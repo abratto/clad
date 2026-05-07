@@ -4,7 +4,8 @@
 
 | Path | Layer | Why |
 |---|---|---|
-| (the human's request) | — | Source of intent |
+| `../00_actor-goal/output/actors.md` | 4 | Confirmed actors |
+| `../00_actor-goal/output/goals.md` | 4 | Confirmed goals |
 | `../../../../methodology/core/CLAD.md` | 3 | Methodology |
 | `../../../../templates/usecase.md` | 3 | Output template |
 | `../../_config/voice.md` | 3 | Feature voice |
@@ -27,3 +28,11 @@ about what is out of scope.
 - Out-of-scope section is non-empty.
 - The operational principle reads as a coherent story, not a feature
   list.
+- **Cross-stage check (back):** every in-scope goal in
+  `../00_actor-goal/output/goals.md` corresponds to at least one named
+  scenario in `usecase.md`.
+
+## Gate
+
+Default human approval. The use case is the contract every later
+stage compiles against; gate carefully.

@@ -1,0 +1,50 @@
+name: CLAD — new feature
+description: Propose a new use case for CLAD
+title: "[UC-XX] <short feature name>"
+labels: ["clad:spec-needed"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        New CLAD feature. Read [`AGENTS.md`](../AGENTS.md) and the
+        active `CONTEXT.md` files before drafting. Bootstrap by
+        copying [`templates/feature-skeleton/`](../templates/feature-skeleton/),
+        not by copying an existing feature folder.
+  - type: input
+    id: uc-slug
+    attributes:
+      label: UC slug
+      description: "e.g. UC-04-comment-thread"
+      placeholder: UC-XX-<slug>
+    validations:
+      required: true
+  - type: textarea
+    id: actors
+    attributes:
+      label: Actors (initial guess)
+      description: One per line — name and one-line role. Stage 00 will refine this collaboratively.
+    validations:
+      required: true
+  - type: textarea
+    id: in-scope
+    attributes:
+      label: In scope
+      description: Goals (in `<actor> wants to <do X> so that <reason>` form) this feature must satisfy.
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: Goals deliberately excluded. Be explicit.
+    validations:
+      required: true
+  - type: checkboxes
+    id: ack
+    attributes:
+      label: Acknowledgements
+      options:
+        - label: I will start at Stage 00 (`stages/00_actor-goal/`) and not skip ahead.
+          required: true
+        - label: I will not import another concept from this feature's concepts.
+          required: true

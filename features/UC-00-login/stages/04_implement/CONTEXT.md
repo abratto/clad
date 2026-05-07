@@ -1,4 +1,6 @@
-# Stage 04 — Implement
+# Stage 04 — Implement (router) — UC-00-login
+
+This stage owns no artefacts of its own. It routes to the five sub-stages.
 
 ## Inputs
 
@@ -6,36 +8,30 @@
 |---|---|---|
 | `../02_concepts/output/` | 4 | Concept specs |
 | `../03_syncs/output/` | 4 | Sync specs |
-| `../../../../methodology/implementation/RULES.md` | 3 | Hard rules (all) |
-| `../../../../reference-impl/<profile>/README.md` | 3 | Profile conventions |
+| `../../../../methodology/implementation/STAGES.md` | 3 | §"Stage 04 — `04_implement/` (router)" |
+| `../../../../methodology/implementation/RULES.md` | 3 | Hard rules |
+| `../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` | 3 | Java profile conventions |
 
 ## Process
 
-Generate or update code under `reference-impl/<profile>/` that realises
-the concepts and syncs. One package (or module) per concept. One
-declaration per sync. The HTTP surface lives only in `Web`. Every action
-emits a flow token. No concept imports another.
+Run the sub-stages in order, gating after each:
 
-When the work is done, write a small `implementation-manifest.md` here
-in `output/` listing the files generated and the commit they landed in.
+1. [`04a_orm/`](04a_orm/CONTEXT.md) — not applicable (in-memory profile)
+2. [`04b_spec/`](04b_spec/CONTEXT.md) — per-concept SPEC slice
+3. [`04c_flow-tests/`](04c_flow-tests/CONTEXT.md) — outer red (flow tests)
+4. [`04d_concept-tdd/`](04d_concept-tdd/CONTEXT.md) — inner red→green per concept
+5. [`04e_sync-tdd/`](04e_sync-tdd/CONTEXT.md) — inner red→green per sync; outer goes green
 
 ## Outputs
 
-- `output/implementation-manifest.md` — what landed where
+(none — see sub-stages)
 
 ## Verify
 
-- `git grep` shows no cross-concept imports.
-- A test exercising `successful-login` produces a flow-token tree
-  whose root is `Web.handle POST /login` and whose leaves include
-  `Session.open` and `Web.respond`.
-- Build and tests pass.
+- Every sub-stage has been gated.
+- The flow tests from `04c` are green at the end of `04e`.
+- **Cross-stage check (back):** every concept in `02_concepts/output/` and every sync in `03_syncs/output/` has a corresponding sub-stage output.
 
-## Status in this seed
+## Gate
 
-This stage's `output/` is intentionally empty in the seed. UC-00-login
-is included as a *spec*-level worked example; the implementation
-profile under `reference-impl/` is a skeleton. When the
-[`reference-impl/java-micronaut-jena/`](../../../../reference-impl/java-micronaut-jena/)
-profile is filled in, this stage's output will be populated by the
-agent that runs it.
+Default — fires only after `04e` is green.

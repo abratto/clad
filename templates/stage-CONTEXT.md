@@ -1,3 +1,5 @@
+<!-- Stage CONTEXT.md template. Purpose: see methodology/implementation/STAGES.md and the ICM five-layer hierarchy in AGENTS.md §4. -->
+
 # Stage <NN> — <name>
 
 > Stage `CONTEXT.md` template. This is the contract for what the agent
@@ -30,6 +32,21 @@
 ## Verify
 
 > How the next stage (or the human) will check this stage's work.
+> Include at least one **cross-stage consistency check** (e.g. "every
+> actor in `00_actor-goal/output/actors.md` whose goal is in-scope
+> appears in at least one concept's operational principle"). See
+> `methodology/implementation/STAGES.md` §"Cross-stage consistency".
 
 - <check>
-- <check>
+- <check (cross-stage)>
+
+## Gate
+
+> The standard gate is: the human reviews `output/`, edits if
+> necessary, and either says "go" (move to next stage) or sends the
+> agent back. Note any stage-specific gate semantics here (e.g. Stage
+> 00's collaboration loop may take multiple turns before this gate is
+> reached).
+
+- Default: human approval of `output/` contents.
+- Stage-specific: <e.g. "agent must not have produced files outside the Outputs list">.

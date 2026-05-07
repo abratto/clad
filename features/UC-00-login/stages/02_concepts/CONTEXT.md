@@ -27,3 +27,9 @@ operational principle. No concept may reference another.
 - No concept names another concept's state or actions.
 - Every action lists its outcomes and its flow-token fields.
 - The three concepts together cover every observable in the use case.
+- **Cross-stage check (back):** every actor in `../00_actor-goal/output/actors.md` whose goal is in-scope appears in at least one concept's operational principle (here, `User` is the actor in `User.concept.md`'s principle).
+
+## Gate
+
+Default human approval. This is the most common place to catch
+over-fused or under-split concepts.

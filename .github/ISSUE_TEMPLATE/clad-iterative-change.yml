@@ -1,0 +1,60 @@
+name: CLAD — iterative change
+description: Change an existing CLAD feature
+title: "[UC-XX] <change description>"
+labels: ["clad:in-progress"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Iterative change to a CLAD feature. Fill in the artefact impact
+        matrix and the smallest stage you must re-run from. See
+        [`templates/artefact-impact-matrix.md`](../templates/artefact-impact-matrix.md).
+  - type: input
+    id: uc-slug
+    attributes:
+      label: Existing UC slug
+      placeholder: UC-XX-<slug>
+    validations:
+      required: true
+  - type: textarea
+    id: change-summary
+    attributes:
+      label: Change summary
+      description: One paragraph. Why now, what changes, who notices.
+    validations:
+      required: true
+  - type: textarea
+    id: impact-matrix
+    attributes:
+      label: Artefact impact matrix
+      description: |
+        Paste the filled-in matrix from `templates/artefact-impact-matrix.md`.
+        Anything marked "touched" must be re-derived from its predecessor stage.
+      render: markdown
+    validations:
+      required: true
+  - type: dropdown
+    id: rerun-from
+    attributes:
+      label: Smallest re-run starting stage
+      description: The earliest stage you must re-run. Everything before it is unaffected.
+      options:
+        - "01_usecase"
+        - "02_concepts"
+        - "03_syncs"
+        - "04_implement / 04b_spec"
+        - "04_implement / 04c_flow-tests"
+        - "04_implement / 04d_concept-tdd"
+        - "04_implement / 04e_sync-tdd"
+        - "05_verify"
+    validations:
+      required: true
+  - type: checkboxes
+    id: ack
+    attributes:
+      label: Acknowledgements
+      options:
+        - label: I will not edit a late-stage artefact in isolation; I will re-derive from the smallest stage that owns the change.
+          required: true
+        - label: I will record the resume point at the end of each session per the TRACKING overlay.
+          required: true

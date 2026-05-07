@@ -20,13 +20,21 @@ satisfies.
 
 ## Outputs
 
-- `output/login.sync.md` — couples `PasswordAuth.verify -> Ok` to
-  `Session.open` and the HTTP response.
+- `output/LoginGrantsSession.sync.md` — couples `PasswordAuth.check -> OK` to `Session.grant` and the 200 response.
+- `output/LockoutOnFailedAttempts.sync.md` — spec-only this iteration; pairs N consecutive `BAD_PASSWORD` outcomes with `PasswordAuth.lock` and a 401 response.
 
 ## Verify
 
 - Every scenario in the use case is satisfied by at least one sync, or
   is handled directly by `Web` returning a failure outcome (the
-  unhappy paths in UC-00 are the latter).
+  `wrong-password` and `unknown-user` paths in UC-00 are the latter —
+  documented in `LoginGrantsSession.sync.md` notes).
 - No sync contains `if`/`else` over business state.
 - No sync persists state.
+- **Cross-stage check (back):** every named scenario in
+  `../01_usecase/output/usecase.md` is satisfied by at least one sync
+  or is explicitly called out as a `Web`-only failure path.
+
+## Gate
+
+Default human approval.

@@ -1,3 +1,5 @@
+<!-- Flow prediction template. Purpose: see methodology/architecture/FLOW_TOKENS.md. -->
+
 # Flow — <name>
 
 > A flow is a named, expected chain of concept actions for a particular
