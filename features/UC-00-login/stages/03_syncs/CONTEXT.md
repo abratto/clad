@@ -6,7 +6,9 @@
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Scenarios to satisfy |
 | `../02_concepts/output/` | 4 | Concepts available to coordinate |
+| `../02b_chain-table/output/` | 4 | The action chain each sync formalises |
 | `../../../../methodology/architecture/SYNCHRONIZATIONS.md` | 3 | Sync semantics |
+| `../../../../methodology/architecture/SYNC_PATTERNS.md` | 3 | The four `where` patterns (A/B/C/D) |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rules (R3) |
 | `../../../../templates/sync.md` | 3 | Output template |
 

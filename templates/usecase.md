@@ -2,37 +2,100 @@
 
 # UC-XX — <feature name>
 
+## Completeness level
+
+> Pick one. The level controls how much of this template you must fill
+> in. Adapted from Cockburn's *Writing Effective Use Cases*.
+
+- [ ] **Brief** — one paragraph. Use for out-of-scope or deferred goals
+  that exist only to be referenced from elsewhere.
+- [ ] **Casual** — operational principle + main scenario + key
+  extensions. Default for backlog items not yet in active design.
+- [ ] **Fully Dressed** — the entire template below, including
+  mandatory **Postconditions** for every scenario. **Required** before
+  a use case enters Stage 02a.
+
+A use case is **promoted** to Fully Dressed at the moment its first
+flow artefact is drafted (i.e. when Stage 02a starts). Do not
+pre-emptively fully-dress use cases that are not in active design;
+the unused detail rots.
+
+A use case that is not yet Fully Dressed must not be used as input to
+Stage 02a, 02b, 03, or any 04 sub-stage. The Fully Dressed gate is
+load-bearing.
+
 ## Operational principle
 
-> One paragraph describing the feature from a user's point of view: what
-> they do, what they see, why they would use it.
+> One paragraph describing the feature from a user's point of view:
+> what they do, what they see, why they would use it.
 
 ## Actors
 
-- **<ActorName>** — <role>
+- **<PrimaryActor>** — <role>
+- **<SecondaryActor>** — <role>  *(omit if none)*
 
 ## Scenarios
 
-> Each scenario is a trigger + expected outcomes. Name them; the names
-> are referenced by syncs and by stage 5 verification.
+> Each scenario is a trigger + expected outcomes + **postconditions**.
+> Name them; the names are referenced by chain tables (Stage 02b),
+> syncs (Stage 03), and verification traces (Stage 05).
 
 ### Scenario: <name>
 
 - **Trigger:** <user action or external event>
-- **Pre-conditions:** <state required>
+  *(Trigger is required only when the use case is system-initiated or
+  the initiating event is non-obvious. For straightforward
+  actor-initiated flows — "the user submits the form" — it may be
+  omitted.)*
+- **Pre-conditions:**
+  - <state required>
+- **Main flow:**
+  1. <Actor> does X.
+  2. System responds with Y.
+  3. …
 - **Expected outcomes:**
   - <observable outcome 1>
   - <observable outcome 2>
+- **Postconditions — Success:**
+  - <what is true after the main flow completes successfully>
+  - <what state is modified, by which concept>
+- **Postconditions — Failure:**
+  - <what is true after any extension that ends in failure>
+  - <if no state is modified, state that explicitly>
+- **Extensions:**
+  - **Xa.** <branch condition> → <how the system responds>
+  - **Xb.** …  *(omit subsection if none)*
+
+> **Both Postconditions sub-sections are mandatory in every Fully
+> Dressed scenario.** A scenario without a Failure postcondition (even
+> if it reads *"No state is modified"*) is incomplete and will be
+> rejected at the Stage 01 gate.
+>
+> **Why mandatory.** Postconditions are what Stage 04c flow tests
+> assert against. Each Success postcondition becomes one or more flow
+> assertions; each Failure postcondition becomes a failure-branch
+> assertion. Skipping them means the flow tests get invented during
+> 04c instead of derived — which silently drifts the tests from the
+> use case.
 
 ### Scenario: <name>
 
-- **Trigger:** ...
-- **Pre-conditions:** ...
-- **Expected outcomes:** ...
+- **Trigger:** …
+- **Pre-conditions:** …
+- **Main flow:** …
+- **Expected outcomes:** …
+- **Postconditions — Success:** …
+- **Postconditions — Failure:** …
 
 ## Out of scope
 
-> What this feature explicitly does *not* cover. This is as important as
-> what it does cover.
+> What this feature explicitly does *not* cover. As important as what
+> it does cover.
 
 - <item>
+
+## Relationship to other use cases
+
+> Optional. Cite by `UC-id` and explain the relationship in one line.
+
+- **UC-YY** — <how this use case relates>

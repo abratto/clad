@@ -5,6 +5,7 @@
 | Path | Layer | Why |
 |---|---|---|
 | `../../02_concepts/output/` | 4 | Concept state sections |
+| `../../03a_dependency-review/output/pattern-d-summary.md` | 4 | Cross-concept fields, if any (UC-00 has none) |
 | `../../../../../methodology/architecture/ORM_NOTES.md` | 3 | Seven-step procedure (when applicable) |
 | `../../../../../reference-impl/java-micronaut-jena/README.md` | 3 | Profile storage status |
 

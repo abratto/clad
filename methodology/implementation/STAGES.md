@@ -38,6 +38,9 @@ features/UC-XX-name/
     ├── 03_syncs/
     │   ├── CONTEXT.md
     │   └── output/              <name>.sync.md (one per rule)
+    ├── 03a_dependency-review/
+    │   ├── CONTEXT.md
+    │   └── output/              <concept>-card.md per concept; pattern-d-summary.md
     ├── 04_implement/
     │   ├── CONTEXT.md           Router → 04a..04e; no direct artefacts
     │   ├── 04a_orm/             Optional state model
@@ -143,6 +146,16 @@ them).
 **Gate:** the human checks each chain is plausible and that no chain
 introduces a concept absent from the responsibility map.
 
+A well-formed chain table is structurally equivalent to a finite
+state machine (states = outcomes, events = the outcome the previous
+row emitted, transitions = the next row's action). The table is the
+canonical source; any Mermaid diagram is **derived** from it and
+must be presented in the **same conversation turn** as the table —
+the gate cannot open over half a picture. See
+[`../../templates/chain-table.md`](../../templates/chain-table.md)
+§"The chain table is a finite state machine" for the FSM mapping and
+the derivation rules.
+
 ### Stage 02 — `02_concepts/`
 
 **Input:** `02a_responsibility-map/output/responsibility-map.md`,
@@ -177,6 +190,36 @@ sync.
 
 **Gate:** the human checks that every scenario is covered and that no
 sync contains imperative branching.
+
+### Stage 03a — `03a_dependency-review/`
+
+**Input:** `03_syncs/output/`, `02b_chain-table/output/`,
+`02a_responsibility-map/output/responsibility-map.md`,
+`02_concepts/output/`,
+[`../architecture/SYNC_PATTERNS.md`](../architecture/SYNC_PATTERNS.md),
+[`../../templates/dependency-review-card.md`](../../templates/dependency-review-card.md),
+[`../../templates/pattern-d-summary.md`](../../templates/pattern-d-summary.md).
+
+**Process:** for each concept in 02a's map, produce a per-concept
+dependency card listing (1) every action invocation it receives from
+syncs, labelled by the data-flow pattern A/B/C/D from
+[`../architecture/SYNC_PATTERNS.md`](../architecture/SYNC_PATTERNS.md),
+and (2) every Pattern D read of its named region by other concepts.
+Then produce a single `pattern-d-summary.md` consolidating every
+Pattern D read in the feature.
+
+This stage produces no new design — it makes the cross-concept
+coupling that already exists in the syncs **visible** so the human
+can spot a flow-inconsistent invocation or an unintended state
+coupling **before** Stage 04 turns it into code. Pattern D is the
+only legal cross-concept read; if a flow appears to need data from
+elsewhere, the dependency card is where that gets surfaced.
+
+**Output:** `<concept>-card.md` per concept named in 02a's map;
+`pattern-d-summary.md` consolidating Pattern D across the feature.
+
+**Gate:** human approval. Last cross-concept sanity check before
+implementation begins.
 
 ### Stage 04 — `04_implement/` (router)
 
@@ -338,3 +381,27 @@ upstream.
 The numbering is execution order. Renumbering a folder is how you
 change the order; there is no orchestration code to edit. The
 filesystem **is** the orchestrator.
+
+## LLM handoff table — who provides what at each stage transition
+
+The table below is the operational summary of the human↔agent
+contract at each stage boundary. It is the answer to "what is the
+human's job here, what is the agent's job, and what is the human
+reviewing at the gate?" Read top to bottom for a single feature.
+
+| Transition | Human provides | Agent produces | Human reviews at gate |
+|---|---|---|---|
+| brief → **00** | One-paragraph feature brief | Proposed actor list + ≤5 clarifying questions; iterates | Final `actors.md`, `goals.md` reflect what was agreed |
+| 00 → **01** | Confirmed `actors.md`, `goals.md` | `usecase.md` at **Fully Dressed** level (op principle, scenarios, Postconditions Success+Failure mandatory) | Every in-scope goal has a named scenario; both postcondition sub-sections present |
+| 01 → **02a** | Use case (Fully Dressed) | `responsibility-map.md` — one row per concept (state, actions), coverage check vs scenarios | Concept boundaries; scenarios are fully covered |
+| 02a → **02b** | Responsibility map | One `<scenario>-chain.md` per scenario — action chain (table) **and** Mermaid diagram in the **same turn** | Each chain is plausible; no concept appears that is not in 02a |
+| 02b → **02** | Responsibility map + chain tables | Per-concept `<Name>.concept.md` (full anatomy: state, actions, op principle); no cross-concept references | Concept anatomy honours R1; action signatures match chain-table usage |
+| 02 → **03** | Concept specs + chain tables | One `<name>.sync.md` per coordination rule; every `where` clause labelled with pattern A/B/C/D | Every scenario covered; no imperative branching; Pattern D reads are intentional |
+| 03 → **03a** | Sync specs + chain tables | One `<concept>-card.md` per concept; one `pattern-d-summary.md` for the feature | Cross-concept coupling is intentional; no flow-inconsistent invocations |
+| 03a → **04a** | Sync specs + dependency review (Pattern D summary names every cross-concept field) | `<Name>.orm.md` per concept under R2 (one named region each); fields needed by Pattern D reads are exposed | Schema honours R2; Pattern D fields are present |
+| 04a → **04b** | ORM (or `_NOT_APPLICABLE.md`) + concept specs | `<Name>.spec.md` per concept (signatures, outcomes, flow-token shape) — mechanically derived | SPEC matches concept spec, no design choices snuck in |
+| 04b → **04c** | SPECs + use case | `<scenario>-flow-test.md` per scenario + stub red tests in profile | Predicted flow tokens match the scenario's postconditions |
+| 04c → **04d** | SPECs + concept specs | `concept-test-derivation.md` + per-concept tests (red → green) + concept implementations | Tests trace 1:1 to SPEC rows; no cross-concept imports |
+| 04d → **04e** | SPECs + sync specs | `sync-test-derivation.md` + per-sync tests (red → green); flow tests from 04c go green | All sync and flow tests green; nothing in `then` does I/O outside the named action |
+| 04e → **05** | Use case + running profile | `trace.md` (back-trace from flow tokens), `findings.md` if any, `smoke.md`, `tracking.md` | Every observed flow token traces back to a named scenario; smoke confirms the deployable artefact |
+

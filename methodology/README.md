@@ -17,12 +17,14 @@ CLAD targets. They are paraphrases of, and citations to, Meng & Jackson
 (2025); see [`reference/CITATIONS.md`](reference/CITATIONS.md).
 
 1. [`architecture/LEGIBLE.md`](architecture/LEGIBLE.md) — the WYSIWID idea
-2. [`architecture/CONCEPTS.md`](architecture/CONCEPTS.md) — concept anatomy
-3. [`architecture/SYNCHRONIZATIONS.md`](architecture/SYNCHRONIZATIONS.md) — sync semantics
-4. [`architecture/FLOW_TOKENS.md`](architecture/FLOW_TOKENS.md) — provenance and back-tracing
-5. [`architecture/ENGINE.md`](architecture/ENGINE.md) — the runtime engine that the Java reference profile implements
-6. [`architecture/WEB_CONCEPT.md`](architecture/WEB_CONCEPT.md) — the bootstrap `Web` concept (R4)
-7. [`architecture/ORM_NOTES.md`](architecture/ORM_NOTES.md) — drafting per-concept state schemas (Stage 04a)
+2. [`architecture/MENTAL_MODEL.md`](architecture/MENTAL_MODEL.md) — OO ↔ WYSIWID parallel and the complete artefact map (start here if you come from OO)
+3. [`architecture/CONCEPTS.md`](architecture/CONCEPTS.md) — concept anatomy
+4. [`architecture/SYNCHRONIZATIONS.md`](architecture/SYNCHRONIZATIONS.md) — sync semantics
+5. [`architecture/SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md) — the four legal data-flow patterns (A/B/C/D)
+6. [`architecture/FLOW_TOKENS.md`](architecture/FLOW_TOKENS.md) — provenance and back-tracing
+7. [`architecture/ENGINE.md`](architecture/ENGINE.md) — the runtime engine that the Java reference profile implements
+8. [`architecture/WEB_CONCEPT.md`](architecture/WEB_CONCEPT.md) — the bootstrap `Web` concept (R4)
+9. [`architecture/ORM_NOTES.md`](architecture/ORM_NOTES.md) — drafting per-concept state schemas (Stage 04a)
 
 ## 3. Implementation — hard rules and the workspace scaffold
 

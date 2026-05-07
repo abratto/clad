@@ -61,6 +61,7 @@ Mapped to the ICM stages of a feature folder:
 | 2b | `stages/02b_chain-table/` | `<scenario>-chain.md` per use-case scenario (action choreography) |
 | 2 | `stages/02_concepts/` | One `*.concept.md` per concept (full anatomy) |
 | 3 | `stages/03_syncs/` | One `*.sync.md` per coordination rule |
+| 3a | `stages/03a_dependency-review/` | One `*-card.md` per concept + `pattern-d-summary.md` (cross-concept coupling surface) |
 | 4 | `stages/04_implement/` | Router; sub-stages `04a_orm`, `04b_spec`, `04c_flow-tests`, `04d_concept-tdd`, `04e_sync-tdd` produce the artefacts and code |
 | 5 | `stages/05_verify/` | Trace from running behaviour back to `usecase.md`, plus closure (smoke + tracking) |
 
