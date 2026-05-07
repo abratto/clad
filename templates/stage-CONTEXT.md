@@ -47,6 +47,15 @@
 > agent back. Note any stage-specific gate semantics here (e.g. Stage
 > 00's collaboration loop may take multiple turns before this gate is
 > reached).
+>
+> **Standard gate phrasing.** When you reach the gate, end your turn
+> with this exact line (no embellishment, no apology, no preamble):
+>
+> > **Do you agree with this step? Any corrections before I continue?**
+>
+> Use this phrasing in every stage's `Gate` section so the human sees
+> a consistent stop signal across stages. The rejection protocol in
+> [`../AGENTS.md`](../AGENTS.md) §6 takes over from here.
 
 - Default: human approval of `output/` contents.
 - Stage-specific: <e.g. "agent must not have produced files outside the Outputs list">.

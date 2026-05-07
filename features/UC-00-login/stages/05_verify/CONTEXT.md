@@ -1,10 +1,10 @@
-# Stage 05 — Verify
+# Stage 05 — Verify and close (UC-00-login)
 
 ## Inputs
 
 | Path | Layer | Why |
 |---|---|---|
-| `../01_usecase/output/usecase.md` | 4 | Scenarios to verify against |
+| `../01_usecase/output/usecase.md` | 4 | Scenarios |
 | `../03_syncs/output/` | 4 | Authorising sync rules |
 | `../04_implement/output/implementation-manifest.md` | 4 | What was built |
 | (a flow-token log from a representative test run) | 4 | Runtime evidence |
@@ -12,37 +12,38 @@
 
 ## Process
 
-For each named scenario in the use case:
+### Part 1 — Verify
 
-1. Find the root flow token (the `Web.handle` call matching the
-   scenario's trigger).
-2. Walk the parent-linked tree of children.
-3. Check that the chain matches the syncs in `03_syncs/output/`.
-4. Check that no action appears in the chain that is not authorised
-   by either a use-case scenario or a sync.
+Walk the flow-token tree for each scenario; check every token
+back-traces to a sync or use-case scenario. Write
+`output/verification-trace.md`. (UC-00 also keeps the older
+`trace.md` filename around as the canonical name; this seed uses
+`verification-trace.md` historically — both are acceptable.)
 
-Write a per-scenario walk to `trace.md`. If anything failed step 3 or
-4, add an entry to `findings.md` and mark which earlier stage owns the
-defect.
+### Part 2 — Close
+
+1. Boot the Java profile, hit `POST /login` for each scenario,
+   capture in `output/smoke.md`.
+2. Update tracking (or note "not applicable") in `output/tracking.md`.
+3. Add a `Resume point:` line at the top of the trace file.
 
 ## Outputs
 
-- `output/trace.md` — per-scenario walk
-- `output/findings.md` — only if violations were found
+- `output/verification-trace.md` (with `Resume point:` line at top)
+- `output/findings.md` (only if violations found)
+- `output/smoke.md`
+- `output/tracking.md`
 
 ## Verify
 
-- Every scenario has an entry in `trace.md`.
-- `findings.md`, if present, names the owning stage for each finding.
-- **Cross-stage check (back):** every flow token observed at runtime back-traces to a use-case scenario.
+- Every scenario has a trace entry.
+- `smoke.md` records a real (not predicted) curl/response per scenario.
+- `tracking.md` exists.
+- Trace file begins with `Resume point:`.
+- **Cross-stage check (back):** every observed flow token back-traces
+  to a use-case scenario.
 
 ## Gate
 
-Any finding sends the loop back to whichever stage owns the defect.
-
-## Status in this seed
-
-`output/verification-trace.md` is a **predicted** walk derived from
-the use case, syncs, and SPECs. The Java profile is scaffolding
-(no live HTTP handler yet); this trace will be regenerated from a real
-`ActionLog` when the flow tests in `04c` go green.
+- Findings → loop back to owning stage.
+- No further gate after closure.

@@ -6,13 +6,15 @@
 |---|---|---|
 | `../../02_concepts/output/` | 4 | Concept specs (state sections) |
 | `../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R2 |
+| `../../../../../methodology/architecture/ORM_NOTES.md` | 3 | Seven-step drafting procedure (CLAD adaptation of Jarrar CSDP) |
 | Profile reference docs (e.g. `reference-impl/<profile>/README.md`) | 3 | Storage conventions |
 
 ## Process
 
 If the chosen profile uses a relational/RDF/document store, draft the
-state schema for each concept — one named region per concept (R2).
-Otherwise write `_NOT_APPLICABLE.md` explaining why and skip.
+state schema for each concept by walking the seven-step procedure in
+`ORM_NOTES.md` — one named region per concept (R2). Otherwise write
+`_NOT_APPLICABLE.md` explaining why and skip.
 
 ## Outputs
 
