@@ -5,6 +5,7 @@
 | Path | Layer | Why |
 |---|---|---|
 | `../../02_concepts/output/` | 4 | Concept specs (state sections) |
+| `../../03a_dependency-review/output/pattern-d-summary.md` | 4 | Every cross-concept field that must be exposed in this concept's region |
 | `../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R2 |
 | `../../../../../methodology/architecture/ORM_NOTES.md` | 3 | Seven-step drafting procedure (CLAD adaptation of Jarrar CSDP) |
 | Profile reference docs (e.g. `reference-impl/<profile>/README.md`) | 3 | Storage conventions |
@@ -25,6 +26,8 @@ state schema for each concept by walking the seven-step procedure in
 
 - Each concept's schema lives in exactly one named region.
 - No region is shared across concepts.
+- Every field listed in `03a_dependency-review/output/pattern-d-summary.md`
+  is present in the owner concept's region.
 
 ## Gate
 

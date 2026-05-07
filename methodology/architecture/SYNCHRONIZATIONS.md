@@ -44,6 +44,18 @@ public actions.
 - **Touch I/O directly.** I/O happens in concepts (typically `Web`,
   `Mailer`, etc.). Syncs orchestrate those concepts.
 
+## How a sync gets its data — the four patterns
+
+Every `where` clause in a sync uses **exactly one** of four named
+patterns: A (flow-token join), B (flow-sibling join), C (sync
+constant), D (concept-state join). Pattern D is the only one that
+crosses a concept boundary at read time, which is what makes hard
+rule R1 enforceable by inspection of the sync spec.
+
+The full pattern catalogue, with worked examples and anti-patterns,
+is in [`SYNC_PATTERNS.md`](SYNC_PATTERNS.md). Stage 03 must consume
+it; Stage 03a (per-concept dependency review) is built on it.
+
 ## Why this discipline
 
 If syncs can branch and hold state, they become a hidden controller and

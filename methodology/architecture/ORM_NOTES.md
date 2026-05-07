@@ -85,3 +85,75 @@ sync — never through a schema-level relationship.
 - Not a substitute for the per-profile reference docs (e.g.
   `reference-impl/java-micronaut-jena/README.md`), which describe how
   the profile's named regions are wired.
+
+---
+
+## Working method — chat-first, per-step confirmation
+
+Stage 04a runs **interactively**, not as a single batch:
+
+1. Walk the seven steps **one at a time** in chat. After each step,
+   surface what was decided and end with the standard gate question:
+   *"Do you agree with this step? Any corrections before I continue?"*
+2. Wait for human confirmation before moving to the next step. Do
+   not pre-emptively draft step 4 while presenting step 3.
+3. Commit `output/<Name>.orm.md` (and any profile artefacts like
+   `ORM.xml`) **only after all confirmed steps are complete**. Half-
+   walked drafts do not get committed.
+
+This is slower per concept than batching, and that is the point —
+ORM mistakes that escape Stage 04a propagate into 04b SPECs, into
+test fixtures, and into migrations. Catching a wrong constraint at
+step 5 is cheap; catching it at 04d is not.
+
+### Empty-model shortcut
+
+If **step 1** (sample sentences) shows that the concept has no
+state — its `state` section is empty and no spec WHERE clause
+references it — skip steps 2–7. Confirm once with the human:
+
+> *"`<Concept>` has no persistent state. I'll write
+> `output/<Concept>.orm.md` recording that fact and skip steps 2–7.
+> Do you agree?"*
+
+On confirmation, the file records *"No state — CSDP steps 2–7 do not
+apply"* and the stage advances. No further interaction needed for
+that concept.
+
+## Output format — `## CSDP Notes` section
+
+Every committed `<Name>.orm.md` ends with a section titled
+**`## CSDP Notes`**. This section is **not a transcript** of all
+seven steps — that would just duplicate the body of the file. It
+records **only non-self-evident decisions**:
+
+- Mid-walk corrections (e.g. *"Step 4 originally marked `email`
+  uniquely identifying; revised after step 5 noted invariant
+  permits two soft-deleted users to share an email."*).
+- Conditional mandatory rationale (a role that is mandatory only
+  under some condition, with the condition stated).
+- Upstream artefact impacts (any change required to the concept
+  spec, the responsibility map, or a sync as a result of this walk).
+
+Format: one sub-section per noted decision, identified by step
+number:
+
+```
+## CSDP Notes
+
+### Step 3 correction — `expiresAt` is conditional, not unconditional
+The first draft modelled `expiresAt` as an unconditional fact of
+`Session`. Step 5 surfaced that anonymous sessions have no
+expiry. Reverted to: `Session has expiresAt` mandatory iff
+`Session.kind = "user"`.
+
+### Step 7 — exposing `email` to other concepts
+Pattern D summary requires `User.email` to be readable by
+`PasswordReset`. Added `email` to the `User` named region with
+public visibility. Concept spec already exposed it as a state
+field; no spec change needed.
+```
+
+If the walk had no notable decisions, write
+*"No notable decisions — straight CSDP walk."* The section is
+mandatory; its emptiness is itself a useful signal at review time.
