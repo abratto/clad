@@ -17,11 +17,11 @@ has **zero cross-concept state coupling at runtime**.
 
 ## Cross-flow inconsistencies
 
-- None at the Pattern D level.
-- Action-name discrepancies between sync specs and chain tables
-  (`Session.open` vs `Session.grant`; `PasswordAuth.verify` vs
-  `PasswordAuth.check`) are tracked on the per-concept cards. The
-  chain tables are canonical.
+- None.
+- (A previous iteration flagged action-name discrepancies between
+  sync specs and chain tables — `Session.open` vs `Session.grant`,
+  `PasswordAuth.verify` vs `PasswordAuth.check`. Reconciled in the
+  sync specs; chain tables remain canonical.)
 
 ## What this feeds
 
