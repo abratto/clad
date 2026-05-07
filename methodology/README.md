@@ -19,6 +19,7 @@ CLAD targets. They are paraphrases of, and citations to, Meng & Jackson
 2. [`architecture/CONCEPTS.md`](architecture/CONCEPTS.md) — concept anatomy
 3. [`architecture/SYNCHRONIZATIONS.md`](architecture/SYNCHRONIZATIONS.md) — sync semantics
 4. [`architecture/FLOW_TOKENS.md`](architecture/FLOW_TOKENS.md) — provenance and back-tracing
+5. [`architecture/ENGINE.md`](architecture/ENGINE.md) — the runtime engine that the Java reference profile implements
 
 ## 3. Implementation — hard rules and the workspace scaffold
 

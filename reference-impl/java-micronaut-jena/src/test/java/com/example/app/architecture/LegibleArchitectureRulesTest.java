@@ -5,7 +5,6 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
-import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchCondition;
@@ -77,43 +76,17 @@ class LegibleArchitectureRulesTest {
     }
 
     /**
-     * R5 — every public action of a *Concept class must call
-     * {@code FlowManager.emit(...)} (heuristic via bytecode method
-     * calls). Concept methods that intentionally do not emit must not be
-     * public.
+     * R5 — every {@code *Concept} class under {@code com.example.app.concepts}
+     * must extend {@link com.example.app.engine.ConceptAgent}, ensuring it
+     * participates in the action-log polling loop. Every action it executes
+     * therefore has an addressable flow token in the RDF store.
      */
     @Test
-    void r5_every_public_concept_action_emits_a_flow_token() {
+    void r5_every_concept_class_is_a_concept_agent() {
         classes()
-                .that().haveSimpleNameEndingWith("Concept")
-                .should(new ArchCondition<>(
-                        "have every public method (other than constructors and accessors) call FlowManager.emit") {
-                    @Override
-                    public void check(JavaClass item, ConditionEvents events) {
-                        for (JavaMethod method : item.getMethods()) {
-                            if (!method.getModifiers().contains(
-                                    com.tngtech.archunit.core.domain.JavaModifier.PUBLIC)) {
-                                continue;
-                            }
-                            if (method.getName().equals("equals")
-                                    || method.getName().equals("hashCode")
-                                    || method.getName().equals("toString")) {
-                                continue;
-                            }
-                            boolean callsEmit = method.getMethodCallsFromSelf().stream()
-                                    .anyMatch(c -> c.getTarget().getOwner()
-                                            .getFullName()
-                                            .equals("com.example.app.engine.FlowManager")
-                                            && c.getTarget().getName().equals("emit"));
-                            if (!callsEmit) {
-                                events.add(SimpleConditionEvent.violated(
-                                        method,
-                                        item.getName() + "#" + method.getName()
-                                                + " does not call FlowManager.emit (R5)"));
-                            }
-                        }
-                    }
-                })
+                .that().resideInAPackage(CONCEPTS_ROOT + "..")
+                .and().haveSimpleNameEndingWith("Concept")
+                .should().beAssignableTo(com.example.app.engine.ConceptAgent.class)
                 .check(CLASSES);
     }
 

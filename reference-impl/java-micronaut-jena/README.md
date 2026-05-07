@@ -19,38 +19,56 @@ this folder is one way to implement them.
 
 | Methodology concept | Java realisation |
 |---|---|
-| Concept | A package under `com.example.app.concepts.<name>` containing exactly one `*Concept` class |
-| Sync | A class under `com.example.app.syncs` whose body is declarative `when … then …` |
-| `Web` (HTTP entry) | `com.example.app.infrastructure.WebConcept` (only HTTP entry; R4) |
-| Flow token | `com.example.app.engine.FlowToken` |
-| Flow-token log | `com.example.app.engine.ActionLog` (in-memory; an RDF-backed implementation is the next step) |
+| Concept | A package under `com.example.app.concepts.<name>` containing exactly one `*Concept` class that `extends ConceptAgent` |
+| Sync | A `final` class under `com.example.app.syncs` that `extends SyncAgent` and declares `whereClause()` + `thenBindings()` |
+| `Web` (HTTP entry) | `com.example.app.infrastructure.WebController` — `@Controller("/login")` calling `FlowManager.rootAction` then `SyncDispatcher.awaitResponse` |
+| Flow token | A UUID IRI minted by `FlowManager.mintFlowToken()`; carried by every action node in the chain via the `:flow` predicate |
+| Action log | `com.example.app.engine.ActionLog` — wraps a Jena transactional `Dataset`. Concept state lives in named graphs `concept:<name>`; the active log lives in `https://clad.dev/actions`; archived flows in `https://clad.dev/actions/archive` |
+| Scheduler | `com.example.app.engine.SyncDispatcher` — the only loop in the system |
 | Hard rules R1–R5 | Enforced by `LegibleArchitectureRulesTest` (ArchUnit) |
+
+See [`../../methodology/architecture/ENGINE.md`](../../methodology/architecture/ENGINE.md)
+for engine internals (trigger index, dedup edge, flow archival).
 
 ## Build
 
 ```sh
 cd reference-impl/java-micronaut-jena
-mvn -DskipTests compile
 mvn test
 ```
 
-`mvn test` runs the ArchUnit suite. Domain tests added under
-`features/UC-XX/stages/04*/output/` start `@Disabled`; the outside-in
-TDD discipline turns them on as the inner loops go green.
+`mvn test` runs the ArchUnit suite **and** the outside-loop
+`LoginFlowTest`, which boots an embedded Micronaut server and exercises
+all three UC-00 scenarios (success, wrong password, unknown user)
+end-to-end through the dispatch loop.
+
+## Running locally
+
+```sh
+mvn -DskipTests package
+java -jar target/clad-java-micronaut-jena-0.1.0-SNAPSHOT.jar
+# in another terminal:
+curl -X POST http://localhost:8080/login \
+     -H 'Content-Type: application/json' \
+     -d '{"username":"ada","password":"correct-horse-battery-staple"}'
+# => {"sessionToken":"<uuid>"}
+```
+
+`Application.DemoSeed` registers user `ada` with the known password
+above at startup; remove it in any non-demo profile.
 
 ## Status
 
-This is **scaffolding only**:
+The engine is **fully wired** and the UC-00-login flow runs end-to-end:
+the three concepts (`User`, `PasswordAuth`, `Session`) and the six
+syncs (`LoginRequestStartsLookup`, `LoginLookupTriggersAuth`,
+`LoginGrantsSession`, `LoginRespondSuccess`, `LoginRespondWrongPassword`,
+`LoginRespondUnknownUser`) produce the predicted token chains in
+[`features/UC-00-login/stages/04_implement/04c_flow-tests/output/login-flow-test.md`](../../features/UC-00-login/stages/04_implement/04c_flow-tests/output/login-flow-test.md).
 
-- The engine (`ActionLog`, `FlowManager`) is in-memory.
-- No real Jena store is wired yet (only the dependency); the next
-  iteration adds an `RdfActionLog`/`RdfConceptStore` honouring R2
-  ("one named graph per concept").
-- `WebConcept` exposes no real endpoints; it only exists to anchor
-  R4 ArchUnit checks.
-- The three login concepts (`User`, `PasswordAuth`, `Session`) are
-  minimal stubs — just enough for `LegibleArchitectureRulesTest` to
-  not be vacuous and for the UC-00-login flow-test stubs to compile.
+The Jena dataset is in-memory transactional
+(`DatasetFactory.createTxnMem()`); a TDB2 / Fuseki backend is the next
+profile-level extension.
 
 See [`CODE_STYLE.md`](CODE_STYLE.md) for the conventions every
 contributor (human or agent) should follow inside this profile.
