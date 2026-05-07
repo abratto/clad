@@ -57,10 +57,12 @@ Mapped to the ICM stages of a feature folder:
 |---|---|---|
 | 0 | `stages/00_actor-goal/` | `actors.md`, `goals.md` (collaborative — see [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md) §"Stage 00") |
 | 1 | `stages/01_usecase/` | `usecase.md` (operational principle, actors, scenarios) |
-| 2 | `stages/02_concepts/` | One `*.concept.md` per concept |
+| 2a | `stages/02a_responsibility-map/` | `responsibility-map.md` (one row per concept: state, actions) |
+| 2b | `stages/02b_chain-table/` | `<scenario>-chain.md` per use-case scenario (action choreography) |
+| 2 | `stages/02_concepts/` | One `*.concept.md` per concept (full anatomy) |
 | 3 | `stages/03_syncs/` | One `*.sync.md` per coordination rule |
 | 4 | `stages/04_implement/` | Router; sub-stages `04a_orm`, `04b_spec`, `04c_flow-tests`, `04d_concept-tdd`, `04e_sync-tdd` produce the artefacts and code |
-| 5 | `stages/05_verify/` | Trace from running behaviour back to `usecase.md` |
+| 5 | `stages/05_verify/` | Trace from running behaviour back to `usecase.md`, plus closure (smoke + tracking) |
 
 Stage 04 is the **outside-in TDD double-loop**: `04c` is the outer red
 test (a flow), `04d` and `04e` are the inner red→green TDD on concepts
@@ -108,7 +110,31 @@ These are non-negotiable. Violating any of them is a defect.
 If a rule appears to be in conflict with a request, **stop and ask** —
 do not silently relax it.
 
-## 6. When you are stuck
+## 6. Rejection protocol
+
+When the human rejects a stage's output (says "no", "this is wrong",
+edits something materially, or asks for a redo), follow exactly these
+three steps. Do not freelance.
+
+1. **Acknowledge what was rejected.** Restate, in one sentence, the
+   specific artefact or decision the human pushed back on. Do not
+   apologise; do not re-explain the rationale unless asked.
+2. **Ask one targeted clarifying question** — at most one — before
+   redoing anything. The question should be the *smallest* one whose
+   answer disambiguates the redo. If the rejection was already
+   unambiguous (e.g. the human edited the output directly), skip this
+   step.
+3. **Re-run the same stage.** Produce a new `output/` for the stage
+   you were on. Do **not** silently advance to the next stage. Do
+   **not** drop back to an earlier stage unless the human explicitly
+   said to. Stop at the gate again.
+
+This protocol is what keeps rework predictable. Without it, agents
+fall back on general LLM instinct — re-explaining, over-apologising,
+sometimes producing a different artefact entirely — which makes the
+human's next decision harder, not easier.
+
+## 7. When you are stuck
 
 - If the stage `CONTEXT.md` is ambiguous, edit the `CONTEXT.md` first
   (with the human's approval) and *then* run the stage.
@@ -117,11 +143,14 @@ do not silently relax it.
 - If the human has edited a previous stage's output, **re-read it**.
   Treat the edit as authoritative.
 
-## 7. Pointers
+## 8. Pointers
 
 - Methodology reading order: [`methodology/README.md`](methodology/README.md)
 - Worked example: [`features/UC-00-login/README.md`](features/UC-00-login/README.md)
 - New-feature bootstrap: [`templates/feature-skeleton/`](templates/feature-skeleton/) (copy this, do **not** copy `features/UC-00-login/`)
 - Stage contract template: [`templates/stage-CONTEXT.md`](templates/stage-CONTEXT.md)
+- Iterative-change workflow: [`methodology/core/ITERATIVE_CHANGES.md`](methodology/core/ITERATIVE_CHANGES.md)
+- Pre-commit quality gate: [`methodology/implementation/QUALITY_GATE.md`](methodology/implementation/QUALITY_GATE.md)
 - Optional workflow overlay: [`methodology/overlays/TRACKING.md`](methodology/overlays/TRACKING.md)
+- Optional decision log: [`methodology/overlays/DECISIONS.md`](methodology/overlays/DECISIONS.md)
 - Citations: [`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md)

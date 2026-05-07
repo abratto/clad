@@ -26,6 +26,12 @@ features/UC-XX-name/
     ├── 01_usecase/
     │   ├── CONTEXT.md
     │   └── output/              usecase.md
+    ├── 02a_responsibility-map/
+    │   ├── CONTEXT.md
+    │   └── output/              responsibility-map.md
+    ├── 02b_chain-table/
+    │   ├── CONTEXT.md
+    │   └── output/              <scenario>-chain.md (one per use-case scenario)
     ├── 02_concepts/
     │   ├── CONTEXT.md
     │   └── output/              <Name>.concept.md (one per concept)
@@ -51,7 +57,7 @@ features/UC-XX-name/
     │       └── output/
     └── 05_verify/
         ├── CONTEXT.md
-        └── output/              trace.md, findings.md (if any)
+        └── output/              trace.md, findings.md, smoke.md, tracking.md
 ```
 
 ## The stage contract
@@ -100,19 +106,62 @@ scope is non-empty.
 
 **Gate:** the human edits the use case before stage 2.
 
-### Stage 02 — `02_concepts/`
+### Stage 02a — `02a_responsibility-map/`
 
 **Input:** `01_usecase/output/usecase.md`,
-`methodology/architecture/CONCEPTS.md`, `templates/concept.md`.
+`templates/responsibility-map.md`.
 
-**Process:** identify the concepts the feature requires (one capability
-each). For each, draft a `<Name>.concept.md` per the template. Each
-must have state, actions (with outcomes and flow-token contributions),
-and an operational principle. No concept references another.
+**Process:** identify the *concept set* the feature requires (one
+capability each). Produce one row per concept naming its owned state
+(one line) and its owned actions (names only — no signatures yet).
+Then run the *coverage check*: list each scenario from the use case
+and mark which concepts it touches. Anything that does not fit goes
+in *Out of scope*.
 
-**Output:** one `<Name>.concept.md` per concept.
+**Output:** `responsibility-map.md`.
 
-**Gate:** the human reviews concept boundaries.
+**Gate:** the human reviews the concept boundary set **before** any
+cross-concept choreography is drawn or any per-concept anatomy is
+written.
+
+### Stage 02b — `02b_chain-table/`
+
+**Input:** `01_usecase/output/usecase.md`,
+`02a_responsibility-map/output/responsibility-map.md`,
+`templates/chain-table.md`.
+
+**Process:** for each named scenario in the use case, draw the chain
+of concept actions that fulfils it as a numbered table
+(`# | Concept | Action | Inputs | Outcome | Why this step`) plus a
+Mermaid sequence diagram. The first row is always `Web.handle`; the
+last row is always `Web.respond`. The chain table is the bridge
+between 02a (which concepts exist) and 03 (which syncs coordinate
+them).
+
+**Output:** `<scenario>-chain.md` per scenario.
+
+**Gate:** the human checks each chain is plausible and that no chain
+introduces a concept absent from the responsibility map.
+
+### Stage 02 — `02_concepts/`
+
+**Input:** `02a_responsibility-map/output/responsibility-map.md`,
+`02b_chain-table/output/`, `methodology/architecture/CONCEPTS.md`,
+`templates/concept.md`.
+
+**Process:** for each concept already named in the responsibility
+map, write the **full per-concept anatomy** in `<Name>.concept.md`:
+state, actions (with signatures, outcomes, and flow-token
+contributions), and an operational principle. Concepts whose
+responsibilities are bootstrap-only (e.g. `Web`) get no concept file —
+they are documented in `methodology/architecture/WEB_CONCEPT.md`. No
+concept references another.
+
+**Output:** one `<Name>.concept.md` per business concept.
+
+**Gate:** the human reviews the per-concept anatomy. The concept set
+itself was already gated at 02a, so this gate focuses on action
+shapes and outcomes.
 
 ### Stage 03 — `03_syncs/`
 
@@ -210,18 +259,58 @@ flow tests from `04c` go green.
 
 ### Stage 05 — `05_verify/`
 
-**Input:** the use case, the sync specs, and the flow-token log from
+Stage 05 has two parts: **Verify** (back-trace) and **Close** (smoke,
+tracking, resume-point). The full contract is in the stage seed at
+[`../../templates/feature-skeleton/stages/05_verify/CONTEXT.md`](../../templates/feature-skeleton/stages/05_verify/CONTEXT.md).
+
+**Input:** the use case, the sync specs, and a flow-token log from
 a representative test execution.
 
-**Process:** for each named scenario, walk the flow-token tree and
-check that it matches the chain of syncs and concept actions the
-specs predict. Flag any tokens not authorised by a spec.
+**Process — verify:** for each named scenario, walk the flow-token
+tree and check that it matches the chain of syncs and concept actions
+the specs predict. Flag any tokens not authorised by a spec.
 
-**Output:** `trace.md` (per-scenario walk); `findings.md` if anything
-failed.
+**Process — close (only after verify is clean):**
 
-**Gate:** any finding sends the loop back to whichever stage owns the
-defect.
+1. Smoke the running profile (boot → exercise each scenario's trigger
+   → record real responses) into `smoke.md`. This is the only step
+   that proves the deployable artefact, not just the test suite,
+   behaves.
+2. Update tracking (or note "not applicable") into `tracking.md` —
+   see [`../overlays/TRACKING.md`](../overlays/TRACKING.md) when the
+   overlay is in use.
+3. Append `Resume point: …` at the top of the trace file so the next
+   session lands on a known next step.
+
+**Output:** `trace.md` (with `Resume point:` line), `findings.md` if
+anything failed verify, `smoke.md`, `tracking.md`.
+
+**Gate:** any verify finding sends the loop back to whichever stage
+owns the defect; closure has no further gate.
+
+## Fast-path: when an agent may auto-advance
+
+The default rule is **one stage per turn, gate after each**. There is
+exactly one exception.
+
+An agent may auto-advance through `04c → 04d → 04e` in a single turn
+**if and only if** all four of the following hold:
+
+1. The change is *behavioural* and was already gated through Stage 03
+   in this session.
+2. The agent produces a
+   [`test-intent-derivation-map`](../../templates/test-intent-derivation-map.md)
+   showing 1:1 traceability from each row in `04b_spec/output/` to a
+   test it added or modified, and from each test back to a row.
+3. No new concept and no new sync was introduced (R1, R2 unchanged).
+4. The flow tests from `04c` end the turn green.
+
+If any of (1)–(4) fails, fall back to one-stage-per-turn. The
+fast-path exists to make small *behavioural* iterations bearable; it
+never applies to *structural* changes (Stage 02a re-entry) or to a
+feature's first run.
+
+The human may always disable the fast-path by saying so.
 
 ## Cross-stage consistency
 

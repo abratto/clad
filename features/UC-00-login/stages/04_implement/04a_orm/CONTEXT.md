@@ -5,6 +5,7 @@
 | Path | Layer | Why |
 |---|---|---|
 | `../../02_concepts/output/` | 4 | Concept state sections |
+| `../../../../../methodology/architecture/ORM_NOTES.md` | 3 | Seven-step procedure (when applicable) |
 | `../../../../../reference-impl/java-micronaut-jena/README.md` | 3 | Profile storage status |
 
 ## Process
