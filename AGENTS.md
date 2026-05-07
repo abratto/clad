@@ -1,0 +1,115 @@
+# AGENTS.md — Canonical guide for AI coding agents working in this repository
+
+> This file is the **single source of truth** for any AI coding agent
+> (Claude, Copilot, Cursor, Codex, etc.) operating on this repository.
+> `CLAUDE.md`, `.github/copilot-instructions.md`, and `.cursor/rules/clad.mdc`
+> are thin adapters that defer to this file.
+
+---
+
+## 1. What this repository is
+
+CLAD is a discipline for building software with AI agents under human review.
+It rests on three layers:
+
+| Layer | What it controls | Where it lives |
+|---|---|---|
+| **CLAD** (process) | What changes are allowed, what shape they take | `methodology/core/` |
+| **Legible / WYSIWID** (architecture) | How the running system is structured | `methodology/architecture/` |
+| **ICM** (workspace) | How you walk a feature stage by stage | `methodology/implementation/STAGES.md`, `features/` |
+
+You are expected to operate within all three layers simultaneously.
+
+## 2. Operating principles (apply to every action)
+
+1. **Read the contract first.** Before writing anything, open the relevant
+   `CONTEXT.md` (workspace, then feature stage) and read its `Inputs`,
+   `Process`, `Outputs` sections. Load only the files listed in `Inputs`.
+2. **Write to `output/` and stop at the gate.** Every stage ends with a
+   review gate. After you write the stage's outputs, summarise what you
+   produced and **wait** for the human to inspect/edit before moving on.
+3. **One stage, one job.** Do not run two stages in one turn. Do not
+   anticipate the next stage's work in the current stage's output.
+4. **No cross-concept references.** Code under `reference-impl/` and concept
+   specs under `features/UC-*/stages/02_concepts/output/` must never
+   reference another concept's state directly. Coordination happens only
+   in syncs (stage `03_syncs/`).
+5. **Edit the source, not the output, when a pattern repeats.** If you would
+   make the same correction in three runs, the fix belongs in a
+   `CONTEXT.md`, a reference file, or a template — not in the latest
+   output. Surface this to the human.
+6. **Cite when you adapt.** If you reuse ideas from Meng & Jackson or Van
+   Clief, point to `methodology/reference/CITATIONS.md`.
+
+## 3. The CLAD contract loop
+
+Every meaningful change moves through this loop. Skipping a step is a bug.
+
+```
+  use case  ->  concepts  ->  syncs  ->  implementation  ->  verification
+     ^                                                              |
+     +----------------------- back-trace --------------------------+
+```
+
+Mapped to the ICM stages of a feature folder:
+
+| Stage | Folder | Produces |
+|---|---|---|
+| 1 | `stages/01_usecase/` | `usecase.md` (operational principle, actors, scenarios) |
+| 2 | `stages/02_concepts/` | One `*.concept.md` per concept |
+| 3 | `stages/03_syncs/` | One `*.sync.md` per coordination rule |
+| 4 | `stages/04_implement/` | Code (under `reference-impl/`) + a manifest |
+| 5 | `stages/05_verify/` | Trace from running behaviour back to `usecase.md` |
+
+## 4. The five-layer context hierarchy (ICM)
+
+When you start work, identify which layer each file belongs to:
+
+| Layer | Question it answers | Examples |
+|---|---|---|
+| 0 | "Where am I?" | This file (`AGENTS.md`) |
+| 1 | "Where do I go?" | `CONTEXT.md` at repo root |
+| 2 | "What do I do *here*?" | `features/UC-XX/stages/NN_*/CONTEXT.md` |
+| 3 | "What rules apply?" (stable) | `methodology/`, `templates/`, `_config/` |
+| 4 | "What am I working on?" (per-run) | `features/UC-XX/stages/NN_*/output/` |
+
+Load Layers 0–2 always. Load Layer 3 only as the stage `Inputs` table
+specifies. Layer 4 is what you produce or consume between stages.
+
+## 5. Hard rules
+
+These are non-negotiable. Violating any of them is a defect.
+
+1. **No concept imports another concept.** In code: no Java import across
+   concept packages. In specs: no `*.concept.md` mentions another concept's
+   state by name. Cross-concept coordination is only legal inside syncs.
+2. **One named graph per concept.** When concepts persist state (e.g. via
+   RDF/Jena under the Java profile), each concept owns its graph; no
+   concept reads another's graph directly.
+3. **Syncs are declarative, not imperative.** A sync says
+   `when X completes -> then Y`. It does not contain branching business
+   logic; that belongs in a concept's actions.
+4. **`Web` (or equivalent HTTP entry) is the sole bootstrap concept.**
+   No business concept owns an HTTP endpoint.
+5. **Every action emits a flow token.** A flow token is a small,
+   addressable record (id, who, when, what) that lets `05_verify/` trace
+   from a runtime effect back to the use case.
+
+If a rule appears to be in conflict with a request, **stop and ask** —
+do not silently relax it.
+
+## 6. When you are stuck
+
+- If the stage `CONTEXT.md` is ambiguous, edit the `CONTEXT.md` first
+  (with the human's approval) and *then* run the stage.
+- If you produced output that you cannot trace back to a concept or sync,
+  you are mid-violation of rule 1. Stop and surface the problem.
+- If the human has edited a previous stage's output, **re-read it**.
+  Treat the edit as authoritative.
+
+## 7. Pointers
+
+- Methodology reading order: [`methodology/README.md`](methodology/README.md)
+- Worked example: [`features/UC-00-login/README.md`](features/UC-00-login/README.md)
+- Stage contract template: [`templates/stage-CONTEXT.md`](templates/stage-CONTEXT.md)
+- Citations: [`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md)

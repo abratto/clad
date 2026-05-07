@@ -1,0 +1,37 @@
+---
+description: CLAD discipline (Contract-Led, Artefact-Driven Development)
+globs:
+  - "**/*"
+alwaysApply: true
+---
+
+# CLAD repository rules (Cursor)
+
+This file is a thin adapter. The canonical instructions live in
+`AGENTS.md` at the repository root. Read AGENTS.md in full before
+performing any action.
+
+## Binding excerpts
+
+- Every change moves through the loop:
+  use case → concepts → syncs → implementation → verification.
+- Each feature is a folder under `features/UC-XX/` with numbered stages
+  under `stages/`. Each stage has a `CONTEXT.md` (Inputs / Process /
+  Outputs) and an `output/` folder.
+- Load only the files named in the current stage's `Inputs` table.
+- Write outputs only into the current stage's `output/` folder.
+- Stop at the review gate after each stage. Do not anticipate the next
+  stage in the current stage's output.
+
+## Hard rules (do not relax)
+
+1. No concept imports another concept.
+2. One named graph per concept (when persistence applies).
+3. Syncs are declarative (`when … then …`), not imperative branching.
+4. `Web` (or equivalent HTTP entry) is the sole bootstrap concept.
+5. Every action emits a flow token.
+
+If a request would require violating any of these, stop and ask.
+
+For the full guide, hard rules in context, and the five-layer context
+hierarchy, see `AGENTS.md` and `methodology/README.md`.
