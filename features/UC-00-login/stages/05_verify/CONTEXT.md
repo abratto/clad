@@ -34,9 +34,15 @@ defect.
 
 - Every scenario has an entry in `trace.md`.
 - `findings.md`, if present, names the owning stage for each finding.
+- **Cross-stage check (back):** every flow token observed at runtime back-traces to a use-case scenario.
+
+## Gate
+
+Any finding sends the loop back to whichever stage owns the defect.
 
 ## Status in this seed
 
-`output/` is intentionally empty. This stage runs against a live test
-execution; without an implementation in `04_implement/`, there is
-nothing to walk yet.
+`output/verification-trace.md` is a **predicted** walk derived from
+the use case, syncs, and SPECs. The Java profile is scaffolding
+(no live HTTP handler yet); this trace will be regenerated from a real
+`ActionLog` when the flow tests in `04c` go green.

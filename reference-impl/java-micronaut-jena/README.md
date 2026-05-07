@@ -1,48 +1,56 @@
-# java-micronaut-jena — reference profile
+# reference-impl/java-micronaut-jena/
 
-A WYSIWID implementation profile in **Java 21**, using **Micronaut**
-for the HTTP runtime and **Apache Jena** for per-concept persistence
-and the flow-token log.
+A reference profile that maps the CLAD methodology onto a concrete
+Java stack:
+
+| Layer | Technology |
+|---|---|
+| Language | Java 21 |
+| DI / HTTP runtime | Micronaut 4.x |
+| Persistence vocabulary | Apache Jena 5.x (RDF / SPARQL) |
+| Tests | JUnit 5 |
+| Architecture rules | ArchUnit 1.x |
+
+This profile is **optional**. Methodology rules live in
+[`../../methodology/`](../../methodology/) and are profile-agnostic;
+this folder is one way to implement them.
+
+## Mapping methodology → this profile
+
+| Methodology concept | Java realisation |
+|---|---|
+| Concept | A package under `com.example.app.concepts.<name>` containing exactly one `*Concept` class |
+| Sync | A class under `com.example.app.syncs` whose body is declarative `when … then …` |
+| `Web` (HTTP entry) | `com.example.app.infrastructure.WebConcept` (only HTTP entry; R4) |
+| Flow token | `com.example.app.engine.FlowToken` |
+| Flow-token log | `com.example.app.engine.ActionLog` (in-memory; an RDF-backed implementation is the next step) |
+| Hard rules R1–R5 | Enforced by `LegibleArchitectureRulesTest` (ArchUnit) |
+
+## Build
+
+```sh
+cd reference-impl/java-micronaut-jena
+mvn -DskipTests compile
+mvn test
+```
+
+`mvn test` runs the ArchUnit suite. Domain tests added under
+`features/UC-XX/stages/04*/output/` start `@Disabled`; the outside-in
+TDD discipline turns them on as the inner loops go green.
 
 ## Status
 
-Skeleton. The full reference implementation lives in
-[`abratto/tastetag`](https://github.com/abratto/tastetag) under
-`reference-impl/java-micronaut-jena/`. It will be migrated here in a
-follow-up PR; this folder exists in the seed to make the structure
-clear and to give other profiles something to mirror.
+This is **scaffolding only**:
 
-## Conventions (when populated)
+- The engine (`ActionLog`, `FlowManager`) is in-memory.
+- No real Jena store is wired yet (only the dependency); the next
+  iteration adds an `RdfActionLog`/`RdfConceptStore` honouring R2
+  ("one named graph per concept").
+- `WebConcept` exposes no real endpoints; it only exists to anchor
+  R4 ArchUnit checks.
+- The three login concepts (`User`, `PasswordAuth`, `Session`) are
+  minimal stubs — just enough for `LegibleArchitectureRulesTest` to
+  not be vacuous and for the UC-00-login flow-test stubs to compile.
 
-- **One Maven module per concept.** No cross-module dependencies
-  between concept modules. (Enforced by the build.)
-- **One named graph per concept.** Each concept reads and writes
-  only the graph URI assigned to it.
-- **`Web` is the only module that depends on Micronaut HTTP.** Other
-  concepts depend only on Jena and the local sync runtime.
-- **Syncs are declared in a small DSL** (annotation- or builder-based)
-  whose `when/where/then` shape matches the spec form one-to-one.
-- **Flow tokens** are RDF triples appended to a dedicated graph,
-  queryable by SPARQL for stage-5 verification.
-
-## Layout (planned)
-
-```
-java-micronaut-jena/
-├── pom.xml                       Aggregator
-├── platform/
-│   ├── flow-tokens/              Flow-token model + appender
-│   └── sync-runtime/             when/where/then runtime
-├── concepts/
-│   ├── user/
-│   ├── password-auth/
-│   ├── session/
-│   └── web/                      The HTTP entry concept
-└── verify/
-    └── (SPARQL queries used by stages/05_verify/)
-```
-
-See [`../README.md`](../README.md) for how this profile sits within the
-broader `reference-impl/` folder, and
-[`../../methodology/implementation/RULES.md`](../../methodology/implementation/RULES.md)
-for the rules every profile must honour.
+See [`CODE_STYLE.md`](CODE_STYLE.md) for the conventions every
+contributor (human or agent) should follow inside this profile.

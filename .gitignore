@@ -1,0 +1,15 @@
+# Build / IDE artefacts
+target/
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Maven wrapper noise (use system mvn)
+.mvn/
+mvnw
+mvnw.cmd
+
+# Local scratch / out-of-tree references
+references/
+

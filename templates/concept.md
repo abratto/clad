@@ -1,3 +1,5 @@
+<!-- Template for Stage 02 (02_concepts). Purpose: see methodology/architecture/CONCEPTS.md. -->
+
 # <ConceptName> — <one-line capability>
 
 > Concept template. Fill in each section. Keep the whole file under one

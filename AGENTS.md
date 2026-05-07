@@ -46,20 +46,30 @@ You are expected to operate within all three layers simultaneously.
 Every meaningful change moves through this loop. Skipping a step is a bug.
 
 ```
-  use case  ->  concepts  ->  syncs  ->  implementation  ->  verification
-     ^                                                              |
-     +----------------------- back-trace --------------------------+
+  actor/goal -> use case -> concepts -> syncs -> implement -> verify
+      ^                                          (04a..04e)        |
+      +-------------------- back-trace from flow tokens ------------+
 ```
 
 Mapped to the ICM stages of a feature folder:
 
 | Stage | Folder | Produces |
 |---|---|---|
+| 0 | `stages/00_actor-goal/` | `actors.md`, `goals.md` (collaborative — see [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md) §"Stage 00") |
 | 1 | `stages/01_usecase/` | `usecase.md` (operational principle, actors, scenarios) |
 | 2 | `stages/02_concepts/` | One `*.concept.md` per concept |
 | 3 | `stages/03_syncs/` | One `*.sync.md` per coordination rule |
-| 4 | `stages/04_implement/` | Code (under `reference-impl/`) + a manifest |
+| 4 | `stages/04_implement/` | Router; sub-stages `04a_orm`, `04b_spec`, `04c_flow-tests`, `04d_concept-tdd`, `04e_sync-tdd` produce the artefacts and code |
 | 5 | `stages/05_verify/` | Trace from running behaviour back to `usecase.md` |
+
+Stage 04 is the **outside-in TDD double-loop**: `04c` is the outer red
+test (a flow), `04d` and `04e` are the inner red→green TDD on concepts
+and syncs. Stage 04a (ORM) is optional and skipped for in-memory
+profiles.
+
+Stage 00 has special semantics: the agent **proposes**, **asks ≤5
+clarifying questions**, iterates with the human, and only writes
+`actors.md` / `goals.md` once the human signals agreement.
 
 ## 4. The five-layer context hierarchy (ICM)
 
@@ -111,5 +121,7 @@ do not silently relax it.
 
 - Methodology reading order: [`methodology/README.md`](methodology/README.md)
 - Worked example: [`features/UC-00-login/README.md`](features/UC-00-login/README.md)
+- New-feature bootstrap: [`templates/feature-skeleton/`](templates/feature-skeleton/) (copy this, do **not** copy `features/UC-00-login/`)
 - Stage contract template: [`templates/stage-CONTEXT.md`](templates/stage-CONTEXT.md)
+- Optional workflow overlay: [`methodology/overlays/TRACKING.md`](methodology/overlays/TRACKING.md)
 - Citations: [`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md)

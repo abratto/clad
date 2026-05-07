@@ -1,3 +1,5 @@
+<!-- Template for Stage 03 (03_syncs). Purpose: see methodology/architecture/SYNCHRONIZATIONS.md. -->
+
 # <SyncName> — <one-line purpose>
 
 > Sync template. Declarative only — no branching, no state, no I/O.

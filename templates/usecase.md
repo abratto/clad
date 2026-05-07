@@ -1,3 +1,5 @@
+<!-- Template for Stage 01 (01_usecase). Purpose: see methodology/core/CLAD.md and methodology/implementation/STAGES.md §"Stage 01". -->
+
 # UC-XX — <feature name>
 
 ## Operational principle

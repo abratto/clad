@@ -28,3 +28,12 @@ CLAD targets. They are paraphrases of, and citations to, Meng & Jackson
 ## 4. Reference
 
 1. [`reference/CITATIONS.md`](reference/CITATIONS.md) — sources and attributions
+
+## 5. Optional overlays
+
+These are **not** part of the canonical reading order. Adopt them only
+if the corresponding pain shows up in your workflow.
+
+1. [`overlays/TRACKING.md`](overlays/TRACKING.md) — one-active-feature
+   discipline, ROADMAP convention, session start/resume checklists,
+   issue/PR labels.
