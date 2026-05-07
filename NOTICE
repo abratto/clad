@@ -1,0 +1,52 @@
+CLAD — Contract-Led, Artefact-Driven Development
+Copyright 2026 Alan Potosnak and CLAD contributors.
+
+Licensed under the Apache License, Version 2.0. See LICENSE for the full
+text.
+
+================================================================================
+THIRD-PARTY ATTRIBUTIONS
+================================================================================
+
+This starter repository describes and integrates ideas from the following
+external works. The starter contains no verbatim copies of those works; their
+ideas are paraphrased and cited. Anyone reusing or extending the starter is
+expected to preserve attribution to the original authors below.
+
+--------------------------------------------------------------------------------
+1. Legible Architecture / WYSIWID Pattern
+--------------------------------------------------------------------------------
+
+Eagon Meng and Daniel Jackson, "What You See Is What It Does: A Structural
+Pattern for Legible Software." Onward! 2025 (ACM SPLASH).
+DOI: 10.1145/3759429.3762628
+arXiv: 2508.14511
+
+The original paper is distributed under CC BY-NC 4.0. The summaries of
+"concepts," "synchronizations," "flow tokens," and the bootstrap "Web concept"
+that appear in `methodology/architecture/` are paraphrases written for this
+project; they are not derivative copies of the paper's prose. Implementations
+that follow the WYSIWID pattern should cite the paper.
+
+--------------------------------------------------------------------------------
+2. Interpretable Context Methodology (ICM)
+--------------------------------------------------------------------------------
+
+Jake Van Clief, "Interpretable Context Methodology (ICM)." 2026.
+Repository: https://github.com/RinDig/Interpretable-Context-Methodology-ICM-
+arXiv: 2603.16021
+
+ICM is licensed under the MIT License. The five-layer context hierarchy, the
+numbered-stage workspace pattern, and the `CONTEXT.md` stage-contract format
+used throughout `features/` and the templates in `templates/stage-CONTEXT.md`
+are adapted from ICM. Workspaces and features that follow this scaffold should
+cite ICM.
+
+--------------------------------------------------------------------------------
+3. Source CLAD/WYSIWID Reference Implementation
+--------------------------------------------------------------------------------
+
+The original prose, examples, and Java/Micronaut/Jena reference implementation
+that this starter distills live in https://github.com/abratto/tastetag,
+copyright 2026 Alan Potosnak. The starter quotes and adapts that material with
+the author's permission and re-licenses the adaptation under Apache-2.0.
