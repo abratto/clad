@@ -8,36 +8,54 @@ imposes its own grain.
 
 ```
 com.example.app
-├── engine                  Flow tokens, ActionLog, FlowManager, vocab
-├── infrastructure          WebConcept (sole HTTP entry; R4)
+├── engine                  RDF vocab, ActionLog, FlowManager, ConceptAgent, SyncAgent, SyncDispatcher, CompletionBus
+├── infrastructure          WebController (sole HTTP entry; R4)
 ├── api                     DTOs for HTTP boundary
-├── concepts.<name>         Exactly one *Concept class per package
-└── syncs                   Declarative when/then rules
+├── concepts.<name>         Exactly one *Concept class per package; extends ConceptAgent
+└── syncs                   Declarative when/then rules (one final class per sync, extends SyncAgent)
 ```
 
 ## Hard rules (machine-checked by `LegibleArchitectureRulesTest`)
 
 - **R1 — no cross-concept imports.** A class in
-  `concepts.X` must not import any class in `concepts.Y` (Y ≠ X).
-- **R2 — one persistence region per concept.** When the RDF backend
-  lands, each concept owns one named graph. Today, each concept owns
-  its in-memory state field directly; cross-concept reads are
-  forbidden by R1.
-- **R3 — syncs are declarative.** Classes in `syncs` may read flow
-  tokens and call concept actions. They must not contain `if/else`
-  branches on domain state, hold mutable fields, or do I/O.
-- **R4 — `Web` is the sole HTTP entry.** Only `WebConcept` may carry
-  Micronaut HTTP annotations (`@Controller`, `@Get`, `@Post`, …).
-- **R5 — every action emits a flow token.** Every public method of a
-  `*Concept` class must call `FlowManager.emit(...)` (heuristic check
-  via bytecode method calls; concept methods that intentionally do not
-  emit must be `private` or `protected`).
+  `concepts.X` must not import any class in `concepts.Y` (Y ≠ X). Syncs
+  may reference any concept's `IRI` constant — that is the *only* legal
+  cross-concept Java symbol.
+- **R2 — one named graph per concept.** Each `*Concept` writes only to
+  the named graph returned by `RdfVocabulary.conceptGraph("<name>")`.
+  Cross-graph reads from another concept's named graph are forbidden.
+- **R3 — syncs are declarative.** Classes in `syncs` may only have
+  `final` fields and must coordinate exclusively via the SPARQL pattern
+  in `whereClause()` / `thenBindings()`. No `if/else` on domain values,
+  no I/O, no calls into concept classes.
+- **R4 — `Web` is the sole HTTP entry.** Only classes inside
+  `com.example.app.infrastructure` may carry Micronaut HTTP annotations
+  (`@Controller`, `@Get`, `@Post`, …).
+- **R5 — every concept is a `ConceptAgent`.** Every `*Concept` class
+  inside `com.example.app.concepts` must be assignable to
+  `com.example.app.engine.ConceptAgent`. This guarantees every action
+  the concept performs is recorded in the action log against an
+  addressable flow token.
 
 ## Method conventions
 
-- Public concept actions return an **outcome enum** declared next to the concept (`SessionOutcome`, `LoginOutcome`, …). They never return `null`.
-- Concepts do not throw checked exceptions across the boundary; failure modes are outcomes.
-- Flow-token field names live in `engine.RdfVocabulary` so syncs can pattern-match by stable identifier.
+- A concept agent's `processInvocation(...)` method handles a single pending
+  invocation and **must** call exactly one of `writeCompletion(...)` or
+  `writeError(...)` before returning. Both helpers signal the
+  `CompletionBus` automatically.
+- A concept agent's `pollAll()` method enumerates every action name the
+  concept handles, calling `pollAndProcess("<actionName>")` for each.
+- A concept agent never reads from another concept's named graph and
+  never calls another concept's class. Cross-concept information must
+  arrive via `bindings` on an `ActionRecord`.
+- A sync's `thenBindings()` must include exactly one
+  `?_then_1 :concept <…> ; :name "…" ; :input ?_then_input .` triple
+  pattern. The base class parses this string to determine which
+  concept's pending-invocation poll to schedule next tick — keep the
+  format stable.
+- Outcome values are uppercase string literals (e.g. `"OK"`, `"FOUND"`,
+  `"GRANTED"`); concept actions write them as plain string literals via
+  `ResourceFactory.createStringLiteral(...)`.
 
 ## Tests
 

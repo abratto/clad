@@ -1,70 +1,124 @@
 package com.example.app.concepts.user;
 
-import com.example.app.engine.FlowManager;
-import com.example.app.engine.FlowToken;
+import com.example.app.engine.ActionLog;
+import com.example.app.engine.ActionRecord;
+import com.example.app.engine.CompletionBus;
+import com.example.app.engine.ConceptAgent;
 import com.example.app.engine.RdfVocabulary;
-import java.util.HashMap;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import org.apache.jena.query.ParameterizedSparqlString;
+import org.apache.jena.rdf.model.ResourceFactory;
+
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
  * The User concept: who exists in the system.
  *
- * <p>Honours R1 (no cross-concept imports), R2 (owns its own state
- * region — here, an in-memory map), R5 (every public action emits a
- * flow token).
+ * <p>State lives in the named graph {@code concept:user}. Two actions:
+ * <ul>
+ *   <li>{@code register} — adds a (userId, username) record.</li>
+ *   <li>{@code lookupByUsername} — emits {@code outcome=FOUND|UNKNOWN}.</li>
+ * </ul>
  */
-public final class UserConcept {
+@Singleton
+public final class UserConcept extends ConceptAgent {
 
-    public enum RegisterOutcome { REGISTERED, USERNAME_TAKEN }
+    /** IRI used in :concept triples. */
+    public static final String IRI = "https://clad.dev/concept/user";
 
-    private final FlowManager flow;
-    private final Map<UUID, String> usernamesById = new HashMap<>();
-    private final Map<String, UUID> idsByUsername = new HashMap<>();
+    private static final String GRAPH = RdfVocabulary.conceptGraph("user");
+    private static final String PROFILE_NS = "https://clad.dev/concept/user#";
 
-    public UserConcept(FlowManager flow) {
-        this.flow = flow;
+    @Inject
+    public UserConcept(ActionLog actionLog, CompletionBus completionBus) {
+        super(actionLog, completionBus);
     }
 
-    /** Register a new user. */
-    public RegisterOutcome register(String username, UUID parentTokenId, String actor) {
-        if (idsByUsername.containsKey(username)) {
-            flow.emit(
-                    "User.register",
-                    actor,
-                    parentTokenId,
-                    Map.of(
-                            RdfVocabulary.FIELD_USERNAME, username,
-                            RdfVocabulary.FIELD_OUTCOME, RegisterOutcome.USERNAME_TAKEN.name()));
-            return RegisterOutcome.USERNAME_TAKEN;
-        }
-        UUID id = UUID.randomUUID();
-        usernamesById.put(id, username);
-        idsByUsername.put(username, id);
-        flow.emit(
-                "User.register",
-                actor,
-                parentTokenId,
-                Map.of(
-                        RdfVocabulary.FIELD_USER_ID, id,
-                        RdfVocabulary.FIELD_USERNAME, username,
-                        RdfVocabulary.FIELD_OUTCOME, RegisterOutcome.REGISTERED.name()));
-        return RegisterOutcome.REGISTERED;
+    @Override
+    protected String conceptIRI() {
+        return IRI;
     }
 
-    /** Look up a user id by username, emitting a lookup token. */
-    public Optional<UUID> lookupByUsername(String username, UUID parentTokenId, String actor) {
-        UUID id = idsByUsername.get(username);
-        Map<String, Object> fields = new HashMap<>();
-        fields.put(RdfVocabulary.FIELD_USERNAME, username);
-        fields.put(RdfVocabulary.FIELD_OUTCOME, id == null ? "UNKNOWN" : "FOUND");
-        if (id != null) {
-            fields.put(RdfVocabulary.FIELD_USER_ID, id);
+    @Override
+    public void pollAll() {
+        pollAndProcess("register");
+        pollAndProcess("lookupByUsername");
+    }
+
+    @Override
+    protected void processInvocation(ActionRecord invocation) {
+        switch (invocation.actionName()) {
+            case "register" -> doRegister(invocation);
+            case "lookupByUsername" -> doLookup(invocation);
+            default -> writeError(invocation, "unknown action: " + invocation.actionName());
         }
-        FlowToken t = flow.emit("User.lookupByUsername", actor, parentTokenId, fields);
-        // referenced to keep the variable in use; tests can read the log.
-        assert t != null;
-        return Optional.ofNullable(id);
+    }
+
+    /** Test/seed helper to pre-populate the user graph. */
+    public void seedUser(String userId, String username) {
+        var pss = new ParameterizedSparqlString();
+        pss.setNsPrefix("u", PROFILE_NS);
+        pss.setCommandText("INSERT DATA { GRAPH ?g { ?user u:username ?username } }");
+        pss.setIri("g", GRAPH);
+        pss.setIri("user", PROFILE_NS + "user/" + userId);
+        pss.setLiteral("username", username);
+        actionLog.update(pss.toString());
+    }
+
+    private void doRegister(ActionRecord invocation) {
+        String username = invocation.binding("username");
+        if (username == null) { writeError(invocation, "missing username"); return; }
+        if (existsByUsername(username)) {
+            writeCompletion(invocation, Map.of(
+                    "outcome", ResourceFactory.createStringLiteral("USERNAME_TAKEN"),
+                    "username", ResourceFactory.createStringLiteral(username)));
+            return;
+        }
+        String userId = UUID.randomUUID().toString();
+        seedUser(userId, username);
+        writeCompletion(invocation, Map.of(
+                "outcome", ResourceFactory.createStringLiteral("REGISTERED"),
+                "userId", ResourceFactory.createStringLiteral(userId),
+                "username", ResourceFactory.createStringLiteral(username)));
+    }
+
+    private void doLookup(ActionRecord invocation) {
+        String username = invocation.binding("username");
+        if (username == null) { writeError(invocation, "missing username"); return; }
+        String userId = findUserIdByUsername(username);
+        if (userId == null) {
+            writeCompletion(invocation, Map.of(
+                    "outcome", ResourceFactory.createStringLiteral("UNKNOWN"),
+                    "username", ResourceFactory.createStringLiteral(username)));
+        } else {
+            writeCompletion(invocation, Map.of(
+                    "outcome", ResourceFactory.createStringLiteral("FOUND"),
+                    "userId", ResourceFactory.createStringLiteral(userId),
+                    "username", ResourceFactory.createStringLiteral(username)));
+        }
+    }
+
+    private boolean existsByUsername(String username) {
+        var pss = new ParameterizedSparqlString();
+        pss.setNsPrefix("u", PROFILE_NS);
+        pss.setCommandText("ASK { GRAPH ?g { ?user u:username ?username } }");
+        pss.setIri("g", GRAPH);
+        pss.setLiteral("username", username);
+        return actionLog.ask(pss.toString());
+    }
+
+    private String findUserIdByUsername(String username) {
+        var pss = new ParameterizedSparqlString();
+        pss.setNsPrefix("u", PROFILE_NS);
+        pss.setCommandText("SELECT ?user WHERE { GRAPH ?g { ?user u:username ?username } } LIMIT 1");
+        pss.setIri("g", GRAPH);
+        pss.setLiteral("username", username);
+        List<Map<String, String>> rows = actionLog.select(pss.toString());
+        if (rows.isEmpty()) return null;
+        String iri = rows.get(0).get("user");
+        return iri == null ? null : iri.substring(PROFILE_NS.length() + "user/".length());
     }
 }

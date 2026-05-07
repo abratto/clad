@@ -1,4 +1,7 @@
 package com.example.app.api;
 
-/** Login request DTO. Lives on the HTTP boundary only. */
+import io.micronaut.core.annotation.Introspected;
+
+/** JSON body for {@code POST /login}. */
+@Introspected
 public record LoginRequest(String username, String password) {}

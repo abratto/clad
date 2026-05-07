@@ -1,16 +1,21 @@
 package com.example.app;
 
 import com.example.app.engine.ActionLog;
+import com.example.app.engine.CompletionBus;
 import com.example.app.engine.FlowManager;
+import org.junit.jupiter.api.BeforeEach;
 
 /** Shared test fixtures for concept-level tests. */
 public abstract class ConceptTestBase {
 
     protected ActionLog log;
+    protected CompletionBus bus;
     protected FlowManager flow;
 
-    protected void setUpEngine() {
+    @BeforeEach
+    void setUpEngine() {
         log = new ActionLog();
-        flow = new FlowManager(log);
+        bus = new CompletionBus();
+        flow = new FlowManager(log, bus);
     }
 }
