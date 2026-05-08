@@ -57,3 +57,9 @@ satisfies.
 ## Gate
 
 Default human approval.
+
+## Next stage
+
+→ [`../03a_dependency-review/CONTEXT.md`](../03a_dependency-review/CONTEXT.md) — Dependency review
+
+To advance, the human says: **"Proceed to Stage 03a."**

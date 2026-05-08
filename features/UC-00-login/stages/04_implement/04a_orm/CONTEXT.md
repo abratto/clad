@@ -49,3 +49,9 @@ rule). No relational/RDF schema is needed. Document the decision in
 ## Gate
 
 Default.
+
+## Next stage
+
+→ [`../04b_spec/CONTEXT.md`](../04b_spec/CONTEXT.md) — Per-concept SPEC slice
+
+To advance, the human says: **"Proceed to Stage 04b."**

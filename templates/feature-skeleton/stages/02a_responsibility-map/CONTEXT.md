@@ -60,3 +60,9 @@ paper.
 
 Default human approval. **Do you agree with this step? Any
 corrections before I continue?**
+
+## Next stage
+
+→ [`../02b_chain-table/CONTEXT.md`](../02b_chain-table/CONTEXT.md) — Chain tables (one per scenario)
+
+To advance, the human says: **"Proceed to Stage 02b."**

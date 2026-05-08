@@ -47,3 +47,11 @@ when its `when` pattern matches. Implement the sync declaratively
 ## Gate
 
 Default. This is the gate before `05_verify/`.
+
+## Next stage
+
+→ [`../../05_verify/CONTEXT.md`](../../05_verify/CONTEXT.md) — Verify + close
+
+(Stage 04 router is satisfied when 04e is green; advance directly to Stage 05.)
+
+To advance, the human says: **"Proceed to Stage 05."**

@@ -77,3 +77,9 @@ Default human approval. This stage is the last cross-concept
 sanity check before implementation begins; gate carefully.
 
 **Do you agree with this step? Any corrections before I continue?**
+
+## Next stage
+
+→ [`../04_implement/CONTEXT.md`](../04_implement/CONTEXT.md) — Implement (router)
+
+To advance, the human says: **"Proceed to Stage 04."**

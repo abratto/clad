@@ -45,3 +45,9 @@ The implementation in `04d` and `04e` compiles against these SPECs.
 ## Gate
 
 Default human approval.
+
+## Next stage
+
+→ [`../04c_flow-tests/CONTEXT.md`](../04c_flow-tests/CONTEXT.md) — Outer red (flow tests)
+
+To advance, the human says: **"Proceed to Stage 04c."**

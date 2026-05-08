@@ -53,3 +53,9 @@ MFA, SSO, logout).
 ## Gate
 
 Default — for the seed, the gate is the human PR review.
+
+## Next stage
+
+→ [`../01_usecase/CONTEXT.md`](../01_usecase/CONTEXT.md) — Use case (Fully Dressed)
+
+To advance, the human says: **"Proceed to Stage 01."** The agent then opens the next `CONTEXT.md`, loads only the files in its `Inputs` table, and runs that stage.

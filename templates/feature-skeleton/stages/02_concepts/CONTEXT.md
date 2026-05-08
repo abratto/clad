@@ -70,3 +70,9 @@ or types beyond opaque ids.
 
 Default human approval. **Do you agree with this step? Any
 corrections before I continue?**
+
+## Next stage
+
+→ [`../03_syncs/CONTEXT.md`](../03_syncs/CONTEXT.md) — Synchronizations
+
+To advance, the human says: **"Proceed to Stage 03."**

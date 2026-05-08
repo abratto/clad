@@ -44,3 +44,9 @@ discussion (those stay in `02_concepts/`).
 ## Gate
 
 Default.
+
+## Next stage
+
+→ [`../04c_flow-tests/CONTEXT.md`](../04c_flow-tests/CONTEXT.md) — Outer red (flow tests)
+
+To advance, the human says: **"Proceed to Stage 04c."**

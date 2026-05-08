@@ -55,3 +55,9 @@ about what is out of scope.
 
 Default human approval. The use case is the contract every later
 stage compiles against; gate carefully.
+
+## Next stage
+
+→ [`../02a_responsibility-map/CONTEXT.md`](../02a_responsibility-map/CONTEXT.md) — Responsibility map
+
+To advance, the human says: **"Proceed to Stage 02a."**

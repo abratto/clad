@@ -51,3 +51,9 @@ state schema for each concept by walking the seven-step procedure in
 ## Gate
 
 Default human approval.
+
+## Next stage
+
+→ [`../04b_spec/CONTEXT.md`](../04b_spec/CONTEXT.md) — Per-concept SPEC slice
+
+To advance, the human says: **"Proceed to Stage 04b."**
