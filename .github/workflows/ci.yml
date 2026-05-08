@@ -1,0 +1,60 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  markdown-links:
+    name: Markdown link check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check links in markdown
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          use-verbose-mode: 'yes'
+          config-file: '.github/markdown-link-check.json'
+
+  hard-rule-r1:
+    name: R1 — no cross-concept imports
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect concept-to-concept imports
+        run: bash .github/scripts/check-no-cross-concept-imports.sh
+
+  java-verify:
+    name: Java reference profile (mvn verify)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect changes under reference-impl/java-micronaut-jena
+        id: detect
+        run: |
+          if [ -f reference-impl/java-micronaut-jena/pom.xml ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Set up JDK 21
+        if: steps.detect.outputs.run == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: mvn verify
+        if: steps.detect.outputs.run == 'true'
+        working-directory: reference-impl/java-micronaut-jena
+        run: mvn -B -ntp verify

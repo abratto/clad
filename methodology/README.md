@@ -31,7 +31,8 @@ CLAD targets. They are paraphrases of, and citations to, Meng & Jackson
 
 1. [`implementation/RULES.md`](implementation/RULES.md) — the non-negotiable rules
 2. [`implementation/STAGES.md`](implementation/STAGES.md) — how CLAD stages map onto the ICM scaffold
-3. [`implementation/QUALITY_GATE.md`](implementation/QUALITY_GATE.md) — pre-commit checks per profile
+3. [`implementation/QUALITY_GATE.md`](implementation/QUALITY_GATE.md) — local pre-commit checks per profile
+4. [`implementation/DELIVERY.md`](implementation/DELIVERY.md) — trunk-based delivery posture, CI gate, branch protection
 
 ## 4. Reference
 

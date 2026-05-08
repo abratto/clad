@@ -31,6 +31,25 @@ are documentation, templates, and worked examples, not application code.
 4. Open a PR. Link the issue. Describe what contract drove the change and
    what artefact it produced.
 
+## Branching & merging
+
+This repo is run trunk-based: `main` is the only long-lived branch and every
+change lands via a short-lived PR. The full posture and the CI gate are in
+[`methodology/implementation/DELIVERY.md`](methodology/implementation/DELIVERY.md).
+Highlights:
+
+- One PR = one change (one feature **or** one iterative change **or** one
+  focused methodology edit). Don't bundle.
+- Branches live hours, not weeks. If yours has been open more than two
+  days, split it or rebase onto `main`.
+- Branch names: `feat/UC-XX-<slug>`, `change/UC-XX-<slug>`,
+  `docs/<topic>`, `impl/<profile>-<topic>`, `chore/<topic>`.
+- Squash-merge. The git log carries one commit per PR; the per-stage
+  history of a feature lives in the `stages/NN_*/output/` artefacts.
+- CI must be green. The local
+  [`methodology/implementation/QUALITY_GATE.md`](methodology/implementation/QUALITY_GATE.md)
+  is the developer's mirror of CI; CI is authoritative.
+
 ## Style
 
 - Markdown: ATX headings, fenced code blocks with language tags, line wrap
