@@ -45,6 +45,11 @@ into `reference-impl/` over subsequent PRs.
 
 ## Quick start
 
+> **Using this as a starter for your own project?** Click **"Use this
+> template"** at the top of the GitHub repo (or
+> [follow this link](https://github.com/abratto/clad/generate)) to get
+> a clean copy with no fork relationship — then read on.
+
 ```bash
 git clone https://github.com/abratto/clad.git
 cd clad
@@ -96,6 +101,8 @@ clad/
 ├── README.md
 ├── LICENSE                          Apache-2.0
 ├── NOTICE                           Third-party attributions
+├── SECURITY.md                      Vulnerability reporting policy
+├── CHANGELOG.md                     Per-version changes
 ├── ROADMAP.md                       Optional tracking overlay (CI-checked)
 ├── CONTRIBUTING.md
 ├── AGENTS.md                        Canonical agent guide (single source)
