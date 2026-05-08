@@ -202,7 +202,7 @@ cd clad
 #   5. features/UC-00-login/README.md  ← the worked example itself
 ```
 
-### Your first prompt to the agent
+### Your first prompt — load the methodology
 
 After cloning, open a chat with your agent (Copilot, Claude, Cursor,
 Codex, …) in this workspace and send exactly this:
@@ -210,44 +210,27 @@ Codex, …) in this workspace and send exactly this:
 > Read `AGENTS.md` in full, then `CONTEXT.md`, then
 > `methodology/README.md`, then `methodology/WALKTHROUGH.md`. Confirm you
 > understand the five-layer hierarchy and the stage flow, then wait for
-> my feature brief.
+> my next instruction.
 
 That loads the binding rules (`AGENTS.md`), the workspace router
 (`CONTEXT.md`), the methodology reading order, and an annotated example
 of what a single CLAD turn looks like — without pulling in any
 feature-specific material the agent shouldn't have yet.
 
-### Your second prompt — Stage 00 at system level
+### Your second prompt — start Stage 00
 
-> Open `features/_system/stages/00_actor-goal/CONTEXT.md` and run
-> Stage 00 against this brief: *<one paragraph describing what you want
-> the system to let users do>*.
+> Open `features/_system/stages/00_actor-goal/CONTEXT.md` and read it.
+> Then run Stage 00 against this brief: *<one paragraph describing what
+> you want the system to let users do>*. Ask up to five clarifying
+> questions in one turn; after I answer and approve, write the final
+> artefacts to `features/_system/stages/00_actor-goal/output/actors.md`
+> and `features/_system/stages/00_actor-goal/output/goals.md`.
 
 The agent will run **Stage 00 (actor/goal)** at system scope: it
 proposes a draft actor list and goal list, asks up to five clarifying
-questions, and **waits for your answers** before writing `actors.md` /
-`goals.md`. Stage 00 lives in `features/_system/` because its outputs
-describe the *whole system* — not a single feature. The individual UC
-folders come next.
-
-### Your third prompt — create one UC folder per in-scope goal
-
-Once you have approved `actors.md` and `goals.md`:
-
-> For each in-scope goal in `features/_system/stages/00_actor-goal/output/goals.md`,
-> copy `templates/feature-skeleton/` to a new `features/UC-XX-<slug>/`
-> folder (UC numbers starting from 01). Then open
-> `features/UC-01-<slug>/stages/01_usecase/CONTEXT.md` and run Stage 01
-> for the first goal, carrying `actors.md` and `goals.md` as inputs.
-
-From there each subsequent stage produces one artefact, asks *"Do you
-agree with this step? Any corrections before I continue?"*, and stops
-at the gate. Repeat Stage 01 for each remaining UC folder when you are
-ready.
-
-> Note: copy `templates/feature-skeleton/`, not `features/UC-00-login/`.
-> The skeleton carries empty stage folders with their `CONTEXT.md`
-> contracts already in place; the worked example is for reading.
+questions, and **waits for your answers** before writing
+`output/actors.md` / `output/goals.md` in
+`features/_system/stages/00_actor-goal/output/`.
 
 ## Repository layout
 
