@@ -1,5 +1,19 @@
 # Stage 02b — Chain table (per scenario)
 
+## Why this stage exists
+
+The **choreography review surface** — one scenario per file, easier to
+read than six declarative syncs at once. 02b is also the **canonical
+resolver for action-name disputes**: if a sync spec (Stage 03)
+disagrees with a chain table, the table wins. That rule keeps Stage 03
+from silently inventing names that nothing else will recognise.
+
+**Feeds:**
+
+- `<scenario>-chain.md` → 02 (every action used must be declared in the matching concept spec with the same outcome enum), 03 (each row formalises into a sync `when`/`then` link), 03a (the chain is the source of truth for inbound calls per concept), 04c (flow tests assert the chain end-to-end at runtime).
+
+**Agent stance for this stage:** every row is `<Concept>.<action> -> <outcome>`. If you cannot name the outcome, the concept set is wrong — go back to 02a, do not invent.
+
 ## Inputs
 
 | Path | Layer | Why |

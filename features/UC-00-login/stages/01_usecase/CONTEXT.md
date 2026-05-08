@@ -1,5 +1,24 @@
 # Stage 01 — Use case
 
+## Why this stage exists
+
+The use case is the **contract every later artefact compiles against**.
+Stages 02a, 02b, 02, 03, 04c and 05 each carry a back-cite to a
+scenario in this file. If the Postcondition rigour is skipped here
+(especially the *no state is modified* assertion on negative paths),
+Stage 04c cannot mechanically check the no-enumeration property and
+Stage 05 cannot decide whether an observed runtime trace was correct
+or merely plausible. Hence: Fully Dressed, both Postcondition
+sub-sections, mandatory.
+
+**Feeds:**
+
+- `usecase.md` → 02a (scenarios drive coverage), 02b (one chain table per scenario), 02 (each concept's operational principle must reference these scenarios), 03 (every sync's `Cites` names a scenario), 04c (one flow test per scenario), 05 (verifier walks each scenario's token tree).
+
+**Agent stance for this stage:** you are writing the source of truth
+for everything downstream. Prefer over-specifying postconditions to
+under-specifying them.
+
 ## Inputs
 
 | Path | Layer | Why |

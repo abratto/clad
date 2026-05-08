@@ -1,5 +1,23 @@
 # Stage 04e — Sync TDD (inner red → green; outer goes green)
 
+## Why this stage exists
+
+The **inner red→green for syncs** — and the moment the **outer flow
+tests from 04c finally go green**. Each sync gets its own TDD pass:
+assert the `then` actions fire when the `when` pattern matches, with
+the `where` clause's join semantics honoured (Pattern A/B/C/D per
+`SYNC_PATTERNS.md`). When the last sync goes green, the corresponding
+flow test goes green too — closing the outer loop.
+
+**Feeds:**
+
+- `sync-test-derivation.md` → 05 (which syncs are covered by tests, which only by flow tests).
+- `<SyncName>Test.java` + `<SyncName>.java` → the running coordination layer; this is the artefact 05 back-traces against.
+
+**Agent stance for this stage:** if you find a sync needs imperative
+branching to make a test pass, the defect is in Stage 03 — push the
+branching down into a concept action's outcomes and re-derive the sync.
+
 ## Inputs
 
 | Path | Layer | Why |

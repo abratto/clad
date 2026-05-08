@@ -1,5 +1,22 @@
 # Stage 04b — SPEC (UC-00-login)
 
+## Why this stage exists
+
+The SPEC is the **machine-checkable slice** of each concept spec —
+action signatures, outcome enums, flow-token shape — with the prose
+principle and edge-case discussion stripped out. 04d and 04e compile
+against the SPECs, not against the prose. Without 04b the inner-loop
+tests would have to re-derive the contract from prose every time the
+spec changes.
+
+**Feeds:**
+
+- `<Name>.spec.md` → 04c (flow tests assert SPEC-level signatures), 04d (concept TDD compiles against SPEC), 04e (sync TDD references SPEC action enums).
+
+**Agent stance for this stage:** mechanical extraction only. If the
+SPEC needs an action that isn't in the concept spec, the defect is
+upstream (Stage 02), not here.
+
 ## Inputs
 
 | Path | Layer | Why |

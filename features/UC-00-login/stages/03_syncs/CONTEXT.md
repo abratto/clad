@@ -1,5 +1,22 @@
 # Stage 03 — Synchronizations
 
+## Why this stage exists
+
+Coordination is **declarative** so that **no concept imports another**
+(hard rule R1) and so each cross-concept link is reviewable as a small
+`when … where … then` rule rather than being buried in imperative
+code. Each sync also commits to one of the four legal data-flow
+patterns (A/B/C/D), which makes Stage 03a's audit and Stage 04e's TDD
+mechanical.
+
+**Feeds:**
+
+- `<name>.sync.md` → 03a (every `then` call and every `where` clause is tabulated; Pattern D reads are flagged), 04c (the sync chain is what the outer flow test asserts), 04e (one inner red→green TDD pass per sync), 05 (the verifier checks that every observed call is authorised by a sync or a use-case scenario).
+
+**Agent stance for this stage:** if you reach for an `if`, you are in
+the wrong file. Branching belongs inside a concept action's outcomes;
+the sync just says *"when outcome X fires → then call Y."*
+
 ## Inputs
 
 | Path | Layer | Why |

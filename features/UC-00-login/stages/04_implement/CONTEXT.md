@@ -2,6 +2,20 @@
 
 This stage owns no artefacts of its own. It routes to the five sub-stages.
 
+## Why this stage exists
+
+**Outside-in TDD double-loop.** The outer loop is one failing flow
+test per use-case scenario (`04c`). The inner loop is per-concept
+(`04d`) and per-sync (`04e`) red→green. `04a` and `04b` prepare the
+ground (state schema and per-concept SPEC slice). Order matters:
+state schema before tests, tests before code, concept code before
+sync code, sync code is what turns the outer flow test green.
+
+**Feeds:**
+
+- (this router owns no artefacts — sub-stages do.)
+- the running, compilable artefact → Stage 05 (back-trace target + smoke target).
+
 ## Inputs
 
 | Path | Layer | Why |

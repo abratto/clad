@@ -1,5 +1,22 @@
 # Stage 02 — Concept specs
 
+## Why this stage exists
+
+Locks down each concept's full anatomy — state, action signatures with
+outcomes, flow-token shape, operational principle — so that Stage 03
+can name actions/outcomes precisely in syncs, Stage 04a can derive an
+ORM schema from `state`, and Stage 04d can TDD the concept against a
+fixed contract. Hard rule **R1** is enforced here: no concept names
+another concept's state, actions, or types beyond opaque ids.
+
+**Feeds:**
+
+- `<Name>.concept.md` → 03 (`when`/`then` reference these action names + outcome enums), 03a (action existence and field declarations), 04a (`state` → relational schema), 04b (per-concept SPEC slice), 04d (concept TDD reads from this spec).
+
+**Agent stance for this stage:** if you find yourself wanting to
+import another concept's type, stop — that coordination belongs in a
+sync, not in this file.
+
 > **Note:** in Round 4 the choreography review (which concepts exist;
 > what they own; how they fan out per scenario) was lifted into two
 > upstream stages — `02a_responsibility-map/` and `02b_chain-table/`.
