@@ -228,8 +228,8 @@ feature-specific material the agent shouldn't have yet.
 
 The agent will run **Stage 00 (actor/goal)** at system scope: it
 proposes a draft actor list and goal list, asks up to five clarifying
-questions, and **waits for your answers** before writing
-`output/actors.md` / `output/goals.md`.
+questions, and **waits for your answers** before writing the approved
+artefacts.
 
 ## Repository layout
 
