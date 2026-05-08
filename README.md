@@ -76,16 +76,40 @@ state, real coordination across concepts, real domain modelling.
 
 The architecture answered "what to build toward." It did not answer
 "how to drive the LLM there without losing control." That gap became
-the methodology. As implementation progressed, it became clear that
-several long-standing artefacts of requirements engineering and system
-modelling — Cockburn use cases, state machines, activity diagrams, and
-especially **ORM** (whose binary fact types map mechanically to RDF
-triples and therefore to Legible's concept-state graphs) — could be
-used to capture human intent in a form that drives the architecture
-*directly*, rather than being translated by hand. CLAD is the loop
-that fell out of doing that work: contracts at every gate, formal
-artefacts the LLM can consume verbatim, and a rejection protocol that
-keeps rework predictable.
+the methodology. As implementation progressed, two things became
+clear:
+
+1. Several long-standing artefacts of requirements engineering and
+   system modelling — Cockburn use cases, state machines, activity
+   diagrams, and especially **ORM** (whose binary fact types map
+   mechanically to RDF triples and therefore to Legible's
+   concept-state graphs) — could be used to capture human intent in a
+   form that drives the architecture *directly*, rather than being
+   translated by hand.
+2. Process and design artefacts that the industry had written off as
+   **heavyweight** — RUP-style phase gates, UML, fully-dressed use
+   cases — turned out to be extremely valuable *and*, with an LLM
+   doing the typing, cheap to produce. Their cost had always been
+   transcription and maintenance; once both collapse, what's left is
+   the rigour, which is exactly what an agent needs to stay correct.
+   The "heavyweight" label was an artefact of the all-human cost
+   model, not of the artefacts themselves.
+
+CLAD is the loop that fell out of doing that work: contracts at every
+gate, formal artefacts the LLM can consume verbatim, and a rejection
+protocol that keeps rework predictable.
+
+One thing did not work: simply *telling* the agent to follow CLAD.
+Throughout early Tastetag development the agent had to be re-prompted
+constantly to re-read the methodology docs and stay on the process.
+Discovering ICM (Van Clief, 2026) was accidental and decisive — its
+numbered-stage workspace, with a `CONTEXT.md` contract per stage and
+an `output/` folder per stage, is a **structural constraint** that
+makes the workflow self-enforcing. The agent reads the contract for
+the stage it is standing in; it cannot drift into the next stage
+without opening a different folder. ICM was added to CLAD for that
+single reason: it converts process discipline from a thing you
+remind the agent about into a thing the file system enforces.
 
 Over ~33 calendar days Tastetag's Block 1 shipped 15 concepts, 300+
 syncs, 7 domain ontologies, and ~1,100 passing tests with **zero
