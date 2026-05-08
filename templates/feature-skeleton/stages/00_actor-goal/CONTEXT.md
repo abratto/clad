@@ -1,5 +1,21 @@
 # Stage 00 — Actor / Goal
 
+## Why this stage exists
+
+This stage answers *"who wants what."* Without it, every later stage
+is solving for an unstated user, and the use case drifts. The human's
+brief alone is too soft to plan against; turning it into a confirmed
+actor list and goal list is what lets the rest of the loop be
+mechanical.
+
+**Feeds:**
+
+- `actors.md` → Stage 01 (verbatim actor list in `usecase.md`); Stage 02a (every in-scope actor must be represented by ≥1 concept).
+- `goals.md` → Stage 01 (every in-scope goal becomes ≥1 named scenario; out-of-scope goals lift into the use case's *Out of scope* section).
+
+**Agent stance for this stage:** propose, ask ≤5 questions, iterate. Do
+not write `actors.md` / `goals.md` until the human signals agreement.
+
 ## Inputs
 
 | Path | Layer | Why |

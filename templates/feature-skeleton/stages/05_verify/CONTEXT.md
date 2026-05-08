@@ -6,6 +6,19 @@ flow tokens to the use case (this is what Stage 05 has always been).
 update tracking, leave a resume-point — that prevents the feature
 from going "done" implicitly the moment the PR merges.
 
+## Why this stage exists
+
+The **closing of the contract loop**. Stage 05 is the only place that
+proves runtime behaviour matches the use case (Part 1, back-trace) and
+that the deployable thing actually runs (Part 2, smoke). Without it,
+*merged* is not *done* — and the next session has no resume-point.
+
+**Feeds:**
+
+- `trace.md` → the next feature's Stage 00 (the `Resume point:` line is the bridge between features).
+- `findings.md` → upstream stage(s) — defects route **back**, never forward.
+- `smoke.md` + `tracking.md` → the human (closure evidence).
+
 ## Inputs
 
 | Path | Layer | Why |

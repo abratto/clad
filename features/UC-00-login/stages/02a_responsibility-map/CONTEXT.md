@@ -1,5 +1,20 @@
 # Stage 02a — Responsibility map (UC-00-login)
 
+## Why this stage exists
+
+A clean human-review surface for *"are these the right concepts and do
+they own the right things?"* — **before** any choreography or anatomy
+is committed to paper. Without 02a the human reviews concept fan-out
+(02b) and concept anatomy (02) at the same time, which doubles the
+rework cost when a concept turns out to be wrong.
+
+**Feeds:**
+
+- `responsibility-map.md` → 02b (only listed concepts and actions may appear in chains), 02 (one `*.concept.md` is produced per row), 03a (one dependency-review card per concept).
+
+**Agent stance for this stage:** resist the urge to draft full
+signatures or coordination here. Names and one-line state only.
+
 ## Inputs
 
 | Path | Layer | Why |

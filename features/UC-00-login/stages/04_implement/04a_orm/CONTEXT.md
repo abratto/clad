@@ -1,5 +1,27 @@
 # Stage 04a — ORM (UC-00-login)
 
+## Why this stage exists
+
+For profiles with a persistent store, this is where each concept's
+`state` section becomes a concrete schema in **its own named region**
+(hard rule R2). Drafting the schema **before** writing tests catches
+"this field needs to be there because flow X reads it via Pattern D"
+defects in 30 seconds rather than later inside a failing test.
+
+In this feature the chosen profile is in-memory — see
+[`output/_NOT_APPLICABLE.md`](output/_NOT_APPLICABLE.md). The CONTEXT
+is kept so that, if the feature later gains a persistence profile, the
+contract is already in place.
+
+**Feeds:**
+
+- `<Name>.orm.md` (or `_NOT_APPLICABLE.md`) → 04d (the test fixture builds against this schema), and the runtime data layer in the profile.
+
+**Agent stance for this stage:** if a Pattern D field from
+`pattern-d-summary.md` is missing from the owning concept's region, do
+not "add it to make the column exist" — go back to Stage 02 and add it
+to `state` first.
+
 ## Inputs
 
 | Path | Layer | Why |

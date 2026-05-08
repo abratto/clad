@@ -1,5 +1,23 @@
 # Stage 04c — Flow tests (outer red)
 
+## Why this stage exists
+
+The **outer red** of the outside-in TDD double-loop. One failing flow
+test per use-case scenario, each asserting (a) the HTTP request, (b)
+the expected sequence of flow tokens, and (c) the response. These tests
+stay red through 04d (concept TDD) and go **green at the end of 04e**
+(sync TDD). They are the executable form of the use case — if they
+pass, the scenario passes; if they don't exist, the scenario isn't
+covered.
+
+**Feeds:**
+
+- `<scenario>-flow-test.md` → 04e (when the last sync's tests go green, these tests must too); 05 (the runtime token chain captured by these tests is the back-trace evidence).
+- the stub test files in `reference-impl/<profile>/.../flows/` → the outer loop of TDD itself.
+
+**Agent stance for this stage:** these tests must read like the use
+case. If they read like a unit test, you are testing the wrong layer.
+
 ## Inputs
 
 | Path | Layer | Why |

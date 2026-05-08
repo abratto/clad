@@ -1,5 +1,18 @@
 # Stage 05 — Verify and close (UC-00-login)
 
+## Why this stage exists
+
+The **closing of the contract loop**. Stage 05 is the only place that
+proves runtime behaviour matches the use case (Part 1, back-trace) and
+that the deployable thing actually runs (Part 2, smoke). Without it,
+*merged* is not *done* — and the next session has no resume-point.
+
+**Feeds:**
+
+- `trace.md` → the next feature's Stage 00 (the `Resume point:` line is the bridge between features).
+- `findings.md` → upstream stage(s) — defects route **back**, never forward.
+- `smoke.md` + `tracking.md` → the human (closure evidence).
+
 ## Inputs
 
 | Path | Layer | Why |

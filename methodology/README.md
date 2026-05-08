@@ -25,6 +25,7 @@ CLAD targets. They are paraphrases of, and citations to, Meng & Jackson
 7. [`architecture/ENGINE.md`](architecture/ENGINE.md) — the runtime engine that the Java reference profile implements
 8. [`architecture/WEB_CONCEPT.md`](architecture/WEB_CONCEPT.md) — the bootstrap `Web` concept (R4)
 9. [`architecture/ORM_NOTES.md`](architecture/ORM_NOTES.md) — drafting per-concept state schemas (Stage 04a)
+10. [`architecture/ARTEFACT_MAP.md`](architecture/ARTEFACT_MAP.md) — the dependency graph between every per-feature artefact (producer → consumer, with the data each consumer needs and why)
 
 ## 3. Implementation — hard rules and the workspace scaffold
 
@@ -36,7 +37,11 @@ CLAD targets. They are paraphrases of, and citations to, Meng & Jackson
 
 1. [`reference/CITATIONS.md`](reference/CITATIONS.md) — sources and attributions
 
-## 5. Optional overlays
+## 5. Worked example — how a CLAD session actually runs
+
+- [`WALKTHROUGH.md`](WALKTHROUGH.md) — turn-by-turn replay of producing UC-00-login from brief through Stage 05, with the loaded `CONTEXT.md`, opened inputs, written outputs, and gate question called out at every turn. Read this alongside [`../features/UC-00-login/README.md`](../features/UC-00-login/README.md).
+
+## 6. Optional overlays
 
 These are **not** part of the canonical reading order. Adopt them only
 if the corresponding pain shows up in your workflow.
