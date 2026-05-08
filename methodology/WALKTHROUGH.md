@@ -34,6 +34,18 @@ inline.
 
 ## Turn 0 — the human's brief
 
+> **Single-goal edge-case note.** UC-00-login is a deliberately minimal
+> example: one actor, one in-scope goal. In a real multi-goal system,
+> Stage 00 runs once at system scope inside
+> `features/_system/stages/00_actor-goal/`, and each in-scope goal from
+> `goals.md` then becomes its own `features/UC-XX-<slug>/` folder at
+> Stage 01. Here, because there is only one goal, the Stage 00 output
+> (actors + goal) and the single UC folder happen to coincide — so
+> `UC-00-login/stages/00_actor-goal/` doubles as both. Do **not** use
+> this co-location as a template for new work. See
+> [`../methodology/implementation/STAGES.md`](implementation/STAGES.md)
+> §"Scope: system-level vs per-UC" for the correct multi-UC structure.
+
 > **Human:** *"I want to add login. Username and password. On success
 > they get a session token. On failure, the error message must not
 > reveal whether the username exists. After several failed attempts

@@ -217,19 +217,33 @@ That loads the binding rules (`AGENTS.md`), the workspace router
 of what a single CLAD turn looks like — without pulling in any
 feature-specific material the agent shouldn't have yet.
 
-### Your second prompt — start a feature
+### Your second prompt — Stage 00 at system level
 
-> Copy `templates/feature-skeleton/` to `features/UC-01-<slug>/`. Then
-> open `features/UC-01-<slug>/stages/00_actor-goal/CONTEXT.md` and run
+> Open `features/_system/stages/00_actor-goal/CONTEXT.md` and run
 > Stage 00 against this brief: *<one paragraph describing what you want
 > the system to let users do>*.
 
-The agent will then run **Stage 00 (actor/goal)**: it proposes a draft
-actor list and goal list, asks up to five clarifying questions, and
-**waits for your answers** before writing `actors.md` / `goals.md`. From
-there each subsequent stage produces one artefact, asks *"Do you agree
-with this step? Any corrections before I continue?"*, and stops at the
-gate.
+The agent will run **Stage 00 (actor/goal)** at system scope: it
+proposes a draft actor list and goal list, asks up to five clarifying
+questions, and **waits for your answers** before writing `actors.md` /
+`goals.md`. Stage 00 lives in `features/_system/` because its outputs
+describe the *whole system* — not a single feature. The individual UC
+folders come next.
+
+### Your third prompt — create one UC folder per in-scope goal
+
+Once you have approved `actors.md` and `goals.md`:
+
+> For each in-scope goal in `features/_system/stages/00_actor-goal/output/goals.md`,
+> copy `templates/feature-skeleton/` to a new `features/UC-XX-<slug>/`
+> folder (UC numbers starting from 01). Then open
+> `features/UC-01-<slug>/stages/01_usecase/CONTEXT.md` and run Stage 01
+> for the first goal, carrying `actors.md` and `goals.md` as inputs.
+
+From there each subsequent stage produces one artefact, asks *"Do you
+agree with this step? Any corrections before I continue?"*, and stops
+at the gate. Repeat Stage 01 for each remaining UC folder when you are
+ready.
 
 > Note: copy `templates/feature-skeleton/`, not `features/UC-00-login/`.
 > The skeleton carries empty stage folders with their `CONTEXT.md`
@@ -266,6 +280,8 @@ clad/
 │
 ├── features/
 │   ├── README.md
+│   ├── _system/                     System-level Stage 00 (actors.md, goals.md)
+│   │   └── stages/00_actor-goal/    Run once per project brief
 │   └── UC-00-login/                 Worked example (read, do not copy)
 │       ├── README.md                Stage-by-stage index with rationale
 │       ├── _config/                 Feature-scoped reference (Layer 3)
