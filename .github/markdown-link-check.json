@@ -1,7 +1,9 @@
 {
   "ignorePatterns": [
     { "pattern": "^https://doi.org/" },
-    { "pattern": "^https://arxiv.org/" }
+    { "pattern": "^https://arxiv.org/" },
+    { "pattern": "^https://github.com/abratto/tastetag" },
+    { "pattern": "^https://github.com/RinDig/Interpretable-Context-Methodology-ICM-" }
   ],
   "timeout": "20s",
   "retryOn429": true,

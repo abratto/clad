@@ -16,7 +16,10 @@
 > concept's exposure to the rest of the system.
 >
 > Pattern D is the only legal cross-concept read; see
-> [`../../../../methodology/architecture/SYNC_PATTERNS.md`](../../../../methodology/architecture/SYNC_PATTERNS.md).
+> `methodology/architecture/SYNC_PATTERNS.md` (relative path depends on
+> where this card is materialised — typically
+> `../../../../../methodology/architecture/SYNC_PATTERNS.md` from a
+> stage `output/` folder).
 
 ## Section 1 — Invocations received
 

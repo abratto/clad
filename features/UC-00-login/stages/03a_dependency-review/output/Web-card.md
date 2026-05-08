@@ -28,7 +28,7 @@ runtime.
 ## Cross-checks
 
 - `respond` is the canonical Web action (no Web concept spec; see
-  [`../../../../methodology/architecture/WEB_CONCEPT.md`](../../../../methodology/architecture/WEB_CONCEPT.md)).
+  [`../../../../../methodology/architecture/WEB_CONCEPT.md`](../../../../../methodology/architecture/WEB_CONCEPT.md)).
 
 ---
 
