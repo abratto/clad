@@ -56,9 +56,15 @@ Every meaningful change moves through this loop. Skipping a step is a bug.
 
 Mapped to the ICM stages of a feature folder:
 
+> **Scope note:** Stage 00 runs **once per system brief** at
+> `features/_system/stages/00_actor-goal/`. Stages 01–05 run **once per
+> in-scope goal**, each in its own `features/UC-XX-<slug>/` folder.
+> UC folders are created *after* Stage 00's gate is passed — one folder
+> per confirmed in-scope goal from `goals.md`.
+
 | Stage | Folder | Produces |
 |---|---|---|
-| 0 | `stages/00_actor-goal/` | `actors.md`, `goals.md` (collaborative — see [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md) §"Stage 00") |
+| 0 | `features/_system/stages/00_actor-goal/` *(system scope — run once per brief)* | `actors.md`, `goals.md` (collaborative — see [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md) §"Stage 00") |
 | 1 | `stages/01_usecase/` | `usecase.md` (operational principle, actors, scenarios) |
 | 2a | `stages/02a_responsibility-map/` | `responsibility-map.md` (one row per concept: state, actions) |
 | 2b | `stages/02b_chain-table/` | `<scenario>-chain.md` per use-case scenario (action choreography) |

@@ -1,5 +1,29 @@
 # Stages — how the CLAD loop maps onto the ICM scaffold
 
+## Scope: system-level vs per-UC
+
+Not all stages operate at the same scope. This distinction matters
+before you open any `CONTEXT.md`:
+
+| Scope | Stage | Folder | Created when |
+|---|---|---|---|
+| **System-level** (once per project brief) | 00 | `features/_system/stages/00_actor-goal/` | Exists in the repo; use as-is |
+| **Per-UC** (once per in-scope goal) | 01–05 | `features/UC-XX-<slug>/stages/NN_*/` | Created after Stage 00 gate, one folder per confirmed in-scope goal |
+
+**The order is non-negotiable:**
+
+1. Run Stage 00 inside `features/_system/` against your project brief.
+   Stage 00 is multi-turn; write nothing until the human approves.
+2. Read the confirmed `goals.md`. Count the in-scope goals.
+3. Copy `templates/feature-skeleton/` to a new `features/UC-XX-<slug>/`
+   folder for **each** in-scope goal (UC numbers from 01).
+4. Run Stages 01–05 inside each UC folder, one goal at a time.
+
+`features/_system/` never grows beyond Stage 00 output. Every stage
+from 01 onwards lives inside a per-UC folder.
+
+---
+
 CLAD's contract loop has six steps once the outside-in TDD discipline
 is unfolded:
 

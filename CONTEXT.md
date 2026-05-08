@@ -12,7 +12,7 @@ given task.
 | Operate as an AI coding agent | [`AGENTS.md`](AGENTS.md) |
 | Learn the methodology | [`methodology/README.md`](methodology/README.md) |
 | See a worked example end-to-end | [`features/UC-00-login/README.md`](features/UC-00-login/README.md) (start at `stages/00_actor-goal/`) |
-| Start a new feature | Copy [`templates/feature-skeleton/`](templates/feature-skeleton/) to `features/UC-XX-<slug>/` and open its `stages/00_actor-goal/CONTEXT.md` |
+| Start a new feature | **Step 1 — Stage 00 (system scope):** open [`features/_system/stages/00_actor-goal/CONTEXT.md`](features/_system/stages/00_actor-goal/CONTEXT.md) and run Stage 00 against your brief to produce `actors.md` + `goals.md`. **Step 2 — create UC folders:** once the goal list is approved, copy [`templates/feature-skeleton/`](templates/feature-skeleton/) to `features/UC-XX-<slug>/` — one folder per in-scope goal — then open each `stages/01_usecase/CONTEXT.md` in turn. |
 | Author a new concept / sync / use case / actors / goals / spec | [`templates/`](templates/) |
 | See the optional Java reference impl | [`reference-impl/java-micronaut-jena/README.md`](reference-impl/java-micronaut-jena/README.md) |
 | Track work across features (optional) | [`methodology/overlays/TRACKING.md`](methodology/overlays/TRACKING.md) |
