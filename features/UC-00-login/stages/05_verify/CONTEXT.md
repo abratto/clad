@@ -60,3 +60,9 @@ back-traces to a sync or use-case scenario. Write
 
 - Findings → loop back to owning stage.
 - No further gate after closure.
+
+## Next stage
+
+**This is the final stage.** When the gate passes, the feature is complete.
+
+To start the next feature, copy [`templates/feature-skeleton/`](../../../../templates/feature-skeleton/) to `features/UC-XX-<slug>/` and open its `stages/00_actor-goal/CONTEXT.md`.

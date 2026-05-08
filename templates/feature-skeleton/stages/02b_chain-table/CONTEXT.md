@@ -59,3 +59,9 @@ chain table per scenario.
 
 Default human approval. **Do you agree with this step? Any
 corrections before I continue?**
+
+## Next stage
+
+→ [`../02_concepts/CONTEXT.md`](../02_concepts/CONTEXT.md) — Concept specs (full anatomy)
+
+To advance, the human says: **"Proceed to Stage 02."**

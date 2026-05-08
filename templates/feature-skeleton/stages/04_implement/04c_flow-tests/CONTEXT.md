@@ -51,3 +51,9 @@ goes green at the end of `04e`.
 ## Gate
 
 Default human approval. After this gate, the outer loop is red.
+
+## Next stage
+
+→ [`../04d_concept-tdd/CONTEXT.md`](../04d_concept-tdd/CONTEXT.md) — Inner red→green per concept
+
+To advance, the human says: **"Proceed to Stage 04d."**

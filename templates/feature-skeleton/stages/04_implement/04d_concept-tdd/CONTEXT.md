@@ -49,3 +49,9 @@ a flow token) throughout.
 ## Gate
 
 Default human approval.
+
+## Next stage
+
+→ [`../04e_sync-tdd/CONTEXT.md`](../04e_sync-tdd/CONTEXT.md) — Inner red→green per sync (turns the outer flow test green)
+
+To advance, the human says: **"Proceed to Stage 04e."**

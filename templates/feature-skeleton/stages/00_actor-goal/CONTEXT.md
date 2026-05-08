@@ -55,3 +55,9 @@ before drafting.
 Default human approval — but the gate is *expected* to take multiple
 turns to reach. The stage is complete when the human says the
 artefacts match their intent.
+
+## Next stage
+
+→ [`../01_usecase/CONTEXT.md`](../01_usecase/CONTEXT.md) — Use case (Fully Dressed)
+
+To advance, the human says: **"Proceed to Stage 01."** The agent then opens the next `CONTEXT.md`, loads only the files in its `Inputs` table, and runs that stage.

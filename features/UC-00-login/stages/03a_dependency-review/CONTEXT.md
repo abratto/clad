@@ -58,3 +58,9 @@ are the only reads needed.
 Default human approval.
 
 **Do you agree with this step? Any corrections before I continue?**
+
+## Next stage
+
+→ [`../04_implement/CONTEXT.md`](../04_implement/CONTEXT.md) — Implement (router)
+
+To advance, the human says: **"Proceed to Stage 04."**

@@ -56,11 +56,38 @@ cd clad
 #   5. features/UC-00-login/README.md  ← the worked example itself
 ```
 
-To start a new feature, **copy `templates/feature-skeleton/`** (not
-`features/UC-00-login/`) to `features/UC-XX-<slug>/`, then point your agent at
-`features/UC-XX-<slug>/stages/00_actor-goal/CONTEXT.md`. The skeleton
-carries empty stage folders with their `CONTEXT.md` contracts already in
-place; the worked example is for reading, not copying.
+### Your first prompt to the agent
+
+After cloning, open a chat with your agent (Copilot, Claude, Cursor,
+Codex, …) in this workspace and send exactly this:
+
+> Read `AGENTS.md` in full, then `CONTEXT.md`, then
+> `methodology/README.md`, then `methodology/WALKTHROUGH.md`. Confirm you
+> understand the five-layer hierarchy and the stage flow, then wait for
+> my feature brief.
+
+That loads the binding rules (`AGENTS.md`), the workspace router
+(`CONTEXT.md`), the methodology reading order, and an annotated example
+of what a single CLAD turn looks like — without pulling in any
+feature-specific material the agent shouldn't have yet.
+
+### Your second prompt — start a feature
+
+> Copy `templates/feature-skeleton/` to `features/UC-01-<slug>/`. Then
+> open `features/UC-01-<slug>/stages/00_actor-goal/CONTEXT.md` and run
+> Stage 00 against this brief: *<one paragraph describing what you want
+> the system to let users do>*.
+
+The agent will then run **Stage 00 (actor/goal)**: it proposes a draft
+actor list and goal list, asks up to five clarifying questions, and
+**waits for your answers** before writing `actors.md` / `goals.md`. From
+there each subsequent stage produces one artefact, asks *"Do you agree
+with this step? Any corrections before I continue?"*, and stops at the
+gate.
+
+> Note: copy `templates/feature-skeleton/`, not `features/UC-00-login/`.
+> The skeleton carries empty stage folders with their `CONTEXT.md`
+> contracts already in place; the worked example is for reading.
 
 ## Repository layout
 
