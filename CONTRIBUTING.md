@@ -31,6 +31,32 @@ are documentation, templates, and worked examples, not application code.
 4. Open a PR. Link the issue. Describe what contract drove the change and
    what artefact it produced.
 
+## After cloning — one-time setup
+
+The methodology runs the same with or without GitHub-side tracking. If you
+do want the tracking overlay (recommended for any project that will live
+longer than one feature), do this once after cloning:
+
+1. **Edit [`ROADMAP.md`](ROADMAP.md).** Replace the seed `UC-01-<slug>`
+   row with your first real feature. Keep exactly one row at status
+   `doing` at any time. CI enforces this — see
+   [`methodology/overlays/TRACKING.md`](methodology/overlays/TRACKING.md).
+2. **Enable Issues** on the repo (Settings → Features).
+3. **Create the three labels** referenced by the issue templates and
+   `TRACKING.md`: `clad:in-progress`, `clad:done`, `clad:spec-needed`.
+   (The first two issues you file from the templates will fail to
+   apply labels until these exist.)
+4. **Create one GitHub Project** (Projects → New project → Board).
+   Suggested columns: `Backlog` · `Doing` · `In review` · `Done`.
+   Link it from your `ROADMAP.md` Backlog section if you want a single
+   entry point.
+5. **Update `ROADMAP.md` at the end of every working session.** The
+   `Resume point` block is the cheapest cross-session memory you have;
+   CI flags it as stale after 60 days.
+
+If you don't want the overlay, **delete `ROADMAP.md`** — the
+`tracking-hygiene` CI job is a no-op when the file is absent.
+
 ## Branching & merging
 
 This repo is run trunk-based: `main` is the only long-lived branch and every

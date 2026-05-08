@@ -34,6 +34,14 @@ jobs:
       - name: Detect concept-to-concept imports
         run: bash .github/scripts/check-no-cross-concept-imports.sh
 
+  tracking-hygiene:
+    name: Tracking overlay (ROADMAP.md)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check ROADMAP.md hygiene
+        run: bash .github/scripts/check-roadmap-hygiene.sh
+
   java-verify:
     name: Java reference profile (mvn verify)
     runs-on: ubuntu-latest

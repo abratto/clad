@@ -33,9 +33,20 @@ Match the labels used by `.github/ISSUE_TEMPLATE/`:
 
 ### 3. Roadmap convention
 
-If you keep a `ROADMAP.md`, mark **at most one phase** as `doing`
-at any time. Other phases are `next`, `later`, or `done`. The
-`doing` phase points to the active `features/UC-XX/` folder.
+The repo ships [`ROADMAP.md`](../../ROADMAP.md) as a working example.
+Conventions:
+
+- **At most one phase row has status `doing`** at any time. The other
+  rows are `done`, `next`, or `later`. The `doing` row points at the
+  active `features/UC-XX/` folder.
+- A **`## Resume point`** section with a `**Last updated:** YYYY-MM-DD`
+  line records where the last session stopped.
+
+CI enforces both via
+[`.github/scripts/check-roadmap-hygiene.sh`](../../.github/scripts/check-roadmap-hygiene.sh)
+(threshold for the resume point is 60 days; override with the
+`ROADMAP_MAX_AGE_DAYS` env var if you need to). The check is a no-op
+if `ROADMAP.md` is absent — opt out by deleting the file.
 
 A starter template lives at [`../../templates/roadmap.md`](../../templates/roadmap.md).
 
