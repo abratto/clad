@@ -45,28 +45,55 @@ into `reference-impl/` over subsequent PRs.
 
 ## Where this comes from
 
-CLAD did not start as a methodology paper. It started as the working
-discipline of a single project — and was extracted, generalised, and
-re-licensed only after it had survived contact with real code.
+CLAD did not start as a methodology paper. It started as an experiment —
+*does LLM/agentic development actually move the needle, or is the speed
+illusory once you account for rework?* — and it was extracted,
+generalised, and re-licensed only after it had survived contact with
+real code.
 
-### Origins — Taste Tag
+### Origins — the bet
 
-The direct ancestor is [abratto/tastetag](https://github.com/abratto/tastetag),
-a greenfield Java/Micronaut/Jena backend built between March and May 2026
-by one human plus an LLM partner. Tastetag is itself a re-implementation
-of the core of *FeastIt* — an earlier conventionally-staffed startup whose
-domain insight (semantic "taste tagging" of products) was proven but never
-landed in a clean architecture. The second attempt set out to answer a
-narrower question: *can a formal architecture plus a structured human-LLM
-loop out-deliver a small distributed team on a domain the human already
-understands?*
+The starting position was a thesis, not a project. If LLM/agentic
+development is going to become a dominant way to build software, then
+the **architecture itself** has to be optimised for the agent, not just
+for the human. Concretely that means:
 
-Over ~33 calendar days the project shipped 15 concepts, 300+ syncs, 7
-domain ontologies, and ~1,100 passing tests with **zero cross-concept
-imports** — a structural property that conventional codebases lose by
-week 4–6. The methodology used to get there was being invented in
-parallel; by the close of Block 1 it had stabilised enough to be
-extracted into this repository as a starter.
+- a **small context window** is enough to understand any one part of
+  the system,
+- **isolated components** localise the blast radius of any change,
+- **declarative orchestration rules** can be read and reasoned about
+  without tracing call graphs, and
+- **system state is legible** — what you read in the spec is what the
+  running system does.
+
+The WYSIWID paper (Meng & Jackson, MIT CSAIL, *Onward!* 2025) was an
+immediate match for those properties. The next question was whether a
+non-trivial system could actually be built on it with an LLM partner.
+[abratto/tastetag](https://github.com/abratto/tastetag) — a
+Java/Micronaut/Jena backend with multi-domain taste matching — was
+chosen as the test bed precisely because it is non-trivial: real
+state, real coordination across concepts, real domain modelling.
+
+The architecture answered "what to build toward." It did not answer
+"how to drive the LLM there without losing control." That gap became
+the methodology. As implementation progressed, it became clear that
+several long-standing artefacts of requirements engineering and system
+modelling — Cockburn use cases, state machines, activity diagrams, and
+especially **ORM** (whose binary fact types map mechanically to RDF
+triples and therefore to Legible's concept-state graphs) — could be
+used to capture human intent in a form that drives the architecture
+*directly*, rather than being translated by hand. CLAD is the loop
+that fell out of doing that work: contracts at every gate, formal
+artefacts the LLM can consume verbatim, and a rejection protocol that
+keeps rework predictable.
+
+Over ~33 calendar days Tastetag's Block 1 shipped 15 concepts, 300+
+syncs, 7 domain ontologies, and ~1,100 passing tests with **zero
+cross-concept imports**. The bet — that you can move dramatically
+faster *and* keep strong correctness guarantees *and* end up with a
+well-structured, maintainable system — held. By the close of Block 1
+the methodology had stabilised enough to be extracted into this
+repository as a starter that anyone can clone.
 
 ### Influences
 
