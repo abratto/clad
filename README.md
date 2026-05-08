@@ -43,6 +43,96 @@ The broader reference implementation lives at
 [abratto/tastetag](https://github.com/abratto/tastetag) and will be ported
 into `reference-impl/` over subsequent PRs.
 
+## Where this comes from
+
+CLAD did not start as a methodology paper. It started as the working
+discipline of a single project — and was extracted, generalised, and
+re-licensed only after it had survived contact with real code.
+
+### Origins — Taste Tag
+
+The direct ancestor is [abratto/tastetag](https://github.com/abratto/tastetag),
+a greenfield Java/Micronaut/Jena backend built between March and May 2026
+by one human plus an LLM partner. Tastetag is itself a re-implementation
+of the core of *FeastIt* — an earlier conventionally-staffed startup whose
+domain insight (semantic "taste tagging" of products) was proven but never
+landed in a clean architecture. The second attempt set out to answer a
+narrower question: *can a formal architecture plus a structured human-LLM
+loop out-deliver a small distributed team on a domain the human already
+understands?*
+
+Over ~33 calendar days the project shipped 15 concepts, 300+ syncs, 7
+domain ontologies, and ~1,100 passing tests with **zero cross-concept
+imports** — a structural property that conventional codebases lose by
+week 4–6. The methodology used to get there was being invented in
+parallel; by the close of Block 1 it had stabilised enough to be
+extracted into this repository as a starter.
+
+### Influences
+
+CLAD synthesises three external bodies of work and cites them at every
+boundary. None is adopted whole; each contributes a specific load-bearing
+piece.
+
+- **WYSIWID — Meng & Jackson, "What You See Is What It Does"** (Onward!
+  2025). Source of the runtime architecture: concepts as isolated state
+  machines with explicit operational principles, synchronizations as the
+  *only* legal coordination primitive, and a single bootstrap concept
+  that owns the HTTP surface. CLAD's hard rules R1–R5 are the
+  enforceable contract version of the WYSIWID pattern. See
+  [methodology/architecture/](methodology/architecture/).
+
+- **ICM — Van Clief, "Interpretable Context Methodology"** (2026).
+  Source of the workspace shape: the five-layer context hierarchy,
+  numbered-stage feature folders (`stages/NN_*/`), and the
+  `CONTEXT.md` stage contract with its `Inputs / Process / Outputs`
+  triplet. ICM is what lets a human walk a feature stage by stage with
+  the agent stopping at every gate. See
+  [methodology/implementation/STAGES.md](methodology/implementation/STAGES.md).
+
+- **ORM / CSDP — Halpin & Jarrar.** Source of the discipline that the
+  conceptual schema is decided *before* code, not derived from it. CLAD
+  borrows the *shape* of the seven-step CSDP for per-concept schemas —
+  not the full ORM-ML notation. See
+  [methodology/architecture/ORM_NOTES.md](methodology/architecture/ORM_NOTES.md).
+
+Background traditions that shaped the gate protocol — Cockburn use
+cases, Extreme Programming's red-before-green TDD, RUP's artefact-chain
+phasing — are noted in
+[methodology/reference/CITATIONS.md](methodology/reference/CITATIONS.md).
+
+### What CLAD adds
+
+WYSIWID specifies a runtime pattern. ICM specifies a workspace shape.
+Neither tells you *how to drive an LLM through a change* without losing
+control. CLAD is the missing piece:
+
+- **Contracts at every stage gate.** Each `stages/NN_*/CONTEXT.md`
+  declares exactly what the agent may read, what it must produce, and
+  where it must stop. The agent does not advance until the human has
+  inspected `output/`. This is what keeps generation speed inside a
+  pre-validated scope rather than ahead of it.
+- **Hard rules that CI enforces.** "No concept imports another concept"
+  is not a guideline — it is a job (`hard-rule-r1`) that fails the
+  build. Architecture drift is a defect class CLAD makes structurally
+  impossible, not merely discouraged.
+- **A rejection protocol** ([AGENTS.md](AGENTS.md) §6). When the human
+  pushes back, the agent re-runs the same stage with one targeted
+  question — it does not freelance, drop back, or silently advance.
+  This is the single biggest difference between productive and
+  exhausting LLM rework.
+- **Optional overlays, not mandates.** Tracking
+  ([methodology/overlays/TRACKING.md](methodology/overlays/TRACKING.md))
+  and decision logs
+  ([methodology/overlays/DECISIONS.md](methodology/overlays/DECISIONS.md))
+  are bolt-ons; the core loop works without either.
+
+The proposed benefit is not "ship faster." It is **ship under review at
+LLM speed without losing the audit trail.** Every stage produces a file
+you can diff, every action emits a flow token you can trace, every
+hard rule is checked by CI. The methodology amplifies one careful
+human's judgment rather than replacing it.
+
 ## Quick start
 
 > **Using this as a starter for your own project?** Click **"Use this
