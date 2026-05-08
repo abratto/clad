@@ -155,6 +155,7 @@ human's next decision harder, not easier.
 - Stage contract template: [`templates/stage-CONTEXT.md`](templates/stage-CONTEXT.md)
 - Iterative-change workflow: [`methodology/core/ITERATIVE_CHANGES.md`](methodology/core/ITERATIVE_CHANGES.md)
 - Pre-commit quality gate: [`methodology/implementation/QUALITY_GATE.md`](methodology/implementation/QUALITY_GATE.md)
+- Trunk-based delivery + CI gate: [`methodology/implementation/DELIVERY.md`](methodology/implementation/DELIVERY.md)
 - Optional workflow overlay: [`methodology/overlays/TRACKING.md`](methodology/overlays/TRACKING.md)
 - Optional decision log: [`methodology/overlays/DECISIONS.md`](methodology/overlays/DECISIONS.md)
 - Citations: [`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md)
