@@ -21,18 +21,25 @@ steer multi-step agent work without losing control of the system being built:
    Adapted from Van Clief, *Interpretable Context Methodology*.
 
 ```
-You write a use case  ->  agent drafts concepts  ->  you edit  ->
-agent drafts syncs    ->  you edit  ->  agent implements  ->
-agent verifies traces back to the use case.
+actors/goals -> use case -> responsibility map -> chain tables ->
+concepts -> syncs -> dependency review -> implement -> verify
+   (00)        (01)        (02a)              (02b)
+   (02)        (03)        (03a)              (04)        (05)
 ```
 
-At every arrow there is a folder you can open and a file you can edit.
+At every arrow there is a folder you can open, a `CONTEXT.md` contract
+that tells the agent what to do, and an `output/` folder you can inspect
+and edit before the next stage runs. The full stage table lives in
+[`AGENTS.md`](AGENTS.md) §3.
 
 ## Status
 
 **Seed.** This repo bootstraps the methodology, templates, agent guides, a
-worked example (`features/UC-00-login/`), and an optional Java reference
-profile. The full reference implementation lives at
+worked example ([`features/UC-00-login/`](features/UC-00-login/README.md))
+taken end-to-end through Stage 04 (the LoginFlowTest is currently
+`@Disabled` pending Stage 05 closure), and an optional Java reference
+profile under [`reference-impl/java-micronaut-jena/`](reference-impl/java-micronaut-jena/).
+The broader reference implementation lives at
 [abratto/tastetag](https://github.com/abratto/tastetag) and will be ported
 into `reference-impl/` over subsequent PRs.
 
@@ -43,15 +50,17 @@ git clone https://github.com/abratto/clad.git
 cd clad
 # Read in this order:
 #   1. README.md (you are here)
-#   2. AGENTS.md             ← canonical guide for any AI coding agent
-#   3. methodology/README.md ← reading order for the methodology
-#   4. features/UC-00-login/ ← worked example, end to end
+#   2. AGENTS.md                       ← canonical guide for any AI coding agent
+#   3. methodology/README.md           ← reading order for the methodology
+#   4. methodology/WALKTHROUGH.md      ← annotated UC-00 session, turn by turn
+#   5. features/UC-00-login/README.md  ← the worked example itself
 ```
 
-To start a new feature, copy `features/UC-00-login/` to
-`features/UC-XX-your-feature/`, blank the `output/` folders, and rewrite
-`stages/01_usecase/output/usecase.md`. Then point your agent at
-`features/UC-XX-your-feature/stages/01_usecase/CONTEXT.md`.
+To start a new feature, **copy `templates/feature-skeleton/`** (not
+`features/UC-00-login/`) to `features/UC-XX-<slug>/`, then point your agent at
+`features/UC-XX-<slug>/stages/00_actor-goal/CONTEXT.md`. The skeleton
+carries empty stage folders with their `CONTEXT.md` contracts already in
+place; the worked example is for reading, not copying.
 
 ## Repository layout
 
@@ -69,23 +78,31 @@ clad/
 │
 ├── methodology/
 │   ├── README.md                    Reading order
+│   ├── WALKTHROUGH.md               Annotated UC-00 session (turn by turn)
 │   ├── core/                        CLAD: contracts, artefacts, principles
-│   ├── architecture/                Legible/WYSIWID: concepts, syncs, flows
+│   ├── architecture/                Legible/WYSIWID + ARTEFACT_MAP.md
 │   ├── implementation/              Hard rules + ICM stage mapping
+│   ├── overlays/                    Optional: tracking, decision logs
 │   └── reference/                   Citations and source pointers
 │
-├── templates/                       Concept, sync, use-case, flow, stage
+├── templates/                       Per-artefact templates +
+│   └── feature-skeleton/            ...empty stage tree to copy for new features
 │
 ├── features/
 │   ├── README.md
-│   └── UC-00-login/                 Worked example
-│       ├── README.md
+│   └── UC-00-login/                 Worked example (read, do not copy)
+│       ├── README.md                Stage-by-stage index with rationale
 │       ├── _config/                 Feature-scoped reference (Layer 3)
 │       └── stages/
+│           ├── 00_actor-goal/
 │           ├── 01_usecase/
+│           ├── 02a_responsibility-map/
+│           ├── 02b_chain-table/
 │           ├── 02_concepts/
 │           ├── 03_syncs/
-│           ├── 04_implement/
+│           ├── 03a_dependency-review/
+│           ├── 04_implement/        Router + 04a_orm, 04b_spec,
+│           │                        04c_flow-tests, 04d_concept-tdd, 04e_sync-tdd
 │           └── 05_verify/
 │
 └── reference-impl/
