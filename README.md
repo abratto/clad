@@ -96,6 +96,7 @@ clad/
 ├── README.md
 ├── LICENSE                          Apache-2.0
 ├── NOTICE                           Third-party attributions
+├── ROADMAP.md                       Optional tracking overlay (CI-checked)
 ├── CONTRIBUTING.md
 ├── AGENTS.md                        Canonical agent guide (single source)
 ├── CLAUDE.md                        Adapter -> AGENTS.md

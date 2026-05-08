@@ -55,6 +55,7 @@ following on every PR. Each maps to a CLAD invariant.
 |---|---|---|
 | Markdown link check | No broken cross-stage links | `methodology/`, `features/`, root `*.md` |
 | Concept-import grep (R1) | No `import` across `concepts.<X>.<Y>` packages | `reference-impl/**/src/main/java/**` |
+| Tracking hygiene (overlay) | At most one `doing` phase + fresh resume point | `ROADMAP.md` (skipped if absent) |
 | `mvn verify` (when Java profile changed) | Format, lint, unit + integration tests, ArchUnit hard-rule tests | `reference-impl/java-micronaut-jena/` |
 | Stage-output edit guard (advisory) | Edits to `stages/NN_*/output/` come from re-running the stage, not freelance edits | warning only — humans judge in review |
 
