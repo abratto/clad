@@ -44,9 +44,6 @@ features/UC-XX-name/
 ├── README.md
 ├── _config/                     Feature-scoped reference (Layer 3)
 └── stages/
-    ├── 00_actor-goal/
-    │   ├── CONTEXT.md
-    │   └── output/              actors.md, goals.md
     ├── 01_usecase/
     │   ├── CONTEXT.md
     │   └── output/              usecase.md
