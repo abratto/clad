@@ -78,6 +78,20 @@ load-bearing.
 > 04c instead of derived — which silently drifts the tests from the
 > use case.
 
+> **When to add a new scenario vs an extension.** A top-level scenario
+> requires a genuinely distinct trigger and a genuinely distinct user
+> goal. Failure branches — invalid input, duplicate submission,
+> unauthorised state, resource not found — share the same trigger as
+> the success path and belong in the `Extensions` field of that
+> scenario, not as separate `### Scenario:` blocks. If two scenarios
+> have the same trigger, one of them is an extension.
+>
+> **Identical postconditions are always wrong.** If Postconditions —
+> Success and Postconditions — Failure contain the same content, one of
+> them is incorrect. They must be distinct: Success postconditions
+> describe state after the main flow completes; Failure postconditions
+> describe state after an extension that ends in failure.
+
 ### Scenario: <name>
 
 - **Trigger:** …
