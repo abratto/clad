@@ -62,9 +62,19 @@ load-bearing.
 - **Postconditions — Failure:**
   - <what is true after any extension that ends in failure>
   - <if no state is modified, state that explicitly>
+
+> **Extension format.** Each extension is: the step number it branches from, the branch condition, a numbered list of system responses, and Postconditions — Success/Failure for that branch only. Extensions do not repeat Trigger, Pre-conditions, Main flow, or Expected outcomes — those fields belong only on top-level `### Scenario:` blocks. If an extension fully resolves and resumes the main flow, note the resume point.
+
 - **Extensions:**
-  - **Xa.** <branch condition> → <how the system responds>
-  - **Xb.** …  *(omit subsection if none)*
+  - **2a.** <condition detected at step 2>:
+    1. System does X.
+    2. System does Y.
+    - Postconditions — Success: <what is true if the branch is handled correctly>
+    - Postconditions — Failure: <what is true if the branch is not handled correctly>
+  - **3a.** <condition detected at step 3>:
+    1. System does X.
+    - Postconditions — Success: <what is true if the branch is handled correctly>
+    - Postconditions — Failure: <what is true if the branch is not handled correctly>
 
 > **Both Postconditions sub-sections are mandatory in every Fully
 > Dressed scenario.** A scenario without a Failure postcondition (even
