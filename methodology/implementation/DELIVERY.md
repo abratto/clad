@@ -45,7 +45,41 @@ A branch lives until its PR merges or is closed — typically hours,
 not weeks. If a branch lasts longer than two days, split the work or
 rebase frequently.
 
-## 3. The CI surface (what `main` requires)
+## 3. Branch lifecycle
+
+Create the feature branch **before** writing any Stage 01 output to the
+repo — the branch must exist before the first `git add` of feature
+artefacts. Do not commit artefacts directly to `main`.
+
+**Commit cadence:** one commit per gate approval on the branch. After the
+human approves a stage's output, commit all that stage's output files in
+a single commit using the message convention:
+
+```
+feat(UC-XX): Stage NN — <artefact name>
+```
+
+Example commit sequence for a feature:
+
+```
+feat(UC-01): Stage 01 — use case artefact (usecase.md)
+feat(UC-01): Stage 02a — responsibility map artefact
+feat(UC-01): Stage 02b — chain tables artefact
+feat(UC-01): Stage 03 — syncs artefacts
+feat(UC-01): Stage 04a — ORM artefact
+feat(UC-01): Stage 04b — spec artefact
+feat(UC-01): Stage 04c — flow tests artefact
+feat(UC-01): Stage 04d — concept TDD artefact
+feat(UC-01): Stage 04e — sync TDD artefact
+feat(UC-01): Stage 05 — verification trace, smoke, tracking
+```
+
+The branch squash-merges to `main` as a single commit at the end of
+Stage 05. The per-stage history lives on the branch, not on `main`. If a
+stage produces multiple output files (e.g. Stage 02 concepts + catalog
+entry), include them all in one commit for that gate.
+
+## 4. The CI surface (what `main` requires)
 
 The repository's GitHub Actions workflow
 [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) runs the
@@ -63,7 +97,7 @@ CI is intentionally short. Add a check only when the *cost* of a
 violation reaching `main` is higher than the *cost* of the check
 running on every PR.
 
-## 4. Branch protection (`main`)
+## 5. Branch protection (`main`)
 
 Settings to enable on the GitHub repo (one-time, repo admin):
 
@@ -82,7 +116,7 @@ The exact toggles live under *Settings → Rules → Rulesets* on the
 GitHub repo. They are not in this file because git itself does not
 host them; the file is the spec, the GitHub UI is the implementation.
 
-## 5. PR review checklist
+## 6. PR review checklist
 
 A reviewer reads the PR against these:
 
@@ -103,7 +137,7 @@ A reviewer reads the PR against these:
 A green CI is necessary, not sufficient. Approval is the human
 half of the gate.
 
-## 6. Anti-patterns
+## 7. Anti-patterns
 
 - **Long-lived feature branches** that accumulate two or three
   features. Always split.
@@ -115,7 +149,7 @@ half of the gate.
 - **"Just one tiny fix" follow-up commits to `main`.** They go
   through the same loop: branch → PR → CI → review → merge.
 
-## 7. Pointers
+## 8. Pointers
 
 - Local pre-commit gate: [`QUALITY_GATE.md`](QUALITY_GATE.md)
 - Hard rules CI enforces: [`RULES.md`](RULES.md)

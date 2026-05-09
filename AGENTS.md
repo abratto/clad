@@ -43,6 +43,14 @@ You are expected to operate within all three layers simultaneously.
    output. Surface this to the human.
 6. **Cite when you adapt.** If you reuse ideas from Meng & Jackson or Van
    Clief, point to `methodology/reference/CITATIONS.md`.
+7. **Branch rule.** Before writing any Stage 01 output, create and push
+   the feature branch:
+   `git checkout -b feat/UC-XX-<slug> && git push -u origin feat/UC-XX-<slug>`.
+   Do not write artefacts to `main` directly.
+8. **Commit rule.** After each gate is approved by the human, commit all
+   outputs for that stage to the feature branch with the message
+   `feat(UC-XX): Stage NN — <artefact name>`. Do not accumulate multiple
+   stages in one commit.
 
 ## 3. The CLAD contract loop
 
