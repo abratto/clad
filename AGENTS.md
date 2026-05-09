@@ -43,6 +43,11 @@ You are expected to operate within all three layers simultaneously.
    output. Surface this to the human.
 6. **Cite when you adapt.** If you reuse ideas from Meng & Jackson or Van
    Clief, point to `methodology/reference/CITATIONS.md`.
+7. **RESUME rule.** After each gate is approved by the human, overwrite
+   `features/{{slug}}/RESUME.md` with the current feature state (last
+   completed stage, gate outcome, corrections, deferred concepts, next
+   stage, next task). Do this before running the `git commit` for that
+   gate.
 
 ## 3. The CLAD contract loop
 

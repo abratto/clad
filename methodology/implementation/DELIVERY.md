@@ -50,6 +50,8 @@ rebase frequently.
 The repository's GitHub Actions workflow
 [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) runs the
 following on every PR. Each maps to a CLAD invariant.
+For feature branches, `RESUME.md` is a required per-gate artefact and
+is included in each gate-approved commit.
 
 | Check | Enforces | Where |
 |---|---|---|
