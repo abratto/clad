@@ -79,6 +79,10 @@ Stage 05. The per-stage history lives on the branch, not on `main`. If a
 stage produces multiple output files (e.g. Stage 02 concepts + catalog
 entry), include them all in one commit for that gate.
 
+`RESUME.md` is a required per-gate artefact for feature branches and
+is included in each gate-approved commit alongside the stage outputs
+(see [HANDOVER.md](HANDOVER.md) for the read protocol).
+
 ## 4. The CI surface (what `main` requires)
 
 The repository's GitHub Actions workflow

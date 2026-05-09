@@ -51,6 +51,11 @@ You are expected to operate within all three layers simultaneously.
    outputs for that stage to the feature branch with the message
    `feat(UC-XX): Stage NN — <artefact name>`. Do not accumulate multiple
    stages in one commit.
+9. **RESUME rule.** After each gate is approved by the human, overwrite
+   `features/UC-XX-<slug>/RESUME.md` with the current feature state
+   (last completed stage, gate outcome, corrections, deferred concepts,
+   next stage, next task). Do this before running the `git commit` for
+   that gate.
 
 ## 3. The CLAD contract loop
 
@@ -72,7 +77,7 @@ Mapped to the ICM stages of a feature folder:
 
 | Stage | Folder | Produces |
 |---|---|---|
-| 0 | `features/_system/stages/00_actor-goal/` *(system scope — run once per brief)* | `actors.md`, `goals.md` (collaborative — see [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md) §"Stage 00") |
+| 0 | `features/_system/stages/00_actor-goal/` *(system scope — run once per brief)* | `actors.md`, `goals.md` (collaborative — see [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)) |
 | 1 | `stages/01_usecase/` | `usecase.md` (operational principle, actors, scenarios) |
 | 2a | `stages/02a_responsibility-map/` | `responsibility-map.md` (one row per concept: state, actions) |
 | 2b | `stages/02b_chain-table/` | `<scenario>-chain.md` per use-case scenario (action choreography) |
@@ -170,6 +175,7 @@ human's next decision harder, not easier.
 - Iterative-change workflow: [`methodology/core/ITERATIVE_CHANGES.md`](methodology/core/ITERATIVE_CHANGES.md)
 - Pre-commit quality gate: [`methodology/implementation/QUALITY_GATE.md`](methodology/implementation/QUALITY_GATE.md)
 - Trunk-based delivery + CI gate: [`methodology/implementation/DELIVERY.md`](methodology/implementation/DELIVERY.md)
+- Handover protocol: [`methodology/implementation/HANDOVER.md`](methodology/implementation/HANDOVER.md)
 - Optional workflow overlay: [`methodology/overlays/TRACKING.md`](methodology/overlays/TRACKING.md)
 - Optional decision log: [`methodology/overlays/DECISIONS.md`](methodology/overlays/DECISIONS.md)
 - Citations: [`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md)
