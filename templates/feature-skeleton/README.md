@@ -1,29 +1,40 @@
 # templates/feature-skeleton/
 
 The empty CLAD feature skeleton. **Copy this folder** to start a new
-feature; do not copy `features/UC-00-login/` (which contains worked
-example content).
+per-UC feature (Stages 01–05); do not copy `features/UC-00-login/`
+(which contains worked example content).
+
+> **Stage 00 is system-level.** It lives in
+> `features/_system/stages/00_actor-goal/` and is run **once per project
+> brief**, not once per UC. This skeleton covers only Stages 01–05 (the
+> per-UC work). Never add a `00_actor-goal/` folder inside a UC folder.
 
 ## How to bootstrap a new feature
 
 ```sh
 cp -R templates/feature-skeleton features/UC-XX-<slug>
 # edit features/UC-XX-<slug>/README.md and _config/voice.md
-# open features/UC-XX-<slug>/stages/00_actor-goal/CONTEXT.md and start there
+# open features/UC-XX-<slug>/stages/01_usecase/CONTEXT.md and start there
 ```
 
 `UC-XX` should be the next free number; `<slug>` is a short hyphenated
 name (e.g. `comment-thread`, not `Comment Thread Feature`).
 
+Run Stage 00 (`features/_system/stages/00_actor-goal/`) to completion
+**before** copying this skeleton for any UC.
+
 ## What is in here
 
 - `_config/voice.md` — placeholder explaining feature-scoped Layer-3 reference material
-- `stages/` — empty stage tree (`00_actor-goal`, `01_usecase`, `02_concepts`,
-  `03_syncs`, `04_implement` with sub-stages `04a..04e`, `05_verify`),
+- `stages/` — empty stage tree (`01_usecase`, `02a_responsibility-map`,
+  `02b_chain-table`, `02_concepts`, `03_syncs`, `03a_dependency-review`,
+  `04_implement` with sub-stages `04a..04e`, `05_verify`),
   each with a `CONTEXT.md` and an empty `output/`
 
 ## What is **not** in here
 
+- No `00_actor-goal/` stage. That stage is system-level and belongs only
+  in `features/_system/`. Do not create it inside a UC folder.
 - No example artefacts. Do not copy `features/UC-00-login/output/*` into a
   new feature; derive your own from the actor/goal stage.
 - No `README.md` for the new feature. Write one yourself.
