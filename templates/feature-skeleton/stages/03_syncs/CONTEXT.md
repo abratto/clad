@@ -31,13 +31,21 @@ the sync just says *"when outcome X fires → then call Y."*
 
 ## Process
 
-For each scenario in the use case, identify the chain of concept
-actions that fulfils it. Each coordination link becomes one sync.
-Syncs are declarative `when … where … then …` — no imperative
-branching, no state, no I/O. Every `where` clause must label the
-pattern it uses (`A:` / `B:` / `C:` / `D:`) per `SYNC_PATTERNS.md`.
-Every sync's `Cites` section names the use-case scenario it
-satisfies.
+Count the transitions in every approved chain table in
+`02b_chain-table/output/` for this feature. Each transition (row N →
+row N+1) becomes exactly one sync file. Do not collapse multiple
+transitions into one sync.
+
+For each transition, write one `<name>.sync.md`:
+- `when:` the outcome that fires (e.g. `Account.validate(...) -> Valid`)
+- `where:` data-routing only — field-path references and sync constants.
+  No function calls, no arithmetic, no I/O. If you need a computation,
+  it belongs inside the concept action, not here. Label every line with
+  its pattern: `A:` / `B:` / `C:` / `D:` per `SYNC_PATTERNS.md`.
+- `then:` the next concept action to invoke.
+
+Syncs are declarative — no imperative branching, no state, no I/O.
+Every sync's `Cites` section names the use-case scenario it satisfies.
 
 ## Outputs
 
@@ -46,6 +54,14 @@ satisfies.
 ## Verify
 
 - No sync contains imperative branching or persists state.
+- **Sync count:** the number of sync files in `output/` equals the
+  number of transitions in the chain table(s) for this feature (each
+  chain-table row-to-row arrow = one sync).
+- **Where-clause discipline:** no `where` line contains a function call,
+  arithmetic expression, or I/O operation. Every line is a field-path
+  reference (`body.field`, `result_of(<#N>).field`) or a sync constant
+  (quoted literal). Pattern labels (`A:` / `B:` / `C:` / `D:`) are
+  present on every `where` line.
 - **Cross-stage check (back):** every named scenario in
   `01_usecase/output/usecase.md` is satisfied by at least one sync, or
   is a `Web`-only failure path (call this out explicitly in the sync
