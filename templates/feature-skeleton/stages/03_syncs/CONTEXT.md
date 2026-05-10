@@ -62,6 +62,10 @@ Every sync's `Cites` section names the use-case scenario it satisfies.
   reference (`body.field`, `result_of(<#N>).field`) or a sync constant
   (quoted literal). Pattern labels (`A:` / `B:` / `C:` / `D:`) are
   present on every `where` line.
+- **Declare before use:** every variable referenced in a `then` line
+  is either carried directly from the `when` outcome's flow token or
+  explicitly declared in a `where` clause with a pattern label. No
+  undeclared variable references permitted.
 - **Cross-stage check (back):** every named scenario in
   `01_usecase/output/usecase.md` is satisfied by at least one sync, or
   is a `Web`-only failure path (call this out explicitly in the sync
