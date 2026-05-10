@@ -39,9 +39,13 @@ For each concept that appears in any chain table or sync:
 1. Open
    [`../../../../templates/dependency-review-card.md`](../../../../templates/dependency-review-card.md)
    and produce `output/<concept>-card.md`.
-2. Section 1 — list every sync `then` call into one of this
-   concept's actions, with the Pattern (A/B/C/D) and Source from the
-   sync's `where` clause. One row per (sync × flow × call).
+2. Section 1 — for each sync in `../03_syncs/output/`, inspect its
+   `then` clause only. If the `then` clause calls an action on this
+   concept, add one row. Do **not** add a row for syncs where this
+   concept's action appears in the `when` clause — a `when` clause is
+   a trigger, not an invocation. One row per (sync × action called in `then`).
+   Pattern B applies when the argument comes from a prior action's flow
+   token (`result_of(...)`) rather than directly from `body.*`.
 3. Section 2 — list every Pattern D read of this concept's named
    region by **other** concepts' syncs. If none, say so explicitly.
 4. Note any inconsistency (same action invoked via different
@@ -70,6 +74,9 @@ before Stage 04 turns it into code.
   and vice versa.
 - Every Pattern D `Field` is declared in the owner concept's `state`
   section (and therefore will need to appear in 04a's ORM output).
+- **`then`-only rule:** every row in every Section 1 table corresponds
+  to a sync whose `then` clause calls that action. No row may correspond
+  to a sync whose `when` clause merely triggers on that action's outcome.
 
 ## Gate
 

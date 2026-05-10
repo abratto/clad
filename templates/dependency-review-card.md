@@ -23,14 +23,38 @@
 
 ## Section 1 — Invocations received
 
-> Every row is one sync's `then` call into an action on this concept.
-> Group by action; one row per (sync × flow × call). The `Source`
-> column names where the call's argument data came from.
+> **Only `then` calls go here. `when` triggers do NOT.**
+> A sync's `when` clause names the outcome that *fires* this sync — that
+> is not an invocation of this concept. Only the sync's `then` clause
+> *invokes* a concept action. If a sync has `when: Account.validate(...) -> Valid`
+> and `then: Account.create(...)`, that sync contributes exactly one row
+> here: under `create`, not under `validate`.
+>
+> One row per (sync × action) where the sync's `then` calls that action.
+> The `Pattern` and `Source` columns describe how the *arguments* to that
+> `then` call were obtained (from the sync's `where` clause).
+>
+> Pattern reference:
+>   A — argument comes from Web.handle body (flow-token join)
+>   B — argument comes from a prior action's output (flow-sibling join)
+>   C — argument is a sync constant (literal)
+>   D — argument is a named-region read from another concept's state
 
 | Action | Flow (sync) | Data received | Pattern | Source |
 |---|---|---|---|---|
 | `<actionName>` | `<SyncName>` (`<scenario>`) | `<arg1>, <arg2>` | A / B / C / D | `Web.handle.body.foo` / `result_of(Other.action).bar` / literal `"FOO"` / `Other.namedRegion.field` |
 | `<actionName>` | `<SyncName>` (`<scenario>`) | … | … | … |
+
+> **Example:** Given these two syncs:
+>   Sync 1 — `when: Web.handle -> Routed` / `then: Account.validate(email, password)`
+>   Sync 2 — `when: Account.validate -> Valid` / `then: Account.create(email, password)`
+>
+> The Section 1 table for `Account` has exactly **2 rows**:
+>   | `validate` | Sync 1 | email, password | A | body.email, body.password |
+>   | `create`   | Sync 2 | email, password | B | result_of(Account.validate).email, … |
+>
+> Sync 2 does **not** produce a row for `validate` — `validate` is Sync 2's
+> `when` trigger, not its `then` invocation.
 
 > If the same action is called via **different patterns in different
 > flows**, that is almost always a defect — the data source disagrees
