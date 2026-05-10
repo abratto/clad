@@ -37,16 +37,30 @@ LABEL EVERY WHERE PATTERN
     B: — flow-sibling join (field from an earlier action's output)
     C: — sync constant (literal value)
     D: — concept-state join (named region of another concept's state)
+
+DECLARE BEFORE USE
+  Every variable referenced in the `then` line must either come directly
+  from the `when` outcome's flow token, or be declared explicitly in a
+  `where` line. You may not reference a name in `then` that does not
+  appear in `when` or `where`.
+
+  NOT ALLOWED:
+    then: Web.respond(status=422, body={errors: validationErrors})
+    — if validationErrors is not declared in `where`, this is invalid.
+
+  ALLOWED:
+    where: B: validationErrors = result_of(Account.validate).errors
+    then:  Web.respond(status=422, body={errors: validationErrors})
 -->
 
 ## Rule
 
 ```
 when:  <Concept>.<action>(<args>) -> <Outcome>
-where: <local> = <pure expression>
-       <local> = <pure expression>
+where: A: <local> = body.<field>
+       B: <local> = result_of(<Concept>.<action>).<field>
+       C: <local> = "<literal value>"
 then:  <Concept>.<action>(<args>)
-       <Concept>.<action>(<args>)
 ```
 
 ## Cites
