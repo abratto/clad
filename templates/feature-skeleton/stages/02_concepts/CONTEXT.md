@@ -30,7 +30,7 @@ sync, not in this file.
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Use case |
 | `../02a_responsibility-map/output/responsibility-map.md` | 4 | The agreed concept set |
-| `../02b_chain-table/output/` | 4 | The agreed action choreography (per scenario) |
+| `../02b_chain-table/output/` | 4 | The agreed action choreography (per scenario) — **read every file before naming any outcome** |
 | `../00_actor-goal/output/actors.md` | 4 | For cross-stage check |
 | `../../../../methodology/architecture/CONCEPTS.md` | 3 | Concept anatomy |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R2 |
@@ -42,10 +42,19 @@ For each concept already listed in
 `02a_responsibility-map/output/responsibility-map.md`, draft
 `<Name>.concept.md` per the template — full state, full action
 signatures (inputs, outcomes, effect on state, flow-token fields),
-and an operational principle. The action *names* and *outcomes*
-should match the chain tables in `02b_chain-table/output/`; if you
-need an outcome the chain table did not name, return to Stage 02b
-first.
+and an operational principle.
+
+**Outcome alignment is mandatory:** every action output name MUST
+exactly match the outcome strings used in the approved chain tables in
+`02b_chain-table/output/`. Open every chain table file before naming
+any outcome. If you need an outcome the chain table did not name,
+return to Stage 02b and amend the chain table first — do not invent
+outcomes here.
+
+**State and input discipline:** do not add state fields or action
+inputs that have no basis in the chain table or responsibility map.
+If a field is absent from both, raise it as an open question in the
+concept's Notes section for the human reviewer.
 
 R1 still applies: no concept names another concept's state, actions,
 or types beyond opaque ids.
@@ -58,9 +67,14 @@ or types beyond opaque ids.
 
 - The set of files in `output/` matches the set of concepts in
   `02a_responsibility-map/output/responsibility-map.md` exactly.
-- Every action used in any `02b_chain-table/output/*-chain.md` is
-  declared (with the same outcome enum) in the corresponding concept
-  spec.
+- **Outcome alignment:** every action output name in every concept file
+  matches verbatim the outcome strings in the corresponding
+  `02b_chain-table/output/` chain table. Check character-for-character —
+  `AccountExists` and `EmailExists` are different names.
+- **Input/state discipline:** no state field or action input appears
+  that has no basis in the chain table or responsibility map.
+- **Action discipline:** no action is declared that is not listed in
+  `02a_responsibility-map/output/responsibility-map.md`.
 - No concept names another concept's state, actions, or types.
 - **Cross-stage check (back):** every actor in
   `00_actor-goal/output/actors.md` whose goal is in-scope appears in
