@@ -1,4 +1,4 @@
-<!-- Template for Stage 02b (02b_chain-table). Purpose: see methodology/architecture/CONCEPTS.md, methodology/architecture/SYNCHRONIZATIONS.md, and methodology/implementation/STAGES.md §"Stage 02b". -->
+<!-- Template for Stage 02b (02b_chain-table). Purpose: see methodology/architecture/CONCEPTS.md, methodology/architecture/SYNCHRONIZATIONS.md, and methodology/implementation/STAGES.md §"Stage 02b chain-table". Fill every placeholder; delete this comment before committing. -->
 
 # Chain table — `<scenario-name>`
 
@@ -39,18 +39,23 @@
 
 ## Diagram (optional but encouraged)
 
+> **Diagram type: `stateDiagram-v2` only.** Do NOT use `sequenceDiagram`.
+> The chain table is a finite state machine; `stateDiagram-v2` makes
+> branching and failure paths visible at a glance. See translation rules
+> below. Validate at [mermaid.live](https://mermaid.live) before committing.
+
 ```mermaid
-sequenceDiagram
-    actor U as User
-    participant W as Web
-    participant A as <ConceptA>
-    participant B as <ConceptB>
-    U->>W: <trigger>
-    W->>A: <action>(<args>)
-    A-->>W: <Outcome>
-    W->>B: <action>(<args>)
-    B-->>W: <Outcome>
-    W-->>U: <response>
+stateDiagram-v2
+    [*] --> ConceptA_actionName : Web/request[trigger]
+    ConceptA_actionName --> ConceptB_actionName : [Ok]
+    ConceptB_actionName --> Web_respond200 : [Ok]
+    ConceptA_actionName --> Web_respond401 : [unauthenticated]
+    ConceptA_actionName --> Web_respond403 : [forbidden]
+    ConceptB_actionName --> Web_respond404 : [notFound]
+    Web_respond200 --> [*]
+    Web_respond401 --> [*]
+    Web_respond403 --> [*]
+    Web_respond404 --> [*]
 ```
 
 ## Cross-checks
@@ -100,12 +105,14 @@ When you change the table, regenerate the diagram. The translation is
 mechanical:
 
 1. Each row's `Action` becomes a state node (replace `.` with `_` so
-   Mermaid will accept it: `User_lookupByUsername`).
+   Mermaid will accept it: `Account_validate`).
 2. Each transition `row N → row N+1` becomes an arrow labelled with
-   row N's `Outcome`.
+   row N's `Outcome` in brackets: `[Ok]`, `[AccountExists]`, etc.
 3. The first row's trigger comes from `[*]`; every terminal
    `Web.respond` returns to `[*]`.
-4. Validate the resulting `stateDiagram-v2` block by pasting it into
+4. Failure branches from the same state appear as additional arrows
+   from that state node, each labelled with their failure outcome.
+5. Validate the resulting `stateDiagram-v2` block by pasting it into
    [mermaid.live](https://mermaid.live) before commit. A diagram that
    does not render must not be committed.
 
