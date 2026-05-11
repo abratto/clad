@@ -231,6 +231,33 @@ proposes a draft actor list and goal list, asks up to five clarifying
 questions, and **waits for your answers** before writing the approved
 artefacts.
 
+### Roo Code setup (optional — Stage 04d/04e agentic loop)
+
+If you are using [Roo Code](https://github.com/RooVetGit/Roo-Code) in
+VS Code, CLAD ships two custom modes (`clad-red` and `clad-green`) that
+enforce the R8 red-before-green gate and loop on your test runner
+automatically. One manual step is required before first use:
+
+```bash
+cp .roo-clad-config.example .roo-clad-config
+```
+
+Then open `.roo-clad-config` and fill in two values for your project:
+
+```
+TEST_COMMAND=./mvnw test -pl reference-impl/java-micronaut-jena
+STORAGE_LAYER=Jena TDB2 named graph (Java/Micronaut profile)
+```
+
+`.roo-clad-config` is gitignored — it is yours alone and will not be
+committed. See [`.roo-clad-config.example`](.roo-clad-config.example)
+for examples covering Maven, Gradle, npm, and common storage profiles.
+
+Roo will detect the custom modes automatically on workspace open. Switch
+to **CLAD 04d — Red Tests** for the test-writing phase and **CLAD 04d —
+Green Implementation** for the implementation phase. Roo will block if
+`.roo-clad-config` is missing and prompt you to create it.
+
 ## Repository layout
 
 ```
@@ -247,6 +274,8 @@ clad/
 ├── .github/copilot-instructions.md  Adapter -> AGENTS.md
 ├── .cursor/rules/clad.mdc           Adapter -> AGENTS.md
 ├── CONTEXT.md                       Workspace routing (ICM Layer 1)
+├── .roomodes                        Roo Code custom modes (clad-red, clad-green)
+├── .roo-clad-config.example         Template for per-developer Roo config
 │
 ├── methodology/
 │   ├── README.md                    Reading order
