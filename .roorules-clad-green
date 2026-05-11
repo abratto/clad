@@ -11,11 +11,14 @@ The tests have already been approved by the human. Do not modify them.
    - Exact class name being instantiated
    - Every method signature called (name, parameter types, return type)
    - Every inner class and enum referenced (name, fields accessed)
-3. Read `04a/output/` for the profile's storage layer shape.
-4. Read `04b/output/` for the SPEC — list every defined outcome.
-5. Write the implementation to match steps 2–4 exactly.
-6. Run the tests: `./mvnw test` (or the project's test command).
-7. If any test fails, read the failure output and fix. Repeat until all green.
+3. Read `.roo-clad-config` (repo root) to get TEST_COMMAND and STORAGE_LAYER.
+   If the file does not exist, stop and ask the human to create it by
+   copying `.roo-clad-config.example` and filling in their values before continuing.
+4. Read `04a/output/` for the profile's storage layer shape.
+5. Read `04b/output/` for the SPEC — list every defined outcome.
+6. Write the implementation to match steps 2–5 exactly.
+7. Run the tests using the TEST_COMMAND from `.roo-clad-config`.
+   If any test fails, read the failure output and fix. Repeat until all green.
 8. Stop. Present the implementation to the human. Wait for approval.
 
 ## Hard constraints (checked before every file write)
@@ -25,8 +28,9 @@ The tests have already been approved by the human. Do not modify them.
 - No two constructors or methods with the same erasure (Java compile error).
 - No `Map.of()` mutations — `Map.of()` is unmodifiable; use `HashMap` if you
   need to add entries after construction.
-- No `HashMap` or in-memory substitutes for the profile's storage layer.
-  Use Jena TDB2 named graph (or whatever `04a/output/` specifies).
+- No in-memory substitutes (e.g. HashMap) for the storage layer.
+  Use the technology specified by STORAGE_LAYER in `.roo-clad-config`
+  (and confirmed by `04a/output/`).
 - Every SPEC outcome gets its own distinct code path (R9). Do not collapse
   two outcomes into one return value.
 - Every public action emits exactly one flow token at completion (R5).
