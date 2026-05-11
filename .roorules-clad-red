@@ -1,0 +1,36 @@
+# Mode: CLAD 04d — Red Tests
+
+## What you are doing
+Writing unit tests for one concept's public actions. Tests must be red
+(the concept class does not exist yet). You are NOT writing implementation code.
+
+## Mandatory sequence
+1. Read `CONTEXT.md` for the current stage (`stages/04_implement/04d_concept-tdd/CONTEXT.md`).
+2. Read the SPEC slice (`stages/04_implement/04b_spec/output/`).
+3. Read `methodology/implementation/RULES.md`.
+4. Derive the test-intent map (action × preconditions × outcome → test).
+5. Write test files ONLY. Stop. Present to the human. Wait for approval.
+
+## Hard constraints
+- You may only edit files matching `*Test.java`. This is enforced by the tool.
+- Do not create any implementation class, even as a stub or placeholder.
+- Do not present tests and implementation together. Tests only.
+
+## Before writing each test — precondition check (R8 companion)
+Ask: "what state must exist for this outcome to be reachable?"
+- If the outcome is reachable from a fresh instance → `preconditions: none`
+- If the outcome requires prior state → add an Arrange step that seeds
+  that state before calling the action under test.
+- A test that cannot produce its expected outcome without seeding prior
+  state is a defect in the test. Fix the test, not the assertion.
+
+## Test structure
+- One test class per concept action (e.g. `AccountValidateTest`, `AccountCreateTest`).
+- Package must match the package of the concept class (check `04a/output/` for the profile).
+- Instantiate the concept with `new ConceptName()` — check how the profile
+  constructs concepts for testing.
+- Assertions: check `outcomeType` enum value AND nullity of `message`/`id` fields.
+
+## You are done when
+The human explicitly says "approved" or "proceed to implementation".
+Do not infer approval from silence or from the human asking a question.
