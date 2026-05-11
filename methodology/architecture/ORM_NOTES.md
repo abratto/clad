@@ -44,12 +44,55 @@ For each concept independently — never look across concepts during
    concept's invariants.
 6. **Check derivability.** If a fact can be derived from others, mark
    it derived rather than stored. Derived facts do not become columns.
-7. **Map to the profile.** Translate the resulting fact types into
-   the profile's storage shape — one **named region** per concept
-   (R2). For Java/Jena that is one named graph; for a relational
-   profile it would be one schema or table prefix.
+7. **Note the profile mapping.** Record how the named region for this
+   concept is wired in the chosen profile — one **named region** per
+   concept (R2). For a Jena/RDF profile, each fact type becomes an RDF
+   property (predicate); uniqueness constraints become
+   `owl:InverseFunctionalProperty` or SHACL `sh:uniqueLang`; mandatory
+   roles become SHACL `sh:minCount 1`; enums become `owl:oneOf` or
+   SHACL `sh:in`. For a relational profile, fact types become columns.
+   This mapping note goes in `## CSDP Notes` — it is **not** the body
+   of the `.orm.md` file.
 
-The output of step 7 is what gets written to `output/<Name>.orm.md`.
+The output written to `output/<Name>.orm.md` is the **profile-neutral
+conceptual model** from steps 1–6: the fact types with their
+uniqueness and mandatory constraints expressed in plain English or a
+simple table of (Fact Type | Uniqueness | Mandatory). Do not write a
+relational schema table (`Field / Type / Constraints`) unless the
+profile is explicitly relational. A relational schema table is a
+profile-specific artefact, not a conceptual model.
+
+## Profile mapping guidance
+
+The conceptual model (steps 1–6) is always profile-neutral. Step 7
+records *where* the named region lives; the translation varies by
+profile:
+
+### RDF / Jena TDB2
+- Each fact type → an RDF property in the concept's namespace
+  (e.g. `account:hasEmail`, `account:hasPasswordHash`)
+- Uniqueness constraint → `owl:InverseFunctionalProperty` on the
+  property, or a SHACL `sh:PropertyShape` with `sh:maxCount 1` on
+  the inverse
+- Mandatory role → SHACL `sh:minCount 1`
+- Enum value type → `owl:oneOf` restriction or SHACL `sh:in`
+- The named region itself → one named graph URI per concept
+  (e.g. `<urn:clad:account>`)
+
+Do **not** write a `Field / Type / Constraints` table for an RDF
+profile. That is a relational schema. RDF has no columns.
+
+### Relational (PostgreSQL, SQLite, etc.)
+- Each fact type → a column
+- Uniqueness constraint → `UNIQUE` constraint
+- Mandatory role → `NOT NULL`
+- Enum → `CHECK` constraint or a lookup table
+- Named region → one schema or table prefix per concept
+
+### Document (MongoDB, etc.)
+- Each fact type → a document field
+- Constraints → JSON Schema or validator annotations
+- Named region → one collection per concept
 
 ## Cross-concept rule (R1, R2)
 

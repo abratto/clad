@@ -38,7 +38,11 @@ state schema for each concept by walking the seven-step procedure in
 
 ## Outputs
 
-- `output/<Name>.orm.md` per concept (one row per state field, with type and constraints), **or**
+- `output/<Name>.orm.md` per concept — the **profile-neutral conceptual
+  model**: fact types with uniqueness and mandatory constraints from the
+  CSDP walk (steps 1–6). Profile mapping notes go in `## CSDP Notes`.
+  Do **not** write a relational `Field / Type / Constraints` table
+  unless the profile is explicitly relational. **or**
 - `output/_NOT_APPLICABLE.md` if the profile does not use a persistent store
 
 ## Verify
@@ -47,6 +51,9 @@ state schema for each concept by walking the seven-step procedure in
 - No region is shared across concepts.
 - Every field listed in `03a_dependency-review/output/pattern-d-summary.md`
   is present in the owner concept's region.
+- The `.orm.md` body describes fact types and constraints in
+  profile-neutral terms. A relational schema table (`Field / Type /
+  Constraints`) is only present if the profile is relational.
 
 ## Gate
 
