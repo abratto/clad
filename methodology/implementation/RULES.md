@@ -96,7 +96,18 @@ This applies per concept in 04d (one concept's tests approved before
 that concept's implementation), and per sync in 04e (one sync's tests
 approved before that sync's implementation).
 
+## R9. Every SPEC outcome maps to a distinct implementation branch
+
+In implementation code, each outcome defined in the SPEC must be
+returned by its own distinct code path. Two SPEC outcomes must never
+be collapsed into one return value (e.g. returning `VALIDATION_FAILED`
+when the SPEC defines `ACCOUNT_EXISTS` as a separate outcome).
+
+If you find yourself returning one outcome for two different
+conditions, check the SPEC — they are almost certainly distinct
+outcomes that were defined separately for a reason.
+
 ---
 
-Three of these rules — R1, R3, and R8 — fail most often by accident.
+Four of these rules — R1, R3, R8, and R9 — fail most often by accident.
 When reviewing PRs, look for them first.
