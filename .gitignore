@@ -13,3 +13,6 @@ mvnw.cmd
 # Local scratch / out-of-tree references
 references/
 
+# Roo Code local config (per-developer, not committed)
+# Copy .roo-clad-config.example to .roo-clad-config and fill in your values.
+.roo-clad-config
