@@ -13,3 +13,5 @@ mvnw.cmd
 # Local scratch / out-of-tree references
 references/
 
+# Roo Code local config (per-developer, not committed)
+.roo-clad-config
