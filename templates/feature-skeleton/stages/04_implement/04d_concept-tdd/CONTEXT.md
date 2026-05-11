@@ -39,9 +39,22 @@ sequence** (hard rule R8). Do not batch tests and implementation:
 2. **Stop. Present the tests to the human. Wait for approval.**
    Do not proceed until the human explicitly approves the tests.
 3. **Write the implementation** to make the approved tests green.
-   The implementation must use the profile's storage layer as defined
-   in `04a/output/` — not an in-memory substitute (e.g. no `HashMap`
-   standing in for a named graph in the Jena profile).
+   Before writing any code, read the approved test files and extract:
+   - The exact package declaration
+   - The exact class name being instantiated
+   - Every method signature being called
+   - Every inner class and enum being referenced
+
+   Your implementation must match all of these exactly. Do not invent
+   a different package, class name, or method shape.
+
+   The implementation must also use the profile's storage layer as
+   defined in `04a/output/` — not an in-memory substitute (e.g. no
+   `HashMap` standing in for a named graph in the Jena profile).
+
+   Cross-check the SPEC (`04b/output/`) and ensure every defined
+   outcome has its own distinct code path (R9). Do not collapse two
+   SPEC outcomes into one return value.
 4. **Stop. Present the implementation to the human. Wait for approval.**
 
 Build up a test-intent derivation map showing every action × outcome →
