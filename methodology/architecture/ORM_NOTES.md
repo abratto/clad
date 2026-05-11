@@ -8,7 +8,7 @@ under whatever profile is in use (relational, RDF, document, in-mem).
 
 The procedure is adapted from Mustafa Jarrar's **Object Role Modelling
 (ORM/ORM-ML) Conceptual Schema Design Procedure** (CSDP). The
-seven-step CSDP is the canonical answer to "given a domain
+six-step CSDP is the canonical answer to "given a domain
 description, how do I derive a normalised schema without skipping
 steps?". CLAD borrows the *shape* of the procedure; it does not adopt
 the full ORM-ML notation. See
@@ -22,7 +22,7 @@ primary source.
 Stage 04a only. If the profile is in-memory (no persistent store),
 04a writes `_NOT_APPLICABLE.md` and this file does not apply.
 
-## The seven steps (CLAD adaptation of Jarrar CSDP)
+## The six steps (CLAD adaptation of Jarrar CSDP)
 
 For each concept independently — never look across concepts during
 04a.
@@ -44,29 +44,30 @@ For each concept independently — never look across concepts during
    concept's invariants.
 6. **Check derivability.** If a fact can be derived from others, mark
    it derived rather than stored. Derived facts do not become columns.
-7. **Note the profile mapping.** Record how the named region for this
-   concept is wired in the chosen profile — one **named region** per
-   concept (R2). For a Jena/RDF profile, each fact type becomes an RDF
-   property (predicate); uniqueness constraints become
-   `owl:InverseFunctionalProperty` or SHACL `sh:uniqueLang`; mandatory
-   roles become SHACL `sh:minCount 1`; enums become `owl:oneOf` or
-   SHACL `sh:in`. For a relational profile, fact types become columns.
-   This mapping note goes in `## CSDP Notes` — it is **not** the body
-   of the `.orm.md` file.
 
-The output written to `output/<Name>.orm.md` is the **profile-neutral
-conceptual model** from steps 1–6: the fact types with their
-uniqueness and mandatory constraints expressed in plain English or a
-simple table of (Fact Type | Uniqueness | Mandatory). Do not write a
-relational schema table (`Field / Type / Constraints`) unless the
-profile is explicitly relational. A relational schema table is a
-profile-specific artefact, not a conceptual model.
+The output of steps 1–6 is what gets written to the body of
+`output/<Name>.orm.md` as the profile-neutral conceptual model.
+
+## Post-walk: profile mapping note
+
+After completing the six conceptual steps, record how the named region
+for this concept is wired in the chosen profile. This note goes in
+`## CSDP Notes` of the `.orm.md` file — **not** in the `## CSDP Walk`
+section. The walk contains only steps 1–6.
+
+The profile mapping note should state:
+- The named region identifier (e.g. `<urn:clad:account>` for Jena)
+- How each fact type maps to the profile's storage primitive
+  (RDF property, column, document field)
+- How uniqueness and mandatory constraints are expressed in the profile
+
+See `## Profile mapping guidance` below for per-profile details.
 
 ## Profile mapping guidance
 
-The conceptual model (steps 1–6) is always profile-neutral. Step 7
-records *where* the named region lives; the translation varies by
-profile:
+The conceptual model (steps 1–6) is always profile-neutral. The post-walk
+profile mapping note records *where* the named region lives; the translation
+varies by profile:
 
 ### RDF / Jena TDB2
 - Each fact type → an RDF property in the concept's namespace
@@ -135,14 +136,15 @@ sync — never through a schema-level relationship.
 
 Stage 04a runs **interactively**, not as a single batch:
 
-1. Walk the seven steps **one at a time** in chat. After each step,
+1. Walk the six steps **one at a time** in chat. After each step,
    surface what was decided and end with the standard gate question:
    *"Do you agree with this step? Any corrections before I continue?"*
 2. Wait for human confirmation before moving to the next step. Do
    not pre-emptively draft step 4 while presenting step 3.
 3. Commit `output/<Name>.orm.md` (and any profile artefacts like
-   `ORM.xml`) **only after all confirmed steps are complete**. Half-
-   walked drafts do not get committed.
+   `ORM.xml`) **only after all six steps and the post-walk profile
+   mapping note are confirmed**. Half-walked drafts do not get
+   committed.
 
 This is slower per concept than batching, and that is the point —
 ORM mistakes that escape Stage 04a propagate into 04b SPECs, into
@@ -153,13 +155,13 @@ step 5 is cheap; catching it at 04d is not.
 
 If **step 1** (sample sentences) shows that the concept has no
 state — its `state` section is empty and no spec WHERE clause
-references it — skip steps 2–7. Confirm once with the human:
+references it — skip steps 2–6. Confirm once with the human:
 
 > *"`<Concept>` has no persistent state. I'll write
-> `output/<Concept>.orm.md` recording that fact and skip steps 2–7.
+> `output/<Concept>.orm.md` recording that fact and skip steps 2–6.
 > Do you agree?"*
 
-On confirmation, the file records *"No state — CSDP steps 2–7 do not
+On confirmation, the file records *"No state — CSDP steps 2–6 do not
 apply"* and the stage advances. No further interaction needed for
 that concept.
 
@@ -167,7 +169,7 @@ that concept.
 
 Every committed `<Name>.orm.md` ends with a section titled
 **`## CSDP Notes`**. This section is **not a transcript** of all
-seven steps — that would just duplicate the body of the file. It
+six steps — that would just duplicate the body of the file. It
 records **only non-self-evident decisions**:
 
 - Mid-walk corrections (e.g. *"Step 4 originally marked `email`
@@ -190,7 +192,7 @@ The first draft modelled `expiresAt` as an unconditional fact of
 expiry. Reverted to: `Session has expiresAt` mandatory iff
 `Session.kind = "user"`.
 
-### Step 7 — exposing `email` to other concepts
+### Profile mapping — exposing `email` to other concepts
 Pattern D summary requires `User.email` to be readable by
 `PasswordReset`. Added `email` to the `User` named region with
 public visibility. Concept spec already exposed it as a state
