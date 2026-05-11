@@ -76,7 +76,27 @@ be walkable for every observable effect. If you find an effect that
 does not back-trace, you have either an unauthorised behaviour (fix the
 code) or an incomplete use case (amend the contract).
 
+## R8. Tests before implementation — no exceptions
+
+In stages 04d and 04e, tests must be written, committed, and confirmed
+**red** before any implementation code is written. This is not a
+guideline; it is a hard gate.
+
+- Write the test file(s).
+- Stop. Present the tests to the human.
+- Wait for explicit human approval that the tests are correct.
+- Only then write the implementation to make them green.
+
+An agent that writes implementation code before receiving approval on
+the tests has violated this rule. If you find yourself thinking "I'll
+write the test and the implementation together to save time" — stop.
+Write the test only. Wait for approval.
+
+This applies per concept in 04d (one concept's tests approved before
+that concept's implementation), and per sync in 04e (one sync's tests
+approved before that sync's implementation).
+
 ---
 
-Two of these rules — R1 and R3 — fail most often by accident. When
-reviewing PRs, look for them first.
+Three of these rules — R1, R3, and R8 — fail most often by accident.
+When reviewing PRs, look for them first.
