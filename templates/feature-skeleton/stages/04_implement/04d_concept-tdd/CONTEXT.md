@@ -18,6 +18,7 @@ wrong layer.
 - If a test you want to write requires another concept's state, the test belongs in 04e, not here.
 - Write tests first. Do not write implementation code until the tests are approved (R8). Do not present tests and implementation together.
 - Do not use in-memory substitutes (e.g. `HashMap`) for the profile's storage layer. Check `04a/output/` for the correct storage shape.
+- Before writing each test, ask: "what state must exist for this outcome to be reachable?" Outcomes that require prior state (e.g. `ACCOUNT_EXISTS`, `AccountNotFound`) need an Arrange step that seeds that state before calling the action under test. A test that asserts an outcome it cannot produce from a fresh instance is a defect in the test.
 
 ## Inputs
 

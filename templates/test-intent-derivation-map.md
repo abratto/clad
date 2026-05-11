@@ -17,10 +17,15 @@
 ## Concept actions → concept tests
 
 > For Stage 04d. One row per public action of each concept in scope.
+> **Preconditions:** state that must exist before the action is called
+> to make this outcome reachable. Write `none` if the outcome is
+> reachable from a fresh instance. A test that cannot produce its
+> expected outcome from a fresh instance without seeding prior state
+> is a defect in the test, not the implementation.
 
-| Concept | Action | Outcome under test | Test | Status |
-|---|---|---|---|---|
-| `<Concept>` | `<action>` | `<Outcome>` | `<TestClass>.<testMethod>` | red \| green |
+| Concept | Action | Preconditions | Outcome under test | Test | Status |
+|---|---|---|---|---|---|
+| `<Concept>` | `<action>` | `none` \| `<description of required prior state>` | `<Outcome>` | `<TestClass>.<testMethod>` | red \| green |
 
 ## Sync rules → sync tests
 
