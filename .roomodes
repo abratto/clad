@@ -7,8 +7,8 @@
       "groups": [
         "read",
         ["edit", {
-          "fileRegex": "^(features/_system/.*|features/[^/]+/(stages/(0[0-3]|05)_.*/output/.*|RESUME\\.md))$",
-          "description": "Stage 00–03 and 05 output files, RESUME.md, and the system-scoped stage 00 folder (features/_system/) only. No implementation files, no test files, no stage 04 output."
+          "fileRegex": "^(features/_system/.*|features/[^/]+/(stages/(0[0-3][a-z]?|05[a-z]?)_.*/output/.*|RESUME\\.md))$",
+          "description": "Stage 00–03 and 05 output files (including lettered sub-stages 02a, 02b, 03a etc.), RESUME.md, and the system-scoped stage 00 folder (features/_system/) only. No implementation files, no test files, no stage 04 output."
         }]
       ],
       "customInstructions": "See .roorules-clad-architect for full instructions."
