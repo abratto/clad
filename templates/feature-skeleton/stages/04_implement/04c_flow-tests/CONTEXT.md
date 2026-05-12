@@ -17,6 +17,7 @@ covered.
 
 **Agent stance for this stage:** these tests must read like the use
 case. If they read like a unit test, you are testing the wrong layer.
+Read `methodology/implementation/TDD.md` before writing anything.
 
 ## Inputs
 
@@ -24,8 +25,9 @@ case. If they read like a unit test, you are testing the wrong layer.
 |---|---|---|
 | `../../01_usecase/output/usecase.md` | 4 | Scenarios to test |
 | `../../03_syncs/output/` | 4 | Expected coordination |
-| `../04b_spec/output/` | 4 | Action signatures |
-| `../../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics |
+| `../04b_spec/output/` | 4 | Action signatures and outcome values |
+| `../../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics, casing rules, payload rules |
+| `../../../../../methodology/implementation/TDD.md` | 3 | London School double-loop discipline |
 
 ## Process
 
@@ -36,6 +38,11 @@ expected response. Then add a stub test under
 (or the profile's equivalent), starting `@Disabled` (red). The test
 goes green at the end of `04e`.
 
+**Token chain rules (read `FLOW_TOKENS.md` in full before writing):**
+- Outcome values MUST be SCREAMING_SNAKE_CASE, copied from the SPEC slice.
+- Token count = number of rows in the chain table — no phantom intermediate tokens.
+- Passwords and secrets MUST NOT appear in any token payload.
+
 ## Outputs
 
 - `output/<scenario>-flow-test.md` per scenario
@@ -45,6 +52,9 @@ goes green at the end of `04e`.
 
 - Every scenario has one flow-test markdown spec.
 - Every stub test is `@Disabled` (or red) and carries a `TODO` linking back to the scenario name.
+- All outcome values are SCREAMING_SNAKE_CASE.
+- No passwords or secrets appear in any token payload.
+- Token count per scenario equals the number of rows in the corresponding chain table.
 - **Cross-stage check (back):** the flow-test markdown's expected token
   chain matches the syncs in `03_syncs/output/` (no surprise tokens).
 
