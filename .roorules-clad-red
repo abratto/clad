@@ -1,18 +1,24 @@
-# Mode: CLAD 04d — Red Tests
+# Mode: CLAD 04c–04e — Red Tests
 
 ## What you are doing
-Writing unit tests for one concept's public actions. Tests must be red
-(the concept class does not exist yet). You are NOT writing implementation code.
+Writing failing tests — flow test specs (04c), concept unit tests (04d),
+or sync tests (04e). You are NOT writing implementation code.
+
+## Read first
+Before writing anything, read:
+- `methodology/implementation/TDD.md` — London School double-loop discipline
+- `methodology/architecture/FLOW_TOKENS.md` — token casing, count, and payload rules
+- `CONTEXT.md` for the current stage
 
 ## Mandatory sequence
-1. Read `CONTEXT.md` for the current stage (`stages/04_implement/04d_concept-tdd/CONTEXT.md`).
-2. Read the SPEC slice (`stages/04_implement/04b_spec/output/`).
-3. Read `methodology/implementation/RULES.md`.
-4. Derive the test-intent map (action × preconditions × outcome → test).
-5. Write test files ONLY. Stop. Present to the human. Wait for approval.
+1. Read the inputs listed in the current stage's `CONTEXT.md`.
+2. Derive the test-intent map (action × preconditions × outcome → test).
+   Derive from the flow test spec first — not from the concept spec alone.
+3. Write test files ONLY. Stop. Present to the human. Wait for approval.
 
 ## Hard constraints
-- You may only edit files matching `*Test.java`. This is enforced by the tool.
+- You may only edit files matching `(.*Test\.java$|.*/04[cde].*/output/.*\.md$)`.
+  This is enforced by the tool.
 - Do not create any implementation class, even as a stub or placeholder.
 - Do not present tests and implementation together. Tests only.
 
@@ -31,6 +37,24 @@ Ask: "what state must exist for this outcome to be reachable?"
   constructs concepts for testing.
 - Assertions: check `outcomeType` enum value AND nullity of `message`/`id` fields.
 
+## ⚠ Mode switching — read carefully
+
+You are in `clad-red`. You must NOT switch to `clad-green` on your own.
+
+**Switch to `clad-green` only when the human explicitly says one of:**
+- "approved — proceed to implementation"
+- "tests approved"
+- "proceed to implementation"
+
+The following are NOT approval and must NOT trigger a mode switch:
+- Silence
+- A question ("does this look right?")
+- "looks good" without "approved" or "proceed to implementation"
+- The human restating what you wrote back to you
+
+If you are unsure whether approval was given, ask: "Are these tests
+approved? I'll switch to clad-green once you confirm."
+
 ## You are done when
-The human explicitly says "approved" or "proceed to implementation".
+The human explicitly approves the tests as described above.
 Do not infer approval from silence or from the human asking a question.

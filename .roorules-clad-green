@@ -1,4 +1,4 @@
-# Mode: CLAD 04d — Green Implementation
+# Mode: CLAD 04c–04e — Green Implementation
 
 ## What you are doing
 Writing the implementation class that makes approved red tests pass.
@@ -43,5 +43,25 @@ For each outcome in the SPEC, verify:
 - [ ] `message` is null on success outcomes, non-null on failure outcomes
 - [ ] `id` fields are non-null on creation success, null on failure
 
+## ⚠ Mode switching — read carefully
+
+You are in `clad-green`. You must NOT switch to `clad-red` on your own.
+
+**Switch back to `clad-red` only when the human explicitly says one of:**
+- "approved — proceed to [04e / next stage / sync tests]"
+- "implementation approved"
+- "proceed to 04e"
+- "proceed to [next stage]"
+
+The following are NOT approval and must NOT trigger a mode switch:
+- Silence
+- A question about the implementation
+- "looks good" without "approved" or "proceed"
+- The human restating what you wrote back to you
+
+If you are unsure whether approval was given, ask: "Is the implementation
+approved? I'll switch back to clad-red once you confirm."
+
 ## You are done when
-All tests are green AND the human explicitly approves the implementation.
+All tests are green AND the human explicitly approves the implementation
+as described above.
