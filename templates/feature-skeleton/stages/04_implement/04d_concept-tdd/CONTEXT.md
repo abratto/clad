@@ -1,5 +1,12 @@
 # Stage 04d — Concept TDD (inner red → green)
 
+## Pre-condition (agent must verify before starting)
+
+**`04c_flow-tests/output/` must be non-empty.** If it is empty, stop
+immediately and tell the human that Stage 04c must be completed and
+gated before Stage 04d can begin. Do not write any test or
+implementation file until this pre-condition is satisfied.
+
 ## Why this stage exists
 
 The **inner red→green** for each concept in isolation. One concept,
@@ -18,7 +25,7 @@ wrong layer.
 - If a test you want to write requires another concept's state, the test belongs in 04e, not here.
 - Write tests first. Do not write implementation code until the tests are approved (R8). Do not present tests and implementation together.
 - Do not use in-memory substitutes (e.g. `HashMap`) for the profile's storage layer. Check `04a/output/` for the correct storage shape.
-- Before writing each test, ask: "what state must exist for this outcome to be reachable?" Outcomes that require prior state (e.g. `ACCOUNT_EXISTS`, `AccountNotFound`) need an Arrange step that seeds that state before calling the action under test. A test that asserts an outcome it cannot produce from a fresh instance is a defect in the test.
+- Before writing each test, ask: "what state must exist for this outcome to be reachable?" Outcomes that require prior state (e.g. `ACCOUNT_EXISTS`, `AccountNotFound`) need an Arrange step that sets that state up via the concept's own API — not direct storage writes.
 
 ## Inputs
 
@@ -26,6 +33,7 @@ wrong layer.
 |---|---|---|
 | `../../02_concepts/output/` | 4 | Concept specs |
 | `../04b_spec/output/` | 4 | SPEC slices to compile against |
+| `../04c_flow-tests/output/` | 4 | Pre-condition check — must be non-empty |
 | `../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
 | `../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5 |
 
@@ -73,6 +81,7 @@ a flow token) throughout.
 - Every public concept action emits a flow token.
 - Tests were approved red before implementation was written (R8).
 - **Cross-stage check (back):** every action listed in `04b/output/` has at least one row in the test-intent map.
+- **Cross-stage check (back):** `04c_flow-tests/output/` is non-empty (pre-condition was satisfied).
 
 ## Gate
 
