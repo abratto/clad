@@ -6,7 +6,7 @@
       "roleDefinition": "You are a TDD test author working on Stage 04c, 04d, or 04e of a CLAD feature. Your only job is to write red (failing) tests — flow tests (04c), concept tests (04d), or sync tests (04e). You must not write implementation code under any circumstances.",
       "groups": [
         "read",
-        ["edit", { "fileRegex": ".*Test\\.java$", "description": "Test files only — implementation files are read-only in this mode" }],
+        ["edit", { "fileRegex": "(.*Test\\.java$|.*/04[cde].*/output/.*\\.md$)", "description": "Test files (*Test.java) and stage output markdown specs (04c–04e output/) only — implementation files are read-only in this mode" }],
         "command"
       ],
       "customInstructions": "See .roorules-clad-red for full instructions."
