@@ -54,7 +54,19 @@ paper.
   concept's first action).
 - **Coverage:** every scenario in `../01_usecase/output/usecase.md`
   has at least one concept listed under it in the *Coverage check*
-  section; every concept appears in at least one scenario.
+  section; every concept appears in at least one scenario. Every
+  **extension scenario** must appear as its own row — do not collapse
+  extensions into the main success scenario row.
+- **Bootstrap concept check:** every transport boundary this feature
+  crosses must have a bootstrap concept in the Concepts table. For
+  HTTP features this is `Web` (`handle`, `respond`). For other
+  transports use the appropriate bootstrap concept (e.g. `Grpc`,
+  `Stream`, `Cli` — see
+  `../../../../methodology/architecture/WEB_CONCEPT.md` for the
+  pattern). A responsibility map with no bootstrap concept is
+  incomplete: the chain has no entry point and no exit point. The
+  bootstrap concept's Notes column should read *"Bootstrap concept —
+  see methodology/architecture/WEB_CONCEPT.md"*.
 
 ## Gate
 

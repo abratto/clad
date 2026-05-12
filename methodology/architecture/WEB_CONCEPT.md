@@ -1,55 +1,69 @@
-# The `Web` concept — sole bootstrap surface
+# Bootstrap concepts — transport boundary ownership
 
-`Web` is a **bootstrap concept**: it is the only concept allowed to
-own an HTTP entry point (hard rule R4). Every business concept stays
-on its side of the wire and is invoked only through syncs that fire
-on `Web.handle` flow tokens.
+A **bootstrap concept** is the concept that owns a system's transport
+boundary: it translates external signals into flow tokens (the entry
+point) and translates concept outcomes back into transport responses
+(the exit point). Every chain table starts and ends with a bootstrap
+concept action.
 
-This file describes what `Web` does, what it does not do, and how to
-recognise a `Web` violation in code review.
+`Web` is the HTTP bootstrap concept and is the primary example in
+CLAD. Other transports use the same pattern under a different name:
+
+| Transport | Bootstrap concept | Entry action | Exit action |
+|---|---|---|---|
+| HTTP / REST | `Web` | `handle(request)` | `respond(status, body)` |
+| gRPC | `Grpc` | `receive(call)` | `reply(status, message)` |
+| Kafka / event stream | `Stream` | `consume(event)` | `publish(topic, payload)` |
+| CLI | `Cli` | `invoke(args)` | `print(exitCode, output)` |
+
+The pattern is identical in all cases. Only the transport vocabulary
+changes. Hard rule R4 applies to every bootstrap concept: **no
+business concept may own a transport entry point**.
+
+This file uses `Web` for all examples. Substitute the appropriate
+bootstrap concept name and action vocabulary when working with a
+different transport.
 
 ---
 
-## What `Web` does
+## What a bootstrap concept does
 
-1. **Translate HTTP into a single action.** `Web.handle(request)`
-   takes the incoming HTTP request and emits a flow token. That is
-   `Web`'s entire upstream job.
-2. **Translate a result back into HTTP.** `Web.respond(token,
-   status, body)` takes a result (typically authored by a sync) and
-   writes the HTTP response.
-3. **Own the route table.** `Web` knows which URL paths exist and
-   which method is allowed on each. The route table is data inside
-   `Web`; it is not metadata scattered across business concepts.
+1. **Translate the transport signal into a single action.** The entry
+   action (e.g. `Web.handle(request)`) receives the inbound signal and
+   emits a flow token. That is its entire upstream job.
+2. **Translate a result back into a transport response.** The exit
+   action (e.g. `Web.respond(status, body)`) takes a result authored
+   by a sync and writes the outbound response.
+3. **Own the dispatch table.** The bootstrap concept knows which
+   routes / methods / topics / commands exist. This table is data
+   inside the concept; it is not metadata scattered across business
+   concepts.
 
-That is the whole responsibility list. `Web` has two actions:
-`handle` and `respond`. It has one piece of state: the route table.
+That is the whole responsibility list. A bootstrap concept has two
+actions and one piece of state.
 
-## What `Web` does **not** do
+## What a bootstrap concept does **not** do
 
-- **No business logic.** `Web` does not validate domain invariants,
-  query a database, hash a password, or decide whether a request is
+- **No business logic.** It does not validate domain invariants, query
+  a database, hash a password, or decide whether a request is
   authorised. Those decisions live in concepts and are coordinated
   by syncs.
-- **No reading another concept's state.** `Web` honours R1 like
-  every other concept. If a sync needs `User.lookupByUsername` to
-  decide a response shape, the *sync* calls it, not `Web`.
-- **No conditional branching on domain values.** `Web.respond` can
-  switch on HTTP status (200/400/401/...) but not on domain
-  outcomes like "wrong password vs. unknown user". Domain branching
-  belongs to syncs whose `then` clause picks which `Web.respond`
-  variant to fire.
+- **No reading another concept's state.** It honours R1 like every
+  other concept.
+- **No conditional branching on domain values.** The exit action can
+  switch on transport-level status codes but not on domain outcomes
+  like "wrong password vs. unknown user". Domain branching belongs to
+  syncs whose `then` clause picks which exit action variant to fire.
 - **No retries, no caching, no rate-limiting policy.** Those are
   cross-cutting concerns that, if needed, become their own concepts
   (`RateLimit`, `Cache`, ...) coordinated by syncs.
 
-## How `Web` participates in the chain
+## How a bootstrap concept participates in the chain
 
-Every chain table (Stage 02b) starts with `Web.handle` and ends with
-`Web.respond`. The middle rows are business concepts. This is what
-makes `Web` *visible* in the choreography rather than ambient — a
-reviewer can see exactly where the HTTP boundary is in every
-scenario.
+Every chain table (Stage 02b) starts with the bootstrap concept's
+entry action and ends with its exit action. The middle rows are
+business concepts. This makes the transport boundary *visible* in the
+choreography rather than ambient.
 
 ```mermaid
 sequenceDiagram
@@ -65,34 +79,45 @@ sequenceDiagram
     Web->>Client: respond(status, body)
 ```
 
-## Why `Web` is not in `02_concepts/output/`
+## Why bootstrap concepts are not in `02_concepts/output/`
 
 Stage 02 writes one `<Name>.concept.md` per *business* concept.
-`Web` is a fixture of the system, not a domain concept; its
-`<Name>.concept.md` would just restate this file. Stage 02a's
-responsibility map lists `Web` (so its row is visible in coverage
-checks) and points its *Notes* column at this document.
+Bootstrap concepts are fixtures of the system, not domain concepts;
+their anatomy is documented here rather than in a per-feature concept
+file. Stage 02a's responsibility map lists the bootstrap concept (so
+its row is visible in coverage checks) and points its *Notes* column
+at this document.
+
+## Responsibility map rule
+
+Every responsibility map must include a row for the bootstrap concept
+that owns this feature's transport boundary. A map without a bootstrap
+concept row is incomplete: the chain has no entry point and no exit
+point. The 02a CONTEXT.md Verify section enforces this as a named
+check.
 
 ## Reviewing for R4 violations
 
 Look for these symptoms:
 
-- A `@Controller`/`@Get`/`@Post` annotation outside the `Web` (or
-  equivalent) package.
-- A business concept that takes an `HttpRequest` (or framework
-  equivalent) as an argument.
-- A sync whose `then` clause speaks HTTP verbs ("respond 401")
-  instead of calling `Web.respond(...)` with a domain result.
-- A new concept named `*Controller` or `*Endpoint` — that name is a
-  smell that `Web`'s job is being split.
+- A `@Controller`/`@Get`/`@Post` annotation (or transport equivalent)
+  outside the bootstrap concept's package.
+- A business concept that takes a transport request object as an
+  argument.
+- A sync whose `then` clause speaks transport verbs directly instead
+  of calling the bootstrap concept's exit action with a domain result.
+- A new concept named `*Controller`, `*Endpoint`, `*Consumer`, or
+  `*Handler` — those names are a smell that the bootstrap concept's
+  job is being split.
 
-Any of these means R4 has slipped. The fix is always: move the HTTP
-surface back into `Web` and replace the violation with a sync.
+Any of these means R4 has slipped. The fix is always: move the
+transport surface back into the bootstrap concept and replace the
+violation with a sync.
 
 ## Profile reference
 
 The Java/Micronaut/Jena profile implements `Web` as a single
-`WebController` class under
-`reference-impl/java-micronaut-jena/src/main/java/com/example/app/infrastructure/`.
-Other profiles (Node/Express, Python/FastAPI, ...) would implement
-the same two actions over their respective frameworks.
+`WebController` class. Other profiles (Node/Express, Python/FastAPI,
+Go/net-http, ...) implement the same two actions over their respective
+frameworks. A gRPC profile would implement `Grpc` as a single
+`GrpcServer` class with the same two-action contract.

@@ -14,18 +14,26 @@
 
 | Concept | Owned state (one line) | Owned actions | Notes |
 |---|---|---|---|
+| `Web` | route table | `handle`, `respond` | Bootstrap concept — see `methodology/architecture/WEB_CONCEPT.md`. Replace with `Grpc`, `Stream`, `Cli`, etc. if this feature's transport is not HTTP. |
 | `<Name>` | `<field>: <Type>`, `<field>: <Type>` | `<actionName>`, `<actionName>` | <e.g. "no persistence in v1"> |
 | `<Name>` | … | … | |
+
+> **Bootstrap concept rule:** every feature must have exactly one
+> bootstrap concept row — the concept that owns the transport boundary
+> (entry point + exit point). For HTTP this is `Web`. Remove this
+> comment block once the row is confirmed.
 
 ## Coverage check
 
 > For each scenario in `../01_usecase/output/usecase.md`, list the
 > concepts that participate. Every scenario must touch at least one
 > concept; every concept must be touched by at least one scenario.
+> List every extension scenario as its own row.
 
 | Scenario | Concepts touched |
 |---|---|
-| `<scenario-name>` | `<Name>`, `<Name>` |
+| `<main-scenario-name>` | `Web`, `<Name>` |
+| `<main-scenario-name> ext <Xa> — <label>` | `Web`, `<Name>` |
 
 ## Out of scope
 
