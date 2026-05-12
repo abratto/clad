@@ -16,16 +16,32 @@
 
 ## Concept actions → concept tests
 
-> For Stage 04d. One row per public action of each concept in scope.
+> For Stage 04d.
+>
+> **One test class per concept action.** Do not mix actions in the same
+> test class. The test class name is `<Concept><Action>Test`
+> (e.g. `AccountValidateTest`, `AccountCreateTest`). If you find
+> yourself putting two actions in one class, stop and split it.
+>
 > **Preconditions:** state that must exist before the action is called
 > to make this outcome reachable. Write `none` if the outcome is
 > reachable from a fresh instance. A test that cannot produce its
 > expected outcome from a fresh instance without seeding prior state
 > is a defect in the test, not the implementation.
+>
+> **Coverage rule:** every outcome defined in the SPEC slice
+> (`04b_spec/output/`) must appear as at least one row, whether or not
+> it is exercised by a flow test. Quote the spec line if the outcome
+> does not appear in any flow test — this confirms it is spec-defined
+> and not invented.
 
-| Concept | Action | Preconditions | Outcome under test | Test | Status |
+### `<Concept>.<action>` → test class: `<Concept><Action>Test`
+
+| # | Test method | Outcome | Source | Preconditions | Arrange |
 |---|---|---|---|---|---|
-| `<Concept>` | `<action>` | `none` \| `<description of required prior state>` | `<Outcome>` | `<TestClass>.<testMethod>` | red \| green |
+| 1 | `<testMethod>()` | `<OUTCOME>` | Flow: `<scenario-name>` \| Spec: `<file>:<line>` | none \| `<description>` | none \| `<description>` |
+
+> Repeat this `###` block once per public action of each concept in scope.
 
 ## Sync rules → sync tests
 
