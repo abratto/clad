@@ -11,7 +11,7 @@ mechanical.
 
 **Feeds:**
 
-- `<name>.sync.md` → 03a (every `then` call and every `where` clause is tabulated; Pattern D reads are flagged), 04c (the sync chain is what the outer flow test asserts), 04e (one inner red→green TDD pass per sync), 05 (the verifier checks that every observed call is authorised by a sync or a use-case scenario).
+- `<name>.sync.md` → 03a (every `then` call and every `where` clause is tabulated; Pattern D reads are flagged), 04c (the sync chain is what the outer flow test asserts), 04e (one inner red→green TDD loop per sync).
 
 **Agent stance for this stage:** if you reach for an `if`, you are in
 the wrong file. Branching belongs inside a concept action's outcomes;
@@ -70,6 +70,17 @@ Every sync's `Cites` section names the use-case scenario it satisfies.
   `01_usecase/output/usecase.md` is satisfied by at least one sync, or
   is a `Web`-only failure path (call this out explicitly in the sync
   pack's notes).
+- **Cross-stage check (back to 02b) — repeated action backstop:** scan
+  the full sync set for any `<Concept>.<action>` that appears as the
+  `then` target of one sync and also as the `when` source of another,
+  where both share the same concept action name. If the same
+  `<Concept>.<action>` appears more than once across the `then` lines
+  of the sync set, this indicates that the chain table contained a
+  repeated action invocation that was not caught at the 02b gate. Stop,
+  do not proceed to 03a, and surface the finding to the human: name the
+  duplicated action and the chain table rows that produced it. The chain
+  table must be corrected and re-approved before the syncs can be
+  re-derived.
 
 ## Gate
 
