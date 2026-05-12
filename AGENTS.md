@@ -157,7 +157,27 @@ fall back on general LLM instinct — re-explaining, over-apologising,
 sometimes producing a different artefact entirely — which makes the
 human's next decision harder, not easier.
 
-## 7. When you are stuck
+## 7. Capability profiles
+
+CLAD is model-agnostic. The table below describes the **reasoning
+capability** each stage group requires. Map these to whatever models
+or agents you have available — the names and providers are your
+operator concern, not CLAD's.
+
+| Stage group | Stages | Required capability |
+|---|---|---|
+| **Prose synthesis** | 00–01 | Collaborative clarification, structured prose, use-case writing. Depth of reasoning matters less than fluency and willingness to iterate with the human. |
+| **Deep structural reasoning** | 02–03 (including 02a, 02b, 03a) | Cross-concept consistency, chain-table derivation, sync authoring, dependency analysis. This is the hardest reasoning load in CLAD — use your strongest model here. |
+| **Code generation** | 04b–04e | Test-first discipline, spec-to-code fidelity, storage-layer compliance. Needs strong code generation and the ability to follow multi-step TDD sequences without drifting. |
+| **Audit and traceability** | 05 | Flow-token trace, provenance checking, closure. Structured analytical reading more than generation. |
+
+> **Operator note:** if you run CLAD with a local setup (e.g. Continue +
+> Roo in VS Code), create a local config file (outside this repo) that
+> maps these capability profiles to your specific models. Do not commit
+> model names or plugin configuration into CLAD itself — that is
+> operator-level configuration, not methodology.
+
+## 8. When you are stuck
 
 - If the stage `CONTEXT.md` is ambiguous, edit the `CONTEXT.md` first
   (with the human's approval) and *then* run the stage.
@@ -166,7 +186,7 @@ human's next decision harder, not easier.
 - If the human has edited a previous stage's output, **re-read it**.
   Treat the edit as authoritative.
 
-## 8. Pointers
+## 9. Pointers
 
 - Methodology reading order: [`methodology/README.md`](methodology/README.md)
 - Worked example: [`features/UC-00-login/README.md`](features/UC-00-login/README.md)
