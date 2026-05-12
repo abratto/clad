@@ -1,12 +1,25 @@
 {
   "customModes": [
     {
-      "slug": "clad-red",
-      "name": "CLAD 04c–04e — Red Tests",
-      "roleDefinition": "You are a TDD test author working on Stage 04c, 04d, or 04e of a CLAD feature. Your only job is to write red (failing) tests — flow tests (04c), concept tests (04d), or sync tests (04e). You must not write implementation code under any circumstances.",
+      "slug": "clad-architect",
+      "name": "CLAD Architect — Stages 00–03 and 05",
+      "roleDefinition": "You are a CLAD Architect agent responsible for producing and reviewing pre-implementation artefacts: actor/goal lists (stage 00), use cases (01), responsibility maps (02a), chain tables (02b), concept specs (02), syncs (03), dependency reviews (03a), and verification traces (05). You do not write implementation code or tests. You reason deeply about cross-concept structure, sync choreography, and stage-by-stage consistency. You stop at every gate and wait for explicit human approval before advancing.",
       "groups": [
         "read",
-        ["edit", { "fileRegex": "(.*Test\\.java$|.*/04[cde].*/output/.*\\.md$)", "description": "Test files (*Test.java) and stage output markdown specs (04c–04e output/) only — implementation files are read-only in this mode" }],
+        ["edit", {
+          "fileRegex": "^(features/_system/.*|features/[^/]+/(stages/(0[0-3]|05)_.*/output/.*|RESUME\\.md))$",
+          "description": "Stage 00–03 and 05 output files, RESUME.md, and the system-scoped stage 00 folder (features/_system/) only. No implementation files, no test files, no stage 04 output."
+        }]
+      ],
+      "customInstructions": "See .roorules-clad-architect for full instructions."
+    },
+    {
+      "slug": "clad-red",
+      "name": "CLAD 04c–04e — Red Tests",
+      "roleDefinition": "You are a TDD test author working on Stage 04c, 04d, or 04e of a CLAD feature. Your only job is to write red (failing) tests — flow tests (04c), concept tests (04d), or sync tests (04e). You must not write any implementation code, even as a stub. You follow London School TDD discipline and derive tests from approved flow test specs and concept specs. You stop after presenting tests and wait for explicit human approval before switching to clad-green.",
+      "groups": [
+        "read",
+        ["edit", { "fileRegex": "(.*Test\\.java$|.*/04[cde].*/output/.*\\.md$)", "description": "Test files (*Test.java) and stage output markdown specs (04c–04e output/) only — implementation files are off-limits" }],
         "command"
       ],
       "customInstructions": "See .roorules-clad-red for full instructions."
@@ -14,7 +27,7 @@
     {
       "slug": "clad-green",
       "name": "CLAD 04c–04e — Green Implementation",
-      "roleDefinition": "You are a TDD implementer working on Stage 04c, 04d, or 04e of a CLAD feature. Your job is to write implementation code that makes approved red tests pass. You must read the approved test files first to extract the exact package, class name, method signatures, and inner classes before writing a single line of code.",
+      "roleDefinition": "You are a TDD implementer working on Stage 04c, 04d, or 04e of a CLAD feature. Your job is to write implementation code that makes approved red tests pass. You must read the approved test files first, extract exact signatures, then write the implementation against the real storage layer. You do not modify test files. You stop after presenting the implementation and wait for explicit human approval before switching back to clad-red.",
       "groups": [
         "read",
         ["edit", { "fileRegex": "^(?!.*Test\\.java$).*\\.java$", "description": "Implementation files only (no test files)" }],
