@@ -15,8 +15,53 @@ authorised it.
 | `action` | string | `<ConceptName>.<actionName>` |
 | `actor` | string \| null | Who initiated the chain (typically a `userId`); flows down from the root |
 | `at` | timestamp | When the action completed |
-| `outcome` | enum | The action's outcome variant (`Ok`, `InvalidPassword`, …) |
-| `payload` | object | Action-specific, redacted as appropriate |
+| `outcome` | enum | The action's outcome variant — see **Outcome casing** below |
+| `payload` | object | Action-specific — see **Payload rules** below |
+
+## Outcome casing
+
+**Outcome values MUST use SCREAMING_SNAKE_CASE**, matching the Java
+enum variant name exactly. Examples: `VALID`, `ACCOUNT_EXISTS`,
+`VALIDATION_FAILED`, `CREATED`, `ROUTED`, `SENT`.
+
+PascalCase variants (e.g. `AccountExists`, `ValidationFailed`) are
+wrong and will fail cross-stage consistency checks in Stage 05.
+
+When writing flow test specs (Stage 04c), copy outcome values directly
+from the SPEC slice (`04b_spec/output/`) — do not invent casing.
+
+## One token per invocation
+
+**Each concept action emits exactly one flow token.** Internal steps
+within an action — such as a duplicate-check query inside
+`Account.validate` — are implementation details and must not appear as
+separate tokens in the chain.
+
+If a chain table row lists `Account.validate`, exactly one
+`Account.validate` token appears in the flow token tree for that
+invocation. A second `Account.validate` token (e.g. `AccountNotFound`
+as an intermediate step) is a phantom token and is always wrong.
+
+The token count for a scenario equals the number of rows in its chain
+table, no more.
+
+## Payload rules
+
+The `payload` field is subject to three hard rules:
+
+1. **No secrets.** Passwords, tokens, private keys, and any other
+   credential MUST NOT appear in any flow token payload. Ever. Flow
+   tokens are persisted; a password in a token is a password in a log.
+
+2. **Minimum necessary.** Include only the fields needed to diagnose
+   the outcome. For a `VALIDATION_FAILED` outcome, include the field
+   names and error messages — not the raw submitted values of sensitive
+   fields.
+
+3. **No cross-concept state.** Payload fields must come from the
+   concept's own state or from the action's input parameters. A concept
+   must not read another concept's named region to populate its token
+   payload (R2).
 
 ## Why "tokens" and not just "logs"
 
