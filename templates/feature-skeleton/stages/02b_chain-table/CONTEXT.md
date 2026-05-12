@@ -10,7 +10,7 @@ from silently inventing names that nothing else will recognise.
 
 **Feeds:**
 
-- `<scenario>-chain.md` → 02 (every action used must be declared in the matching concept spec with the same outcome enum), 03 (each row formalises into a sync `when`/`then` link), 03a (the chain is the source of truth for inbound calls per concept), 04c (flow tests assert the chain end-to-end at runtime).
+- `<scenario>-chain.md` → 02 (every action used must be declared in the matching concept spec with the same outcome enum), 03 (each row formalises into a sync `when`/`then` link), 03a (the chain is the dependency graph 03a audits), 04c (the flow test asserts the token sequence the chain predicts).
 
 **Agent stance for this stage:** every row is `<Concept>.<action> -> <outcome>`. If you cannot name the outcome, the concept set is wrong — go back to 02a, do not invent.
 
@@ -51,6 +51,13 @@ chain table per scenario.
   `02a_responsibility-map/output/responsibility-map.md`.
 - The first row of every chain is `Web.handle` (R4); the last row of
   every chain is `Web.respond`.
+- **No repeated action invocations.** Each `<Concept>.<action>` pair
+  may appear at most once per chain. If the same action appears in two
+  rows, those rows must be merged: a single action invocation produces
+  one outcome per execution path, and all reachable outcomes are listed
+  in the `Outcome` column of that single row. Two rows for the same
+  action means outcomes are being split that belong together — that is
+  a defect in the chain table, not a valid choreography choice.
 - **Cross-stage check (back):** the chain's trigger and final response
   match the scenario's *Trigger* and *Expected outcomes* in the use
   case.
