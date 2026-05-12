@@ -21,55 +21,85 @@ A concept name is a **noun**, in PascalCase, and refers to a capability,
 not an entity. (`User` is fine because there is something called a user;
 `UserService` is not, because the service-ness is incidental.)
 
-### 2. State
+### 2. State — Alloy-style relational notation
 
-The data the concept owns. Described in plain prose plus a small typed
-schema. This is the *only* state the concept has access to.
-
-```
-State
------
-- credentials: Map<UserId, PasswordHash>
-- failedAttempts: Map<UserId, Int>
-```
-
-State is private to the concept. No other concept may read it.
-
-### 3. Actions
-
-The verbs the concept exposes. Each action lists:
-
-- **inputs** (typed)
-- **outputs** (typed, including failure modes)
-- **effect on state** (in prose)
-- **flow-token contribution** (what fields the emitted flow token carries)
+The data the concept owns, expressed as typed relations with multiplicity
+annotations. This notation is drawn from Daniel Jackson's Alloy (see
+`../reference/CITATIONS.md`) and used here without the Alloy toolchain —
+it adds precision without requiring a model checker.
 
 ```
-Action: verify(userId, password) -> Ok | InvalidPassword | Locked
-  - Reads credentials[userId].
-  - On Ok: clears failedAttempts[userId].
-  - On InvalidPassword: increments failedAttempts[userId]; if it crosses
-    threshold, returns Locked thereafter.
-  - Flow token: { action: "PasswordAuth.verify", userId, outcome }.
+credentials(userId: UserId) -> passwordHash: PasswordHash   -- mandatory
+failedAttempts(userId: UserId) -> count: Int                -- mandatory, default 0
+lockedUntil(userId: UserId) -> timestamp: Timestamp         -- optional
 ```
 
-Actions are the *only* way the outside world (other concepts via syncs,
-or `Web` via the HTTP surface) influences the concept.
+Multiplicity annotations:
+- `mandatory` — every instance of the subject must have this field
+- `optional` — may be absent
+- `conditional mandatory: <condition>` — mandatory only when the condition holds
+- `zero or more` — multi-valued relation
 
-### 4. Operational principle
+For stateless concepts:
+```
+*None.* TasteMatch is stateless. All data is read on-demand from
+flow tokens and upstream action payloads.
+```
 
-A short prose story of how the concept is meant to be used: a typical
-sequence of actions and what the user observes. This is the heart of
-WYSIWID — if a reader can follow the operational principle, they
-understand the concept.
+State is **private** to the concept. No other concept may read it directly
+(hard rule R1). The only legal cross-concept read is a Pattern D `where`
+clause in a sync spec.
+
+### 3. Actions — case-split notation
+
+The verbs the concept exposes. Each action lists every possible output as
+a separate indented case-split block. This makes exhaustiveness visible
+at a glance and maps directly to the TDD case-split in Stage 04.
+
+```
+verify [ userId: UserId ; password: String ] => [ ok ]
+    password matches credentials[userId] and account is not locked
+    clears failedAttempts[userId]
+    flow token: { action: "PasswordAuth.verify", userId, outcome: "ok" }
+
+verify [ userId: UserId ; password: String ] => [ error: "invalidPassword" ]
+    userId is registered but password did not match
+    increments failedAttempts[userId]; if counter reaches threshold,
+    sets lockedUntil[userId] to now + 15 minutes
+
+verify [ userId: UserId ; password: String ] => [ error: "locked" ]
+    lockedUntil[userId] is in the future
+    no state change
+
+verify [ userId: UserId ; password: String ] => [ error: "unknownPrincipal" ]
+    userId has no registered credential
+    no state change
+```
+
+Rules:
+- One block per outcome — do not collapse two outcomes into one block (R9).
+- The flow token is declared in the happy-path block only.
+- The password is **never** in the flow token.
+- Actions are the *only* way the outside world influences the concept.
+
+### 4. Operational principle — sync notation trace
+
+A witness trace of the typical happy path, written in `after`/`then`
+sync notation. This is the WYSIWID heart of the spec: if a reader can
+follow the operational principle, they understand the concept.
+
+The notation mirrors Stage 03 sync files, making it directly traceable:
+`after` = `when`, `then` = `then`. Happy path only — no branching.
 
 ```
 Operational principle
 ---------------------
-A user registers a credential by calling `register(userId, password)`.
-Later, they prove identity by calling `verify(userId, password)`. After
-N consecutive InvalidPassword outcomes the userId is Locked and further
-verify calls return Locked until an out-of-band reset.
+after  PasswordAuth/setPassword: [ userId: u ; password: p ] => [ ok ]
+then   PasswordAuth/verify:      [ userId: u ; password: p ] => [ ok ]
+-- five consecutive failures lock the account --
+then   PasswordAuth/verify:      [ userId: u ; password: wrong ] => [ error: "invalidPassword" ]
+-- (× 5) --
+then   PasswordAuth/verify:      [ userId: u ; password: p ]     => [ error: "locked" ]
 ```
 
 ## What a concept must not do
@@ -89,6 +119,16 @@ verify calls return Locked until an out-of-band reset.
 - Maintain whatever internal data structures its job requires.
 - Emit flow tokens on every action.
 - Define helper functions, types, and tests *internally*.
+
+## Notation provenance
+
+The relational state notation (`relation(subject) -> field: Type -- multiplicity`)
+is adapted from Alloy (Jackson, *Software Abstractions*, MIT Press 2006/2012).
+The case-split action notation and `after`/`then` operational principle trace
+are drawn from the WYSIWID paper (Meng & Jackson, Onward! 2025) and
+first applied in full in `abratto/tastetag`. Neither the Alloy toolchain
+nor the Alloy Analyzer is required — the notation is used for precision
+and readability only. See `../reference/CITATIONS.md`.
 
 ## Authoring a concept (for agents)
 

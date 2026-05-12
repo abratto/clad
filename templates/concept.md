@@ -8,8 +8,14 @@
 ## State
 
 > The data this concept owns. No other concept may read or write it.
+> Use Alloy-style relational notation: `relation(subject: Type) -> field: Type  -- multiplicity`
+> Multiplicity annotations: `mandatory` | `optional` | `conditional mandatory: <condition>`
+> For stateless concepts write: `*None.* <ConceptName> is stateless.`
 
-- `<field>: <Type>` — <what it represents>
+```
+<conceptName>(<id>: <IdType>) -> <field>: <Type>   -- mandatory
+<conceptName>(<id>: <IdType>) -> <field>: <Type>   -- optional
+```
 
 ## Actions
 
@@ -36,20 +42,31 @@
 
 > The verbs this concept exposes. Each action is a local function call
 > from a sync or from `Web`.
+> Use case-split notation: one indented block per output case.
+> Flow token is declared inside the happy-path block.
 
-### `<actionName>(<args>) -> <Outcome1> | <Outcome2>`
+```
+<actionName> [ <arg>: <Type> ; <arg2>: <Type> ] => [ <field>: <Type> ]
+    <description of happy path and effect on state>
+    flow token: { action: "<ConceptName>.<actionName>", <fields> }
 
-- **Inputs:** `<arg>: <Type>` — <meaning>
-- **Outputs:** `<Outcome1>` — <when>; `<Outcome2>` — <when>
-- **Effect on state:** <prose>
-- **Flow token:** `{ action: "<ConceptName>.<actionName>", <fields> }`
+<actionName> [ <arg>: <Type> ] => [ error: "<errorName>" ]
+    <condition under which this error fires>
+```
 
 ## Operational principle
 
-> One paragraph: a typical sequence of actions and what the user
-> observes. This is the WYSIWID heart of the spec.
+> A witness trace of the typical happy path, written in sync notation
+> (`after`/`then`). This proves the actions compose correctly and serves
+> as the WYSIWID heart of the spec. Happy path only — one sequence,
+> no branching.
+
+```
+after  <ConceptName>/<action>: [ <param>: <value> ] => [ <result>: <value> ]
+then   <ConceptName>/<action>: [ <param>: <value> ] => [ <result>: <value> ]
+```
 
 ## Notes
 
-> Optional. Edge cases, invariants, or open questions for the human
-> reviewer.
+> Optional. Edge cases, invariants, open questions, or scope boundaries
+> for the human reviewer.

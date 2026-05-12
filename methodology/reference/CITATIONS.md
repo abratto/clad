@@ -1,7 +1,7 @@
 # Citations and attributions
 
-The CLAD starter integrates ideas from two external works. Both are
-cited here; both are also acknowledged in the repository-root
+The CLAD starter integrates ideas from several external works. All are
+cited here; all are also acknowledged in the repository-root
 [`NOTICE`](../../NOTICE) file.
 
 ## Legible architecture / WYSIWID pattern
@@ -23,6 +23,32 @@ and an RDF/SPARQL action log. The summaries in
 [`../architecture/`](../architecture/) are paraphrases of these ideas;
 they are not derivative copies of the paper's prose. Implementations
 that follow the WYSIWID pattern should cite the paper.
+
+## Alloy — relational state and operational principle notation
+
+Daniel Jackson. **Software Abstractions: Logic, Language, and Analysis.**
+MIT Press, 2006; revised edition 2012.
+
+- MIT Press: [mitpress.mit.edu/9780262528900](https://mitpress.mit.edu/9780262528900)
+
+CLAD adopts Alloy's relational notation for the `## State` section of
+concept specs:
+
+```
+relation(subject: Type) -> field: Type   -- multiplicity
+```
+
+and the `after`/`then` trace form for the `## Operational Principle`
+section. Neither the Alloy language syntax nor the Alloy Analyzer tool
+is required — the notation is used for precision and human readability
+only. The paper's use of Alloy `check` for mechanical verification of
+operational principles is a deliberate gap in CLAD: gate review and
+red-first TDD are the practical substitutes. Full Alloy verification
+remains appropriate if state-machine bugs become the dominant failure
+category in a given project.
+
+This notation was first applied in full in `abratto/tastetag` before
+being formalised here.
 
 ## Interpretable Context Methodology (ICM)
 
@@ -62,6 +88,8 @@ Alan Potosnak. **abratto/tastetag** —
 
 This starter distils prose, examples, and the Java/Micronaut/Jena
 reference implementation that originated in `tastetag/methodology/`.
+The Alloy-style notation used in concept specs was first developed and
+battle-tested in `tastetag` before being formalised in this starter.
 The starter is re-licensed under Apache-2.0 with the author's
 permission.
 

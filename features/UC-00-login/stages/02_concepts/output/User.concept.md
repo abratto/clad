@@ -2,39 +2,44 @@
 
 ## State
 
-- `users: Map<UserId, Username>` — the set of registered users and
-  their public usernames.
+```
+user(userId: UserId) -> username: String   -- mandatory, unique across all users
+```
 
 ## Actions
 
-### `register(username) -> Created(userId) | UsernameTaken`
+```
+register [ username: String ] => [ userId: UserId ]
+    username is not already in use
+    mints a fresh UserId and records username -> userId
+    flow token: { action: "User.register", username, userId, outcome: "created" }
 
-- **Inputs:** `username: String`
-- **Outputs:**
-  - `Created(userId)` — a fresh `UserId` was minted and stored
-  - `UsernameTaken` — the username is already in use
-- **Effect on state:** on `Created`, adds `userId -> username`.
-- **Flow token:** `{ action: "User.register", username, outcome }`
+register [ username: String ] => [ error: "usernameTaken" ]
+    username is already in use
+    no state change
 
-### `lookupByUsername(username) -> Found(userId) | NotFound`
+lookupByUsername [ username: String ] => [ userId: UserId ]
+    username is registered — returns the corresponding UserId
+    no state change
+    flow token: { action: "User.lookupByUsername", username, userId, outcome: "found" }
 
-- **Inputs:** `username: String`
-- **Outputs:**
-  - `Found(userId)` — the username is registered
-  - `NotFound` — it is not
-- **Effect on state:** none (read-only).
-- **Flow token:** `{ action: "User.lookupByUsername", username, outcome }`
+lookupByUsername [ username: String ] => [ error: "notFound" ]
+    username is not registered
+    no state change
+```
 
 ## Operational principle
 
-A username is the public name a user is known by; a `UserId` is the
-opaque internal identifier other concepts use to refer to that user.
-External callers register a username, receive a `UserId`, and from
-then on identify the user by that `UserId`. `lookupByUsername` is the
-bridge from public name to internal id.
+```
+after  User/register:         [ username: "alice" ] => [ userId: u ]
+then   User/lookupByUsername:  [ username: "alice" ] => [ userId: u ]
+```
 
 ## Notes
 
+- A `UserId` is the opaque internal identifier other concepts use to
+  refer to a user. External callers register a username, receive a
+  `UserId`, and from then on identify the user by that `UserId`.
 - UC-00-login does not invoke `register`; account creation is out of
   scope. The action is listed because the concept owns the lifecycle
   and would not be coherent without it.
