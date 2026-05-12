@@ -28,13 +28,21 @@ sync code, sync code is what turns the outer flow test green.
 
 ## Process
 
-Run the sub-stages in order, gating after each:
+Run the sub-stages **strictly in order**, gating after each. Before
+starting any sub-stage, verify its pre-condition is met. If it is not,
+stop and tell the human which earlier sub-stage must be completed first.
 
-1. [`04a_orm/`](04a_orm/CONTEXT.md) — optional state model
-2. [`04b_spec/`](04b_spec/CONTEXT.md) — per-concept SPEC slice
-3. [`04c_flow-tests/`](04c_flow-tests/CONTEXT.md) — outer red (flow tests)
-4. [`04d_concept-tdd/`](04d_concept-tdd/CONTEXT.md) — inner red→green per concept
-5. [`04e_sync-tdd/`](04e_sync-tdd/CONTEXT.md) — inner red→green per sync; outer goes green
+| # | Sub-stage | Pre-condition before starting |
+|---|---|---|
+| 1 | [`04a_orm/`](04a_orm/CONTEXT.md) — optional state model | None (first sub-stage) |
+| 2 | [`04b_spec/`](04b_spec/CONTEXT.md) — per-concept SPEC slice | `04a_orm/output/` exists (or `_NOT_APPLICABLE.md` present) |
+| 3 | [`04c_flow-tests/`](04c_flow-tests/CONTEXT.md) — outer red (flow tests) | `04b_spec/output/` is non-empty |
+| 4 | [`04d_concept-tdd/`](04d_concept-tdd/CONTEXT.md) — inner red→green per concept | `04c_flow-tests/output/` is non-empty |
+| 5 | [`04e_sync-tdd/`](04e_sync-tdd/CONTEXT.md) — inner red→green per sync; outer goes green | All concept tests from `04d` are green |
+
+**Do not skip or reorder sub-stages.** The fast-path exception in
+`STAGES.md` §"Fast-path" applies only when all four listed conditions
+hold; when in doubt, use one-stage-per-turn.
 
 ## Outputs
 
