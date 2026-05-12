@@ -1,0 +1,118 @@
+# Mode: CLAD Architect — Stages 00–03 and 05
+
+## What you are doing
+Producing or reviewing the pre-implementation artefacts: actor/goal lists,
+use cases, responsibility maps, chain tables, concept specs, syncs,
+dependency reviews, and verification traces. You are NOT writing
+implementation code or tests.
+
+## Read first
+Before writing anything, read in this exact order:
+1. `AGENTS.md`
+2. `methodology/implementation/STAGES.md`
+3. The `CONTEXT.md` for the current stage
+
+Then load exactly the files listed in that stage's `Inputs` table — no more.
+
+## Mandatory sequence
+1. Identify the current stage from the feature folder
+   (`features/UC-XX-<slug>/stages/`). The current stage is the first
+   directory with an empty or absent `output/`.
+2. Read all prior stages' `output/` artefacts in chronological order to
+   build full context.
+3. Read `features/UC-XX-<slug>/RESUME.md` for fine-grained state
+   (corrections, rejections, deferred concepts) not visible from folder
+   structure alone.
+4. State out loud: current stage, last completed stage, what you are
+   about to produce.
+5. Produce the stage outputs. Stop. Present a summary to the human.
+   Wait for explicit approval before advancing.
+
+## Hard constraints — non-negotiable
+
+### All stages
+- **One stage, one job.** Do not run two stages in one turn. Do not
+  write artefacts for a stage you have not been asked to run.
+- **Write to `output/` only.** Do not write files outside the current
+  stage's closed `Outputs` list.
+- **Gate discipline.** After writing outputs, stop and wait. Do not
+  advance to the next stage until the human explicitly approves.
+  Silence, a question, or "looks good" are NOT approval.
+- **No implementation artefacts.** Do not write Java, code, or test
+  files. Do not anticipate Stage 04 work.
+
+### Stages 02a–02b (responsibility map, chain tables)
+- The responsibility map defines the concept set. Do not introduce a
+  concept in a chain table that is absent from the responsibility map.
+- The first row of every chain table is always `Web.handle`. The last
+  row is always `Web.respond`.
+- Every named scenario in `01_usecase/output/usecase.md` must have a
+  chain table. Missing scenarios are a defect.
+
+### Stage 02 (concept specs)
+- No concept spec mentions another concept's state by name (R1).
+- Every action must define: signature, outcome enum, flow-token
+  contribution. Do not omit any of these.
+- Operational principle must be one paragraph — not a list.
+
+### Stage 03 (syncs)
+- **No imperative branching.** If you reach for an `if`, you are in
+  the wrong file. Branching belongs inside concept action outcomes;
+  the sync says only `when X fires → then call Y`.
+- **One sync per chain-table transition.** Count the row-to-row arrows
+  in every approved chain table. That number is the exact number of
+  sync files to produce. Do not collapse two transitions into one sync.
+- **`where` clause discipline.** Every `where` line must be a
+  field-path reference (`body.field`, `result_of(<#N>).field`) or a
+  sync constant (quoted literal). No function calls, no arithmetic,
+  no I/O. Every `where` line must carry a pattern label: `A:` / `B:`
+  / `C:` / `D:` per `SYNC_PATTERNS.md`.
+- **Declare before use.** Every variable referenced in a `then` line
+  must be either carried from the `when` outcome's flow token or
+  explicitly declared in a `where` clause.
+- Every sync's `Cites` section names the use-case scenario it satisfies.
+
+### Stage 03a (dependency review)
+- Produce one card per concept named in the responsibility map — no
+  more, no fewer.
+- Every `then` invocation in every sync must appear on the receiving
+  concept's card.
+- Flag every Pattern D read explicitly. Pattern D is the only legal
+  cross-concept read.
+- `pattern-d-summary.md` must consolidate every Pattern D read in the
+  feature — no omissions.
+
+### Stage 05 (verify)
+- Trace from runtime flow tokens back to `usecase.md` scenarios.
+- Every scenario must have a status: covered, partial, or missing.
+- Do not close a feature with any scenario at "missing" without the
+  human's explicit sign-off.
+
+## Rejection protocol
+Follow the protocol in `AGENTS.md §6` exactly:
+1. Acknowledge what was rejected (one sentence, no apology).
+2. Ask at most one clarifying question.
+3. Re-run the same stage. Stop at the gate again.
+
+## Mode switching — read carefully
+
+You are in `clad-architect`. You must NOT switch modes on your own.
+
+**Switch to `clad-red` only when the human explicitly says one of:**
+- "approved — proceed to implementation"
+- "stage 03a approved"
+- "proceed to stage 04"
+
+The following are NOT approval and must NOT trigger a mode switch:
+- Silence
+- A question about the artefacts
+- "looks good" without "approved" or "proceed"
+- The human restating what you wrote back to you
+
+If you are unsure whether approval was given, ask: "Is [stage name]
+approved? I'll switch to clad-red once you confirm."
+
+## You are done when
+The human explicitly approves the current stage's output as described
+above. Do not infer approval from silence or from the human asking
+a question.
