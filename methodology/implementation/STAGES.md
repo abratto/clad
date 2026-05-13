@@ -286,6 +286,13 @@ flow tokens → expected response), plus a stub test under the chosen
 profile's `src/test/.../flows/`. Tests start `@Disabled` (or red); they
 go green only at the end of `04e`.
 
+Before claiming this stage is "red and ready", run the profile's
+build-and-test command (or targeted equivalent) and verify the test
+tree compiles. The expected outcome at this stage is either
+disabled/skipped flow tests (when stubs are intentionally `@Disabled`)
+or failing flow tests (if enabled early) — but never compilation
+errors.
+
 **Output:** `<scenario>-flow-test.md` per scenario; stub test files
 under `reference-impl/<profile>/...`.
 
@@ -299,6 +306,11 @@ under `reference-impl/<profile>/...`.
 **Process:** for each public action of each concept, write the
 **inner-loop** unit tests (red), then implement the concept until the
 tests are green. R1–R5 must hold throughout.
+
+"Red" in this stage means executable failing tests, not uncompiled
+tests and not disabled placeholders. The agent must run tests after
+writing them and confirm they fail for behavioral reasons before
+implementing.
 
 **Output:** `concept-test-derivation.md` (the test-intent map) plus
 `<Name>ConceptTest.java` and `<Name>Concept.java` (in the profile)
@@ -316,10 +328,18 @@ rule's `then` actions fire when its `when` pattern matches; then
 implement the sync (declarative form). At the end of this stage, the
 flow tests from `04c` go green.
 
+As in 04d, "red" means executable failing tests before
+implementation, not disabled placeholders and not compile-failing
+suites.
+
 **Output:** `sync-test-derivation.md` plus `<SyncName>Test.java` and
 `<SyncName>.java` (in the profile) per sync.
 
 **Gate:** all sync tests green; flow tests from `04c` now green.
+
+Gate evidence must include one executed build-and-test command result
+showing: 1) test compilation succeeded, 2) sync tests are green, and
+3) flow tests from `04c` are green.
 
 ### Stage 05 — `05_verify/`
 
@@ -413,16 +433,15 @@ reviewing at the gate?" Read top to bottom for a single feature.
 | Transition | Human provides | Agent produces | Human reviews at gate |
 |---|---|---|---|
 | brief → **00** | One-paragraph feature brief | Proposed actor list + ≤5 clarifying questions; iterates | Final `actors.md`, `goals.md` reflect what was agreed |
-| 00 → **01** | Confirmed `actors.md`, `goals.md` | `usecase.md` at **Fully Dressed** level (op principle, scenarios, Postconditions Success+Failure mandatory) | Every in-scope goal has a named scenario; both postcondition sub-sections present |
+| 00 → **01** | Confirmed `actors.md`, `goals.md` | `usecase.md` at **Fully Dressed** level (op principle, scenarios, Postconditions Success+Failure mandatory) | Every in-scope goal has a named scenario; success+failure postconditions distinct |
 | 01 → **02a** | Use case (Fully Dressed) | `responsibility-map.md` — one row per concept (state, actions), coverage check vs scenarios | Concept boundaries; scenarios are fully covered |
-| 02a → **02b** | Responsibility map | One `<scenario>-chain.md` per scenario — action chain (table) **and** Mermaid diagram in the **same turn** | Each chain is plausible; no concept appears that is not in 02a |
-| 02b → **02** | Responsibility map + chain tables | Per-concept `<Name>.concept.md` (full anatomy: state, actions, op principle); no cross-concept references | Concept anatomy honours R1; action signatures match chain-table usage |
-| 02 → **03** | Concept specs + chain tables | One `<name>.sync.md` per coordination rule; every `where` clause labelled with pattern A/B/C/D | Every scenario covered; no imperative branching; Pattern D reads are intentional |
-| 03 → **03a** | Sync specs + chain tables | One `<concept>-card.md` per concept; one `pattern-d-summary.md` for the feature | Cross-concept coupling is intentional; no flow-inconsistent invocations |
-| 03a → **04a** | Sync specs + dependency review (Pattern D summary names every cross-concept field) | `<Name>.orm.md` per concept under R2 (one named region each); fields needed by Pattern D reads are exposed | Schema honours R2; Pattern D fields are present |
-| 04a → **04b** | ORM (or `_NOT_APPLICABLE.md`) + concept specs | `<Name>.spec.md` per concept (signatures, outcomes, flow-token shape) — mechanically derived | SPEC matches concept spec, no design choices snuck in |
+| 02a → **02b** | Responsibility map | One `<scenario>-chain.md` per scenario — action chain (table) **and** Mermaid diagram in the **same turn** | Each chain is plausible; no concept appears that wasn't in 02a |
+| 02b → **02** | Responsibility map + chain tables | Per-concept `<Name>.concept.md` (full anatomy: state, actions, op principle); no cross-concept references | Concept anatomy honours R1; action outcomes cover the chains |
+| 02 → **03** | Concept specs + chain tables | One `<name>.sync.md` per coordination rule; every `where` clause labelled with pattern A/B/C/D | Every scenario covered; no imperative branching; all joins explicit |
+| 03 → **03a** | Sync specs + chain tables | One `<concept>-card.md` per concept; one `pattern-d-summary.md` for the feature | Cross-concept coupling is intentional; Pattern D is explicit and reviewed |
+| 03a → **04a** | Sync specs + dependency review (Pattern D summary names every cross-concept field) | `<Name>.orm.md` per concept under R2 (one named region each); fields needed by Pattern D reads exist | State model supports the syncs; Pattern D reads map to named fields |
+| 04a → **04b** | ORM (or `_NOT_APPLICABLE.md`) + concept specs | `<Name>.spec.md` per concept (signatures, outcomes, flow-token shape) — mechanically derived | SPEC matches concept spec, no drift |
 | 04b → **04c** | SPECs + use case | `<scenario>-flow-test.md` per scenario + stub red tests in profile | Predicted flow tokens match the scenario's postconditions |
 | 04c → **04d** | SPECs + concept specs | `concept-test-derivation.md` + per-concept tests (red → green) + concept implementations | Tests trace 1:1 to SPEC rows; no cross-concept imports |
-| 04d → **04e** | SPECs + sync specs | `sync-test-derivation.md` + per-sync tests (red → green); flow tests from 04c go green | All sync and flow tests green; nothing in `then` does I/O outside the named action |
-| 04e → **05** | Use case + running profile | `trace.md` (back-trace from flow tokens), `findings.md` if any, `smoke.md`, `tracking.md` | Every observed flow token traces back to a named scenario; smoke confirms the deployable artefact |
-
+| 04d → **04e** | SPECs + sync specs | `sync-test-derivation.md` + per-sync tests (red → green); flow tests from 04c go green | All sync and flow tests green; `then` does no I/O outside concepts |
+| 04e → **05** | Use case + running profile | `trace.md` (back-trace from flow tokens), `findings.md` if any, `smoke.md`, `tracking.md` | Every observed flow token traces back to a named scenario |

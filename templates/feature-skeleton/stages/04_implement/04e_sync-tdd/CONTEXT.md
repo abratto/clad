@@ -35,6 +35,10 @@ form, no branching). Build up the test-intent derivation map for
 syncs. **At the end of this stage, the flow tests from `04c` go
 green.**
 
+"Red" in this stage means executable failing sync tests before
+implementation, not disabled placeholders and not compile-failing
+suites.
+
 ## Outputs
 
 - `output/sync-test-derivation.md` — the test-intent map for syncs
@@ -44,6 +48,7 @@ green.**
 
 - All sync tests green.
 - All flow tests from `04c` now green.
+- Executed command evidence shows: test compilation succeeds, sync tests are green, and flow tests are green.
 - **Cross-stage check (back):** every sync in `03_syncs/output/` has at least one row in the sync test-intent map.
 
 ## Gate

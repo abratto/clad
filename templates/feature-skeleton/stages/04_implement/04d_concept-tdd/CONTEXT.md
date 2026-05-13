@@ -27,7 +27,7 @@ wrong layer.
 - If a test you want to write requires another concept's state, the test belongs in 04e, not here.
 - Write tests first. Do not write implementation code until the tests are approved (R8). Do not present tests and implementation together.
 - Do not use in-memory substitutes (e.g. `HashMap`) for the profile's storage layer. Check `04a/output/` for the correct storage shape.
-- Before writing each test, ask: "what state must exist for this outcome to be reachable?" Outcomes that require prior state (e.g. `ACCOUNT_EXISTS`, `AccountNotFound`) need an Arrange step that sets that state up via the concept's own API — not direct storage writes.
+- Before writing each test, ask: "what state must exist for this outcome to be reachable?" Outcomes that require prior state (e.g. `ACCOUNT_EXISTS`, `AccountNotFound`) need an Arrange step that sets up that state.
 
 ## Inputs
 
@@ -51,6 +51,9 @@ sequence** (hard rule R8). Do not batch tests and implementation:
    outcomes not covered by the flow tests. Every (action × outcome) pair
    in the SPEC is a required test case.
 2. **Write the test file(s) only.** Do not write any implementation code.
+   "Red" here means executable failing tests (not disabled placeholders,
+   not compile-failing test suites).
+   Run tests now and confirm failure is behavioral.
 3. **Stop. Present the tests to the human. Wait for approval.**
    Do not proceed until the human explicitly approves the tests.
    Do not switch to `clad-green` mode until approval is given.
@@ -89,6 +92,7 @@ a flow token) throughout.
 - All concept tests green.
 - No cross-concept imports.
 - Every public concept action emits a flow token.
+- Before implementation began, tests were executed and observed failing for behavioral reasons (true red), with successful test compilation.
 - Tests were approved red before implementation was written (R8).
 - Mode was switched to `clad-green` only after explicit human approval of tests.
 - **Cross-stage check (back):** every action listed in `04b/output/` has at least one row in the test-intent map.

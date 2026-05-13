@@ -38,6 +38,13 @@ expected response. Then add a stub test under
 (or the profile's equivalent), starting `@Disabled` (red). The test
 goes green at the end of `04e`.
 
+Before claiming "red and ready", run the profile's build-and-test
+command (or a targeted equivalent) and verify test compilation
+succeeds. At this stage, acceptable red evidence is either
+disabled/skipped flow tests (when stubs are intentionally `@Disabled`)
+or failing flow tests if enabled; compilation errors are not
+acceptable.
+
 **Token chain rules (read `FLOW_TOKENS.md` in full before writing):**
 - Outcome values MUST be SCREAMING_SNAKE_CASE, copied from the SPEC slice.
 - Token count = number of rows in the chain table — no phantom intermediate tokens.
@@ -52,6 +59,7 @@ goes green at the end of `04e`.
 
 - Every scenario has one flow-test markdown spec.
 - Every stub test is `@Disabled` (or red) and carries a `TODO` linking back to the scenario name.
+- An executed build-and-test command proves test compilation succeeds; no compile errors.
 - All outcome values are SCREAMING_SNAKE_CASE.
 - No passwords or secrets appear in any token payload.
 - Token count per scenario equals the number of rows in the corresponding chain table.
