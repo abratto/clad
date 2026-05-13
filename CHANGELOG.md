@@ -10,6 +10,100 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-05-12
+
+### Methodology
+
+- **RESUME rule** (rule 9 in `AGENTS.md`): Mandatory state artefact
+  (`features/UC-XX-<slug>/RESUME.md`) at every stage gate, capturing last
+  completed stage, gate outcome, corrections, deferred concepts, next stage,
+  next task. Templates at `templates/feature-skeleton/RESUME.md`.
+- **Testing discipline** (rule 8): Tests precede implementation. Added
+  `TDD.md` documenting the London School outside-in double-loop (04c flow
+  tests → 04d concept TDD → 04e sync TDD). Pre-condition tables added to
+  04_implement router to enforce gate verification before advancing.
+- **Bootstrap concept generalisation**: Clarified that Web is one example
+  (via 04b `Inputs` contract); other concepts can be bootstrap points if
+  justified in Stage 02a.
+- **Sync authoring refinements**: Added "DECLARE BEFORE USE" rule,
+  then-only rule clarifications, and syncs must emit flow tokens explicitly.
+- **Branch and commit hygiene** (`DELIVERY.md`): Rule 7 (branch creation)
+  and rule 8 (commit messages) documented; RESUME.md written before each
+  commit.
+- **Handover protocol** (`methodology/implementation/HANDOVER.md`): New
+  stage-entry orientation artefact for agents joining in-flight features.
+  Specifies strict read order (AGENTS.md → STAGES.md → DELIVERY.md →
+  HANDOVER.md → templates → stage outputs → RESUME.md).
+
+### Documentation
+
+- **Concept templates**: Adopted Alloy-style notation in concept state
+  definitions; restructured derivation map to group tests by action with
+  one class per action. Added outcome-alignment contract to Stage 02
+  CONTEXT.
+- **ORM_NOTES**: Revised Step 7 to enforce profile-neutral conceptual
+  models (RDF triple facts independent of storage layer).
+- **Usecase template**: Added worked Cockburn-format extensions example;
+  added scenario-vs-extension and identical-postconditions guidance
+  (`templates/usecase.md`).
+- **FLOW_TOKENS.md**: Added casing convention (SCREAMING_SNAKE_CASE),
+  one-token-per-invocation rule (never batch events), and payload
+  prohibitions (no nested objects).
+- **CSDP reduction**: Simplified ORM derivation from seven to six steps;
+  added post-walk profile mapping note section.
+- **Dependency review card** (`03a` template): Clarified then-only rule
+  and cross-concept coupling surface patterns.
+- **Agent capability profiles** (`AGENTS.md`): Mapped stage groups to
+  required reasoning depth (prose synthesis, deep structural reasoning,
+  code generation, audit/traceability).
+
+### Tooling & CI
+
+- **Roo Code integration**: Added `.roorules-clad-architect` for stages
+  00–03 and 05; `.roorules-clad-red` for 04c flow tests; `.roorules-clad-green`
+  for 04d/04e TDD. Modes cover full outside-in loop.
+- **Roo configuration**: Added `.roo-clad-config.example` for
+  per-developer mode switching; `.roo-clad-config` (local, gitignored)
+  enables developer customization.
+- **fileRegex expansions**: Expanded clad-architect and clad-red patterns
+  to match stage letter suffixes (02a, 02b, 03a, etc.) and flow-test specs
+  / derivation maps.
+- **Feature skeleton hook**: Added `_config` file to `templates/feature-skeleton/`
+  documenting canonical build/test command per project type.
+
+### Templates
+
+- **Test intent derivation**: Updated 04d template to require pre-04c
+  verification; Preconditions column and reasoning bullets added.
+- **Sync template**: Updated pattern labels for clarity; added DECLARE
+  BEFORE USE guidance.
+
+### Verification & Checks
+
+- **Repeated-action checks**: Added backstop cross-stage check (02b→03
+  Verify section) and repeated-action-invocation check (02b Verify) to
+  catch unintended action duplication.
+- **Pre-condition framework**: 04_implement router now verifies that each
+  sub-stage gate output is present and valid before advancing (04c→04d,
+  04d→04e).
+- **Build/test evidence**: 04e gate now requires executed test evidence
+  for true red and green states (not just staged files).
+
+### Fixes
+
+- Chain-table diagram type corrected to `stateDiagram-v2` (was
+  `sequenceDiagram`).
+- Merge conflict resolution: rule 9, DELIVERY.md §3, HANDOVER.md content
+  standardized across PR #20 and PR #21 consolidation.
+
+### Notes
+
+This release rolls up ~70 commits over 5 days of methodology refinement,
+driven by second-pass walkthroughs on Stage 02–05 and Roo Code tooling
+integration. The RESUME artefact and TDD discipline are now mandatory
+(hard rules). Syncs are now stricter (declarative-only, must emit tokens).
+Ready for Round-12+ feature work.
+
 ## [0.1.0] — 2026-05-07
 
 Initial public seed.
