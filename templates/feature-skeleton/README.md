@@ -13,7 +13,8 @@ per-UC feature (Stages 01–05); do not copy `features/UC-00-login/`
 
 ```sh
 cp -R templates/feature-skeleton features/UC-XX-<slug>
-# edit features/UC-XX-<slug>/README.md and _config/voice.md
+# edit features/UC-XX-<slug>/README.md, _config/voice.md,
+# and _config/package-and-layout.md
 # open features/UC-XX-<slug>/stages/01_usecase/CONTEXT.md and start there
 ```
 
@@ -26,6 +27,7 @@ Run Stage 00 (`features/_system/stages/00_actor-goal/`) to completion
 ## What is in here
 
 - `_config/voice.md` — placeholder explaining feature-scoped Layer-3 reference material
+- `_config/package-and-layout.md` — canonical package/source-root settings
 - `stages/` — empty stage tree (`01_usecase`, `02a_responsibility-map`,
   `02b_chain-table`, `02_concepts`, `03_syncs`, `03a_dependency-review`,
   `04_implement` with sub-stages `04a..04e`, `05_verify`),

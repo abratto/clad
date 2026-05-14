@@ -24,6 +24,7 @@ branching down into a concept action's outcomes and re-derive the sync.
 |---|---|---|
 | `../../03_syncs/output/` | 4 | Sync specs |
 | `../04b_spec/output/` | 4 | SPEC slices for the actions involved |
+| `../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings for this feature |
 | `../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
 | `../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (only when this profile is selected) | 3 | SPARQL sync-fragment conventions used by the reference engine |
@@ -41,6 +42,11 @@ fragments (`whereClause()` and `thenBindings()`), preserve engine-owned
 variables (`?_when_1`, `?_flow`, `?_then_1`, `?_then_input`), and emit
 exactly one downstream invocation per sync firing.
 
+Generated sync implementation files must live under
+`APP_SOURCE_ROOT`/`APP_PACKAGE_ROOT` from
+`../../../_config/package-and-layout.md`, not under a copied
+`com.example.app` path unless that is explicitly configured.
+
 "Red" in this stage means executable failing sync tests before
 implementation, not disabled placeholders and not compile-failing
 suites.
@@ -55,6 +61,9 @@ suites.
 - All sync tests green.
 - All flow tests from `04c` now green.
 - Executed command evidence shows: test compilation succeeds, sync tests are green, and flow tests are green.
+- Sync implementation package/source path matches
+  `../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,
+  `APP_SOURCE_ROOT`).
 - **Cross-stage check (back):** every sync in `03_syncs/output/` has at least one row in the sync test-intent map.
 
 ## Gate

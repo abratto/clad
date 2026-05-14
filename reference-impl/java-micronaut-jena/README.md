@@ -15,6 +15,12 @@ This profile is **optional**. Methodology rules live in
 [`../../methodology/`](../../methodology/) and are profile-agnostic;
 this folder is one way to implement them.
 
+> Package note: `com.example.app` and `src/main/java` in this folder are
+> reference-profile examples, not required CLAD defaults. In downstream
+> projects, set package/source-root values in
+> `features/UC-XX-<slug>/_config/package-and-layout.md` and generate code
+> to those paths.
+
 ## Mapping methodology → this profile
 
 | Methodology concept | Java realisation |

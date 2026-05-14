@@ -36,6 +36,7 @@ wrong layer.
 | `../../02_concepts/output/` | 4 | Concept specs |
 | `../04b_spec/output/` | 4 | SPEC slices to compile against |
 | `../04c_flow-tests/output/` | 4 | Pre-condition check + drives test derivation |
+| `../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings for this feature |
 | `../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
 | `../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5 |
 | `../../../../../methodology/implementation/TDD.md` | 3 | London School double-loop — how to derive concept tests from flow tests |
@@ -69,6 +70,11 @@ sequence** (hard rule R8). Do not batch tests and implementation:
    Your implementation must match all of these exactly. Do not invent
    a different package, class name, or method shape.
 
+   Package choices must also be consistent with
+   `../../../_config/package-and-layout.md`. If tests use a package outside
+   `APP_PACKAGE_ROOT`, fix the tests first; do not implement into a
+   placeholder package copied from a reference profile.
+
    The implementation must also use the profile's storage layer as
    defined in `04a/output/` — not an in-memory substitute (e.g. no
    `HashMap` standing in for a named graph in the Jena profile).
@@ -101,6 +107,9 @@ joins) from `reference-impl/java-micronaut-jena/README.md` and
 - Before implementation began, tests were executed and observed failing for behavioral reasons (true red), with successful test compilation.
 - Tests were approved red before implementation was written (R8).
 - Mode was switched to `clad-green` only after explicit human approval of tests.
+- Implementation package/source path matches
+   `../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,
+   `APP_SOURCE_ROOT`).
 - **Cross-stage check (back):** every action listed in `04b/output/` has at least one row in the test-intent map.
 - **Cross-stage check (back):** `04c_flow-tests/output/` is non-empty (pre-condition was satisfied).
 - **Cross-stage check (back):** every outcome exercised by the flow tests has a corresponding test row in the derivation map.

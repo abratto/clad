@@ -14,12 +14,18 @@ The tests have already been approved by the human. Do not modify them.
 3. Read `.roo-clad-config` (repo root) to get TEST_COMMAND and STORAGE_LAYER.
    If the file does not exist, stop and ask the human to create it by
    copying `.roo-clad-config.example` and filling in their values before continuing.
-4. Read `04a/output/` for the profile's storage layer shape.
-5. Read `04b/output/` for the SPEC — list every defined outcome.
-6. Write the implementation to match steps 2–5 exactly.
-7. Run the tests using the TEST_COMMAND from `.roo-clad-config`.
+4. Read `features/UC-XX-<slug>/_config/package-and-layout.md` to get
+  APP_PACKAGE_ROOT and APP_SOURCE_ROOT.
+  If this file is missing or not filled, stop and ask the human to
+  set it before continuing.
+5. Read `04a/output/` for the profile's storage layer shape.
+6. Read `04b/output/` for the SPEC — list every defined outcome.
+7. Write the implementation to match steps 2–6 exactly.
+  Do not copy package/source paths from `reference-impl/` unless they
+  match APP_PACKAGE_ROOT and APP_SOURCE_ROOT.
+8. Run the tests using the TEST_COMMAND from `.roo-clad-config`.
    If any test fails, read the failure output and fix. Repeat until all green.
-8. Stop. Present the implementation to the human. Wait for approval.
+9. Stop. Present the implementation to the human. Wait for approval.
 
 ## Local-context discipline (Roo)
 - Keep intelligent context condensing enabled; use an early threshold
@@ -33,6 +39,11 @@ The tests have already been approved by the human. Do not modify them.
 
 ## Hard constraints (checked before every file write)
 - Package and class name MUST match what the tests import and instantiate (step 2).
+- Implementation file path and package MUST match
+  APP_SOURCE_ROOT and APP_PACKAGE_ROOT from
+  `features/UC-XX-<slug>/_config/package-and-layout.md`.
+- `com.example.app` is forbidden unless APP_PACKAGE_ROOT is explicitly
+  set to `com.example.app` in that config file.
 - No constructor signature mismatch — if tests call `new Account()`, the class
   must have a no-arg constructor.
 - No two constructors or methods with the same erasure (Java compile error).

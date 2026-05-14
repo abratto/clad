@@ -25,6 +25,7 @@ to `state` first.
 |---|---|---|
 | `../../02_concepts/output/` | 4 | Concept specs (state sections) |
 | `../../03a_dependency-review/output/pattern-d-summary.md` | 4 | Every cross-concept field that must be exposed in this concept's region |
+| `../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings for this feature |
 | `../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R2 |
 | `../../../../../methodology/architecture/ORM_NOTES.md` | 3 | Seven-step drafting procedure (CLAD adaptation of Jarrar CSDP) |
 | Profile reference docs (e.g. `reference-impl/<profile>/README.md`) | 3 | Storage conventions |
@@ -35,6 +36,11 @@ If the chosen profile uses a relational/RDF/document store, draft the
 state schema for each concept by walking the seven-step procedure in
 `ORM_NOTES.md` — one named region per concept (R2). Otherwise write
 `_NOT_APPLICABLE.md` explaining why and skip.
+
+Before writing any implementation-adjacent artefact, read
+`../../../_config/package-and-layout.md` and confirm this feature's
+`APP_PACKAGE_ROOT` and `APP_SOURCE_ROOT`. Treat reference-profile
+package names as examples only.
 
 ## Outputs
 
@@ -54,6 +60,9 @@ state schema for each concept by walking the seven-step procedure in
 - The `.orm.md` body describes fact types and constraints in
   profile-neutral terms. A relational schema table (`Field / Type /
   Constraints`) is only present if the profile is relational.
+- Package/source-root decisions used by later implementation stages are
+  sourced from `../../../_config/package-and-layout.md`, not inferred from
+  `reference-impl/` paths.
 
 ## Gate
 
