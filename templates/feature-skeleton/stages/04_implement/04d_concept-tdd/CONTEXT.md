@@ -39,6 +39,7 @@ wrong layer.
 | `../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
 | `../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5 |
 | `../../../../../methodology/implementation/TDD.md` | 3 | London School double-loop — how to derive concept tests from flow tests |
+| `../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (only when this profile is selected) | 3 | SPARQL/query-shape conventions for concept and sync implementations |
 
 ## Process
 
@@ -81,6 +82,11 @@ sequence** (hard rule R8). Do not batch tests and implementation:
 Build up a test-intent derivation map showing every action × outcome →
 test. Honour R1 (no cross-concept imports) and R5 (every action emits
 a flow token) throughout.
+
+If the selected profile is Java/Jena, follow that profile's SPARQL
+construction conventions (query shape, outcome literals, and flow-token
+joins) from `reference-impl/java-micronaut-jena/README.md` and
+`reference-impl/java-micronaut-jena/CODE_STYLE.md`.
 
 ## Outputs
 

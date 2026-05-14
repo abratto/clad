@@ -57,6 +57,42 @@ com.example.app
   `"GRANTED"`); concept actions write them as plain string literals via
   `ResourceFactory.createStringLiteral(...)`.
 
+## SPARQL construction conventions (profile-specific)
+
+These conventions apply only to this Java/Jena profile.
+
+- **Sync fragments, not full updates.** In `SyncAgent` subclasses,
+  provide only `whereClause()` and `thenBindings()` fragments. The base
+  class assembles `INSERT ... WHERE` and dedup logic.
+- **Engine-owned variables are reserved.** Do not redefine `?_when_1`,
+  `?_flow`, `?_then_1`, or `?_then_input`.
+- **One invocation per sync firing.** `thenBindings()` must create
+  exactly one `?_then_1` invocation and one `?_then_input` node.
+- **Join via flow token.** Cross-concept coordination joins through
+  action-log nodes that share `?_flow`; do not read another concept's
+  named graph directly.
+- **Keep outcomes explicit.** Match concrete outcome literals in
+  `whereClause()` so each SPEC outcome maps to a distinct path.
+- **Deterministic projection for reads.** In concept-side `SELECT`, only
+  project fields you need and use `LIMIT 1` for singleton lookups.
+- **Use ASK for existence checks.** Prefer `ASK` over `SELECT` when the
+  caller needs only true/false.
+
+Quick examples:
+
+```java
+// Existence check: prefer ASK
+boolean exists = actionLog.ask(
+  "ASK { GRAPH <" + RdfVocabulary.conceptGraph("user") + "> { ?u :username \"ada\" } }"
+);
+
+// Singleton lookup: narrow SELECT with LIMIT 1
+var rows = actionLog.select(
+  "SELECT ?userId WHERE { GRAPH <" + RdfVocabulary.conceptGraph("user") + "> { " +
+    "?u :username \"ada\" ; :userId ?userId . } } LIMIT 1"
+);
+```
+
 ## Tests
 
 - `ConceptTestBase`, `SyncTestBase`, `FlowTestBase` in `src/test/java/com/example/app/`.

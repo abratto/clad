@@ -26,6 +26,7 @@ branching down into a concept action's outcomes and re-derive the sync.
 | `../04b_spec/output/` | 4 | SPEC slices for the actions involved |
 | `../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
 | `../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
+| `../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (only when this profile is selected) | 3 | SPARQL sync-fragment conventions used by the reference engine |
 
 ## Process
 
@@ -34,6 +35,11 @@ when its `when` pattern matches; then implement the sync (declarative
 form, no branching). Build up the test-intent derivation map for
 syncs. **At the end of this stage, the flow tests from `04c` go
 green.**
+
+If the selected profile is Java/Jena, keep sync logic in SPARQL
+fragments (`whereClause()` and `thenBindings()`), preserve engine-owned
+variables (`?_when_1`, `?_flow`, `?_then_1`, `?_then_input`), and emit
+exactly one downstream invocation per sync firing.
 
 "Red" in this stage means executable failing sync tests before
 implementation, not disabled placeholders and not compile-failing

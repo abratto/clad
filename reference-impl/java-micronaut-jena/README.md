@@ -30,6 +30,50 @@ this folder is one way to implement them.
 See [`../../methodology/architecture/ENGINE.md`](../../methodology/architecture/ENGINE.md)
 for engine internals (trigger index, dedup edge, flow archival).
 
+## SPARQL guidance (this profile only)
+
+Use the rules below only when implementing CLAD with this Java/Jena
+profile. They are not global CLAD rules.
+
+1. Keep coordination in sync SPARQL fragments (`whereClause()` and
+   `thenBindings()`); do not move domain branching into Java sync code.
+2. Keep concept state in the owning concept graph (`concept:<name>`).
+   Cross-concept state reads are forbidden (R2).
+3. Join cross-concept facts via the action log and shared `?_flow` in the
+   active action graph (`https://clad.dev/actions`).
+4. In `whereClause()`, treat `?_when_1` and `?_flow` as engine-owned
+   bindings. Use them; do not redefine them.
+5. In `thenBindings()`, emit exactly one downstream invocation rooted at
+   `?_then_1` with `:concept`, `:name`, and `:input ?_then_input`.
+6. Keep outcomes explicit and literal (for example `"FOUND"`,
+   `"WRONG_PASSWORD"`) so test intent maps remain stable.
+
+Minimal sync fragment shape:
+
+```java
+@Override
+protected String whereClause() {
+     return
+          "    ?_when_1 :concept <...> ;\n" +
+          "             :name    \"...\" ;\n" +
+          "             :flow    ?_flow ;\n" +
+          "             :output  ?_out .\n" +
+          "    ?_out :outcome \"...\" .\n";
+}
+
+@Override
+protected String thenBindings() {
+     return
+          "    ?_then_1 :concept <...> ;\n" +
+          "             :name    \"...\" ;\n" +
+          "             :input   ?_then_input .\n" +
+          "    ?_then_input :field ?value .\n";
+}
+```
+
+For profile conventions and architecture guardrails, see
+[`CODE_STYLE.md`](CODE_STYLE.md).
+
 ## Build
 
 ```sh
