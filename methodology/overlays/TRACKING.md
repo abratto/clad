@@ -61,6 +61,41 @@ At the top of a new session:
 5. Look for a resume-point comment in the most recent `output/` file.
 6. Proceed.
 
+## Natural-language intake shortcuts (for LLM sessions)
+
+This overlay supports simple human prompts so users do not need to
+remember multiple command styles.
+
+### "What's next?"
+
+Agent behavior:
+
+1. Read `ROADMAP.md` (if present) and identify the `doing` row.
+2. Read the active feature's `RESUME.md`.
+3. Identify the first stage whose gate is not yet approved.
+4. Reply with one concrete next action (single step), then wait for
+  human confirmation.
+
+### "Let's work on a new feature"
+
+Agent behavior:
+
+1. Route to system-scope Stage 00 at
+  `features/_system/stages/00_actor-goal/CONTEXT.md`.
+2. Propose actors/goals, ask up to 5 clarifying questions, iterate to
+  gate approval.
+3. Only after Stage 00 approval, create per-UC folders from
+  `templates/feature-skeleton/`.
+
+### "Resume work"
+
+Agent behavior:
+
+1. Read `AGENTS.md`, `CONTEXT.md`, `ROADMAP.md` (if present), and the
+  active `RESUME.md`.
+2. State current feature, current stage, and next task out loud.
+3. Wait for explicit confirmation before editing files.
+
 ## What this overlay does **not** do
 
 - It does not change the stage map.

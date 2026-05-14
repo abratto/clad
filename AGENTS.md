@@ -58,6 +58,17 @@ You are expected to operate within all three layers simultaneously.
    that gate. During an active stage, keep `RESUME.md` updated as
    working memory at the end of each turn (current blocker, failing
    command, files touched, next concrete steps).
+10. **Intent routing rule.** Treat plain-language steering prompts as
+      workflow intents:
+      - If the human says "what's next" (or equivalent), diagnose the next
+         actionable step from `ROADMAP.md` (if present), the active
+         `features/UC-XX-<slug>/RESUME.md`, and the current stage gate
+         status. Reply with one concrete next action, then wait for approval.
+      - If the human says "let's work on a new feature" (or equivalent),
+         route to system-scope Stage 00 at
+         `features/_system/stages/00_actor-goal/CONTEXT.md` before creating
+         any UC folder.
+      - If intent is ambiguous, ask one clarifying question, then continue.
 
 ## 3. The CLAD contract loop
 
@@ -199,6 +210,7 @@ operator concern, not CLAD's.
 - Trunk-based delivery + CI gate: [`methodology/implementation/DELIVERY.md`](methodology/implementation/DELIVERY.md)
 - Handover protocol: [`methodology/implementation/HANDOVER.md`](methodology/implementation/HANDOVER.md)
 - Optional workflow overlay: [`methodology/overlays/TRACKING.md`](methodology/overlays/TRACKING.md)
+- Optional planning/intake shortcuts: [`methodology/overlays/TRACKING.md`](methodology/overlays/TRACKING.md)
 - Optional decision log: [`methodology/overlays/DECISIONS.md`](methodology/overlays/DECISIONS.md)
 - Optional local-model context overlay: [`methodology/overlays/LOCAL_LLM.md`](methodology/overlays/LOCAL_LLM.md)
 - Citations: [`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md)
