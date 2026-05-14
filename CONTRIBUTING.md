@@ -22,12 +22,13 @@ are documentation, templates, and worked examples, not application code.
 
 1. Open an issue or discussion. State the use case in one paragraph.
 2. Fork or branch (`feat/UC-XX-short-name` or `docs/topic`).
-3. For new features, copy [`templates/feature-skeleton/`](templates/feature-skeleton/)
-   to `features/UC-XX-<slug>/` and start at
-   `stages/00_actor-goal/CONTEXT.md`. Do **not** copy
-   `features/UC-00-login/` — that is the worked example, kept for reading.
-   For methodology edits, keep diffs focused; do not bundle unrelated
-   changes.
+3. For new feature work, first run system-scope Stage 00 at
+   [`features/_system/stages/00_actor-goal/CONTEXT.md`](features/_system/stages/00_actor-goal/CONTEXT.md).
+   After the Stage 00 gate passes, copy [`templates/feature-skeleton/`](templates/feature-skeleton/)
+   to `features/UC-XX-<slug>/` and start at `stages/01_usecase/CONTEXT.md`.
+   Do **not** copy `features/UC-00-login/` — that is the worked example,
+   kept for reading. For methodology edits, keep diffs focused; do not
+   bundle unrelated changes.
 4. Open a PR. Link the issue. Describe what contract drove the change and
    what artefact it produced.
 

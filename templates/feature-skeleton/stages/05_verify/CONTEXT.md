@@ -100,4 +100,4 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
 
 **This is the final stage.** When the gate passes, the feature is complete.
 
-To start the next feature, copy [`templates/feature-skeleton/`](../../../../templates/feature-skeleton/) to `features/UC-XX-<slug>/` and open its `stages/00_actor-goal/CONTEXT.md`.
+To start the next feature, run system-scope Stage 00 at [`features/_system/stages/00_actor-goal/CONTEXT.md`](../../../../features/_system/stages/00_actor-goal/CONTEXT.md). After that gate passes, copy [`templates/feature-skeleton/`](../../../../templates/feature-skeleton/) to `features/UC-XX-<slug>/` and begin at `stages/01_usecase/CONTEXT.md`.
