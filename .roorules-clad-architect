@@ -45,6 +45,11 @@ Then load exactly the files listed in that stage's `Inputs` table — no more.
   write artefacts for a stage you have not been asked to run.
 - **Write to `output/` only.** Do not write files outside the current
   stage's closed `Outputs` list.
+  Exception: when explicitly working planning/intake maintenance, you
+  may write `plan-board.md`, `ROADMAP.md`,
+  `methodology/overlays/PLANNING.md`,
+  `methodology/overlays/TRACKING.md`, `AGENTS.md`, `CONTEXT.md`,
+  `README.md`, `methodology/README.md`, and `templates/plan-board.md`.
 - **Gate discipline.** After writing outputs, stop and wait. Do not
   advance to the next stage until the human explicitly approves.
   Silence, a question, or "looks good" are NOT approval.
