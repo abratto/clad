@@ -7,8 +7,8 @@
       "groups": [
         "read",
         ["edit", {
-          "fileRegex": "^(features/_system/.*|features/[^/]+/(stages/(0[0-3][a-z]?|05[a-z]?)_.*/output/.*|RESUME\\.md)|plan-board\\.md|ROADMAP\\.md|templates/plan-board\\.md|methodology/overlays/(PLANNING|TRACKING)\\.md|AGENTS\\.md|CONTEXT\\.md|README\\.md|methodology/README\\.md)$",
-          "description": "Stage 00–03 and 05 output files (including lettered sub-stages 02a, 02b, 03a etc.), RESUME.md, system-scoped stage 00 (features/_system/), and planning/intake docs (plan-board, ROADMAP, planning overlays/router docs). No implementation files, no test files, no stage 04 output."
+          "fileRegex": "^(features/_system/.*|features/[^/]+/(stages/(0[0-3][a-z]?|05[a-z]?)_.*/(output/.*|CONTEXT\\.md)|_config/[^/]+\\.md|RESUME\\.md|README\\.md)|plan-board\\.md|ROADMAP\\.md|templates/plan-board\\.md|methodology/overlays/(PLANNING|TRACKING)\\.md|AGENTS\\.md|CONTEXT\\.md|README\\.md|methodology/README\\.md)$",
+          "description": "Stage 00–03 and 05 output files (including lettered sub-stages 02a, 02b, 03a etc.), stage CONTEXT.md files for those stages, feature _config/*.md, feature-level README.md, RESUME.md, system-scoped stage 00 (features/_system/), and planning/intake docs (plan-board, ROADMAP, planning overlays/router docs). No implementation files, no test files, no stage 04 output."
         }]
       ],
       "customInstructions": "See .roorules-clad-architect for full instructions."
