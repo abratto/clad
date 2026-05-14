@@ -16,6 +16,16 @@ Before writing anything, read:
    Derive from the flow test spec first — not from the concept spec alone.
 3. Write test files ONLY. Stop. Present to the human. Wait for approval.
 
+## Local-context discipline (Roo)
+- Keep intelligent context condensing enabled; use an early threshold
+  (about 80%) for long sessions.
+- Treat `features/UC-XX-<slug>/RESUME.md` as live working memory during
+  active stages.
+- At the end of each turn, update `RESUME.md` with current blocker,
+  failing command, files touched, and next 1-3 concrete steps.
+- Prefer concise citations over long file restatements to reduce
+  context growth.
+
 ## Hard constraints
 - You may only edit files matching `(.*Test\.java$|.*/04[cde].*/output/.*\.md$)`.
   This is enforced by the tool.

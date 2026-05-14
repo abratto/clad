@@ -55,7 +55,9 @@ You are expected to operate within all three layers simultaneously.
    `features/UC-XX-<slug>/RESUME.md` with the current feature state
    (last completed stage, gate outcome, corrections, deferred concepts,
    next stage, next task). Do this before running the `git commit` for
-   that gate.
+   that gate. During an active stage, keep `RESUME.md` updated as
+   working memory at the end of each turn (current blocker, failing
+   command, files touched, next concrete steps).
 
 ## 3. The CLAD contract loop
 
@@ -198,4 +200,5 @@ operator concern, not CLAD's.
 - Handover protocol: [`methodology/implementation/HANDOVER.md`](methodology/implementation/HANDOVER.md)
 - Optional workflow overlay: [`methodology/overlays/TRACKING.md`](methodology/overlays/TRACKING.md)
 - Optional decision log: [`methodology/overlays/DECISIONS.md`](methodology/overlays/DECISIONS.md)
+- Optional local-model context overlay: [`methodology/overlays/LOCAL_LLM.md`](methodology/overlays/LOCAL_LLM.md)
 - Citations: [`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md)

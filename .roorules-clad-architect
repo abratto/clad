@@ -28,6 +28,16 @@ Then load exactly the files listed in that stage's `Inputs` table — no more.
 5. Produce the stage outputs. Stop. Present a summary to the human.
    Wait for explicit approval before advancing.
 
+## Local-context discipline (Roo)
+- Keep intelligent context condensing enabled; use an early threshold
+  (about 80%) for long sessions.
+- Treat `features/UC-XX-<slug>/RESUME.md` as live working memory during
+  active stages.
+- At the end of each turn, update `RESUME.md` with current blocker,
+  failing command, files touched, and next 1-3 concrete steps.
+- Minimize long restatements of stable docs; reference headings when
+  possible instead of quoting large sections.
+
 ## Hard constraints — non-negotiable
 
 ### All stages
