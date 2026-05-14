@@ -174,6 +174,8 @@ control. CLAD is the missing piece:
   exhausting LLM rework.
 - **Optional overlays, not mandates.** Tracking
   ([methodology/overlays/TRACKING.md](methodology/overlays/TRACKING.md))
+  and planning intake
+  ([methodology/overlays/PLANNING.md](methodology/overlays/PLANNING.md))
   and decision logs
   ([methodology/overlays/DECISIONS.md](methodology/overlays/DECISIONS.md))
   are bolt-ons; the core loop works without either.
@@ -231,6 +233,12 @@ proposes a draft actor list and goal list, asks up to five clarifying
 questions, and **waits for your answers** before writing the approved
 artefacts.
 
+If you want to sequence multiple goals before implementation, adopt the
+optional planning overlay:
+
+- [methodology/overlays/PLANNING.md](methodology/overlays/PLANNING.md)
+- [templates/plan-board.md](templates/plan-board.md)
+
 ### Roo Code setup (optional — Stage 04d/04e agentic loop)
 
 If you are using [Roo Code](https://github.com/RooVetGit/Roo-Code) in
@@ -283,10 +291,11 @@ clad/
 │   ├── core/                        CLAD: contracts, artefacts, principles
 │   ├── architecture/                Legible/WYSIWID + ARTEFACT_MAP.md
 │   ├── implementation/              Hard rules + ICM stage mapping
-│   ├── overlays/                    Optional: tracking, decision logs
+│   ├── overlays/                    Optional: tracking, planning, decision logs
 │   └── reference/                   Citations and source pointers
 │
 ├── templates/                       Per-artefact templates +
+│   ├── plan-board.md                Optional sequencing board for overlays/PLANNING
 │   └── feature-skeleton/            ...empty stage tree to copy for new features
 │
 ├── features/

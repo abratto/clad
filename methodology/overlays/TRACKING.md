@@ -80,12 +80,14 @@ Agent behavior:
 
 Agent behavior:
 
-1. Route to system-scope Stage 00 at
+1. Open [`PLANNING.md`](PLANNING.md) and detect project state.
+2. If Stage 00 outputs do not exist, route to system-scope Stage 00 at
   `features/_system/stages/00_actor-goal/CONTEXT.md`.
-2. Propose actors/goals, ask up to 5 clarifying questions, iterate to
-  gate approval.
-3. Only after Stage 00 approval, create per-UC folders from
-  `templates/feature-skeleton/`.
+3. If Stage 00 outputs exist, planning is optional: sequence in
+  `plan-board.md` or choose an existing approved goal directly.
+4. If goals changed after planning, run the plan-drift check and update
+  `plan-board.md` before starting new work.
+5. Ask one targeted planning question only when sequencing is unclear.
 
 ### "Resume work"
 

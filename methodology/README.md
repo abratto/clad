@@ -50,8 +50,10 @@ if the corresponding pain shows up in your workflow.
 1. [`overlays/TRACKING.md`](overlays/TRACKING.md) — one-active-feature
    discipline, ROADMAP convention, session start/resume checklists,
    issue/PR labels.
-2. [`overlays/DECISIONS.md`](overlays/DECISIONS.md) — append-only ADR
+2. [`overlays/PLANNING.md`](overlays/PLANNING.md) — intake and sequencing
+   overlay for deciding what to start next before Stage 00.
+3. [`overlays/DECISIONS.md`](overlays/DECISIONS.md) — append-only ADR
    trail for cross-cutting choices.
-3. [`overlays/LOCAL_LLM.md`](overlays/LOCAL_LLM.md) — context-window
+4. [`overlays/LOCAL_LLM.md`](overlays/LOCAL_LLM.md) — context-window
    discipline for local model runs (Roo condensing + `RESUME.md`
    working-memory loop).

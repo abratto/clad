@@ -65,9 +65,12 @@ You are expected to operate within all three layers simultaneously.
          `features/UC-XX-<slug>/RESUME.md`, and the current stage gate
          status. Reply with one concrete next action, then wait for approval.
       - If the human says "let's work on a new feature" (or equivalent),
-         route to system-scope Stage 00 at
-         `features/_system/stages/00_actor-goal/CONTEXT.md` before creating
-         any UC folder.
+         run planning intake first: read `methodology/overlays/PLANNING.md`
+         and check `plan-board.md` (if present) for priority/dependency fit.
+         If Stage 00 outputs (`actors.md`/`goals.md`) do not exist, run
+         system-scope Stage 00 first. If they do exist, planning is optional:
+         either sequence via `plan-board.md` or pick an existing approved goal
+         directly. Ask one targeted planning question if sequencing is unclear.
       - If intent is ambiguous, ask one clarifying question, then continue.
 
 ## 3. The CLAD contract loop
@@ -210,7 +213,7 @@ operator concern, not CLAD's.
 - Trunk-based delivery + CI gate: [`methodology/implementation/DELIVERY.md`](methodology/implementation/DELIVERY.md)
 - Handover protocol: [`methodology/implementation/HANDOVER.md`](methodology/implementation/HANDOVER.md)
 - Optional workflow overlay: [`methodology/overlays/TRACKING.md`](methodology/overlays/TRACKING.md)
-- Optional planning/intake shortcuts: [`methodology/overlays/TRACKING.md`](methodology/overlays/TRACKING.md)
+- Optional planning/intake shortcuts: [`methodology/overlays/PLANNING.md`](methodology/overlays/PLANNING.md)
 - Optional decision log: [`methodology/overlays/DECISIONS.md`](methodology/overlays/DECISIONS.md)
 - Optional local-model context overlay: [`methodology/overlays/LOCAL_LLM.md`](methodology/overlays/LOCAL_LLM.md)
 - Citations: [`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md)
