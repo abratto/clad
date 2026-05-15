@@ -1,0 +1,21 @@
+# CLAD local configuration for Cline workspace rules
+# Copy this file to .cline-clad-config and fill in values for your project.
+# .cline-clad-config is gitignored — it is yours alone.
+# This file is only for CLAD stage-specific runtime inputs.
+# It does NOT configure Cline Auto Compact thresholds or compaction prompts.
+
+## Test command
+# The command to run after each implementation edit in CLAD green work.
+# Examples:
+#   ./mvnw test -pl reference-impl/java-micronaut-jena
+#   ./gradlew test
+#   npm test
+TEST_COMMAND=./mvnw test
+
+## Profile storage layer
+# The storage technology used by this project's reference-impl profile.
+# Examples:
+#   Jena TDB2 named graph (Java/Micronaut profile)
+#   PostgreSQL schema per concept (Spring Boot profile)
+#   MongoDB collection per concept (Node.js profile)
+STORAGE_LAYER=Jena TDB2 named graph (Java/Micronaut profile)

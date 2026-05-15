@@ -239,32 +239,95 @@ optional planning overlay:
 - [methodology/overlays/PLANNING.md](methodology/overlays/PLANNING.md)
 - [templates/plan-board.md](templates/plan-board.md)
 
-### Roo Code setup (optional — Stage 04d/04e agentic loop)
+### Cline setup (optional — local agentic loop)
 
-If you are using [Roo Code](https://github.com/RooVetGit/Roo-Code) in
-VS Code, CLAD ships two custom modes (`clad-red` and `clad-green`) that
-enforce the R8 red-before-green gate and loop on your test runner
-automatically. One manual step is required before first use:
+If you are using [Cline](https://docs.cline.bot/) in VS Code, CLAD now
+ships workspace rules under `.clinerules/` that preserve the old
+Roo-mode workflow as closely as Cline allows. Cline already reads
+`AGENTS.md`; the additional rule files let you manually toggle the
+current CLAD phase:
+
+- `10-clad-architect.md` for Stages `00`-`03` and `05`
+- `20-clad-red.md` for red test/spec work in `04c`-`04e`
+- `30-clad-green.md` for green implementation after explicit approval
+
+Enable exactly one of those phase rules at a time in the Cline Rules
+panel.
+
+The underlying CLAD process prompt does **not** change across local
+agent frameworks. `AGENTS.md` remains the canonical instruction source
+for Copilot, Cline, Roo, Cursor, and other agents. What changes by tool
+is only the local wiring:
+
+- Roo used custom modes and mode-specific rule files.
+- Cline uses Plan/Act plus `.clinerules/` toggles.
+- Copilot uses repository instructions plus normal tool permissions.
+
+In other words: when someone clones this repo from the template, they
+should not need a different CLAD methodology prompt just because they
+prefer Cline over Roo. The process contract is shared; the shell around
+it is tool-specific.
+
+#### Manual Cline settings
+
+Set these locally in Cline before long CLAD sessions:
+
+- Enable **Auto Compact**.
+- If you prefer different models for planning and implementation,
+  enable **Use different models for Plan and Act**.
+- Keep the CLAD phase rules visible in the Rules panel and toggle only
+  one of `10-clad-architect.md`, `20-clad-red.md`, or
+  `30-clad-green.md` at a time.
+
+Important: current Cline documentation describes Auto Compact as a
+feature, but does **not** document a portable repo-committed settings
+file for an Auto Compact threshold or custom compaction prompt. Because
+of that, CLAD does not commit a fake `.cline/` settings file for those
+values. Auto Compact behavior is currently a **per-user Cline setting**,
+not a team-shared repository config.
+
+Plan/Act and CLAD phase are **orthogonal**:
+
+- `Plan` means read/search/discuss only.
+- `Act` means Cline may edit files and run commands.
+- `10-clad-architect.md` / `20-clad-red.md` / `30-clad-green.md`
+  decide **what kind of work** CLAD allows.
+
+Typical CLAD-on-Cline combinations:
+
+- `Plan` + `10-clad-architect.md`: inspect stage context, review artefacts, plan the stage.
+- `Act` + `10-clad-architect.md`: write Stage `00`-`03` or `05` artefacts.
+- `Act` + `20-clad-red.md`: write Stage `04` red tests/specs.
+- `Act` + `30-clad-green.md`: implement approved Stage `04` work.
+
+One manual step is required before Stage `04` implementation work:
 
 ```bash
-cp .roo-clad-config.example .roo-clad-config
+cp .cline-clad-config.example .cline-clad-config
 ```
 
-Then open `.roo-clad-config` and fill in two values for your project:
+Then open `.cline-clad-config` and fill in two values for your project:
 
 ```
 TEST_COMMAND=./mvnw test -pl reference-impl/java-micronaut-jena
 STORAGE_LAYER=Jena TDB2 named graph (Java/Micronaut profile)
 ```
 
-`.roo-clad-config` is gitignored — it is yours alone and will not be
-committed. See [`.roo-clad-config.example`](.roo-clad-config.example)
+`.cline-clad-config` is gitignored — it is yours alone and will not be
+committed. See [`.cline-clad-config.example`](.cline-clad-config.example)
 for examples covering Maven, Gradle, npm, and common storage profiles.
 
-Roo will detect the custom modes automatically on workspace open. Switch
-to **CLAD 04d — Red Tests** for the test-writing phase and **CLAD 04d —
-Green Implementation** for the implementation phase. Roo will block if
-`.roo-clad-config` is missing and prompt you to create it.
+That file is **not** where Auto Compact settings live. It exists only
+for CLAD implementation-time inputs such as the test command and the
+storage profile.
+
+Cline will detect `.clinerules/` and `AGENTS.md` automatically on
+workspace open. Use `.clineignore` to keep generated/build files out of
+automatic context gathering.
+
+Limitation versus Roo: Cline rules do not enforce Roo-style `fileRegex`
+edit fences. The phase boundaries are preserved as rule instructions,
+not as hard tool-level write restrictions.
 
 ## Repository layout
 
@@ -281,9 +344,12 @@ clad/
 ├── CLAUDE.md                        Adapter -> AGENTS.md
 ├── .github/copilot-instructions.md  Adapter -> AGENTS.md
 ├── .cursor/rules/clad.mdc           Adapter -> AGENTS.md
+├── .clinerules/                     Cline workspace rules for CLAD phases
+├── .clineignore                     Cline automatic-context exclusions
+├── .cline-clad-config.example       Template for per-developer Cline config
 ├── CONTEXT.md                       Workspace routing (ICM Layer 1)
-├── .roomodes                        Roo Code custom modes (clad-red, clad-green)
-├── .roo-clad-config.example         Template for per-developer Roo config
+├── .roomodes                        Legacy Roo custom modes
+├── .roo-clad-config.example         Legacy Roo per-developer config
 │
 ├── methodology/
 │   ├── README.md                    Reading order

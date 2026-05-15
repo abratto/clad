@@ -102,16 +102,23 @@ London School forces the question "does this scenario pass?" before any
 implementation is written, which is exactly what CLAD's legibility property
 requires.
 
-## Mode switching in Roo
+## Phase switching in Cline
 
-The red→green boundary maps directly to Roo mode switches:
+The red→green boundary now maps to Cline rule toggles rather than Roo
+custom modes:
 
-| What just happened | Mode to be in |
+| What just happened | Rule to enable |
 |---|---|
-| Starting 04c, 04d (tests), or 04e (tests) | `clad-red` |
-| Human has **explicitly approved** the red tests | Switch to `clad-green` |
-| Human has **explicitly approved** the green implementation | Switch back to `clad-red` for the next stage |
+| Starting 04c, 04d (tests), or 04e (tests) | `20-clad-red.md` |
+| Human has **explicitly approved** the red tests | Disable red, enable `30-clad-green.md` |
+| Human has **explicitly approved** the green implementation | Disable green, re-enable `20-clad-red.md` for the next red stage |
 
-**Do not switch modes without explicit human approval.** Approval is a
+Keep exactly one CLAD phase rule enabled at a time.
+
+**Do not switch phases without explicit human approval.** Approval is a
 statement like "approved — proceed to implementation" or "approved — proceed
 to 04e". Silence, a question, or "looks good" is not approval.
+
+Unlike Roo, Cline rules do not enforce tool-level file write fences.
+Treat the red/green boundary as a hard instruction boundary and stop at
+the gate if the current phase no longer matches the requested work.

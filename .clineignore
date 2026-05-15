@@ -1,0 +1,26 @@
+# Build / IDE artefacts
+/target/
+**/target/
+/.idea/
+**/.idea/
+/.vscode/
+**/.vscode/
+*.iml
+.DS_Store
+
+# Maven wrapper and local scratch
+/.mvn/
+/mvnw
+/mvnw.cmd
+/references/
+
+# Large generated / derived content
+**/generated-sources/
+**/generated-test-sources/
+**/surefire-reports/
+**/test-classes/
+**/classes/
+
+# Local per-developer agent config
+.cline-clad-config
+.roo-clad-config

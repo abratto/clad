@@ -13,6 +13,9 @@ mvnw.cmd
 # Local scratch / out-of-tree references
 references/
 
-# Roo Code local config (per-developer, not committed)
-# Copy .roo-clad-config.example to .roo-clad-config and fill in your values.
+# Local agent config (per-developer, not committed)
+# Copy .cline-clad-config.example to .cline-clad-config and fill in your values.
+.cline-clad-config
+
+# Legacy Roo local config
 .roo-clad-config

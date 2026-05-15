@@ -1,6 +1,6 @@
 # LOCAL_LLM.md - context management overlay for local model runs
 
-Use this overlay when running CLAD with local models (for example via Roo)
+Use this overlay when running CLAD with local models (for example via Cline)
 where long sessions can degrade quality or trigger context-window limits.
 
 This overlay is optional. It does not replace `AGENTS.md`, stage contracts,
@@ -10,17 +10,23 @@ or gate rules.
 
 Keep long-running feature work stable by combining:
 
-1. Roo context condensing
+1. Cline Auto Compact (or equivalent summarization)
 2. `RESUME.md` as continuous working memory
 3. Tight file-reading discipline
 
-## Recommended Roo settings
+## Recommended Cline settings
 
-In Roo settings, under context management:
+In Cline:
 
-1. Keep intelligent context condensing enabled.
-2. Set condense threshold to around 80% (instead of waiting for 100%).
-3. Add a custom condense prompt that preserves CLAD-critical state.
+1. Keep Auto Compact enabled when your model/provider supports it.
+2. Use task lists and `RESUME.md` so the session can survive summarization cleanly.
+3. If you use custom summarization prompts or plugins, preserve CLAD-critical state.
+
+Current limitation: the Cline docs describe Auto Compact behavior, but
+do not document a portable repo-committed workspace settings file for a
+custom compaction threshold or summarization prompt. Treat those as
+local user settings unless Cline publishes a stable project-level
+settings format for them.
 
 Suggested condense prompt:
 

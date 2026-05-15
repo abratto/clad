@@ -55,5 +55,5 @@ if the corresponding pain shows up in your workflow.
 3. [`overlays/DECISIONS.md`](overlays/DECISIONS.md) — append-only ADR
    trail for cross-cutting choices.
 4. [`overlays/LOCAL_LLM.md`](overlays/LOCAL_LLM.md) — context-window
-   discipline for local model runs (Roo condensing + `RESUME.md`
+   discipline for local model runs (Cline Auto Compact + `RESUME.md`
    working-memory loop).
