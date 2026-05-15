@@ -43,16 +43,15 @@ load-bearing.
 ### Scenario: <name>
 
 - **Trigger:** <user action or external event>
-  *(Trigger is required only when the use case is system-initiated or
-  the initiating event is non-obvious. For straightforward
-  actor-initiated flows — "the user submits the form" — it may be
-  omitted.)*
+  *(Every scenario must state its trigger explicitly. Examples: "User clicks Submit", "Password-reset token expires", "System detects lockout condition".)*
 - **Pre-conditions:**
   - <state required>
 - **Main flow:**
-  1. <Actor> does X.
+  1. <Actor> does X. *(Step 1 must always be an action by the primary actor, never by the system.)*
   2. System responds with Y.
   3. …
+
+  > **Note:** Domain entities (e.g. "Loan", "Copy", "Title") are not actors. Actors are roles (e.g. "Patron", "Librarian", "Web User")
 - **Expected outcomes:**
   - <observable outcome 1>
   - <observable outcome 2>

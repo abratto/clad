@@ -42,14 +42,14 @@ about what is out of scope.
 
 ## Verify
 
-- Every scenario has a trigger, pre-conditions, and at least one
-  observable outcome.
+- Every scenario has an explicit trigger. *(The trigger names a user action or external event, not just "user does something".)*
+- Every scenario's main flow begins with an action by the primary actor.
+- All actors named in scenarios come from `../00_actor-goal/output/actors.md`.
+- No scenario lists a domain entity (Loan, Copy, Title, etc.) as an actor.
+- Pre-conditions, observable outcomes, and postconditions (Success and Failure) are present in each scenario.
 - Out-of-scope section is non-empty.
-- The operational principle reads as a coherent story, not a feature
-  list.
-- **Cross-stage check (back):** every in-scope goal in
-  `../00_actor-goal/output/goals.md` corresponds to at least one named
-  scenario in `usecase.md`.
+- The operational principle reads as a coherent story, not a feature list.
+- **Cross-stage check (back):** every in-scope goal in `../00_actor-goal/output/goals.md` corresponds to at least one named scenario in `usecase.md`.
 
 ## Gate
 

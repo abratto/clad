@@ -35,6 +35,16 @@ not relax the *intent*.
    `Owner stage = NN` so a reviewer can see which stage produced the
    change. Edits to a stage's output that did not come from re-running
    that stage are flagged.
+7. **Stage 01 use-case consistency checks.** When a diff touches
+   `features/UC-*/stages/01_usecase/output/usecase.md`, verify:
+   - Every actor named in scenarios is listed in
+     `features/UC-*/stages/00_actor-goal/output/actors.md`.
+   - Every scenario's main flow starts with an action by an actor
+     (not by the system).
+   - No domain entity (entity-name patterns from
+     `features/UC-*/stages/02_concepts/output/`) is named as an actor.
+   - Every scenario has an explicit, concrete trigger statement (not
+     implicit).
 
 ## Java/Micronaut/Jena profile
 
