@@ -16,14 +16,11 @@ registered user.
 ## Diagram
 
 ```mermaid
-sequenceDiagram
-    actor U as User
-    participant W as Web
-    participant Us as User
-    U->>W: POST /login {username, password}
-    W->>Us: lookupByUsername(username)
-    Us-->>W: NotFound
-    W-->>U: 401 {message}
+stateDiagram-v2
+    [*] --> Web_handle : POST /login {username, password}
+    Web_handle --> User_lookupByUsername : [Routed]
+    User_lookupByUsername --> Web_respond401 : [NotFound]
+    Web_respond401 --> [*]
 ```
 
 ## Cross-checks

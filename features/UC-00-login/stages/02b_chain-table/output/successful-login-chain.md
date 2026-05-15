@@ -18,20 +18,13 @@ for a registered user whose account is not locked.
 ## Diagram
 
 ```mermaid
-sequenceDiagram
-    actor U as User
-    participant W as Web
-    participant Us as User
-    participant PA as PasswordAuth
-    participant S as Session
-    U->>W: POST /login {username, password}
-    W->>Us: lookupByUsername(username)
-    Us-->>W: Found(userId)
-    W->>PA: check(userId, password)
-    PA-->>W: Ok
-    W->>S: grant(userId)
-    S-->>W: Granted(sessionId)
-    W-->>U: 200 {sessionToken}
+stateDiagram-v2
+    [*] --> Web_handle : POST /login {username, password}
+    Web_handle --> User_lookupByUsername : [Routed]
+    User_lookupByUsername --> PasswordAuth_check : [Found]
+    PasswordAuth_check --> Session_grant : [Ok]
+    Session_grant --> Web_respond200 : [Granted]
+    Web_respond200 --> [*]
 ```
 
 ## Cross-checks

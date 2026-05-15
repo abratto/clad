@@ -17,17 +17,12 @@ reached the lockout threshold for that user.
 ## Diagram
 
 ```mermaid
-sequenceDiagram
-    actor U as User
-    participant W as Web
-    participant Us as User
-    participant PA as PasswordAuth
-    U->>W: POST /login {username, password}
-    W->>Us: lookupByUsername(username)
-    Us-->>W: Found(userId)
-    W->>PA: check(userId, password)
-    PA-->>W: Locked
-    W-->>U: 401 {lockout message}
+stateDiagram-v2
+    [*] --> Web_handle : POST /login {username, password}
+    Web_handle --> User_lookupByUsername : [Routed]
+    User_lookupByUsername --> PasswordAuth_check : [Found]
+    PasswordAuth_check --> Web_respond401 : [Locked]
+    Web_respond401 --> [*]
 ```
 
 ## Cross-checks
