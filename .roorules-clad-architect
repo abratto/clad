@@ -77,14 +77,26 @@ Then load exactly the files listed in that stage's `Inputs` table — no more.
 - **One sync per chain-table transition.** Count the row-to-row arrows
   in every approved chain table. That number is the exact number of
   sync files to produce. Do not collapse two transitions into one sync.
+- **Build a Sync Contract Matrix first.** For each sync, record the
+  source row, target row, exact `when`, exact `then`, and allowed
+  literals copied from Stage 02b and Stage 02.
 - **`where` clause discipline.** Every `where` line must be a
   field-path reference (`body.field`, `result_of(<#N>).field`) or a
-  sync constant (quoted literal). No function calls, no arithmetic,
+  sync constant (exact approved literal). No function calls, no arithmetic,
   no I/O. Every `where` line must carry a pattern label: `A:` / `B:`
   / `C:` / `D:` per `SYNC_PATTERNS.md`.
+- **Literal lock.** Preserve exact token identity across stages:
+  numeric status codes stay numeric, and string/status literals keep
+  their approved casing and hyphenation.
+- **No invented payload fields.** Response bodies and downstream calls
+  may use only approved constants or fields explicitly emitted by prior
+  action outcomes and declared in `where`.
 - **Declare before use.** Every variable referenced in a `then` line
   must be either carried from the `when` outcome's flow token or
   explicitly declared in a `where` clause.
+- **Mismatch means Stage 02 is wrong.** If any Stage 03 signature or
+  literal disagrees with Stage 02b or Stage 02, stop and reopen Stage
+  02 instead of normalizing the mismatch in the sync.
 - Every sync's `Cites` section names the use-case scenario it satisfies.
 
 ### Stage 03a (dependency review)
@@ -96,6 +108,10 @@ Then load exactly the files listed in that stage's `Inputs` table — no more.
   cross-concept read.
 - `pattern-d-summary.md` must consolidate every Pattern D read in the
   feature — no omissions.
+- Copy sync names, action names, field names, pattern labels, keys,
+  status codes, and literals exactly from the approved Stage 03 syncs.
+- If 03a discovers token drift, surface it as a defect in Stage 03 or
+  earlier; do not normalize it in the review artefacts.
 
 ### Stage 05 (verify)
 - Trace from runtime flow tokens back to `usecase.md` scenarios.

@@ -20,6 +20,11 @@
 > where this card is materialised — typically
 > `../../../../../methodology/architecture/SYNC_PATTERNS.md` from a
 > stage `output/` folder).
+>
+> This card is an exact-token audit of the approved syncs. Copy action
+> names, argument names, field names, pattern labels, keys, status codes,
+> and literals exactly. Do not normalize casing, hyphenation, or
+> numeric-vs-string form.
 
 ## Section 1 — Invocations received
 
@@ -59,6 +64,9 @@
 > If the same action is called via **different patterns in different
 > flows**, that is almost always a defect — the data source disagrees
 > across flows. Flag it in *Inconsistencies* below.
+>
+> If a row here would need to differ from the approved sync text, stop.
+> The mismatch belongs in Stage 03 (or earlier), not in this review card.
 
 ## Section 2 — Named-region reads by others (inbound Pattern D)
 
@@ -93,6 +101,7 @@
 - Every `Action` row exists in this concept's `<ConceptName>.concept.md`.
 - Every `Sync` named here exists in `../../03_syncs/output/`.
 - Every Pattern D `Field` row appears in this concept's `state` section.
+- Every copied token matches the approved sync text exactly.
 
 ---
 

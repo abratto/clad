@@ -213,12 +213,24 @@ section), `methodology/architecture/SYNCHRONIZATIONS.md`,
 
 **Process:** for each scenario in the use case, identify the chain of
 concept actions that fulfils it. Each coordination link becomes one
-sync.
+sync. Before writing sync prose, build a per-sync **Sync Contract
+Matrix** from the approved 02b rows and 02 concept signatures: source
+row id, target row id, exact `when`, exact `then`, and allowed literals.
+
+Stage 03 is under an exact-token lock. Outcome names, argument names,
+status values, casing, hyphenation, and numeric-vs-string literals must
+match the approved earlier-stage contracts exactly. `where:` is for join
+provenance only; it may not invent convenience payload fields. If any
+02b row and 02 concept signature disagree, stop and reopen Stage 02
+instead of guessing inside Stage 03.
 
 **Output:** one `<name>.sync.md` per coordination rule.
 
-**Gate:** the human checks that every scenario is covered and that no
-sync contains imperative branching.
+**Gate:** the human checks that every scenario is covered, that no
+sync contains imperative branching, that output filenames match the
+stage's `Outputs` list exactly, and that any 02b↔02 signature mismatch
+was surfaced as a Stage 02 correction rather than silently normalized in
+the syncs.
 
 ### Stage 03a — `03a_dependency-review/`
 
@@ -237,6 +249,13 @@ and (2) every Pattern D read of its named region by other concepts.
 Then produce a single `pattern-d-summary.md` consolidating every
 Pattern D read in the feature.
 
+Stage 03a is an audit stage, not a repair stage. Cards and the Pattern D
+summary copy action names, argument names, field names, pattern labels,
+keys, status codes, and literals exactly from the approved Stage 03
+syncs. If 03a discovers token drift, it surfaces the defect and sends
+work back to Stage 03 (or earlier if Stage 03 already reflects earlier
+contract drift).
+
 This stage produces no new design — it makes the cross-concept
 coupling that already exists in the syncs **visible** so the human
 can spot a flow-inconsistent invocation or an unintended state
@@ -248,7 +267,8 @@ elsewhere, the dependency card is where that gets surfaced.
 `pattern-d-summary.md` consolidating Pattern D across the feature.
 
 **Gate:** human approval. Last cross-concept sanity check before
-implementation begins.
+implementation begins. The reviewer should reject any 03a artefact that
+silently normalizes token mismatches instead of surfacing them.
 
 ### Stage 04 — `04_implement/` (router)
 

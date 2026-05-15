@@ -39,6 +39,10 @@ For each concept that appears in any chain table or sync:
 1. Open
    [`../../../../templates/dependency-review-card.md`](../../../../templates/dependency-review-card.md)
    and produce `output/<concept>-card.md`.
+2. Before tabulating anything, treat the approved Stage 03 sync pack as
+   token-locked input. Copy action names, argument names, field names,
+   pattern labels, keys, status codes, and literals exactly as written.
+   03a is an audit stage; it does not normalize names.
 2. Section 1 — for each sync in `../03_syncs/output/`, inspect its
    `then` clause only. If the `then` clause calls an action on this
    concept, add one row. Do **not** add a row for syncs where this
@@ -51,6 +55,11 @@ For each concept that appears in any chain table or sync:
 4. Note any inconsistency (same action invoked via different
    patterns across flows; same field read via D in one flow and
    reconstructed via A/B in another).
+
+If a sync name, action signature, field name, key, pattern label, or
+literal in 03a would differ from the approved Stage 03 file, stop and
+reopen Stage 03. If the Stage 03 file itself disagrees with 02b or 02,
+stop and reopen the earlier stage instead of patching the review card.
 
 Then produce `output/pattern-d-summary.md` from
 [`../../../../templates/pattern-d-summary.md`](../../../../templates/pattern-d-summary.md):
@@ -77,6 +86,11 @@ before Stage 04 turns it into code.
 - **`then`-only rule:** every row in every Section 1 table corresponds
   to a sync whose `then` clause calls that action. No row may correspond
   to a sync whose `when` clause merely triggers on that action's outcome.
+- **Exact-token audit:** every action name, argument name, field name,
+   pattern label, key, status code, and literal matches the approved
+   Stage 03 sync file exactly.
+- **Escalation discipline:** any mismatch found in 03a is surfaced as a
+   defect in Stage 03 or earlier; 03a does not repair or reinterpret it.
 
 ## Gate
 

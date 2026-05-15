@@ -38,6 +38,15 @@ Produce one card per concept (`User`, `PasswordAuth`, `Session`,
 `Web`) and one consolidated `pattern-d-summary.md`. The inputs above
 are the only reads needed.
 
+Treat the approved Stage 03 sync files as token-locked input. Copy
+action names, argument names, field names, pattern labels, keys, status
+codes, and literals exactly. This stage is an audit, not a repair step.
+
+If a card or summary would need to rename, re-case, re-type, or otherwise
+normalize a token from Stage 03, stop and reopen Stage 03 instead. If
+the approved Stage 03 syncs disagree with Stage 02b or Stage 02, reopen
+that earlier stage rather than fixing the mismatch inside 03a.
+
 ## Outputs
 
 - `output/User-card.md`
@@ -52,6 +61,11 @@ are the only reads needed.
 - Every action row exists in the matching `*.concept.md`.
 - Every sync mentioned exists under `../03_syncs/output/`.
 - The Pattern D summary is consistent with every card's Section 2.
+- Every action name, argument name, field name, pattern label, key,
+	status code, and literal matches the approved Stage 03 sync file
+	exactly.
+- Any mismatch is surfaced as a Stage 03 or earlier-stage defect rather
+	than being normalized in the dependency review output.
 
 ## Gate
 

@@ -32,10 +32,26 @@ the sync just says *"when outcome X fires → then call Y."*
 ## Process
 
 For each scenario in the use case, identify the chain of concept actions
-that fulfils it. Each coordination link becomes one sync. Syncs are
-declarative `when … where … then …`; no imperative branching, no state,
-no I/O. Each sync's `Cites` section names the use-case scenarios it
-satisfies.
+that fulfils it. Each coordination link becomes one sync.
+
+Before writing sync prose, build a per-sync **Sync Contract Matrix** from
+the approved chain table and concept files. For each transition, record
+the source row id, target row id, exact `when` signature, exact `then`
+signature, and any allowed literals. Copy tokens verbatim.
+
+If any action signature, outcome name, argument name, or literal differs
+between `../02b_chain-table/output/` and `../02_concepts/output/`, stop
+and reopen Stage 02. Stage 03 does not normalize earlier-stage drift.
+
+Syncs are declarative `when … where … then …`; no imperative branching,
+no state, no I/O. `where` is data routing only. It may use field-path
+references and sync constants, but it may not invent convenience fields.
+Response bodies may use only constants from the target chain row or
+fields explicitly emitted by an earlier approved outcome and declared in
+`where`. Exact literals are locked: numeric status codes stay numeric,
+and string/status values keep their approved casing and hyphenation.
+
+Each sync's `Cites` section names the use-case scenarios it satisfies.
 
 ## Outputs
 
@@ -50,13 +66,27 @@ satisfies.
   documented in `LoginGrantsSession.sync.md` notes).
 - No sync contains `if`/`else` over business state.
 - No sync persists state.
+- Every sync has a one-row Sync Contract Matrix that names the exact
+  source row, target row, `when`, `then`, and allowed literals it was
+  derived from.
+- Numeric transport status codes remain numeric, not quoted strings.
+- String literals and status values preserve their exact approved casing
+  and hyphenation.
+- Response payloads contain only chain-row constants or fields explicitly
+  emitted by earlier approved outcomes and declared in `where:`.
+- If any 03 signature differs from 02b or 02, stop and reopen Stage 02
+  instead of resolving the mismatch inside a sync.
 - **Cross-stage check (back):** every named scenario in
   `../01_usecase/output/usecase.md` is satisfied by at least one sync
   or is explicitly called out as a `Web`-only failure path.
+- **Filename contract:** the files in `output/` match the `Outputs`
+  section exactly: `LoginGrantsSession.sync.md` and
+  `LockoutOnFailedAttempts.sync.md`, with no extras and no omissions.
 
 ## Gate
 
-Default human approval.
+Default human approval, with an explicit pass/fail check for the output
+filename contract.
 
 ## Next stage
 

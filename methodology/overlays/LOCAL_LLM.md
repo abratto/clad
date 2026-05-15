@@ -40,7 +40,25 @@ Preserve these items exactly while condensing:
 
 Do not drop symbol names, method signatures, enum values, imports,
 or package names.
+Do not normalize canonical literals or tokens: preserve exact casing,
+hyphenation, numeric-vs-string form, action argument names, and outcome
+names exactly as written in approved artefacts.
 ```
+
+## Extra guardrail for Stage 03 with local models
+
+Before drafting sync prose, build a short token ledger from Stage 02b and
+Stage 02 containing:
+
+- source row id
+- target row id
+- exact `when` signature
+- exact `then` signature
+- allowed literals
+
+Use that ledger as a copy source. If the signatures or literals differ
+between Stage 02b and Stage 02, stop and reopen Stage 02 instead of
+asking the model to reconcile them from memory.
 
 ## Working-memory contract
 

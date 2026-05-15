@@ -33,6 +33,12 @@ Before writing anything:
 - For Stage `02b`, every named scenario has exactly one canonical chain file; the first row is `Web.handle`, the last row is `Web.respond`.
 - For Stage `03`, write one sync per chain-table transition; do not collapse transitions.
 - For Stage `03`, syncs are declarative only: `when X -> then Y`, no imperative branching.
+- For Stage `03`, build a Sync Contract Matrix first: source row, target row, exact `when`, exact `then`, allowed literals.
+- For Stage `03`, preserve literal identity exactly: numeric status codes are numeric, and string/status literals keep exact casing and hyphenation.
+- For Stage `03`, do not invent convenience payload fields; use only approved constants or fields explicitly emitted by prior outcomes.
+- For Stage `03`, if a 02b row and 02 concept signature disagree, stop and reopen Stage `02` instead of reconciling them yourself.
+- For Stage `03a`, copy sync names, action names, field names, pattern labels, keys, and literals exactly from the approved Stage `03` files.
+- For Stage `03a`, treat any token mismatch as a defect to surface, not something to normalize in the dependency review output.
 - For Stage `05`, trace runtime behavior back to use-case scenarios using flow tokens.
 
 ## Working memory

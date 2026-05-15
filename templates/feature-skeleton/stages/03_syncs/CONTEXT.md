@@ -36,12 +36,30 @@ Count the transitions in every approved chain table in
 row N+1) becomes exactly one sync file. Do not collapse multiple
 transitions into one sync.
 
+Before writing any sync prose, build a per-sync **Sync Contract Matrix**
+from the approved chain table and concept files. For each transition,
+capture exactly these tokens: source row id, target row id, `when`
+signature, `then` signature, and allowed literals. Copy them verbatim.
+This is a preflight check, not a place to reinterpret names.
+
+If any action signature, outcome name, argument name, or literal differs
+between 02b and 02, stop and reopen Stage 02 before writing any sync
+file. Stage 03 derives coordination from approved contracts; it does not
+repair contract drift.
+
 For each transition, write one `<name>.sync.md`:
 - `when:` the outcome that fires (e.g. `Account.validate(...) -> Valid`)
 - `where:` data-routing only — field-path references and sync constants.
   No function calls, no arithmetic, no I/O. If you need a computation,
   it belongs inside the concept action, not here. Label every line with
   its pattern: `A:` / `B:` / `C:` / `D:` per `SYNC_PATTERNS.md`.
+- `where:` is also under a **literal lock**. Status codes remain numeric,
+  not quoted strings. Status values keep their exact casing and
+  hyphenation. Action argument names must match the Stage 02 signatures
+  exactly.
+- `where:` may not invent convenience fields. A response sync may use
+  only constants from the target chain row, or fields explicitly emitted
+  by the triggering/prior action outcomes and declared in `where:`.
 - `then:` the next concept action to invoke.
 
 Syncs are declarative — no imperative branching, no state, no I/O.
@@ -60,12 +78,26 @@ Every sync's `Cites` section names the use-case scenario it satisfies.
 - **Where-clause discipline:** no `where` line contains a function call,
   arithmetic expression, or I/O operation. Every line is a field-path
   reference (`body.field`, `result_of(<#N>).field`) or a sync constant
-  (quoted literal). Pattern labels (`A:` / `B:` / `C:` / `D:`) are
+  (exact approved literal). Pattern labels (`A:` / `B:` / `C:` / `D:`) are
   present on every `where` line.
+- **Sync Contract Matrix:** each sync can be traced back to one source
+  row and one target row from 02b, with `when`/`then` signatures copied
+  exactly from the approved contracts.
+- **Literal lock:** exact literal identity is preserved across stages.
+  Numeric transport status codes stay numeric, string literals keep their
+  exact casing and hyphenation, and action argument names match the 02
+  concept signatures exactly.
+- **No invented payload fields:** every field referenced in `then`,
+  including `Web.respond(...)` bodies, is either a Stage 03 constant from
+  the chain row or a field explicitly emitted by an earlier approved
+  action outcome and declared in `where:`.
 - **Declare before use:** every variable referenced in a `then` line
   is either carried directly from the `when` outcome's flow token or
   explicitly declared in a `where` clause with a pattern label. No
   undeclared variable references permitted.
+- **Cross-stage signature lock:** if any 03 `when`/`then` signature does
+  not exactly match the corresponding 02b row or the 02 concept action
+  signature, stop and reopen Stage 02 instead of guessing.
 - **Cross-stage check (back):** every named scenario in
   `01_usecase/output/usecase.md` is satisfied by at least one sync, or
   is a `Web`-only failure path (call this out explicitly in the sync

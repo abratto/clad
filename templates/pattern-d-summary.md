@@ -11,6 +11,10 @@
 > concept's stored state. If a row should appear here but is
 > currently being reconstructed via Pattern A or B in some flow,
 > that is a flow inconsistency — call it out.
+>
+> This summary is also token-locked to the approved sync pack. Copy sync
+> names, owner concept names, field names, keys, and literals exactly.
+> If you find a mismatch, surface it as a defect; do not normalize it.
 
 ## Pattern D reads
 
@@ -26,6 +30,9 @@
 
 > Same field read via Pattern D in some flows and Pattern A/B in
 > others; same field with different keys; etc.
+>
+> Also record any exact-token drift discovered here: renamed fields,
+> recased literals, quoted numeric status codes, or key-name drift.
 
 - <inconsistency, or "none">
 

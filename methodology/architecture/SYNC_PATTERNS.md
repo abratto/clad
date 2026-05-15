@@ -127,20 +127,25 @@ differs.
 
 ---
 
-## What goes in the chain table / sync spec
+## What goes in Stage 02b vs Stage 03
 
-Once these patterns are in scope, the chain table (Stage 02b) and the
-sync spec (Stage 03) should carry two extra columns per row:
+Stage 02b stays concrete: `# | Concept | Action | Inputs | Outcome |
+Why this step`. It does **not** carry `Where` / `Key` columns. At that
+stage, the table captures causal choreography only.
 
-| Column | Meaning |
-|---|---|
-| `Where` | The source of the data needed by the `then` action, in pattern notation (`A: ...`, `B: ...`, `C: ...`, `D: ...`). `—` if no extra data is needed. |
-| `Key` | The join key used to reach `Where`. `flow token` for A and B, `none` for C, an explicit identifier for D. |
+Stage 03 is the first place where join provenance is spelled out. The
+sync's Contract Matrix and `where:` clause make the data source explicit
+using pattern notation (`A: ...`, `B: ...`, `C: ...`, `D: ...`). That
+keeps the derivation path reviewable:
+
+- Stage 02b says which action follows which outcome.
+- Stage 03 says where the downstream action's arguments come from.
+- Stage 03a audits those joins per concept.
 
 Worked examples live in
-[`../../templates/chain-table.md`](../../templates/chain-table.md)
-and the UC-00-login chain tables under
-[`features/UC-00-login/stages/02b_chain-table/output/`](../../features/UC-00-login/stages/02b_chain-table/output/).
+[`../../templates/sync.md`](../../templates/sync.md)
+and the UC-00-login sync pack under
+[`../../features/UC-00-login/stages/03_syncs/`](../../features/UC-00-login/stages/03_syncs/).
 
 ---
 

@@ -4,6 +4,12 @@
 
 > Sync template. Declarative only — no branching, no state, no I/O.
 
+## Sync Contract Matrix
+
+| Source row | Target row | `when` signature | `then` signature | Allowed literals |
+|---|---|---|---|---|
+| `<#>` | `<#>` | `<Concept>.<action>(<args>) -> <Outcome>` | `<Concept>.<action>(<args>)` | `<none \/ 200 / on-loan / ...>` |
+
 <!-- ⚠️ SYNC AUTHORING RULES — READ BEFORE WRITING THE RULE BLOCK
 
 ONE SYNC PER CHAIN-TABLE ROW
@@ -51,6 +57,27 @@ DECLARE BEFORE USE
   ALLOWED:
     where: B: validationErrors = result_of(Account.validate).errors
     then:  Web.respond(status=422, body={errors: validationErrors})
+
+LITERAL LOCK
+  Copy literals and signature tokens exactly from the approved Stage 02b
+  row and Stage 02 concept signature.
+
+  REQUIRED:
+    Web.respond(status=409, body={reason: "on-loan"})
+
+  NOT ALLOWED:
+    Web.respond(status="409", body={reason: "OnLoan"})
+
+NO INVENTED PAYLOAD FIELDS
+  Response bodies and downstream calls may use only:
+  - constants explicitly present in the target chain row
+  - fields explicitly emitted by an earlier approved action outcome and
+    declared in `where`
+
+  NOT ALLOWED:
+    then: Web.respond(status=409, body={message: reason, count: total})
+    — if `message`, `reason`, or `total` were not present in the approved
+      chain row / action outcomes.
 -->
 
 ## Rule
@@ -59,7 +86,7 @@ DECLARE BEFORE USE
 when:  <Concept>.<action>(<args>) -> <Outcome>
 where: A: <local> = body.<field>
        B: <local> = result_of(<Concept>.<action>).<field>
-       C: <local> = "<literal value>"
+  C: <local> = <exact literal from approved contract>
 then:  <Concept>.<action>(<args>)
 ```
 

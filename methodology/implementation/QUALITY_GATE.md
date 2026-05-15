@@ -45,6 +45,30 @@ not relax the *intent*.
      `features/UC-*/stages/02_concepts/output/`) is named as an actor.
    - Every scenario has an explicit, concrete trigger statement (not
      implicit).
+8. **Stage 03 sync contract checks.** When a diff touches
+   `features/UC-*/stages/03_syncs/` or `templates/sync.md`, verify:
+   - Every sync has an exact source-row/target-row derivation from the
+     approved `02b_chain-table/output/` rows.
+   - Every `when`/`then` signature matches the approved Stage 02b rows
+     and Stage 02 concept signatures exactly. If they do not, Stage 02
+     must be corrected before Stage 03 proceeds.
+   - Literal identity is preserved exactly: numeric status codes are not
+     quoted, and string/status literals keep their approved casing and
+     hyphenation.
+   - No response payload or downstream call invents fields that are not
+     present as approved constants or emitted action-outcome fields.
+   - The files in `03_syncs/output/` match the Stage 03 `Outputs` list
+     exactly, with no extra or missing files.
+9. **Stage 03a dependency-review checks.** When a diff touches
+   `features/UC-*/stages/03a_dependency-review/` or the Stage 03a
+   templates, verify:
+   - Every card row and every Pattern D summary row copies sync names,
+     action names, argument names, field names, pattern labels, keys,
+     status codes, and literals exactly from the approved Stage 03 syncs.
+   - No 03a artefact silently normalizes casing, hyphenation,
+     numeric-vs-string form, or key names.
+   - Any mismatch discovered in 03a is surfaced as a Stage 03 or
+     earlier-stage defect rather than repaired in the review output.
 
 ## Java/Micronaut/Jena profile
 
