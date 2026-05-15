@@ -15,22 +15,42 @@
 
 ## Consolidated chain
 
-| # | Scenario | When | Then | Outcome | Why this path |
-|---|---|---|---|---|---|
-| 1 | all | `Web/request[<route>]` | `<Concept1>/<action1>` | `<outcome>` | Entry point (R4) |
-| 2 | main, scenario-X | `<outcome-from-#1>[ok]` | `<Concept2>/<action2>` | `<outcome>` | Happy path continuation |
-| 2a | scenario-Y | `<outcome-from-#1>[error:X]` | `Web/respond[code]` | `Sent` | Short-circuit error |
-| 3 | main | `<outcome-from-#2>[ok]` | `<Concept3>/<action3>` | `<outcome>` | Next step (happy path) |
-| 3a | scenario-Z | `<outcome-from-#2>[error:Y]` | `Web/respond[code]` | `Sent` | Branch error |
-| N | main | `<final-outcome>[ok]` | `Web/respond[code]` | `Sent` | Terminal success |
-| 90+ | errors | `<error-trigger>` | `Web/respond[code]` | `Sent` | Terminal failure |
+| # | Scenario(s) | Concept | Action | Inputs | Outcome | Why this path |
+|---|---|---|---|---|---|---|
+| 1 | all | `Web` | `handle` | `<route>`, `<request body>` | `Routed` | Entry point (R4) |
+| 2 | main, scenario-X | `<Concept1>` | `<action1>` | `<args>` | `<outcome>` | Happy path continuation |
+| 2a | scenario-Y | `Web` | `respond` | `<status>`, `<body>` | `Sent` | Short-circuit error |
+| 3 | main | `<Concept2>` | `<action2>` | `<args>` | `<outcome>` | Next step (happy path) |
+| 3a | scenario-Z | `Web` | `respond` | `<status>`, `<body>` | `Sent` | Branch error |
+| N | main | `Web` | `respond` | `<status>`, `<body>` | `Sent` | Terminal success |
+| 90+ | errors | `Web` | `respond` | `<status>`, `<body>` | `Sent` | Terminal failure |
 
-> **Column semantics:**
-> - **Scenario**: which use-case scenario(s) exercise this row. If all four scenarios share row 1, write "all".
-> - **When**: the trigger event from the previous row's outcome, or `Web/request` for row 1.
-> - **Then**: the concept and action invoked.
-> - **Outcome**: the named result (enum value) emitted by the action (e.g., `Ok`, `NotFound`, `BadPassword`, `Locked`).
-> - **Why this path**: one-line justification; use-case scenario name or error condition.
+## WYSIWID lineage and Stage 03 derivation
+
+This artefact stays in **Level 2b** even though it is designed to help
+Stage 03 and Stage 04 work.
+
+- `Concept` + `Action` together are the concrete rendering of the
+  WYSIWID/Taste Tag **Then** column.
+- The row's **When** is implicit: row 1 is triggered by the use-case
+  request, and every later row is triggered by the previous row's
+  `Outcome` plus the relevant scenario branch context.
+- `Inputs` are the downstream action's implementation-facing arguments
+  only. They are **not** Stage 03 `Where` provenance.
+- Stage 03 is the first place where join provenance and pattern labels
+  (`A/B/C/D`, `Where`, `Key`) are formalised.
+
+Use this table to keep the causal choreography explicit without letting
+Stage 02b collapse into a pseudo-sync specification.
+
+## Reading the table as `When -> Then`
+
+Read each non-root row as a derived causal rule:
+
+- row 1: `Web/request -> Web.handle`
+- every later row: `previous row outcome + scenario branch -> this row's Concept.Action`
+
+That is the exact bridge into Stage 03 sync authoring.
 
 ## State diagram (combined FSM)
 
@@ -56,11 +76,11 @@ stateDiagram-v2
 Use this checklist when implementing Stages 03–04 to ensure no outcome is missed:
 
 - [ ] Concept action outcome enum:
-  - [ ] `<Concept1>.<action1>`: `[<outcome1>, <outcome2>, …]` ✓ matches "Then" column
-  - [ ] `<Concept2>.<action2>`: `[<outcome1>, <outcome2>, …]` ✓ matches "Then" column
+  - [ ] `<Concept1>.<action1>`: `[<outcome1>, <outcome2>, …]` ✓ matches the consolidated chain rows
+  - [ ] `<Concept2>.<action2>`: `[<outcome1>, <outcome2>, …]` ✓ matches the consolidated chain rows
   - [ ] (repeat for all concepts)
 - [ ] Sync rules:
-  - [ ] One sync per "When → Then" row ✓ table row count = sync count
+  - [ ] One sync per non-root row ✓ root `Web.handle` is not a sync
   - [ ] All error syncs present ✓ every `[error:X]` has a sync to terminal response
   - [ ] No invented transitions ✓ only "When/Then" pairs from this table
 - [ ] Flow tests (Stage 04c):
@@ -75,3 +95,16 @@ Validate that this consolidated view is consistent:
 - Every row in this table can be traced back to a specific row in one of the per-scenario `<scenario>-chain.md` files.
 - Every per-scenario file's final row (`Web/respond`) appears in this consolidated table (possibly merged if responses are identical).
 - No outcome enum values are missing (compare against all per-scenario `Outcome` columns).
+
+## Deriving Stage 03 syncs from this table
+
+For each non-root row:
+
+1. Derive the Stage 03 `then` from that row's `Concept` + `Action`.
+2. Derive the Stage 03 `when` from the previous row's `Outcome` and the
+  scenario branch named in `Scenario(s)`.
+3. Add Stage 03 `where` bindings only for arguments in `Inputs` that are
+  not already carried by the triggering outcome.
+
+Stage 02b therefore answers **what action fires next**; Stage 03 adds
+**where each argument came from**.

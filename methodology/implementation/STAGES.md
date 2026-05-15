@@ -157,10 +157,18 @@ written.
 **Process:** for each named scenario in the use case, draw the chain
 of concept actions that fulfils it as a numbered table
 (`# | Concept | Action | Inputs | Outcome | Why this step`) plus a
-Mermaid sequence diagram. The first row is always `Web.handle`; the
-last row is always `Web.respond`. The chain table is the bridge
-between 02a (which concepts exist) and 03 (which syncs coordinate
-them).
+Mermaid `stateDiagram-v2` diagram. The first row is always
+`Web.handle`; the last row is always `Web.respond`.
+
+At this level, `Concept + Action` is the concrete rendering of the
+WYSIWID Level 2b **Then**. The corresponding **When** is still
+implicit: row 1 is triggered by the use-case request, and each later
+row is triggered by the previous row's outcome plus branch context.
+`Inputs` name the downstream action's arguments only; they are **not**
+join provenance. `Where`/pattern A/B/C/D first appear in Stage 03.
+
+The chain table is therefore the bridge between 02a (which concepts
+exist) and 03 (which syncs coordinate them).
 
 **Output:** `<scenario>-chain.md` per scenario.
 

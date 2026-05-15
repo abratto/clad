@@ -2,6 +2,15 @@
 
 > **Status: Derived, non-canonical view.** This file consolidates all four UC-00-login scenarios into a single branching chain and combined FSM diagram. It shows every possible transition and outcome in one view, aiding implementation review (Stages 03–04) by making complete outcome coverage visible. The four per-scenario files (`successful-login-chain.md`, `wrong-password-chain.md`, `lockout-chain.md`, `unknown-user-chain.md`) remain canonical for traceability to the use case.
 
+## WYSIWID lineage and Stage 03 boundary
+
+This artefact remains a **Stage 02b causal chain**, not a sync spec:
+
+- `Concept` + `Action` are the concrete rendering of the Level 2b **Then**.
+- The corresponding **When** is implicit: row 1 comes from the route request; every later row is triggered by the previous row's `Outcome` plus the scenario branch.
+- `Inputs` show the downstream action's arguments only. They do **not** encode Stage 03 `Where` provenance.
+- Stage 03 is where CLAD first adds join provenance, pattern labels, and sync names.
+
 ## Scenarios covered
 
 - `successful-login` (main flow — valid credentials, fresh session)
@@ -63,7 +72,7 @@ Use this when implementing Stages 03–04 to verify no outcome is missed:
 
 ### Sync rules (Stage 03)
 
-- [ ] One sync per transition in the table ✓ count = 8 table rows = 8 syncs
+- [ ] One sync per non-root row ✓ count = 7 non-root rows = 7 syncs
   - [ ] `Web_handle[Routed] → User_lookup`
   - [ ] `User_lookup[Found] → PasswordAuth_check`
   - [ ] `User_lookup[NotFound] → Web_respond[401]`
@@ -97,7 +106,9 @@ Use this when implementing Stages 03–04 to verify no outcome is missed:
 
 ## Deriving syncs from this table (Stage 03)
 
-For each "When → Then" transition:
+Row 1 is the root `Web.handle` entry; it is not itself a sync.
+
+For each non-root row's derived `When -> Then` transition:
 
 1. **Row 1→2:** When `Web.handle[Routed]`, invoke `User.lookupByUsername` → sync name: `LookupUserForLogin`
 2. **Row 2 [Found] → 3b:** When `User.lookupByUsername[Found]`, invoke `PasswordAuth.check` → sync: `CheckCredentialForLogin`

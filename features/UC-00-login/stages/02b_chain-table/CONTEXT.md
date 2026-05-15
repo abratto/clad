@@ -35,8 +35,16 @@ scenario; the last row is `Web.respond`.
 If the use case has 2+ scenarios: also produce
 `output/login-all-scenarios-chain.md` (consolidated view). This
 non-canonical artefact merges all scenario chains into one
-breatching table and combined FSM diagram. Stages 03–04 will use it
+branching table and combined FSM diagram. It uses the same concrete
+Stage 02b shape as the per-scenario chains
+(`Scenario(s) | Concept | Action | Inputs | Outcome | Why this path`)
+and keeps the WYSIWID `When -> Then` causality explicit by derivation:
+the row's `Concept + Action` is the downstream `Then`, while the row's
+implicit `When` is the previous row's `Outcome` plus branch context.
+Stages 03–04 will use it
 to verify complete outcome coverage and prevent implementation gaps.
+`Inputs` in this artefact are action arguments only; join provenance
+still belongs exclusively to Stage 03 sync `where` clauses.
 Template: `../../../../templates/consolidated-chain.md`.
 
 ## Outputs
@@ -52,8 +60,10 @@ Template: `../../../../templates/consolidated-chain.md`.
 - Every scenario has exactly one chain file (canonical).
 - Consolidated chain (non-canonical):
   - Every row in the consolidated table traces back to a specific scenario chain.
-  - Every error outcome from the four scenarios appears in the consolidated "When → Then" table.
+  - Every non-root row can be restated as one derived `When -> Then` transition for Stage 03.
+  - Every error outcome from the four scenarios appears in the consolidated branching table.
   - Concept outcome enums match across all per-scenario files (e.g., PasswordAuth.check: [Ok, BadPassword, Locked] appears in all files that use it).
+  - `Inputs` expose downstream action arguments only; no `Where`/join provenance appears in Stage 02b.
 - The first row of each scenario chain is `Web.handle`; the last is `Web.respond`.
 - Every action used appears in the responsibility map.
 - Mermaid `stateDiagram-v2` diagrams render at [mermaid.live](https://mermaid.live) with no errors.

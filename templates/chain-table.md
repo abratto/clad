@@ -18,21 +18,23 @@
 
 ## Chain
 
-| # | Concept | Action | Inputs | Outcome | Where | Key | Why this step |
-|---|---|---|---|---|---|---|---|
-| 1 | `Web` | `handle` | `<route>`, `<request body>` | `Routed` | — | — | The HTTP entry point (R4) |
-| 2 | `<Name>` | `<actionName>` | `<args>` | `<Outcome>` | `A: Web.handle.body → username` | flow token | <one-line justification> |
-| 3 | `<Name>` | `<actionName>` | `<args>` | `<Outcome>` | `B: result_of(<#2>).userId` | flow token | … |
-| 4 | `Web` | `respond` | `<status>`, `<body>` | `Sent` | — | — | Closes the request |
+| # | Concept | Action | Inputs | Outcome | Why this step |
+|---|---|---|---|---|---|
+| 1 | `Web` | `handle` | `<route>`, `<request body>` | `Routed` | The HTTP entry point (R4) |
+| 2 | `<Name>` | `<actionName>` | `<args>` | `<Outcome>` | <one-line justification> |
+| 3 | `<Name>` | `<actionName>` | `<args>` | `<Outcome>` | … |
+| 4 | `Web` | `respond` | `<status>`, `<body>` | `Sent` | Closes the request |
 
-> The `Where` and `Key` columns label the
-> [four sync data-flow patterns](../methodology/architecture/SYNC_PATTERNS.md):
-> `A:` flow-token join (read the original `Web.handle` body),
-> `B:` flow-sibling join (read an earlier action's output),
-> `C:` sync constant (literal value baked into the rule),
-> `D:` concept-state join (read another concept's named region — the
-> only inter-concept read; surfaces in Stage 03a).
-> Use `—` if the row needs no extra data.
+> **Why this shape is Level 2b, not Level 3a.**
+> - `Concept` + `Action` together are the concrete rendering of the
+>   WYSIWID Level 2b **Then**.
+> - The row's **When** is implicit: row 1 is triggered by the scenario's
+>   `Web/request`, and every later row is triggered by the previous row's
+>   `Outcome` plus the scenario branch context.
+> - `Inputs` show the action's implementation-facing arguments only.
+>   They are **not** provenance, join logic, or sync bindings.
+> - Stage 03 is the first place where `where` provenance and the
+>   A/B/C/D pattern labels are formalised.
 >
 > The `Why this step` column is what the human reviews. If you cannot
 > name a reason, the step probably does not belong.
@@ -87,11 +89,27 @@ inspection of the table alone, before any sync is written.
   (`Ok`, `BadPassword`, `NotFound`, …). Every completion emits
   exactly one event; every event triggers at most one transition per
   sync.
-- **Transitions** = the `Action` column in the next-numbered row.
+- **Transitions** = the next row's `Concept` + `Action`, triggered by
+  the previous row's outcome.
 
 A chain table with no ambiguous transitions, no unreachable states,
 and no missing failure paths is a well-formed FSM — and therefore a
 correct skeleton for the syncs at Stage 03.
+
+### Deriving Stage 03 syncs from the chain table
+
+Stage 03 turns the implicit Level 2b `When -> Then` structure into
+explicit sync rules:
+
+1. Row 1 is the root `Web.handle` entry. It is **not** itself a sync.
+2. Every non-root row becomes one Stage 03 `then` target.
+3. The matching Stage 03 `when` is the previous row's `Outcome` plus
+  the branch context that selects this row.
+4. Stage 03 adds `where` provenance only when the downstream action
+  needs data not carried directly by the triggering outcome.
+
+So Stage 02b answers *what fires what*; Stage 03 adds *where each
+argument came from*.
 
 ### The table is canonical; the diagram is derived
 
