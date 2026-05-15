@@ -69,6 +69,23 @@ not relax the *intent*.
      numeric-vs-string form, or key names.
    - Any mismatch discovered in 03a is surfaced as a Stage 03 or
      earlier-stage defect rather than repaired in the review output.
+10. **Stage 04 implementation-stage checks.** When a diff touches
+   `features/UC-*/stages/04_implement/`, verify:
+   - `04b_spec/output/` exists before any claimed `04c`, `04d`, or `04e`
+     completion.
+   - `04c` has one markdown flow spec and one stub flow test per use-case
+     scenario; a consolidated markdown file is not a substitute.
+   - `04c`, `04d`, and `04e` claims include executed command evidence for
+     the stage's required compilation/test state; markdown artefacts alone
+     do not complete the stage.
+   - `04d` tests and implementation stay concept-local; tests that depend
+     on another concept's state or sync orchestration are rejected back to
+     `04e`.
+   - `04e` test/implementation pairs correspond 1:1 with approved Stage 03
+     sync specs; no extra executable sync/coordinator artefacts appear
+     without an upstream sync contract.
+   - Required human gates between `04c`, `04d` red, `04d` green, and `04e`
+     were not collapsed.
 
 ## Java/Micronaut/Jena profile
 

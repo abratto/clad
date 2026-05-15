@@ -36,6 +36,7 @@ wrong layer.
 | `../../02_concepts/output/` | 4 | Concept specs |
 | `../04b_spec/output/` | 4 | SPEC slices to compile against |
 | `../04c_flow-tests/output/` | 4 | Pre-condition check + drives test derivation |
+| `../../../_config/build-and-test.md` | 3 | Canonical build/test command for red/green evidence |
 | `../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings for this feature |
 | `../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
 | `../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5 |
@@ -52,10 +53,15 @@ sequence** (hard rule R8). Do not batch tests and implementation:
    tests. Then read the SPEC slice (`04b/output/`) and add any additional
    outcomes not covered by the flow tests. Every (action × outcome) pair
    in the SPEC is a required test case.
+   Do not invent failures that depend on another concept's state or sync
+   orchestration; those belong in `04e`.
 2. **Write the test file(s) only.** Do not write any implementation code.
    "Red" here means executable failing tests (not disabled placeholders,
    not compile-failing test suites).
-   Run tests now and confirm failure is behavioral.
+   Place tests under `APP_TEST_SOURCE_ROOT` and packages consistent with
+   `APP_PACKAGE_ROOT`. Run the canonical build-and-test command from
+   `../../../_config/build-and-test.md` now and confirm failure is
+   behavioral.
 3. **Stop. Present the tests to the human. Wait for approval.**
    Do not proceed until the human explicitly approves the tests.
    Do not switch to `clad-green` mode until approval is given.
@@ -102,6 +108,8 @@ joins) from `reference-impl/java-micronaut-jena/README.md` and
 ## Verify
 
 - All concept tests green.
+- Every concept test and implementation file required by the approved
+   red/green work exists in the selected profile's source tree.
 - No cross-concept imports.
 - Every public concept action emits a flow token.
 - Before implementation began, tests were executed and observed failing for behavioral reasons (true red), with successful test compilation.
@@ -109,10 +117,12 @@ joins) from `reference-impl/java-micronaut-jena/README.md` and
 - Mode was switched to `clad-green` only after explicit human approval of tests.
 - Implementation package/source path matches
    `../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,
-   `APP_SOURCE_ROOT`).
+   `APP_SOURCE_ROOT`, `APP_TEST_SOURCE_ROOT`).
 - **Cross-stage check (back):** every action listed in `04b/output/` has at least one row in the test-intent map.
 - **Cross-stage check (back):** `04c_flow-tests/output/` is non-empty (pre-condition was satisfied).
 - **Cross-stage check (back):** every outcome exercised by the flow tests has a corresponding test row in the derivation map.
+- **Boundary rule:** any test or implementation path that depends on
+   another concept's state or a sync belongs in `04e`, not `04d`.
 
 ## Gate
 

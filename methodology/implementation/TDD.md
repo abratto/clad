@@ -44,6 +44,36 @@ concept actions the scenario needs to exercise, and derive the unit tests
 from that. The flow test is the acceptance criterion; the unit tests are the
 design scaffold.
 
+## Stage 04 is executable, not documentary
+
+Stage 04 is not complete because the markdown derivation files exist.
+Those files are evidence and review aids. Completion requires the
+sub-stage's executable side effects too:
+
+- `04b`: SPEC slices that later tests compile against.
+- `04c`: per-scenario stub flow tests plus executed compilation proof.
+- `04d`: executable red concept tests, then concept implementation that
+   turns them green.
+- `04e`: executable red sync tests, then sync implementation that turns
+   both sync tests and outer flow tests green.
+
+If an agent claims a Stage 04 sub-stage is done without the required
+test/source files or without executed command evidence, that claim is
+invalid.
+
+## Stage 04 order and gates are mandatory
+
+The order is `04b -> 04c -> 04d -> 04e` (with optional `04a` before
+them). `04b` is not optional when later stages consume SPECs.
+
+Do not collapse these gates:
+
+- `04c` stops after red flow specs/stubs and waits for approval.
+- `04d` stops after red concept tests, waits for approval, then stops
+   again after green implementation and waits for approval.
+- `04e` turns the outer loop green and then waits for approval before
+   Stage 05.
+
 ## The outer loop must stay red through 04d
 
 This is not a flaw — it is the mechanism. The flow test is `@Disabled` (stub)
@@ -122,3 +152,7 @@ to 04e". Silence, a question, or "looks good" is not approval.
 Unlike Roo, Cline rules do not enforce tool-level file write fences.
 Treat the red/green boundary as a hard instruction boundary and stop at
 the gate if the current phase no longer matches the requested work.
+
+Do not use the lack of tool-enforced write fences as permission to merge
+sub-stages or skip executable artefacts. The stage contracts still
+govern what must be written, run, and gated.

@@ -26,6 +26,8 @@ Read `methodology/implementation/TDD.md` before writing anything.
 | `../../01_usecase/output/usecase.md` | 4 | Scenarios to test |
 | `../../03_syncs/output/` | 4 | Expected coordination |
 | `../04b_spec/output/` | 4 | Action signatures and outcome values |
+| `../../../_config/build-and-test.md` | 3 | Canonical build/test command for compilation evidence |
+| `../../../_config/package-and-layout.md` | 3 | Canonical test-source root and package layout |
 | `../../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics, casing rules, payload rules |
 | `../../../../../methodology/implementation/TDD.md` | 3 | London School double-loop discipline |
 
@@ -38,9 +40,20 @@ expected response. Then add a stub test under
 (or the profile's equivalent), starting `@Disabled` (red). The test
 goes green at the end of `04e`.
 
-Before claiming "red and ready", run the profile's build-and-test
-command (or a targeted equivalent) and verify test compilation
-succeeds. At this stage, acceptable red evidence is either
+Place the stub test under `APP_TEST_SOURCE_ROOT`, packaged under
+`APP_PACKAGE_ROOT`, using the `flows` test location defined by
+`../../../_config/package-and-layout.md`. Do not guess the test tree
+from the reference profile if this feature config says otherwise.
+
+One scenario means one markdown spec file and one stub flow test file.
+Do not replace the required per-scenario files with a single
+consolidated markdown artefact. A consolidated overview is optional only
+after all required per-scenario artefacts exist.
+
+Before claiming "red and ready", run the canonical build-and-test
+command from `../../../_config/build-and-test.md` (or the targeted
+equivalent documented there) and verify test compilation succeeds. At
+this stage, acceptable red evidence is either
 disabled/skipped flow tests (when stubs are intentionally `@Disabled`)
 or failing flow tests if enabled; compilation errors are not
 acceptable.
@@ -58,6 +71,8 @@ acceptable.
 ## Verify
 
 - Every scenario has one flow-test markdown spec.
+- Every scenario has a corresponding stub flow test file under the
+  configured `APP_TEST_SOURCE_ROOT` test tree.
 - Every stub test is `@Disabled` (or red) and carries a `TODO` linking back to the scenario name.
 - An executed build-and-test command proves test compilation succeeds; no compile errors.
 - All outcome values are SCREAMING_SNAKE_CASE.
@@ -65,6 +80,9 @@ acceptable.
 - Token count per scenario equals the number of rows in the corresponding chain table.
 - **Cross-stage check (back):** the flow-test markdown's expected token
   chain matches the syncs in `03_syncs/output/` (no surprise tokens).
+- **Completion rule:** `04c` is not complete from markdown alone. The
+  per-scenario stub tests and the executed compilation evidence are part
+  of the stage contract.
 
 ## Gate
 

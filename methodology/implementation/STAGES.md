@@ -306,7 +306,8 @@ against.
 #### Stage 04c — `04c_flow-tests/`
 
 **Input:** `01_usecase/output/usecase.md`, `03_syncs/output/`,
-`04b_spec/output/`.
+`04b_spec/output/`, `features/UC-XX/_config/build-and-test.md`,
+`features/UC-XX/_config/package-and-layout.md`.
 
 **Process:** for each named scenario in the use case, write the
 **outer** test as a markdown spec (HTTP request → expected sequence of
@@ -314,9 +315,18 @@ flow tokens → expected response), plus a stub test under the chosen
 profile's `src/test/.../flows/`. Tests start `@Disabled` (or red); they
 go green only at the end of `04e`.
 
-Before claiming this stage is "red and ready", run the profile's
-build-and-test command (or targeted equivalent) and verify the test
-tree compiles. The expected outcome at this stage is either
+Stub flow tests live under the feature's configured
+`APP_TEST_SOURCE_ROOT`; agents must not guess the test tree from the
+reference profile when the feature config says otherwise.
+
+One scenario means one markdown spec and one stub test file. A single
+consolidated markdown file is not a substitute for the required
+per-scenario artefacts.
+
+Before claiming this stage is "red and ready", run the canonical
+build-and-test command from `features/UC-XX/_config/build-and-test.md`
+(or the targeted equivalent documented there) and verify the test tree
+compiles. The expected outcome at this stage is either
 disabled/skipped flow tests (when stubs are intentionally `@Disabled`)
 or failing flow tests (if enabled early) — but never compilation
 errors.
@@ -329,11 +339,20 @@ under `reference-impl/<profile>/...`.
 #### Stage 04d — `04d_concept-tdd/`
 
 **Input:** `02_concepts/output/`, `04b_spec/output/`,
+`features/UC-XX/_config/build-and-test.md`,
+`features/UC-XX/_config/package-and-layout.md`,
 `templates/test-intent-derivation-map.md`.
 
 **Process:** for each public action of each concept, write the
 **inner-loop** unit tests (red), then implement the concept until the
 tests are green. R1–R5 must hold throughout.
+
+Concept tests live under `APP_TEST_SOURCE_ROOT`, and red/green evidence
+uses the canonical build-and-test command from
+`features/UC-XX/_config/build-and-test.md`.
+
+Tests that depend on another concept's state or on sync orchestration do
+not belong here; they belong in `04e`.
 
 "Red" in this stage means executable failing tests, not uncompiled
 tests and not disabled placeholders. The agent must run tests after
@@ -349,12 +368,22 @@ per concept.
 #### Stage 04e — `04e_sync-tdd/`
 
 **Input:** `03_syncs/output/`, `04b_spec/output/`,
+`features/UC-XX/_config/build-and-test.md`,
+`features/UC-XX/_config/package-and-layout.md`,
 `templates/test-intent-derivation-map.md`.
 
 **Process:** for each sync rule, write the test that asserts the
 rule's `then` actions fire when its `when` pattern matches; then
 implement the sync (declarative form). At the end of this stage, the
 flow tests from `04c` go green.
+
+Sync tests live under `APP_TEST_SOURCE_ROOT`, and the executed evidence
+for green uses the canonical build-and-test command from
+`features/UC-XX/_config/build-and-test.md`.
+
+There must be a 1:1 correspondence between approved Stage 03 sync specs
+and Stage 04e test/implementation pairs. Do not invent extra executable
+syncs with no upstream sync contract.
 
 As in 04d, "red" means executable failing tests before
 implementation, not disabled placeholders and not compile-failing

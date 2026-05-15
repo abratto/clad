@@ -10,6 +10,7 @@ Cline already reads `AGENTS.md`. These workspace rules are the Cline replacement
   - `30-clad-green.md` for Stage `04d`/`04e` implementation after red-test approval
 - If two CLAD phase rules are enabled at once, disable the one that does not match the current stage before continuing.
 - Treat rule switches the same way Roo mode switches were treated: they happen only after explicit human approval at the stage gate.
+- Stage `04` still runs one sub-stage at a time: `04b -> 04c -> 04d -> 04e` (with optional `04a` before them). Do not treat Stage `04` as one combined pass.
 
 ## Important limitation vs Roo
 

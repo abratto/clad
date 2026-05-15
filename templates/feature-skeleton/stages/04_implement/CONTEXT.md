@@ -12,6 +12,12 @@ ground (state schema and per-concept SPEC slice). Order matters:
 state schema before tests, tests before code, concept code before
 sync code, sync code is what turns the outer flow test green.
 
+Stage 04 is the **executable implementation stage**. The markdown
+derivation files produced in `04b`/`04c`/`04d`/`04e` are supporting
+artefacts, not substitutes for code or tests. A Stage 04 sub-stage is
+not complete unless its required side effects exist in the selected
+profile and the required commands have been executed for that sub-stage.
+
 **Feeds:**
 
 - (this router owns no artefacts — sub-stages do.)
@@ -51,6 +57,9 @@ hold; when in doubt, use one-stage-per-turn.
 ## Verify
 
 - Every sub-stage has been gated.
+- `04b` exists before any `04c`/`04d`/`04e` work.
+- No sub-stage is treated as complete from markdown outputs alone; each
+  required code/test side effect exists for the selected profile.
 - The flow tests from `04c` are green at the end of `04e`.
 - **Cross-stage check (back):** every concept and every sync from
   stages 02 and 03 has a corresponding sub-stage output.

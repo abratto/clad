@@ -31,6 +31,10 @@ Before writing anything, read:
   This is enforced by the tool.
 - Do not create any implementation class, even as a stub or placeholder.
 - Do not present tests and implementation together. Tests only.
+- Do not skip `04b_spec`. If the SPEC slice is missing, stop instead of deriving tests from prose.
+- `04c` requires both per-scenario markdown specs and per-scenario stub flow tests. Markdown alone does not complete the stage.
+- `04d`/`04e` red means executable failing tests with successful compilation, not markdown-only derivations and not compile-failing suites.
+- Do not merge `04c`, `04d`, and `04e` into one pass. Stop at each gate and wait for explicit approval.
 
 ## Before writing each test — precondition check (R8 companion)
 Ask: "what state must exist for this outcome to be reachable?"

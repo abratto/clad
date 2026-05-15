@@ -24,6 +24,7 @@ branching down into a concept action's outcomes and re-derive the sync.
 |---|---|---|
 | `../../03_syncs/output/` | 4 | Sync specs |
 | `../04b_spec/output/` | 4 | SPEC slices for the actions involved |
+| `../../../_config/build-and-test.md` | 3 | Canonical build/test command for red/green evidence |
 | `../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings for this feature |
 | `../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
 | `../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
@@ -37,6 +38,12 @@ form, no branching). Build up the test-intent derivation map for
 syncs. **At the end of this stage, the flow tests from `04c` go
 green.**
 
+Implementations in this stage must correspond 1:1 with the approved
+Stage 03 sync specs. Do not invent extra executable convenience syncs,
+aggregate handlers, or imperative coordinator classes that have no
+matching Stage 03 sync contract. If the profile uses a declarative sync
+fragment style, follow that style rather than inventing an ad hoc API.
+
 If the selected profile is Java/Jena, keep sync logic in SPARQL
 fragments (`whereClause()` and `thenBindings()`), preserve engine-owned
 variables (`?_when_1`, `?_flow`, `?_then_1`, `?_then_input`), and emit
@@ -46,6 +53,9 @@ Generated sync implementation files must live under
 `APP_SOURCE_ROOT`/`APP_PACKAGE_ROOT` from
 `../../../_config/package-and-layout.md`, not under a copied
 `com.example.app` path unless that is explicitly configured.
+
+Generated sync test files must live under `APP_TEST_SOURCE_ROOT`, using
+packages rooted at `APP_PACKAGE_ROOT`.
 
 "Red" in this stage means executable failing sync tests before
 implementation, not disabled placeholders and not compile-failing
@@ -61,9 +71,12 @@ suites.
 - All sync tests green.
 - All flow tests from `04c` now green.
 - Executed command evidence shows: test compilation succeeds, sync tests are green, and flow tests are green.
+- Every generated sync test/implementation pair corresponds to exactly
+  one sync in `03_syncs/output/`; no extra executable syncs exist
+  without an upstream sync spec.
 - Sync implementation package/source path matches
   `../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,
-  `APP_SOURCE_ROOT`).
+  `APP_SOURCE_ROOT`, `APP_TEST_SOURCE_ROOT`).
 - **Cross-stage check (back):** every sync in `03_syncs/output/` has at least one row in the sync test-intent map.
 
 ## Gate

@@ -29,6 +29,9 @@ Do not modify approved test files unless the human explicitly reopens the red st
 - Every public action emits exactly one flow token at completion.
 - No imports across concept packages.
 - Do not rewrite approved tests during green work.
+- Do not claim a green stage from markdown artefacts alone; the required source files and executed test command evidence must exist.
+- In `04e`, implement exactly the approved Stage `03` sync set. Do not invent extra coordinator/sync classes that lack an upstream sync spec.
+- Do not continue into the next Stage `04` sub-stage without explicit approval for the current green work.
 
 ## Approval boundary
 

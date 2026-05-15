@@ -27,6 +27,10 @@ Before writing anything:
 - Before writing each test, ask what prior state is required for the outcome to be reachable.
 - One test class per concept action.
 - Keep the package aligned with the package under test.
+- Do not skip `04b_spec`. If the SPEC slice is missing, stop instead of deriving tests from prose.
+- `04c` requires both markdown specs and per-scenario stub flow test files. Markdown alone does not complete the stage.
+- `04d`/`04e` red means executable failing tests with successful compilation, not markdown-only derivations and not compile-failing suites.
+- Do not merge `04c`, `04d`, and `04e` into one pass. Stop at each written gate and wait for explicit approval.
 
 ## Approval boundary
 
