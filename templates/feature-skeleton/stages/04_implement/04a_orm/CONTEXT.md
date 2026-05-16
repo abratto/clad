@@ -37,6 +37,12 @@ state schema for each concept by walking the seven-step procedure in
 `ORM_NOTES.md` — one named region per concept (R2). Otherwise write
 `_NOT_APPLICABLE.md` explaining why and skip.
 
+Every ORM field, allowed value, and region-level structure must trace
+1:1 to approved Stage 02 concept state plus approved Pattern D needs
+from `../../03a_dependency-review/output/pattern-d-summary.md`. Do not
+add fields, statuses, defaults, lifecycle concepts, helper regions, or
+commentary that is not present upstream.
+
 Before writing any implementation-adjacent artefact, read
 `../../../_config/package-and-layout.md` and confirm this feature's
 `APP_PACKAGE_ROOT` and `APP_SOURCE_ROOT`. Treat reference-profile
@@ -57,6 +63,9 @@ package names as examples only.
 - No region is shared across concepts.
 - Every field listed in `03a_dependency-review/output/pattern-d-summary.md`
   is present in the owner concept's region.
+- No ORM field, status, default, or region structure appears without a
+  direct trace back to approved Stage 02 state or approved Pattern D
+  needs from 03a.
 - The `.orm.md` body describes fact types and constraints in
   profile-neutral terms. A relational schema table (`Field / Type /
   Constraints`) is only present if the profile is relational.
@@ -66,7 +75,8 @@ package names as examples only.
 
 ## Gate
 
-Default human approval.
+Default human approval. Before requesting the gate, run every `Verify`
+item as a pass/fail checklist and stop if any item fails.
 
 ## Next stage
 

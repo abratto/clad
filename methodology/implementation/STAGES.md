@@ -100,6 +100,17 @@ If any item fails, the stage is not complete. The agent must stop,
 surface the earliest invalid upstream stage or local defect, and ask to
 reopen or repair it instead of normalizing the mismatch downstream.
 
+When a stage depends on configuration or profile-specific commands, use
+this precedence order unless the stage contract states otherwise:
+
+1. feature-local `_config/` files named in the stage `Inputs`
+2. local workspace runtime config (`.cline-clad-config` / `.roo-clad-config`)
+   for executable command values only
+3. reference-profile docs for patterns and conventions only
+
+If the needed value is still missing after that order, stop and ask the
+human instead of guessing from examples or `.example` files.
+
 ## Stage-by-stage
 
 ### Stage 00 — `00_actor-goal/`
@@ -296,6 +307,11 @@ own all artefacts). Sub-stages run in order `04a → 04b → 04c → 04d →
 state schema per concept. Otherwise write `_NOT_APPLICABLE.md`
 explaining why and skip.
 
+Every ORM field, allowed value, and region-level structure must trace
+1:1 to approved Stage 02 concept state plus approved Pattern D needs
+from 03a. Do not add fields, statuses, defaults, lifecycle concepts, or
+helper regions that are not present upstream.
+
 **Output:** `<Name>.orm.md` per concept (or `_NOT_APPLICABLE.md`).
 
 **Gate:** human approval that the schema honours R2 (one named region
@@ -312,6 +328,10 @@ Nothing else.
 If `02_concepts/output/` contains a bootstrap concept file such as
 `Web.concept.md` without an explicit methodology deviation, `04b` must
 stop and send work back to Stage 02 instead of deriving a SPEC from it.
+
+SPEC files must not include correction history, methodology
+interpretation, remediation notes, design commentary, or implementation
+guidance beyond what is mechanically present in the concept spec.
 
 **Output:** `<Name>.spec.md` per concept.
 

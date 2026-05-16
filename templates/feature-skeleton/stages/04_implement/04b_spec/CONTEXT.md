@@ -36,6 +36,10 @@ as `Web.concept.md` without an explicit feature-level deviation, stop
 and reopen Stage 02 instead of deriving a SPEC from it. `04b` must not
 normalize upstream bootstrap drift by continuing mechanically.
 
+SPEC files must not include correction history, methodology
+interpretation, remediation notes, design commentary, or implementation
+guidance beyond what is mechanically present in the concept spec.
+
 ## Outputs
 
 - `output/<Name>.spec.md` per concept
@@ -49,6 +53,9 @@ normalize upstream bootstrap drift by continuing mechanically.
 - **Bootstrap drift stop rule:** if a bootstrap concept file appears in
   `02_concepts/output/` without an explicit deviation, `04b` must stop
   and send work back to Stage 02 rather than deriving a new spec.
+- **Mechanical extraction only:** no SPEC file contains correction
+  history, methodology interpretation, remediation notes, or
+  implementation guidance not present in the concept spec.
 
 ## Gate
 

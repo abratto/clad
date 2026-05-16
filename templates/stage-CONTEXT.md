@@ -60,6 +60,10 @@
 >
 > > **Do you agree with this step? Any corrections before I continue?**
 >
+> "Ready for review" means the stage passed its `Verify` self-audit and
+> is being presented to the human. "Gate passed" means the human has
+> explicitly approved it. Do not treat these as the same state.
+>
 > Use this phrasing in every stage's `Gate` section so the human sees
 > a consistent stop signal across stages. The rejection protocol in
 > [`../AGENTS.md`](../AGENTS.md) §6 takes over from here.

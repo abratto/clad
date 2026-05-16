@@ -25,12 +25,20 @@ You are expected to operate within all three layers simultaneously.
 1. **Read the contract first.** Before writing anything, open the relevant
    `CONTEXT.md` (workspace, then feature stage) and read its `Inputs`,
    `Process`, `Outputs` sections. Load only the files listed in `Inputs`.
+   If a feature-local stage contract is stale relative to updated CLAD
+   safety or sequencing rules in `methodology/` or the stage template,
+   stop and refresh the feature-local contract before continuing that
+   stage. Do not keep executing a stale copied contract once the drift is
+   visible.
 2. **Write to `output/` and stop at the gate.** Every stage ends with a
    review gate. After you write the stage's outputs, summarise what you
    produced and **wait** for the human to inspect/edit before moving on.
    When the human approves, advance to the successor named in this
    stage's `## Next stage` section (or, if absent, the next row of the
    table in §3). Open that stage's `CONTEXT.md` next, not before.
+   "Ready for review" is not the same as "gate passed": a stage is ready
+   for review after it passes self-audit, but the gate passes only when
+   the human explicitly approves it.
 3. **One stage, one job.** Do not run two stages in one turn. Do not
    anticipate the next stage's work in the current stage's output.
 4. **No cross-concept references.** Code under `reference-impl/` and concept
