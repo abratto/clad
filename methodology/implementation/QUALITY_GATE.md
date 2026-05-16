@@ -45,7 +45,15 @@ not relax the *intent*.
      `features/UC-*/stages/02_concepts/output/`) is named as an actor.
    - Every scenario has an explicit, concrete trigger statement (not
      implicit).
-8. **Stage 03 sync contract checks.** When a diff touches
+8. **Stage 02 bootstrap-concept checks.** When a diff touches
+   `features/UC-*/stages/02_concepts/` or the Stage 02 template, verify:
+   - No bootstrap concept file (`Web`, `Grpc`, `Cli`, `Stream`, or the
+     transport-equivalent bootstrap concept) appears in
+     `02_concepts/output/` unless the feature explicitly declares a
+     methodology deviation.
+   - If bootstrap drift is detected, downstream stages are not allowed
+     to normalize it; work must be sent back to Stage 02.
+9. **Stage 03 sync contract checks.** When a diff touches
    `features/UC-*/stages/03_syncs/` or `templates/sync.md`, verify:
    - Every sync has an exact source-row/target-row derivation from the
      approved `02b_chain-table/output/` rows.
@@ -59,7 +67,7 @@ not relax the *intent*.
      present as approved constants or emitted action-outcome fields.
    - The files in `03_syncs/output/` match the Stage 03 `Outputs` list
      exactly, with no extra or missing files.
-9. **Stage 03a dependency-review checks.** When a diff touches
+10. **Stage 03a dependency-review checks.** When a diff touches
    `features/UC-*/stages/03a_dependency-review/` or the Stage 03a
    templates, verify:
    - Every card row and every Pattern D summary row copies sync names,
@@ -69,8 +77,10 @@ not relax the *intent*.
      numeric-vs-string form, or key names.
    - Any mismatch discovered in 03a is surfaced as a Stage 03 or
      earlier-stage defect rather than repaired in the review output.
-10. **Stage 04 implementation-stage checks.** When a diff touches
+11. **Stage 04 implementation-stage checks.** When a diff touches
    `features/UC-*/stages/04_implement/`, verify:
+   - `04b` does not derive a SPEC from a bootstrap concept file unless
+     the feature explicitly declares that deviation.
    - `04b_spec/output/` exists before any claimed `04c`, `04d`, or `04e`
      completion.
    - `04c` has one markdown flow spec and one stub flow test per use-case

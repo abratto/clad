@@ -94,6 +94,12 @@ The `Inputs` table is **load-bearing**: an agent must load *exactly*
 those files, no more. The `Outputs` list is closed: an agent must not
 write files that are not on it.
 
+The `Verify` section is also load-bearing: before requesting the human
+gate, the agent must run every `Verify` item as a pass/fail self-audit.
+If any item fails, the stage is not complete. The agent must stop,
+surface the earliest invalid upstream stage or local defect, and ask to
+reopen or repair it instead of normalizing the mismatch downstream.
+
 ## Stage-by-stage
 
 ### Stage 00 — `00_actor-goal/`
@@ -199,6 +205,11 @@ responsibilities are bootstrap-only (e.g. `Web`) get no concept file —
 they are documented in `methodology/architecture/WEB_CONCEPT.md`. No
 concept references another.
 
+If a bootstrap concept file appears in `02_concepts/output/` without an
+explicit methodology deviation, Stage 02 is not complete; the agent must
+stop and reopen Stage 02 rather than carrying that file into downstream
+stages.
+
 **Output:** one `<Name>.concept.md` per business concept.
 
 **Gate:** the human reviews the per-concept anatomy. The concept set
@@ -297,6 +308,10 @@ per concept).
 **Process:** derive the SPEC contract slice mechanically from each
 concept spec — action signatures, outcome enums, flow-token shape.
 Nothing else.
+
+If `02_concepts/output/` contains a bootstrap concept file such as
+`Web.concept.md` without an explicit methodology deviation, `04b` must
+stop and send work back to Stage 02 instead of deriving a SPEC from it.
 
 **Output:** `<Name>.spec.md` per concept.
 

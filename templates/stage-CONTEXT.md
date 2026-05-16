@@ -36,6 +36,13 @@
 > actor in `00_actor-goal/output/actors.md` whose goal is in-scope
 > appears in at least one concept's operational principle"). See
 > `methodology/implementation/STAGES.md` §"Cross-stage consistency".
+>
+> **Mandatory self-audit.** Before requesting the human gate, the
+> agent must run every item in this section as a pass/fail checklist.
+> If any item fails, the stage is not complete: do not present it as
+> ready for approval. Stop, name the earliest invalid upstream stage or
+> local defect, and ask to reopen or repair that stage instead of
+> normalizing the mismatch downstream.
 
 - <check>
 - <check (cross-stage)>

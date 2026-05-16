@@ -56,6 +56,14 @@ inputs that have no basis in the chain table or responsibility map.
 If a field is absent from both, raise it as an open question in the
 concept's Notes section for the human reviewer.
 
+**Bootstrap concept exclusion:** bootstrap concepts such as `Web`,
+`Grpc`, `Cli`, or `Stream` do not belong in `02_concepts/output/`
+unless the feature has explicitly declared a methodology deviation.
+Bootstrap-only concepts are governed by the shared bootstrap-concept
+docs, not per-feature concept files. If one appears here without an
+explicit deviation, stop and reopen Stage 02 instead of carrying that
+file forward.
+
 R1 still applies: no concept names another concept's state, actions,
 or types beyond opaque ids.
 
@@ -75,6 +83,8 @@ or types beyond opaque ids.
   that has no basis in the chain table or responsibility map.
 - **Action discipline:** no action is declared that is not listed in
   `02a_responsibility-map/output/responsibility-map.md`.
+- **Bootstrap exclusion:** no bootstrap concept file appears in
+  `output/` unless the feature explicitly declares that deviation.
 - No concept names another concept's state, actions, or types.
 - **Cross-stage check (back):** every actor in
   `00_actor-goal/output/actors.md` whose goal is in-scope appears in
@@ -82,8 +92,10 @@ or types beyond opaque ids.
 
 ## Gate
 
-Default human approval. **Do you agree with this step? Any
-corrections before I continue?**
+Default human approval. Before requesting the gate, run every `Verify`
+item as a pass/fail checklist and stop if any item fails.
+
+**Do you agree with this step? Any corrections before I continue?**
 
 ## Next stage
 

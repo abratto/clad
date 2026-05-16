@@ -31,6 +31,11 @@ spec: action signatures, outcome enums, flow-token shape. No prose
 principle, no edge-case discussion — those stay in the concept spec.
 The implementation in `04d` and `04e` compiles against these SPECs.
 
+If `../../02_concepts/output/` contains a bootstrap concept file such
+as `Web.concept.md` without an explicit feature-level deviation, stop
+and reopen Stage 02 instead of deriving a SPEC from it. `04b` must not
+normalize upstream bootstrap drift by continuing mechanically.
+
 ## Outputs
 
 - `output/<Name>.spec.md` per concept
@@ -41,10 +46,14 @@ The implementation in `04d` and `04e` compiles against these SPECs.
 - Every SPEC entry's flow-token shape matches the concept's spec.
 - **Cross-stage check (back):** the set of action names in `04b/output/`
   equals the set of action names in `02_concepts/output/`.
+- **Bootstrap drift stop rule:** if a bootstrap concept file appears in
+  `02_concepts/output/` without an explicit deviation, `04b` must stop
+  and send work back to Stage 02 rather than deriving a new spec.
 
 ## Gate
 
-Default human approval.
+Default human approval. Before requesting the gate, run every `Verify`
+item as a pass/fail checklist and stop if any item fails.
 
 ## Next stage
 
