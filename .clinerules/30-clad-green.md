@@ -6,6 +6,8 @@ Use this rule only while implementing approved Stage `04d` or `04e` work.
 
 Write the implementation that makes approved red tests pass.
 Do not modify approved test files unless the human explicitly reopens the red stage.
+This is the implementor side of the Stage 04 handoff: treat the
+approved tests as the immediate contract.
 
 ## Mandatory sequence
 
@@ -20,6 +22,11 @@ Do not modify approved test files unless the human explicitly reopens the red st
 8. Run the tests using `TEST_COMMAND` from `.cline-clad-config` until green.
 9. Stop and wait for explicit human approval.
 
+If the approved tests appear wrong, incomplete, or in tension with
+earlier prose artefacts, stop and send work back to the red phase or
+earliest invalid upstream stage. Do not redesign the tests during green
+work.
+
 ## Hard constraints
 
 - Package and file path must match `APP_PACKAGE_ROOT` and `APP_SOURCE_ROOT`.
@@ -32,6 +39,8 @@ Do not modify approved test files unless the human explicitly reopens the red st
 - Do not claim a green stage from markdown artefacts alone; the required source files and executed test command evidence must exist.
 - In `04e`, implement exactly the approved Stage `03` sync set. Do not invent extra coordinator/sync classes that lack an upstream sync spec.
 - Do not continue into the next Stage `04` sub-stage without explicit approval for the current green work.
+- Do not reinterpret earlier prose/spec artefacts against approved tests
+   in order to redesign the implementation contract.
 
 ## Approval boundary
 

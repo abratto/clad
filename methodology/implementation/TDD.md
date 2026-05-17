@@ -74,6 +74,19 @@ Do not collapse these gates:
 - `04e` turns the outer loop green and then waits for approval before
    Stage 05.
 
+For multi-model workflows, treat `04d` and `04e` as operational handoff
+boundaries:
+
+- red phase: an architect/engineer model interprets upstream artefacts
+   into executable tests
+- green phase: an implementor model treats the approved tests as the
+   immediate contract and writes code only to satisfy them
+
+Green work may consult earlier prose/spec artefacts as reference, but
+it may not redesign approved tests. If green discovers that the tests
+are wrong, the work returns to the red phase or to the earliest invalid
+upstream stage.
+
 ## The outer loop must stay red through 04d
 
 This is not a flaw — it is the mechanism. The flow test is `@Disabled` (stub)
@@ -142,6 +155,10 @@ custom modes:
 | Starting 04c, 04d (tests), or 04e (tests) | `20-clad-red.md` |
 | Human has **explicitly approved** the red tests | Disable red, enable `30-clad-green.md` |
 | Human has **explicitly approved** the green implementation | Disable green, re-enable `20-clad-red.md` for the next red stage |
+
+This boundary is also the recommended model-switch point in multi-model
+workflows: use a design/derivation-capable model in red, and an
+implementation-capable model in green.
 
 Keep exactly one CLAD phase rule enabled at a time.
 

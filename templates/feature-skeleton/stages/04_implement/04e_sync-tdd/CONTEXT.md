@@ -17,6 +17,11 @@ flow test goes green too — closing the outer loop.
 **Agent stance for this stage:** if you find a sync needs imperative
 branching to make a test pass, the defect is in Stage 03 — push the
 branching down into a concept action's outcomes and re-derive the sync.
+Treat this stage as two operational handoff phases: `04e-red`
+(sync test derivation) and `04e-green` (sync implementation only). The
+red phase is for an architect/engineer model that interprets approved
+sync specs into tests. The green phase is for an implementor model that
+makes those approved tests pass without redesigning them.
 
 ## Inputs
 
@@ -33,10 +38,10 @@ branching down into a concept action's outcomes and re-derive the sync.
 ## Process
 
 For each sync, write the test that asserts its `then` actions fire
-when its `when` pattern matches; then implement the sync (declarative
-form, no branching). Build up the test-intent derivation map for
-syncs. **At the end of this stage, the flow tests from `04c` go
-green.**
+when its `when` pattern matches; stop for approval; then implement the
+sync (declarative form, no branching). Build up the test-intent
+derivation map for syncs. **At the end of this stage, the flow tests
+from `04c` go green.**
 
 Implementations in this stage must correspond 1:1 with the approved
 Stage 03 sync specs. Do not invent extra executable convenience syncs,
@@ -61,6 +66,12 @@ packages rooted at `APP_PACKAGE_ROOT`.
 implementation, not disabled placeholders and not compile-failing
 suites.
 
+At the red/green boundary, treat the approved sync tests as the handoff
+contract for `04e-green`. Earlier sync prose remains reference material,
+but green work must not reinterpret or redesign approved tests. If the
+tests appear wrong, stop and send work back to the red phase or Stage 03
+instead of repairing the contract during implementation.
+
 ## Outputs
 
 - `output/sync-test-derivation.md` — the test-intent map for syncs
@@ -74,6 +85,8 @@ suites.
 - Every generated sync test/implementation pair corresponds to exactly
   one sync in `03_syncs/output/`; no extra executable syncs exist
   without an upstream sync spec.
+- Green implementation treated the approved sync tests as the immediate
+  contract and did not redesign them against earlier prose artefacts.
 - Sync implementation package/source path matches
   `../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,
   `APP_SOURCE_ROOT`, `APP_TEST_SOURCE_ROOT`).

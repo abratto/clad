@@ -26,6 +26,11 @@ wrong layer.
   tests are derived from the flow test, not from the concept spec alone.
 - If a test you want to write requires another concept's state, the test belongs in 04e, not here.
 - Write tests first. Do not write implementation code until the tests are approved (R8). Do not present tests and implementation together.
+- Treat this stage as two operational handoff phases: `04d-red`
+   (test derivation) and `04d-green` (implementation only). The red
+   phase is for an architect/engineer model that interprets upstream
+   artefacts into tests. The green phase is for an implementor model that
+   satisfies approved tests without redesigning them.
 - Do not use in-memory substitutes (e.g. `HashMap`) for the profile's storage layer. Check `04a/output/` for the correct storage shape.
 - Before writing each test, ask: "what state must exist for this outcome to be reachable?" Outcomes that require prior state (e.g. `ACCOUNT_EXISTS`, `AccountNotFound`) need an Arrange step that sets up that state.
 
@@ -65,6 +70,8 @@ sequence** (hard rule R8). Do not batch tests and implementation:
 3. **Stop. Present the tests to the human. Wait for approval.**
    Do not proceed until the human explicitly approves the tests.
    Do not switch to `clad-green` mode until approval is given.
+   At this boundary, treat the approved red tests as the handoff
+   contract for `04d-green`.
 4. **Switch to `clad-green` mode.** Write the implementation to make the
    approved tests green. Before writing any code, read the approved test
    files and extract:
@@ -88,12 +95,22 @@ sequence** (hard rule R8). Do not batch tests and implementation:
    Cross-check the SPEC (`04b/output/`) and ensure every defined
    outcome has its own distinct code path (R9). Do not collapse two
    SPEC outcomes into one return value.
+   Earlier prose artefacts remain reference material, but the approved
+   tests are now the immediate implementation contract. If the tests
+   appear wrong or incomplete, stop and send work back to the red phase
+   or earlier stage instead of redesigning them during green work.
 5. **Stop. Present the implementation to the human. Wait for approval.**
    Switch back to `clad-red` mode only after the human explicitly approves.
 
 Build up a test-intent derivation map showing every action × outcome →
 test. Honour R1 (no cross-concept imports) and R5 (every action emits
 a flow token) throughout.
+
+At the red/green handoff, record a short implementation handoff in
+`output/concept-test-derivation.md` or `RESUME.md`: approved test files,
+exact package/class/method names, the command used for red evidence, and
+the next implementation target. This handoff is what the implementor
+model should pick up.
 
 If the selected profile is Java/Jena, follow that profile's SPARQL
 construction conventions (query shape, outcome literals, and flow-token
@@ -115,6 +132,8 @@ joins) from `reference-impl/java-micronaut-jena/README.md` and
 - Before implementation began, tests were executed and observed failing for behavioral reasons (true red), with successful test compilation.
 - Tests were approved red before implementation was written (R8).
 - Mode was switched to `clad-green` only after explicit human approval of tests.
+- Green implementation treated the approved red tests as the immediate
+   contract and did not reinterpret earlier artefacts against them.
 - Implementation package/source path matches
    `../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,
    `APP_SOURCE_ROOT`, `APP_TEST_SOURCE_ROOT`).

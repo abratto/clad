@@ -10,6 +10,8 @@ Write failing tests or stage output specs only:
 - sync tests (`04e`)
 
 Do not write implementation code.
+This is the architect/engineer side of the Stage 04 handoff: interpret
+approved upstream artefacts into tests, then stop.
 
 ## Read order
 
@@ -31,6 +33,9 @@ Before writing anything:
 - `04c` requires both markdown specs and per-scenario stub flow test files. Markdown alone does not complete the stage.
 - `04d`/`04e` red means executable failing tests with successful compilation, not markdown-only derivations and not compile-failing suites.
 - Do not merge `04c`, `04d`, and `04e` into one pass. Stop at each written gate and wait for explicit approval.
+- Treat approved red tests as the handoff bundle for the green
+	implementor model. Record enough detail for green to implement without
+	re-deriving the contract.
 
 ## Approval boundary
 
