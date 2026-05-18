@@ -55,3 +55,21 @@
 
 > Anything missing — actions or scenarios with no row — is a coverage
 > gap that stage 05 verification will flag.
+
+## Red-To-Green Handoff Bundle
+
+> Required for Stages 04d and 04e before switching from red work to
+> green work. This is the handoff packet for the implementor model.
+
+| Item | Value |
+|---|---|
+| Approved test files | `<list>` |
+| Exact package names | `<list>` |
+| Exact class names | `<list>` |
+| Exact method signatures under test | `<list>` |
+| Red evidence command | `<command>` |
+| Expected red outcome | `<failing tests / disabled stubs / etc.>` |
+| Next implementation target | `<class/file>` |
+
+> If this bundle is missing, the red stage is not ready to hand off to
+> green implementation.

@@ -69,9 +69,11 @@ are still the authoritative contracts; this file just makes the
    │  04b_spec/   concept spec → SPEC slice           │              │
    │  04c_flow-tests/   one outer-red flow test per   │              │
    │                    scenario  ────────────────────┼──┐           │
-   │  04d_concept-tdd/  inner red→green per concept   │  │           │
-   │  04e_sync-tdd/     inner red→green per sync;     │  │           │
-   │                    outer flow tests go GREEN ────┼──┘           │
+       │  04d_concept-tdd/  router -> 04d_red-tests,      │  │           │
+       │                    04d_green-impl                │  │           │
+       │  04e_sync-tdd/     router -> 04e_red-tests,      │  │           │
+       │                    04e_green-impl; outer flow    │  │           │
+       │                    tests go GREEN ───────────────┼──┘           │
    └──────┬───────────────────────────────────────────┘              │
           │ (compilable artefact + green test suite)                 │
           ▼                                                          │

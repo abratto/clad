@@ -1,57 +1,59 @@
-# Stage 04e — Sync TDD (UC-00-login)
+# Stage 04e — Sync TDD (router)
 
 ## Why this stage exists
 
-The **inner red→green for syncs** — and the moment the **outer flow
-tests from 04c finally go green**. Each sync gets its own TDD pass:
-assert the `then` actions fire when the `when` pattern matches, with
-the `where` clause's join semantics honoured (Pattern A/B/C/D per
-`SYNC_PATTERNS.md`). When the last sync goes green, the corresponding
-flow test goes green too — closing the outer loop.
+This stage is the ICM router for sync TDD. It exists to make the London
+School red/green handoff structural: `04e-red` derives and approves
+sync tests, `04e-green` implements only against those approved tests and
+turns the outer flow tests green.
 
 **Feeds:**
 
-- `sync-test-derivation.md` → 05 (which syncs are covered by tests, which only by flow tests).
-- `<SyncName>Test.java` + `<SyncName>.java` → the running coordination layer; this is the artefact 05 back-traces against.
-
-**Agent stance for this stage:** if you find a sync needs imperative
-branching to make a test pass, the defect is in Stage 03 — push the
-branching down into a concept action's outcomes and re-derive the sync.
+- approved red sync tests + handoff bundle -> `04e_green-impl/`
+- green sync implementation and green flow tests -> `05_verify/`
 
 ## Inputs
 
 | Path | Layer | Why |
 |---|---|---|
 | `../../03_syncs/output/` | 4 | Sync specs |
-| `../04b_spec/output/` | 4 | SPECs for the actions involved |
-| `../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
-| `../../../../../methodology/implementation/RULES.md` | 3 | R3 |
+| `../04b_spec/output/` | 4 | SPEC slices for the actions involved |
+| `../04c_flow-tests/output/` | 4 | Outer flow expectations that must go green at the end |
+| `../../../_config/build-and-test.md` | 3 | Canonical build/test command inherited by child stages |
+| `../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings inherited by child stages |
+| `../../../../../methodology/implementation/TDD.md` | 3 | London School structural handoff rules |
 
 ## Process
 
-For each sync, write the test that asserts its `then` actions fire
-when its `when` pattern matches. Implement the sync declaratively
-(no branching). At the end, the flow tests from `04c` go green.
+Run the child stages strictly in order, gating after each:
+
+1. [`04e_red-tests/`](04e_red-tests/CONTEXT.md) — derive executable
+   sync tests, run them red, and record the handoff bundle.
+2. [`04e_green-impl/`](04e_green-impl/CONTEXT.md) — implement only
+   against the approved red sync tests until they and the `04c` flow
+   tests are green.
 
 ## Outputs
 
-- `output/sync-test-derivation.md`
-- (Side effect:) `<SyncName>Test.java` and `<SyncName>.java` under the Java profile
+(none — child stages own outputs and side effects)
 
 ## Verify
 
-- All sync tests green.
-- All `04c` flow tests green.
-- **Cross-stage check (back):** every sync in `03_syncs/output/` has at least one row in the sync test-intent map.
+- `04e_red-tests/` was gated before `04e_green-impl/` started.
+- `04e_red-tests/output/sync-test-derivation.md` exists.
+- All approved sync tests are green at the end of `04e_green-impl/`.
+- All flow tests from `04c` are green at the end of `04e_green-impl/`.
+- No extra executable syncs exist without an approved Stage 03 sync.
 
 ## Gate
 
-Default. This is the gate before `05_verify/`.
+Default human approval. The gate fires only after `04e_green-impl/` is
+green. This is the gate before `05_verify/`.
 
 ## Next stage
 
-→ [`../../05_verify/CONTEXT.md`](../../05_verify/CONTEXT.md) — Verify + close
+-> [`04e_red-tests/CONTEXT.md`](04e_red-tests/CONTEXT.md) — Sync test derivation (red)
 
-(Stage 04 router is satisfied when 04e is green; advance directly to Stage 05.)
+(Stage 04 router is satisfied when `04e_green-impl/` is green; advance directly to Stage 05.)
 
-To advance, the human says: **"Proceed to Stage 05."**
+To advance, the human says: **"Proceed to Stage 04e-red."**

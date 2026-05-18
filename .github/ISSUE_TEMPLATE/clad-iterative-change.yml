@@ -44,8 +44,10 @@ body:
         - "03_syncs"
         - "04_implement / 04b_spec"
         - "04_implement / 04c_flow-tests"
-        - "04_implement / 04d_concept-tdd"
-        - "04_implement / 04e_sync-tdd"
+        - "04_implement / 04d_concept-tdd / 04d_red-tests"
+        - "04_implement / 04d_concept-tdd / 04d_green-impl"
+        - "04_implement / 04e_sync-tdd / 04e_red-tests"
+        - "04_implement / 04e_sync-tdd / 04e_green-impl"
         - "05_verify"
     validations:
       required: true

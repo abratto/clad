@@ -108,7 +108,7 @@ Mapped to the ICM stages of a feature folder:
 | 2 | `stages/02_concepts/` | One `*.concept.md` per concept (full anatomy) |
 | 3 | `stages/03_syncs/` | One `*.sync.md` per coordination rule |
 | 3a | `stages/03a_dependency-review/` | One `*-card.md` per concept + `pattern-d-summary.md` (cross-concept coupling surface) |
-| 4 | `stages/04_implement/` | Router; sub-stages `04a_orm`, `04b_spec`, `04c_flow-tests`, `04d_concept-tdd`, `04e_sync-tdd` produce the artefacts and code |
+| 4 | `stages/04_implement/` | Router; top-level sub-stages `04a_orm`, `04b_spec`, `04c_flow-tests`, `04d_concept-tdd`, `04e_sync-tdd`, where `04d` and `04e` each split into structural red/green child stages |
 | 5 | `stages/05_verify/` | Trace from running behaviour back to `usecase.md`, plus closure (smoke + tracking) |
 
 Stage 04 is the **outside-in TDD double-loop**: `04c` is the outer red

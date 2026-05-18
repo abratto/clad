@@ -1,0 +1,78 @@
+# Stage 04e-green — Sync Implementation (green)
+
+## Pre-condition (agent must verify before starting)
+
+**`../04e_red-tests/output/sync-test-derivation.md` must exist and be
+human-approved.** If the red sync tests are missing or not yet approved,
+stop and send the work back to `04e-red`.
+
+## Why this stage exists
+
+This is the **green half** of sync TDD. Its only job is to implement
+exactly what the approved red sync tests require and turn the outer flow
+tests green. Making this a separate ICM folder gives weaker models a
+hard boundary: implementation may consult earlier artefacts, but it may
+not redesign approved tests.
+
+**Feeds:**
+
+- green sync implementation -> Stage 05
+- green flow tests from `04c` -> Stage 05
+
+## Inputs
+
+| Path | Layer | Why |
+|---|---|---|
+| `../../../03_syncs/output/` | 4 | Sync specs |
+| `../../04b_spec/output/` | 4 | SPEC slices for participating actions |
+| `../../04c_flow-tests/output/` | 4 | Outer flow tests that must now go green |
+| `../04e_red-tests/output/` | 4 | Approved red sync tests and handoff bundle |
+| `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for green evidence |
+| `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
+| `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
+| `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
+| `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (only when this profile is selected) | 3 | Profile conventions |
+
+## Process
+
+1. Read the approved red sync tests and the handoff bundle from
+   `../04e_red-tests/output/`.
+2. Extract and match exactly: package declarations, class names, method
+   signatures, referenced helper symbols, and test expectations.
+3. Implement only what is needed to make the approved sync tests pass.
+   Do not redesign the tests during this stage. If they appear wrong,
+   stop and send the work back to `04e-red` or Stage 03.
+4. Keep sync logic declarative. Do not invent imperative coordinator
+   classes, extra executable syncs, or branching business logic.
+5. Run the canonical command from `../../../../_config/build-and-test.md`
+   until sync tests are green and the `04c` flow tests are green, then
+   stop for human approval.
+
+## Outputs
+
+- (Side effect:) `<SyncName>.java` and green `<SyncName>Test.java` files (or profile equivalents) per sync
+
+## Verify
+
+- All approved sync tests are green.
+- All flow tests from `04c` are green.
+- Executed command evidence shows: test compilation succeeds, sync tests
+  are green, and flow tests are green.
+- Every generated sync test/implementation pair corresponds to exactly
+  one approved Stage 03 sync; no extra executable syncs exist without an
+  upstream sync contract.
+- Green implementation treated the approved sync tests as the immediate
+  contract and did not redesign them against earlier prose artefacts.
+- Sync implementation package/source path matches
+  `../../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,
+  `APP_SOURCE_ROOT`, `APP_TEST_SOURCE_ROOT`).
+
+## Gate
+
+Default human approval. This is the gate before Stage 05.
+
+## Next stage
+
+-> [`../../../05_verify/CONTEXT.md`](../../../05_verify/CONTEXT.md) — Verify + close
+
+To advance, the human says: **"Proceed to Stage 05."**

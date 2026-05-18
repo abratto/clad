@@ -74,18 +74,35 @@ Do not collapse these gates:
 - `04e` turns the outer loop green and then waits for approval before
    Stage 05.
 
-For multi-model workflows, treat `04d` and `04e` as operational handoff
-boundaries:
+For multi-model workflows, treat `04d` and `04e` as structural handoff
+boundaries with their own child-stage folders:
 
 - red phase: an architect/engineer model interprets upstream artefacts
    into executable tests
 - green phase: an implementor model treats the approved tests as the
    immediate contract and writes code only to satisfy them
 
+Name these subcontracts explicitly when reasoning about handoff:
+
+- `04d-red` / `04d-green`
+- `04e-red` / `04e-green`
+
+In the stage tree, these map to real ICM child stages:
+
+- `04d_concept-tdd/04d_red-tests/` then `04d_concept-tdd/04d_green-impl/`
+- `04e_sync-tdd/04e_red-tests/` then `04e_sync-tdd/04e_green-impl/`
+
 Green work may consult earlier prose/spec artefacts as reference, but
 it may not redesign approved tests. If green discovers that the tests
 are wrong, the work returns to the red phase or to the earliest invalid
 upstream stage.
+
+The red phase is not complete until it produces both:
+
+- a derivation map showing every test's source in approved outer tests
+   and/or SPEC rows
+- a red-to-green handoff bundle naming the exact files, symbols, and
+   command the implementor model must pick up
 
 ## The outer loop must stay red through 04d
 

@@ -73,12 +73,20 @@ features/UC-XX-name/
     │   ├── 04c_flow-tests/      Outside-loop red: HTTP → flow-token tree
     │   │   ├── CONTEXT.md
     │   │   └── output/
-    │   ├── 04d_concept-tdd/     Inside-loop: concept tests red → code green
-    │   │   ├── CONTEXT.md
-    │   │   └── output/
-    │   └── 04e_sync-tdd/        Inside-loop: sync tests red → code green
-    │       ├── CONTEXT.md
-    │       └── output/
+   │   ├── 04d_concept-tdd/     Router: concept red/green split
+   │   │   ├── CONTEXT.md
+   │   │   ├── 04d_red-tests/
+   │   │   │   ├── CONTEXT.md
+   │   │   │   └── output/      concept-test-derivation.md
+   │   │   └── 04d_green-impl/
+   │   │       └── CONTEXT.md
+   │   └── 04e_sync-tdd/        Router: sync red/green split
+   │       ├── CONTEXT.md
+   │       ├── 04e_red-tests/
+   │       │   ├── CONTEXT.md
+   │       │   └── output/      sync-test-derivation.md
+   │       └── 04e_green-impl/
+   │           └── CONTEXT.md
     └── 05_verify/
         ├── CONTEXT.md
         └── output/              trace.md, findings.md, smoke.md, tracking.md
@@ -371,63 +379,53 @@ under `reference-impl/<profile>/...`.
 
 **Gate:** human reviews the flow predictions.
 
-#### Stage 04d — `04d_concept-tdd/`
+#### Stage 04d — `04d_concept-tdd/` (router)
 
 **Input:** `02_concepts/output/`, `04b_spec/output/`,
-`features/UC-XX/_config/build-and-test.md`,
-`features/UC-XX/_config/package-and-layout.md`,
-`templates/test-intent-derivation-map.md`.
+`04c_flow-tests/output/`, `features/UC-XX/_config/build-and-test.md`,
+`features/UC-XX/_config/package-and-layout.md`.
 
-**Process:** for each public action of each concept, write the
-**inner-loop** unit tests (red), then implement the concept until the
-tests are green. R1–R5 must hold throughout.
+**Process:** route concept TDD through two structural child stages:
 
-Concept tests live under `APP_TEST_SOURCE_ROOT`, and red/green evidence
-uses the canonical build-and-test command from
-`features/UC-XX/_config/build-and-test.md`.
+- `04d_red-tests/`: derive executable concept tests from approved outer
+   artefacts, run them red, and record the handoff bundle
+- `04d_green-impl/`: implement only against the approved red tests until
+   they are green
 
 Tests that depend on another concept's state or on sync orchestration do
 not belong here; they belong in `04e`.
 
-"Red" in this stage means executable failing tests, not uncompiled
-tests and not disabled placeholders. The agent must run tests after
-writing them and confirm they fail for behavioral reasons before
-implementing.
+**Output:** child-stage outputs and side effects. `04d_red-tests/`
+produces `concept-test-derivation.md`; `04d_green-impl/` produces green
+concept code and tests in the selected profile.
 
-**Output:** `concept-test-derivation.md` (the test-intent map) plus
-`<Name>ConceptTest.java` and `<Name>Concept.java` (in the profile)
-per concept.
+**Gate:** `04d_red-tests/` approved before `04d_green-impl/` starts;
+all approved concept tests green; no cross-concept imports.
 
-**Gate:** all concept tests green, no cross-concept imports.
-
-#### Stage 04e — `04e_sync-tdd/`
+#### Stage 04e — `04e_sync-tdd/` (router)
 
 **Input:** `03_syncs/output/`, `04b_spec/output/`,
-`features/UC-XX/_config/build-and-test.md`,
-`features/UC-XX/_config/package-and-layout.md`,
-`templates/test-intent-derivation-map.md`.
+`04c_flow-tests/output/`, `features/UC-XX/_config/build-and-test.md`,
+`features/UC-XX/_config/package-and-layout.md`.
 
-**Process:** for each sync rule, write the test that asserts the
-rule's `then` actions fire when its `when` pattern matches; then
-implement the sync (declarative form). At the end of this stage, the
-flow tests from `04c` go green.
+**Process:** route sync TDD through two structural child stages:
 
-Sync tests live under `APP_TEST_SOURCE_ROOT`, and the executed evidence
-for green uses the canonical build-and-test command from
-`features/UC-XX/_config/build-and-test.md`.
+- `04e_red-tests/`: derive executable sync tests from approved sync
+   contracts and outer flow expectations, run them red, and record the
+   handoff bundle
+- `04e_green-impl/`: implement only against the approved red sync tests
+   until they are green and the flow tests from `04c` go green
 
 There must be a 1:1 correspondence between approved Stage 03 sync specs
 and Stage 04e test/implementation pairs. Do not invent extra executable
 syncs with no upstream sync contract.
 
-As in 04d, "red" means executable failing tests before
-implementation, not disabled placeholders and not compile-failing
-suites.
+**Output:** child-stage outputs and side effects. `04e_red-tests/`
+produces `sync-test-derivation.md`; `04e_green-impl/` produces green
+sync code/tests and green flow tests.
 
-**Output:** `sync-test-derivation.md` plus `<SyncName>Test.java` and
-`<SyncName>.java` (in the profile) per sync.
-
-**Gate:** all sync tests green; flow tests from `04c` now green.
+**Gate:** `04e_red-tests/` approved before `04e_green-impl/` starts;
+all sync tests green; flow tests from `04c` now green.
 
 Gate evidence must include one executed build-and-test command result
 showing: 1) test compilation succeeded, 2) sync tests are green, and

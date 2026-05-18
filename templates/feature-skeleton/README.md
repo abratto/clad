@@ -30,8 +30,9 @@ Run Stage 00 (`features/_system/stages/00_actor-goal/`) to completion
 - `_config/package-and-layout.md` — canonical package/source-root settings
 - `stages/` — empty stage tree (`01_usecase`, `02a_responsibility-map`,
   `02b_chain-table`, `02_concepts`, `03_syncs`, `03a_dependency-review`,
-  `04_implement` with sub-stages `04a..04e`, `05_verify`),
-  each with a `CONTEXT.md` and an empty `output/`
+  `04_implement` with sub-stages `04a..04e`, where `04d` and `04e`
+  each contain structural red/green child folders, and `05_verify`),
+  each stage folder with a `CONTEXT.md`
 
 ## What is **not** in here
 

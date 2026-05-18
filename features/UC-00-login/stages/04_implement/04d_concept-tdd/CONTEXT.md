@@ -1,55 +1,64 @@
-# Stage 04d — Concept TDD (UC-00-login)
+# Stage 04d — Concept TDD (router)
+
+## Pre-condition (agent must verify before starting)
+
+**`../04c_flow-tests/output/` must be non-empty.** If it is empty, stop
+immediately and tell the human that Stage 04c must be completed and
+gated before Stage 04d can begin.
 
 ## Why this stage exists
 
-The **inner red→green** for each concept in isolation. One concept,
-one test fixture, no other concepts in scope (R1). Doing concept TDD
-*before* sync TDD (04e) means each concept's behaviour is locked down
-before any coordination is asserted on top of it; otherwise sync
-failures and concept failures look identical and the agent debugs the
-wrong layer.
+This stage is the ICM router for concept TDD. It exists to make the
+London School red/green handoff structural: `04d-red` derives and
+approves tests, `04d-green` implements only against those approved
+tests.
 
 **Feeds:**
 
-- `concept-test-derivation.md` → 04e (which concept actions can be relied on as already-green when wiring sync TDD); 05 (which actions are exercised by tests vs. only by syncs).
-- `<Name>ConceptTest.java` + `<Name>Concept.java` → the running concept layer.
-
-**Agent stance for this stage:** if a test you want to write requires
-another concept's state, the test belongs in 04e, not here.
+- approved red concept tests + handoff bundle -> `04d_green-impl/`
+- green concept implementation -> `04e_sync-tdd/`
 
 ## Inputs
 
 | Path | Layer | Why |
 |---|---|---|
 | `../../02_concepts/output/` | 4 | Concept specs |
-| `../04b_spec/output/` | 4 | SPEC slices |
-| `../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
-| `../../../../../methodology/implementation/RULES.md` | 3 | R1, R5 |
+| `../04b_spec/output/` | 4 | SPEC slices to compile against |
+| `../04c_flow-tests/output/` | 4 | Pre-condition check + drives child-stage work |
+| `../../../_config/build-and-test.md` | 3 | Canonical build/test command inherited by child stages |
+| `../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings inherited by child stages |
+| `../../../../../methodology/implementation/TDD.md` | 3 | London School structural handoff rules |
 
 ## Process
 
-Drive each concept (`User`, `PasswordAuth`, `Session`) outside-in
-with a unit test per public action × outcome. Honour R1 (no cross-
-concept imports) and R5 (every action emits a flow token).
+Run the child stages strictly in order, gating after each:
+
+1. [`04d_red-tests/`](04d_red-tests/CONTEXT.md) — derive executable
+   concept tests, run them red, and record the handoff bundle.
+2. [`04d_green-impl/`](04d_green-impl/CONTEXT.md) — implement only
+   against the approved red tests until they are green.
 
 ## Outputs
 
-- `output/concept-test-derivation.md`
-- (Side effect:) `<Name>ConceptTest.java` and `<Name>Concept.java` under the Java profile
+(none — child stages own outputs and side effects)
 
 ## Verify
 
-- All concept tests green.
-- No cross-concept imports (also enforced by `LegibleArchitectureRulesTest` R1).
-- Every public concept action emits a flow token (also enforced by R5).
-- **Cross-stage check (back):** every action in `04b/output/` has at least one row in the test-intent map.
+- `04d_red-tests/` was gated before `04d_green-impl/` started.
+- `04d_red-tests/output/concept-test-derivation.md` exists.
+- All approved concept tests are green at the end of `04d_green-impl/`.
+- No cross-concept imports.
+- Every public concept action emits a flow token.
+- **Boundary rule:** any test or implementation path that depends on
+  another concept's state or a sync belongs in `04e`, not `04d`.
 
 ## Gate
 
-Default.
+Default human approval. The gate fires only after `04d_green-impl/` is
+green.
 
 ## Next stage
 
-→ [`../04e_sync-tdd/CONTEXT.md`](../04e_sync-tdd/CONTEXT.md) — Inner red→green per sync (turns the outer flow test green)
+-> [`04d_red-tests/CONTEXT.md`](04d_red-tests/CONTEXT.md) — Concept test derivation (red)
 
-To advance, the human says: **"Proceed to Stage 04e."**
+To advance, the human says: **"Proceed to Stage 04d-red."**

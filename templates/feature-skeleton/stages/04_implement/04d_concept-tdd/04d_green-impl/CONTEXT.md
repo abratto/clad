@@ -1,0 +1,78 @@
+# Stage 04d-green — Concept Implementation (green)
+
+## Pre-condition (agent must verify before starting)
+
+**`../04d_red-tests/output/concept-test-derivation.md` must exist and be
+human-approved.** If the red tests are missing or not yet approved, stop
+and send the work back to `04d-red`.
+
+## Why this stage exists
+
+This is the **green half** of concept TDD. Its only job is to implement
+exactly what the approved red tests require. Making this a separate ICM
+folder gives weaker models a hard boundary: implementation may consult
+upstream prose, but it may not redesign approved tests.
+
+**Feeds:**
+
+- green concept implementation -> `04e`
+- green concept tests -> Stage 05 traceability
+
+## Inputs
+
+| Path | Layer | Why |
+|---|---|---|
+| `../../../02_concepts/output/` | 4 | Concept specs |
+| `../../04a_orm/output/` | 4 | Storage shape when ORM applies |
+| `../../04b_spec/output/` | 4 | SPEC slices to preserve outcome distinctions |
+| `../04d_red-tests/output/` | 4 | Approved red tests and handoff bundle |
+| `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for green evidence |
+| `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
+| `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5, R8, R9 |
+| `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
+| `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (only when this profile is selected) | 3 | Profile conventions |
+
+## Process
+
+1. Read the approved red tests and the handoff bundle from
+   `../04d_red-tests/output/`.
+2. Extract and match exactly: package declarations, class names, method
+   signatures, referenced inner types, and test expectations.
+3. Implement only what is needed to make the approved concept tests
+   pass. Do not redesign the tests during this stage. If they appear
+   wrong or incomplete, stop and send the work back to `04d-red` or the
+   earliest invalid upstream stage.
+4. Use the storage shape from `04a_orm/output/` when applicable. Do not
+   replace the selected profile's storage layer with an in-memory
+   substitute.
+5. Run the canonical command from `../../../../_config/build-and-test.md`
+   until concept tests are green, then stop for human approval.
+
+## Outputs
+
+- (Side effect:) `<Name>Concept.java` and green `<Name>ConceptTest.java` files (or profile equivalents) per concept
+
+## Verify
+
+- All approved concept tests are green.
+- Every required concept test and implementation file exists in the
+  selected profile's source tree.
+- Green implementation treated the approved red tests as the immediate
+  contract and did not reinterpret earlier artefacts against them.
+- No cross-concept imports.
+- Every public concept action emits a flow token.
+- Distinct SPEC outcomes remain distinct in code paths; no approved
+  outcomes were collapsed.
+- Implementation package/source path matches
+  `../../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,
+  `APP_SOURCE_ROOT`, `APP_TEST_SOURCE_ROOT`).
+
+## Gate
+
+Default human approval.
+
+## Next stage
+
+-> [`../../04e_sync-tdd/CONTEXT.md`](../../04e_sync-tdd/CONTEXT.md) — Sync TDD router
+
+To advance, the human says: **"Proceed to Stage 04e."**

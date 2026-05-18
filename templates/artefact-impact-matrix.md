@@ -15,8 +15,8 @@
 | Sync(s) | `features/UC-XX/stages/03_syncs/output/*.sync.md` | yes \| no | <which syncs, what changes> |
 | SPEC slices | `features/UC-XX/stages/04_implement/04b_spec/output/*.spec.md` | yes \| no | <which> |
 | Flow tests | `features/UC-XX/stages/04_implement/04c_flow-tests/output/` | yes \| no | <which> |
-| Concept tests | `features/UC-XX/stages/04_implement/04d_concept-tdd/output/` | yes \| no | <which> |
-| Sync tests | `features/UC-XX/stages/04_implement/04e_sync-tdd/output/` | yes \| no | <which> |
+| Concept tests | `features/UC-XX/stages/04_implement/04d_concept-tdd/04d_red-tests/output/` | yes \| no | <which> |
+| Sync tests | `features/UC-XX/stages/04_implement/04e_sync-tdd/04e_red-tests/output/` | yes \| no | <which> |
 | Production code | `reference-impl/<profile>/...` | yes \| no | <which classes> |
 | Verification trace | `features/UC-XX/stages/05_verify/output/` | yes \| no | <which scenarios> |
 

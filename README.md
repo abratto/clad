@@ -380,7 +380,10 @@ clad/
 │           ├── 03_syncs/
 │           ├── 03a_dependency-review/
 │           ├── 04_implement/        Router + 04a_orm, 04b_spec,
-│           │                        04c_flow-tests, 04d_concept-tdd, 04e_sync-tdd
+│           │                        04c_flow-tests, 04d_concept-tdd
+│           │                        (04d_red-tests, 04d_green-impl),
+│           │                        04e_sync-tdd (04e_red-tests,
+│           │                        04e_green-impl)
 │           └── 05_verify/
 │
 └── reference-impl/
