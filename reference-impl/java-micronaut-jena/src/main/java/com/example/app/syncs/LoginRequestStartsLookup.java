@@ -4,6 +4,7 @@ import com.example.app.concepts.user.UserConcept;
 import com.example.app.engine.ActionLog;
 import com.example.app.engine.FlowManager;
 import com.example.app.engine.SyncAgent;
+import com.example.app.engine.SyncMetadata;
 import com.example.app.engine.SyncTrigger;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -20,6 +21,12 @@ import jakarta.inject.Singleton;
  * <p>Note: {@code UserConcept.IRI} is referenced as a constant only — no
  * cross-concept Java import of state or behaviour is performed (R1).
  */
+@SyncMetadata(
+        flow = "Login",
+        step = 1,
+        triggeredBy = "Web/request[route=login]",
+        fires = "User/lookupByUsername",
+        where = "route=login")
 @Singleton
 public final class LoginRequestStartsLookup extends SyncAgent {
 

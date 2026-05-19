@@ -4,6 +4,7 @@ import com.example.app.concepts.user.UserConcept;
 import com.example.app.engine.ActionLog;
 import com.example.app.engine.FlowManager;
 import com.example.app.engine.SyncAgent;
+import com.example.app.engine.SyncMetadata;
 import com.example.app.engine.SyncTrigger;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -16,6 +17,12 @@ import jakarta.inject.Singleton;
  *
  * <p>Same message as {@link LoginRespondWrongPassword} — no enumeration leak.
  */
+@SyncMetadata(
+        flow = "Login",
+        step = 2,
+        triggeredBy = "User/lookupByUsername[UNKNOWN]",
+        fires = "Web/respond[401]",
+        where = "unknown-user path")
 @Singleton
 public final class LoginRespondUnknownUser extends SyncAgent {
 

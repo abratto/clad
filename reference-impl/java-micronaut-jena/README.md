@@ -107,6 +107,31 @@ curl -X POST http://localhost:8080/login \
 `Application.DemoSeed` registers user `ada` with the known password
 above at startup; remove it in any non-demo profile.
 
+## Debugging flows locally
+
+The reference impl now exposes **dev-only** WYSIWID introspection routes
+under `/api/dev` when the Micronaut environment is not `prod`. These
+endpoints are for local debugging and flow inspection only; they are not
+part of the business HTTP API.
+
+- `GET /api/dev/flows` — registered syncs grouped by human-readable flow metadata
+- `GET /api/dev/syncs` — flat list of registered syncs and any `@SyncMetadata`
+- `GET /api/dev/flow/{token}` — action history for one flow token, including archived flows
+- `GET /api/dev/stuck` — active actions that have no `:output`
+- `DELETE /api/dev/actions` — clear the active action graph for local resets
+- `GET /api/dev/concept/{name}/triples` — inspect all triples in `concept:{name}`
+
+Example:
+
+```sh
+curl http://localhost:8080/api/dev/flows
+curl http://localhost:8080/api/dev/stuck
+curl http://localhost:8080/api/dev/concept/user/triples
+```
+
+Because completed flows are archived, `/api/dev/flow/{token}` remains
+useful after a request has already produced `Web/respond`.
+
 ## Status
 
 The engine is **fully wired** and the UC-00-login flow runs end-to-end:

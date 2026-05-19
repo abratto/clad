@@ -5,6 +5,7 @@ import com.example.app.concepts.user.UserConcept;
 import com.example.app.engine.ActionLog;
 import com.example.app.engine.FlowManager;
 import com.example.app.engine.SyncAgent;
+import com.example.app.engine.SyncMetadata;
 import com.example.app.engine.SyncTrigger;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -18,6 +19,12 @@ import jakarta.inject.Singleton;
  * <p>Joins the User lookup output (for {@code userId}) with the original Web
  * request input (for {@code password}) via shared {@code ?_flow}.
  */
+@SyncMetadata(
+        flow = "Login",
+        step = 2,
+        triggeredBy = "User/lookupByUsername[FOUND]",
+        fires = "PasswordAuth/check",
+        where = "same flow as the login request")
 @Singleton
 public final class LoginLookupTriggersAuth extends SyncAgent {
 
