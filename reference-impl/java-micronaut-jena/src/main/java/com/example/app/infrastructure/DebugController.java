@@ -6,31 +6,38 @@ import com.example.app.engine.SyncAgent;
 import com.example.app.engine.SyncMetadata;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Delete;
 import io.micronaut.http.annotation.Get;
+import io.micronaut.http.exceptions.HttpStatusException;
 import jakarta.inject.Inject;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
  * Developer-mode WYSIWID introspection endpoints.
  *
  * <p>These routes expose engine state for local debugging only. They are not
- * part of the business HTTP surface and are disabled in the {@code prod}
- * environment.
+ * part of the business HTTP surface. They require explicit opt-in via
+ * {@code clad.debug.endpoints.enabled=true} and are disabled in the
+ * {@code prod} environment.
  */
 @Controller("/api/dev")
+@Requires(property = "clad.debug.endpoints.enabled", value = "true")
 @Requires(notEnv = "prod")
 public final class DebugController {
 
     private static final String NO_SYNC_METADATA = "(no @SyncMetadata)";
     private static final String PREFIX = "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n";
+    private static final Pattern CONCEPT_NAME_PATTERN = Pattern.compile("[a-z][a-z0-9]*");
 
     private final ActionLog actionLog;
     private final List<SyncAgent> syncAgents;
@@ -64,9 +71,10 @@ public final class DebugController {
 
     @Get(uri = "/flow/{token:.*}", produces = MediaType.APPLICATION_JSON)
     public Map<String, Object> flow(String token) {
-        List<Map<String, Object>> actions = flowActions(token);
+        String flowToken = requireFlowToken(token);
+        List<Map<String, Object>> actions = flowActions(flowToken);
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("flowToken", token);
+        response.put("flowToken", flowToken);
         response.put("actionCount", actions.size());
         response.put("actions", actions);
         if (actions.isEmpty()) {
@@ -113,7 +121,8 @@ public final class DebugController {
 
     @Get(uri = "/concept/{name}/triples", produces = MediaType.APPLICATION_JSON)
     public Map<String, Object> conceptTriples(String name) {
-        String graph = RdfVocabulary.conceptGraph(name);
+        String conceptName = requireConceptName(name);
+        String graph = RdfVocabulary.conceptGraph(conceptName);
         List<Map<String, String>> triples = actionLog.select(
                 "SELECT ?subject ?predicate ?object\n" +
                 "WHERE {\n" +
@@ -165,6 +174,31 @@ public final class DebugController {
             }
             return action;
         }).toList();
+    }
+
+    private static String requireFlowToken(String token) {
+        if (token == null || !token.startsWith(RdfVocabulary.FLOW_TOKEN_PREFIX)) {
+            throw invalidRequest("flow token must be a CLAD flow IRI");
+        }
+
+        String suffix = token.substring(RdfVocabulary.FLOW_TOKEN_PREFIX.length());
+        try {
+            UUID.fromString(suffix);
+            return token;
+        } catch (IllegalArgumentException ignored) {
+            throw invalidRequest("flow token must be a CLAD flow IRI");
+        }
+    }
+
+    private static String requireConceptName(String name) {
+        if (name != null && CONCEPT_NAME_PATTERN.matcher(name).matches()) {
+            return name;
+        }
+        throw invalidRequest("concept name must be lowercase alphanumeric");
+    }
+
+    private static HttpStatusException invalidRequest(String message) {
+        return new HttpStatusException(HttpStatus.BAD_REQUEST, message);
     }
 
     private Map<String, String> nodeFields(String graph, String actionIri, String edge) {

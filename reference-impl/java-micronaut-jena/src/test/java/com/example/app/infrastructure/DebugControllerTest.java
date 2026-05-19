@@ -12,6 +12,8 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
+import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,9 +26,11 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @MicronautTest
+@Property(name = "clad.debug.endpoints.enabled", value = "true")
 class DebugControllerTest {
 
     @Inject
@@ -124,6 +128,24 @@ class DebugControllerTest {
 
         Map<String, Object> conceptTriples = getMap("/api/dev/concept/user/triples");
         assertTrue(((Number) conceptTriples.get("tripleCount")).intValue() > 0);
+    }
+
+    @Test
+    void flow_endpoint_rejects_non_clad_flow_token() {
+        HttpClientResponseException error = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.toBlocking().retrieve(HttpRequest.GET("/api/dev/flow/not-a-flow-token")));
+
+        assertEquals(HttpStatus.BAD_REQUEST, error.getStatus());
+    }
+
+    @Test
+    void concept_triples_endpoint_rejects_invalid_concept_name() {
+        HttpClientResponseException error = assertThrows(
+                HttpClientResponseException.class,
+                () -> client.toBlocking().retrieve(HttpRequest.GET("/api/dev/concept/../triples")));
+
+        assertEquals(HttpStatus.BAD_REQUEST, error.getStatus());
     }
 
     private void insertPendingAction(String name) {

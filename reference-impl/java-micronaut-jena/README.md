@@ -110,9 +110,48 @@ above at startup; remove it in any non-demo profile.
 ## Debugging flows locally
 
 The reference impl now exposes **dev-only** WYSIWID introspection routes
-under `/api/dev` when the Micronaut environment is not `prod`. These
-endpoints are for local debugging and flow inspection only; they are not
-part of the business HTTP API.
+under `/api/dev`, but only when both of these conditions are true:
+
+- the Micronaut environment is not `prod`
+- `clad.debug.endpoints.enabled=true` is set explicitly
+
+These endpoints are for local debugging and flow inspection only; they
+are not part of the business HTTP API.
+
+Why this exists:
+
+- humans can inspect the exact action-log and concept-state shape without
+   dropping into ad hoc SPARQL queries
+- weaker/local LLMs can be given a stable, read-oriented debugging
+   surface instead of asking them to infer engine state from raw triples
+- `/api/dev/flows` and `/api/dev/syncs` make the Stage 03/04 runtime
+   wiring legible in the same vocabulary used by CLAD artefacts
+
+How to enable it locally:
+
+```sh
+cd reference-impl/java-micronaut-jena
+mvn -DskipTests package
+java -Dclad.debug.endpoints.enabled=true \
+       -jar target/clad-java-micronaut-jena-0.1.0-SNAPSHOT.jar
+```
+
+Use it when you need to answer questions like:
+
+- which syncs are currently registered, and in what intended flow order?
+- what happened for one specific flow token after the flow archived?
+- which active actions are stuck without `:output`?
+- what triples currently exist in one concept graph?
+
+Operational notes:
+
+- the controller is disabled by default; if you do not opt in, `/api/dev/*`
+   returns `404`
+- `DELETE /api/dev/actions` clears only the active action graph for local
+   reset/debug loops; it does not clear archived flows or concept graphs
+- `GET /api/dev/flow/{token}` accepts only CLAD flow-token IRIs and
+   `GET /api/dev/concept/{name}/triples` accepts only lowercase
+   alphanumeric concept names
 
 - `GET /api/dev/flows` — registered syncs grouped by human-readable flow metadata
 - `GET /api/dev/syncs` — flat list of registered syncs and any `@SyncMetadata`
@@ -127,6 +166,8 @@ Example:
 curl http://localhost:8080/api/dev/flows
 curl http://localhost:8080/api/dev/stuck
 curl http://localhost:8080/api/dev/concept/user/triples
+# after a /login call, inspect one archived flow token:
+curl http://localhost:8080/api/dev/flow/https%3A%2F%2Fclad.dev%2Fflow%2F<uuid>
 ```
 
 Because completed flows are archived, `/api/dev/flow/{token}` remains
