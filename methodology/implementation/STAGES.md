@@ -151,9 +151,28 @@ principle for the *feature* (not for any single concept); the actors
 must satisfy. Each scenario is a trigger + expected outcomes. Out of
 scope is non-empty.
 
+An optional Mermaid `sequenceDiagram` may appear inside a scenario as a
+derived interaction sketch for humans. It is explanatory only and does
+not become a new source of truth: Stage 01 prose remains canonical, and
+Stage 02b chain tables remain the first canonical executable rendering
+of cross-concept choreography. Stage 01 sequence diagrams stay limited
+to actor/system interaction and must not introduce concept names, sync
+names, provenance details, or state claims that are not already stated
+in the prose use case.
+
+Default expectation: include the sequence diagram when it materially
+improves review clarity, especially for scenarios with branching
+extensions, opaque failure handling, or longer interaction sequences.
+Omit it when it would only restate a short linear path without adding a
+useful visual distinction.
+
 **Output:** `usecase.md`.
 
-**Gate:** the human edits the use case before stage 2.
+**Gate:** the human edits the use case before stage 2. If a sequence
+diagram is present, the human checks that it improves clarity without
+becoming a second design source; if a scenario obviously benefits from
+one and none is provided, the human may send Stage 01 back for a more
+legible presentation.
 
 ### Stage 02a — `02a_responsibility-map/`
 

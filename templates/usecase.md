@@ -75,6 +75,54 @@ load-bearing.
     - Postconditions — Success: <what is true if the branch is handled correctly>
     - Postconditions — Failure: <what is true if the branch is not handled correctly>
 
+- **Interaction sketch (optional):**
+
+  > **Diagram type: `sequenceDiagram` only.** This is a human-facing,
+  > derived view of actor/system interaction at Stage 01. It is
+  > explanatory only: the prose scenario remains canonical. If the prose
+  > and the diagram disagree, the prose wins.
+  >
+  > Keep participants limited to the primary actor, any real supporting
+  > actor, and `System` or `Web`. Do **not** introduce concept names,
+  > sync names, provenance details, storage/state claims, or extra steps
+  > that are not already present in the scenario text.
+  >
+  > Use one diagram per scenario. Derive it only from the scenario's
+  > Trigger, Main flow, and Extensions. Validate at
+  > [mermaid.live](https://mermaid.live) before committing.
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant System
+
+    Note over User,System: Trigger: User submits the form.
+
+    User->>System: Submit request with required fields
+    System-->>User: Acknowledge request accepted for processing
+    System->>System: Validate input and current preconditions
+
+    alt Main flow succeeds
+        System->>System: Apply the business action
+        System-->>User: Return success response
+    else Extension 2a: validation fails
+        System-->>User: Return validation error message
+    else Extension 3a: dependency rejects request
+        System-->>User: Return failure response for rejected request
+    end
+```
+
+  > **Translation rules.**
+  > - The first message comes from the primary actor and mirrors the
+  >   `Trigger` / Main flow step 1.
+  > - Use `System` (or `Web` when HTTP is important) as the system-side
+  >   participant unless a real external actor is named in the prose.
+  > - `alt` / `else` blocks mirror scenario extensions; label them with
+  >   the extension id (`2a`, `3a`, ...) and condition.
+  > - Keep response messages user-observable. Do not smuggle in concept
+  >   choreography; that belongs in Stage 02b chain tables.
+  > - If you cannot draw the diagram without inventing details, omit it.
+
 > **Both Postconditions sub-sections are mandatory in every Fully
 > Dressed scenario.** A scenario without a Failure postcondition (even
 > if it reads *"No state is modified"*) is incomplete and will be

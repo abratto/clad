@@ -36,6 +36,17 @@ scenarios the feature must satisfy. One paragraph for the operational
 principle. Each scenario is a trigger + expected outcomes. Be honest
 about what is out of scope.
 
+An optional Mermaid `sequenceDiagram` may be included inside a scenario
+as a human-facing interaction sketch, but it is derived only from the
+scenario prose. If present, it must stay actor/system-only and must not
+introduce concept names, sync names, provenance, or state claims.
+
+Default expectation: include the diagram when it materially improves
+review clarity, especially for scenarios with branching extensions,
+opaque error handling, or more than three interaction steps. Omit it
+when it would merely restate a short linear scenario without adding
+useful visual structure.
+
 ## Outputs
 
 - `output/usecase.md` — the use case spec
@@ -47,6 +58,11 @@ about what is out of scope.
 - All actors named in scenarios come from `../00_actor-goal/output/actors.md`.
 - No scenario lists a domain entity (Loan, Copy, Title, etc.) as an actor.
 - Pre-conditions, observable outcomes, and postconditions (Success and Failure) are present in each scenario.
+- Any Mermaid `sequenceDiagram` included in the use case matches the
+	prose scenario and remains explanatory only.
+- Scenarios with branching extensions, opaque failure paths, or longer
+	interaction sequences include an interaction sketch unless it would
+	add no review value.
 - Out-of-scope section is non-empty.
 - The operational principle reads as a coherent story, not a feature list.
 - **Cross-stage check (back):** every in-scope goal in `../00_actor-goal/output/goals.md` corresponds to at least one named scenario in `usecase.md`.

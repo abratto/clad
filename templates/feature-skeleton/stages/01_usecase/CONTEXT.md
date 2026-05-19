@@ -38,6 +38,18 @@ distinct trigger if a goal has several). Write the out-of-scope
 section by lifting out-of-scope goals from `goals.md` and adding any
 implicit exclusions.
 
+An optional Mermaid `sequenceDiagram` may be included inside each
+scenario as a derived, human-facing interaction sketch. If present, it
+must stay actor/system-only and must not introduce concept discovery,
+sync design, provenance, or state claims that are not already stated in
+the prose scenario.
+
+Default expectation: include the diagram when it materially improves
+review clarity, especially for scenarios with branching extensions,
+opaque error handling, or more than three interaction steps. Omit it
+when it would merely restate a short linear scenario without adding
+useful visual structure.
+
 The use case **must be Fully Dressed** before exiting this stage —
 the completeness checkbox at the top of `usecase.md` selects "Fully
 Dressed", and every scenario carries both `Postconditions — Success`
@@ -56,6 +68,12 @@ for level definitions and the rationale.
   **and** both `Postconditions — Success` and `Postconditions — Failure`
   sub-sections (the Failure section may say "no state is modified" but
   must be present).
+- Any Mermaid `sequenceDiagram` included in the use case is consistent
+  with the prose scenario and remains explanatory only; it introduces no
+  concept names, sync names, or extra steps absent from the prose.
+- Scenarios with branching extensions, opaque failure paths, or longer
+  interaction sequences include an interaction sketch unless there is a
+  clear reason it would add no review value.
 - `Trigger` is present unless the scenario is a straightforward
   actor-initiated flow.
 - Out-of-scope section is non-empty.

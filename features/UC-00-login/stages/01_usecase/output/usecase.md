@@ -50,6 +50,19 @@ before the account is locked.
   - Not applicable — this scenario is the success branch. Failures
     are covered by the *wrong-password*, *unknown-user*, and
     *lockout* scenarios below.
+- **Interaction sketch (optional):**
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Web
+
+    Note over User,Web: Trigger: User submits POST /login with username and password.
+
+    User->>Web: POST /login { username, password }
+    Web->>Web: Check username and password against the login flow
+    Web-->>User: 200 OK { sessionToken }
+```
 
 ### Scenario: wrong-password
 
