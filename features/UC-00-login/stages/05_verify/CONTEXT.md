@@ -22,6 +22,7 @@ that the deployable thing actually runs (Part 2, smoke). Without it,
 | `../04_implement/output/implementation-manifest.md` | 4 | What was built |
 | (a flow-token log from a representative test run) | 4 | Runtime evidence |
 | `../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics |
+| `../../../../reference-impl/java-micronaut-jena/README.md` | 3 | Java runtime debug surface |
 
 ## Process
 
@@ -32,6 +33,14 @@ back-traces to a sync or use-case scenario. Write
 `output/verification-trace.md`. (UC-00 also keeps the older
 `trace.md` filename around as the canonical name; this seed uses
 `verification-trace.md` historically — both are acceptable.)
+
+In this Java profile, the default runtime evidence surface is the debug
+controller documented in the reference-impl README. Prefer
+`/api/dev/flows` to confirm the registered sync plan,
+`/api/dev/flow/{token}` to inspect one archived flow token,
+`/api/dev/stuck` to rule out missing `:output`, and
+`/api/dev/concept/{name}/triples` when concept state must be checked
+alongside the trace.
 
 ### Part 2 — Close
 
@@ -50,6 +59,9 @@ back-traces to a sync or use-case scenario. Write
 ## Verify
 
 - Every scenario has a trace entry.
+- The trace is backed by captured runtime evidence from the Java debug
+  endpoints or another executed runtime inspection command, not only by
+  predicted test chains.
 - `smoke.md` records a real (not predicted) curl/response per scenario.
 - `tracking.md` exists.
 - Trace file begins with `Resume point:`.

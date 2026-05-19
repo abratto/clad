@@ -118,6 +118,10 @@ under `/api/dev`, but only when both of these conditions are true:
 These endpoints are for local debugging and flow inspection only; they
 are not part of the business HTTP API.
 
+For this Java profile, they are also the default runtime evidence
+surface for CLAD Stage 04 implementation-time debugging and Stage 05
+verification-time flow-token traceability.
+
 Why this exists:
 
 - humans can inspect the exact action-log and concept-state shape without

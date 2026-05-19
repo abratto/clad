@@ -27,6 +27,7 @@ that the deployable thing actually runs (Part 2, smoke). Without it,
 | `../03_syncs/output/` | 4 | Authorising sync rules |
 | (a flow-token log from a representative test run) | 4 | Runtime evidence |
 | `../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics |
+| `../../../../reference-impl/java-micronaut-jena/README.md` | 3 | Example runtime debug surface for the Java profile |
 | `../../../../methodology/overlays/TRACKING.md` | 3 | Optional — only if the TRACKING overlay is in use |
 
 ## Process
@@ -41,6 +42,14 @@ For each named scenario in the use case:
 3. Check that the chain matches the syncs in `03_syncs/output/`.
 4. Check that no action appears in the chain that is not authorised
    by either a use-case scenario or a sync.
+
+When the selected profile exposes a read-oriented runtime debug surface,
+use that surface as the default proof source for the walk before you
+write `trace.md`. For the Java reference profile, prefer `/api/dev/flows`
+to confirm the registered sync plan, `/api/dev/flow/{token}` to inspect
+the archived action history for one flow token, `/api/dev/stuck` to rule
+out missing `:output`, and `/api/dev/concept/{name}/triples` when you
+need to verify concept state alongside the flow trace.
 
 Write a per-scenario walk to `output/trace.md`. If anything failed
 step 3 or 4, add an entry to `output/findings.md` and mark which
@@ -81,6 +90,9 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
 
 - Every scenario has an entry in `trace.md`.
 - `findings.md`, if present, names the owning stage for each finding.
+- `trace.md` is backed by captured runtime evidence from the profile's
+  debug surface or equivalent executed inspection commands, not only by
+  predicted test chains.
 - `smoke.md` exists and contains a real (not predicted) command +
   response per scenario.
 - `tracking.md` exists, even if only to record that no overlay is in

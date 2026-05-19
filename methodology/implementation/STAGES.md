@@ -431,18 +431,29 @@ Gate evidence must include one executed build-and-test command result
 showing: 1) test compilation succeeded, 2) sync tests are green, and
 3) flow tests from `04c` are green.
 
+When the selected profile exposes a runtime debug surface, Stage 04 uses
+that surface as the default tool for explaining observed behaviour while
+the flow is still being made green. In the Java reference profile, this
+means `/api/dev/flows`, `/api/dev/flow/{token}`, `/api/dev/stuck`, and
+`/api/dev/concept/{name}/triples`. Predicted tokens and test comments
+do not count as runtime evidence when such a surface exists.
+
 ### Stage 05 — `05_verify/`
 
 Stage 05 has two parts: **Verify** (back-trace) and **Close** (smoke,
 tracking, resume-point). The full contract is in the stage seed at
 [`../../templates/feature-skeleton/stages/05_verify/CONTEXT.md`](../../templates/feature-skeleton/stages/05_verify/CONTEXT.md).
 
-**Input:** the use case, the sync specs, and a flow-token log from
-a representative test execution.
+**Input:** the use case, the sync specs, a flow-token log from a
+representative test execution, and the selected profile's runtime debug
+surface when one exists.
 
 **Process — verify:** for each named scenario, walk the flow-token
 tree and check that it matches the chain of syncs and concept actions
-the specs predict. Flag any tokens not authorised by a spec.
+the specs predict. Gather the runtime evidence for that walk from the
+profile's debug surface when available; in the Java reference profile,
+the default proof surface is `/api/dev/*`. Flag any tokens not
+authorised by a spec.
 
 **Process — close (only after verify is clean):**
 
@@ -501,7 +512,8 @@ coherent with an earlier stage's output. Examples:
 - Stage 04d verifies: every action listed in `04b_spec/output/` has at
   least one test row in the test-intent derivation map.
 - Stage 05 verifies: every flow token observed at runtime back-traces
-  to a use-case scenario.
+   to a use-case scenario using captured runtime evidence, not only
+   predicted token chains.
 
 The cross-stage check is what gives ICM § 6.2's reversibility
 property teeth: a downstream stage cannot silently drift from
@@ -534,4 +546,4 @@ reviewing at the gate?" Read top to bottom for a single feature.
 | 04b → **04c** | SPECs + use case | `<scenario>-flow-test.md` per scenario + stub red tests in profile | Predicted flow tokens match the scenario's postconditions |
 | 04c → **04d** | SPECs + concept specs | `concept-test-derivation.md` + per-concept tests (red → green) + concept implementations | Tests trace 1:1 to SPEC rows; no cross-concept imports |
 | 04d → **04e** | SPECs + sync specs | `sync-test-derivation.md` + per-sync tests (red → green); flow tests from 04c go green | All sync and flow tests green; `then` does no I/O outside concepts |
-| 04e → **05** | Use case + running profile | `trace.md` (back-trace from flow tokens), `findings.md` if any, `smoke.md`, `tracking.md` | Every observed flow token traces back to a named scenario |
+| 04e → **05** | Use case + running profile + runtime debug surface (if the profile exposes one) | `trace.md` (back-trace from flow tokens), `findings.md` if any, `smoke.md`, `tracking.md` | Every observed flow token traces back to a named scenario using captured runtime evidence |

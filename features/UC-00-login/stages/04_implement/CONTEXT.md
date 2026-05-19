@@ -28,6 +28,7 @@ test green.
 | `../../../../methodology/implementation/STAGES.md` | 3 | Stage 04 routing contract |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rules |
 | `../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` | 3 | Java profile conventions |
+| `../../../../reference-impl/java-micronaut-jena/README.md` | 3 | Java runtime debug surface |
 
 ## Process
 
@@ -39,6 +40,13 @@ Run the sub-stages in order, gating after each:
 4. [`04d_concept-tdd/`](04d_concept-tdd/CONTEXT.md) — router for `04d_red-tests/` then `04d_green-impl/`
 5. [`04e_sync-tdd/`](04e_sync-tdd/CONTEXT.md) — router for `04e_red-tests/` then `04e_green-impl/`
 
+During `04c` through `04e`, use the Java profile's debug endpoints as
+the default runtime evidence surface for explaining live behaviour:
+`/api/dev/flows` for registered sync order, `/api/dev/flow/{token}` for
+one archived flow, `/api/dev/stuck` for active actions missing
+`:output`, and `/api/dev/concept/{name}/triples` for concept-state
+inspection. Do not treat predicted token chains alone as runtime proof.
+
 ## Outputs
 
 (none — see sub-stages)
@@ -49,6 +57,9 @@ Run the sub-stages in order, gating after each:
 - `04d_red-tests/` is approved before `04d_green-impl/` starts.
 - `04e_red-tests/` is approved before `04e_green-impl/` starts.
 - The flow tests from `04c` are green at the end of `04e_green`.
+- Any runtime explanation of why a flow is red, green, stuck, or
+	archived cites one of the Java profile debug endpoints or another
+	executed runtime inspection command.
 - **Cross-stage check (back):** every concept in `02_concepts/output/` and every sync in `03_syncs/output/` has a corresponding sub-stage output.
 
 ## Gate

@@ -34,6 +34,7 @@ sub-stage.
 | `../03_syncs/output/` | 4 | Sync specs |
 | `../../../../methodology/implementation/STAGES.md` | 3 | Stage 04 routing contract |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rules |
+| `../../../../reference-impl/java-micronaut-jena/README.md` | 3 | Example runtime debug surface for the Java profile |
 
 ## Process
 
@@ -48,6 +49,16 @@ stop and tell the human which earlier sub-stage must be completed first.
 | 3 | [`04c_flow-tests/`](04c_flow-tests/CONTEXT.md) — outer red (flow tests) | `04b_spec/output/` is non-empty |
 | 4 | [`04d_concept-tdd/`](04d_concept-tdd/CONTEXT.md) — router for `04d_red-tests/` then `04d_green-impl/` | `04c_flow-tests/output/` is non-empty |
 | 5 | [`04e_sync-tdd/`](04e_sync-tdd/CONTEXT.md) — router for `04e_red-tests/` then `04e_green-impl/` | All concept tests from `04d_green` are green |
+
+During `04c` through `04e`, if the selected profile exposes a runtime
+debug surface, use it as the default evidence source for explaining
+live behaviour. For the Java reference profile, prefer `/api/dev/flows`
+to inspect registered sync order, `/api/dev/flow/{token}` to inspect a
+single archived flow, `/api/dev/stuck` to find active actions missing
+`:output`, and `/api/dev/concept/{name}/triples` to inspect concept
+state. Do not claim runtime traceability from predicted tokens, test
+comments, or markdown derivations alone when a profile debug surface is
+available.
 
 **Do not skip or reorder sub-stages.** The fast-path exception in
 `STAGES.md` applies only when all listed conditions hold; when in
@@ -66,6 +77,9 @@ doubt, use one-stage-per-turn.
 - No sub-stage is treated as complete from markdown outputs alone; each
   required code/test side effect exists for the selected profile.
 - The flow tests from `04c` are green at the end of `04e_green`.
+- Any runtime explanation of why a flow is red, green, stuck, or
+  archived is backed by the profile's debug surface or an equivalent
+  executed runtime inspection command.
 - **Cross-stage check (back):** every concept and every sync from
   stages 02 and 03 has a corresponding sub-stage output.
 
