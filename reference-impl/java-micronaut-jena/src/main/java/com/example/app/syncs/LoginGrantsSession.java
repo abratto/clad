@@ -4,6 +4,7 @@ import com.example.app.concepts.passwordauth.PasswordAuthConcept;
 import com.example.app.concepts.session.SessionConcept;
 import com.example.app.engine.ActionLog;
 import com.example.app.engine.SyncAgent;
+import com.example.app.engine.SyncMetadata;
 import com.example.app.engine.SyncTrigger;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -16,6 +17,11 @@ import jakarta.inject.Singleton;
  * <p>When: {@code PasswordAuth/check[outcome=OK]}
  * <p>Then: {@code Session/grant { userId }}
  */
+@SyncMetadata(
+        flow = "Login",
+        step = 3,
+        triggeredBy = "PasswordAuth/check[OK]",
+        fires = "Session/grant")
 @Singleton
 public final class LoginGrantsSession extends SyncAgent {
 

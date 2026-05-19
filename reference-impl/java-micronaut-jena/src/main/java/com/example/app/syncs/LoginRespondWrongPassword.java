@@ -4,6 +4,7 @@ import com.example.app.concepts.passwordauth.PasswordAuthConcept;
 import com.example.app.engine.ActionLog;
 import com.example.app.engine.FlowManager;
 import com.example.app.engine.SyncAgent;
+import com.example.app.engine.SyncMetadata;
 import com.example.app.engine.SyncTrigger;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -17,6 +18,12 @@ import jakarta.inject.Singleton;
  * <p>The message is intentionally identical to the unknown-user response so
  * the API does not leak account enumeration.
  */
+@SyncMetadata(
+        flow = "Login",
+        step = 3,
+        triggeredBy = "PasswordAuth/check[BAD_PASSWORD|NO_CREDENTIAL]",
+        fires = "Web/respond[401]",
+        where = "credential failure path")
 @Singleton
 public final class LoginRespondWrongPassword extends SyncAgent {
 
