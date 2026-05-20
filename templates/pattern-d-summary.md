@@ -38,8 +38,10 @@
 
 ## What this feeds
 
-- **Stage 04a (ORM).** The owner concept's ORM must include every
-  field listed in the *Field read* column.
+- **Stage 03b (data model).** The owner concept's data model must
+  include every field listed in the *Field read* column.
+- **Stage 04a (storage mapping).** The owner concept's storage mapping
+  must realize those approved fields in the selected profile.
 - **Stage 04b (spec).** The consumer sync's spec must name the owner
   concept and the field by the same names used here.
 - **Stage 05 (verify).** Each row is a runtime trace target — the

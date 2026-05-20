@@ -25,9 +25,12 @@ has **zero cross-concept state coupling at runtime**.
 
 ## What this feeds
 
-- **Stage 04a (ORM).** Because no Pattern D reads exist, no
-  cross-concept field exposure is required. Each concept's ORM is
+- **Stage 03b (data model).** Because no Pattern D reads exist, no
+  cross-concept field exposure is required. Each concept's data model is
   scoped strictly to its own `state` section.
+- **Stage 04a (storage mapping).** The in-memory profile will skip
+  storage mapping, but any future persistent profile will realize only
+  the concept-local facts approved in Stage 03b.
 - **Stage 04b (spec).** Sync specs need only normalise the
   action-name discrepancies noted on the per-concept cards.
 - **Stage 05 (verify).** Trace target list is empty for Pattern D;

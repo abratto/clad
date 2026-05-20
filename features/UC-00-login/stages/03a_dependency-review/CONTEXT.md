@@ -13,8 +13,8 @@ per [`SYNC_PATTERNS.md`](../../../../methodology/architecture/SYNC_PATTERNS.md);
 
 **Feeds:**
 
-- `<concept>-card.md` → 04a (Pattern D fields drive ORM column choices), 04b (per-concept SPEC author sees the full inbound contract), 04d (concept TDD knows its inbound surface), 04e (sync TDD knows which concepts it must double).
-- `pattern-d-summary.md` → 04a (single cross-cutting checklist for ORM design).
+- `<concept>-card.md` → 03b (Pattern D fields drive conceptual data-model coverage), 04b (per-concept SPEC author sees the full inbound contract), 04d (concept TDD knows its inbound surface), 04e (sync TDD knows which concepts it must double).
+- `pattern-d-summary.md` → 03b (single cross-cutting checklist for conceptual data-model design).
 
 **Agent stance for this stage:** this stage produces **no new design**.
 If a card needs an action that doesn't exist yet, you are mid-violation
@@ -75,6 +75,6 @@ Default human approval.
 
 ## Next stage
 
-→ [`../04_implement/CONTEXT.md`](../04_implement/CONTEXT.md) — Implement (router)
+→ [`../03b_data-model/CONTEXT.md`](../03b_data-model/CONTEXT.md) — Data model
 
-To advance, the human says: **"Proceed to Stage 04."**
+To advance, the human says: **"Proceed to Stage 03b."**

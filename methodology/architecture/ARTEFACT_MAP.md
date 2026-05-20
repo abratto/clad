@@ -62,10 +62,16 @@ are still the authoritative contracts; this file just makes the
    └──────┬───────────────┘                                          │
           │ (cross-concept coupling surface; Pattern D field list)   │
           ▼                                                          │
+   ┌──────────────────────┐                                          │
+   │ 03b_data-model/      │   <Name>.data-model.md                   │
+   └──────┬───────────────┘                                          │
+          │ (conceptual facts + constraints per concept)             │
+          ▼                                                          │
    ┌──────────────────────────────────────────────────┐              │
    │ 04_implement/  (router → 5 sub-stages)           │              │
    │                                                  │              │
-   │  04a_orm/    state → schema (per concept region) │              │
+   │  04a_storage-mapping/  data model → profile      │              │
+   │                       storage mapping            │              │
    │  04b_spec/   concept spec → SPEC slice           │              │
    │  04c_flow-tests/   one outer-red flow test per   │              │
    │                    scenario  ────────────────────┼──┐           │
@@ -142,12 +148,13 @@ consumer need that?**
 | `<name>.sync.md` | 03 | 04c | Expected coordination chain | Flow test's expected token sequence comes from here. |
 | `<name>.sync.md` | 03 | 04e | `when … where … then` | One inner red→green TDD pass per sync. |
 | `<name>.sync.md` | 03 | 05 | Authorisation surface | The verifier checks every observed call is authorised by either a sync `then` or a use-case scenario trigger. |
-| `<concept>-card.md` | 03a | 04a | Pattern D fields owned by this concept | Drives ORM column choices (the field must be exposed in this concept's region). |
+| `<concept>-card.md` | 03a | 03b | Pattern D fields owned by this concept | Drives conceptual data-model coverage (the field must be exposed in this concept's region). |
 | `<concept>-card.md` | 03a | 04b | Full inbound contract for this concept | The SPEC author sees every call this concept will receive. |
 | `<concept>-card.md` | 03a | 04d | Inbound action surface | The concept TDD knows what its boundary actually is. |
 | `<concept>-card.md` | 03a | 04e | Set of concepts this sync invokes | The sync TDD knows which concepts to double. |
-| `pattern-d-summary.md` | 03a | 04a | Single cross-cutting list of every Pattern D read | One ORM-design checklist for the whole feature. |
-| `<Name>.orm.md` (or `_NOT_APPLICABLE.md`) | 04a | 04d | Schema for the test fixture | The concept TDD builds against this schema. |
+| `pattern-d-summary.md` | 03a | 03b | Single cross-cutting list of every Pattern D read | One conceptual data-model checklist for the whole feature. |
+| `<Name>.data-model.md` | 03b | 04a | Approved fact types and constraints | The storage mapping must realize this model without drift. |
+| `<Name>.storage.md` (or `_NOT_APPLICABLE.md`) | 04a | 04d | Storage shape for the test fixture | The concept TDD builds against this mapping when persistence exists. |
 | `<Name>.spec.md` | 04b | 04c, 04d, 04e | Action signatures the test code compiles against | All inner-loop and outer-loop tests reference SPECs, not prose. |
 | `<scenario>-flow-test.md` | 04c | 04e | The test that must go green | When the last sync goes green, the flow test must too. |
 | `<scenario>-flow-test.md` | 04c | 05 | Expected runtime token chain | The back-trace evidence comes from running this. |
@@ -170,7 +177,7 @@ runtime artefacts in the chosen profile:
 
 | Spec artefact | Java reference profile counterpart | Enforced by |
 |---|---|---|
-| `<Name>.concept.md` `state` | `<Name>Concept` class fields + (optional) `<Name>.orm.md` schema | ArchUnit: no field of a concept class is referenced from another concept package. |
+| `<Name>.concept.md` `state` | `<Name>Concept` class fields + (optional) `<Name>.data-model.md` + `<Name>.storage.md` | ArchUnit: no field of a concept class is referenced from another concept package. |
 | `<Name>.concept.md` actions | public methods on `<Name>Concept`, each emitting a flow token | ArchUnit + R1 + R5. |
 | `<name>.sync.md` `when … then` | `<SyncName>` class registered with the sync engine | R3 — no imperative branching inside a sync class. |
 | `<scenario>-chain.md` | `<Scenario>FlowTest` (an HTTP-level test) | The chain's row sequence equals the test's expected token sequence. |

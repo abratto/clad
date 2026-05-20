@@ -143,9 +143,10 @@ piece.
 
 - **ORM / CSDP — Halpin & Jarrar.** Source of the discipline that the
   conceptual schema is decided *before* code, not derived from it. CLAD
-  borrows the *shape* of the seven-step CSDP for per-concept schemas —
-  not the full ORM-ML notation. See
-  [methodology/architecture/ORM_NOTES.md](methodology/architecture/ORM_NOTES.md).
+  borrows the shape of the CSDP for Stage 03b conceptual data modeling,
+  then maps that approved model into a chosen profile at Stage 04a. See
+  [methodology/architecture/DATA_MODEL_NOTES.md](methodology/architecture/DATA_MODEL_NOTES.md)
+  and [methodology/implementation/STORAGE_MAPPING.md](methodology/implementation/STORAGE_MAPPING.md).
 
 Background traditions that shaped the gate protocol — Cockburn use
 cases, Extreme Programming's red-before-green TDD, RUP's artefact-chain
@@ -379,7 +380,8 @@ clad/
 │           ├── 02_concepts/
 │           ├── 03_syncs/
 │           ├── 03a_dependency-review/
-│           ├── 04_implement/        Router + 04a_orm, 04b_spec,
+│           ├── 03b_data-model/
+│           ├── 04_implement/        Router + 04a_storage-mapping, 04b_spec,
 │           │                        04c_flow-tests, 04d_concept-tdd
 │           │                        (04d_red-tests, 04d_green-impl),
 │           │                        04e_sync-tdd (04e_red-tests,

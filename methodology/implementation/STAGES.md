@@ -62,9 +62,12 @@ features/UC-XX-name/
     ├── 03a_dependency-review/
     │   ├── CONTEXT.md
     │   └── output/              <concept>-card.md per concept; pattern-d-summary.md
+   ├── 03b_data-model/
+   │   ├── CONTEXT.md
+   │   └── output/              <Name>.data-model.md per concept
     ├── 04_implement/
     │   ├── CONTEXT.md           Router → 04a..04e; no direct artefacts
-    │   ├── 04a_orm/             Optional state model
+   │   ├── 04a_storage-mapping/ Optional profile mapping
     │   │   ├── CONTEXT.md
     │   │   └── output/
     │   ├── 04b_spec/            Per-concept SPEC contract slice
@@ -319,6 +322,22 @@ elsewhere, the dependency card is where that gets surfaced.
 implementation begins. The reviewer should reject any 03a artefact that
 silently normalizes token mismatches instead of surfacing them.
 
+### Stage 03b — `03b_data-model/`
+
+**Input:** `02_concepts/output/`, `03a_dependency-review/output/`,
+[`../architecture/DATA_MODEL_NOTES.md`](../architecture/DATA_MODEL_NOTES.md).
+
+**Process:** for each approved concept spec, derive a profile-neutral
+conceptual data model: fact types, uniqueness, mandatory roles, and
+derived facts. Every fact must trace back to approved Stage 02 state or
+approved Pattern D exposure from 03a. This stage decides the
+**conceptual model**, not the storage technology.
+
+**Output:** `<Name>.data-model.md` per concept.
+
+**Gate:** human approval that the conceptual model is complete,
+profile-neutral, and free of cross-concept schema coupling.
+
 ### Stage 04 — `04_implement/` (router)
 
 `04_implement/CONTEXT.md` is a router: its **Process** points at the
@@ -326,23 +345,23 @@ five sub-stages below, and its **Outputs** list is empty (sub-stages
 own all artefacts). Sub-stages run in order `04a → 04b → 04c → 04d →
 04e`; the human gates after each.
 
-#### Stage 04a — `04a_orm/`
+#### Stage 04a — `04a_storage-mapping/`
 
-**Input:** `02_concepts/output/`, the chosen profile's reference docs.
+**Input:** `03b_data-model/output/`, the chosen profile's reference
+docs, [`../implementation/STORAGE_MAPPING.md`](STORAGE_MAPPING.md).
 
-**Process:** if the profile uses a relational/RDF store, draft the
-state schema per concept. Otherwise write `_NOT_APPLICABLE.md`
-explaining why and skip.
+**Process:** if the profile uses a relational/RDF/document store, map
+each approved conceptual data model into the profile's storage
+primitives. Otherwise write `_NOT_APPLICABLE.md` explaining why and
+skip.
 
-Every ORM field, allowed value, and region-level structure must trace
-1:1 to approved Stage 02 concept state plus approved Pattern D needs
-from 03a. Do not add fields, statuses, defaults, lifecycle concepts, or
-helper regions that are not present upstream.
+Stage 04a must not invent new facts or constraints. It realizes the
+approved model from 03b in a specific profile.
 
-**Output:** `<Name>.orm.md` per concept (or `_NOT_APPLICABLE.md`).
+**Output:** `<Name>.storage.md` per concept (or `_NOT_APPLICABLE.md`).
 
-**Gate:** human approval that the schema honours R2 (one named region
-per concept).
+**Gate:** human approval that the mapping honours R2 (one named region
+per concept) and introduces no new design.
 
 #### Stage 04b — `04b_spec/`
 
@@ -560,8 +579,9 @@ reviewing at the gate?" Read top to bottom for a single feature.
 | 02b → **02** | Responsibility map + chain tables | Per-concept `<Name>.concept.md` (full anatomy: state, actions, op principle); no cross-concept references | Concept anatomy honours R1; action outcomes cover the chains |
 | 02 → **03** | Concept specs + chain tables | One `<name>.sync.md` per coordination rule; every `where` clause labelled with pattern A/B/C/D | Every scenario covered; no imperative branching; all joins explicit |
 | 03 → **03a** | Sync specs + chain tables | One `<concept>-card.md` per concept; one `pattern-d-summary.md` for the feature | Cross-concept coupling is intentional; Pattern D is explicit and reviewed |
-| 03a → **04a** | Sync specs + dependency review (Pattern D summary names every cross-concept field) | `<Name>.orm.md` per concept under R2 (one named region each); fields needed by Pattern D reads exist | State model supports the syncs; Pattern D reads map to named fields |
-| 04a → **04b** | ORM (or `_NOT_APPLICABLE.md`) + concept specs | `<Name>.spec.md` per concept (signatures, outcomes, flow-token shape) — mechanically derived | SPEC matches concept spec, no drift |
+| 03a → **03b** | Sync specs + dependency review (Pattern D summary names every cross-concept field) | `<Name>.data-model.md` per concept — fact types and constraints under R2 | Conceptual state model supports the syncs; Pattern D reads map to named facts |
+| 03b → **04a** | Data models + chosen profile | `<Name>.storage.md` per concept (or `_NOT_APPLICABLE.md`) | Profile mapping matches the conceptual model with no drift |
+| 04a → **04b** | Storage mapping (or `_NOT_APPLICABLE.md`) + concept specs | `<Name>.spec.md` per concept (signatures, outcomes, flow-token shape) — mechanically derived | SPEC matches concept spec, no drift |
 | 04b → **04c** | SPECs + use case | `<scenario>-flow-test.md` per scenario + stub red tests in profile | Predicted flow tokens match the scenario's postconditions |
 | 04c → **04d** | SPECs + concept specs | `concept-test-derivation.md` + per-concept tests (red → green) + concept implementations | Tests trace 1:1 to SPEC rows; no cross-concept imports |
 | 04d → **04e** | SPECs + sync specs | `sync-test-derivation.md` + per-sync tests (red → green); flow tests from 04c go green | All sync and flow tests green; `then` does no I/O outside concepts |

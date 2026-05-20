@@ -23,7 +23,7 @@ upstream prose, but it may not redesign approved tests.
 | Path | Layer | Why |
 |---|---|---|
 | `../../../02_concepts/output/` | 4 | Concept specs |
-| `../../04a_orm/output/` | 4 | Storage shape when ORM applies |
+| `../../04a_storage-mapping/output/` | 4 | Storage mapping when a persistent profile applies |
 | `../../04b_spec/output/` | 4 | SPEC slices to preserve outcome distinctions |
 | `../04d_red-tests/output/` | 4 | Approved red tests and handoff bundle |
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for green evidence |
@@ -42,7 +42,7 @@ upstream prose, but it may not redesign approved tests.
    pass. Do not redesign the tests during this stage. If they appear
    wrong or incomplete, stop and send the work back to `04d-red` or the
    earliest invalid upstream stage.
-4. Use the storage shape from `04a_orm/output/` when applicable. Do not
+4. Use the storage mapping from `04a_storage-mapping/output/` when applicable. Do not
    replace the selected profile's storage layer with an in-memory
    substitute.
 5. Run the canonical command from `../../../../_config/build-and-test.md`

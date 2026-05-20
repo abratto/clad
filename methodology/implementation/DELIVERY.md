@@ -66,7 +66,8 @@ feat(UC-01): Stage 01 — use case artefact (usecase.md)
 feat(UC-01): Stage 02a — responsibility map artefact
 feat(UC-01): Stage 02b — chain tables artefact
 feat(UC-01): Stage 03 — syncs artefacts
-feat(UC-01): Stage 04a — ORM artefact
+feat(UC-01): Stage 03b — data model artefact
+feat(UC-01): Stage 04a — storage mapping artefact
 feat(UC-01): Stage 04b — spec artefact
 feat(UC-01): Stage 04c — flow tests artefact
 feat(UC-01): Stage 04d — concept TDD artefact

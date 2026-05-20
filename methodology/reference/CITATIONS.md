@@ -69,17 +69,17 @@ adaptations of these ideas.
 Mustafa Jarrar. **Object Role Modelling (ORM/ORM-ML) and the
 Conceptual Schema Design Procedure (CSDP).** Cited in CLAD as the
 source of the seven-step drafting procedure summarised in
-[`../architecture/ORM_NOTES.md`](../architecture/ORM_NOTES.md).
+[`../architecture/DATA_MODEL_NOTES.md`](../architecture/DATA_MODEL_NOTES.md).
 
 - Personal page: [jarrar.info](https://www.jarrar.info)
 - Representative paper: Jarrar, M. *Towards Methodological Principles
   for Ontology Engineering*, PhD thesis, Vrije Universiteit Brussel,
   2005, and subsequent ORM/ORM-ML papers.
 
-CLAD borrows the *shape* of the seven-step CSDP and adapts it to
-per-concept schemas under hard rule R2 (one named region per
-concept). The full ORM-ML notation is **not** adopted; readers who
-want the notation should consult Jarrar's papers directly.
+CLAD borrows the shape of the CSDP and adapts it to per-concept data
+models under hard rule R2 (one named region per concept). The full
+ORM-ML notation is **not** adopted; readers who want the notation
+should consult Jarrar's papers directly.
 
 ## Source of the CLAD reference implementation
 

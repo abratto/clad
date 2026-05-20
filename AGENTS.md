@@ -86,8 +86,8 @@ You are expected to operate within all three layers simultaneously.
 Every meaningful change moves through this loop. Skipping a step is a bug.
 
 ```
-  actor/goal -> use case -> concepts -> syncs -> implement -> verify
-      ^                                          (04a..04e)        |
+  actor/goal -> use case -> concepts -> syncs -> data-model -> implement -> verify
+     ^                                                       (04a..04e)        |
       +-------------------- back-trace from flow tokens ------------+
 ```
 
@@ -108,13 +108,14 @@ Mapped to the ICM stages of a feature folder:
 | 2 | `stages/02_concepts/` | One `*.concept.md` per concept (full anatomy) |
 | 3 | `stages/03_syncs/` | One `*.sync.md` per coordination rule |
 | 3a | `stages/03a_dependency-review/` | One `*-card.md` per concept + `pattern-d-summary.md` (cross-concept coupling surface) |
-| 4 | `stages/04_implement/` | Router; top-level sub-stages `04a_orm`, `04b_spec`, `04c_flow-tests`, `04d_concept-tdd`, `04e_sync-tdd`, where `04d` and `04e` each split into structural red/green child stages |
+| 3b | `stages/03b_data-model/` | One `*.data-model.md` per concept (profile-neutral conceptual data model) |
+| 4 | `stages/04_implement/` | Router; top-level sub-stages `04a_storage-mapping`, `04b_spec`, `04c_flow-tests`, `04d_concept-tdd`, `04e_sync-tdd`, where `04d` and `04e` each split into structural red/green child stages |
 | 5 | `stages/05_verify/` | Trace from running behaviour back to `usecase.md`, plus closure (smoke + tracking) |
 
 Stage 04 is the **outside-in TDD double-loop**: `04c` is the outer red
 test (a flow), `04d` and `04e` are the inner red→green TDD on concepts
-and syncs. Stage 04a (ORM) is optional and skipped for in-memory
-profiles.
+and syncs. Stage 03b owns conceptual data modeling; Stage 04a owns only
+profile-specific storage mapping and is optional for in-memory profiles.
 
 Stage 00 has special semantics: the agent **proposes**, **asks ≤5
 clarifying questions**, iterates with the human, and only writes

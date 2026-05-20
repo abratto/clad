@@ -18,7 +18,7 @@ two things that play the same structural role.
 |---|---|---|
 | Class | Concept | `*.concept.md`, then `<Name>Concept.java` (or profile equivalent) |
 | Method signature | Action signature (name, args, outcome enum) | Concept spec `actions:` section, then `<Name>.spec.md` |
-| Field / instance variable | State field in concept's named region | Concept spec `state:` section, then ORM (`<Name>.orm.md`) |
+| Field / instance variable | State field in concept's named region | Concept spec `state:` section, then data model (`<Name>.data-model.md`), then storage mapping (`<Name>.storage.md`) |
 | Encapsulation (`private`) | One named region per concept (R2); no other concept reads it | Hard rule R2; per-concept named graph (Java/Jena) or schema |
 | Method call between objects | Sync: `then: OtherConcept.action(...)` | One `*.sync.md` per coordination link |
 | `someOther.getFoo()` (field access on another object) | **Pattern D** — sync `where:` reads another concept's named region | `where:` clause in sync; row in 03a dependency review |
@@ -75,7 +75,8 @@ artefact "lives" in CLAD, this is the full map:
 | Sequence diagram | Chain table | 02b | output |
 | Class definition (with methods) | Concept spec | 02 | output |
 | CRC card (responsibilities + collaborators) | Dependency review card | 03a | output |
-| Schema (DDL / ORM mapping) | ORM file | 04a | output |
+| Conceptual schema | Data model file | 03b | output |
+| Schema / storage realization | Storage mapping file | 04a | output |
 | Public interface (`.h`, `.d.ts`, etc.) | SPEC slice | 04b | output |
 | Integration test (HTTP-level) | Flow test | 04c | output |
 | Unit test | Concept test | 04d | output |

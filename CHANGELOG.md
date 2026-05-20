@@ -10,6 +10,13 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
 
+### Methodology
+
+- **Stage 03b CSDP fidelity**: Restored the conceptual data-model walk
+  to Halpin's explicit seven-step CSDP, added a dedicated
+  `templates/data-model.md`, and updated the UC-00 worked example to
+  show the fuller step-by-step structure.
+
 ## [0.2.0] — 2026-05-12
 
 ### Methodology
@@ -115,11 +122,11 @@ Initial public seed.
 - **Legible / WYSIWID architecture** (`methodology/architecture/`):
   `LEGIBLE.md`, `CONCEPTS.md`, `SYNCHRONIZATIONS.md`, `SYNC_PATTERNS.md`,
   `WEB_CONCEPT.md`, `ENGINE.md`, `MENTAL_MODEL.md`, `ARTEFACT_MAP.md`,
-  `FLOW_TOKENS.md`, `ORM_NOTES.md`.
+  `FLOW_TOKENS.md`, `DATA_MODEL_NOTES.md`.
 - **ICM implementation** (`methodology/implementation/`): `STAGES.md`
   (00 → 05 with 04a–04e sub-stages), `RULES.md` (the five hard rules),
-  `QUALITY_GATE.md` (local pre-commit), `DELIVERY.md` (trunk-based +
-  CI gate).
+  `STORAGE_MAPPING.md`, `QUALITY_GATE.md` (local pre-commit),
+  `DELIVERY.md` (trunk-based + CI gate).
 - **Optional overlays** (`methodology/overlays/`): `TRACKING.md` and
   `DECISIONS.md`.
 - **Worked example**: `features/UC-00-login/` taken end-to-end through

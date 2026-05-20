@@ -9,10 +9,10 @@ red/green child stages.
 **Outside-in TDD double-loop.** The outer loop is one failing flow
 test per use-case scenario (`04c`). The inner loop is per-concept
 (`04d-red` -> `04d-green`) and per-sync (`04e-red` -> `04e-green`).
-`04a` and `04b` prepare the ground (state schema and per-concept SPEC
-slice). Order matters: state schema before tests, tests before code,
-concept code before sync code, sync code is what turns the outer flow
-test green.
+`04a` and `04b` prepare the ground (storage mapping and per-concept
+SPEC slice). Order matters: storage mapping before tests when a
+persistent store exists, tests before code, concept code before sync
+code, sync code is what turns the outer flow test green.
 
 **Feeds:**
 
@@ -23,6 +23,7 @@ test green.
 
 | Path | Layer | Why |
 |---|---|---|
+| `../03b_data-model/output/` | 4 | Approved conceptual data models |
 | `../02_concepts/output/` | 4 | Concept specs |
 | `../03_syncs/output/` | 4 | Sync specs |
 | `../../../../methodology/implementation/STAGES.md` | 3 | Stage 04 routing contract |
@@ -34,7 +35,7 @@ test green.
 
 Run the sub-stages in order, gating after each:
 
-1. [`04a_orm/`](04a_orm/CONTEXT.md) — not applicable (in-memory profile)
+1. [`04a_storage-mapping/`](04a_storage-mapping/CONTEXT.md) — not applicable (in-memory profile)
 2. [`04b_spec/`](04b_spec/CONTEXT.md) — per-concept SPEC slice
 3. [`04c_flow-tests/`](04c_flow-tests/CONTEXT.md) — outer red (flow tests)
 4. [`04d_concept-tdd/`](04d_concept-tdd/CONTEXT.md) — router for `04d_red-tests/` then `04d_green-impl/`
@@ -68,7 +69,7 @@ Default — fires only after `04e_green-impl/` is green.
 
 ## Next stage
 
--> [`04a_orm/CONTEXT.md`](04a_orm/CONTEXT.md) — ORM (state schema)
+-> [`04a_storage-mapping/CONTEXT.md`](04a_storage-mapping/CONTEXT.md) — Storage mapping
 
 For in-memory profiles, skip 04a and go straight to [`04b_spec/CONTEXT.md`](04b_spec/CONTEXT.md). Mark 04a with a `_NOT_APPLICABLE.md` note in its `output/`.
 

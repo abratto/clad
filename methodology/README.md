@@ -24,15 +24,16 @@ CLAD targets. They are paraphrases of, and citations to, Meng & Jackson
 6. [`architecture/FLOW_TOKENS.md`](architecture/FLOW_TOKENS.md) — provenance and back-tracing
 7. [`architecture/ENGINE.md`](architecture/ENGINE.md) — the runtime engine that the Java reference profile implements
 8. [`architecture/WEB_CONCEPT.md`](architecture/WEB_CONCEPT.md) — the bootstrap `Web` concept (R4)
-9. [`architecture/ORM_NOTES.md`](architecture/ORM_NOTES.md) — drafting per-concept state schemas (Stage 04a)
+9. [`architecture/DATA_MODEL_NOTES.md`](architecture/DATA_MODEL_NOTES.md) — drafting per-concept conceptual data models (Stage 03b)
 10. [`architecture/ARTEFACT_MAP.md`](architecture/ARTEFACT_MAP.md) — the dependency graph between every per-feature artefact (producer → consumer, with the data each consumer needs and why)
 
 ## 3. Implementation — hard rules and the workspace scaffold
 
 1. [`implementation/RULES.md`](implementation/RULES.md) — the non-negotiable rules
 2. [`implementation/STAGES.md`](implementation/STAGES.md) — how CLAD stages map onto the ICM scaffold
-3. [`implementation/QUALITY_GATE.md`](implementation/QUALITY_GATE.md) — local pre-commit checks per profile
-4. [`implementation/DELIVERY.md`](implementation/DELIVERY.md) — trunk-based delivery posture, CI gate, branch protection
+3. [`implementation/STORAGE_MAPPING.md`](implementation/STORAGE_MAPPING.md) — mapping conceptual data models onto a concrete profile (Stage 04a)
+4. [`implementation/QUALITY_GATE.md`](implementation/QUALITY_GATE.md) — local pre-commit checks per profile
+5. [`implementation/DELIVERY.md`](implementation/DELIVERY.md) — trunk-based delivery posture, CI gate, branch protection
 
 ## 4. Reference
 

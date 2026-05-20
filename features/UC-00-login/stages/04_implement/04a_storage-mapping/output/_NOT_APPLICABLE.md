@@ -7,5 +7,6 @@ is satisfied by R1 (no cross-concept imports), since no other concept
 can read the field.
 
 When the RDF backend lands in `reference-impl/java-micronaut-jena/`,
-this sub-stage will produce one `<Name>.orm.md` per concept describing
-the named graph URI and triple shape that concept owns.
+this sub-stage will produce one `<Name>.storage.md` per concept
+describing how the approved data model maps onto the named graph URI
+and triple shape that concept owns.
