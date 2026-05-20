@@ -27,7 +27,9 @@ structures that were not already approved in Stage 03b.
 
 Use [`../../templates/storage.md`](../../templates/storage.md) as the
 default output shape unless the selected profile needs a stricter local
-format.
+format. See [`../../templates/storage-rdf-example.md`](../../templates/storage-rdf-example.md)
+for one concrete RDF / named-graph example based on the Java/Jena
+reference profile.
 
 ## Profile guidance
 

@@ -1,5 +1,7 @@
 <!-- Template for Stage 04a (04a_storage-mapping). Purpose: capture a profile-specific realization of an approved conceptual data model. -->
 
+> See `templates/storage-rdf-example.md` for one concrete RDF / named-graph example.
+
 # <Concept> — storage mapping
 
 ## Profile
