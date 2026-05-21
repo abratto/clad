@@ -5,10 +5,17 @@ import com.example.app.concepts.user.UserConcept;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.runtime.Micronaut;
 import io.micronaut.runtime.event.annotation.EventListener;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Info;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /** Micronaut bootstrap. */
+@OpenAPIDefinition(
+        info = @Info(
+                title = "CLAD Java Reference API",
+                version = "0.1.0",
+                description = "Transport-facing REST surface for the CLAD Java/Jena/Micronaut reference profile. This OpenAPI document is derived from the Web boundary and remains subordinate to CLAD use case, concept, sync, and SPEC artefacts."))
 public class Application {
     public static void main(String[] args) {
         Micronaut.run(Application.class, args);

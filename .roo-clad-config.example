@@ -5,10 +5,10 @@
 ## Test command
 # The command Roo will run after each implementation edit in clad-green mode.
 # Examples:
-#   ./mvnw test -pl reference-impl/java-micronaut-jena
+#   mvn -f reference-impl/java-micronaut-jena/pom.xml test
 #   ./gradlew test
 #   npm test
-TEST_COMMAND=./mvnw test
+TEST_COMMAND=mvn -f reference-impl/java-micronaut-jena/pom.xml test
 
 ## Profile storage layer
 # The storage technology used by this project's reference-impl profile.

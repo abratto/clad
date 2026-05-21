@@ -13,7 +13,8 @@ per-UC feature (Stages 01–05); do not copy `features/UC-00-login/`
 
 ```sh
 cp -R templates/feature-skeleton features/UC-XX-<slug>
-# edit features/UC-XX-<slug>/README.md, _config/voice.md,
+# replace the starter features/UC-XX-<slug>/README.md with your feature-specific text,
+# then edit _config/voice.md,
 # and _config/package-and-layout.md
 # open features/UC-XX-<slug>/stages/01_usecase/CONTEXT.md and start there
 ```
@@ -40,4 +41,5 @@ Run Stage 00 (`features/_system/stages/00_actor-goal/`) to completion
   in `features/_system/`. Do not create it inside a UC folder.
 - No example artefacts. Do not copy `features/UC-00-login/output/*` into a
   new feature; derive your own from the actor/goal stage.
-- No `README.md` for the new feature. Write one yourself.
+- No feature-specific `README.md` content. Replace the starter `README.md`
+  with one that explains your new feature.

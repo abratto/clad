@@ -18,8 +18,8 @@ The tests have already been approved by the human. Do not modify them.
   APP_PACKAGE_ROOT and APP_SOURCE_ROOT.
   If this file is missing or not filled, stop and ask the human to
   set it before continuing.
-5. Read `04a/output/` for the profile's storage layer shape.
-6. Read `04b/output/` for the SPEC — list every defined outcome.
+5. Read `04_implement/04a_storage-mapping/output/` for the profile's storage layer shape.
+6. Read `04_implement/04b_spec/output/` for the SPEC — list every defined outcome.
 7. Write the implementation to match steps 2–6 exactly.
   Do not copy package/source paths from `reference-impl/` unless they
   match APP_PACKAGE_ROOT and APP_SOURCE_ROOT.

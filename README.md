@@ -36,9 +36,8 @@ and edit before the next stage runs. The full stage table lives in
 
 **Seed.** This repo bootstraps the methodology, templates, agent guides, a
 worked example ([`features/UC-00-login/`](features/UC-00-login/README.md))
-taken end-to-end through Stage 04 (the LoginFlowTest is currently
-`@Disabled` pending Stage 05 closure), and an optional Java reference
-profile under [`reference-impl/java-micronaut-jena/`](reference-impl/java-micronaut-jena/).
+taken end-to-end as the canonical example, and an optional runnable Java
+reference profile under [`reference-impl/java-micronaut-jena/`](reference-impl/java-micronaut-jena/).
 The broader reference implementation lives at
 [abratto/tastetag](https://github.com/abratto/tastetag) and will be ported
 into `reference-impl/` over subsequent PRs.
@@ -249,6 +248,26 @@ proposes a draft actor list and goal list, asks up to five clarifying
 questions, and **waits for your answers** before writing the approved
 artefacts.
 
+### After Stage 00 passes
+
+Once `features/_system/stages/00_actor-goal/output/goals.md` is approved,
+create one UC folder per in-scope goal by copying the feature skeleton,
+then start Stage 01 in the first UC folder:
+
+```bash
+cp -R templates/feature-skeleton features/UC-01-<slug>
+# repeat for each remaining in-scope goal with the next UC number
+# then open:
+#   features/UC-01-<slug>/stages/01_usecase/CONTEXT.md
+```
+
+If you plan to adopt the Java reference profile, read
+[`reference-impl/java-micronaut-jena/README.md`](reference-impl/java-micronaut-jena/README.md)
+after Stage 00 passes and before Stage 04 implementation work. That file
+shows how to copy the starter profile into your real app root, how to run
+it locally, and how the Java package/source-root conventions map back into
+`_config/package-and-layout.md`.
+
 If you want to sequence multiple goals before implementation, adopt the
 optional planning overlay:
 
@@ -325,7 +344,7 @@ cp .cline-clad-config.example .cline-clad-config
 Then open `.cline-clad-config` and fill in two values for your project:
 
 ```
-TEST_COMMAND=./mvnw test -pl reference-impl/java-micronaut-jena
+TEST_COMMAND=mvn -f reference-impl/java-micronaut-jena/pom.xml test
 STORAGE_LAYER=Jena TDB2 named graph (Java/Micronaut profile)
 ```
 

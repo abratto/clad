@@ -48,6 +48,12 @@ for runtime/framework classes, `concepts.<name>` for concept agents,
 and `syncs` for declarative syncs. Do not scatter those class kinds
 into arbitrary sibling packages.
 
+This profile also treats generated OpenAPI as a **transport artefact**.
+Swagger/OpenAPI annotations belong on the HTTP boundary and boundary DTOs,
+not on concepts or syncs. The generated spec documents the authored
+`Web/respond` surface; it does not replace Stage 01-04 CLAD artefacts as
+the source of domain truth.
+
 ## Mapping methodology → this profile
 
 | Methodology concept | Java realisation |
@@ -137,17 +143,39 @@ mvn test
 all three UC-00 scenarios (success, wrong password, unknown user)
 end-to-end through the dispatch loop.
 
+The same build also generates an OpenAPI spec at
+`META-INF/swagger/clad-java-reference-api-0.1.0.yml` and a Swagger UI view
+under `META-INF/swagger/views/swagger-ui`.
+
 ## Running locally
 
 ```sh
-mvn -DskipTests package
-java -jar target/clad-java-micronaut-jena-0.1.0-SNAPSHOT.jar
+mvn mn:run
 # in another terminal:
 curl -X POST http://localhost:8080/login \
      -H 'Content-Type: application/json' \
      -d '{"username":"ada","password":"correct-horse-battery-staple"}'
 # => {"sessionToken":"<uuid>"}
 ```
+
+If you are staying at the repository root instead of `cd`-ing into this
+module, run the same goal against this profile's POM explicitly:
+
+```sh
+mvn -f reference-impl/java-micronaut-jena/pom.xml mn:run
+```
+
+If you want a packaged handoff artifact instead of the dev run loop:
+
+```sh
+mvn -DskipTests package
+java -jar target/clad-java-micronaut-jena-0.1.0-SNAPSHOT.jar
+```
+
+With the app running, the generated transport docs are available at:
+
+- `/swagger/clad-java-reference-api-0.1.0.yml`
+- `/swagger-ui` (redirects to `/swagger-ui/index.html`)
 
 `Application.DemoSeed` registers user `ada` with the known password
 above at startup; remove it in any non-demo profile.
@@ -180,9 +208,7 @@ How to enable it locally:
 
 ```sh
 cd reference-impl/java-micronaut-jena
-mvn -DskipTests package
-java -Dclad.debug.endpoints.enabled=true \
-       -jar target/clad-java-micronaut-jena-0.1.0-SNAPSHOT.jar
+mvn mn:run -Dclad.debug.endpoints.enabled=true
 ```
 
 Use it when you need to answer questions like:

@@ -15,14 +15,16 @@ Before writing anything, read in this exact order:
 Then load exactly the files listed in that stage's `Inputs` table — no more.
 
 ## Mandatory sequence
-1. Identify the current stage from the feature folder
-   (`features/UC-XX-<slug>/stages/`). The current stage is the first
-   directory with an empty or absent `output/`.
+1. Identify the current stage from either the system-level Stage 00
+  folder (`features/_system/stages/00_actor-goal/`) or a per-UC
+  feature folder (`features/UC-XX-<slug>/stages/`). For per-UC work,
+  the current stage is the first directory with an empty or absent
+  `output/`.
 2. Read all prior stages' `output/` artefacts in chronological order to
    build full context.
-3. Read `features/UC-XX-<slug>/RESUME.md` for fine-grained state
-   (corrections, rejections, deferred concepts) not visible from folder
-   structure alone.
+3. Read `features/UC-XX-<slug>/RESUME.md` for fine-grained state during
+  per-UC work. System-level Stage 00 under `features/_system/` does not
+  use a per-feature `RESUME.md` yet.
 4. State out loud: current stage, last completed stage, what you are
    about to produce.
 5. Produce the stage outputs. Stop. Present a summary to the human.
@@ -32,7 +34,8 @@ Then load exactly the files listed in that stage's `Inputs` table — no more.
 - Keep intelligent context condensing enabled; use an early threshold
   (about 80%) for long sessions.
 - Treat `features/UC-XX-<slug>/RESUME.md` as live working memory during
-  active stages.
+  active per-UC stages. For system-level Stage 00, rely on the approved
+  brief and current stage outputs until UC folders exist.
 - At the end of each turn, update `RESUME.md` with current blocker,
   failing command, files touched, and next 1-3 concrete steps.
 - Minimize long restatements of stable docs; reference headings when

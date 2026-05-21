@@ -57,6 +57,17 @@ actions and one piece of state.
 - **No retries, no caching, no rate-limiting policy.** Those are
   cross-cutting concerns that, if needed, become their own concepts
   (`RateLimit`, `Cache`, ...) coordinated by syncs.
+- **No transport docs as domain truth.** Generated OpenAPI / Swagger is
+  a transport-facing description of the already-authored boundary, not a
+  substitute for the use case, concept, sync, chain, or SPEC artefacts.
+
+Transport-facing documentation such as OpenAPI is still useful and may
+be generated directly from the bootstrap boundary. Keep it narrow:
+
+- annotate the bootstrap controller / route and boundary DTOs
+- document the inbound request and outbound `respond(status, body)` shape
+- do not move domain rules, scenario branching, or concept semantics into
+  the transport documentation layer
 
 ## Implementation check for Stage 04
 

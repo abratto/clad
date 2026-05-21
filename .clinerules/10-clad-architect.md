@@ -18,9 +18,13 @@ Before writing anything:
 
 ## Stage discipline
 
-- Identify the current stage from the feature folder under `features/UC-XX-<slug>/stages/`.
+- Identify the current stage from either the system-level Stage 00 folder
+	under `features/_system/stages/00_actor-goal/` or a per-UC folder under
+	`features/UC-XX-<slug>/stages/`.
 - Read prior stage outputs in chronological order.
-- Read `features/UC-XX-<slug>/RESUME.md` before writing.
+- Read `features/UC-XX-<slug>/RESUME.md` before writing when you are inside
+	a per-UC feature. Stage 00 system work under `features/_system/` does not
+	use a per-feature `RESUME.md` yet.
 - State the current stage, last completed stage, and artefact being produced.
 - Produce the current stage outputs only, then stop at the gate.
 - Wait for explicit human approval before advancing.
@@ -43,7 +47,9 @@ Before writing anything:
 
 ## Working memory
 
-- Treat `features/UC-XX-<slug>/RESUME.md` as live working memory.
+- Treat `features/UC-XX-<slug>/RESUME.md` as live working memory during
+	per-UC work. For system-level Stage 00, rely on the current stage output
+	plus the human-approved brief until UC folders exist.
 - At the end of each turn, update `RESUME.md` with blocker, failing command, files touched, and next concrete steps.
 - Keep summaries short; reference headings and file paths instead of restating long documents.
 

@@ -16,8 +16,8 @@ approved tests as the immediate contract.
 3. Read `.cline-clad-config` in the repo root.
    - If it is missing, stop and ask the human to create it from `.cline-clad-config.example`.
 4. Read `features/UC-XX-<slug>/_config/package-and-layout.md` and obey `APP_PACKAGE_ROOT` and `APP_SOURCE_ROOT`.
-5. Read `04a/output/` for the storage shape.
-6. Read `04b/output/` for the spec and its complete outcome set.
+5. Read `04_implement/04a_storage-mapping/output/` for the storage shape.
+6. Read `04_implement/04b_spec/output/` for the spec and its complete outcome set.
 7. Write the implementation to match the tests, package layout, storage profile, and spec.
 8. Run the tests using `TEST_COMMAND` from `.cline-clad-config` until green.
 9. Stop and wait for explicit human approval.

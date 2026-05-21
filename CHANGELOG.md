@@ -50,6 +50,10 @@ file `methodology/` is the source of truth for what each version contains.
 - **Java `api` / `engine` placement enforcement**: Added ArchUnit
   checks so Micronaut boundary DTOs live under `api` and the canonical
   runtime abstractions stay under `engine`.
+- **Java OpenAPI starter support**: Added Micronaut OpenAPI generation,
+  Swagger UI exposure, boundary-level OpenAPI annotations for the login
+  example, and guidance that generated transport docs remain subordinate
+  to CLAD's upstream artefacts.
 
 ## [0.2.0] — 2026-05-12
 

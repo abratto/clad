@@ -6,10 +6,14 @@ more than a "hello world": authenticate a user with a username and a
 password, and on success establish a session token they can present
 on subsequent requests.
 
-It exists to be **read**, not run. The Java reference profile compiles
-and the ArchUnit suite passes, but `LoginFlowTest` is `@Disabled`
-until the inner-loop tests in `04d` and `04e` ship — see *Status* at
-the bottom.
+Read this folder as the canonical example first. The Java reference
+profile is also runnable now, and `mvn test` exercises the active outer-loop
+login flow tests end-to-end.
+
+> **Do not copy this folder as a starter template.** UC-00 still contains a
+> seed-time `stages/00_actor-goal/` folder for historical/example reasons.
+> New work must run Stage 00 only in `features/_system/stages/00_actor-goal/`
+> and then copy `templates/feature-skeleton/` for each per-UC feature.
 
 ## How to read this folder
 
@@ -72,6 +76,6 @@ to navigate the feature:
 
 ## Status
 
-Spec-complete; implementation is scaffolding. The Java profile compiles
-and `mvn test` runs the ArchUnit suite, but the `LoginFlowTest` is
-`@Disabled` until the inner-loop tests in `04d` and `04e` ship.
+Spec-complete with a runnable Java reference profile. The Java profile
+compiles and `mvn test` runs the ArchUnit suite, the OpenAPI docs tests,
+and the active `LoginFlowTest` scenarios end-to-end.
