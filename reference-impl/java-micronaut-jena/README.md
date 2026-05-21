@@ -41,6 +41,13 @@ cp -R reference-impl/java-micronaut-jena/. app/backend/
 > `features/UC-XX-<slug>/_config/package-and-layout.md` and generate code
 > to those paths.
 
+Subpackage note: after substituting your real `APP_PACKAGE_ROOT`, keep
+the same artifact-to-package mapping used by this profile: `api` for
+boundary DTOs, `infrastructure` for HTTP/bootstrap adapters, `engine`
+for runtime/framework classes, `concepts.<name>` for concept agents,
+and `syncs` for declarative syncs. Do not scatter those class kinds
+into arbitrary sibling packages.
+
 ## Mapping methodology → this profile
 
 | Methodology concept | Java realisation |

@@ -40,6 +40,13 @@ file `methodology/` is the source of truth for what each version contains.
   created from the CLAD template should treat `reference-impl/` as a
   clean upstream exemplar and copy chosen starter profiles into their
   real app root instead of mixing product code into the reference tree.
+- **Java package-placement contract**: Tightened the Java profile docs
+  and Stage `04d` / `04e` contracts so agents place DTOs, transport,
+  engine classes, concepts, syncs, and flow tests in the canonical
+  Java subpackages instead of ad hoc siblings.
+- **Java package-placement enforcement**: Added ArchUnit checks so
+  concrete `*Concept` classes must live under `concepts.<name>` and
+  executable `SyncAgent` implementations must live under `syncs`.
 
 ## [0.2.0] — 2026-05-12
 

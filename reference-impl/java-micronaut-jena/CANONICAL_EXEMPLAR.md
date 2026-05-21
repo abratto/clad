@@ -45,6 +45,8 @@ flow implemented by:
 - one transport-only `WebController`
 - one `*Concept` class per concept package, extending `ConceptAgent`
 - one declarative `SyncAgent` subclass per approved sync
+- the package split itself: `api`, `infrastructure`, `engine`,
+  `concepts.<name>`, `syncs`, and `flows` tests
 - no coordinator / orchestrator class that sequences domain calls
 - flow completion through `Web/respond`, not inline controller branching
 - flow tests and runtime debug evidence aligned to the expected authored

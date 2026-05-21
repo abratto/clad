@@ -15,6 +15,21 @@ com.example.app
 └── syncs                   Declarative when/then rules (one final class per sync, extends SyncAgent)
 ```
 
+Treat this package split as the **canonical Java profile contract** for
+artifact placement, not just an illustrative tree.
+
+- HTTP request/response DTOs belong in `api`.
+- Transport adapters and controllers belong in `infrastructure`.
+- Runtime/dispatch/logging framework classes belong in `engine`.
+- Each concept implementation belongs in exactly one
+  `concepts.<name>` package.
+- Declarative sync classes belong in `syncs`.
+- Flow tests belong in the `flows` test package under the configured
+  test source root.
+
+If a class fits none of those buckets, stop and justify a new package
+explicitly instead of placing it ad hoc.
+
 ## Hard rules (machine-checked by `LegibleArchitectureRulesTest`)
 
 - **R1 — no cross-concept imports.** A class in

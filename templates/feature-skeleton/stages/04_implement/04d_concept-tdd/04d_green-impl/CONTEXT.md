@@ -49,10 +49,15 @@ upstream prose, but it may not redesign approved tests.
    profile is Java/Jena/Micronaut, use `CANONICAL_EXEMPLAR.md` only as a
    realization pattern for class/package/code shape. It must not
    override the feature's own approved artefacts.
-5. Use the storage mapping from `04a_storage-mapping/output/` when applicable. Do not
+5. If the selected profile is Java/Jena/Micronaut, place concept code in
+   the canonical concept package bucket: one `*Concept` class under
+   `<APP_PACKAGE_ROOT>.concepts.<name>`, with its tests mirrored under
+   the corresponding test package. Do not place concept agents in
+   `engine`, `syncs`, `infrastructure`, or ad hoc sibling packages.
+6. Use the storage mapping from `04a_storage-mapping/output/` when applicable. Do not
    replace the selected profile's storage layer with an in-memory
    substitute.
-6. Run the canonical command from `../../../../_config/build-and-test.md`
+7. Run the canonical command from `../../../../_config/build-and-test.md`
    until concept tests are green, then stop for human approval.
 
 ## Outputs
@@ -75,6 +80,9 @@ upstream prose, but it may not redesign approved tests.
 - Implementation package/source path matches
   `../../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,
   `APP_SOURCE_ROOT`, `APP_TEST_SOURCE_ROOT`).
+- For the Java/Jena/Micronaut profile, concept classes are under
+   `<APP_PACKAGE_ROOT>.concepts.<name>` and not in `engine`,
+   `infrastructure`, `api`, `syncs`, or ad hoc sibling packages.
 
 ## Gate
 

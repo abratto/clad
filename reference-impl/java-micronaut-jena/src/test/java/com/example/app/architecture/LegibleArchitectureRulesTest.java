@@ -142,6 +142,17 @@ class LegibleArchitectureRulesTest {
                 .check(CLASSES);
     }
 
+    /** Java profile placement — concrete concept implementations must live under concepts.<name>. */
+    @Test
+    void java_profile_concept_classes_live_only_in_concept_packages() {
+        classes()
+                .that().haveSimpleNameEndingWith("Concept")
+                .and().doNotHaveFullyQualifiedName("com.example.app.engine.ConceptAgent")
+                .should().resideInAPackage(CONCEPTS_ROOT + ".(*)..")
+                .as("Java concept implementations must live under com.example.app.concepts.<name>")
+                .check(CLASSES);
+    }
+
     /**
      * R2 (heuristic) — each concept package contains exactly one
      * {@code *Concept} class, which is taken as that concept's owning
@@ -198,6 +209,18 @@ class LegibleArchitectureRulesTest {
             .and().haveNameNotMatching(".*\\$.*")
                 .should().beAssignableTo(com.example.app.engine.SyncAgent.class)
                 .as("sync package classes must be declarative SyncAgent implementations, not ad hoc coordinators")
+                .allowEmptyShould(true)
+                .check(CLASSES);
+    }
+
+    /** Java profile placement — executable sync implementations must live under the syncs package. */
+    @Test
+    void java_profile_sync_classes_live_only_in_syncs_package() {
+        classes()
+                .that().areAssignableTo(com.example.app.engine.SyncAgent.class)
+                .and().doNotHaveFullyQualifiedName("com.example.app.engine.SyncAgent")
+                .should().resideInAPackage("com.example.app.syncs..")
+                .as("Java SyncAgent implementations must live under com.example.app.syncs")
                 .allowEmptyShould(true)
                 .check(CLASSES);
     }

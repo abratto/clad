@@ -37,11 +37,20 @@ reference implementation when they are not correct for this project.
 
 If using Java, typical paths are:
 
+- API DTOs: `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/api/`
+- Engine/runtime classes: `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/engine/`
 - Concepts: `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/concepts/<name>/`
 - Syncs: `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/syncs/`
 - HTTP entry: `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/infrastructure/`
 - Concept tests: `<APP_TEST_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/concepts/<name>/`
 - Sync tests: `<APP_TEST_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/syncs/`
 - Flow tests: `<APP_TEST_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/flows/`
+
+Use those buckets as the default Java placement contract. If a class is
+concept logic, it belongs under `concepts/<name>/`; if it is sync
+coordination, it belongs under `syncs/`; if it is transport-only HTTP
+code, it belongs under `infrastructure/`; if it is DTO-only boundary
+shape, it belongs under `api/`; if it is shared runtime/dispatch
+machinery, it belongs under `engine/`.
 
 Replace dots with path separators when mapping `APP_PACKAGE_ROOT`.

@@ -47,10 +47,15 @@ upstream prose, but it may not redesign approved tests.
    Stage 02 concept spec, the `04b` SPEC slice, the `04a` storage
    mapping when applicable, and the approved red tests. Use the Java
    canonical exemplar only as a realization pattern for code shape.
-5. Use the storage mapping from `04a_storage-mapping/output/` when applicable. Do not
+5. Place concept code in the canonical Java concept package bucket: one
+   `*Concept` class under `<APP_PACKAGE_ROOT>.concepts.<name>`, with its
+   tests mirrored under the corresponding test package. Do not place
+   concept agents in `engine`, `syncs`, `infrastructure`, or ad hoc
+   sibling packages.
+6. Use the storage mapping from `04a_storage-mapping/output/` when applicable. Do not
    replace the selected profile's storage layer with an in-memory
    substitute.
-6. Run the canonical command from `../../../../_config/build-and-test.md`
+7. Run the canonical command from `../../../../_config/build-and-test.md`
    until concept tests are green, then stop for human approval.
 
 ## Outputs
@@ -73,6 +78,9 @@ upstream prose, but it may not redesign approved tests.
 - Implementation package/source path matches
   `../../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,
   `APP_SOURCE_ROOT`, `APP_TEST_SOURCE_ROOT`).
+- Concept classes are under `<APP_PACKAGE_ROOT>.concepts.<name>` and not
+   in `engine`, `infrastructure`, `api`, `syncs`, or ad hoc sibling
+   packages.
 
 ## Gate
 

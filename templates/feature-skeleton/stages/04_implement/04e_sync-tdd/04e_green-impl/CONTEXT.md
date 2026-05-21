@@ -50,11 +50,16 @@ not redesign approved tests.
    `CANONICAL_EXEMPLAR.md` only as a realization pattern for class,
    package, SPARQL, and test shape. It must not override the feature's
    own approved artefacts.
-5. Keep sync logic declarative. Do not invent imperative coordinator
+5. If the selected profile is Java/Jena/Micronaut, place sync code in
+   the canonical sync package bucket: each approved sync becomes one
+   class under `<APP_PACKAGE_ROOT>.syncs`, with tests mirrored under the
+   corresponding sync test package. Do not place syncs in `engine`,
+   `infrastructure`, `concepts`, or ad hoc sibling packages.
+6. Keep sync logic declarative. Do not invent imperative coordinator
    classes, extra executable syncs, or branching business logic. A
    class that sequences ordered domain calls or chooses the final
    scenario branch inline is a defect, not an acceptable shortcut.
-6. Run the canonical command from `../../../../_config/build-and-test.md`
+7. Run the canonical command from `../../../../_config/build-and-test.md`
    until sync tests are green and the `04c` flow tests are green, then
    stop for human approval.
 
@@ -84,6 +89,9 @@ not redesign approved tests.
 - Sync implementation package/source path matches
   `../../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,
   `APP_SOURCE_ROOT`, `APP_TEST_SOURCE_ROOT`).
+- For the Java/Jena/Micronaut profile, sync classes are under
+   `<APP_PACKAGE_ROOT>.syncs` and not in `engine`, `infrastructure`,
+   `api`, `concepts`, or ad hoc sibling packages.
 
 ## Gate
 
