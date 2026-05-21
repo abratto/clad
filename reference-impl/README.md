@@ -15,3 +15,11 @@ skeleton:
 Other profiles (TypeScript/Deno, Kotlin/Ktor, Python/FastAPI, …) can
 be added as sibling folders without changing anything in
 `methodology/`. The methodology is profile-independent.
+
+For repositories created from the CLAD template, treat this directory as
+an **upstream reference shelf**, not as the main product code root. If
+you choose one of these profiles, copy the selected profile's starter
+code and conventions into your own runtime/app directory and continue
+product-specific implementation there. Do not mix downstream business
+code back into `reference-impl/`, or the starter profile stops being a
+clean exemplar.

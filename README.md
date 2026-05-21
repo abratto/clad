@@ -43,6 +43,16 @@ The broader reference implementation lives at
 [abratto/tastetag](https://github.com/abratto/tastetag) and will be ported
 into `reference-impl/` over subsequent PRs.
 
+Important for template users: `reference-impl/` is a seeded **reference
+source**, not the main application root for your downstream product. If
+you adopt a profile from this repo, copy the chosen profile's starter
+code and patterns into your own project root or runtime folder
+(`app/`, `backend/`, `services/api/`, etc.) and set your real package
+and source roots in
+[`templates/feature-skeleton/_config/package-and-layout.md`](templates/feature-skeleton/_config/package-and-layout.md).
+Do not keep extending `reference-impl/` in place with product-specific
+code.
+
 ## Where this comes from
 
 CLAD did not start as a methodology paper. It started as an experiment —
@@ -193,6 +203,11 @@ human's judgment rather than replacing it.
 > template"** at the top of the GitHub repo (or
 > [follow this link](https://github.com/abratto/clad/generate)) to get
 > a clean copy with no fork relationship — then read on.
+
+When you later implement against a concrete profile, treat
+`reference-impl/` as upstream example material. Your real application
+code should live under your own chosen project root, not inside the
+starter's `reference-impl/` tree.
 
 ```bash
 git clone https://github.com/abratto/clad.git

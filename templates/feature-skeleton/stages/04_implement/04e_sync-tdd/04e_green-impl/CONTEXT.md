@@ -32,6 +32,7 @@ not redesign approved tests.
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
 | `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (only when this profile is selected) | 3 | Profile conventions |
+| `../../../../../../reference-impl/java-micronaut-jena/CANONICAL_EXEMPLAR.md` (only when this profile is selected) | 3 | Profile realization pattern, not source of truth |
 
 ## Process
 
@@ -42,11 +43,18 @@ not redesign approved tests.
 3. Implement only what is needed to make the approved sync tests pass.
    Do not redesign the tests during this stage. If they appear wrong,
    stop and send the work back to `04e-red` or Stage 03.
-4. Keep sync logic declarative. Do not invent imperative coordinator
+4. Derive behavior from the approved upstream artefacts first: the
+   Stage 03 sync specs, the `04b` SPEC slices, the `04c` expected
+   authored action chain, and the approved red sync tests. If the
+   selected profile is Java/Jena/Micronaut, use
+   `CANONICAL_EXEMPLAR.md` only as a realization pattern for class,
+   package, SPARQL, and test shape. It must not override the feature's
+   own approved artefacts.
+5. Keep sync logic declarative. Do not invent imperative coordinator
    classes, extra executable syncs, or branching business logic. A
    class that sequences ordered domain calls or chooses the final
    scenario branch inline is a defect, not an acceptable shortcut.
-5. Run the canonical command from `../../../../_config/build-and-test.md`
+6. Run the canonical command from `../../../../_config/build-and-test.md`
    until sync tests are green and the `04c` flow tests are green, then
    stop for human approval.
 
@@ -60,6 +68,8 @@ not redesign approved tests.
 - All flow tests from `04c` are green.
 - Executed command evidence shows: test compilation succeeds, sync tests
   are green, and flow tests are green.
+- Behavior is traceable first to the approved upstream artefacts; any
+   profile exemplar was used only as a realization pattern.
 - Every generated sync test/implementation pair corresponds to exactly
   one approved Stage 03 sync; no extra executable syncs exist without an
   upstream sync contract.

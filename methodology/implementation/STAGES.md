@@ -435,6 +435,12 @@ green.
 - `04d_green-impl/`: implement only against the approved red tests until
    they are green
 
+Implementation in `04d_green-impl/` is derived **first** from the
+feature's approved upstream artefacts (Stage 02 concept spec, `04b`
+SPEC slice, `04a` mapping when applicable, and approved red tests).
+Any selected profile example is a realization pattern only; it must not
+override or compete with those upstream artefacts.
+
 Tests that depend on another concept's state or on sync orchestration do
 not belong here; they belong in `04e`.
 
@@ -458,6 +464,12 @@ all approved concept tests green; no cross-concept imports.
    chain from `04c`, run them red, and record the handoff bundle
 - `04e_green-impl/`: implement only against the approved red sync tests
    until they are green and the flow tests from `04c` go green
+
+Implementation in `04e_green-impl/` is derived **first** from the
+feature's approved upstream artefacts (Stage 03 sync specs, `04b` SPEC
+slice, `04c` expected authored action chain, and approved red sync
+tests). Any selected profile example is a realization pattern only; it
+must not override or compete with those upstream artefacts.
 
 There must be a 1:1 correspondence between approved Stage 03 sync specs
 and Stage 04e test/implementation pairs. Do not invent extra executable

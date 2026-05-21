@@ -31,6 +31,7 @@ upstream prose, but it may not redesign approved tests.
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5, R8, R9 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
 | `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` | 3 | Java profile conventions |
+| `../../../../../../reference-impl/java-micronaut-jena/CANONICAL_EXEMPLAR.md` | 3 | Java realization pattern, not source of truth |
 
 ## Process
 
@@ -42,10 +43,14 @@ upstream prose, but it may not redesign approved tests.
    pass. Do not redesign the tests during this stage. If they appear
    wrong or incomplete, stop and send the work back to `04d-red` or the
    earliest invalid upstream stage.
-4. Use the storage mapping from `04a_storage-mapping/output/` when applicable. Do not
+4. Derive behavior from the approved upstream artefacts first: the
+   Stage 02 concept spec, the `04b` SPEC slice, the `04a` storage
+   mapping when applicable, and the approved red tests. Use the Java
+   canonical exemplar only as a realization pattern for code shape.
+5. Use the storage mapping from `04a_storage-mapping/output/` when applicable. Do not
    replace the selected profile's storage layer with an in-memory
    substitute.
-5. Run the canonical command from `../../../../_config/build-and-test.md`
+6. Run the canonical command from `../../../../_config/build-and-test.md`
    until concept tests are green, then stop for human approval.
 
 ## Outputs
@@ -57,6 +62,8 @@ upstream prose, but it may not redesign approved tests.
 - All approved concept tests are green.
 - Every required concept test and implementation file exists in the
   selected profile's source tree.
+- Behavior is traceable first to the approved upstream artefacts; the
+   Java exemplar was used only as a realization pattern.
 - Green implementation treated the approved red tests as the immediate
   contract and did not reinterpret earlier artefacts against them.
 - No cross-concept imports.

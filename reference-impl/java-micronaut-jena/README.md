@@ -15,6 +15,26 @@ This profile is **optional**. Methodology rules live in
 [`../../methodology/`](../../methodology/) and are profile-agnostic;
 this folder is one way to implement them.
 
+Downstream-template rule: if you create a new repository from CLAD and
+choose this Java profile, copy the starter engine/code shape into your
+own application root or service folder and evolve it there. Keep this
+directory as a clean reference profile; do not turn
+`reference-impl/java-micronaut-jena/` itself into your product's main
+codebase.
+
+Example copy-out pattern:
+
+```sh
+mkdir -p app/backend
+cp -R reference-impl/java-micronaut-jena/. app/backend/
+# then set real downstream paths in:
+#   features/UC-XX-<slug>/_config/package-and-layout.md
+# for example:
+#   APP_PACKAGE_ROOT=org.acme.billing
+#   APP_SOURCE_ROOT=app/backend/src/main/java
+#   APP_TEST_SOURCE_ROOT=app/backend/src/test/java
+```
+
 > Package note: `com.example.app` and `src/main/java` in this folder are
 > reference-profile examples, not required CLAD defaults. In downstream
 > projects, set package/source-root values in
@@ -79,6 +99,24 @@ protected String thenBindings() {
 
 For profile conventions and architecture guardrails, see
 [`CODE_STYLE.md`](CODE_STYLE.md).
+
+## Canonical exemplar
+
+When Stage 04 implementation work needs a concrete Java/Jena/Micronaut
+shape to copy, use [`CANONICAL_EXEMPLAR.md`](CANONICAL_EXEMPLAR.md).
+
+Important: this exemplar is a **realization pattern**, not a substitute
+for a feature's own approved upstream artefacts. Implementation must be
+derived first from Stage 02 / 03 / 04 artefacts and only then mapped
+into this profile's code shape.
+
+In downstream CLAD-derived repositories, older imperative code,
+coordinator classes, or mixed architectural styles must not be treated
+as canonical precedent just because they exist in the tree.
+
+That rule applies especially to copied template repositories: keep one
+clean reference profile and copy from it into your real app root rather
+than accumulating product code inside the profile seed itself.
 
 ## Build
 

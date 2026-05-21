@@ -27,6 +27,11 @@ reference implementation when they are not correct for this project.
   `APP_PACKAGE_ROOT`.
 4. Use the reference profile for patterns and engine behavior, not for
    package names or source-root paths unless they match this file.
+5. In a repository created from the CLAD template, do not use
+  `reference-impl/<profile>/` as the long-term product code root.
+  Copy starter code/patterns from the selected reference profile into
+  your own app/runtime directory and point this file at those real
+  package and source roots.
 
 ## Java profile mapping hints
 

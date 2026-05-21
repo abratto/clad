@@ -33,6 +33,13 @@ file `methodology/` is the source of truth for what each version contains.
   scenario must name an expected authored action chain and green status
   must be explained against that chain, not only against the final HTTP
   response.
+- **Implementation derivation order**: Tightened `04d` / `04e` so code
+  is derived first from approved upstream artefacts and uses the
+  Java/Jena/Micronaut example only as a profile realization pattern.
+- **Reference-profile copy-out rule**: Clarified that repositories
+  created from the CLAD template should treat `reference-impl/` as a
+  clean upstream exemplar and copy chosen starter profiles into their
+  real app root instead of mixing product code into the reference tree.
 
 ## [0.2.0] — 2026-05-12
 
