@@ -31,7 +31,7 @@ case. If they read like a unit test, you are testing the wrong layer.
 
 For each named scenario in the use case, write a flow-test markdown
 spec (HTTP request → expected sequence of flow tokens → expected
-response) and a stub Java test under
+authored action chain → expected response) and a stub Java test under
 `reference-impl/java-micronaut-jena/src/test/java/com/example/app/flows/`
 starting `@Disabled`. The tests go green at the end of `04e`.
 
@@ -43,8 +43,12 @@ starting `@Disabled`. The tests go green at the end of `04e`.
 ## Verify
 
 - Each scenario has an entry in the markdown spec.
+- Each scenario names an explicit expected authored action chain.
 - The stub Java test is `@Disabled` and links back to the markdown.
 - **Cross-stage check (back):** the predicted token chain matches the syncs in `03_syncs/output/` (no surprise tokens).
+- **Cross-stage check (forward):** the expected authored action chain is
+	concrete enough that `04e` can prove the scenario went green through
+	authorised concept actions and syncs, not by response-only shortcuts.
 
 ## Gate
 

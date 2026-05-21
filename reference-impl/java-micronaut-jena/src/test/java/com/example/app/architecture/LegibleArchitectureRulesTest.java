@@ -25,6 +25,8 @@ class LegibleArchitectureRulesTest {
 
     private static final String SOURCE_ROOT = "src/main/java/com/example/app";
     private static final String TRANSPORT_BRANCH_WAIVER = "CLAD-ALLOW-TRANSPORT-BRANCH";
+    private static final String IMPERATIVE_SYNC_WAIVER = "CLAD-ALLOW-IMPERATIVE-SYNC";
+    private static final String COORDINATOR_WAIVER = "CLAD-ALLOW-COORDINATOR";
 
     private static final JavaClasses CLASSES = new ClassFileImporter()
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
@@ -184,6 +186,68 @@ class LegibleArchitectureRulesTest {
                 .as("syncs must have only final fields (R3)")
                 .allowEmptyShould(true)
                 .check(CLASSES);
+    }
+
+    /** R3 — executable sync classes must use the declared SyncAgent abstraction. */
+    @Test
+    void r3_sync_package_classes_are_sync_agents() {
+        classes()
+                .that().resideInAPackage("com.example.app.syncs..")
+                .and().areNotAnonymousClasses()
+                .and().areNotMemberClasses()
+            .and().haveNameNotMatching(".*\\$.*")
+                .should().beAssignableTo(com.example.app.engine.SyncAgent.class)
+                .as("sync package classes must be declarative SyncAgent implementations, not ad hoc coordinators")
+                .allowEmptyShould(true)
+                .check(CLASSES);
+    }
+
+    /** R3 (heuristic) — sync source must not contain imperative branching without explicit waiver. */
+    @Test
+    void r3_sync_sources_have_no_imperative_branching_without_waiver() throws IOException {
+        List<Path> syncSources = Files.walk(Path.of(SOURCE_ROOT, "syncs"))
+                .filter(path -> path.toString().endsWith(".java"))
+                .toList();
+
+        for (Path path : syncSources) {
+            List<String> lines = Files.readAllLines(path);
+            for (int index = 0; index < lines.size(); index++) {
+                String trimmed = lines.get(index).trim();
+                if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*")) {
+                    continue;
+                }
+                if ((trimmed.contains("if (") || trimmed.contains("switch (") || trimmed.startsWith("case "))
+                        && !trimmed.contains(IMPERATIVE_SYNC_WAIVER)) {
+                    throw new AssertionError(
+                            path + ":" + (index + 1)
+                                    + " contains imperative branching in sync code."
+                                    + " Move branching to concept outcomes or annotate a transport/runtime exception with "
+                                    + IMPERATIVE_SYNC_WAIVER + ".");
+                }
+            }
+        }
+    }
+
+    /** R3 (heuristic) — coordinator/orchestrator classes are banned unless explicitly waived. */
+    @Test
+    void r3_no_coordinator_or_orchestrator_classes_without_waiver() throws IOException {
+        List<Path> sources = Files.walk(Path.of(SOURCE_ROOT))
+                .filter(path -> path.toString().endsWith(".java"))
+                .filter(path -> {
+                    String file = path.getFileName().toString();
+                    return file.contains("Coordinator") || file.contains("Orchestrator");
+                })
+                .toList();
+
+        for (Path path : sources) {
+            String text = Files.readString(path);
+            if (!text.contains(COORDINATOR_WAIVER)) {
+                throw new AssertionError(
+                        path + " declares a Coordinator/Orchestrator class."
+                                + " CLAD treats imperative orchestration as a defect unless source carries the explicit waiver "
+                                + COORDINATOR_WAIVER + ".");
+            }
+        }
     }
 
     private static String subPackageOf(String pkg, String root) {

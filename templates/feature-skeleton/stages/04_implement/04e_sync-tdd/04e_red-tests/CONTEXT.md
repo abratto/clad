@@ -37,7 +37,8 @@ no sync implementation belongs here.
 ## Process
 
 1. Derive sync tests from approved Stage 03 sync specs, the relevant
-   SPEC slices, and the outer expectations in `04c_flow-tests/output/`.
+  SPEC slices, the outer expectations in `04c_flow-tests/output/`, and
+  the expected authored action chain recorded there.
 2. Write the sync test file(s) only under `APP_TEST_SOURCE_ROOT`.
    Do not write or modify sync implementation code in this stage.
 3. Run the canonical command from `../../../../_config/build-and-test.md`
@@ -60,6 +61,8 @@ no sync implementation belongs here.
 - Every sync test row traces back to an approved Stage 03 sync plus the
   approved outer flow expectations it helps turn green. No sync test was
   invented without those sources.
+- The handoff bundle names the expected authored action chain from `04c`
+  that the green implementation must satisfy.
 - Sync tests live under `APP_TEST_SOURCE_ROOT` and packages consistent
   with `APP_PACKAGE_ROOT`.
 - Executed red evidence shows successful test compilation and

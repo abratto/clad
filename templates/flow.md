@@ -13,6 +13,10 @@
 
 ## Expected chain
 
+This section is the **expected authored action chain**. It is not just a
+token count prediction; it names the concept actions that must exist at
+runtime for this scenario to be considered correctly implemented.
+
 ```
 Web.handle(<route>)
   └─ <Concept>.<action>(<args>)
@@ -28,3 +32,7 @@ Web.handle(<route>)
 ## Notes
 
 > Optional.
+
+> If a scenario can reach the correct final HTTP response without
+> producing this authored action chain, the implementation is wrong even
+> if the response matches.

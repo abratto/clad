@@ -43,7 +43,9 @@ not redesign approved tests.
    Do not redesign the tests during this stage. If they appear wrong,
    stop and send the work back to `04e-red` or Stage 03.
 4. Keep sync logic declarative. Do not invent imperative coordinator
-   classes, extra executable syncs, or branching business logic.
+   classes, extra executable syncs, or branching business logic. A
+   class that sequences ordered domain calls or chooses the final
+   scenario branch inline is a defect, not an acceptable shortcut.
 5. Run the canonical command from `../../../../_config/build-and-test.md`
    until sync tests are green and the `04c` flow tests are green, then
    stop for human approval.
@@ -61,6 +63,12 @@ not redesign approved tests.
 - Every generated sync test/implementation pair corresponds to exactly
   one approved Stage 03 sync; no extra executable syncs exist without an
   upstream sync contract.
+- No coordinator / orchestrator class was introduced to sequence domain
+   calls imperatively unless an explicit methodology waiver exists.
+- Green was reached through declared concept outcomes and sync triggers,
+   not by inline business branching in implementation code.
+- The resulting runtime/action shape matches the expected authored
+   action chain recorded in `04c_flow-tests/output/` for each scenario.
 - Green implementation treated the approved sync tests as the immediate
   contract and did not redesign them against earlier prose artefacts.
 - Sync implementation package/source path matches

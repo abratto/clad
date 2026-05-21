@@ -392,7 +392,8 @@ against.
 
 **Process:** for each named scenario in the use case, write the
 **outer** test as a markdown spec (HTTP request → expected sequence of
-flow tokens → expected response), plus a stub test under the chosen
+flow tokens → expected response), plus an explicit expected authored
+action chain for that scenario, and a stub test under the chosen
 profile's `src/test/.../flows/`. Tests start `@Disabled` (or red); they
 go green only at the end of `04e`.
 
@@ -416,6 +417,10 @@ errors.
 under `reference-impl/<profile>/...`.
 
 **Gate:** human reviews the flow predictions.
+
+The `04c` artifact is therefore not only an output contract. It is also
+the choreography contract that `04e` must satisfy when making the flow
+green.
 
 #### Stage 04d — `04d_concept-tdd/` (router)
 
@@ -449,14 +454,23 @@ all approved concept tests green; no cross-concept imports.
 **Process:** route sync TDD through two structural child stages:
 
 - `04e_red-tests/`: derive executable sync tests from approved sync
-   contracts and outer flow expectations, run them red, and record the
-   handoff bundle
+   contracts, outer flow expectations, and the expected authored action
+   chain from `04c`, run them red, and record the handoff bundle
 - `04e_green-impl/`: implement only against the approved red sync tests
    until they are green and the flow tests from `04c` go green
 
 There must be a 1:1 correspondence between approved Stage 03 sync specs
 and Stage 04e test/implementation pairs. Do not invent extra executable
 syncs with no upstream sync contract.
+
+Imperative orchestration is a fail condition in Stage 04e. An
+implementation does **not** satisfy the sync contract if it introduces a
+class that sequences ordered domain calls, branches on business
+conditions inline, or chooses the final response directly instead of
+authoring the branch through concept outcomes and declarative syncs.
+`*Coordinator` / `*Orchestrator` classes are therefore defects unless
+they are thin profile/runtime adapters with an explicit methodology
+waiver.
 
 **Output:** child-stage outputs and side effects. `04e_red-tests/`
 produces `sync-test-derivation.md`; `04e_green-impl/` produces green
@@ -468,6 +482,12 @@ all sync tests green; flow tests from `04c` now green.
 Gate evidence must include one executed build-and-test command result
 showing: 1) test compilation succeeded, 2) sync tests are green, and
 3) flow tests from `04c` are green.
+
+Gate evidence must also show that green was reached through authorised
+concept actions and declarative syncs rather than through imperative
+scenario orchestration hidden in implementation code, and that the
+runtime action chain matches the expected authored action chain written
+in `04c`.
 
 When the selected profile exposes a runtime debug surface, Stage 04 uses
 that surface as the default tool for explaining observed behaviour while

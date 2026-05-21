@@ -35,7 +35,7 @@ Read `methodology/implementation/TDD.md` before writing anything.
 
 For each named scenario in the use case, write the **outer** test as a
 markdown spec: HTTP request → expected sequence of flow tokens →
-expected response. Then add a stub test under
+expected authored action chain → expected response. Then add a stub test under
 `reference-impl/<profile>/src/test/.../flows/<Scenario>FlowTest.java`
 (or the profile's equivalent), starting `@Disabled` (red). The test
 goes green at the end of `04e`.
@@ -71,6 +71,8 @@ acceptable.
 ## Verify
 
 - Every scenario has one flow-test markdown spec.
+- Every scenario's markdown spec names an explicit expected authored
+  action chain, not just a final response and token count.
 - Every scenario has a corresponding stub flow test file under the
   configured `APP_TEST_SOURCE_ROOT` test tree.
 - Every stub test is `@Disabled` (or red) and carries a `TODO` linking back to the scenario name.
@@ -80,6 +82,9 @@ acceptable.
 - Token count per scenario equals the number of rows in the corresponding chain table.
 - **Cross-stage check (back):** the flow-test markdown's expected token
   chain matches the syncs in `03_syncs/output/` (no surprise tokens).
+- **Cross-stage check (forward):** the expected authored action chain is
+  concrete enough that `04e` can prove the scenario went green through
+  authorised concept actions and syncs, not by response-only shortcuts.
 - **Completion rule:** `04c` is not complete from markdown alone. The
   per-scenario stub tests and the executed compilation evidence are part
   of the stage contract.

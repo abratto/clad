@@ -24,6 +24,15 @@ file `methodology/` is the source of truth for what each version contains.
 - **Web branching heuristic**: Added a Java-profile source-level check
   that rejects imperative branching in `Web` infrastructure code unless
   a transport-only exception is marked explicitly.
+- **Sync orchestration hardening**: Tightened Stage `04e` to treat
+  imperative coordinator/orchestrator code as a defect, and added
+  Java-profile checks that sync package classes use `SyncAgent`, reject
+  imperative branching in sync source by default, and ban
+  `*Coordinator` / `*Orchestrator` classes unless explicitly waived.
+- **Action-chain test contract**: Tightened Stage `04c` / `04e` so each
+  scenario must name an expected authored action chain and green status
+  must be explained against that chain, not only against the final HTTP
+  response.
 
 ## [0.2.0] — 2026-05-12
 

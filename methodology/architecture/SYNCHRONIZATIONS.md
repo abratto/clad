@@ -43,6 +43,13 @@ public actions.
   needs memory belongs in a concept.
 - **Touch I/O directly.** I/O happens in concepts (typically `Web`,
   `Mailer`, etc.). Syncs orchestrate those concepts.
+- **Hide orchestration in an imperative coordinator class.** A class
+  that sequences ordered domain calls with `if` / `then` branching is
+  not a sync in CLAD terms, even if it sits in a `sync` package. In the
+  Java profile, executable syncs are `SyncAgent` subclasses; a
+  `*Coordinator` or `*Orchestrator` class is a design smell that should
+  fail review unless it is a thin transport/runtime adapter with an
+  explicit waiver.
 
 ## How a sync gets its data — the four patterns
 
@@ -62,6 +69,12 @@ If syncs can branch and hold state, they become a hidden controller and
 the system stops being legible — you can no longer read a concept and
 know what it does, because some sync somewhere may overrule it. Keeping
 syncs declarative is what preserves the WYSIWID property.
+
+In implementation stages, treat imperative orchestration as a defect,
+not as an alternative style. If a scenario can only be made green by a
+coordinator that orders domain calls and chooses the final branch inline,
+the sync set or concept outcomes are incomplete and the work must return
+to Stage 03 or 04e-red.
 
 ## Composition
 
