@@ -3,6 +3,10 @@ package com.example.app.architecture;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
@@ -18,6 +22,9 @@ import org.junit.jupiter.api.Test;
  * of these fail, the build fails.
  */
 class LegibleArchitectureRulesTest {
+
+    private static final String SOURCE_ROOT = "src/main/java/com/example/app";
+    private static final String TRANSPORT_BRANCH_WAIVER = "CLAD-ALLOW-TRANSPORT-BRANCH";
 
     private static final JavaClasses CLASSES = new ClassFileImporter()
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
@@ -73,6 +80,49 @@ class LegibleArchitectureRulesTest {
                 .orShould().beAnnotatedWith("io.micronaut.http.annotation.Put")
                 .orShould().beAnnotatedWith("io.micronaut.http.annotation.Delete")
                 .check(CLASSES);
+    }
+
+    /** R4 — the HTTP boundary must not depend on business concepts directly. */
+    @Test
+    void r4_web_boundary_does_not_depend_on_business_concepts() {
+        noClasses()
+                .that().resideInAPackage("com.example.app.infrastructure..")
+                .and().haveSimpleNameContaining("Web")
+                .should().dependOnClassesThat().resideInAPackage(CONCEPTS_ROOT + "..")
+                .as("Web/infrastructure entry classes must stay transport-only and not depend on business concepts directly")
+                .check(CLASSES);
+    }
+
+    /**
+     * R4 (heuristic) — Web boundary code must not perform imperative branching
+     * on business outcomes in controller source. If a transport-only branch is
+     * genuinely required, it must carry the explicit waiver marker.
+     */
+    @Test
+    void r4_web_boundary_has_no_imperative_branching_without_transport_waiver() throws IOException {
+        List<Path> webSources = Files.walk(Path.of(SOURCE_ROOT, "infrastructure"))
+                .filter(path -> path.getFileName().toString().contains("Web"))
+                .filter(path -> path.toString().endsWith(".java"))
+                .toList();
+
+        for (Path path : webSources) {
+            List<String> lines = Files.readAllLines(path);
+            for (int index = 0; index < lines.size(); index++) {
+                String line = lines.get(index);
+                String trimmed = line.trim();
+                if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*")) {
+                    continue;
+                }
+                if ((trimmed.contains("if (") || trimmed.contains("switch (") || trimmed.startsWith("case "))
+                        && !trimmed.contains(TRANSPORT_BRANCH_WAIVER)) {
+                    throw new AssertionError(
+                            path + ":" + (index + 1)
+                                    + " contains imperative branching in Web boundary code."
+                                    + " Move domain branching to syncs/concepts or annotate a transport-only exception with "
+                                    + TRANSPORT_BRANCH_WAIVER + ".");
+                }
+            }
+        }
     }
 
     /**

@@ -58,6 +58,38 @@ actions and one piece of state.
   cross-cutting concerns that, if needed, become their own concepts
   (`RateLimit`, `Cache`, ...) coordinated by syncs.
 
+## Implementation check for Stage 04
+
+When implementing a bootstrap concept, the allowed shape is narrow:
+
+1. normalize the inbound transport payload into the root action input
+2. call the flow root (`Web.handle(...)` or profile equivalent)
+3. await the authored result
+4. translate the authored result into the outbound transport response
+
+Everything else is suspect and should be treated as a boundary
+violation unless the methodology explicitly says otherwise.
+
+Concrete anti-patterns:
+
+- calling business concept classes directly from the controller / route
+  handler
+- branching on domain outcomes inside the controller / route handler
+- computing business dates, identifiers, status transitions, or policy
+  inside the transport boundary
+- reading or mutating business concept state from the transport boundary
+- matching the final HTTP output while bypassing the action/sync chain
+
+If a flow can only be made green by putting domain logic in the
+bootstrap concept, the problem is upstream: the concept/spec/sync set
+is incomplete and should be repaired there.
+
+The Java reference profile adds a heuristic source-level check here as
+well: `Web` infrastructure classes must not contain imperative
+branching (`if` / `switch`) unless a transport-only exception is marked
+explicitly in source. The waiver marker is
+`CLAD-ALLOW-TRANSPORT-BRANCH`.
+
 ## How a bootstrap concept participates in the chain
 
 Every chain table (Stage 02b) starts with the bootstrap concept's

@@ -48,6 +48,12 @@ one archived flow, `/api/dev/stuck` for active actions missing
 `:output`, and `/api/dev/concept/{name}/triples` for concept-state
 inspection. Do not treat predicted token chains alone as runtime proof.
 
+For the `Web` bootstrap boundary, keep the controller transport-only:
+normalize input, invoke the flow root, await the authored response, and
+translate transport output. Do not call business concept classes
+directly, branch on domain outcomes, compute domain policy, or
+read/mutate concept state in the controller/route handler.
+
 ## Outputs
 
 (none — see sub-stages)
@@ -61,6 +67,9 @@ inspection. Do not treat predicted token chains alone as runtime proof.
 - Any runtime explanation of why a flow is red, green, stuck, or
 	archived cites one of the Java profile debug endpoints or another
 	executed runtime inspection command.
+- Any `Web` implementation remains transport-only: no direct
+  business-concept dependency, no domain branching, and no concept-state
+  read/write in the controller/route handler.
 - **Cross-stage check (back):** every concept in `02_concepts/output/` and every sync in `03_syncs/output/` has a corresponding sub-stage output.
 
 ## Gate

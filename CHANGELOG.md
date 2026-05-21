@@ -16,6 +16,14 @@ file `methodology/` is the source of truth for what each version contains.
   to Halpin's explicit seven-step CSDP, added a dedicated
   `templates/data-model.md`, and updated the UC-00 worked example to
   show the fuller step-by-step structure.
+- **Web boundary hardening**: Tightened Stage 04 and Stage 05 so
+  bootstrap / `Web` implementations must prove transport-only
+  behaviour, and added a Java-profile architecture test forbidding
+  `Web` infrastructure classes from depending directly on business
+  concept packages.
+- **Web branching heuristic**: Added a Java-profile source-level check
+  that rejects imperative branching in `Web` infrastructure code unless
+  a transport-only exception is marked explicitly.
 
 ## [0.2.0] — 2026-05-12
 

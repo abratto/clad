@@ -42,6 +42,10 @@ For each named scenario in the use case:
 3. Check that the chain matches the syncs in `03_syncs/output/`.
 4. Check that no action appears in the chain that is not authorised
    by either a use-case scenario or a sync.
+5. Check that the runtime chain actually crossed the bootstrap
+  boundary the right way: transport entry -> authorised concept/sync
+  chain -> transport exit, rather than being short-circuited inside the
+  controller / route handler.
 
 When the selected profile exposes a read-oriented runtime debug surface,
 use that surface as the default proof source for the walk before you
@@ -93,6 +97,9 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
 - `trace.md` is backed by captured runtime evidence from the profile's
   debug surface or equivalent executed inspection commands, not only by
   predicted test chains.
+- The captured runtime evidence shows that transport entry and exit were
+  reached through the authorised action/sync chain, not by imperative
+  controller branching.
 - `smoke.md` exists and contains a real (not predicted) command +
   response per scenario.
 - `tracking.md` exists, even if only to record that no overlay is in

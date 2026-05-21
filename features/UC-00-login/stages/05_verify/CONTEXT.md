@@ -34,6 +34,10 @@ back-traces to a sync or use-case scenario. Write
 `trace.md` filename around as the canonical name; this seed uses
 `verification-trace.md` historically — both are acceptable.)
 
+Also check that transport entry and transport exit were reached through
+the authorised action/sync chain rather than being short-circuited
+inside the controller / route handler.
+
 In this Java profile, the default runtime evidence surface is the debug
 controller documented in the reference-impl README. Prefer
 `/api/dev/flows` to confirm the registered sync plan,
@@ -62,6 +66,9 @@ alongside the trace.
 - The trace is backed by captured runtime evidence from the Java debug
   endpoints or another executed runtime inspection command, not only by
   predicted test chains.
+- The captured runtime evidence shows that transport entry and exit were
+  reached through the authorised action/sync chain, not by imperative
+  controller branching.
 - `smoke.md` records a real (not predicted) curl/response per scenario.
 - `tracking.md` exists.
 - Trace file begins with `Resume point:`.

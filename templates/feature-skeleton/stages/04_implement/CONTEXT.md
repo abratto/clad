@@ -61,6 +61,12 @@ state. Do not claim runtime traceability from predicted tokens, test
 comments, or markdown derivations alone when a profile debug surface is
 available.
 
+For bootstrap / `Web` implementations, keep the transport boundary
+strict: normalize input, invoke the flow root, await the authored
+response, and translate transport output. Do not call business concept
+classes directly, branch on domain outcomes, compute domain policy, or
+read/mutate concept state in the controller/route handler.
+
 **Do not skip or reorder sub-stages.** The fast-path exception in
 `STAGES.md` applies only when all listed conditions hold; when in
 doubt, use one-stage-per-turn.
@@ -81,6 +87,9 @@ doubt, use one-stage-per-turn.
 - Any runtime explanation of why a flow is red, green, stuck, or
   archived is backed by the profile's debug surface or an equivalent
   executed runtime inspection command.
+- Any bootstrap / `Web` implementation is transport-only: no direct
+  business-concept dependency, no domain branching, and no concept-state
+  read/write in the controller/route handler.
 - **Cross-stage check (back):** every concept and every sync from
   stages 02 and 03 has a corresponding sub-stage output.
 

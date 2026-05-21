@@ -476,6 +476,13 @@ means `/api/dev/flows`, `/api/dev/flow/{token}`, `/api/dev/stuck`, and
 `/api/dev/concept/{name}/triples`. Predicted tokens and test comments
 do not count as runtime evidence when such a surface exists.
 
+For bootstrap / `Web` implementations, Stage 04 must also preserve the
+transport boundary described in `WEB_CONCEPT.md`. A controller/route
+handler may normalize input, invoke the flow root, await the authored
+response, and translate transport output. It must not call business
+concept classes directly, branch on domain outcomes, compute domain
+policy, or read/mutate concept state.
+
 ### Stage 05 — `05_verify/`
 
 Stage 05 has two parts: **Verify** (back-trace) and **Close** (smoke,
@@ -491,7 +498,9 @@ tree and check that it matches the chain of syncs and concept actions
 the specs predict. Gather the runtime evidence for that walk from the
 profile's debug surface when available; in the Java reference profile,
 the default proof surface is `/api/dev/*`. Flag any tokens not
-authorised by a spec.
+authorised by a spec. Also check that transport entry and transport exit
+were reached through the authorised action/sync chain rather than being
+short-circuited inside the controller / route handler.
 
 **Process — close (only after verify is clean):**
 
