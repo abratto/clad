@@ -27,6 +27,17 @@ class LegibleArchitectureRulesTest {
     private static final String TRANSPORT_BRANCH_WAIVER = "CLAD-ALLOW-TRANSPORT-BRANCH";
     private static final String IMPERATIVE_SYNC_WAIVER = "CLAD-ALLOW-IMPERATIVE-SYNC";
     private static final String COORDINATOR_WAIVER = "CLAD-ALLOW-COORDINATOR";
+    private static final List<String> ENGINE_RUNTIME_TYPES = List.of(
+            "com.example.app.engine.ActionLog",
+            "com.example.app.engine.ActionRecord",
+            "com.example.app.engine.CompletionBus",
+            "com.example.app.engine.ConceptAgent",
+            "com.example.app.engine.FlowManager",
+            "com.example.app.engine.RdfVocabulary",
+            "com.example.app.engine.SyncAgent",
+            "com.example.app.engine.SyncDispatcher",
+            "com.example.app.engine.SyncMetadata",
+            "com.example.app.engine.SyncTrigger");
 
     private static final JavaClasses CLASSES = new ClassFileImporter()
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
@@ -81,6 +92,22 @@ class LegibleArchitectureRulesTest {
                 .orShould().beAnnotatedWith("io.micronaut.http.annotation.Post")
                 .orShould().beAnnotatedWith("io.micronaut.http.annotation.Put")
                 .orShould().beAnnotatedWith("io.micronaut.http.annotation.Delete")
+                .check(CLASSES);
+    }
+
+    /** Java profile placement — Micronaut boundary DTOs belong under the api package. */
+    @Test
+    void java_profile_boundary_dtos_live_only_in_api_package() {
+        classes()
+                .that().areAnnotatedWith("io.micronaut.core.annotation.Introspected")
+                .and().haveSimpleNameEndingWith("Request")
+                .or().areAnnotatedWith("io.micronaut.core.annotation.Introspected")
+                .and().haveSimpleNameEndingWith("Response")
+                .or().areAnnotatedWith("io.micronaut.core.annotation.Introspected")
+                .and().haveSimpleNameEndingWith("Dto")
+                .should().resideInAPackage("com.example.app.api..")
+                .as("Micronaut boundary DTOs should live under com.example.app.api")
+                .allowEmptyShould(true)
                 .check(CLASSES);
     }
 
@@ -210,6 +237,25 @@ class LegibleArchitectureRulesTest {
                 .should().beAssignableTo(com.example.app.engine.SyncAgent.class)
                 .as("sync package classes must be declarative SyncAgent implementations, not ad hoc coordinators")
                 .allowEmptyShould(true)
+                .check(CLASSES);
+    }
+
+    /** Java profile placement — canonical runtime abstractions must stay under engine. */
+    @Test
+    void java_profile_engine_runtime_classes_live_only_in_engine_package() {
+        classes()
+                .that().haveFullyQualifiedName(ENGINE_RUNTIME_TYPES.get(0))
+                .or().haveFullyQualifiedName(ENGINE_RUNTIME_TYPES.get(1))
+                .or().haveFullyQualifiedName(ENGINE_RUNTIME_TYPES.get(2))
+                .or().haveFullyQualifiedName(ENGINE_RUNTIME_TYPES.get(3))
+                .or().haveFullyQualifiedName(ENGINE_RUNTIME_TYPES.get(4))
+                .or().haveFullyQualifiedName(ENGINE_RUNTIME_TYPES.get(5))
+                .or().haveFullyQualifiedName(ENGINE_RUNTIME_TYPES.get(6))
+                .or().haveFullyQualifiedName(ENGINE_RUNTIME_TYPES.get(7))
+                .or().haveFullyQualifiedName(ENGINE_RUNTIME_TYPES.get(8))
+                .or().haveFullyQualifiedName(ENGINE_RUNTIME_TYPES.get(9))
+                .should().resideInAPackage("com.example.app.engine..")
+                .as("Canonical runtime abstractions should live under com.example.app.engine")
                 .check(CLASSES);
     }
 

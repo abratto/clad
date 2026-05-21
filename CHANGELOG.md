@@ -47,6 +47,9 @@ file `methodology/` is the source of truth for what each version contains.
 - **Java package-placement enforcement**: Added ArchUnit checks so
   concrete `*Concept` classes must live under `concepts.<name>` and
   executable `SyncAgent` implementations must live under `syncs`.
+- **Java `api` / `engine` placement enforcement**: Added ArchUnit
+  checks so Micronaut boundary DTOs live under `api` and the canonical
+  runtime abstractions stay under `engine`.
 
 ## [0.2.0] — 2026-05-12
 
