@@ -49,7 +49,8 @@ For each concept that appears in any chain table or sync:
    concept's action appears in the `when` clause — a `when` clause is
    a trigger, not an invocation. One row per (sync × action called in `then`).
    Pattern B applies when the argument comes from a prior action's flow
-   token (`result_of(...)`) rather than directly from `body.*`.
+   token (`result_of(...)`) rather than from the approved trigger token
+   (Pattern A).
 3. Section 2 — list every Pattern D read of this concept's named
    region by **other** concepts' syncs. If none, say so explicitly.
 4. Note any inconsistency (same action invoked via different

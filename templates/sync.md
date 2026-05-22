@@ -24,7 +24,7 @@ WHERE CLAUSE — DATA ROUTING ONLY
   the `then` call. It is a field-path binding list, not a computation engine.
 
   ALLOWED:
-    email    = body.email          (read a field from the flow token)
+    email    = when.email          (read a field declared by the trigger token)
     userId   = result_of(#2).id    (read a field from an earlier outcome)
     status   = "active"            (sync constant — Pattern C)
 
@@ -38,6 +38,19 @@ ASSEMBLY AND EXTRACTION LOCK
   `where` may not assemble JSON, extract ad hoc nested projections, or
   reshape payloads. If the downstream action needs a different shape,
   that shape must be emitted by the upstream concept action explicitly.
+
+  Pattern A binds only from names already declared by the approved
+  `when` token. It may not reach into raw HTTP/body/request structure.
+
+  NOT ALLOWED:
+    where: A: email = body.email
+    where: A: identifier = request.body.identifier
+
+  REQUIRED:
+    Stage 02b names the carried fields explicitly, e.g.
+    `Web.handle[Routed(email, identifier)]`
+    where: A: email = when.email
+           A: identifier = when.identifier
 
   NOT ALLOWED:
     where: B: productScores = result_of(TasteMatch.compute).scores[*].calibratedScore
@@ -53,7 +66,7 @@ ASSEMBLY AND EXTRACTION LOCK
 
 LABEL EVERY WHERE PATTERN
   Every `where` line must be prefixed with its pattern label:
-    A: — flow-token join (field from Web.handle body)
+    A: — trigger-token join (field declared by the approved `when` token)
     B: — flow-sibling join (field from an earlier action's output)
     C: — sync constant (literal value)
     D: — concept-state join (named region of another concept's state)
@@ -71,6 +84,12 @@ DECLARE BEFORE USE
   ALLOWED:
     where: B: validationErrors = result_of(Account.validate).errors
     then:  Web.respond(status=422, body={errors: validationErrors})
+
+UPSTREAM CONTRACT CHECK
+  If a needed Pattern A name does not appear in the approved Stage 02b
+  trigger token, stop and reopen Stage 02b. Stage 03 must not invent a
+  source by reading `body.*`, `request.*`, or another undeclared payload
+  path.
 
 LITERAL LOCK
   Copy literals and signature tokens exactly from the approved Stage 02b
@@ -98,7 +117,7 @@ NO INVENTED PAYLOAD FIELDS
 
 ```
 when:  <explicit When token from approved 02b row>
-where: A: <local> = body.<field>
+where: A: <local> = when.<field declared by the approved trigger token>
        B: <local> = result_of(<Concept>.<action>).<field>
   C: <local> = <exact literal from approved contract>
 then:  <Concept>.<action>(<args>)

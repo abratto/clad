@@ -20,8 +20,8 @@
 
 | # | When | Then | Inputs | Outcome | Why this step |
 |---|---|---|---|---|---|
-| 1 | `Web/request[<route>]` | `Web.handle` | `<route>`, `<request body>` | `Routed` | The HTTP entry point (R4) |
-| 2 | `Web.handle[Routed]` | `<Name>.<actionName>` | `<args>` | `<Outcome>` | <one-line justification> |
+| 1 | `Web/request[<route>]` | `Web.handle` | `<route>`, `<request body>` | `Routed(<carried fields>)` | The HTTP entry point (R4) |
+| 2 | `Web.handle[Routed(<carried fields>)]` | `<Name>.<actionName>` | `<args>` | `<Outcome>` | <one-line justification> |
 | 3 | `<PreviousName>.<previousAction>[<Outcome>]` | `<Name>.<actionName>` | `<args>` | `<Outcome>` | … |
 | 4 | `<Name>.<actionName>[<Outcome>]` | `Web.respond[<status>]` | `<status>`, `<body>` | `Sent` | Closes the request |
 
@@ -30,6 +30,10 @@
 >   **Then**.
 > - The row's `When` is explicit so the choreography can be reviewed
 >   without mentally reconstructing the trigger edge.
+> - If a downstream action needs request-originated values, the row's
+>   `When`/`Outcome` contract must name those carried fields explicitly
+>   (for example `Routed(email, password)`). Stage 03 may bind only from
+>   names already declared by the approved trigger contract.
 > - `Inputs` show the action's implementation-facing arguments only.
 >   They are **not** provenance, join logic, or sync bindings.
 > - Stage 03 is the first place where `where` provenance and the
@@ -105,6 +109,11 @@ explicit sync rules:
   `When` token.
 4. Stage 03 adds `where` provenance only when the downstream action
   needs data not carried directly by the triggering outcome.
+
+If a non-root row needs request-originated data, Stage 02b must expose
+that data as named carried fields on the approved trigger token before
+Stage 03 begins. Stage 03 must not recover missing names by reaching
+back into raw HTTP/body structure.
 
 So Stage 02b answers *what fires what*; Stage 03 adds *where each
 argument came from*.

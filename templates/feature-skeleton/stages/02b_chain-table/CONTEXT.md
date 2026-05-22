@@ -34,6 +34,11 @@ with the downstream action's `Inputs`, resulting `Outcome`, and one-line
 justification. Use the actions and concepts already named in the
 responsibility map — do not invent new ones.
 
+If a downstream action needs request-originated data, the approved 02b
+row must name those carried fields on the trigger contract itself
+(for example `Web.handle[Routed(email, password)]`). Stage 03 may bind
+Pattern A values only from names that 02b has already declared.
+
 Optionally include a Mermaid sequence diagram (the template suggests
 one). The diagram is for human review; it is not load-bearing.
 
@@ -64,6 +69,10 @@ chain table per scenario.
 - **Cross-stage check (back):** the chain's trigger and final response
   match the scenario's *Trigger* and *Expected outcomes* in the use
   case.
+- **Trigger contract completeness:** if a non-root row's `Then` action
+  needs request-originated values, those values are named explicitly on
+  the approved trigger token instead of being left implicit for Stage 03
+  to recover later.
 
 ## Gate
 

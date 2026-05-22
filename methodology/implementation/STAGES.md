@@ -212,11 +212,19 @@ Mermaid `stateDiagram-v2` diagram. The first row is always
 At this level, the `Then` column is the concrete rendering of the
 WYSIWID Level 2b **Then**. The corresponding `When` is explicit in the
 table so the reviewer can inspect the causal edge directly.
+If a downstream action needs request-originated data, the approved 02b
+row must name those carried fields on the trigger contract itself
+(for example `Web.handle[Routed(email, password)]`).
 `Inputs` name the downstream action's arguments only; they are **not**
 join provenance. `Where`/pattern A/B/C/D first appear in Stage 03.
 
 The chain table is therefore the bridge between 02a (which concepts
 exist) and 03 (which syncs coordinate them).
+
+If the Stage 03 author cannot bind a Pattern A value from a name that is
+already declared by the approved 02b trigger token, that is an upstream
+defect in Stage 02b, not a local invitation to read `body.*` or
+`request.*`. Reopen 02b and fix the trigger contract before continuing.
 
 **Output:** `<scenario>-chain.md` per scenario.
 

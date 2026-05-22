@@ -53,6 +53,10 @@ For each transition, write one `<name>.sync.md`:
   No function calls, no arithmetic, no I/O. If you need a computation,
   it belongs inside the concept action, not here. Label every line with
   its pattern: `A:` / `B:` / `C:` / `D:` per `SYNC_PATTERNS.md`.
+- Pattern A binds only from names already declared by the approved
+  `when` token. It may not read `body.*`, `request.*`, or other raw
+  transport structure. If a needed Pattern A name is missing, reopen
+  Stage 02b and fix the trigger contract before continuing.
 - `where:` is binding-only. No JSON assembly, no ad hoc projection
   extraction, and no payload reshaping. If a downstream action needs a
   different shape, the upstream concept action must emit it explicitly.
@@ -85,9 +89,12 @@ not introduce new logic.
   chain-table row-to-row arrow = one sync).
 - **Where-clause discipline:** no `where` line contains a function call,
   arithmetic expression, or I/O operation. Every line is a field-path
-  reference (`body.field`, `result_of(<#N>).field`) or a sync constant
+  reference (`when.field`, `result_of(<#N>).field`) or a sync constant
   (exact approved literal). Pattern labels (`A:` / `B:` / `C:` / `D:`) are
   present on every `where` line.
+- **Pattern A discipline:** every Pattern A binding reads only from a
+  name declared by the approved `when` token. No `body.*`, `request.*`,
+  or other raw transport paths are permitted in Stage 03.
 - **Sync Contract Matrix:** each sync can be traced back to one source
   row and one target row from 02b, with `when`/`then` signatures copied
   exactly from the approved contracts.
