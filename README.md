@@ -251,15 +251,22 @@ artefacts.
 ### After Stage 00 passes
 
 Once `features/_system/stages/00_actor-goal/output/goals.md` is approved,
-create one UC folder per in-scope goal by copying the feature skeleton,
-then start Stage 01 in the first UC folder:
+tell the agent to proceed. The next action is mechanical and should be
+performed by the agent: create one UC folder per in-scope goal by
+copying the feature skeleton, then open Stage 01 in the first UC folder.
 
 ```bash
+# agent action, not required manual shell work:
 cp -R templates/feature-skeleton features/UC-01-<slug>
 # repeat for each remaining in-scope goal with the next UC number
 # then open:
 #   features/UC-01-<slug>/stages/01_usecase/CONTEXT.md
 ```
+
+The human responsibility here is the gate: approve Stage 00 or send it
+back for correction. Once approved, the agent should continue the flow
+by creating the UC folders and moving into Stage 01 unless the human
+explicitly wants to pause.
 
 If you plan to adopt the Java reference profile, read
 [`reference-impl/java-micronaut-jena/README.md`](reference-impl/java-micronaut-jena/README.md)
