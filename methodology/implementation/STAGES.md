@@ -155,6 +155,11 @@ principle for the *feature* (not for any single concept); the actors
 must satisfy. Each scenario is a trigger + expected outcomes. Out of
 scope is non-empty.
 
+Name top-level scenarios for the user goal or trigger, not just the
+happy-path result, because Stage 02b derives one chain file from each
+top-level scenario and carries that scenario's extensions as separate
+branches inside the same file.
+
 An optional Mermaid `sequenceDiagram` may appear inside a scenario as a
 derived interaction sketch for humans. It is explanatory only and does
 not become a new source of truth: Stage 01 prose remains canonical, and
@@ -186,9 +191,13 @@ legible presentation.
 **Process:** identify the *concept set* the feature requires (one
 capability each). Produce one row per concept naming its owned state
 (one line) and its owned actions (names only — no signatures yet).
-Then run the *coverage check*: list each scenario from the use case
-and mark which concepts it touches. Anything that does not fit goes
-in *Out of scope*.
+Before finalizing the table, fill the template's derivation rubric from
+the approved use-case responsibilities and extensions: one candidate row
+per responsibility cluster, with an explicit reason why the capability is
+separate, why it is not bootstrap transport work, and why it is not owned
+by another listed concept. Only then run the *coverage check*: list each
+scenario from the use case and mark which concepts it touches. Anything
+that does not fit goes in *Out of scope*.
 
 **Output:** `responsibility-map.md`.
 
@@ -209,6 +218,12 @@ Mermaid `stateDiagram-v2` diagram. The first row is always
 `Web/request[...] -> Web.handle`; the last row is always
 `... -> Web.respond[...]`.
 
+The file boundary follows Stage 01 top-level scenarios exactly: one
+top-level scenario becomes one chain file. Its failure extensions stay in
+that same chain file as separate branch rows when they share the same
+trigger and user goal. Only a separate top-level Stage 01 scenario gets a
+separate Stage 02b chain file.
+
 At this level, the `Then` column is the concrete rendering of the
 WYSIWID Level 2b **Then**. The corresponding `When` is explicit in the
 table so the reviewer can inspect the causal edge directly.
@@ -217,6 +232,13 @@ row must name those carried fields on the trigger contract itself
 (for example `Web.handle[Routed(email, password)]`).
 `Inputs` name the downstream action's arguments only; they are **not**
 join provenance. `Where`/pattern A/B/C/D first appear in Stage 03.
+
+Each 02b row is one transition branch. Do not collapse multiple outcome
+branches that lead to different next effects into one row. If an action
+can end in `Ok`, `ValidationFailed`, and `AccountExists`, and those lead
+to different `Web.respond[...]` contracts or different next actions,
+they must appear as separate rows so the table and derived diagram stay
+structurally identical.
 
 The chain table is therefore the bridge between 02a (which concepts
 exist) and 03 (which syncs coordinate them).
@@ -249,7 +271,9 @@ must be presented in the **same conversation turn** as the table —
 the gate cannot open over half a picture. See
 [`../../templates/chain-table.md`](../../templates/chain-table.md)
 §"The chain table is a finite state machine" for the FSM mapping and
-the derivation rules.
+the derivation rules. One row in the table must correspond to one arrow
+in the diagram; if the diagram needs multiple arrows, the table must
+already have multiple rows.
 
 ### Stage 02 — `02_concepts/`
 

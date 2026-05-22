@@ -34,13 +34,24 @@ with the downstream action's `Inputs`, resulting `Outcome`, and one-line
 justification. Use the actions and concepts already named in the
 responsibility map — do not invent new ones.
 
+This mapping is deterministic: one top-level Stage 01 scenario becomes
+one Stage 02b chain file. Keep that scenario's extensions in the same
+file as additional branch rows when they share the same trigger and user
+goal. Do not split ordinary failure extensions into separate chain files.
+
+Each row is one transition branch. If one action can complete with
+multiple outcomes that lead to different `Web.respond[...]` contracts or
+different next actions, split those branches into separate rows instead
+of collapsing them into one line.
+
 If a downstream action needs request-originated data, the approved 02b
 row must name those carried fields on the trigger contract itself
 (for example `Web.handle[Routed(email, password)]`). Stage 03 may bind
 Pattern A values only from names that 02b has already declared.
 
-Optionally include a Mermaid sequence diagram (the template suggests
-one). The diagram is for human review; it is not load-bearing.
+Optionally include a Mermaid `stateDiagram-v2` as a derived view. Do not
+use `sequenceDiagram`. The diagram must be mechanically derivable from
+the canonical table: one table row, one arrow.
 
 This stage exists to give the human a single, scenario-shaped review
 surface **before** Stage 03 commits the choreography to declarative
@@ -55,6 +66,9 @@ chain table per scenario.
 
 - Every scenario in `01_usecase/output/usecase.md` has exactly one
   chain file.
+- The rows in each chain file cover the top-level scenario's main flow
+  plus its extensions, not some narrower happy-path-only subset unless
+  the Stage 01 scenario itself truly has no extensions.
 - Every concept and action that appears in a chain table is listed in
   `02a_responsibility-map/output/responsibility-map.md`.
 - The first row of every chain is `Web/request[...] -> Web.handle` (R4);
@@ -73,6 +87,10 @@ chain table per scenario.
   needs request-originated values, those values are named explicitly on
   the approved trigger token instead of being left implicit for Stage 03
   to recover later.
+- **No collapsed branch rows:** if one state would need multiple arrows
+  in the derived diagram, the table already contains multiple rows.
+  Do not combine distinct `Web.respond[...]` contracts or distinct next
+  actions into one canonical row.
 
 ## Gate
 

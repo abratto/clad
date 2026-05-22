@@ -69,6 +69,12 @@ the source of domain truth.
 See [`../../methodology/architecture/ENGINE.md`](../../methodology/architecture/ENGINE.md)
 for engine internals (trigger index, dedup edge, flow archival).
 
+For the deterministic lowering contract from approved Stage 03 syncs to
+`SyncAgent` SPARQL fragments, see [`SYNC_LOWERING.md`](SYNC_LOWERING.md).
+That document is the profile-specific source of truth for how Pattern
+A/B/C/D bindings, sink syncs, and the bootstrap handoff map into
+`whereClause()` / `thenBindings()`.
+
 ## SPARQL guidance (this profile only)
 
 Use the rules below only when implementing CLAD with this Java/Jena
@@ -112,6 +118,11 @@ protected String thenBindings() {
 
 For profile conventions and architecture guardrails, see
 [`CODE_STYLE.md`](CODE_STYLE.md).
+
+When writing executable syncs, use this README for profile overview,
+[`CODE_STYLE.md`](CODE_STYLE.md) for package/architecture constraints,
+and [`SYNC_LOWERING.md`](SYNC_LOWERING.md) for the actual spec-to-SPARQL
+translation recipe.
 
 ## Canonical exemplar
 

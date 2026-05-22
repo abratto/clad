@@ -33,6 +33,14 @@ owned state (one line), owned actions (names only). Do **not** draft
 full concept specs here — that is Stage 02. Do **not** describe how
 concepts coordinate — that is Stage 02b.
 
+Before writing the final Concepts table, fill the **Derivation rubric**
+in `templates/responsibility-map.md`: one row per distinct use-case
+responsibility cluster or extension branch that might justify a concept.
+Only keep a candidate as a real concept if it passes all of these
+tests: one capability in one verb phrase, specifiable without another
+concept's internals, not merely bootstrap transport work, and not a
+duplicate of an already-listed concept.
+
 The reason for splitting this out is to give the human a clean review
 surface: *"these are the right concepts and they own the right
 things"* — before any choreography or coordination is committed to
@@ -48,6 +56,9 @@ paper.
   concept is doing too much (split it).
 - Every concept's `Owned actions` is a comma-separated list of names
   only — no signatures, no outcomes (those are Stage 02).
+- Every final concept row is justified by at least one Derivation rubric
+  row, and every Derivation rubric row is either represented by a final
+  concept or explicitly rejected in *Out of scope*.
 - **Cross-stage check (back):** every actor in
   `../00_actor-goal/output/actors.md` whose goal is in-scope is
   represented by at least one concept (typically as the actor of that

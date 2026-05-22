@@ -17,6 +17,12 @@ If this exemplar appears to conflict with those upstream artefacts, the
 upstream artefacts win and implementation must stop rather than copying
 the profile example blindly.
 
+For the deterministic lowering rules that connect a Stage 03 sync spec
+to a `SyncAgent` SPARQL implementation, read
+[`SYNC_LOWERING.md`](SYNC_LOWERING.md) alongside this exemplar. The
+exemplar shows one canonical slice; the lowering doc names the stepwise
+translation contract.
+
 ## The canonical slice
 
 For this profile, the canonical declarative slice is the UC-00 login

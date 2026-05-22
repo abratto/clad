@@ -10,6 +10,18 @@
 >
 > Keep each row to one action. If a row needs to say
 > "and also …", add another row.
+>
+> Keep each row to **one transition branch**. If one action outcome set
+> fans out to multiple distinct next effects (different `Web.respond`
+> statuses, different body contracts, or different next actions), split
+> them into separate rows. Do not collapse multiple derived arrows into
+> one canonical table row.
+>
+> The file boundary is deterministic: one Stage 01 **top-level scenario**
+> becomes one Stage 02b chain file. That chain file includes the
+> scenario's main flow and any extensions that share the same trigger and
+> user goal, rendered as separate branch rows. Do not create separate
+> chain files for ordinary failure extensions.
 
 ## Scenario
 
@@ -103,6 +115,12 @@ A chain table with no ambiguous transitions, no unreachable states,
 and no missing failure paths is a well-formed FSM — and therefore a
 correct skeleton for the syncs at Stage 03.
 
+That means one table row corresponds to one transition branch. A row may
+not bundle several distinct outgoing arrows into one line by writing
+`Ok | ValidationFailed | AccountExists` if those outcomes lead to
+different next effects. Split them into separate rows so the canonical
+table and the derived diagram are isomorphic.
+
 ### Deriving Stage 03 syncs from the chain table
 
 Stage 03 turns the Level 2b `When -> Then` structure into
@@ -145,17 +163,34 @@ transitions changed, with no rendering tool required, and an LLM can
 read/write/validate the table without ambiguity. If the table and the
 diagram disagree, the table wins.
 
+Derived-diagram discipline:
+
+- One table row = one Mermaid arrow.
+- If the diagram shows three outgoing arrows from one state, the table
+  must contain three corresponding rows.
+- A single table row may not imply multiple arrows by collapsing several
+  outcome branches that lead to different transport contracts or next
+  actions.
+- For a per-scenario chain file, include only the branches that belong
+  to that top-level Stage 01 scenario, including its extensions.
+- If a failure path is only an extension of the same trigger/goal, keep
+  it in the same chain file as a separate row/arrow, not a separate
+  chain file.
+- Only create a separate chain file when Stage 01 already defines a
+  separate top-level scenario with its own trigger or distinct user goal.
+
 When you change the table, regenerate the diagram. The translation is
 mechanical:
 
 1. Each row's `Then` action becomes a state node (replace `.` with `_` so
    Mermaid will accept it: `Account_validate`).
-2. Each transition `row N → row N+1` becomes an arrow labelled with
-   row N's `Outcome` in brackets: `[Ok]`, `[AccountExists]`, etc.
+2. Each table row becomes exactly one arrow labelled with that row's
+  triggering outcome token: `[Ok]`, `[AccountExists]`, etc.
 3. The first row's trigger comes from `[*]`; every terminal
    `Web.respond` returns to `[*]`.
-4. Failure branches from the same state appear as additional arrows
-   from that state node, each labelled with their failure outcome.
+4. Failure branches from the same state appear as additional rows in the
+  table and therefore as additional arrows from that state node, each
+  labelled with its own outcome.
 5. Validate the resulting `stateDiagram-v2` block by pasting it into
    [mermaid.live](https://mermaid.live) before commit. A diagram that
    does not render must not be committed.

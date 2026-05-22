@@ -38,6 +38,11 @@ distinct trigger if a goal has several). Write the out-of-scope
 section by lifting out-of-scope goals from `goals.md` and adding any
 implicit exclusions.
 
+Use scenario names that can carry both the main flow and its extensions
+into Stage 02b. If a failure branch shares the same trigger and user
+goal, keep it as an extension under that top-level scenario rather than
+creating a second top-level scenario with a success-only name.
+
 An optional Mermaid `sequenceDiagram` may be included inside each
 scenario as a derived, human-facing interaction sketch. If present, it
 must stay actor/system-only and must not introduce concept discovery,
@@ -81,6 +86,9 @@ for level definitions and the rationale.
 - **Cross-stage check (back):** every in-scope goal in
   `00_actor-goal/output/goals.md` corresponds to at least one named
   scenario in `usecase.md`.
+- Scenario names are not misleadingly happy-path-only when the scenario
+  also contains failure extensions that will be carried into the same
+  Stage 02b chain file.
 
 ## Gate
 

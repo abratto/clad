@@ -33,6 +33,7 @@ no sync implementation belongs here.
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
 | `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (only when this profile is selected) | 3 | Profile conventions |
+| `../../../../../../reference-impl/java-micronaut-jena/SYNC_LOWERING.md` (only when this profile is selected) | 3 | Deterministic Stage 03 -> SPARQL lowering contract |
 
 ## Process
 

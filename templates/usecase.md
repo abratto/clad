@@ -143,6 +143,14 @@ sequenceDiagram
 > scenario, not as separate `### Scenario:` blocks. If two scenarios
 > have the same trigger, one of them is an extension.
 >
+> **Naming rule for downstream derivation.** Name a top-level scenario
+> for the user goal or trigger, not just for the happy-path outcome.
+> Stage 02b derives one chain file from one top-level scenario, and that
+> chain file includes the scenario's main flow **and** its extensions as
+> distinct branches. Prefer names like `register-member` or
+> `submit-registration`, not `successful-registration`, unless the use
+> case truly has no failure extensions.
+>
 > **Identical postconditions are always wrong.** If Postconditions —
 > Success and Postconditions — Failure contain the same content, one of
 > them is incorrect. They must be distinct: Success postconditions

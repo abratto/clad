@@ -32,6 +32,7 @@ not redesign approved tests.
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
 | `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (only when this profile is selected) | 3 | Profile conventions |
+| `../../../../../../reference-impl/java-micronaut-jena/SYNC_LOWERING.md` (only when this profile is selected) | 3 | Deterministic Stage 03 -> SPARQL lowering contract |
 | `../../../../../../reference-impl/java-micronaut-jena/CANONICAL_EXEMPLAR.md` (only when this profile is selected) | 3 | Profile realization pattern, not source of truth |
 
 ## Process
@@ -47,9 +48,10 @@ not redesign approved tests.
    Stage 03 sync specs, the `04b` SPEC slices, the `04c` expected
    authored action chain, and the approved red sync tests. If the
    selected profile is Java/Jena/Micronaut, use
+   `SYNC_LOWERING.md` as the deterministic lowering contract and
    `CANONICAL_EXEMPLAR.md` only as a realization pattern for class,
-   package, SPARQL, and test shape. It must not override the feature's
-   own approved artefacts.
+   package, and test shape. Neither may override the feature's own
+   approved artefacts.
 5. If the selected profile is Java/Jena/Micronaut, place sync code in
    the canonical sync package bucket: each approved sync becomes one
    class under `<APP_PACKAGE_ROOT>.syncs`, with tests mirrored under the
