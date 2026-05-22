@@ -226,6 +226,16 @@ already declared by the approved 02b trigger token, that is an upstream
 defect in Stage 02b, not a local invitation to read `body.*` or
 `request.*`. Reopen 02b and fix the trigger contract before continuing.
 
+Declaring the names only on the original `Web/request[...]` token is not
+sufficient if the next row still consumes an unparameterized trigger such
+as `Web.handle[Routed]`. The carried names must appear on the actual
+handoff token used by the next row, for example:
+
+```text
+1 | Web/request[POST /register] | Web.handle | ... | Routed(name, identifier)
+2 | Web.handle[Routed(name, identifier)] | Member.register | name, identifier | ...
+```
+
 **Output:** `<scenario>-chain.md` per scenario.
 
 **Gate:** the human checks each chain is plausible and that no chain

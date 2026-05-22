@@ -34,6 +34,11 @@
 >   `When`/`Outcome` contract must name those carried fields explicitly
 >   (for example `Routed(email, password)`). Stage 03 may bind only from
 >   names already declared by the approved trigger contract.
+> - Those carried names must appear on the **handoff token consumed by the
+>   next row**, not merely on the original `Web/request[...]` token. If
+>   row 2 consumes `Web.handle[Routed]`, then row 1 must emit
+>   `Routed(email, password)` and row 2 must consume
+>   `Web.handle[Routed(email, password)]`.
 > - `Inputs` show the action's implementation-facing arguments only.
 >   They are **not** provenance, join logic, or sync bindings.
 > - Stage 03 is the first place where `where` provenance and the
@@ -114,6 +119,20 @@ If a non-root row needs request-originated data, Stage 02b must expose
 that data as named carried fields on the approved trigger token before
 Stage 03 begins. Stage 03 must not recover missing names by reaching
 back into raw HTTP/body structure.
+
+Bad:
+
+```text
+1 | Web/request[POST /register](name, identifier) | Web.handle | ... | Routed
+2 | Web.handle[Routed] | Member.register | name, identifier | ...
+```
+
+Good:
+
+```text
+1 | Web/request[POST /register] | Web.handle | ... | Routed(name, identifier)
+2 | Web.handle[Routed(name, identifier)] | Member.register | name, identifier | ...
+```
 
 So Stage 02b answers *what fires what*; Stage 03 adds *where each
 argument came from*.
