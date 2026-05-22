@@ -6,8 +6,8 @@
 
 This artefact remains a **Stage 02b causal chain**, not a sync spec:
 
-- `Concept` + `Action` are the concrete rendering of the Level 2b **Then**.
-- The corresponding **When** is implicit: row 1 comes from the route request; every later row is triggered by the previous row's `Outcome` plus the scenario branch.
+- `Then` is the concrete rendering of the Level 2b **Then**.
+- `When` is explicit in each row so the causal edge is reviewable directly.
 - `Inputs` show the downstream action's arguments only. They do **not** encode Stage 03 `Where` provenance.
 - Stage 03 is where CLAD first adds join provenance, pattern labels, and sync names.
 
@@ -20,16 +20,16 @@ This artefact remains a **Stage 02b causal chain**, not a sync spec:
 
 ## Consolidated chain
 
-| # | Scenario(s) | Concept | Action | Inputs | Outcome | Why this path |
+| # | Scenario(s) | When | Then | Inputs | Outcome | Why this path |
 |---|---|---|---|---|---|---|
-| 1 | all | `Web` | `handle` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
-| 2 | all | `User` | `lookupByUsername` | `username` | `Found(userId)` \| `NotFound` | Determine if user is registered |
-| 3a | unknown-user | `Web` | `respond` | `401`, `{ message: "username or password didn't match" }` | `Sent` | No such user; opaque message (no enumeration leak) |
-| 3b | successful-login, wrong-password, lockout | `PasswordAuth` | `check` | `userId`, `password` | `Ok` \| `BadPassword` \| `Locked` | Verify credential; increment counter if needed |
-| 4a | successful-login | `Session` | `grant` | `userId` | `Granted(sessionId)` | Open session for verified user |
-| 4b | wrong-password | `Web` | `respond` | `401`, `{ message: "username or password didn't match" }` | `Sent` | Wrong password (counter incremented internally); same opaque message |
-| 4c | lockout | `Web` | `respond` | `401`, `{ message: "Too many attempts. Try again in 15 minutes." }` | `Sent` | Lockout state is observable to user; distinct message |
-| 5 | successful-login | `Web` | `respond` | `200`, `{ sessionToken: sessionId }` | `Sent` | Closes request with new token |
+| 1 | all | `Web/request[POST /login]` | `Web.handle` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
+| 2 | all | `Web.handle[Routed]` | `User.lookupByUsername` | `username` | `Found(userId)` \| `NotFound` | Determine if user is registered |
+| 3a | unknown-user | `User.lookupByUsername[NotFound]` | `Web.respond[401]` | `401`, `{ message: "username or password didn't match" }` | `Sent` | No such user; opaque message (no enumeration leak) |
+| 3b | successful-login, wrong-password, lockout | `User.lookupByUsername[Found(userId)]` | `PasswordAuth.check` | `userId`, `password` | `Ok` \| `BadPassword` \| `Locked` | Verify credential; increment counter if needed |
+| 4a | successful-login | `PasswordAuth.check[Ok]` | `Session.grant` | `userId` | `Granted(sessionId)` | Open session for verified user |
+| 4b | wrong-password | `PasswordAuth.check[BadPassword]` | `Web.respond[401]` | `401`, `{ message: "username or password didn't match" }` | `Sent` | Wrong password (counter incremented internally); same opaque message |
+| 4c | lockout | `PasswordAuth.check[Locked]` | `Web.respond[401]` | `401`, `{ message: "Too many attempts. Try again in 15 minutes." }` | `Sent` | Lockout state is observable to user; distinct message |
+| 5 | successful-login | `Session.grant[Granted(sessionId)]` | `Web.respond[200]` | `200`, `{ sessionToken: sessionId }` | `Sent` | Closes request with new token |
 
 ## Concept outcome enums (derived from all scenarios)
 
@@ -110,10 +110,10 @@ Row 1 is the root `Web.handle` entry; it is not itself a sync.
 
 For each non-root row's derived `When -> Then` transition:
 
-1. **Row 1→2:** When `Web.handle[Routed]`, invoke `User.lookupByUsername` → sync name: `LookupUserForLogin`
-2. **Row 2 [Found] → 3b:** When `User.lookupByUsername[Found]`, invoke `PasswordAuth.check` → sync: `CheckCredentialForLogin`
-3. **Row 2 [NotFound] → 3a:** When `User.lookupByUsername[NotFound]`, invoke `Web.respond[401]` → sync: `RespondUnknownUser`
-4. **Row 3b [Ok] → 4a:** When `PasswordAuth.check[Ok]`, invoke `Session.grant` → sync: `GrantSessionForLogin`
-5. **Row 3b [BadPassword] → 4b:** When `PasswordAuth.check[BadPassword]`, invoke `Web.respond[401]` → sync: `RespondWrongPassword`
-6. **Row 3b [Locked] → 4c:** When `PasswordAuth.check[Locked]`, invoke `Web.respond[401]` → sync: `RespondLocked`
-7. **Row 4a [Granted] → 5:** When `Session.grant[Granted]`, invoke `Web.respond[200]` → sync: `RespondLoginSuccess`
+2. **Row 1→2:** When `Web.handle[Routed]`, invoke `User.lookupByUsername` → sync name: `LookupUserForLogin`
+3. **Row 2 [Found] → 3b:** When `User.lookupByUsername[Found(userId)]`, invoke `PasswordAuth.check` → sync: `CheckCredentialForLogin`
+4. **Row 2 [NotFound] → 3a:** When `User.lookupByUsername[NotFound]`, invoke `Web.respond[401]` → sync: `RespondUnknownUser`
+5. **Row 3b [Ok] → 4a:** When `PasswordAuth.check[Ok]`, invoke `Session.grant` → sync: `GrantSessionForLogin`
+6. **Row 3b [BadPassword] → 4b:** When `PasswordAuth.check[BadPassword]`, invoke `Web.respond[401]` → sync: `RespondWrongPassword`
+7. **Row 3b [Locked] → 4c:** When `PasswordAuth.check[Locked]`, invoke `Web.respond[401]` → sync: `RespondLocked`
+8. **Row 4a [Granted] → 5:** When `Session.grant[Granted(sessionId)]`, invoke `Web.respond[200]` → sync: `RespondLoginSuccess`

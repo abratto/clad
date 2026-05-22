@@ -76,10 +76,11 @@ postconditions. The agent's job at Stage 00 is to turn it into one.
 most 5 clarifying questions** before writing anything:
 
 > **Agent (proposal):** I read one in-scope actor `EndUser`. I read
-> three in-scope goals: sign in with username+password, see a
-> non-enumerating failure message, be told when the account is
-> locked. I read these out-of-scope: registration, password reset, MFA,
-> SSO, email-as-identity, logout.
+> three in-scope goals: `Sign In`, `See Safe Failure Message`,
+> `Understand Lockout`. Their rationales are obtaining a session,
+> retrying without learning whether the username exists, and
+> understanding why retrying does not work. I read these out-of-scope:
+> registration, password reset, MFA, SSO, email-as-identity, logout.
 >
 > Before I write `actors.md`/`goals.md`, four questions:
 >
@@ -114,8 +115,8 @@ corrections before I continue?"*
 
 > **Why this matters downstream:** every later stage cites these.
 > `actors.md` will appear verbatim as the use case's *Actors*
-> section. Each in-scope `goals.md` row becomes ≥1 named scenario in
-> Stage 01.
+> section. Each in-scope `goals.md` row contributes a stable goal name
+> plus rationale that becomes ≥1 named scenario in Stage 01.
 
 ---
 

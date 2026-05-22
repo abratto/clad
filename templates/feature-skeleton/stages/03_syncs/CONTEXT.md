@@ -53,6 +53,9 @@ For each transition, write one `<name>.sync.md`:
   No function calls, no arithmetic, no I/O. If you need a computation,
   it belongs inside the concept action, not here. Label every line with
   its pattern: `A:` / `B:` / `C:` / `D:` per `SYNC_PATTERNS.md`.
+- `where:` is binding-only. No JSON assembly, no ad hoc projection
+  extraction, and no payload reshaping. If a downstream action needs a
+  different shape, the upstream concept action must emit it explicitly.
 - `where:` is also under a **literal lock**. Status codes remain numeric,
   not quoted strings. Status values keep their exact casing and
   hyphenation. Action argument names must match the Stage 02 signatures
@@ -64,6 +67,11 @@ For each transition, write one `<name>.sync.md`:
 
 Syncs are declarative — no imperative branching, no state, no I/O.
 Every sync's `Cites` section names the use-case scenario it satisfies.
+Optionally also emit `output/<scenario-name>.sync-summary.md` as a
+derived, non-canonical review table that summarizes one scenario's syncs
+as `Step | Sync | When | Then | Where summary | Key`. If present, it
+must be mechanically derivable from the canonical per-sync files and may
+not introduce new logic.
 
 ## Outputs
 

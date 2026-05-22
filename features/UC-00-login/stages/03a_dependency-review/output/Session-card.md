@@ -4,7 +4,7 @@
 
 | Action | Flow (sync) | Data received | Pattern | Source |
 |---|---|---|---|---|
-| `grant` | `LoginGrantsSession` (`successful-login`) | `userId` | — | Trigger pattern variable from `when: PasswordAuth.check(userId, password) -> Ok` |
+| `grant` | `GrantSessionForLogin` (`successful-login`) | `userId` | B | `result_of(PasswordAuth.check).userId` |
 
 ## Section 2 — Named-region reads by others (inbound Pattern D)
 
@@ -16,14 +16,14 @@ state.
 
 ## Inconsistencies and risks
 
-- None at this time. (A previous draft of `LoginGrantsSession.sync.md`
+- None at this time. (A previous draft of the sync pack
   used `Session.open` and `PasswordAuth.verify`; reconciled to the
   canonical chain-table names `Session.grant` and `PasswordAuth.check`.)
 
 ## Cross-checks
 
 - `grant` is declared in `../../02_concepts/output/Session.concept.md`.
-- The sync `LoginGrantsSession` exists under `../../03_syncs/output/`.
+- The sync `GrantSessionForLogin` exists under `../../03_syncs/output/`.
 
 ---
 

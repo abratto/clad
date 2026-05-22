@@ -3,11 +3,11 @@
 
 ## In scope
 
-| Actor | Goal | Priority | In scope |
-|---|---|---|---|
-| EndUser | wants to **sign in with username and password** so that **subsequent requests are recognised as them** | must | yes |
-| EndUser | wants to **see a clear, non-enumerating error** on a failed attempt so that **they know to retry without learning whether the username exists** | must | yes |
-| EndUser | wants to **be told when the account is temporarily locked** so that **they understand why retrying does not work** | should | yes |
+| Actor | Goal | Rationale | Priority | In scope |
+|---|---|---|---|---|
+| EndUser | Sign In | with username and password so that subsequent requests are recognised as them | must | yes |
+| EndUser | See Safe Failure Message | on a failed attempt so that they know to retry without learning whether the username exists | must | yes |
+| EndUser | Understand Lockout | by being told when the account is temporarily locked so that they understand why retrying does not work | should | yes |
 
 ## Out of scope
 

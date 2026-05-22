@@ -15,26 +15,25 @@
 
 ## Consolidated chain
 
-| # | Scenario(s) | Concept | Action | Inputs | Outcome | Why this path |
+| # | Scenario(s) | When | Then | Inputs | Outcome | Why this path |
 |---|---|---|---|---|---|---|
-| 1 | all | `Web` | `handle` | `<route>`, `<request body>` | `Routed` | Entry point (R4) |
-| 2 | main, scenario-X | `<Concept1>` | `<action1>` | `<args>` | `<outcome>` | Happy path continuation |
-| 2a | scenario-Y | `Web` | `respond` | `<status>`, `<body>` | `Sent` | Short-circuit error |
-| 3 | main | `<Concept2>` | `<action2>` | `<args>` | `<outcome>` | Next step (happy path) |
-| 3a | scenario-Z | `Web` | `respond` | `<status>`, `<body>` | `Sent` | Branch error |
-| N | main | `Web` | `respond` | `<status>`, `<body>` | `Sent` | Terminal success |
-| 90+ | errors | `Web` | `respond` | `<status>`, `<body>` | `Sent` | Terminal failure |
+| 1 | all | `Web/request[<route>]` | `Web.handle` | `<route>`, `<request body>` | `Routed` | Entry point (R4) |
+| 2 | main, scenario-X | `Web.handle[Routed]` | `<Concept1>.<action1>` | `<args>` | `<outcome>` | Happy path continuation |
+| 2a | scenario-Y | `<Concept1>.<action1>[<error>]` | `Web.respond[<status>]` | `<status>`, `<body>` | `Sent` | Short-circuit error |
+| 3 | main | `<Concept1>.<action1>[<outcome>]` | `<Concept2>.<action2>` | `<args>` | `<outcome>` | Next step (happy path) |
+| 3a | scenario-Z | `<Concept2>.<action2>[<error>]` | `Web.respond[<status>]` | `<status>`, `<body>` | `Sent` | Branch error |
+| N | main | `<ConceptN>.<actionN>[<outcome>]` | `Web.respond[<status>]` | `<status>`, `<body>` | `Sent` | Terminal success |
+| 90+ | errors | `<ConceptX>.<actionX>[<error>]` | `Web.respond[<status>]` | `<status>`, `<body>` | `Sent` | Terminal failure |
 
 ## WYSIWID lineage and Stage 03 derivation
 
 This artefact stays in **Level 2b** even though it is designed to help
 Stage 03 and Stage 04 work.
 
-- `Concept` + `Action` together are the concrete rendering of the
-  WYSIWID/Taste Tag **Then** column.
-- The row's **When** is implicit: row 1 is triggered by the use-case
-  request, and every later row is triggered by the previous row's
-  `Outcome` plus the relevant scenario branch context.
+- The row's `Then` is the concrete rendering of the WYSIWID/Taste Tag
+  **Then** column.
+- The row's `When` is explicit so the reviewer can inspect the causal
+  edge directly in Stage 02b.
 - `Inputs` are the downstream action's implementation-facing arguments
   only. They are **not** Stage 03 `Where` provenance.
 - Stage 03 is the first place where join provenance and pattern labels
@@ -48,7 +47,7 @@ Stage 02b collapse into a pseudo-sync specification.
 Read each non-root row as a derived causal rule:
 
 - row 1: `Web/request -> Web.handle`
-- every later row: `previous row outcome + scenario branch -> this row's Concept.Action`
+- every later row: `this row's explicit When -> this row's Then`
 
 That is the exact bridge into Stage 03 sync authoring.
 
@@ -100,9 +99,8 @@ Validate that this consolidated view is consistent:
 
 For each non-root row:
 
-1. Derive the Stage 03 `then` from that row's `Concept` + `Action`.
-2. Derive the Stage 03 `when` from the previous row's `Outcome` and the
-  scenario branch named in `Scenario(s)`.
+1. Derive the Stage 03 `then` from that row's `Then` token.
+2. Derive the Stage 03 `when` from the row's explicit `When` token.
 3. Add Stage 03 `where` bindings only for arguments in `Inputs` that are
   not already carried by the triggering outcome.
 

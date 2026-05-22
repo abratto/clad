@@ -7,12 +7,12 @@ password that does not match. Account is below the lockout threshold.
 
 ## Chain
 
-| # | Concept | Action | Inputs | Outcome | Why this step |
+| # | When | Then | Inputs | Outcome | Why this step |
 |---|---|---|---|---|---|
-| 1 | `Web` | `handle` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
-| 2 | `User` | `lookupByUsername` | `username` | `Found(userId)` | The username does exist |
-| 3 | `PasswordAuth` | `check` | `userId`, `password` | `BadPassword` | Credential mismatch; counter increments inside `PasswordAuth` |
-| 4 | `Web` | `respond` | `401`, `{ message: "username or password didn't match" }` | `Sent` | Same opaque message as `unknown-user` (no enumeration leak) |
+| 1 | `Web/request[POST /login]` | `Web.handle` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
+| 2 | `Web.handle[Routed]` | `User.lookupByUsername` | `username` | `Found(userId)` | The username does exist |
+| 3 | `User.lookupByUsername[Found(userId)]` | `PasswordAuth.check` | `userId`, `password` | `BadPassword` | Credential mismatch; counter increments inside `PasswordAuth` |
+| 4 | `PasswordAuth.check[BadPassword]` | `Web.respond[401]` | `401`, `{ message: "username or password didn't match" }` | `Sent` | Same opaque message as `unknown-user` (no enumeration leak) |
 
 ## Diagram
 

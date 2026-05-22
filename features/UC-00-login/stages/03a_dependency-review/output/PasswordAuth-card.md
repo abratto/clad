@@ -4,11 +4,12 @@
 
 | Action | Flow (sync) | Data received | Pattern | Source |
 |---|---|---|---|---|
-| `lock` | `LockoutOnFailedAttempts` (`lockout`) | `userId` | — | Trigger pattern variable from `when: PasswordAuth.check(userId, _) -> BAD_PASSWORD` |
+| `check` | `CheckCredentialForLogin` (`successful-login`, `wrong-password`, `lockout`) | `userId`, `password` | A | `password` from `body.password`; `userId` carried directly by `when: User.lookupByUsername[Found(userId)]` |
 
-> The `check` action itself is invoked inline by `Web` (per the
-> chain tables) — not by a sync. It appears here only as the
-> *trigger* of `LockoutOnFailedAttempts`, not as a `then` target.
+> `PasswordAuth.check` is now a normal sync target under
+> `CheckCredentialForLogin`; the lockout branch is expressed by the
+> `Locked` outcome plus `RespondLocked`, not by a separate `lock`
+> action.
 
 ## Section 2 — Named-region reads by others (inbound Pattern D)
 
@@ -16,20 +17,14 @@ None — no other concept's sync reads `PasswordAuth`'s named region.
 
 ## Inconsistencies and risks
 
-- The `LockoutOnFailedAttempts` sync is **spec-only** in this
-  iteration; the `lock` action does not yet exist in
-  `02_concepts/output/PasswordAuth.concept.md`. Stage 04 will fail
-  fast on this if not closed first.
-- The lockout window predicate ("counted N times within window")
-  must be supplied by the sync runtime, not by branching inside the
-  sync — see `LockoutOnFailedAttempts.sync.md` notes.
+- None at this time. `PasswordAuth` owns the failed-attempt and lockout
+  state internally, and Stage 03 now branches only on the approved
+  `Ok` / `BadPassword` / `Locked` outcomes.
 
 ## Cross-checks
 
-- `lock` is referenced by `../../03_syncs/output/LockoutOnFailedAttempts.sync.md` and
-  must be added to `../../02_concepts/output/PasswordAuth.concept.md`
-  before Stage 04.
 - `check` is declared in `../../02_concepts/output/PasswordAuth.concept.md`.
+- The sync `CheckCredentialForLogin` exists under `../../03_syncs/output/`.
 
 ---
 

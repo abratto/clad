@@ -139,7 +139,8 @@ fabricate goals beyond what the human confirms.
 
 **Output:** `actors.md`, `goals.md` (per
 [`../../templates/actors.md`](../../templates/actors.md) and
-[`../../templates/goals.md`](../../templates/goals.md)).
+[`../../templates/goals.md`](../../templates/goals.md), with one row per
+goal using a short `Goal` phrase plus separate `Rationale`).
 
 **Gate:** human approval — but the gate is *expected* to take multiple
 turns to reach.
@@ -203,14 +204,14 @@ written.
 
 **Process:** for each named scenario in the use case, draw the chain
 of concept actions that fulfils it as a numbered table
-(`# | Concept | Action | Inputs | Outcome | Why this step`) plus a
+(`# | When | Then | Inputs | Outcome | Why this step`) plus a
 Mermaid `stateDiagram-v2` diagram. The first row is always
-`Web.handle`; the last row is always `Web.respond`.
+`Web/request[...] -> Web.handle`; the last row is always
+`... -> Web.respond[...]`.
 
-At this level, `Concept + Action` is the concrete rendering of the
-WYSIWID Level 2b **Then**. The corresponding **When** is still
-implicit: row 1 is triggered by the use-case request, and each later
-row is triggered by the previous row's outcome plus branch context.
+At this level, the `Then` column is the concrete rendering of the
+WYSIWID Level 2b **Then**. The corresponding `When` is explicit in the
+table so the reviewer can inspect the causal edge directly.
 `Inputs` name the downstream action's arguments only; they are **not**
 join provenance. `Where`/pattern A/B/C/D first appear in Stage 03.
 

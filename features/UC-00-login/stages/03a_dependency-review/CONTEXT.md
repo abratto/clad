@@ -24,7 +24,7 @@ If a card needs an action that doesn't exist yet, you are mid-violation
 
 | Path | Layer | Why |
 |---|---|---|
-| `../03_syncs/output/` | 4 | The two UC-00 syncs (`LoginGrantsSession`, `LockoutOnFailedAttempts`) |
+| `../03_syncs/output/` | 4 | The UC-00 per-transition sync pack |
 | `../02b_chain-table/output/` | 4 | The four scenarios' action chains |
 | `../02a_responsibility-map/output/responsibility-map.md` | 4 | The four concepts: `User`, `PasswordAuth`, `Session`, `Web` |
 | `../02_concepts/output/` | 4 | Action and field names |

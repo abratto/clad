@@ -13,7 +13,9 @@ reconciled `Session.open` → `Session.grant` and `PasswordAuth.verify` →
 
 - `<scenario>-chain.md` → 02 (every action used must be declared in the matching concept spec with the same outcome enum), 03 (each row formalises into a sync `when`/`then` link), 03a (the chain is the source of truth for inbound calls per concept), 04c (flow tests assert the chain end-to-end at runtime).
 
-**Agent stance for this stage:** every row is `<Concept>.<action> -> <outcome>`. If you cannot name the outcome, the concept set is wrong — go back to 02a, do not invent.
+**Agent stance for this stage:** every row is an explicit `When -> Then`
+edge with a named outcome. If you cannot name the outcome or trigger,
+the concept set is wrong — go back to 02a, do not invent.
 
 ## Inputs
 
@@ -29,18 +31,18 @@ reconciled `Session.open` → `Session.grant` and `PasswordAuth.verify` →
 For each named scenario in `01_usecase/output/usecase.md`, produce
 `output/<scenario-name>-chain.md` using only concepts and actions
 from `02a_responsibility-map/output/responsibility-map.md`. The
-chain is the ordered list of concept actions that fulfils the
-scenario; the last row is `Web.respond`.
+chain is the ordered list of explicit `When -> Then` edges that
+fulfils the scenario; the last row is always a `... -> Web.respond`
+terminal response.
 
 If the use case has 2+ scenarios: also produce
 `output/login-all-scenarios-chain.md` (consolidated view). This
 non-canonical artefact merges all scenario chains into one
 branching table and combined FSM diagram. It uses the same concrete
 Stage 02b shape as the per-scenario chains
-(`Scenario(s) | Concept | Action | Inputs | Outcome | Why this path`)
-and keeps the WYSIWID `When -> Then` causality explicit by derivation:
-the row's `Concept + Action` is the downstream `Then`, while the row's
-implicit `When` is the previous row's `Outcome` plus branch context.
+(`Scenario(s) | When | Then | Inputs | Outcome | Why this path`)
+and keeps the WYSIWID `When -> Then` causality explicit in the table
+itself.
 Stages 03–04 will use it
 to verify complete outcome coverage and prevent implementation gaps.
 `Inputs` in this artefact are action arguments only; join provenance
@@ -60,11 +62,11 @@ Template: `../../../../templates/consolidated-chain.md`.
 - Every scenario has exactly one chain file (canonical).
 - Consolidated chain (non-canonical):
   - Every row in the consolidated table traces back to a specific scenario chain.
-  - Every non-root row can be restated as one derived `When -> Then` transition for Stage 03.
+  - Every non-root row already states one explicit `When -> Then` transition for Stage 03.
   - Every error outcome from the four scenarios appears in the consolidated branching table.
   - Concept outcome enums match across all per-scenario files (e.g., PasswordAuth.check: [Ok, BadPassword, Locked] appears in all files that use it).
   - `Inputs` expose downstream action arguments only; no `Where`/join provenance appears in Stage 02b.
-- The first row of each scenario chain is `Web.handle`; the last is `Web.respond`.
+- The first row of each scenario chain is `Web/request[...] -> Web.handle`; the last is `... -> Web.respond[...]`.
 - Every action used appears in the responsibility map.
 - Mermaid `stateDiagram-v2` diagrams render at [mermaid.live](https://mermaid.live) with no errors.
 

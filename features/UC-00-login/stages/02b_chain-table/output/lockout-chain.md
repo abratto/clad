@@ -7,12 +7,12 @@ reached the lockout threshold for that user.
 
 ## Chain
 
-| # | Concept | Action | Inputs | Outcome | Why this step |
+| # | When | Then | Inputs | Outcome | Why this step |
 |---|---|---|---|---|---|
-| 1 | `Web` | `handle` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
-| 2 | `User` | `lookupByUsername` | `username` | `Found(userId)` | The username exists |
-| 3 | `PasswordAuth` | `check` | `userId`, `password` | `Locked` | Counter is at threshold; verifier short-circuits regardless of password |
-| 4 | `Web` | `respond` | `401`, `{ message: "Too many attempts. Try again in 15 minutes." }` | `Sent` | Distinct message — the lockout state is observable to the user |
+| 1 | `Web/request[POST /login]` | `Web.handle` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
+| 2 | `Web.handle[Routed]` | `User.lookupByUsername` | `username` | `Found(userId)` | The username exists |
+| 3 | `User.lookupByUsername[Found(userId)]` | `PasswordAuth.check` | `userId`, `password` | `Locked` | Counter is at threshold; verifier short-circuits regardless of password |
+| 4 | `PasswordAuth.check[Locked]` | `Web.respond[401]` | `401`, `{ message: "Too many attempts. Try again in 15 minutes." }` | `Sent` | Distinct message — the lockout state is observable to the user |
 
 ## Diagram
 
@@ -40,5 +40,5 @@ stateDiagram-v2
   `PasswordAuth.check`'s `BadPassword` outcome (see the
   `wrong-password` chain). The `lockout` chain shows what happens on
   the *next* attempt, once the counter is already at threshold.
-- This scenario is currently spec-only in the Java profile; the
-  `LockoutOnFailedAttempts` sync ships in a follow-up.
+- The lockout branch is represented directly by the `Locked` outcome on
+  `PasswordAuth.check` plus the `RespondLocked` sync.

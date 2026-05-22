@@ -33,9 +33,10 @@ before the account is locked.
      `Found(userId)`.
   3. `Web` invokes `PasswordAuth.check(userId, password)`, which
      returns `Ok`.
-  4. The `LoginGrantsSession` sync fires, invoking
-     `Session.grant(userId)` which returns `Granted(sessionId)`.
-  5. `Web` responds `200` with `{ sessionToken: sessionId }`.
+    4. The `GrantSessionForLogin` sync fires, invoking
+      `Session.grant(userId)` which returns `Granted(sessionId)`.
+    5. The `RespondLoginSuccess` sync fires, returning `200` with
+      `{ sessionToken: sessionId }`.
 - **Expected outcomes:**
   - A new `Session` is opened for the user.
   - The response carries a session token.
@@ -120,11 +121,10 @@ sequenceDiagram
   1. The User submits `POST /login` with `{ username, password }`.
   2. `Web` invokes `User.lookupByUsername(username)`, which returns
      `Found(userId)`.
-  3. `Web` invokes `PasswordAuth.check(userId, password)`, which
-     returns `BadPassword`.
-  4. The `LockoutOnFailedAttempts` sync fires, invoking
-     `PasswordAuth.lock(userId)` and the lockout response.
-  5. `Web` responds `401` with the lockout message.
+    3. `Web` invokes `PasswordAuth.check(userId, password)`, which
+      returns `Locked`.
+    4. The `RespondLocked` sync fires, returning `401` with the
+      lockout message.
 - **Expected outcomes:**
   - No session is opened.
   - The response shows: *"Too many attempts. Try again in 15 minutes."*
@@ -133,8 +133,8 @@ sequenceDiagram
   - Not applicable.
 - **Postconditions — Failure:**
   - `Session`'s named region is unchanged.
-  - `PasswordAuth` records the account as `Locked` for the lockout
-    window.
+  - `PasswordAuth`'s `lockedUntil[userId]` remains in force for the
+    lockout window.
   - `User`'s named region is unchanged.
 
 ## Out of scope

@@ -12,5 +12,5 @@
 ### `lookupByUsername(username) -> Optional<UserId>`
 
 - **Inputs:** `username: String`
-- **Outcomes (enum):** `FOUND`, `UNKNOWN`
+- **Outcomes (enum):** `FOUND`, `NOT_FOUND`
 - **Flow token:** `User.lookupByUsername { username, userId?, outcome }`

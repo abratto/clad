@@ -52,8 +52,8 @@ before drafting.
 ## Outputs
 
 - `output/actors.md` — one row per actor (name, role, primary concerns)
-- `output/goals.md` — one row per goal in `<actor> wants to <do X> so
-  that <reason>` form, with priority and in/out-of-scope flag
+- `output/goals.md` — one row per goal with a short `Goal` phrase, a
+  separate `Rationale`, plus priority and in/out-of-scope flag
 
 ## Verify
 

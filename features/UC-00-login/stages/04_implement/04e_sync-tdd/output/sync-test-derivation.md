@@ -3,13 +3,17 @@
 
 | Sync | When-pattern | Expected `then` action | Test name | Status |
 |---|---|---|---|---|
-| LoginGrantsSession | `PasswordAuth.check { outcome: OK }` | `Session.grant(userId)` then `Web.respond(200, sessionId)` | `ok_check_grants_session_and_responds_200` | stub |
-| LoginGrantsSession | `PasswordAuth.check { outcome: BAD_PASSWORD }` | (no `then` — `Web` handles failure response directly) | `bad_password_does_not_grant_session` | stub |
-| LockoutOnFailedAttempts | `PasswordAuth.check { outcome: BAD_PASSWORD }` ×N | `PasswordAuth.lock(userId)` (action TBD when lockout is added) | `nth_bad_password_locks_account` | stub (sync spec only; concept action pending) |
+| LookupUserForLogin | `Web.handle { outcome: ROUTED }` | `User.lookupByUsername(username)` | `routed_login_invokes_user_lookup` | stub |
+| CheckCredentialForLogin | `User.lookupByUsername { outcome: FOUND }` | `PasswordAuth.check(userId, password)` | `found_user_invokes_password_check` | stub |
+| RespondUnknownUser | `User.lookupByUsername { outcome: NOT_FOUND }` | `Web.respond(401, opaqueMessage)` | `unknown_user_returns_opaque_401` | stub |
+| GrantSessionForLogin | `PasswordAuth.check { outcome: OK }` | `Session.grant(userId)` | `ok_check_grants_session` | stub |
+| RespondWrongPassword | `PasswordAuth.check { outcome: BAD_PASSWORD }` | `Web.respond(401, opaqueMessage)` | `bad_password_returns_opaque_401` | stub |
+| RespondLocked | `PasswordAuth.check { outcome: LOCKED }` | `Web.respond(401, lockoutMessage)` | `locked_account_returns_lockout_401` | stub |
+| RespondLoginSuccess | `Session.grant { outcome: GRANTED }` | `Web.respond(200, sessionToken)` | `granted_session_returns_token` | stub |
 
 ## Status
 
-All rows currently `stub`. The first row's stub Java test exists as
+All rows currently `stub`. The success-path stubs already line up with
 the disabled `LoginFlowTest.successful_login_grants_session_and_returns_token`
 in the outside loop; an inner-loop unit test under
 `com.example.app.syncs` will be added in the next iteration.

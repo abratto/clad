@@ -12,5 +12,5 @@
 ### `lookup(sessionId) -> Optional<UserId>`
 
 - **Inputs:** `sessionId: SessionId`
-- **Outcomes (enum):** `ACTIVE`, `UNKNOWN`
+- **Outcomes (enum):** `FOUND`, `UNKNOWN`
 - **Flow token:** `Session.lookup { sessionId, userId?, outcome }`

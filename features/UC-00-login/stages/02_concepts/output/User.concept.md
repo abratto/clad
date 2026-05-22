@@ -43,3 +43,6 @@ then   User/lookupByUsername:  [ username: "alice" ] => [ userId: u ]
 - UC-00-login does not invoke `register`; account creation is out of
   scope. The action is listed because the concept owns the lifecycle
   and would not be coherent without it.
+- Stage 02b renders the happy-path lookup outcome as
+    `Found(userId)` and the miss path as `NotFound`; those tokens are the
+    chain-table/sync view of the same two action cases above.

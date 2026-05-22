@@ -25,9 +25,14 @@
 - **Trigger:** `POST /login { username: "nobody", password: "anything" }`
 - **Expected token chain:**
   1. `Web.handle`
-  2. `User.lookupByUsername { outcome: UNKNOWN }`
+  2. `User.lookupByUsername { outcome: NOT_FOUND }`
 - **Expected response:** `401 Unauthorized` with the **same message** as `wrong-password` (no enumeration leak).
 
 ## Scenario `lockout`
 
-- **Status:** spec-only in this iteration. Requires the `LockoutOnFailedAttempts` sync; the flow test will be added when that sync's tests land in `04e`.
+- **Trigger:** `POST /login { username: "ada", password: "<any>" }` when the account is already locked.
+- **Expected token chain:**
+  1. `Web.handle`
+  2. `User.lookupByUsername { outcome: FOUND }`
+  3. `PasswordAuth.check { outcome: LOCKED }`
+- **Expected response:** `401 Unauthorized { message: "Too many attempts. Try again in 15 minutes." }`

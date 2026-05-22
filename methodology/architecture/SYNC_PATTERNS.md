@@ -129,18 +129,24 @@ differs.
 
 ## What goes in Stage 02b vs Stage 03
 
-Stage 02b stays concrete: `# | Concept | Action | Inputs | Outcome |
-Why this step`. It does **not** carry `Where` / `Key` columns. At that
-stage, the table captures causal choreography only.
+Stage 02b stays concrete: `# | When | Then | Inputs | Outcome | Why this
+step`. It does **not** carry `Where` / `Key` columns. At that stage,
+the table captures causal choreography only.
 
 Stage 03 is the first place where join provenance is spelled out. The
 sync's Contract Matrix and `where:` clause make the data source explicit
 using pattern notation (`A: ...`, `B: ...`, `C: ...`, `D: ...`). That
 keeps the derivation path reviewable:
 
-- Stage 02b says which action follows which outcome.
+- Stage 02b says exactly which `When -> Then` edge is approved.
 - Stage 03 says where the downstream action's arguments come from.
 - Stage 03a audits those joins per concept.
+
+Stage 03 `where` clauses are binding-only. They may bind fields from a
+flow token, prior action output, sync constant, or named concept graph.
+They may not compute values, assemble JSON, or reshape payloads. If a
+downstream action needs a new shape, the upstream concept action must
+emit that shape explicitly.
 
 Worked examples live in
 [`../../templates/sync.md`](../../templates/sync.md)

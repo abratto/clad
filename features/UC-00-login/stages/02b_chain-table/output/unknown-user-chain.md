@@ -7,11 +7,11 @@ registered user.
 
 ## Chain
 
-| # | Concept | Action | Inputs | Outcome | Why this step |
+| # | When | Then | Inputs | Outcome | Why this step |
 |---|---|---|---|---|---|
-| 1 | `Web` | `handle` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
-| 2 | `User` | `lookupByUsername` | `username` | `NotFound` | Username does not exist |
-| 3 | `Web` | `respond` | `401`, `{ message: "username or password didn't match" }` | `Sent` | Same opaque message as `wrong-password` (no enumeration leak) |
+| 1 | `Web/request[POST /login]` | `Web.handle` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
+| 2 | `Web.handle[Routed]` | `User.lookupByUsername` | `username` | `NotFound` | Username does not exist |
+| 3 | `User.lookupByUsername[NotFound]` | `Web.respond[401]` | `401`, `{ message: "username or password didn't match" }` | `Sent` | Same opaque message as `wrong-password` (no enumeration leak) |
 
 ## Diagram
 

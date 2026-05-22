@@ -18,19 +18,18 @@
 
 ## Chain
 
-| # | Concept | Action | Inputs | Outcome | Why this step |
+| # | When | Then | Inputs | Outcome | Why this step |
 |---|---|---|---|---|---|
-| 1 | `Web` | `handle` | `<route>`, `<request body>` | `Routed` | The HTTP entry point (R4) |
-| 2 | `<Name>` | `<actionName>` | `<args>` | `<Outcome>` | <one-line justification> |
-| 3 | `<Name>` | `<actionName>` | `<args>` | `<Outcome>` | … |
-| 4 | `Web` | `respond` | `<status>`, `<body>` | `Sent` | Closes the request |
+| 1 | `Web/request[<route>]` | `Web.handle` | `<route>`, `<request body>` | `Routed` | The HTTP entry point (R4) |
+| 2 | `Web.handle[Routed]` | `<Name>.<actionName>` | `<args>` | `<Outcome>` | <one-line justification> |
+| 3 | `<PreviousName>.<previousAction>[<Outcome>]` | `<Name>.<actionName>` | `<args>` | `<Outcome>` | … |
+| 4 | `<Name>.<actionName>[<Outcome>]` | `Web.respond[<status>]` | `<status>`, `<body>` | `Sent` | Closes the request |
 
 > **Why this shape is Level 2b, not Level 3a.**
-> - `Concept` + `Action` together are the concrete rendering of the
->   WYSIWID Level 2b **Then**.
-> - The row's **When** is implicit: row 1 is triggered by the scenario's
->   `Web/request`, and every later row is triggered by the previous row's
->   `Outcome` plus the scenario branch context.
+> - The row's `Then` is the concrete rendering of the WYSIWID Level 2b
+>   **Then**.
+> - The row's `When` is explicit so the choreography can be reviewed
+>   without mentally reconstructing the trigger edge.
 > - `Inputs` show the action's implementation-facing arguments only.
 >   They are **not** provenance, join logic, or sync bindings.
 > - Stage 03 is the first place where `where` provenance and the
@@ -64,7 +63,7 @@ stateDiagram-v2
 
 - Every concept that appears in the table is also a row in
   `../02a_responsibility-map/output/responsibility-map.md`.
-- Every action that appears in the table is listed in the
+- Every `Then` action that appears in the table is listed in the
   corresponding `<Name>.concept.md` (Stage 02) once that file exists.
 - The trigger and the final response match the scenario's *Trigger*
   and *Expected outcomes* in `../01_usecase/output/usecase.md`.
@@ -83,14 +82,13 @@ is not a metaphor — it is a property a reviewer can check by
 inspection of the table alone, before any sync is written.
 
 - **States** = action outcomes, typed as `Ok`/`<NamedFailure>`. The
-  initial state is the `Web.handle` invocation; the terminal states
-  are `Web.respond` invocations (success or failure).
+  initial state is the row-1 `Web/request -> Web.handle` handoff; the
+  terminal states are `Web.respond` invocations (success or failure).
 - **Events** = the outcomes that completing actions emit
   (`Ok`, `BadPassword`, `NotFound`, …). Every completion emits
   exactly one event; every event triggers at most one transition per
   sync.
-- **Transitions** = the next row's `Concept` + `Action`, triggered by
-  the previous row's outcome.
+- **Transitions** = each row's explicit `When -> Then` edge.
 
 A chain table with no ambiguous transitions, no unreachable states,
 and no missing failure paths is a well-formed FSM — and therefore a
@@ -98,13 +96,13 @@ correct skeleton for the syncs at Stage 03.
 
 ### Deriving Stage 03 syncs from the chain table
 
-Stage 03 turns the implicit Level 2b `When -> Then` structure into
+Stage 03 turns the Level 2b `When -> Then` structure into
 explicit sync rules:
 
 1. Row 1 is the root `Web.handle` entry. It is **not** itself a sync.
 2. Every non-root row becomes one Stage 03 `then` target.
-3. The matching Stage 03 `when` is the previous row's `Outcome` plus
-  the branch context that selects this row.
+3. The matching Stage 03 `when` is copied from the row's explicit
+  `When` token.
 4. Stage 03 adds `where` provenance only when the downstream action
   needs data not carried directly by the triggering outcome.
 
@@ -122,7 +120,7 @@ diagram disagree, the table wins.
 When you change the table, regenerate the diagram. The translation is
 mechanical:
 
-1. Each row's `Action` becomes a state node (replace `.` with `_` so
+1. Each row's `Then` action becomes a state node (replace `.` with `_` so
    Mermaid will accept it: `Account_validate`).
 2. Each transition `row N → row N+1` becomes an arrow labelled with
    row N's `Outcome` in brackets: `[Ok]`, `[AccountExists]`, etc.

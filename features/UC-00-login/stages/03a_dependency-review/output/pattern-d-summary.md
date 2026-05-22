@@ -4,12 +4,14 @@
 
 No Pattern D reads in this feature.
 
-Every `where` clause across the two UC-00 syncs uses either:
+Every `where` clause across the UC-00 sync pack uses either:
 
 - A trigger pattern variable (data already bound by the `when`
-  clause — e.g. `userId` in `LoginGrantsSession`),
-- Pattern B (a flow-sibling output — e.g. `sessionId` from
-  `Session.grant` consumed by `Web.respond` in the same flow), or
+  clause),
+- Pattern B (a flow-sibling output — e.g. `userId` from
+  `PasswordAuth.check` consumed by `GrantSessionForLogin`, or
+  `sessionId` from `Session.grant` consumed by `RespondLoginSuccess` in
+  the same flow), or
 - Pattern C (a literal constant — e.g. `status: 200` / `401`).
 
 No sync reads another concept's named region. UC-00-login therefore
@@ -31,8 +33,9 @@ has **zero cross-concept state coupling at runtime**.
 - **Stage 04a (storage mapping).** The in-memory profile will skip
   storage mapping, but any future persistent profile will realize only
   the concept-local facts approved in Stage 03b.
-- **Stage 04b (spec).** Sync specs need only normalise the
-  action-name discrepancies noted on the per-concept cards.
+- **Stage 04b (spec).** Sync specs no longer carry action-name drift;
+  Stage 04b can compile directly against the approved Stage 02 and 03
+  contracts.
 - **Stage 05 (verify).** Trace target list is empty for Pattern D;
   flow tests still cover the `successful-login` and `lockout` chains
   end-to-end.

@@ -8,7 +8,7 @@
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `<#>` | `<#>` | `<Concept>.<action>(<args>) -> <Outcome>` | `<Concept>.<action>(<args>)` | `<none \/ 200 / on-loan / ...>` |
+| `<#>` | `<#>` | `<explicit When token from 02b row>` | `<explicit Then token from 02b row + args>` | `<none \/ 200 / on-loan / ...>` |
 
 <!-- ⚠️ SYNC AUTHORING RULES — READ BEFORE WRITING THE RULE BLOCK
 
@@ -21,7 +21,7 @@ ONE SYNC PER CHAIN-TABLE ROW
 
 WHERE CLAUSE — DATA ROUTING ONLY
   The `where` clause declares how data flows from the `when` outcome to
-  the `then` call. It is a field-path mapping, not a computation engine.
+  the `then` call. It is a field-path binding list, not a computation engine.
 
   ALLOWED:
     email    = body.email          (read a field from the flow token)
@@ -32,6 +32,20 @@ WHERE CLAUSE — DATA ROUTING ONLY
     passwordHash = hash(body.password)   (computation — belongs in the concept)
     token        = jwt.sign(payload)     (I/O — belongs in the concept)
     count        = items.length + 1      (arithmetic — belongs in the concept)
+    summary      = toJson(result.items)  (reshaping — belongs in the concept)
+
+ASSEMBLY AND EXTRACTION LOCK
+  `where` may not assemble JSON, extract ad hoc nested projections, or
+  reshape payloads. If the downstream action needs a different shape,
+  that shape must be emitted by the upstream concept action explicitly.
+
+  NOT ALLOWED:
+    where: B: productScores = result_of(TasteMatch.compute).scores[*].calibratedScore
+    where: B: body = {sessionToken: result_of(Session.grant).sessionId}
+
+  ALLOWED:
+    where: B: sessionId = result_of(Session.grant).sessionId
+    then:  Web.respond(status=200, body={sessionToken: sessionId})
 
   If you find yourself writing a function call in `where`, stop. The
   computation belongs inside the concept action that receives the data.
@@ -83,7 +97,7 @@ NO INVENTED PAYLOAD FIELDS
 ## Rule
 
 ```
-when:  <Concept>.<action>(<args>) -> <Outcome>
+when:  <explicit When token from approved 02b row>
 where: A: <local> = body.<field>
        B: <local> = result_of(<Concept>.<action>).<field>
   C: <local> = <exact literal from approved contract>

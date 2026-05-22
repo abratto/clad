@@ -12,11 +12,10 @@
 ### `check(userId, password) -> AuthOutcome`
 
 - **Inputs:** `userId: UserId`, `password: String`
-- **Outcomes (enum):** `OK`, `BAD_PASSWORD`, `NO_CREDENTIAL`
+- **Outcomes (enum):** `OK`, `BAD_PASSWORD`, `LOCKED`
 - **Flow token:** `PasswordAuth.check { userId, outcome }`
 
 ## Notes
 
-- UC-00-login does not exercise lockout in this slice; the
-  `LockoutOnFailedAttempts` sync adds counter state in a follow-up
-  iteration. SPEC will gain a `getFailedAttempts(userId)` action then.
+- UC-00-login now treats lockout as an internal `PasswordAuth.check`
+  outcome, not as a separate sync-owned action.

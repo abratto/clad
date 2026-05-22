@@ -12,7 +12,9 @@ from silently inventing names that nothing else will recognise.
 
 - `<scenario>-chain.md` → 02 (every action used must be declared in the matching concept spec with the same outcome enum), 03 (each row formalises into a sync `when`/`then` link), 03a (the chain is the dependency graph 03a audits), 04c (the flow test asserts the token sequence the chain predicts).
 
-**Agent stance for this stage:** every row is `<Concept>.<action> -> <outcome>`. If you cannot name the outcome, the concept set is wrong — go back to 02a, do not invent.
+**Agent stance for this stage:** every row is an explicit `When -> Then`
+edge with a named outcome. If you cannot name the outcome or the
+trigger, the concept set is wrong — go back to 02a, do not invent.
 
 ## Inputs
 
@@ -27,9 +29,10 @@ from silently inventing names that nothing else will recognise.
 
 For each named scenario in `01_usecase/output/usecase.md`, produce one
 file `output/<scenario-name>-chain.md`. The chain is the ordered
-sequence of `<Concept>.<action> -> <outcome>` calls that fulfils the
-scenario, justified one row at a time. Use the actions and concepts
-already named in the responsibility map — do not invent new ones.
+sequence of explicit `When -> Then` steps that fulfils the scenario,
+with the downstream action's `Inputs`, resulting `Outcome`, and one-line
+justification. Use the actions and concepts already named in the
+responsibility map — do not invent new ones.
 
 Optionally include a Mermaid sequence diagram (the template suggests
 one). The diagram is for human review; it is not load-bearing.
@@ -49,8 +52,8 @@ chain table per scenario.
   chain file.
 - Every concept and action that appears in a chain table is listed in
   `02a_responsibility-map/output/responsibility-map.md`.
-- The first row of every chain is `Web.handle` (R4); the last row of
-  every chain is `Web.respond`.
+- The first row of every chain is `Web/request[...] -> Web.handle` (R4);
+  the last row of every chain is `... -> Web.respond[...]`.
 - **No repeated action invocations.** Each `<Concept>.<action>` pair
   may appear at most once per chain. If the same action appears in two
   rows, those rows must be merged: a single action invocation produces

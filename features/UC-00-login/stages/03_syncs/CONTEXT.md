@@ -46,24 +46,33 @@ and reopen Stage 02. Stage 03 does not normalize earlier-stage drift.
 Syncs are declarative `when … where … then …`; no imperative branching,
 no state, no I/O. `where` is data routing only. It may use field-path
 references and sync constants, but it may not invent convenience fields.
+It is binding-only: no JSON assembly, no ad hoc nested projection
+extraction, and no payload reshaping. If the downstream action needs a
+different shape, an upstream concept action must emit it explicitly.
 Response bodies may use only constants from the target chain row or
 fields explicitly emitted by an earlier approved outcome and declared in
 `where`. Exact literals are locked: numeric status codes stay numeric,
 and string/status values keep their approved casing and hyphenation.
 
 Each sync's `Cites` section names the use-case scenarios it satisfies.
+An optional `output/<scenario-name>.sync-summary.md` may be emitted as a
+derived, non-canonical per-scenario review table (`Step | Sync | When |
+Then | Where summary | Key`) if it is copied mechanically from the
+canonical sync files and introduces no new logic.
 
 ## Outputs
 
-- `output/LoginGrantsSession.sync.md` — couples `PasswordAuth.check -> OK` to `Session.grant` and the 200 response.
-- `output/LockoutOnFailedAttempts.sync.md` — spec-only this iteration; pairs N consecutive `BAD_PASSWORD` outcomes with `PasswordAuth.lock` and a 401 response.
+- `output/LookupUserForLogin.sync.md`
+- `output/CheckCredentialForLogin.sync.md`
+- `output/RespondUnknownUser.sync.md`
+- `output/GrantSessionForLogin.sync.md`
+- `output/RespondWrongPassword.sync.md`
+- `output/RespondLocked.sync.md`
+- `output/RespondLoginSuccess.sync.md`
 
 ## Verify
 
-- Every scenario in the use case is satisfied by at least one sync, or
-  is handled directly by `Web` returning a failure outcome (the
-  `wrong-password` and `unknown-user` paths in UC-00 are the latter —
-  documented in `LoginGrantsSession.sync.md` notes).
+- Every scenario in the use case is satisfied by at least one sync.
 - No sync contains `if`/`else` over business state.
 - No sync persists state.
 - Every sync has a one-row Sync Contract Matrix that names the exact
@@ -77,11 +86,9 @@ Each sync's `Cites` section names the use-case scenarios it satisfies.
 - If any 03 signature differs from 02b or 02, stop and reopen Stage 02
   instead of resolving the mismatch inside a sync.
 - **Cross-stage check (back):** every named scenario in
-  `../01_usecase/output/usecase.md` is satisfied by at least one sync
-  or is explicitly called out as a `Web`-only failure path.
+  `../01_usecase/output/usecase.md` is satisfied by at least one sync.
 - **Filename contract:** the files in `output/` match the `Outputs`
-  section exactly: `LoginGrantsSession.sync.md` and
-  `LockoutOnFailedAttempts.sync.md`, with no extras and no omissions.
+  section exactly, with no extras and no omissions.
 
 ## Gate
 

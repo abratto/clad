@@ -4,8 +4,10 @@
 
 | Action | Flow (sync) | Data received | Pattern | Source |
 |---|---|---|---|---|
-| `respond` | `LoginGrantsSession` (`successful-login`) | `status: 200`, `body: { sessionId }` | C + B | C: `200` literal; B: `sessionId` from `result_of(Session.grant).sessionId` (same flow) |
-| `respond` | `LockoutOnFailedAttempts` (`lockout`) | `status: 401`, `body: { message: "too many attempts. try again in 15 minutes." }` | C | Both literal — pattern C constants baked into the sync |
+| `respond` | `RespondUnknownUser` (`unknown-user`) | `status: 401`, `body: { message: "username or password didn't match" }` | C | Both literal — pattern C constants baked into the sync |
+| `respond` | `RespondWrongPassword` (`wrong-password`) | `status: 401`, `body: { message: "username or password didn't match" }` | C | Both literal — pattern C constants baked into the sync |
+| `respond` | `RespondLocked` (`lockout`) | `status: 401`, `body: { message: "Too many attempts. Try again in 15 minutes." }` | C | Both literal — pattern C constants baked into the sync |
+| `respond` | `RespondLoginSuccess` (`successful-login`) | `status: 200`, `body: { sessionToken: sessionId }` | C + B | C: `200` literal; B: `sessionId` from `result_of(Session.grant).sessionId` (same flow) |
 
 > `Web.handle` is the trigger of every flow, never a `then` target;
 > it does not appear in this section.
@@ -18,17 +20,15 @@ runtime.
 
 ## Inconsistencies and risks
 
-- `Web` carries inline routing logic for the `wrong-password`,
-  `unknown-user`, and `wrong-password` chains (translating non-`Ok`
-  outcomes from `User.lookupByUsername` and `PasswordAuth.check`
-  into 401 responses). This is permitted by R4 (Web is the bootstrap)
-  but means `Web`'s spec is the place where those failure-branch
-  responses are pinned down — not Stage 03.
+- None at this time. All UC-00 response branches are now represented as
+  Stage 03 syncs, so `Web` remains a pure bootstrap boundary rather
+  than a hidden coordination surface.
 
 ## Cross-checks
 
 - `respond` is the canonical Web action (no Web concept spec; see
   [`../../../../../methodology/architecture/WEB_CONCEPT.md`](../../../../../methodology/architecture/WEB_CONCEPT.md)).
+- All four response syncs named above exist under `../../03_syncs/output/`.
 
 ---
 
