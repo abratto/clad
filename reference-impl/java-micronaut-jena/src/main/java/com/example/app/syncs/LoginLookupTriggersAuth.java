@@ -29,6 +29,7 @@ import jakarta.inject.Singleton;
 public final class LoginLookupTriggersAuth extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
+    private static final String LOGIN_ROUTE = "login";
 
     @Inject
     public LoginLookupTriggersAuth(ActionLog actionLog) {
@@ -45,28 +46,35 @@ public final class LoginLookupTriggersAuth extends SyncAgent {
 
     @Override
     protected String whereClause() {
-        return
-            "    ?_when_1 :concept <" + UserConcept.IRI + "> ;\n" +
-            "             :name    \"lookupByUsername\" ;\n" +
-            "             :flow    ?_flow ;\n" +
-            "             :output  ?_lookup_out .\n" +
-            "    ?_lookup_out :outcome \"FOUND\" ;\n" +
-            "                 :userId  ?_userId .\n" +
-            "    ?_web_req :concept <" + WEB_IRI + "> ;\n" +
-            "              :name    \"request\" ;\n" +
-            "              :flow    ?_flow ;\n" +
-            "              :input   ?_web_inp .\n" +
-            "    ?_web_inp :route    \"login\" ;\n" +
-            "              :password ?_password .\n";
+        return """
+            ?_when_1 :concept <%s> ;
+                     :name    "lookupByUsername" ;
+                     :flow    ?_flow ;
+                     :output  ?_lookup_out .
+            ?_lookup_out :outcome "FOUND" ;
+                         :userId  ?_userId .
+            ?_web_req :concept <%s> ;
+                      :name    "request" ;
+                      :flow    ?_flow ;
+                      :input   ?_web_inp .
+            ?_web_inp :route    ?_route ;
+                      :password ?_password .
+            """.formatted(UserConcept.IRI, WEB_IRI);
     }
 
     @Override
     protected String thenBindings() {
-        return
-            "    ?_then_1 :concept <" + PasswordAuthConcept.IRI + "> ;\n" +
-            "             :name    \"check\" ;\n" +
-            "             :input   ?_then_input .\n" +
-            "    ?_then_input :userId   ?_userId ;\n" +
-            "                 :password ?_password .\n";
+        return """
+            ?_then_1 :concept <%s> ;
+                     :name    "check" ;
+                     :input   ?_then_input .
+            ?_then_input :userId   ?_userId ;
+                         :password ?_password .
+            """.formatted(PasswordAuthConcept.IRI);
+    }
+
+    @Override
+    protected String parameterizeSparql(String sparql) {
+        return bindLiteral(sparql, "_route", LOGIN_ROUTE);
     }
 }

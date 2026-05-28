@@ -75,6 +75,14 @@ That document is the profile-specific source of truth for how Pattern
 A/B/C/D bindings, sink syncs, and the bootstrap handoff map into
 `whereClause()` / `thenBindings()`.
 
+The canonical working example for that lowering is the UC-00 login sync
+pack under `src/main/java/com/example/app/syncs/`, together with
+`engine/SyncAgent.java`. Those classes now demonstrate the reference
+profile style directly: Java text blocks for SPARQL fragments,
+`.formatted()` for IRI constants, explicit outcome literals kept inline,
+and non-outcome string literals bound through
+`SyncAgent.parameterizeSparql(...)`.
+
 ## SPARQL guidance (this profile only)
 
 Use the rules below only when implementing CLAD with this Java/Jena
@@ -92,27 +100,40 @@ profile. They are not global CLAD rules.
    `?_then_1` with `:concept`, `:name`, and `:input ?_then_input`.
 6. Keep outcomes explicit and literal (for example `"FOUND"`,
    `"WRONG_PASSWORD"`) so test intent maps remain stable.
+7. Write sync fragments as Java text blocks and interpolate only IRI
+   constants with `.formatted()`.
+8. For route names, shared response messages, and other non-outcome
+   string literals, declare a Java constant and bind it through
+   `SyncAgent.parameterizeSparql(...)` rather than embedding the literal
+   directly in the fragment text.
 
 Minimal sync fragment shape:
 
 ```java
 @Override
 protected String whereClause() {
-     return
-          "    ?_when_1 :concept <...> ;\n" +
-          "             :name    \"...\" ;\n" +
-          "             :flow    ?_flow ;\n" +
-          "             :output  ?_out .\n" +
-          "    ?_out :outcome \"...\" .\n";
+   return """
+      ?_when_1 :concept <%s> ;
+             :name    "..." ;
+             :flow    ?_flow ;
+             :output  ?_out .
+      ?_out :outcome "..." .
+      """.formatted(CONCEPT_IRI);
 }
 
 @Override
 protected String thenBindings() {
-     return
-          "    ?_then_1 :concept <...> ;\n" +
-          "             :name    \"...\" ;\n" +
-          "             :input   ?_then_input .\n" +
-          "    ?_then_input :field ?value .\n";
+   return """
+      ?_then_1 :concept <%s> ;
+             :name    "..." ;
+             :input   ?_then_input .
+      ?_then_input :field ?value .
+      """.formatted(TARGET_CONCEPT_IRI);
+}
+
+@Override
+protected String parameterizeSparql(String sparql) {
+   return bindLiteral(sparql, "_route", ROUTE);
 }
 ```
 
@@ -128,6 +149,10 @@ translation recipe.
 
 When Stage 04 implementation work needs a concrete Java/Jena/Micronaut
 shape to copy, use [`CANONICAL_EXEMPLAR.md`](CANONICAL_EXEMPLAR.md).
+
+For the concrete sync coding pattern, copy from the UC-00 login sync
+classes, not from older string-concatenation snippets in downstream
+repositories.
 
 Important: this exemplar is a **realization pattern**, not a substitute
 for a feature's own approved upstream artefacts. Implementation must be
@@ -214,6 +239,9 @@ Why this exists:
    surface instead of asking them to infer engine state from raw triples
 - `/api/dev/flows` and `/api/dev/syncs` make the Stage 03/04 runtime
    wiring legible in the same vocabulary used by CLAD artefacts
+- every authored HTTP response also carries `X-Flow-Token`, so a manual
+   `curl` or browser call can be traced back to `/api/dev/flow/{token}`
+   without a special test harness
 
 How to enable it locally:
 
@@ -249,6 +277,12 @@ Operational notes:
 Example:
 
 ```sh
+curl -i -X POST http://localhost:8080/login \
+   -H 'Content-Type: application/json' \
+   -d '{"username":"ada","password":"correct-horse-battery-staple"}'
+# response headers include:
+# X-Flow-Token: https://clad.dev/flow/<uuid>
+
 curl http://localhost:8080/api/dev/flows
 curl http://localhost:8080/api/dev/stuck
 curl http://localhost:8080/api/dev/concept/user/triples

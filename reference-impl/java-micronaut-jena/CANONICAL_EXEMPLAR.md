@@ -33,7 +33,7 @@ flow implemented by:
 - `engine/SyncDispatcher.java` — sync scheduling loop
 - `engine/ConceptAgent.java` — per-concept polling/action boundary
 - `engine/SyncAgent.java` — declarative `whereClause()` /
-  `thenBindings()` sync shape
+  `thenBindings()` sync shape plus shared SPARQL parameterization hook
 - `concepts/user/UserConcept.java`
 - `concepts/passwordauth/PasswordAuthConcept.java`
 - `concepts/session/SessionConcept.java`
@@ -51,6 +51,10 @@ flow implemented by:
 - one transport-only `WebController`
 - one `*Concept` class per concept package, extending `ConceptAgent`
 - one declarative `SyncAgent` subclass per approved sync
+- sync SPARQL fragments written as Java text blocks with `.formatted()`
+  for IRI constants
+- non-outcome discriminator literals centralized as Java constants and
+  bound through `SyncAgent.parameterizeSparql(...)`
 - the package split itself: `api`, `infrastructure`, `engine`,
   `concepts.<name>`, `syncs`, and `flows` tests
 - no coordinator / orchestrator class that sequences domain calls
@@ -65,6 +69,11 @@ flow implemented by:
   `login`
 - any implementation detail not justified by the current feature's own
   approved upstream artefacts
+
+For the concrete code pattern, read the login sync classes together with
+[`SYNC_LOWERING.md`](SYNC_LOWERING.md): they are the working exemplar
+for text-block SPARQL fragments, explicit outcome literals, and
+parameterized route/message literals in this profile.
 
 ## Legacy-code rule for derived repositories
 

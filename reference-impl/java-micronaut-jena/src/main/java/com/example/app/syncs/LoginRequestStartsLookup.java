@@ -31,6 +31,7 @@ import jakarta.inject.Singleton;
 public final class LoginRequestStartsLookup extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
+    private static final String LOGIN_ROUTE = "login";
 
     @Inject
     public LoginRequestStartsLookup(ActionLog actionLog) {
@@ -45,21 +46,28 @@ public final class LoginRequestStartsLookup extends SyncAgent {
 
     @Override
     protected String whereClause() {
-        return
-            "    ?_when_1 :concept <" + WEB_IRI + "> ;\n" +
-            "             :name    \"request\" ;\n" +
-            "             :input   ?_web_inp ;\n" +
-            "             :flow    ?_flow .\n" +
-            "    ?_web_inp :route    \"login\" ;\n" +
-            "              :username ?_username .\n";
+        return """
+            ?_when_1 :concept <%s> ;
+                     :name    "request" ;
+                     :input   ?_web_inp ;
+                     :flow    ?_flow .
+            ?_web_inp :route    ?_route ;
+                      :username ?_username .
+            """.formatted(WEB_IRI);
     }
 
     @Override
     protected String thenBindings() {
-        return
-            "    ?_then_1 :concept <" + UserConcept.IRI + "> ;\n" +
-            "             :name    \"lookupByUsername\" ;\n" +
-            "             :input   ?_then_input .\n" +
-            "    ?_then_input :username ?_username .\n";
+        return """
+            ?_then_1 :concept <%s> ;
+                     :name    "lookupByUsername" ;
+                     :input   ?_then_input .
+            ?_then_input :username ?_username .
+            """.formatted(UserConcept.IRI);
+    }
+
+    @Override
+    protected String parameterizeSparql(String sparql) {
+        return bindLiteral(sparql, "_route", LOGIN_ROUTE);
     }
 }

@@ -47,22 +47,29 @@ public final class LoginRespondWrongPassword extends SyncAgent {
     protected String whereClause() {
         // Match BAD_PASSWORD or NO_CREDENTIAL — both are credential failures and
         // must be indistinguishable from unknown-user externally.
-        return
-            "    ?_when_1 :concept <" + PasswordAuthConcept.IRI + "> ;\n" +
-            "             :name    \"check\" ;\n" +
-            "             :flow    ?_flow ;\n" +
-            "             :output  ?_check_out .\n" +
-            "    ?_check_out :outcome ?_outcome .\n" +
-            "    FILTER (?_outcome IN (\"BAD_PASSWORD\", \"NO_CREDENTIAL\"))\n";
+        return """
+            ?_when_1 :concept <%s> ;
+                     :name    "check" ;
+                     :flow    ?_flow ;
+                     :output  ?_check_out .
+            ?_check_out :outcome ?_outcome .
+            FILTER (?_outcome IN ("BAD_PASSWORD", "NO_CREDENTIAL"))
+            """.formatted(PasswordAuthConcept.IRI);
     }
 
     @Override
     protected String thenBindings() {
-        return
-            "    ?_then_1 :concept <" + WEB_IRI + "> ;\n" +
-            "             :name    \"respond\" ;\n" +
-            "             :input   ?_then_input .\n" +
-            "    ?_then_input :statusCode 401 ;\n" +
-            "                 :message    \"" + LOGIN_FAILURE_MESSAGE + "\" .\n";
+        return """
+            ?_then_1 :concept <%s> ;
+                     :name    "respond" ;
+                     :input   ?_then_input .
+            ?_then_input :statusCode 401 ;
+                         :message    ?_message .
+            """.formatted(WEB_IRI);
+    }
+
+    @Override
+    protected String parameterizeSparql(String sparql) {
+        return bindLiteral(sparql, "_message", LOGIN_FAILURE_MESSAGE);
     }
 }

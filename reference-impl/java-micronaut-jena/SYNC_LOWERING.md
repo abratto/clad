@@ -41,6 +41,56 @@ class under `<APP_PACKAGE_ROOT>.syncs` that:
 Use the approved sync name for the class name with standard Java class
 capitalization. Use lower camel case for `syncName()`.
 
+## SPARQL fragment construction
+
+Use Java text blocks for `whereClause()` and `thenBindings()` fragments.
+Interpolate IRI constants via `.formatted()`.
+
+When a sync needs a non-outcome string literal such as a route name,
+message text, or other discriminator, declare it as a
+`private static final String` constant and bind it through
+`ParameterizedSparqlString`. In the CLAD reference profile, prefer the
+base-class hook `parameterizeSparql(...)` instead of rebuilding the
+outer update manually in each subclass.
+
+Keep outcome literals explicit in the SPARQL text. Do not parameterize
+`"FOUND"`, `"OK"`, `"GRANTED"`, and similar outcome values, because the
+lowering contract needs those branches to stay visibly one-to-one with
+the approved SPEC outcomes.
+
+### Text block shape
+
+```java
+@Override
+protected String whereClause() {
+  return """
+    ?_when_1 :concept <%s> ;
+         :name    "request" ;
+         :input   ?_inp ;
+         :flow    ?_flow .
+    ?_inp :route ?_route ;
+        :copyId ?_copyId ;
+        :memberId ?_memberId .
+    """.formatted(WEB_IRI);
+}
+```
+
+### Parameterized literals
+
+```java
+private static final String ROUTE = "borrow";
+
+@Override
+protected String parameterizeSparql(String sparql) {
+  return bindLiteral(sparql, "_route", ROUTE);
+}
+```
+
+The `?_route` variable in the text block is bound at execution time by
+`ParameterizedSparqlString`. This keeps the fragment readable as pure
+SPARQL while still centralizing rename-sensitive literals in Java
+constants.
+
 ## Engine-owned SPARQL shape
 
 `SyncAgent` assembles the outer `INSERT ... WHERE` shape for you. The
@@ -102,18 +152,22 @@ Java/Jena lowering:
 Completion-shaped example:
 
 ```java
-"    ?_when_1 :output ?_out .\n" +
-"    ?_out :outcome \"FOUND\" ;\n" +
-"         :username ?_username .\n"
+"""
+?_when_1 :output ?_out .
+?_out :outcome "FOUND" ;
+  :username ?_username .
+"""
 ```
 
 Bootstrap-shaped example:
 
 ```java
-"    ?_when_1 :input ?_web_inp ;\n" +
-"             :flow  ?_flow .\n" +
-"    ?_web_inp :route \"login\" ;\n" +
-"              :username ?_username .\n"
+"""
+?_when_1 :input ?_web_inp ;
+         :flow  ?_flow .
+?_web_inp :route ?_route ;
+          :username ?_username .
+"""
 ```
 
 ### Pattern B — flow-sibling join
@@ -132,12 +186,14 @@ Java/Jena lowering:
 Example:
 
 ```java
-"    ?_lookup :concept <...User...> ;\n" +
-"             :name    \"lookupByUsername\" ;\n" +
-"             :flow    ?_flow ;\n" +
-"             :output  ?_lookup_out .\n" +
-"    ?_lookup_out :outcome \"FOUND\" ;\n" +
-"                 :userId  ?_userId .\n"
+"""
+?_lookup :concept <...User...> ;
+         :name    "lookupByUsername" ;
+         :flow    ?_flow ;
+         :output  ?_lookup_out .
+?_lookup_out :outcome "FOUND" ;
+             :userId  ?_userId .
+"""
 ```
 
 ### Pattern C — sync constant
@@ -157,7 +213,9 @@ Java/Jena lowering:
 Example:
 
 ```java
-"    ?_then_input :statusCode 200 .\n"
+"""
+?_then_input :statusCode 200 .
+"""
 ```
 
 ### Pattern D — concept-state join
@@ -181,10 +239,12 @@ Java/Jena lowering for this profile:
 Example shape:
 
 ```java
-"  GRAPH <" + RdfVocabulary.conceptGraph("loan") + "> {\n" +
-"    ?loan :loanId ?_loanId ;\n" +
-"          :dueDate ?_dueDate .\n" +
-"  }\n"
+"""
+GRAPH <%s> {
+  ?loan :loanId ?_loanId ;
+        :dueDate ?_dueDate .
+}
+""".formatted(RdfVocabulary.conceptGraph("loan"))
 ```
 
 ## Bootstrap handoff exception
@@ -225,11 +285,13 @@ Rules:
 Example:
 
 ```java
-"    ?_then_1 :concept <" + WEB_IRI + "> ;\n" +
-"             :name    \"respond\" ;\n" +
-"             :input   ?_then_input .\n" +
-"    ?_then_input :statusCode   200 ;\n" +
-"                 :sessionToken ?_sessionToken .\n"
+"""
+?_then_1 :concept <%s> ;
+         :name    "respond" ;
+         :input   ?_then_input .
+?_then_input :statusCode   200 ;
+             :sessionToken ?_sessionToken .
+""".formatted(WEB_IRI)
 ```
 
 ## Worked derivation slice — successful login
@@ -277,34 +339,37 @@ RespondLoginSuccess:
 `GrantSessionForLogin.whereClause()`:
 
 ```java
-return
-    "    ?_when_1 :concept <" + PasswordAuthConcept.IRI + "> ;\n" +
-    "             :name    \"check\" ;\n" +
-    "             :flow    ?_flow ;\n" +
-    "             :output  ?_check_out .\n" +
-    "    ?_check_out :outcome \"OK\" ;\n" +
-    "                :userId  ?_userId .\n";
+return """
+  ?_when_1 :concept <%s> ;
+       :name    "check" ;
+       :flow    ?_flow ;
+       :output  ?_check_out .
+  ?_check_out :outcome "OK" ;
+        :userId  ?_userId .
+  """.formatted(PasswordAuthConcept.IRI);
 ```
 
 `GrantSessionForLogin.thenBindings()`:
 
 ```java
-return
-    "    ?_then_1 :concept <" + SessionConcept.IRI + "> ;\n" +
-    "             :name    \"grant\" ;\n" +
-    "             :input   ?_then_input .\n" +
-    "    ?_then_input :userId ?_userId .\n";
+return """
+  ?_then_1 :concept <%s> ;
+       :name    "grant" ;
+       :input   ?_then_input .
+  ?_then_input :userId ?_userId .
+  """.formatted(SessionConcept.IRI);
 ```
 
 `RespondLoginSuccess.thenBindings()`:
 
 ```java
-return
-    "    ?_then_1 :concept <" + WEB_IRI + "> ;\n" +
-    "             :name    \"respond\" ;\n" +
-    "             :input   ?_then_input .\n" +
-    "    ?_then_input :statusCode   200 ;\n" +
-    "                 :sessionToken ?_sessionToken .\n";
+return """
+  ?_then_1 :concept <%s> ;
+       :name    "respond" ;
+       :input   ?_then_input .
+  ?_then_input :statusCode   200 ;
+         :sessionToken ?_sessionToken .
+  """.formatted(WEB_IRI);
 ```
 
 That is the intended mechanical path: approved chain row -> approved

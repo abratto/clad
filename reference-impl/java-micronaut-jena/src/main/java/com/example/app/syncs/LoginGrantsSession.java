@@ -40,21 +40,23 @@ public final class LoginGrantsSession extends SyncAgent {
 
     @Override
     protected String whereClause() {
-        return
-            "    ?_when_1 :concept <" + PasswordAuthConcept.IRI + "> ;\n" +
-            "             :name    \"check\" ;\n" +
-            "             :flow    ?_flow ;\n" +
-            "             :output  ?_check_out .\n" +
-            "    ?_check_out :outcome \"OK\" ;\n" +
-            "                :userId  ?_userId .\n";
+        return """
+            ?_when_1 :concept <%s> ;
+                     :name    "check" ;
+                     :flow    ?_flow ;
+                     :output  ?_check_out .
+            ?_check_out :outcome "OK" ;
+                        :userId  ?_userId .
+            """.formatted(PasswordAuthConcept.IRI);
     }
 
     @Override
     protected String thenBindings() {
-        return
-            "    ?_then_1 :concept <" + SessionConcept.IRI + "> ;\n" +
-            "             :name    \"grant\" ;\n" +
-            "             :input   ?_then_input .\n" +
-            "    ?_then_input :userId ?_userId .\n";
+        return """
+            ?_then_1 :concept <%s> ;
+                     :name    "grant" ;
+                     :input   ?_then_input .
+            ?_then_input :userId ?_userId .
+            """.formatted(SessionConcept.IRI);
     }
 }

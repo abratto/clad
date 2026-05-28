@@ -92,6 +92,19 @@ These conventions apply only to this Java/Jena profile.
   project fields you need and use `LIMIT 1` for singleton lookups.
 - **Use ASK for existence checks.** Prefer `ASK` over `SELECT` when the
   caller needs only true/false.
+- **Use text blocks for sync fragments.** All `whereClause()` and
+  `thenBindings()` methods use Java text blocks (`"""..."""`) with
+  `.formatted()` for IRI constants. Do not use `+` string concatenation
+  with `\n` escapes in canonical sync classes.
+- **Parameterize non-outcome string literals.** Route names, shared
+  message strings, and similar discriminator literals are declared as
+  `private static final String` constants and bound through
+  `ParameterizedSparqlString`. In this profile, prefer overriding
+  `parameterizeSparql(String sparql)` on `SyncAgent` rather than
+  rebuilding the full outer update in each subclass.
+- **Keep outcome literals inline.** Outcome values such as `"FOUND"`,
+  `"OK"`, and `"GRANTED"` stay explicit in the fragment text so each
+  branch remains visibly one-to-one with the approved SPEC outcome.
 
 Quick examples:
 
@@ -106,6 +119,24 @@ var rows = actionLog.select(
   "SELECT ?userId WHERE { GRAPH <" + RdfVocabulary.conceptGraph("user") + "> { " +
     "?u :username \"ada\" ; :userId ?userId . } } LIMIT 1"
 );
+
+// Sync whereClause: text block with formatted IRI and parameterized route literal
+@Override
+protected String whereClause() {
+  return """
+    ?_when_1 :concept <%s> ;
+         :name    "request" ;
+         :input   ?_inp ;
+         :flow    ?_flow .
+    ?_inp :route ?_route ;
+        :copyId ?_copyId .
+    """.formatted(WEB_IRI);
+}
+
+@Override
+protected String parameterizeSparql(String sparql) {
+  return bindLiteral(sparql, "_route", ROUTE);
+}
 ```
 
 ## Tests

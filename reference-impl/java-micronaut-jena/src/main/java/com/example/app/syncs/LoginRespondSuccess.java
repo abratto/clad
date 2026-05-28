@@ -40,22 +40,24 @@ public final class LoginRespondSuccess extends SyncAgent {
 
     @Override
     protected String whereClause() {
-        return
-            "    ?_when_1 :concept <" + SessionConcept.IRI + "> ;\n" +
-            "             :name    \"grant\" ;\n" +
-            "             :flow    ?_flow ;\n" +
-            "             :output  ?_grant_out .\n" +
-            "    ?_grant_out :outcome      \"GRANTED\" ;\n" +
-            "                :sessionToken ?_sessionToken .\n";
+        return """
+            ?_when_1 :concept <%s> ;
+                     :name    "grant" ;
+                     :flow    ?_flow ;
+                     :output  ?_grant_out .
+            ?_grant_out :outcome      "GRANTED" ;
+                        :sessionToken ?_sessionToken .
+            """.formatted(SessionConcept.IRI);
     }
 
     @Override
     protected String thenBindings() {
-        return
-            "    ?_then_1 :concept <" + WEB_IRI + "> ;\n" +
-            "             :name    \"respond\" ;\n" +
-            "             :input   ?_then_input .\n" +
-            "    ?_then_input :statusCode   200 ;\n" +
-            "                 :sessionToken ?_sessionToken .\n";
+        return """
+            ?_then_1 :concept <%s> ;
+                     :name    "respond" ;
+                     :input   ?_then_input .
+            ?_then_input :statusCode   200 ;
+                         :sessionToken ?_sessionToken .
+            """.formatted(WEB_IRI);
     }
 }

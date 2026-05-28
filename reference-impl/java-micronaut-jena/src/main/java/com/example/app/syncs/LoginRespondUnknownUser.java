@@ -43,21 +43,28 @@ public final class LoginRespondUnknownUser extends SyncAgent {
 
     @Override
     protected String whereClause() {
-        return
-            "    ?_when_1 :concept <" + UserConcept.IRI + "> ;\n" +
-            "             :name    \"lookupByUsername\" ;\n" +
-            "             :flow    ?_flow ;\n" +
-            "             :output  ?_lookup_out .\n" +
-            "    ?_lookup_out :outcome \"UNKNOWN\" .\n";
+        return """
+            ?_when_1 :concept <%s> ;
+                     :name    "lookupByUsername" ;
+                     :flow    ?_flow ;
+                     :output  ?_lookup_out .
+            ?_lookup_out :outcome "UNKNOWN" .
+            """.formatted(UserConcept.IRI);
     }
 
     @Override
     protected String thenBindings() {
-        return
-            "    ?_then_1 :concept <" + WEB_IRI + "> ;\n" +
-            "             :name    \"respond\" ;\n" +
-            "             :input   ?_then_input .\n" +
-            "    ?_then_input :statusCode 401 ;\n" +
-            "                 :message    \"" + LoginRespondWrongPassword.LOGIN_FAILURE_MESSAGE + "\" .\n";
+        return """
+            ?_then_1 :concept <%s> ;
+                     :name    "respond" ;
+                     :input   ?_then_input .
+            ?_then_input :statusCode 401 ;
+                         :message    ?_message .
+            """.formatted(WEB_IRI);
+    }
+
+    @Override
+    protected String parameterizeSparql(String sparql) {
+        return bindLiteral(sparql, "_message", LoginRespondWrongPassword.LOGIN_FAILURE_MESSAGE);
     }
 }

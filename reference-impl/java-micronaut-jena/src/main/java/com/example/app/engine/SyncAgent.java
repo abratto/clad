@@ -1,5 +1,7 @@
 package com.example.app.engine;
 
+import org.apache.jena.query.ParameterizedSparqlString;
+
 /**
  * Abstract base for declarative when→then sync rules.
  *
@@ -64,10 +66,25 @@ public abstract class SyncAgent {
     public String sparql() {
         String s = cachedSparql;
         if (s == null) {
-            s = assembleSparql();
+            s = parameterizeSparql(assembleSparql());
             cachedSparql = s;
         }
         return s;
+    }
+
+    /**
+     * Gives subclasses one place to bind string/IRI literals without rebuilding
+     * the outer update shape assembled by the base profile.
+     */
+    protected String parameterizeSparql(String sparql) {
+        return sparql;
+    }
+
+    protected static String bindLiteral(String sparql, String variableName, String value) {
+        ParameterizedSparqlString pss = new ParameterizedSparqlString();
+        pss.setCommandText(sparql);
+        pss.setLiteral(variableName, value);
+        return pss.toString();
     }
 
     private String assembleSparql() {

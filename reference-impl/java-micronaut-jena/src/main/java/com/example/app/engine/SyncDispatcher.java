@@ -31,6 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Singleton
 public class SyncDispatcher {
 
+    public static final String FLOW_TOKEN_HEADER = "X-Flow-Token";
+
     private static final String SCHEMA = RdfVocabulary.ACTION_SCHEMA_IRI;
     private static final Duration POLL_INTERVAL = Duration.ofMillis(50);
     private static final Duration TIMEOUT = Duration.ofSeconds(5);
@@ -113,7 +115,9 @@ public class SyncDispatcher {
                     return;
                 }
             }
-            sink.success(io.micronaut.http.HttpResponse.serverError(TIMEOUT_MESSAGE));
+            sink.success(addFlowTokenHeader(
+                    io.micronaut.http.HttpResponse.serverError(TIMEOUT_MESSAGE),
+                    flowToken));
         }).subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic());
     }
 
@@ -122,7 +126,15 @@ public class SyncDispatcher {
         if (data == null) return Optional.empty();
         actionLog.archiveFlow(flowToken);
         var httpStatus = io.micronaut.http.HttpStatus.valueOf(data.statusCode());
-        return Optional.of(io.micronaut.http.HttpResponse.<String>status(httpStatus).body(data.body()));
+        return Optional.of(addFlowTokenHeader(
+                io.micronaut.http.HttpResponse.<String>status(httpStatus).body(data.body()),
+                flowToken));
+    }
+
+    private static <T> io.micronaut.http.MutableHttpResponse<T> addFlowTokenHeader(
+            io.micronaut.http.MutableHttpResponse<T> response,
+            String flowToken) {
+        return response.header(FLOW_TOKEN_HEADER, flowToken);
     }
 
     private void runConceptAgents() {

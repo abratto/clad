@@ -1,6 +1,8 @@
 package com.example.app.flows;
 
 import com.example.app.api.LoginRequest;
+import com.example.app.engine.RdfVocabulary;
+import com.example.app.engine.SyncDispatcher;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -43,6 +45,12 @@ class LoginFlowTest {
                         new LoginRequest("ada", "correct-horse-battery-staple")),
                 String.class);
         assertEquals(HttpStatus.OK, resp.getStatus());
+        assertTrue(resp.getHeaders().contains(SyncDispatcher.FLOW_TOKEN_HEADER),
+                "response must expose a flow-token header for traceability");
+        String flowToken = resp.getHeaders().get(SyncDispatcher.FLOW_TOKEN_HEADER);
+        assertNotNull(flowToken, "flow-token header must be present");
+        assertTrue(flowToken.startsWith(RdfVocabulary.FLOW_TOKEN_PREFIX),
+                "flow-token header must carry a CLAD flow IRI; got " + flowToken);
         String body = resp.body();
         assertNotNull(body, "body must be present");
         assertTrue(body.contains("\"sessionToken\""),
