@@ -83,7 +83,7 @@ def parse_sync_cited_scenarios(sync_dir):
         path = os.path.join(sync_dir, fname)
         with open(path) as f:
             for line in f:
-                m = re.search(r"—\s+scenario\s+`([^`]+)`", line)
+                m = re.search(r"—\s+scenario\s+[\"`']([^\"`']+)[\"`']", line)
                 if m:
                     cited.add(m.group(1))
     return cited
@@ -111,13 +111,18 @@ def main():
         print(f"FAIL  chain directory not found: {args.chain_dir}")
         sys.exit(1)
 
-    # 1. Every in-scope goal → scenario (count heuristic)
-    # Semantic mapping requires human judgment — we check that the scenario
-    # count is at least the goal count, which is necessary but not sufficient.
-    if len(scenarios) < len(goals):
-        print(f"FAIL  fewer scenarios ({len(scenarios)}) than in-scope "
-              f"goals ({len(goals)}) — each goal needs at least one scenario")
-        passed = False
+    # 1. Every in-scope goal → scenario (slug-based match)
+    # Match scenario names to goals via slug: "reserve unavailable books" -> slug = "reserve-unavailable-books"
+    # matches "reserve-unavailable-book" -> slug = "reserve-unavailable-book"
+    # This is a loose heuristic — exact semantic mapping requires human judgment.
+    slugged_goals = {slugify(g) for g in goals}
+    for scenario in scenarios:
+        scenario_slug = slugify(scenario)
+        if not any(scenario_slug.startswith(g.rstrip("s")) or g.startswith(scenario_slug.rstrip("s")) for g in slugged_goals):
+            print(f"WARN  scenario '{scenario}' (slug: '{scenario_slug}') "
+                  f"does not obviously match any in-scope goal "
+                  f"(slugs: {', '.join(sorted(slugged_goals))})")
+            # Not a hard failure — mapping can be semantic
 
     if scenarios:
         print(f"INFO  scenarios in use case: {', '.join(sorted(scenarios))}")

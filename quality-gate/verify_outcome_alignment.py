@@ -72,12 +72,13 @@ def parse_chain_outcomes(chain_dir):
             concept = m.group(1)
             action = m.group(2)
 
-            # Extract base outcome from outcome column:
+            # Extract base outcomes from outcome column:
             # `Found(userId)` → Found, `Ok` → Ok, `Sent` → Sent
-            outcome_raw = outcome_col.strip("`")
-            outcome_base = re.sub(r"\(.*?\)", "", outcome_raw).strip()
-
-            rows.append((concept, action, outcome_base))
+            # `AVAILABLE`, `UNAVAILABLE` → AVAILABLE, UNAVAILABLE
+            outcomes = re.findall(r"`([^`]+)`", outcome_col)
+            for outcome_raw in outcomes:
+                outcome_base = re.sub(r"\(.*?\)", "", outcome_raw).strip()
+                rows.append((concept, action, outcome_base))
 
     return rows
 
