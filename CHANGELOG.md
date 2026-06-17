@@ -12,6 +12,36 @@ file `methodology/` is the source of truth for what each version contains.
 
 ### Methodology
 
+- **Gherkin/Cucumber BDD track (optional outer-red flow tests)**: Stage
+  04c can now mechanically derive executable Gherkin `.feature` files and
+  step-definition skeletons from upstream CLAD artefacts (usecase.md,
+  chain tables, SPECs, sync specs), replacing hand-written markdown flow
+  specs with executable specifications that go green at the end of 04e.
+  The track is profile-optional — set `TEST_FRAMEWORK=CUCUMBER` in
+  `_config/test-framework.md` to opt in. Includes a comprehensive
+  reference at `methodology/architecture/GHERKIN_INTEGRATION.md` with
+  structured derivation rules (G1–G5, S1–S3, E1), cross-stage
+  consistency checks, and a worked example in the Java reference profile.
+  See also `templates/feature.feature` and `templates/step-definitions.java`.
+- **Deterministic cross-stage verification scripts**: Added a suite of
+  7 profile-agnostic Python scripts under `quality-gate/` that automate
+  the cross-stage consistency checks previously done by non-deterministic
+  LLM self-audit. Each script replaces a manual "did the LLM remember to
+  check this?" step with a pass/fail command. Checks include file manifest
+  integrity (`verify_file_manifest.py`), scenario coverage
+  (`verify_scenario_coverage.py`), outcome alignment
+  (`verify_outcome_alignment.py`), action chain consistency
+  (`verify_action_chain.py`), sync contract matrix completeness
+  (`verify_sync_matrix.py`), CSDP data-model structure
+  (`verify_data_model.py`), and SPEC parity (`verify_spec_parity.py`).
+  Stage CONTEXT templates updated to invoke these scripts in their
+  `## Verify` sections alongside the remaining semantic (human) checks.
+- **ArchUnit extensions**: Added two new heuristic checks to
+  `LegibleArchitectureRulesTest`: R5 action token emission (verifies
+  every concept action handler calls `writeCompletion`/`writeError`) and
+  R4 controller boundary (non-Web, non-Debug infrastructure classes must
+  not depend on concept or sync packages).
+
 - **Stage 03b CSDP fidelity**: Restored the conceptual data-model walk
   to Halpin's explicit seven-step CSDP, added a dedicated
   `templates/data-model.md`, and updated the UC-00 worked example to
