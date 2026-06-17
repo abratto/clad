@@ -73,12 +73,36 @@ or types beyond opaque ids.
 
 ## Verify
 
-- The set of files in `output/` matches the set of concepts in
-  `02a_responsibility-map/output/responsibility-map.md` exactly.
-- **Outcome alignment:** every action output name in every concept file
-  matches verbatim the outcome strings in the corresponding
-  `02b_chain-table/output/` chain table. Check character-for-character —
-  `AccountExists` and `EmailExists` are different names.
+### Automated checks
+
+Run the following before requesting the human gate:
+
+```
+python3 ../../../../quality-gate/verify_outcome_alignment.py \
+  --chain-dir ../02b_chain-table/output --spec-dir ../04_implement/04b_spec/output
+python3 ../../../../quality-gate/verify_action_chain.py \
+  --resp-map ../02a_responsibility-map/output/responsibility-map.md \
+  --chain-dir ../02b_chain-table/output \
+  --concept-dir output \
+  --sync-dir ../03_syncs/output \
+  --dep-dir ../03a_dependency-review/output \
+  --spec-dir ../04_implement/04b_spec/output
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output \
+  --expected "<Name>.concept.md,…"  # one per concept in the responsibility map
+```
+
+- **verify_outcome_alignment.py:** every chain-table outcome matches a
+  SPEC outcome enum (character-for-character after PascalCase→SCREAMING_SNAKE_CASE
+  normalization).
+- **verify_action_chain.py:** every action used in chain tables flows
+  consistently through the responsibility map, concept specs, syncs,
+  dependency cards, and SPECs.
+- **verify_file_manifest.py:** `output/` contains exactly one
+  `.concept.md` file per concept in the responsibility map.
+
+### Semantic checks (human)
+
 - **Input/state discipline:** no state field or action input appears
   that has no basis in the chain table or responsibility map.
 - **Action discipline:** no action is declared that is not listed in

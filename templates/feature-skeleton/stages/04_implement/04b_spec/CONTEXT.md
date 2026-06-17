@@ -46,10 +46,24 @@ guidance beyond what is mechanically present in the concept spec.
 
 ## Verify
 
-- Every public action of every concept has a SPEC entry.
+### Automated checks
+
+Run the following before requesting the human gate:
+
+```
+python3 ../../../../quality-gate/verify_spec_parity.py \
+  --concept-dir ../../02_concepts/output --spec-dir output
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "<Name>.spec.md,…"  # one per business concept
+```
+
+- **verify_spec_parity.py:** every action name in every concept spec
+  has a matching entry in the corresponding SPEC file, and vice versa.
+- **verify_file_manifest.py:** one `.spec.md` file per business concept.
+
+### Semantic checks (human)
+
 - Every SPEC entry's flow-token shape matches the concept's spec.
-- **Cross-stage check (back):** the set of action names in `04b/output/`
-  equals the set of action names in `02_concepts/output/`.
 - **Bootstrap drift stop rule:** if a bootstrap concept file appears in
   `02_concepts/output/` without an explicit deviation, `04b` must stop
   and send work back to Stage 02 rather than deriving a new spec.

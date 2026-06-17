@@ -48,19 +48,30 @@ helper fields.
 
 ## Verify
 
-- One data-model file exists for every concept spec in `../02_concepts/output/`.
-- Each `.data-model.md` makes all seven CSDP steps inspectable, even if
-  some steps conclude `None` or `Not applicable`.
+### Automated checks
+
+Run the following before requesting the human gate:
+
+```
+python3 ../../../../quality-gate/verify_data_model.py \
+  --data-dir output --concept-dir ../02_concepts/output
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "<Name>.data-model.md,…"  # one per concept
+```
+
+- **verify_data_model.py:** validates all 7 CSDP steps present, all
+  sub-sections present, constraint sections have content or "None",
+  no storage-leakage patterns, and no cross-concept entity type
+  references.
+- **verify_file_manifest.py:** one `.data-model.md` file per concept.
+
+### Semantic checks (human)
+
 - Every fact type traces back to approved Stage 02 state or approved
   Pattern D exposure from 03a.
 - Elementary facts are explicit and remain concept-local.
-- No profile-specific storage primitives appear in the body of any
-  `.data-model.md` file.
 - No cross-concept foreign key or direct region-sharing relationship is
   introduced.
-- Uniqueness constraints, mandatory role constraints, derivations, and
-  value/set/subtype constraints are either stated explicitly or marked
-  absent explicitly.
 - **Cross-stage check (back):** every Pattern D field in
   `pattern-d-summary.md` appears in the owner concept's data model.
 

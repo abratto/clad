@@ -83,6 +83,30 @@ not introduce new logic.
 
 ## Verify
 
+### Automated checks
+
+Run the following before requesting the human gate:
+
+```
+python3 ../../../../quality-gate/verify_sync_matrix.py \
+  --sync-dir output --chain-dir ../02b_chain-table/output
+python3 ../../../../quality-gate/verify_scenario_coverage.py \
+  --goals ../00_actor-goal/output/goals.md \
+  --usecase ../01_usecase/output/usecase.md \
+  --chain-dir ../02b_chain-table/output \
+  --sync-dir output
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "<name>.sync.md,…"  # one per coordination rule
+```
+
+- **verify_sync_matrix.py:** every sync has a complete Sync Contract Matrix
+  with valid row IDs, `when`/`then` signatures, and allowed literals.
+- **verify_scenario_coverage.py:** every use-case scenario is cited by at
+  least one sync.
+- **verify_file_manifest.py:** `output/` matches the expected sync list.
+
+### Semantic checks (human)
+
 - No sync contains imperative branching or persists state.
 - **Sync count:** the number of sync files in `output/` equals the
   number of transitions in the chain table(s) for this feature (each
