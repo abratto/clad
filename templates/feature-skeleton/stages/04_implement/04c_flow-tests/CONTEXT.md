@@ -142,6 +142,21 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 - **verify_file_manifest.py:** `output/` contains exactly one
   flow-test markdown spec per scenario.
 
+When the Gherkin track is active (`TEST_FRAMEWORK=CUCUMBER` in
+`_config/test-framework.md`), also run the Gherkin derivation check:
+
+```
+python3 ../../../../quality-gate/verify_gherkin_derivation.py \
+  --usecase ../../01_usecase/output/usecase.md \
+  --feature output/login.feature \
+  --sync-dir ../../03_syncs/output
+```
+
+- **verify_gherkin_derivation.py:** every use-case scenario has a
+  matching Gherkin Scenario, every Scenario has Given/When/Then,
+  response status codes match sync spec `then` clauses (per
+  GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1).
+
 ### Gherkin track
 
 - Every named scenario in `usecase.md` has a corresponding Gherkin
