@@ -319,6 +319,83 @@ class LegibleArchitectureRulesTest {
         }
     }
 
+    /**
+     * R5 (heuristic) — every concept action method must emit a completion
+     * (writeCompletion or writeError). This scans concept source for methods
+     * that process invocations and checks they always terminate via a
+     * completion call.
+     */
+    @Test
+    void r5_concept_action_methods_emit_completions() throws IOException {
+        List<Path> conceptSources = Files.walk(Path.of(SOURCE_ROOT, "concepts"))
+                .filter(path -> path.toString().endsWith(".java"))
+                .filter(path -> {
+                    try {
+                        return Files.readString(path).contains("extends ConceptAgent");
+                    } catch (IOException e) {
+                        return false;
+                    }
+                })
+                .toList();
+
+        for (Path path : conceptSources) {
+            String text = Files.readString(path);
+            // Find all method definitions (heuristic: lines starting with
+            // lowercase after access modifier)
+            String[] lines = text.split("\n");
+            for (int i = 0; i < lines.length; i++) {
+                String line = lines[i].trim();
+                // Look for private method definitions (action handlers)
+                if (!line.matches("private\\s+\\w+\\s+\\w+\\(.*"))
+                    continue;
+                String methodName = line.replaceAll("private\\s+\\w+\\s+(\\w+)\\(.*", "$1");
+                if (methodName.equals(line)) continue; // no match
+
+                // Check if this method calls writeCompletion or writeError
+                int depth = 1;
+                boolean hasCompletion = false;
+                for (int j = i + 1; j < Math.min(i + 50, lines.length) && depth > 0; j++) {
+                    String bodyLine = lines[j].trim();
+                    if (bodyLine.contains("writeCompletion(") || bodyLine.contains("writeError(")) {
+                        hasCompletion = true;
+                    }
+                    depth += bodyLine.chars()
+                            .map(c -> c == '{' ? 1 : c == '}' ? -1 : 0).sum();
+                }
+                if (!hasCompletion) {
+                    throw new AssertionError(
+                            path + ": method '" + methodName
+                                    + "' does not call writeCompletion/writeError — "
+                                    + "every concept action must emit a flow token (R5)");
+                }
+            }
+        }
+    }
+
+    /**
+     * R4 (extension) — infrastructure outside WebController must not
+     * depend on business concepts or syncs. Only WebController, engine
+     * classes, concepts, and syncs may reference concept/sync packages.
+     */
+    @Test
+    void r4_non_web_infrastructure_does_not_depend_on_concepts_or_syncs() {
+        noClasses()
+                .that().resideInAPackage("com.example.app.infrastructure..")
+                .and(new com.tngtech.archunit.base.DescribedPredicate<JavaClass>(
+                        "not a Web or Debug controller") {
+                    @Override
+                    public boolean test(JavaClass c) {
+                        String name = c.getSimpleName();
+                        return !name.contains("Web") && !name.contains("Debug");
+                    }
+                })
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        CONCEPTS_ROOT + "..",
+                        "com.example.app.syncs..")
+                .as("non-Web infrastructure must not depend on business concepts or syncs directly")
+                .check(CLASSES);
+    }
+
     private static String subPackageOf(String pkg, String root) {
         if (!pkg.startsWith(root + ".")) return null;
         String tail = pkg.substring(root.length() + 1);
