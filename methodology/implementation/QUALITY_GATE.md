@@ -35,67 +35,61 @@ not relax the *intent*.
    `Owner stage = NN` so a reviewer can see which stage produced the
    change. Edits to a stage's output that did not come from re-running
    that stage are flagged.
-7. **Stage 01 use-case consistency checks.** When a diff touches
-   `features/UC-*/stages/01_usecase/output/usecase.md`, verify:
-   - Every actor named in scenarios is listed in
-     `features/UC-*/stages/00_actor-goal/output/actors.md`.
-   - Every scenario's main flow starts with an action by an actor
-     (not by the system).
-   - No domain entity (entity-name patterns from
-     `features/UC-*/stages/02_concepts/output/`) is named as an actor.
-   - Every scenario has an explicit, concrete trigger statement (not
-     implicit).
-8. **Stage 02 bootstrap-concept checks.** When a diff touches
-   `features/UC-*/stages/02_concepts/` or the Stage 02 template, verify:
-   - No bootstrap concept file (`Web`, `Grpc`, `Cli`, `Stream`, or the
-     transport-equivalent bootstrap concept) appears in
-     `02_concepts/output/` unless the feature explicitly declares a
-     methodology deviation.
-   - If bootstrap drift is detected, downstream stages are not allowed
-     to normalize it; work must be sent back to Stage 02.
-9. **Stage 03 sync contract checks.** When a diff touches
-   `features/UC-*/stages/03_syncs/` or `templates/sync.md`, verify:
-   - Every sync has an exact source-row/target-row derivation from the
-     approved `02b_chain-table/output/` rows.
-   - Every `when`/`then` signature matches the approved Stage 02b rows
-     and Stage 02 concept signatures exactly. If they do not, Stage 02
-     must be corrected before Stage 03 proceeds.
-   - Literal identity is preserved exactly: numeric status codes are not
-     quoted, and string/status literals keep their approved casing and
-     hyphenation.
-   - No response payload or downstream call invents fields that are not
-     present as approved constants or emitted action-outcome fields.
-   - The files in `03_syncs/output/` match the Stage 03 `Outputs` list
-     exactly, with no extra or missing files.
-10. **Stage 03a dependency-review checks.** When a diff touches
-   `features/UC-*/stages/03a_dependency-review/` or the Stage 03a
-   templates, verify:
-   - Every card row and every Pattern D summary row copies sync names,
-     action names, argument names, field names, pattern labels, keys,
-     status codes, and literals exactly from the approved Stage 03 syncs.
-   - No 03a artefact silently normalizes casing, hyphenation,
-     numeric-vs-string form, or key names.
-   - Any mismatch discovered in 03a is surfaced as a Stage 03 or
-     earlier-stage defect rather than repaired in the review output.
-11. **Stage 04 implementation-stage checks.** When a diff touches
-   `features/UC-*/stages/04_implement/`, verify:
-   - `04b` does not derive a SPEC from a bootstrap concept file unless
-     the feature explicitly declares that deviation.
-   - `04b_spec/output/` exists before any claimed `04c`, `04d`, or `04e`
-     completion.
-   - `04c` has one markdown flow spec and one stub flow test per use-case
-     scenario; a consolidated markdown file is not a substitute.
-   - `04c`, `04d`, and `04e` claims include executed command evidence for
-     the stage's required compilation/test state; markdown artefacts alone
-     do not complete the stage.
-   - `04d` tests and implementation stay concept-local; tests that depend
-     on another concept's state or sync orchestration are rejected back to
-     `04e`.
-   - `04e` test/implementation pairs correspond 1:1 with approved Stage 03
-     sync specs; no extra executable sync/coordinator artefacts appear
-     without an upstream sync contract.
-   - Required human gates between `04c`, `04d` red, `04d` green, and `04e`
-     were not collapsed.
+7. **Stage 01 use-case consistency checks (automated + semantic).**
+   When a diff touches
+   `features/UC-*/stages/01_usecase/output/usecase.md`:
+   - **Automated:** Run `quality-gate/verify_scenario_coverage.py`
+     to check every in-scope goal has a scenario, every scenario has
+     a chain file, and every scenario is cited by a sync.
+   - **Automated:** Run `quality-gate/verify_file_manifest.py`
+     to check `output/` contains exactly the expected files.
+   - **Semantic (human):** Verify every scenario's main flow starts
+     with an action by an actor, no domain entity is named as an
+     actor, and every scenario has an explicit trigger statement.
+8. **Stage 02 outcome alignment and chain-table checks.**
+   When a diff touches `features/UC-*/stages/02_concepts/` or
+   `features/UC-*/stages/02b_chain-table/`:
+   - **Automated:** Run `quality-gate/verify_outcome_alignment.py`
+     to check every chain-table outcome matches a SPEC outcome enum.
+   - **Automated:** Run `quality-gate/verify_action_chain.py`
+     to check action names flow consistently from responsibility map
+     through chain tables, concept specs, syncs, cards, and SPECs.
+   - **Automated:** Run `quality-gate/verify_file_manifest.py`
+     for each stage's `output/` directory.
+   - **Semantic (human):** Verify no bootstrap concept file
+     (`Web.concept.md`, etc.) appears in `02_concepts/output/`
+     without an explicit deviation. Verify concept boundaries are
+     coherent.
+9. **Stage 03 sync contract checks (automated + semantic).**
+   When a diff touches `features/UC-*/stages/03_syncs/`:
+   - **Automated:** Run `quality-gate/verify_sync_matrix.py`
+     to verify every sync has a complete Sync Contract Matrix.
+   - **Automated:** Run `quality-gate/verify_file_manifest.py`
+     to check output files match the expected list exactly.
+   - **Automated:** Run `quality-gate/verify_scenario_coverage.py`
+     to check every scenario is cited by at least one sync.
+   - **Semantic (human):** Verify no response payload invents fields
+     not present as approved constants or emitted action-outcome
+     fields. Verify no imperative branching over business state.
+10. **Stage 03b data model checks (automated + semantic).**
+    When a diff touches `features/UC-*/stages/03b_data-model/`:
+    - **Automated:** Run `quality-gate/verify_data_model.py`
+      to check all 7 CSDP steps are present, all sub-sections exist,
+      constraint sections have content or "None", no storage-leakage
+      patterns, and no cross-concept entity type references.
+    - **Automated:** Run `quality-gate/verify_file_manifest.py`
+      to check one data model file per concept.
+    - **Semantic (human):** Verify elementary facts are correctly
+      identified and entity-type combination decisions are sound.
+11. **Stage 04 implementation-stage checks (automated + semantic).**
+    When a diff touches `features/UC-*/stages/04_implement/`:
+    - **Automated:** Run `quality-gate/verify_spec_parity.py`
+      to check every concept spec action has a matching SPEC entry.
+    - **Automated:** For the Gherkin track, run
+      `quality-gate/verify_file_manifest.py` on `04c_flow-tests/output/`.
+    - **Semantic (human):** Verify `04d` tests stay concept-local,
+      `04e` sync tests correspond 1:1 with Stage 03 syncs, and human
+      gates between sub-stages were not collapsed.
 
 ## Java/Micronaut/Jena profile
 
@@ -120,14 +114,43 @@ If `mvn verify` is green and the diff has no naked `TODO`/`FIXME`,
 the commit is gate-clean. Pre-push hooks may automate the check; the
 hook is convenience, not the gate itself.
 
+### Quality-gate scripts (profile-agnostic)
+
+The repo ships a set of profile-agnostic verification scripts under
+[`quality-gate/`](../../quality-gate/) that automate cross-stage
+consistency checks across the CLAD artefact chain:
+
+| Script | Stage(s) | What it checks |
+|---|---|---|
+| `verify_file_manifest.py` | Any | `output/` contains exactly the expected files |
+| `verify_scenario_coverage.py` | 01, 02b, 03 | Goal → scenario → chain → sync coverage |
+| `verify_outcome_alignment.py` | 02 | Chain-table outcomes match SPEC enums |
+| `verify_action_chain.py` | 02–04b | Action names consistent across all artefacts |
+| `verify_sync_matrix.py` | 03 | Every sync has a complete Sync Contract Matrix |
+| `verify_data_model.py` | 03b | CSDP structure, storage-leakage prevention |
+| `verify_spec_parity.py` | 04b | Action name parity between concept specs and SPECs |
+
+Each script returns exit code 0 on pass, 1 on fail, with a structured
+report. They are invoked by the relevant stage's `## Verify` section
+(or at commit time via the quality gate). The automated checks
+complement — not replace — the semantic checks that require human
+judgment (noted as "Semantic (human)" in items 7–11 above).
+
 ### What the ArchUnit rules enforce
 
-`LegibleArchitectureRulesTest` codifies R1 and R4:
+`LegibleArchitectureRulesTest` codifies R1–R5 for the Java profile:
 
-- No class under `com.example.app.concepts.<X>` may import a class
-  under `com.example.app.concepts.<Y>` for any other concept `Y`.
-- HTTP-entry annotations (e.g. `@Controller`, `@Get`, `@Post`) only
-  appear inside the `infrastructure.WebController` package surface.
+- **R1:** No class under `com.example.app.concepts.<X>` may import a
+  class under `com.example.app.concepts.<Y>` for any other concept `Y`.
+- **R2 (heuristic):** One `*Concept` class per concept package.
+- **R3:** Sync classes are `SyncAgent` subclasses with only final
+  fields. No imperative branching in sync source. No
+  `*Coordinator`/`*Orchestrator` classes without explicit waiver.
+- **R4:** Only `infrastructure.WebController` has HTTP annotations.
+  Web boundary does not depend on business concepts directly. No
+  imperative branching in Web boundary code without a transport waiver.
+- **R5 (heuristic):** Every `*Concept` class extends `ConceptAgent`,
+  ensuring participation in the action-log polling loop.
 
 If you add new rules (e.g. R2 enforcement when an RDF profile is
 wired), extend that test class. The test class is the codified form
