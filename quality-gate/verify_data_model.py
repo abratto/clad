@@ -2,11 +2,19 @@
 """
 verify_data_model.py — Stage gate: CSDP structural validation for data model files.
 
+Why this exists:
+  Conceptual data models follow a rigid 7-step CSDP structure with 20 required
+  sub-sections. An LLM can omit steps, leave constraint sections empty, or
+  accidentally introduce storage primitives (VARCHAR, FOREIGN KEY, etc.) into
+  what should be a profile-neutral model. This script checks all structural
+  requirements deterministically, leaving only the ORM modelling decisions
+  to human judgment.
+
 Checks:
   1. All 7 CSDP step headings present (## Step 1 through ## Step 7)
   2. All sub-section headings present (### Familiar examples, ### Object types, etc.)
   3. Constraint sub-sections have content or "None" marker
-  4. No storage primitives (banned keywords)
+  4. No storage-leakage patterns (DDL statements, SQL constructs, engine names)
   5. One file per concept spec
   6. No cross-concept entity type references (entity type names don't
      reference other concept namespaces)
@@ -200,8 +208,10 @@ def check_cross_concept_refs(data_dir, concept_dir):
 def main():
     parser = argparse.ArgumentParser(
         description="Validate conceptual data model CSDP structure")
-    parser.add_argument("--data-dir", required=True)
-    parser.add_argument("--concept-dir", required=True)
+    parser.add_argument("--data-dir", required=True,
+                        help="Path to 03b_data-model/output/")
+    parser.add_argument("--concept-dir", required=True,
+                        help="Path to 02_concepts/output/ (for entity name cross-ref)")
     args = parser.parse_args()
 
     data_dir = args.data_dir

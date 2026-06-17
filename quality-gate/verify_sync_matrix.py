@@ -2,10 +2,17 @@
 """
 verify_sync_matrix.py — Stage gate: every sync has a complete Sync Contract Matrix.
 
+Why this exists:
+  Each sync spec must document its derivation from the approved chain table:
+  source/target row IDs, when/then signatures, and allowed literals. An LLM
+  can forget to include the matrix or leave fields empty. This script verifies
+  the matrix exists and has all required columns for every sync file.
+
 Checks:
   1. ## Sync Contract Matrix heading present in every sync file
   2. Table columns present: Source row, Target row, when, then, Allowed literals
-  3. When/then signatures match chain-table rows (cross-ref by row IDs)
+  3. Row IDs are non-empty alphanumeric identifiers
+  4. When/then signatures are non-empty
 
 Usage:
   python3 verify_sync_matrix.py --sync-dir <sync-output/> --chain-dir <chain-output/>
@@ -99,9 +106,10 @@ def check_sync_matrix(sync_dir):
 def main():
     parser = argparse.ArgumentParser(
         description="Verify every sync has a complete Sync Contract Matrix")
-    parser.add_argument("--sync-dir", required=True)
+    parser.add_argument("--sync-dir", required=True,
+                        help="Path to 03_syncs/output/")
     parser.add_argument("--chain-dir", required=False, default=None,
-                        help="Optional chain-table dir for cross-ref")
+                        help="Optional: path to 02b_chain-table/output/ for cross-ref")
     args = parser.parse_args()
 
     failures = check_sync_matrix(args.sync_dir)

@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 """
-verify_outcome_alignment.py — Stage gate: chain-table outcomes match concept specs.
+verify_outcome_alignment.py — Stage gate: chain-table outcomes match SPEC enums.
+
+Why this exists:
+  The most common form of CLAD contract drift is an outcome name changing between
+  the chain table (e.g. "Found") and the SPEC (e.g. "FOUND"). An LLM can miss
+  this because both look similar to a human reader. This script normalises both
+  sides (PascalCase → SCREAMING_SNAKE_CASE) and compares character-by-character.
 
 Checks:
   For each chain-table row, the Outcome value (base name, stripped of payload)
-  must appear in the corresponding concept spec's outcome enum for that action.
+  must appear in the corresponding SPEC's outcome enum for that action.
 
 Usage:
   python3 verify_outcome_alignment.py \
@@ -134,8 +140,10 @@ def normalize(name):
 def main():
     parser = argparse.ArgumentParser(
         description="Verify chain-table outcomes align with SPEC outcome enums")
-    parser.add_argument("--chain-dir", required=True)
-    parser.add_argument("--spec-dir", required=True)
+    parser.add_argument("--chain-dir", required=True,
+                        help="Path to 02b_chain-table/output/")
+    parser.add_argument("--spec-dir", required=True,
+                        help="Path to 04b_spec/output/")
     args = parser.parse_args()
 
     chain_rows = parse_chain_outcomes(args.chain_dir)

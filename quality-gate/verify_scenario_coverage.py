@@ -2,6 +2,12 @@
 """
 verify_scenario_coverage.py — Stage gate: goal → scenario → chain → sync coverage.
 
+Why this exists:
+  An LLM must manually check that every in-scope goal has a matching use-case
+  scenario, every scenario has a chain-table file, and every scenario is cited
+  by at least one sync. This is a mechanical cross-reference that a script
+  can do deterministically, eliminating drift from LLM self-audit.
+
 Checks:
   1. Every in-scope goal in goals.md maps to a ### Scenario: heading in usecase.md
   2. Every ### Scenario: in usecase.md has a matching <name>-chain.md in the chain dir
@@ -86,10 +92,14 @@ def parse_sync_cited_scenarios(sync_dir):
 def main():
     parser = argparse.ArgumentParser(
         description="Verify goal → scenario → chain → sync coverage")
-    parser.add_argument("--goals", required=True)
-    parser.add_argument("--usecase", required=True)
-    parser.add_argument("--chain-dir", required=True)
-    parser.add_argument("--sync-dir", required=True)
+    parser.add_argument("--goals", required=True,
+                        help="Path to goals.md from Stage 00")
+    parser.add_argument("--usecase", required=True,
+                        help="Path to usecase.md from Stage 01")
+    parser.add_argument("--chain-dir", required=True,
+                        help="Path to 02b_chain-table/output/")
+    parser.add_argument("--sync-dir", required=True,
+                        help="Path to 03_syncs/output/")
     args = parser.parse_args()
 
     passed = True

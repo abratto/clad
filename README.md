@@ -182,6 +182,19 @@ control. CLAD is the missing piece:
   question — it does not freelance, drop back, or silently advance.
   This is the single biggest difference between productive and
   exhausting LLM rework.
+- **Deterministic cross-stage verification scripts.** CLAD ships a suite
+  of profile-agnostic Python scripts under [`quality-gate/`](quality-gate/)
+  that automate the cross-stage consistency checks previously done by LLM
+  self-audit. Each script replaces a non-deterministic "did the LLM
+  remember to check this?" step with a pass/fail command. Checks include
+  file manifest integrity ([`verify_file_manifest.py`](quality-gate/verify_file_manifest.py)),
+  scenario coverage ([`verify_scenario_coverage.py`](quality-gate/verify_scenario_coverage.py)),
+  outcome alignment ([`verify_outcome_alignment.py`](quality-gate/verify_outcome_alignment.py)),
+  action chain consistency ([`verify_action_chain.py`](quality-gate/verify_action_chain.py)),
+  sync contract matrix completeness ([`verify_sync_matrix.py`](quality-gate/verify_sync_matrix.py)),
+  CSDP data-model structure ([`verify_data_model.py`](quality-gate/verify_data_model.py)),
+  and SPEC parity ([`verify_spec_parity.py`](quality-gate/verify_spec_parity.py)).
+  See [`methodology/implementation/QUALITY_GATE.md`](methodology/implementation/QUALITY_GATE.md).
 - **Outer-loop BDD tests (optional Gherkin/Cucumber track).** Stage 04c
   can mechanically derive executable Gherkin `.feature` files and
   step-definition skeletons from the use case, chain tables, and SPECs,

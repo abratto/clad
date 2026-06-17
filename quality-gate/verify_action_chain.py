@@ -4,6 +4,13 @@ verify_action_chain.py — Stage gate: action names flow consistently through
 the full artefact chain: responsibility map → chain table → concept spec →
 sync spec → dependency card → SPEC.
 
+Why this exists:
+  An action name can change in one artefact (e.g. a refactor in the chain table)
+  without being updated downstream (concept spec, sync, card, SPEC). This script
+  cross-references every Concept.action pair across all 6 artefact types and
+  reports any that appear in one but not another. The chain tables are the
+  reference — every action they invoke must appear everywhere downstream.
+
 Usage:
   python3 verify_action_chain.py \
     --resp-map <resp-map.md> \
@@ -151,12 +158,18 @@ def parse_spec_actions(spec_dir):
 def main():
     parser = argparse.ArgumentParser(
         description="Verify action names flow consistently across all artefacts")
-    parser.add_argument("--resp-map", required=True)
-    parser.add_argument("--chain-dir", required=True)
-    parser.add_argument("--concept-dir", required=True)
-    parser.add_argument("--sync-dir", required=True)
-    parser.add_argument("--dep-dir", required=True)
-    parser.add_argument("--spec-dir", required=True)
+    parser.add_argument("--resp-map", required=True,
+                        help="Path to 02a responsibility-map.md")
+    parser.add_argument("--chain-dir", required=True,
+                        help="Path to 02b_chain-table/output/")
+    parser.add_argument("--concept-dir", required=True,
+                        help="Path to 02_concepts/output/")
+    parser.add_argument("--sync-dir", required=True,
+                        help="Path to 03_syncs/output/ (spec files)")
+    parser.add_argument("--dep-dir", required=True,
+                        help="Path to 03a_dependency-review/output/")
+    parser.add_argument("--spec-dir", required=True,
+                        help="Path to 04b_spec/output/")
     args = parser.parse_args()
 
     sources = {

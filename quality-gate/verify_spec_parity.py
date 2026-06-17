@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
 """
-verify_spec_parity.py — Stage gate: concept spec actions and outcomes match SPECs.
+verify_spec_parity.py — Stage gate: concept spec actions match SPEC entries.
+
+Why this exists:
+  The implementation compiles against SPECs, not concept specs. If an action
+  is added to a concept spec but never makes it into the SPEC, the concept
+  will never be exercised at runtime. This script checks that every action
+  name in every concept spec has a matching entry in the corresponding SPEC
+  file, and vice versa, with no extras on either side.
 
 Checks:
   1. Every action name in *.concept.md appears in the corresponding *.spec.md
-  2. Every outcome enum value matches between concept spec and SPEC
+  2. Every action name in *.spec.md appears in the corresponding *.concept.md
   3. No bootstrap SPEC files without an explicit methodology deviation
 
 Usage:
@@ -79,8 +86,10 @@ def normalize(name):
 def main():
     parser = argparse.ArgumentParser(
         description="Verify concept spec actions/outcomes match SPECs")
-    parser.add_argument("--concept-dir", required=True)
-    parser.add_argument("--spec-dir", required=True)
+    parser.add_argument("--concept-dir", required=True,
+                        help="Path to 02_concepts/output/")
+    parser.add_argument("--spec-dir", required=True,
+                        help="Path to 04b_spec/output/")
     args = parser.parse_args()
 
     concept_dir = args.concept_dir
