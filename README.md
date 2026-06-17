@@ -182,6 +182,13 @@ control. CLAD is the missing piece:
   question — it does not freelance, drop back, or silently advance.
   This is the single biggest difference between productive and
   exhausting LLM rework.
+- **Outer-loop BDD tests (optional Gherkin/Cucumber track).** Stage 04c
+  can mechanically derive executable Gherkin `.feature` files and
+  step-definition skeletons from the use case, chain tables, and SPECs,
+  replacing hand-written markdown flow specs with executable
+  specifications that go green at the end of 04e. Chosen per-feature via
+  `_config/test-framework.md`. See
+  [methodology/architecture/GHERKIN_INTEGRATION.md](methodology/architecture/GHERKIN_INTEGRATION.md).
 - **Optional overlays, not mandates.** Tracking
   ([methodology/overlays/TRACKING.md](methodology/overlays/TRACKING.md))
   and planning intake
@@ -273,7 +280,10 @@ If you plan to adopt the Java reference profile, read
 after Stage 00 passes and before Stage 04 implementation work. That file
 shows how to copy the starter profile into your real app root, how to run
 it locally, and how the Java package/source-root conventions map back into
-`_config/package-and-layout.md`.
+`_config/package-and-layout.md`. The Java profile also ships a Cucumber
+integration for the Gherkin track — set `TEST_FRAMEWORK=CUCUMBER` in
+`_config/test-framework.md` to use it (see
+[methodology/architecture/GHERKIN_INTEGRATION.md](methodology/architecture/GHERKIN_INTEGRATION.md)).
 
 If you want to sequence multiple goals before implementation, adopt the
 optional planning overlay:
@@ -403,6 +413,8 @@ clad/
 │   └── reference/                   Citations and source pointers
 │
 ├── templates/                       Per-artefact templates +
+│   ├── feature.feature              Gherkin feature file (Cucumber/BDD track)
+│   ├── step-definitions.java        Step-definition skeleton (Cucumber/BDD track)
 │   ├── plan-board.md                Optional sequencing board for overlays/PLANNING
 │   └── feature-skeleton/            ...empty stage tree to copy for new features
 │

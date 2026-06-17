@@ -10,3 +10,6 @@ This folder holds **Layer-3, feature-scoped reference** material: conventions th
 - `package-and-layout.md` — canonical source-root and package-root settings.
   - Used by Stage 04 implementation work to avoid copying reference-profile
     package names (for example `com.example.app`) into downstream projects.
+- `test-framework.md` — declares whether the outer loop uses Cucumber/Gherkin
+  or the profile-native test framework.
+  - Used by Stage 04c to select the outer-red test format (`.feature` vs markdown spec).

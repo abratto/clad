@@ -61,9 +61,13 @@ not redesign approved tests.
    classes, extra executable syncs, or branching business logic. A
    class that sequences ordered domain calls or chooses the final
    scenario branch inline is a defect, not an acceptable shortcut.
-7. Run the canonical command from `../../../../_config/build-and-test.md`
-   until sync tests are green and the `04c` flow tests are green, then
-   stop for human approval.
+ 7. Run the canonical command from `../../../../_config/build-and-test.md`
+    until sync tests are green and the `04c` flow tests are green, then
+    stop for human approval.
+ 8. On the Gherkin track: after sync tests and flow tests are green,
+    enable the Cucumber runner (remove `@Disabled` from step-definition
+    classes) and re-run. Confirm all Gherkin scenarios pass. Capture
+    the Cucumber report (HTML or JSON) as supplementary gate evidence.
 
 ## Outputs
 
@@ -75,6 +79,17 @@ not redesign approved tests.
 - All flow tests from `04c` are green.
 - Executed command evidence shows: test compilation succeeds, sync tests
   are green, and flow tests are green.
+
+### Gherkin track only (when `TEST_FRAMEWORK=CUCUMBER` in `../../../../_config/test-framework.md`)
+
+- All Gherkin scenarios in `../../04c_flow-tests/output/*.feature` are
+  green via the Cucumber runner.
+- The Cucumber report (HTML or JSON) is captured alongside the executed
+  build-and-test evidence and shows 0 failed scenarios.
+- The runtime token chain observed by each passing Gherkin scenario
+  matches the chain-table row sequence recorded in Step 6 of the
+  ../../04c_flow-tests Process. (This is equivalent to the "expected
+  authored action chain" check for the native track.)
 - Behavior is traceable first to the approved upstream artefacts; any
    profile exemplar was used only as a realization pattern.
 - Every generated sync test/implementation pair corresponds to exactly

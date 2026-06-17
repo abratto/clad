@@ -73,6 +73,16 @@ no sync implementation belongs here.
   package/class/method names, the red evidence command, expected red
   outcome, and the next implementation target.
 
+### Gherkin track only (when `TEST_FRAMEWORK=CUCUMBER` in `../../../../_config/test-framework.md`)
+
+- Every Gherkin `Scenario` in `../../04c_flow-tests/output/*.feature` is
+  covered by at least one sync test row in the derivation map.
+- The sync test's trigger pattern matches the `When` step's expected
+  token-chain root, and its expected actions match the chain-table rows
+  that the step definitions will invoke.
+- The Cucumber runner compiles (tests can stay red — the sync tests
+  provide the behavioral failure evidence).
+
 ## Gate
 
 Default human approval. `04e-green` may not begin until this gate is

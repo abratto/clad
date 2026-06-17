@@ -26,6 +26,7 @@ CLAD targets. They are paraphrases of, and citations to, Meng & Jackson
 8. [`architecture/WEB_CONCEPT.md`](architecture/WEB_CONCEPT.md) — the bootstrap `Web` concept (R4)
 9. [`architecture/DATA_MODEL_NOTES.md`](architecture/DATA_MODEL_NOTES.md) — drafting per-concept conceptual data models (Stage 03b)
 10. [`architecture/ARTEFACT_MAP.md`](architecture/ARTEFACT_MAP.md) — the dependency graph between every per-feature artefact (producer → consumer, with the data each consumer needs and why)
+11. [`architecture/GHERKIN_INTEGRATION.md`](architecture/GHERKIN_INTEGRATION.md) — the optional Gherkin/Cucumber outer-red BDD track (derivation rules, cross-stage consistency, worked example)
 
 ## 3. Implementation — hard rules and the workspace scaffold
 

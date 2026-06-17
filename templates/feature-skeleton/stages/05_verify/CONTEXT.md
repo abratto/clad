@@ -25,7 +25,9 @@ that the deployable thing actually runs (Part 2, smoke). Without it,
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Scenarios to verify against |
 | `../03_syncs/output/` | 4 | Authorising sync rules |
+| `../04_implement/04c_flow-tests/output/` | 4 | Outer test specs for cross-reference (.feature or markdown) |
 | (a flow-token log from a representative test run) | 4 | Runtime evidence |
+| (Cucumber HTML/JSON report, Gherkin track only) | 4 | Supplementary scenario-pass evidence |
 | `../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics |
 | `../../../../reference-impl/java-micronaut-jena/README.md` | 3 | Example runtime debug surface for the Java profile |
 | `../../../../methodology/overlays/TRACKING.md` | 3 | Optional — only if the TRACKING overlay is in use |
@@ -43,9 +45,16 @@ For each named scenario in the use case:
 4. Check that no action appears in the chain that is not authorised
    by either a use-case scenario or a sync.
 5. Check that the runtime chain actually crossed the bootstrap
-  boundary the right way: transport entry -> authorised concept/sync
-  chain -> transport exit, rather than being short-circuited inside the
-  controller / route handler.
+   boundary the right way: transport entry -> authorised concept/sync
+   chain -> transport exit, rather than being short-circuited inside the
+   controller / route handler.
+
+On the Gherkin track, additionally cross-reference:
+   - Every Gherkin `Scenario` / `Scenario Outline` name in
+     `../04_implement/04c_flow-tests/output/*.feature` matches a
+     use-case scenario name in `../01_usecase/output/usecase.md`.
+   - Every scenario's trace entry references its Gherkin scenario
+     name and line number alongside the use-case heading.
 
 When the selected profile exposes a read-oriented runtime debug surface,
 use that surface as the default proof source for the walk before you
@@ -107,6 +116,17 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
 - `trace.md` begins with a `Resume point:` line.
 - **Cross-stage check (back):** every flow token observed at runtime
   back-traces to a use-case scenario.
+
+### Gherkin track only (when `TEST_FRAMEWORK=CUCUMBER` in `../04_implement/04c_flow-tests/../../../_config/test-framework.md` — or equivalently the active feature's `_config/test-framework.md`)
+
+- Every Gherkin scenario name in
+  `../04_implement/04c_flow-tests/output/*.feature` appears as a
+  heading or cross-reference in `trace.md`.
+- The Cucumber report (if present) shows 0 failed scenarios for the
+  scenarios exercised in `smoke.md`.
+- The Gherkin scenarios provide no additional coverage beyond what the
+  use case already defines — they are a derived view, not a new
+  contract.
 
 ## Gate
 
