@@ -68,6 +68,20 @@ package names as examples only.
 
 ## Verify
 
+### Automated checks
+
+Run the following before requesting the human gate:
+
+```
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "<Name>.storage.md,…"  # one per concept, or _NOT_APPLICABLE.md
+```
+
+- **verify_file_manifest.py:** `output/` contains exactly one
+  `.storage.md` per concept or a single `_NOT_APPLICABLE.md`.
+
+### Semantic checks (human)
+
 - Each concept's storage mapping lives in exactly one named region.
 - No region is shared across concepts.
 - Every mapped fact or constraint in a `.storage.md` file traces back to

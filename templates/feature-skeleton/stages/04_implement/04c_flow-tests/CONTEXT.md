@@ -130,6 +130,18 @@ acceptable.
 
 ## Verify
 
+### Automated checks
+
+Run the following before requesting the human gate:
+
+```
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "<scenario>-flow-test.md,…"  # one per scenario
+```
+
+- **verify_file_manifest.py:** `output/` contains exactly one
+  flow-test markdown spec per scenario.
+
 ### Gherkin track
 
 - Every named scenario in `usecase.md` has a corresponding Gherkin

@@ -68,6 +68,27 @@ for level definitions and the rationale.
 
 ## Verify
 
+### Automated checks
+
+Run the following before requesting the human gate:
+
+```
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "usecase.md"
+python3 ../../../../quality-gate/verify_scenario_coverage.py \
+  --goals ../00_actor-goal/output/goals.md \
+  --usecase output/usecase.md \
+  --chain-dir ../02b_chain-table/output \
+  --sync-dir ../03_syncs/output
+```
+
+- **verify_file_manifest.py:** `output/` contains exactly `usecase.md`.
+- **verify_scenario_coverage.py:** every in-scope goal maps to a
+  scenario heading; chain file and sync citation warnings are expected
+  at this stage and do not block the gate.
+
+### Semantic checks (human)
+
 - The completeness level is **Fully Dressed**.
 - Every scenario has pre-conditions, a main flow, ≥1 observable outcome,
   **and** both `Postconditions — Success` and `Postconditions — Failure`

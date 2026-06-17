@@ -56,6 +56,20 @@ here.
 
 ## Verify
 
+### Automated checks
+
+Run the following before requesting the human gate:
+
+```
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "concept-test-derivation.md"
+```
+
+- **verify_file_manifest.py:** `output/` contains exactly
+  `concept-test-derivation.md`.
+
+### Semantic checks (human)
+
 - `output/concept-test-derivation.md` exists.
 - Every test row traces back to an approved `04c` flow test or an
   approved `04b` SPEC outcome. No test case was invented without one of

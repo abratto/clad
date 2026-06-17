@@ -64,6 +64,20 @@ chain table per scenario.
 
 ## Verify
 
+### Automated checks
+
+Run the following before requesting the human gate:
+
+```
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "<scenario-name>-chain.md"  # one per scenario
+```
+
+- **verify_file_manifest.py:** `output/` contains exactly one
+  `<scenario-name>-chain.md` per use-case scenario.
+
+### Semantic checks (human)
+
 - Every scenario in `01_usecase/output/usecase.md` has exactly one
   chain file.
 - The rows in each chain file cover the top-level scenario's main flow

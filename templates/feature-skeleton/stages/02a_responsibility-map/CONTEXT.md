@@ -52,6 +52,20 @@ paper.
 
 ## Verify
 
+### Automated checks
+
+Run the following before requesting the human gate:
+
+```
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "responsibility-map.md"
+```
+
+- **verify_file_manifest.py:** `output/` contains exactly
+  `responsibility-map.md`.
+
+### Semantic checks (human)
+
 - Every concept's `Owned state` is one line; if it needs more, the
   concept is doing too much (split it).
 - Every concept's `Owned actions` is a comma-separated list of names

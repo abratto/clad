@@ -77,6 +77,20 @@ before Stage 04 turns it into code.
 
 ## Verify
 
+### Automated checks
+
+Run the following before requesting the human gate:
+
+```
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "<concept>-card.md,…"  # one per concept + pattern-d-summary.md
+```
+
+- **verify_file_manifest.py:** `output/` contains exactly one card
+  per concept in the responsibility map plus `pattern-d-summary.md`.
+
+### Semantic checks (human)
+
 - One card per concept in the responsibility map (no missing, no extra).
 - Every action in every card exists in the corresponding `*.concept.md`.
 - Every sync named in any card exists under `../03_syncs/output/`.

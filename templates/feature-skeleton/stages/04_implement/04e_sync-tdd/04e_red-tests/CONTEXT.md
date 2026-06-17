@@ -58,6 +58,20 @@ no sync implementation belongs here.
 
 ## Verify
 
+### Automated checks
+
+Run the following before requesting the human gate:
+
+```
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "sync-test-derivation.md"
+```
+
+- **verify_file_manifest.py:** `output/` contains exactly
+  `sync-test-derivation.md`.
+
+### Semantic checks (human)
+
 - `output/sync-test-derivation.md` exists.
 - Every sync test row traces back to an approved Stage 03 sync plus the
   approved outer flow expectations it helps turn green. No sync test was
