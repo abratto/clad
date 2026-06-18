@@ -63,10 +63,17 @@ Run the following before requesting the human gate:
 ```
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "concept-test-derivation.md"
+python3 ../../../../quality-gate/verify_concept_test_derivation.py \
+  --spec-dir ../../04b_spec/output \
+  --derivation output/concept-test-derivation.md \
+  --test-source-root ../../../../../../app/backend/src/test/java
 ```
 
 - **verify_file_manifest.py:** `output/` contains exactly
   `concept-test-derivation.md`.
+- **verify_concept_test_derivation.py:** every SPEC outcome has a matching
+  test row in the derivation map; every named test method exists in the
+  Java source; outcome names match verbatim.
 
 ### Semantic checks (human)
 
