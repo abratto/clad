@@ -12,6 +12,23 @@ file `methodology/` is the source of truth for what each version contains.
 
 ### Methodology
 
+- **Gate restructure**: Reduced per-feature human gates from 15 to 3
+  (Requirements at 02b, Architecture at 03b, Executable spec at 04c).
+  All other stages auto-advance with quality-gate scripts as the
+  mechanised gate between them. Removed the Fast-path section from
+  STAGES.md (replaced by auto-advance default). Updated AGENTS.md
+  commit rule (accumulate outputs between gates), capability profiles,
+  and rejection protocol (defect routes to earliest owning stage within
+  a gate block).
+- **SPEC format unified**: Concept SPEC files (`04b_spec/output/`)
+  changed from code-block format to prose per-action headings with
+  explicit `### \`actionName\`` sections, aligning with the UC-00-login
+  worked example and making them machine-parseable by the quality-gate
+  scripts. Updated `templates/spec.md` accordingly.
+- **Project-wide config** (`clad.properties`): Added framework-agnostic
+  config file at repo root for `test.framework`, `test.command`, and
+  `storage.layer`. Per-feature overrides via `_config/<key>.md`.
+  Documented resolution order in AGENTS.md and README.
 - **Gherkin/Cucumber BDD track (optional outer-red flow tests)**: Stage
   04c can now mechanically derive executable Gherkin `.feature` files and
   step-definition skeletons from upstream CLAD artefacts (usecase.md,
@@ -23,19 +40,18 @@ file `methodology/` is the source of truth for what each version contains.
   structured derivation rules (G1–G5, S1–S3, E1), cross-stage
   consistency checks, and a worked example in the Java reference profile.
   See also `templates/feature.feature` and `templates/step-definitions.java`.
-- **Deterministic cross-stage verification scripts**: Added a suite of
-  7 profile-agnostic Python scripts under `quality-gate/` that automate
-  the cross-stage consistency checks previously done by non-deterministic
-  LLM self-audit. Each script replaces a manual "did the LLM remember to
-  check this?" step with a pass/fail command. Checks include file manifest
-  integrity (`verify_file_manifest.py`), scenario coverage
-  (`verify_scenario_coverage.py`), outcome alignment
-  (`verify_outcome_alignment.py`), action chain consistency
-  (`verify_action_chain.py`), sync contract matrix completeness
-  (`verify_sync_matrix.py`), CSDP data-model structure
-  (`verify_data_model.py`), and SPEC parity (`verify_spec_parity.py`).
-  Stage CONTEXT templates updated to invoke these scripts in their
-  `## Verify` sections alongside the remaining semantic (human) checks.
+- **Deterministic cross-stage verification scripts**: Expanded the suite
+  to 9 profile-agnostic Python scripts under `quality-gate/`. Added:
+  `verify_gherkin_derivation.py` (validates `.feature` file derivation
+  per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1),
+  `verify_concept_test_derivation.py` (validates every SPEC outcome has
+  a matching concept test method in Java source). Fixed
+  `verify_outcome_alignment.py` to parse comma-separated outcomes in
+  chain tables. Fixed `verify_scenario_coverage.py` to handle per-UC
+  use cases (slug-based goal matching, double-quoted sync citations,
+  conditional chain/sync checks when those artefacts don't exist yet).
+  Stage CONTEXT templates updated to invoke the appropriate scripts in
+  their `## Verify` sections.
 - **ArchUnit extensions**: Added two new heuristic checks to
   `LegibleArchitectureRulesTest`: R5 action token emission (verifies
   every concept action handler calls `writeCompletion`/`writeError`) and
@@ -166,10 +182,25 @@ file `methodology/` is the source of truth for what each version contains.
 
 ### Fixes
 
-- Chain-table diagram type corrected to `stateDiagram-v2` (was
-  `sequenceDiagram`).
-- Merge conflict resolution: rule 9, DELIVERY.md §3, HANDOVER.md content
-  standardized across PR #20 and PR #21 consolidation.
+- **Dep card column ordering** (UC-02): Normalised dependency review
+  cards to match the template's `| Action | Flow (sync) | ...` format
+  (was `| Sync | Flow | Action | ...`), fixing `verify_action_chain.py`
+  parsing.
+- **Chain-table outcome parsing**: Fixed `verify_outcome_alignment.py`
+  to handle multiple backtick-quoted outcomes per cell (e.g.
+  `` `AVAILABLE`, `UNAVAILABLE` ``) rather than treating the whole cell
+  as a single outcome name.
+- **Sync citation format**: Fixed `verify_scenario_coverage.py` to
+  accept both double-quoted (`"scenario"`) and backtick-quoted
+  (`` `scenario` ``) citations in sync specs.
+- **Cucumber slash escaping**: Fixed step-definition annotations in
+  Gherkin BDD tests to escape `/` in route paths (`POST \/title`)
+  which Cucumber Expressions interpret as alternative delimiters.
+- **Precondition formatting**: Fixed Gherkin `.feature` Scenario
+  Outline examples to use `Given <precondition>` with precondition
+  values not prefixed by "And", avoiding invalid Gherkin syntax.
+- **Checkstyle baseline**: Updated to 3884 violations (from 2716)
+  to accommodate new sync and concept implementations.
 
 ### Notes
 
