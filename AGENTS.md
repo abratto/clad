@@ -136,6 +136,33 @@ When you start work, identify which layer each file belongs to:
 Load Layers 0–2 always. Load Layer 3 only as the stage `Inputs` table
 specifies. Layer 4 is what you produce or consume between stages.
 
+## 4a. Project-wide configuration (`clad.properties`)
+
+The file `clad.properties` at the repo root holds global defaults for
+settings that affect how stages are run. It is framework-agnostic —
+any agent (Cline, Copilot, Cursor, Roo, Codex, …) reads it at workspace
+load.
+
+Current keys:
+
+| Key | Values | Purpose |
+|---|---|---|
+| `test.framework` | `NATIVE` (default) or `CUCUMBER` | Selects the outer-red flow-test track at Stage 04c |
+| `test.command` | Shell command | The single command to run tests for this profile |
+| `storage.layer` | Free text | Describes the persistence technology in use |
+
+**Resolution order** (lower number wins):
+
+1. `clad.properties` (repo root) — project-wide default
+2. `features/UC-XX/_config/<key>.md` — per-feature override
+3. Stage-level `CONTEXT.md` — stage-specific override (when explicitly
+   documented)
+
+For example, `test.framework` from `clad.properties` is the global
+default. If a feature sets `TEST_FRAMEWORK=CUCUMBER` in its
+`_config/test-framework.md`, that feature uses Cucumber while the rest
+of the project stays on NATIVE.
+
 ## 5. Hard rules
 
 These are non-negotiable. Violating any of them is a defect.

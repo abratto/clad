@@ -365,26 +365,31 @@ Typical CLAD-on-Cline combinations:
 - `Act` + `20-clad-red.md`: write Stage `04` red tests/specs.
 - `Act` + `30-clad-green.md`: implement approved Stage `04` work.
 
-One manual step is required before Stage `04` implementation work:
+One manual step is recommended before Stage `04` implementation work:
+
+Edit [`clad.properties`](clad.properties) at the repo root to set your
+project's global defaults:
+
+```properties
+test.framework=NATIVE          # CUCUMBER or NATIVE
+test.command=mvn -f reference-impl/java-micronaut-jena/pom.xml test
+storage.layer=Jena TDB2 named graph (Java/Micronaut profile)
+```
+
+`clad.properties` is committed to the repo and works with any agent
+framework (Cline, Copilot, Cursor, Roo, Codex, …). Per-feature overrides
+go in `features/UC-XX/_config/<key>.md` (e.g. `_config/test-framework.md`
+overrides `test.framework`).
+
+Legacy per-developer config (Cline/Roo only, gitignored):
 
 ```bash
 cp .cline-clad-config.example .cline-clad-config
+cp .roo-clad-config.example .roo-clad-config
 ```
 
-Then open `.cline-clad-config` and fill in two values for your project:
-
-```
-TEST_COMMAND=mvn -f reference-impl/java-micronaut-jena/pom.xml test
-STORAGE_LAYER=Jena TDB2 named graph (Java/Micronaut profile)
-```
-
-`.cline-clad-config` is gitignored — it is yours alone and will not be
-committed. See [`.cline-clad-config.example`](.cline-clad-config.example)
-for examples covering Maven, Gradle, npm, and common storage profiles.
-
-That file is **not** where Auto Compact settings live. It exists only
-for CLAD implementation-time inputs such as the test command and the
-storage profile.
+These exist for backward compatibility with existing agent setups and
+will be deprecated in a future release.
 
 Cline will detect `.clinerules/` and `AGENTS.md` automatically on
 workspace open. Use `.clineignore` to keep generated/build files out of
@@ -409,12 +414,13 @@ clad/
 ├── CLAUDE.md                        Adapter -> AGENTS.md
 ├── .github/copilot-instructions.md  Adapter -> AGENTS.md
 ├── .cursor/rules/clad.mdc           Adapter -> AGENTS.md
+├── clad.properties                  Project-wide settings (any agent framework)
 ├── .clinerules/                     Cline workspace rules for CLAD phases
 ├── .clineignore                     Cline automatic-context exclusions
-├── .cline-clad-config.example       Template for per-developer Cline config
+├── .cline-clad-config.example       Legacy per-developer Cline config (gitignored at runtime)
 ├── CONTEXT.md                       Workspace routing (ICM Layer 1)
 ├── .roomodes                        Legacy Roo custom modes
-├── .roo-clad-config.example         Legacy Roo per-developer config
+├── .roo-clad-config.example         Legacy Roo per-developer config (gitignored at runtime)
 │
 ├── methodology/
 │   ├── README.md                    Reading order

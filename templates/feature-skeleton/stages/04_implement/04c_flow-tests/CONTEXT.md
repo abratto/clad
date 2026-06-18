@@ -143,7 +143,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   flow-test markdown spec per scenario.
 
 When the Gherkin track is active (`TEST_FRAMEWORK=CUCUMBER` in
-`_config/test-framework.md`), also run the Gherkin derivation check:
+`_config/test-framework.md` or `clad.properties`), also run the Gherkin derivation check:
 
 ```
 python3 ../../../../quality-gate/verify_gherkin_derivation.py \
