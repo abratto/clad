@@ -288,6 +288,34 @@ back for correction. Once approved, the agent should continue the flow
 by creating the UC folders and moving into Stage 01 unless the human
 explicitly wants to pause.
 
+### Configuration
+
+Edit [`clad.properties`](clad.properties) at the repo root to set your
+project's global defaults. The file is committed and works with any
+agent framework (Cline, Copilot, Cursor, Roo, Codex, …).
+
+```properties
+# Test framework: CUCUMBER uses Gherkin/.feature files (requires Cucumber);
+#                 NATIVE (default) uses markdown flow-test specs + JUnit.
+test.framework=NATIVE
+
+# The single command that runs the full test suite.
+test.command=mvn test
+
+# Describe your persistence technology (used by the Stage 04a storage mapping).
+storage.layer=Jena TDB2 named graph (Java/Micronaut profile)
+```
+
+**Resolution order** (lower number wins):
+
+1. `clad.properties` — global default for all features
+2. `features/UC-XX/_config/test-framework.md` — per-feature override (if present)
+3. Stage-level `CONTEXT.md` — stage-specific override (when explicitly documented)
+
+For example, if most features use `NATIVE` but one feature needs
+Cucumber, set `TEST_FRAMEWORK=CUCUMBER` in that feature's
+`_config/test-framework.md` and leave `clad.properties` as-is.
+
 If you plan to adopt the Java reference profile, read
 [`reference-impl/java-micronaut-jena/README.md`](reference-impl/java-micronaut-jena/README.md)
 after Stage 00 passes and before Stage 04 implementation work. That file
