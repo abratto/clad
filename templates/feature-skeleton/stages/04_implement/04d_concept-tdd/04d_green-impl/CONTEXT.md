@@ -86,10 +86,11 @@ upstream prose, but it may not redesign approved tests.
 
 ## Gate
 
-Default human approval.
+Auto-advances to 04e. The concept tests must be green
+(`mvn test`) before advancing.
 
 ## Next stage
 
 -> [`../../04e_sync-tdd/CONTEXT.md`](../../04e_sync-tdd/CONTEXT.md) — Sync TDD router
 
-To advance, the human says: **"Proceed to Stage 04e."**
+The agent proceeds to Stage 04e without a human gate.

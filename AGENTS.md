@@ -55,10 +55,12 @@ You are expected to operate within all three layers simultaneously.
    the feature branch:
    `git checkout -b feat/UC-XX-<slug> && git push -u origin feat/UC-XX-<slug>`.
    Do not write artefacts to `main` directly.
-8. **Commit rule.** After each gate is approved by the human, commit all
-   outputs for that stage to the feature branch with the message
-   `feat(UC-XX): Stage NN — <artefact name>`. Do not accumulate multiple
-   stages in one commit.
+8. **Commit rule.** After each of the three per-feature gates is approved
+   by the human (Gate 1: 02b, Gate 2: 03b, Gate 3: 04c), commit all
+   accumulated stage outputs since the last gate to the feature branch.
+   Use a single commit per gate with a message like
+   `feat(UC-XX): Gate 1 — requirements (stages 01–02b)`.
+   The system-level Stage 00 is the only stage gated individually.
 9. **RESUME rule.** After each gate is approved by the human, overwrite
    `features/UC-XX-<slug>/RESUME.md` with the current feature state
    (last completed stage, gate outcome, corrections, deferred concepts,
@@ -99,18 +101,23 @@ Mapped to the ICM stages of a feature folder:
 > UC folders are created *after* Stage 00's gate is passed — one folder
 > per confirmed in-scope goal from `goals.md`.
 
-| Stage | Folder | Produces |
-|---|---|---|
-| 0 | `features/_system/stages/00_actor-goal/` *(system scope — run once per brief)* | `actors.md`, `goals.md` (collaborative — see [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)) |
-| 1 | `stages/01_usecase/` | `usecase.md` (operational principle, actors, scenarios) |
-| 2a | `stages/02a_responsibility-map/` | `responsibility-map.md` (one row per concept: state, actions) |
-| 2b | `stages/02b_chain-table/` | `<scenario>-chain.md` per use-case scenario (action choreography) |
-| 2 | `stages/02_concepts/` | One `*.concept.md` per concept (full anatomy) |
-| 3 | `stages/03_syncs/` | One `*.sync.md` per coordination rule |
-| 3a | `stages/03a_dependency-review/` | One `*-card.md` per concept + `pattern-d-summary.md` (cross-concept coupling surface) |
-| 3b | `stages/03b_data-model/` | One `*.data-model.md` per concept (profile-neutral conceptual data model) |
-| 4 | `stages/04_implement/` | Router; top-level sub-stages `04a_storage-mapping`, `04b_spec`, `04c_flow-tests`, `04d_concept-tdd`, `04e_sync-tdd`, where `04d` and `04e` each split into structural red/green child stages |
-| 5 | `stages/05_verify/` | Trace from running behaviour back to `usecase.md`, plus closure (smoke + tracking) |
+| Stage | Folder | Produces | Gate |
+|---|---|---|---|
+| 0 | `features/_system/stages/00_actor-goal/` *(system scope — run once per brief)* | `actors.md`, `goals.md` (collaborative — see [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)) | `00 — system-level` |
+| 1 | `stages/01_usecase/` | `usecase.md` (operational principle, actors, scenarios) | Auto → 02b |
+| 2a | `stages/02a_responsibility-map/` | `responsibility-map.md` (one row per concept: state, actions) | Auto → 02b |
+| 2b | `stages/02b_chain-table/` | `<scenario>-chain.md` per use-case scenario (action choreography) | **Gate 1 (Requirements)** |
+| 2 | `stages/02_concepts/` | One `*.concept.md` per concept (full anatomy) | Auto → 03b |
+| 3 | `stages/03_syncs/` | One `*.sync.md` per coordination rule | Auto → 03b |
+| 3a | `stages/03a_dependency-review/` | One `*-card.md` per concept + `pattern-d-summary.md` (cross-concept coupling surface) | Auto → 03b |
+| 3b | `stages/03b_data-model/` | One `*.data-model.md` per concept (profile-neutral conceptual data model) | **Gate 2 (Architecture)** |
+| 4 | `stages/04_implement/` | Router; top-level sub-stages `04a_storage-mapping`, `04b_spec`, `04c_flow-tests`, `04d_concept-tdd`, `04e_sync-tdd`, where `04d` and `04e` each split into structural red/green child stages | Auto → 04c |
+| 4a | `stages/04a_storage-mapping/` | Storage mapping (profile-specific) | Auto → 04c |
+| 4b | `stages/04b_spec/` | Spec | Auto → 04c |
+| 4c | `stages/04c_flow-tests/` | Flow tests (outer red) | **Gate 3 (Executable)** |
+| 4d | `stages/04d_concept-tdd/` | Concept TDD (inner red→green) | Auto → 05 |
+| 4e | `stages/04e_sync-tdd/` | Sync TDD (inner red→green) | Auto → 05 |
+| 5 | `stages/05_verify/` | Trace from running behaviour back to `usecase.md`, plus closure (smoke + tracking) | Auto (close) |
 
 Stage 04 is the **outside-in TDD double-loop**: `04c` is the outer red
 test (a flow), `04d` and `04e` are the inner red→green TDD on concepts
@@ -209,6 +216,10 @@ fall back on general LLM instinct — re-explaining, over-apologising,
 sometimes producing a different artefact entirely — which makes the
 human's next decision harder, not easier.
 
+When rejection occurs at any of the three per-feature gates, the defect
+may belong to any stage within that gate's block. The agent re-runs the
+earliest stage that owns the defect, not the entire gate block.
+
 ## 7. Capability profiles
 
 CLAD is model-agnostic. The table below describes the **reasoning
@@ -218,10 +229,9 @@ operator concern, not CLAD's.
 
 | Stage group | Stages | Required capability |
 |---|---|---|
-| **Prose synthesis** | 00–01 | Collaborative clarification, structured prose, use-case writing. Depth of reasoning matters less than fluency and willingness to iterate with the human. |
-| **Deep structural reasoning** | 02–03 (including 02a, 02b, 03a) | Cross-concept consistency, chain-table derivation, sync authoring, dependency analysis. This is the hardest reasoning load in CLAD — use your strongest model here. |
-| **Code generation** | 04b–04e | Test-first discipline, spec-to-code fidelity, storage-layer compliance. Needs strong code generation and the ability to follow multi-step TDD sequences without drifting. |
-| **Audit and traceability** | 05 | Flow-token trace, provenance checking, closure. Structured analytical reading more than generation. |
+| **Requirements analysis** | 00–02b | Collaborative clarification, structured prose, use-case writing. Depth of reasoning matters less than fluency and willingness to iterate with the human. |
+| **Structural modelling** | 02–03b | Cross-concept consistency, chain-table derivation, sync authoring, dependency analysis. This is the hardest reasoning load in CLAD — use your strongest model here. |
+| **Implementation** | 04a–05 | Test-first discipline, spec-to-code fidelity, storage-layer compliance. Needs strong code generation and the ability to follow multi-step TDD sequences without drifting. |
 
 > **Operator note:** if you run CLAD with a local setup (e.g. Continue +
 > Roo in VS Code), create a local config file (outside this repo) that

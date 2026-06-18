@@ -95,11 +95,11 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Default human approval. **Do you agree with this step? Any
-corrections before I continue?**
+Auto-advances to Stage 02b. Same self-audit rule. The
+`verify_file_manifest.py` script must pass before advancing.
 
 ## Next stage
 
 → [`../02b_chain-table/CONTEXT.md`](../02b_chain-table/CONTEXT.md) — Chain tables (one per scenario)
 
-To advance, the human says: **"Proceed to Stage 02b."**
+The agent proceeds to Stage 02b without a human gate.

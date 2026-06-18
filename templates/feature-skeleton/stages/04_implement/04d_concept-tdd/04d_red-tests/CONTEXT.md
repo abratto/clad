@@ -95,11 +95,13 @@ python3 ../../../../quality-gate/verify_concept_test_derivation.py \
 
 ## Gate
 
-Default human approval. `04d-green` may not begin until this gate is
-explicitly passed.
+Auto-advances to 04d-green. The `verify_concept_test_derivation.py`
+and `verify_file_manifest.py` scripts must pass before advancing. If
+either fails, the agent stops — the derivation does not match the
+SPEC outcomes or the expected files are missing.
 
 ## Next stage
 
 -> [`../04d_green-impl/CONTEXT.md`](../04d_green-impl/CONTEXT.md) — Implement approved concept tests only
 
-To advance, the human says: **"Proceed to Stage 04d-green."**
+The agent proceeds to 04d-green without a human gate.

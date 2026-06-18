@@ -54,13 +54,12 @@ Run the child stages strictly in order, gating after each:
 
 ## Gate
 
-Default human approval. The gate fires only after `04e_green-impl/` is
-green. This is the gate before `05_verify/`.
+Auto-advances through Stage 05. Sub-stages 04e-red and 04e-green
+auto-advance. The flow tests from 04c must go green at the end of
+04e-green.
 
 ## Next stage
 
 -> [`04e_red-tests/CONTEXT.md`](04e_red-tests/CONTEXT.md) — Sync test derivation (red)
 
-(Stage 04 router is satisfied when `04e_green-impl/` is green; advance directly to Stage 05.)
-
-To advance, the human says: **"Proceed to Stage 04e-red."**
+The agent proceeds without a human gate.

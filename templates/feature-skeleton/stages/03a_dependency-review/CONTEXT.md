@@ -109,13 +109,11 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Default human approval. This stage is the last cross-concept
-sanity check before implementation begins; gate carefully.
-
-**Do you agree with this step? Any corrections before I continue?**
+Auto-advances to Stage 03b. The `verify_file_manifest.py` script
+must pass before advancing.
 
 ## Next stage
 
 → [`../03b_data-model/CONTEXT.md`](../03b_data-model/CONTEXT.md) — Data model
 
-To advance, the human says: **"Proceed to Stage 03b."**
+The agent proceeds to Stage 03b without a human gate.

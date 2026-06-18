@@ -99,11 +99,11 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Default human approval. `04e-green` may not begin until this gate is
-explicitly passed.
+Auto-advances to 04e-green. The `verify_sync_matrix.py` and
+`verify_scenario_coverage.py` scripts must pass before advancing.
 
 ## Next stage
 
 -> [`../04e_green-impl/CONTEXT.md`](../04e_green-impl/CONTEXT.md) — Implement approved sync tests only
 
-To advance, the human says: **"Proceed to Stage 04e-green."**
+The agent proceeds to 04e-green without a human gate.

@@ -130,13 +130,21 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
 
 ## Gate
 
-- Any verify-stage finding sends the loop back to whichever stage
-  owns the defect; closure does not run until findings are clear.
-- Closure has no further gate — once smoke, tracking, and resume-
-  point are written, the feature is done.
+Auto-closes. The agent runs verification scripts, records results
+in trace.md, smoke.md, and tracking.md. No human gate required —
+the human inspects the results at their convenience.
+
+Any verify-stage finding in trace.md sends the loop back to whichever
+stage owns the defect; closure does not run until findings are clear.
 
 ## Next stage
 
-**This is the final stage.** When the gate passes, the feature is complete.
+**This is the final stage.** When verification passes, the feature is
+complete.
 
-To start the next feature, run system-scope Stage 00 at [`features/_system/stages/00_actor-goal/CONTEXT.md`](../../../../features/_system/stages/00_actor-goal/CONTEXT.md). After that gate passes, copy [`templates/feature-skeleton/`](../../../../templates/feature-skeleton/) to `features/UC-XX-<slug>/` and begin at `stages/01_usecase/CONTEXT.md`.
+To start the next feature, run system-scope Stage 00 at
+[`features/_system/stages/00_actor-goal/CONTEXT.md`](../../../../features/_system/stages/00_actor-goal/CONTEXT.md).
+After that gate passes, copy
+[`templates/feature-skeleton/`](../../../../templates/feature-skeleton/)
+to `features/UC-XX-<slug>/` and begin at
+`stages/01_usecase/CONTEXT.md`.

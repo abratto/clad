@@ -95,6 +95,32 @@ features/UC-XX-name/
         └── output/              trace.md, findings.md, smoke.md, tracking.md
 ```
 
+## Gate model
+
+Per-UC stages are grouped into **3 human gates**, each answering one
+design question. Between gates, stages auto-advance: the agent runs
+the quality-gate scripts as a self-audit and proceeds without human
+intervention. If any quality-gate check fails, the agent stops and
+surfaces the defect.
+
+```
+Gate 1 — Requirements:  01 → 02a → 02b   (human reviews after 02b)
+Gate 2 — Architecture:  02 → 03 → 03a → 03b (human reviews after 03b)
+Gate 3 — Executable:    04a → 04b → 04c   (human reviews after 04c)
+Auto (Delivery):        04d → 04e → 05    (no human gates)
+```
+
+| Gate | Stages | Human reviews | Questions answered |
+|---|---|---|---|
+| 1 — Requirements | 01 → 02a → 02b | use case, concept boundaries, chain tables | Do we have the right actors/goals? Do the flows cover all scenarios? |
+| 2 — Architecture | 02 → 03 → 03a → 03b | concept state machines, sync coordination, dependency coupling, data model | Do the state machines make sense? Are there missing or invalid transitions? |
+| 3 — Executable spec | 04a → 04b → 04c | .feature files (Gherkin) or flow-test markdown specs | Do the tests capture the right scenarios and inputs? |
+| Auto (Delivery) | 04d → 04e → 05 | (none — script-checked) | All quality checks pass? |
+
+Rejection at any gate sends work back to the earliest stage that owns
+the defect. The agent does not advance past the gate until the human
+approves.
+
 ## The stage contract
 
 Each stage's `CONTEXT.md` follows the standard shape in
@@ -177,11 +203,7 @@ useful visual distinction.
 
 **Output:** `usecase.md`.
 
-**Gate:** the human edits the use case before stage 2. If a sequence
-diagram is present, the human checks that it improves clarity without
-becoming a second design source; if a scenario obviously benefits from
-one and none is provided, the human may send Stage 01 back for a more
-legible presentation.
+**Gate:** Auto-advances to Stage 02b. The agent runs the Verify items as self-audit and proceeds. If any item fails, the agent stops and surfaces the defect.
 
 ### Stage 02a — `02a_responsibility-map/`
 
@@ -201,9 +223,7 @@ that does not fit goes in *Out of scope*.
 
 **Output:** `responsibility-map.md`.
 
-**Gate:** the human reviews the concept boundary set **before** any
-cross-concept choreography is drawn or any per-concept anatomy is
-written.
+**Gate:** Auto-advances to Stage 02b. Same self-audit rule.
 
 ### Stage 02b — `02b_chain-table/`
 
@@ -260,8 +280,7 @@ handoff token used by the next row, for example:
 
 **Output:** `<scenario>-chain.md` per scenario.
 
-**Gate:** the human checks each chain is plausible and that no chain
-introduces a concept absent from the responsibility map.
+**Gate:** **Gate 1 (Requirements).** Default human approval. The human reviews the complete design picture: use case scenarios, concept boundaries, and action choreography together. After approval, the agent auto-advances through Stages 02–03b without further gates.
 
 A well-formed chain table is structurally equivalent to a finite
 state machine (states = outcomes, events = the outcome the previous
@@ -296,9 +315,7 @@ stages.
 
 **Output:** one `<Name>.concept.md` per business concept.
 
-**Gate:** the human reviews the per-concept anatomy. The concept set
-itself was already gated at 02a, so this gate focuses on action
-shapes and outcomes.
+**Gate:** Auto-advances to Stage 03b. The quality-gate scripts verify outcome alignment and action chain consistency.
 
 ### Stage 03 — `03_syncs/`
 
@@ -321,11 +338,7 @@ instead of guessing inside Stage 03.
 
 **Output:** one `<name>.sync.md` per coordination rule.
 
-**Gate:** the human checks that every scenario is covered, that no
-sync contains imperative branching, that output filenames match the
-stage's `Outputs` list exactly, and that any 02b↔02 signature mismatch
-was surfaced as a Stage 02 correction rather than silently normalized in
-the syncs.
+**Gate:** Auto-advances to Stage 03b. The verify_sync_matrix.py and verify_scenario_coverage.py scripts must pass.
 
 ### Stage 03a — `03a_dependency-review/`
 
@@ -361,9 +374,7 @@ elsewhere, the dependency card is where that gets surfaced.
 **Output:** `<concept>-card.md` per concept named in 02a's map;
 `pattern-d-summary.md` consolidating Pattern D across the feature.
 
-**Gate:** human approval. Last cross-concept sanity check before
-implementation begins. The reviewer should reject any 03a artefact that
-silently normalizes token mismatches instead of surfacing them.
+**Gate:** Auto-advances to Stage 03b.
 
 ### Stage 03b — `03b_data-model/`
 
@@ -378,8 +389,7 @@ approved Pattern D exposure from 03a. This stage decides the
 
 **Output:** `<Name>.data-model.md` per concept.
 
-**Gate:** human approval that the conceptual model is complete,
-profile-neutral, and free of cross-concept schema coupling.
+**Gate:** **Gate 2 (Architecture).** Default human approval. The human reviews concept state machines, sync coordination, cross-concept coupling, and the conceptual data model together. After approval, the agent auto-advances through Stages 04a–04c without a gate.
 
 ### Stage 04 — `04_implement/` (router)
 
@@ -403,8 +413,7 @@ approved model from 03b in a specific profile.
 
 **Output:** `<Name>.storage.md` per concept (or `_NOT_APPLICABLE.md`).
 
-**Gate:** human approval that the mapping honours R2 (one named region
-per concept) and introduces no new design.
+**Gate:** Auto-advances to Stage 04c. The verify_file_manifest.py script must pass.
 
 #### Stage 04b — `04b_spec/`
 
@@ -424,8 +433,7 @@ guidance beyond what is mechanically present in the concept spec.
 
 **Output:** `<Name>.spec.md` per concept.
 
-**Gate:** human approval. SPECs are what the implementation compiles
-against.
+**Gate:** Auto-advances to Stage 04c. The verify_spec_parity.py script must pass.
 
 #### Stage 04c — `04c_flow-tests/`
 
@@ -459,7 +467,7 @@ errors.
 **Output:** `<scenario>-flow-test.md` per scenario; stub test files
 under `reference-impl/<profile>/...`.
 
-**Gate:** human reviews the flow predictions.
+**Gate:** **Gate 3 (Executable specification).** Default human approval. The human reviews the .feature files (Gherkin track) or flow-test markdown specs (Native track) as the executable form of the use case. After approval, the agent auto-advances through Stages 04d, 04e, and 05 without further gates.
 
 The `04c` artifact is therefore not only an output contract. It is also
 the choreography contract that `04e` must satisfy when making the flow
@@ -491,8 +499,7 @@ not belong here; they belong in `04e`.
 produces `concept-test-derivation.md`; `04d_green-impl/` produces green
 concept code and tests in the selected profile.
 
-**Gate:** `04d_red-tests/` approved before `04d_green-impl/` starts;
-all approved concept tests green; no cross-concept imports.
+**Gate:** Auto-advances through Stage 05. Sub-stages 04d-red and 04d-green auto-advance with verify_concept_test_derivation.py as the gate.
 
 #### Stage 04e — `04e_sync-tdd/` (router)
 
@@ -531,8 +538,7 @@ waiver.
 produces `sync-test-derivation.md`; `04e_green-impl/` produces green
 sync code/tests and green flow tests.
 
-**Gate:** `04e_red-tests/` approved before `04e_green-impl/` starts;
-all sync tests green; flow tests from `04c` now green.
+**Gate:** Auto-advances through Stage 05. Sub-stages 04e-red and 04e-green auto-advance.
 
 Gate evidence must include one executed build-and-test command result
 showing: 1) test compilation succeeded, 2) sync tests are green, and
@@ -592,32 +598,9 @@ short-circuited inside the controller / route handler.
 **Output:** `trace.md` (with `Resume point:` line), `findings.md` if
 anything failed verify, `smoke.md`, `tracking.md`.
 
-**Gate:** any verify finding sends the loop back to whichever stage
-owns the defect; closure has no further gate.
+**Gate:** Auto-closes. The agent runs verification scripts and records results in trace.md, smoke.md, and tracking.md. No human gate required — the human inspects the results at their convenience. Findings that surface in trace.md send work back to the owning stage, but no gate blocks delivery.
 
-## Fast-path: when an agent may auto-advance
 
-The default rule is **one stage per turn, gate after each**. There is
-exactly one exception.
-
-An agent may auto-advance through `04c → 04d → 04e` in a single turn
-**if and only if** all four of the following hold:
-
-1. The change is *behavioural* and was already gated through Stage 03
-   in this session.
-2. The agent produces a
-   [`test-intent-derivation-map`](../../templates/test-intent-derivation-map.md)
-   showing 1:1 traceability from each row in `04b_spec/output/` to a
-   test it added or modified, and from each test back to a row.
-3. No new concept and no new sync was introduced (R1, R2 unchanged).
-4. The flow tests from `04c` end the turn green.
-
-If any of (1)–(4) fails, fall back to one-stage-per-turn. The
-fast-path exists to make small *behavioural* iterations bearable; it
-never applies to *structural* changes (Stage 02a re-entry) or to a
-feature's first run.
-
-The human may always disable the fast-path by saying so.
 
 ## Cross-stage consistency
 
@@ -639,7 +622,7 @@ coherent with an earlier stage's output. Examples:
 
 The cross-stage check is what gives ICM § 6.2's reversibility
 property teeth: a downstream stage cannot silently drift from
-upstream.
+upstream. The quality-gate scripts under `quality-gate/` automate these cross-stage checks deterministically. Each script validates one contract boundary (SPEC parity, outcome alignment, data-model structure, etc.) and runs between every auto-advance stage.
 
 ## Why numbered folders
 
@@ -654,19 +637,9 @@ contract at each stage boundary. It is the answer to "what is the
 human's job here, what is the agent's job, and what is the human
 reviewing at the gate?" Read top to bottom for a single feature.
 
-| Transition | Human provides | Agent produces | Human reviews at gate |
-|---|---|---|---|
-| brief → **00** | One-paragraph feature brief | Proposed actor list + ≤5 clarifying questions; iterates | Final `actors.md`, `goals.md` reflect what was agreed |
-| 00 → **01** | Confirmed `actors.md`, `goals.md` | `usecase.md` at **Fully Dressed** level (op principle, scenarios, Postconditions Success+Failure mandatory) | Every in-scope goal has a named scenario; success+failure postconditions distinct |
-| 01 → **02a** | Use case (Fully Dressed) | `responsibility-map.md` — one row per concept (state, actions), coverage check vs scenarios | Concept boundaries; scenarios are fully covered |
-| 02a → **02b** | Responsibility map | One `<scenario>-chain.md` per scenario — action chain (table) **and** Mermaid diagram in the **same turn** | Each chain is plausible; no concept appears that wasn't in 02a |
-| 02b → **02** | Responsibility map + chain tables | Per-concept `<Name>.concept.md` (full anatomy: state, actions, op principle); no cross-concept references | Concept anatomy honours R1; action outcomes cover the chains |
-| 02 → **03** | Concept specs + chain tables | One `<name>.sync.md` per coordination rule; every `where` clause labelled with pattern A/B/C/D | Every scenario covered; no imperative branching; all joins explicit |
-| 03 → **03a** | Sync specs + chain tables | One `<concept>-card.md` per concept; one `pattern-d-summary.md` for the feature | Cross-concept coupling is intentional; Pattern D is explicit and reviewed |
-| 03a → **03b** | Sync specs + dependency review (Pattern D summary names every cross-concept field) | `<Name>.data-model.md` per concept — fact types and constraints under R2 | Conceptual state model supports the syncs; Pattern D reads map to named facts |
-| 03b → **04a** | Data models + chosen profile | `<Name>.storage.md` per concept (or `_NOT_APPLICABLE.md`) | Profile mapping matches the conceptual model with no drift |
-| 04a → **04b** | Storage mapping (or `_NOT_APPLICABLE.md`) + concept specs | `<Name>.spec.md` per concept (signatures, outcomes, flow-token shape) — mechanically derived | SPEC matches concept spec, no drift |
-| 04b → **04c** | SPECs + use case | `<scenario>-flow-test.md` per scenario + stub red tests in profile | Predicted flow tokens match the scenario's postconditions |
-| 04c → **04d** | SPECs + concept specs | `concept-test-derivation.md` + per-concept tests (red → green) + concept implementations | Tests trace 1:1 to SPEC rows; no cross-concept imports |
-| 04d → **04e** | SPECs + sync specs | `sync-test-derivation.md` + per-sync tests (red → green); flow tests from 04c go green | All sync and flow tests green; `then` does no I/O outside concepts |
-| 04e → **05** | Use case + running profile + runtime debug surface (if the profile exposes one) | `trace.md` (back-trace from flow tokens), `findings.md` if any, `smoke.md`, `tracking.md` | Every observed flow token traces back to a named scenario using captured runtime evidence |
+| Gate | Stages | Human provides | Agent produces | Human reviews at gate |
+|---|---|---|---|---|
+| **1 (Requirements)** | 01 → 02a → 02b | Project brief (Stage 00) | usecase.md, responsibility-map.md, chain-table.md | Actors/goals correct? Scenarios cover all flows? Concept boundaries right? Action chains plausible? |
+| **2 (Architecture)** | 02 → 03 → 03a → 03b | Approved requirements | concept.md, sync.md, dep-cards, data-model.md | Concept state machines cover the chains? Sync coordination declarative? Pattern D reads intentional? Data model complete? |
+| **3 (Executable)** | 04a → 04b → 04c | Approved architecture | storage.md, spec.md, flow-test specs or .feature files | Tests capture the right scenarios and inputs? |
+| **Auto (Delivery)** | 04d → 04e → 05 | (nothing — all upstream artefacts approved) | concept code, sync code, test code, trace.md, smoke.md, tracking.md | (none — script-checked: `mvn test` passes, quality-gate scripts pass) |

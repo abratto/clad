@@ -116,13 +116,12 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Default human approval. Before requesting the gate, run every `Verify`
-item as a pass/fail checklist and stop if any item fails.
-
-**Do you agree with this step? Any corrections before I continue?**
+Auto-advances to Stage 03b. The quality-gate scripts
+(`verify_outcome_alignment.py`, `verify_action_chain.py`,
+`verify_file_manifest.py`) must all pass before advancing.
 
 ## Next stage
 
 → [`../03_syncs/CONTEXT.md`](../03_syncs/CONTEXT.md) — Synchronizations
 
-To advance, the human says: **"Proceed to Stage 03."**
+The agent proceeds to Stage 03 without a human gate.

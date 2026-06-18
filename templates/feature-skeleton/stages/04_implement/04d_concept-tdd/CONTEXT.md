@@ -60,11 +60,12 @@ Run the child stages strictly in order, gating after each:
 
 ## Gate
 
-Default human approval. The gate fires only after `04d_green-impl/` is
-green.
+Auto-advances through Stage 05. Sub-stages 04d-red and 04d-green
+auto-advance; `verify_concept_test_derivation.py` is the gate
+between them.
 
 ## Next stage
 
 -> [`04d_red-tests/CONTEXT.md`](04d_red-tests/CONTEXT.md) — Concept test derivation (red)
 
-To advance, the human says: **"Proceed to Stage 04d-red."**
+The agent proceeds without a human gate.

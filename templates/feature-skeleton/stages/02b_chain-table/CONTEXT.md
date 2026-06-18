@@ -108,8 +108,15 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Default human approval. **Do you agree with this step? Any
-corrections before I continue?**
+**Gate 1 (Requirements).** Default human approval. The human reviews
+the complete design picture: use case scenarios, concept boundaries,
+and action choreography together. After approval, the agent
+auto-advances through Stages 02–03b without further gates.
+
+The `verify_file_manifest.py` script must pass before requesting the
+gate.
+
+**Do you agree with this step? Any corrections before I continue?**
 
 ## Next stage
 

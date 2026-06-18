@@ -8,6 +8,17 @@ Java/Micronaut/Jena profile that ships with this starter.
 The gate is intentionally small. A long gate that nobody runs is
 worse than a short gate that everybody runs.
 
+## How quality gates relate to stage gates
+
+CLAD's per-feature workflow uses **3 human gates** (Requirements, Architecture,
+Executable spec) with auto-advance between them. Between every auto-advance step,
+the agent runs the relevant quality-gate scripts from this table. If any script
+fails, the agent stops and surfaces the defect — it does not silently advance.
+
+The quality-gate scripts are therefore the **mechanised gate** for auto-advance
+stages. A script that passes gives the agent confidence to proceed; a script that
+fails sends work back to the owning stage just as a human rejection would.
+
 ---
 
 ## Language-agnostic principles
@@ -81,15 +92,16 @@ not relax the *intent*.
       to check one data model file per concept.
     - **Semantic (human):** Verify elementary facts are correctly
       identified and entity-type combination decisions are sound.
-11. **Stage 04 implementation-stage checks (automated + semantic).**
-    When a diff touches `features/UC-*/stages/04_implement/`:
-    - **Automated:** Run `quality-gate/verify_spec_parity.py`
-      to check every concept spec action has a matching SPEC entry.
-    - **Automated:** For the Gherkin track, run
-      `quality-gate/verify_file_manifest.py` on `04c_flow-tests/output/`.
-    - **Semantic (human):** Verify `04d` tests stay concept-local,
-      `04e` sync tests correspond 1:1 with Stage 03 syncs, and human
-      gates between sub-stages were not collapsed.
+11. **Stage 04 implementation-stage checks (automated).**
+     When a diff touches `features/UC-*/stages/04_implement/`:
+     - **Automated:** Run `quality-gate/verify_spec_parity.py`
+       to check every concept spec action has a matching SPEC entry.
+     - **Automated:** For the Gherkin track, run
+       `quality-gate/verify_gherkin_derivation.py` to validate derivation.
+     - **Automated:** Run `quality-gate/verify_concept_test_derivation.py`
+       to check every SPEC outcome has a matching concept test.
+     - The automated checks replace the previous semantic (human) checks.
+       04d and 04e auto-advance; the scripts are the gate.
 
 ## Java/Micronaut/Jena profile
 

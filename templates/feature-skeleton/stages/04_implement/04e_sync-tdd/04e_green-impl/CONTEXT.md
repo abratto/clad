@@ -112,10 +112,11 @@ not redesign approved tests.
 
 ## Gate
 
-Default human approval. This is the gate before Stage 05.
+Auto-advances to Stage 05. All sync tests and the 04c flow tests
+must be green (`mvn test` passes) before advancing.
 
 ## Next stage
 
 -> [`../../../05_verify/CONTEXT.md`](../../../05_verify/CONTEXT.md) — Verify + close
 
-To advance, the human says: **"Proceed to Stage 05."**
+The agent proceeds to Stage 05 without a human gate.

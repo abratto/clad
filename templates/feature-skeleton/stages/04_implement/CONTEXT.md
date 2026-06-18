@@ -95,12 +95,15 @@ doubt, use one-stage-per-turn.
 
 ## Gate
 
-Default — but the gate fires only after `04e_green-impl/` is green.
+Auto-advances to Stage 04c. The router points to sub-stages 04a–04e;
+each auto-advances without a human gate.
 
 ## Next stage
 
 -> [`04a_storage-mapping/CONTEXT.md`](04a_storage-mapping/CONTEXT.md) — Storage mapping
 
-For in-memory profiles, skip 04a and go straight to [`04b_spec/CONTEXT.md`](04b_spec/CONTEXT.md). Mark 04a with a `_NOT_APPLICABLE.md` note in its `output/`.
+For in-memory profiles, skip 04a and go straight to
+[`04b_spec/CONTEXT.md`](04b_spec/CONTEXT.md). Mark 04a with a
+`_NOT_APPLICABLE.md` note in its `output/`.
 
-To advance, the human says: **"Proceed to Stage 04a."** (or **"Skip 04a, proceed to 04b."**)
+The agent proceeds without a human gate.

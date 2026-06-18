@@ -113,11 +113,12 @@ python3 ../../../../quality-gate/verify_scenario_coverage.py \
 
 ## Gate
 
-Default human approval. The use case is the contract every later
-stage compiles against; gate carefully.
+Auto-advances to Stage 02b. The agent runs the Verify items as a
+self-audit and proceeds. If any item fails, the agent stops and
+surfaces the defect — it does not silently advance.
 
 ## Next stage
 
 → [`../02a_responsibility-map/CONTEXT.md`](../02a_responsibility-map/CONTEXT.md) — Responsibility map
 
-To advance, the human says: **"Proceed to Stage 02a."**
+The agent proceeds to Stage 02a without a human gate.

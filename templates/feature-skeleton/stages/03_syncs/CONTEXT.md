@@ -155,10 +155,11 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Default human approval.
+Auto-advances to Stage 03b. The `verify_sync_matrix.py` and
+`verify_scenario_coverage.py` scripts must pass before advancing.
 
 ## Next stage
 
 → [`../03a_dependency-review/CONTEXT.md`](../03a_dependency-review/CONTEXT.md) — Dependency review
 
-To advance, the human says: **"Proceed to Stage 03a."**
+The agent proceeds to Stage 03a without a human gate.

@@ -73,11 +73,11 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Default human approval. Before requesting the gate, run every `Verify`
-item as a pass/fail checklist and stop if any item fails.
+Auto-advances to Stage 04c. The `verify_spec_parity.py` script must
+pass before advancing.
 
 ## Next stage
 
 → [`../04c_flow-tests/CONTEXT.md`](../04c_flow-tests/CONTEXT.md) — Outer red (flow tests)
 
-To advance, the human says: **"Proceed to Stage 04c."**
+The agent proceeds to Stage 04c without a human gate.
