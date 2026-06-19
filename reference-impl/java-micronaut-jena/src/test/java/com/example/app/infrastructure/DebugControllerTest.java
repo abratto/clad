@@ -155,8 +155,7 @@ class DebugControllerTest {
                 "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n" +
                 "INSERT DATA {\n" +
                 "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
-                "    <" + action + "> :actions <" + action + "> ;\n" +
-                "                     :concept <https://clad.dev/concept/debug> ;\n" +
+                "    <" + action + "> :concept <https://clad.dev/concept/debug> ;\n" +
                 "                     :name \"" + name + "\" ;\n" +
                 "                     :flow <" + flow + "> .\n" +
                 "  }\n" +

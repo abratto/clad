@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-
 /**
  * Abstract base for concept agents.
  *
@@ -85,13 +83,12 @@ public abstract class ConceptAgent {
                 }
                 WHERE {
                     GRAPH ?actionGraph {
-                        ?_action :actions  ?_action ;
-                                 :concept  ?concept ;
+                        ?_action :concept  ?concept ;
                                  :name     ?actionName ;
                                  :input    ?input ;
                                  :flow     ?_flow .
                         OPTIONAL { ?input ?inputPred ?inputVal . }
-                        FILTER NOT EXISTS { ?_action :output [] }
+                        FILTER NOT EXISTS { ?_action :outcome [] }
                     }
                 }
                 """);
@@ -139,18 +136,19 @@ public abstract class ConceptAgent {
 
     /** Writes completion (output) triples and signals the bus. */
     protected void writeCompletion(ActionRecord invocation, Map<String, RDFNode> output) {
-        String outputIri = invocation.actionIri() + "/output/" + UUID.randomUUID();
         StringBuilder sparql = new StringBuilder();
         sparql.append("PREFIX : <").append(RdfVocabulary.ACTION_SCHEMA_IRI).append(">\n");
         sparql.append("INSERT DATA {\n");
         sparql.append("  GRAPH <").append(actionGraphIRI()).append("> {\n");
-        sparql.append("    <").append(invocation.actionIri()).append("> :output <").append(outputIri).append("> .\n");
         for (Map.Entry<String, RDFNode> entry : output.entrySet()) {
-            sparql.append("    <").append(outputIri).append("> :")
+            sparql.append("    <").append(invocation.actionIri()).append("> :")
                   .append(entry.getKey()).append(" ")
                   .append(NodeFmtLib.str(entry.getValue().asNode(), (PrefixMap) null))
                   .append(" .\n");
         }
+        sparql.append("    << <").append(invocation.actionIri()).append("> :outcome ")
+              .append(NodeFmtLib.str(output.get("outcome").asNode(), (PrefixMap) null))
+              .append(" >> :flow <").append(invocation.flowToken()).append("> .\n");
         sparql.append("  }\n");
         sparql.append("}\n");
         actionLog.update(sparql.toString());
@@ -169,23 +167,20 @@ public abstract class ConceptAgent {
 
     /** Writes an error output for the given invocation. */
     protected void writeError(ActionRecord invocation, String message) {
-        String outputIri = invocation.actionIri() + "/output/" + UUID.randomUUID();
-        var pss = new ParameterizedSparqlString();
-        pss.setNsPrefix("", RdfVocabulary.ACTION_SCHEMA_IRI);
-        pss.setCommandText("""
-                INSERT DATA {
-                  GRAPH ?actionGraph {
-                    ?actionIri :output ?outputIri .
-                    ?outputIri :status "error" ;
-                               :message ?message .
-                  }
-                }
-                """);
-        pss.setIri("actionGraph", actionGraphIRI());
-        pss.setIri("actionIri", invocation.actionIri());
-        pss.setIri("outputIri", outputIri);
-        pss.setLiteral("message", message);
-        actionLog.update(pss.toString());
+        StringBuilder sparql = new StringBuilder();
+        sparql.append("PREFIX : <").append(RdfVocabulary.ACTION_SCHEMA_IRI).append(">\n");
+        sparql.append("INSERT DATA {\n");
+        sparql.append("  GRAPH <").append(actionGraphIRI()).append("> {\n");
+        sparql.append("    <").append(invocation.actionIri()).append("> :outcome \"error\" ;\n");
+        sparql.append("         :status \"error\" ;\n");
+        sparql.append("         :message ")
+              .append(NodeFmtLib.str(ResourceFactory.createStringLiteral(message).asNode(), (PrefixMap) null))
+              .append(" .\n");
+        sparql.append("    << <").append(invocation.actionIri()).append("> :outcome \"error\" >>");
+        sparql.append(" :flow <").append(invocation.flowToken()).append("> .\n");
+        sparql.append("  }\n");
+        sparql.append("}\n");
+        actionLog.update(sparql.toString());
         completionBus.signal(conceptIRI());
     }
 }

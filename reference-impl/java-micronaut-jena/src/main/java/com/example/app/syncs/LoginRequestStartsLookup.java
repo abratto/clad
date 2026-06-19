@@ -61,8 +61,7 @@ public final class LoginRequestStartsLookup extends SyncAgent {
         return """
             ?_then_1 :concept <%s> ;
                      :name    "lookupByUsername" ;
-                     :input   ?_then_input .
-            ?_then_input :username ?_username .
+                     :input   [ :username ?_username ] .
             """.formatted(UserConcept.IRI);
     }
 

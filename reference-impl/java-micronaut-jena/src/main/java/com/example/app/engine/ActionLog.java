@@ -144,16 +144,29 @@ public class ActionLog {
      */
     public void archiveFlow(String flowToken) {
         String schema = RdfVocabulary.ACTION_SCHEMA_IRI;
-        String sparql =
+        String active = RdfVocabulary.ACTION_GRAPH_IRI;
+        String archive = RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI;
+
+        String moveStandard =
             "PREFIX : <" + schema + ">\n" +
-            "DELETE { GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> { ?s ?p ?o } }\n" +
-            "INSERT { GRAPH <" + RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI + "> { ?s ?p ?o } }\n" +
-            "WHERE  { GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
-            "  ?a :actions ?a ; :flow <" + flowToken + "> .\n" +
+            "DELETE { GRAPH <" + active + "> { ?s ?p ?o } }\n" +
+            "INSERT { GRAPH <" + archive + "> { ?s ?p ?o } }\n" +
+            "WHERE  { GRAPH <" + active + "> {\n" +
+            "  ?a :flow <" + flowToken + "> .\n" +
             "  { ?a ?p ?o . BIND(?a AS ?s) }\n" +
             "  UNION { ?a :input ?s . ?s ?p ?o }\n" +
-            "  UNION { ?a :output ?s . ?s ?p ?o }\n" +
             "} }\n";
-        update(sparql);
+
+        String moveStar =
+            "PREFIX : <" + schema + ">\n" +
+            "DELETE { GRAPH <" + active + "> { << ?a :outcome ?outcome >> ?p ?o } }\n" +
+            "INSERT { GRAPH <" + archive + "> { << ?a :outcome ?outcome >> ?p ?o } }\n" +
+            "WHERE  { GRAPH <" + active + "> {\n" +
+            "  ?a :flow <" + flowToken + "> .\n" +
+            "  ?a :outcome ?outcome .\n" +
+            "  << ?a :outcome ?outcome >> ?p ?o .\n" +
+            "} }\n";
+
+        updateBatch(List.of(moveStandard, moveStar));
     }
 }

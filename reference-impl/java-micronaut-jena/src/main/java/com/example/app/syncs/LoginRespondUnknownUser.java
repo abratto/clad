@@ -46,9 +46,8 @@ public final class LoginRespondUnknownUser extends SyncAgent {
         return """
             ?_when_1 :concept <%s> ;
                      :name    "lookupByUsername" ;
-                     :flow    ?_flow ;
-                     :output  ?_lookup_out .
-            ?_lookup_out :outcome "UNKNOWN" .
+                     :outcome "UNKNOWN" ;
+                     :flow    ?_flow .
             """.formatted(UserConcept.IRI);
     }
 
@@ -57,9 +56,7 @@ public final class LoginRespondUnknownUser extends SyncAgent {
         return """
             ?_then_1 :concept <%s> ;
                      :name    "respond" ;
-                     :input   ?_then_input .
-            ?_then_input :statusCode 401 ;
-                         :message    ?_message .
+                     :input   [ :statusCode 401 ; :message ?_message ] .
             """.formatted(WEB_IRI);
     }
 

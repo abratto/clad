@@ -188,8 +188,7 @@ public class SyncDispatcher {
                 "SELECT ?pred ?value\n" +
                 "WHERE {\n" +
                 "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
-                "    ?_action :actions ?_action ;\n" +
-                "             :concept <" + FlowManager.WEB_CONCEPT_IRI + "> ;\n" +
+                "    ?_action :concept <" + FlowManager.WEB_CONCEPT_IRI + "> ;\n" +
                 "             :name \"respond\" ;\n" +
                 "             :input ?_input ;\n" +
                 "             :flow <" + flowToken + "> .\n" +

@@ -49,10 +49,9 @@ public final class LoginLookupTriggersAuth extends SyncAgent {
         return """
             ?_when_1 :concept <%s> ;
                      :name    "lookupByUsername" ;
-                     :flow    ?_flow ;
-                     :output  ?_lookup_out .
-            ?_lookup_out :outcome "FOUND" ;
-                         :userId  ?_userId .
+                     :outcome "FOUND" ;
+                     :userId  ?_userId ;
+                     :flow    ?_flow .
             ?_web_req :concept <%s> ;
                       :name    "request" ;
                       :flow    ?_flow ;
@@ -67,9 +66,7 @@ public final class LoginLookupTriggersAuth extends SyncAgent {
         return """
             ?_then_1 :concept <%s> ;
                      :name    "check" ;
-                     :input   ?_then_input .
-            ?_then_input :userId   ?_userId ;
-                         :password ?_password .
+                     :input   [ :userId ?_userId ; :password ?_password ] .
             """.formatted(PasswordAuthConcept.IRI);
     }
 

@@ -90,11 +90,10 @@ public final class DebugController {
                 "SELECT ?action ?concept ?name ?flow\n" +
                 "WHERE {\n" +
                 "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
-                "    ?action :actions ?action ;\n" +
-                "            :concept ?concept ;\n" +
+                "    ?action :concept ?concept ;\n" +
                 "            :name ?name ;\n" +
                 "            :flow ?flow .\n" +
-                "    FILTER NOT EXISTS { ?action :output ?output }\n" +
+                "    FILTER NOT EXISTS { ?action :outcome [] }\n" +
                 "  }\n" +
                 "}\n" +
                 "ORDER BY ?action\n");
@@ -105,8 +104,8 @@ public final class DebugController {
         response.put(
                 "status",
                 rows.isEmpty()
-                        ? "No active actions are missing :output."
-                        : rows.size() + " active action(s) are missing :output.");
+                        ? "No active actions are missing :outcome."
+                        : rows.size() + " active action(s) are missing :outcome.");
         return response;
     }
 
@@ -146,8 +145,7 @@ public final class DebugController {
                 "WHERE {\n" +
                 "  VALUES ?graph { <" + RdfVocabulary.ACTION_GRAPH_IRI + "> <" + RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI + "> }\n" +
                 "  GRAPH ?graph {\n" +
-                "    ?action :actions ?action ;\n" +
-                "            :flow <" + token + "> ;\n" +
+                "    ?action :flow <" + token + "> ;\n" +
                 "            :concept ?concept ;\n" +
                 "            :name ?name .\n" +
                 "  }\n" +
@@ -202,6 +200,9 @@ public final class DebugController {
     }
 
     private Map<String, String> nodeFields(String graph, String actionIri, String edge) {
+        if ("output".equals(edge)) {
+            return outputFields(graph, actionIri);
+        }
         List<Map<String, String>> rows = actionLog.select(
                 PREFIX +
                 "SELECT ?predicate ?value\n" +
@@ -215,6 +216,38 @@ public final class DebugController {
 
         Map<String, String> fields = new LinkedHashMap<>();
         for (Map<String, String> row : rows) {
+            fields.put(localName(row.get("predicate")), row.get("value"));
+        }
+        return fields;
+    }
+
+    private Map<String, String> outputFields(String graph, String actionIri) {
+        List<Map<String, String>> outcomeRows = actionLog.select(
+                PREFIX +
+                "SELECT ?value\n" +
+                "WHERE {\n" +
+                "  GRAPH <" + graph + "> {\n" +
+                "    <" + actionIri + "> :outcome ?value .\n" +
+                "  }\n" +
+                "}\n");
+
+        Map<String, String> fields = new LinkedHashMap<>();
+        if (!outcomeRows.isEmpty()) {
+            fields.put("outcome", outcomeRows.get(0).get("value"));
+        }
+
+        List<Map<String, String>> starRows = actionLog.select(
+                PREFIX +
+                "SELECT ?predicate ?value\n" +
+                "WHERE {\n" +
+                "  GRAPH <" + graph + "> {\n" +
+                "    <" + actionIri + "> :outcome ?_outcome .\n" +
+                "    << <" + actionIri + "> :outcome ?_outcome >> ?predicate ?value .\n" +
+                "  }\n" +
+                "}\n" +
+                "ORDER BY ?predicate\n");
+
+        for (Map<String, String> row : starRows) {
             fields.put(localName(row.get("predicate")), row.get("value"));
         }
         return fields;

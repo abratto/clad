@@ -9,7 +9,7 @@ public final class RdfVocabulary {
     /** Base IRI for the action log schema. */
     public static final String ACTION_SCHEMA_IRI = "https://clad.dev/schema#";
 
-    /** The :actions predicate — self-referential identity triple. */
+    /** The :actions predicate (legacy — migrated to RDF-star; no longer in use). */
     public static final String ACTIONS = ACTION_SCHEMA_IRI + "actions";
 
     /** The :concept predicate — links an action node to its concept IRI. */
@@ -21,7 +21,7 @@ public final class RdfVocabulary {
     /** The :input predicate — links an action node to its input blank node. */
     public static final String INPUT = ACTION_SCHEMA_IRI + "input";
 
-    /** The :output predicate — links an action node to its output blank node. */
+    /** The :output predicate (legacy — migrated to :outcome with RDF-star annotation; no longer in use). */
     public static final String OUTPUT = ACTION_SCHEMA_IRI + "output";
 
     /** The :flow predicate — the flow token IRI shared across a causal chain. */

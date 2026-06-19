@@ -22,7 +22,7 @@ import java.util.UUID;
  *   <li>Mints a UUID-based flow token IRI.</li>
  *   <li>Creates a unique action node IRI.</li>
  *   <li>Writes the Web/request RDF triples to the action log named graph.</li>
- *   <li>Writes a self-output (Web/request always succeeds at the receive step).</li>
+ *   <li>Writes a self-outcome (Web/request always succeeds at the receive step).</li>
  *   <li>Signals the {@link CompletionBus} so awaiting syncs are scheduled.</li>
  *   <li>Returns an {@link ActionRecord} representing the root action.</li>
  * </ol>
@@ -60,17 +60,16 @@ public class FlowManager {
         String flowToken = mintFlowToken();
         String actionIri = RdfVocabulary.ACTION_NODE_PREFIX + UUID.randomUUID();
         String inputIri = actionIri + "/input";
-        String outputIri = actionIri + "/output";
 
         StringBuilder sparql = new StringBuilder();
         sparql.append("PREFIX : <").append(SCHEMA).append(">\n");
         sparql.append("INSERT DATA {\n");
         sparql.append("  GRAPH <").append(RdfVocabulary.ACTION_GRAPH_IRI).append("> {\n");
-        sparql.append(INDENT_IRI).append(actionIri).append("> :actions <").append(actionIri).append(SUFFIX_SEMI);
-        sparql.append("         :concept <").append(WEB_CONCEPT_IRI).append(SUFFIX_SEMI);
+        sparql.append("    <").append(actionIri).append("> :concept <").append(WEB_CONCEPT_IRI).append(SUFFIX_SEMI);
         sparql.append("         :name \"request\" ;\n");
         sparql.append("         :input <").append(inputIri).append(SUFFIX_SEMI);
         sparql.append("         :flow <").append(flowToken).append("> .\n");
+        sparql.append("    <").append(actionIri).append("> :outcome \"received\" .\n");
         sparql.append(INDENT_IRI).append(inputIri).append("> :route ")
               .append(NodeFmtLib.str(NodeFactory.createLiteralString(route), (PrefixMap) null)).append(" .\n");
         for (Map.Entry<String, String> entry : requestParams.entrySet()) {
@@ -78,8 +77,6 @@ public class FlowManager {
                   .append(entry.getKey()).append(" ")
                   .append(NodeFmtLib.str(NodeFactory.createLiteralString(entry.getValue()), (PrefixMap) null)).append(" .\n");
         }
-        // Web/request is always successfully received; absence of :status "error" means ok.
-        sparql.append(INDENT_IRI).append(actionIri).append("> :output <").append(outputIri).append("> .\n");
         sparql.append("  }\n");
         sparql.append("}\n");
 

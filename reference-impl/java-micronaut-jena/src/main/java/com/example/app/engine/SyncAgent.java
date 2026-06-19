@@ -36,7 +36,7 @@ public abstract class SyncAgent {
     /** SPARQL WHERE body referencing {@code ?_when_1} and {@code ?_flow}. */
     protected abstract String whereClause();
 
-    /** SPARQL INSERT triples defining {@code ?_then_1} (and {@code ?_then_input}). */
+    /** SPARQL INSERT triples defining {@code ?_then_1} (with blank-node input). */
     protected abstract String thenBindings();
 
     /** The concept-action-status triple this sync watches. */
@@ -92,21 +92,18 @@ public abstract class SyncAgent {
         return "PREFIX : <" + schema + ">\n" +
                "INSERT {\n" +
                "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
-               "    ?_then_1 :actions ?_then_1 ;\n" +
-               "             :flow    ?_flow .\n" +
+               "    ?_then_1 :flow    ?_flow .\n" +
                "    ?_when_1 :" + syncName() + " ?_then_1 .\n" +
                thenBindings() + "\n" +
                "  }\n" +
                "}\n" +
                "WHERE {\n" +
                "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
-               "    ?_when_1 :actions ?_when_1 ;\n" +
-               "             :flow    ?_flow .\n" +
+               "    ?_when_1 :flow    ?_flow .\n" +
                "    FILTER NOT EXISTS { ?_when_1 :" + syncName() + " [] }\n" +
                whereClause() + "\n" +
                "  }\n" +
                "  BIND(IRI(CONCAT(\"" + RdfVocabulary.ACTION_NODE_PREFIX + "\", STRUUID())) AS ?_then_1)\n" +
-               "  BIND(IRI(CONCAT(\"" + RdfVocabulary.ACTION_NODE_PREFIX + "\", STRUUID(), \"/input\")) AS ?_then_input)\n" +
                "}\n";
     }
 }

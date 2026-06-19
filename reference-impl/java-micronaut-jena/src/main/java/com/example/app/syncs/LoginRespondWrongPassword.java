@@ -50,9 +50,8 @@ public final class LoginRespondWrongPassword extends SyncAgent {
         return """
             ?_when_1 :concept <%s> ;
                      :name    "check" ;
-                     :flow    ?_flow ;
-                     :output  ?_check_out .
-            ?_check_out :outcome ?_outcome .
+                     :outcome ?_outcome ;
+                     :flow    ?_flow .
             FILTER (?_outcome IN ("BAD_PASSWORD", "NO_CREDENTIAL"))
             """.formatted(PasswordAuthConcept.IRI);
     }
@@ -62,9 +61,7 @@ public final class LoginRespondWrongPassword extends SyncAgent {
         return """
             ?_then_1 :concept <%s> ;
                      :name    "respond" ;
-                     :input   ?_then_input .
-            ?_then_input :statusCode 401 ;
-                         :message    ?_message .
+                     :input   [ :statusCode 401 ; :message ?_message ] .
             """.formatted(WEB_IRI);
     }
 

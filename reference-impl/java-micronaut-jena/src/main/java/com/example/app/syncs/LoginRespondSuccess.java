@@ -43,10 +43,9 @@ public final class LoginRespondSuccess extends SyncAgent {
         return """
             ?_when_1 :concept <%s> ;
                      :name    "grant" ;
-                     :flow    ?_flow ;
-                     :output  ?_grant_out .
-            ?_grant_out :outcome      "GRANTED" ;
-                        :sessionToken ?_sessionToken .
+                     :outcome      "GRANTED" ;
+                     :sessionToken ?_sessionToken ;
+                     :flow    ?_flow .
             """.formatted(SessionConcept.IRI);
     }
 
@@ -55,9 +54,7 @@ public final class LoginRespondSuccess extends SyncAgent {
         return """
             ?_then_1 :concept <%s> ;
                      :name    "respond" ;
-                     :input   ?_then_input .
-            ?_then_input :statusCode   200 ;
-                         :sessionToken ?_sessionToken .
+                     :input   [ :statusCode 200 ; :sessionToken ?_sessionToken ] .
             """.formatted(WEB_IRI);
     }
 }
