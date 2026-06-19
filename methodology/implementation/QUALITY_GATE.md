@@ -94,6 +94,8 @@ not relax the *intent*.
       identified and entity-type combination decisions are sound.
 11. **Stage 04 implementation-stage checks (automated).**
      When a diff touches `features/UC-*/stages/04_implement/`:
+     - **Automated:** Run `quality-gate/verify_test_framework_config.py`
+       as a pre-flight before any 04c work.
      - **Automated:** Run `quality-gate/verify_spec_parity.py`
        to check every concept spec action has a matching SPEC entry.
      - **Automated:** For the Gherkin track, run
@@ -141,6 +143,9 @@ consistency checks across the CLAD artefact chain:
 | `verify_sync_matrix.py` | 03 | Every sync has a complete Sync Contract Matrix |
 | `verify_data_model.py` | 03b | CSDP structure, storage-leakage prevention |
 | `verify_spec_parity.py` | 04b | Action name parity between concept specs and SPECs |
+| `verify_test_framework_config.py` | 04c | Pre-flight: CUCUMBER/NATIVE config matches produced artefacts |
+| `verify_gherkin_derivation.py` | 04c (Gherkin) | `.feature` file derivation per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1 |
+| `verify_concept_test_derivation.py` | 04d | Every SPEC outcome has a matching concept test row and Java method |
 
 Each script returns exit code 0 on pass, 1 on fail, with a structured
 report. They are invoked by the relevant stage's `## Verify` section

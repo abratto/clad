@@ -130,6 +130,27 @@ acceptable.
 
 ## Verify
 
+### Pre-flight: test framework config check
+
+Run this **before** any other 04c work. It ensures the track
+(CUCUMBER or NATIVE) is correctly configured and that the expected
+artefact type exists before writing new files:
+
+```
+python3 ../../../../quality-gate/verify_test_framework_config.py \
+  --config-dir ../../_config \
+  --clad-properties ../../../../clad.properties \
+  --feature-output-dir output \
+  --feature-files-dir ../../../../app/backend/src/test/resources/features/
+```
+
+- **verify_test_framework_config.py:** asserts that the active test
+  framework has the corresponding artefacts. If `TEST_FRAMEWORK=CUCUMBER`
+  but no `.feature` file exists, the script fails — the agent must
+  derive a `.feature` file before proceeding. If `TEST_FRAMEWORK=NATIVE`
+  but no `-flow-test.md` exists, the agent must create the markdown
+  specs first.
+
 ### Automated checks
 
 Run the following before requesting the human gate:
@@ -148,7 +169,7 @@ When the Gherkin track is active (`TEST_FRAMEWORK=CUCUMBER` in
 ```
 python3 ../../../../quality-gate/verify_gherkin_derivation.py \
   --usecase ../../01_usecase/output/usecase.md \
-  --feature output/login.feature \
+  --feature <relevant>.feature \
   --sync-dir ../../03_syncs/output
 ```
 
