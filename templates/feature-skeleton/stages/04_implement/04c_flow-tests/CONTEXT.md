@@ -230,8 +230,8 @@ python3 ../../../../quality-gate/verify_gherkin_derivation.py \
 **Gate 3 (Executable specification).** Default human approval. The
 human reviews the `.feature` files (Gherkin track) or flow-test
 markdown specs (Native track) as the executable form of the use
-case. After approval, the agent auto-advances through Stages 04d,
-04e, and 05 without further gates.
+case. After approval, the agent proceeds to Stage 04d. Stage 04d and
+04e still require TDD phase approvals at their red/green handoffs.
 
 The `verify_file_manifest.py` script must pass before requesting the
 gate. When the Gherkin track is active, `verify_gherkin_derivation.py`

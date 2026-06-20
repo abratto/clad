@@ -194,6 +194,9 @@ control. CLAD is the missing piece:
   sync contract matrix completeness ([`verify_sync_matrix.py`](quality-gate/verify_sync_matrix.py)),
   CSDP data-model structure ([`verify_data_model.py`](quality-gate/verify_data_model.py)),
   and SPEC parity ([`verify_spec_parity.py`](quality-gate/verify_spec_parity.py)).
+  Use [`run_feature_gate.py`](quality-gate/run_feature_gate.py) when you
+  want one stage-aware command for a feature, including JSON output for CI
+  annotations or agent-readable evidence.
   See [`methodology/implementation/QUALITY_GATE.md`](methodology/implementation/QUALITY_GATE.md).
 - **Outer-loop BDD tests (optional Gherkin/Cucumber track).** Stage 04c
   can mechanically derive executable Gherkin `.feature` files and

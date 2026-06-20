@@ -35,8 +35,8 @@ Before any edits or stage work, state out loud:
 Then wait for explicit human confirmation before doing anything else.
 
 Standing rules you must follow:
-- Gate behaviour: stop after every stage output is produced and wait for explicit human approval before proceeding.
-- Commit cadence: one commit per gate approval on the feature branch, message format `feat(UC-XX): Stage NN — <artefact name>`.
+- Gate behaviour: stop at every feature gate and TDD phase approval, then wait for explicit human approval before proceeding.
+- Commit cadence: one commit per approved feature gate on the feature branch, message format `feat(UC-XX): Gate N — <scope> (stages NN–NN)`.
 - Branch name: `feat/UC-XX-<slug>`.
 - Never write artefacts directly to `main`.
 - After each gate approval, overwrite `features/{{UC-XX-slug}}/RESUME.md` before committing.

@@ -95,8 +95,10 @@ doubt, use one-stage-per-turn.
 
 ## Gate
 
-Auto-advances to Stage 04c. The router points to sub-stages 04a–04e;
-each auto-advances without a human gate.
+Router only. `04a` and `04b` auto-advance on automated verify, `04c`
+opens Gate 3, and the `04d`/`04e` red/green child stages require TDD
+phase approval before each handoff. See `STAGES.md` gate vocabulary and
+`TDD.md` for the red/green approval rules.
 
 ## Next stage
 
@@ -106,4 +108,4 @@ For in-memory profiles, skip 04a and go straight to
 [`04b_spec/CONTEXT.md`](04b_spec/CONTEXT.md). Mark 04a with a
 `_NOT_APPLICABLE.md` note in its `output/`.
 
-The agent proceeds without a human gate.
+The agent proceeds according to the next sub-stage's gate contract.

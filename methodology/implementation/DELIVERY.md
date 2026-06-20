@@ -51,34 +51,29 @@ Create the feature branch **before** writing any Stage 01 output to the
 repo — the branch must exist before the first `git add` of feature
 artefacts. Do not commit artefacts directly to `main`.
 
-**Commit cadence:** one commit per gate approval on the branch. After the
-human approves a stage's output, commit all that stage's output files in
-a single commit using the message convention:
+**Commit cadence:** one commit per approved feature gate on the branch.
+After the human approves Gate 1, Gate 2, or Gate 3, update `RESUME.md`
+and commit all accumulated stage outputs since the previous feature gate
+using the message convention:
 
 ```
-feat(UC-XX): Stage NN — <artefact name>
+feat(UC-XX): Gate N — <scope> (stages NN–NN)
 ```
 
 Example commit sequence for a feature:
 
 ```
-feat(UC-01): Stage 01 — use case artefact (usecase.md)
-feat(UC-01): Stage 02a — responsibility map artefact
-feat(UC-01): Stage 02b — chain tables artefact
-feat(UC-01): Stage 03 — syncs artefacts
-feat(UC-01): Stage 03b — data model artefact
-feat(UC-01): Stage 04a — storage mapping artefact
-feat(UC-01): Stage 04b — spec artefact
-feat(UC-01): Stage 04c — flow tests artefact
-feat(UC-01): Stage 04d — concept TDD artefact
-feat(UC-01): Stage 04e — sync TDD artefact
-feat(UC-01): Stage 05 — verification trace, smoke, tracking
+feat(UC-01): Gate 1 — requirements (stages 01–02b)
+feat(UC-01): Gate 2 — architecture (stages 02–03b)
+feat(UC-01): Gate 3 — executable spec (stages 04a–04c)
 ```
 
 The branch squash-merges to `main` as a single commit at the end of
-Stage 05. The per-stage history lives on the branch, not on `main`. If a
-stage produces multiple output files (e.g. Stage 02 concepts + catalog
-entry), include them all in one commit for that gate.
+Stage 05. The per-stage history lives in the stage artefacts, not in a
+per-stage commit sequence. TDD phase approvals in `04d` and `04e` are
+recorded in their derivation/evidence artefacts and are included in the
+final PR; they do not require additional commits unless the human asks
+for a checkpoint commit on a long-running branch.
 
 `RESUME.md` is a required per-gate artefact for feature branches and
 is included in each gate-approved commit alongside the stage outputs
@@ -98,9 +93,12 @@ following on every PR. Each maps to a CLAD invariant.
 | `mvn verify` (when Java profile changed) | Format, lint, unit + integration tests, ArchUnit hard-rule tests | `reference-impl/java-micronaut-jena/` |
 | Stage-output edit guard (advisory) | Edits to `stages/NN_*/output/` come from re-running the stage, not freelance edits | warning only — humans judge in review |
 
-CI is intentionally short. Add a check only when the *cost* of a
-violation reaching `main` is higher than the *cost* of the check
-running on every PR.
+CI is intentionally shorter than the local/stage gate in
+[`QUALITY_GATE.md`](QUALITY_GATE.md). The stage gate can run the full
+feature-aware script set, including `quality-gate/run_feature_gate.py`;
+CI runs only checks whose *cost* is justified on every PR. Add a CI check
+only when the cost of a violation reaching `main` is higher than the
+cost of the check running on every PR.
 
 ## 5. Branch protection (`main`)
 

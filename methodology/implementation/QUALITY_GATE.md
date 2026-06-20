@@ -19,6 +19,32 @@ The quality-gate scripts are therefore the **mechanised gate** for auto-advance
 stages. A script that passes gives the agent confidence to proceed; a script that
 fails sends work back to the owning stage just as a human rejection would.
 
+Use the stage-aware wrapper when you want one command for the checks that
+apply to a feature stage:
+
+```bash
+python3 quality-gate/run_feature_gate.py \
+  --feature features/UC-01-register \
+  --stage 03b
+```
+
+For CI annotations, agent consumption, or saved evidence, emit JSON:
+
+```bash
+python3 quality-gate/run_feature_gate.py \
+  --feature features/UC-01-register \
+  --stage 03b \
+  --format json
+```
+
+The wrapper invokes the individual `verify_*.py` scripts; it does not
+replace them. Stage contracts may still name the underlying scripts when
+that is clearer for a local handoff.
+
+The wrapper is the local/stage gate. The GitHub Actions workflow is the
+shorter CI merge gate described in `DELIVERY.md`; CI intentionally runs
+only the checks whose cost is justified on every PR.
+
 ---
 
 ## Language-agnostic principles
@@ -146,6 +172,7 @@ consistency checks across the CLAD artefact chain:
 | `verify_test_framework_config.py` | 04c | Pre-flight: CUCUMBER/NATIVE config matches produced artefacts |
 | `verify_gherkin_derivation.py` | 04c (Gherkin) | `.feature` file derivation per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1 |
 | `verify_concept_test_derivation.py` | 04d | Every SPEC outcome has a matching concept test row and Java method |
+| `run_feature_gate.py` | Any supported feature stage | Stage-aware wrapper around the checks above; supports text and JSON output |
 
 Each script returns exit code 0 on pass, 1 on fail, with a structured
 report. They are invoked by the relevant stage's `## Verify` section

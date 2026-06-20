@@ -95,13 +95,15 @@ python3 ../../../../quality-gate/verify_concept_test_derivation.py \
 
 ## Gate
 
-Auto-advances to 04d-green. The `verify_concept_test_derivation.py`
-and `verify_file_manifest.py` scripts must pass before advancing. If
-either fails, the agent stops — the derivation does not match the
-SPEC outcomes or the expected files are missing.
+TDD phase approval. The `verify_concept_test_derivation.py` and
+`verify_file_manifest.py` scripts must pass before requesting approval.
+Then stop and wait for explicit human approval of the red tests before
+starting `04d-green`. If either script fails, the agent stops — the
+derivation does not match the SPEC outcomes or the expected files are
+missing.
 
 ## Next stage
 
 -> [`../04d_green-impl/CONTEXT.md`](../04d_green-impl/CONTEXT.md) — Implement approved concept tests only
 
-The agent proceeds to 04d-green without a human gate.
+The agent proceeds to 04d-green only after explicit human approval.

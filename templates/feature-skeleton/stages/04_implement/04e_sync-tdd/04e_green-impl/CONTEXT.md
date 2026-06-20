@@ -112,11 +112,14 @@ not redesign approved tests.
 
 ## Gate
 
-Auto-advances to Stage 05. All sync tests and the 04c flow tests
-must be green (`mvn test` passes) before advancing.
+TDD phase approval. All sync tests and the 04c flow tests must be green
+(`mvn test` or the feature's configured build/test command passes)
+before requesting approval. Then stop and wait for explicit human
+approval of the green sync and flow-test evidence before starting Stage
+05.
 
 ## Next stage
 
 -> [`../../../05_verify/CONTEXT.md`](../../../05_verify/CONTEXT.md) — Verify + close
 
-The agent proceeds to Stage 05 without a human gate.
+The agent proceeds to Stage 05 only after explicit human approval.

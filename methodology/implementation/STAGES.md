@@ -97,17 +97,18 @@ features/UC-XX-name/
 
 ## Gate model
 
-Per-UC stages are grouped into **3 human gates**, each answering one
-design question. Between gates, stages auto-advance: the agent runs
-the quality-gate scripts as a self-audit and proceeds without human
-intervention. If any quality-gate check fails, the agent stops and
+Per-UC stages are grouped into **3 feature gates**, each answering one
+design question. Between feature gates, stages auto-advance when their
+automated checks pass, except for Stage 04's red/green TDD phase
+approvals. If any quality-gate check fails, the agent stops and
 surfaces the defect.
 
 ```
 Gate 1 — Requirements:  01 → 02a → 02b   (human reviews after 02b)
 Gate 2 — Architecture:  02 → 03 → 03a → 03b (human reviews after 03b)
 Gate 3 — Executable:    04a → 04b → 04c   (human reviews after 04c)
-Auto (Delivery):        04d → 04e → 05    (no human gates)
+TDD phase approvals:    04d-red → 04d-green → 04e-red → 04e-green
+Auto close:             05                (script-checked closure)
 ```
 
 | Gate | Stages | Human reviews | Questions answered |
@@ -115,11 +116,24 @@ Auto (Delivery):        04d → 04e → 05    (no human gates)
 | 1 — Requirements | 01 → 02a → 02b | use case, concept boundaries, chain tables | Do we have the right actors/goals? Do the flows cover all scenarios? |
 | 2 — Architecture | 02 → 03 → 03a → 03b | concept state machines, sync coordination, dependency coupling, data model | Do the state machines make sense? Are there missing or invalid transitions? |
 | 3 — Executable spec | 04a → 04b → 04c | .feature files (Gherkin) or flow-test markdown specs | Do the tests capture the right scenarios and inputs? |
-| Auto (Delivery) | 04d → 04e → 05 | (none — script-checked) | All quality checks pass? |
+| TDD phase approvals | 04d-red → 04d-green → 04e-red → 04e-green | red tests, green implementation evidence | Are the tests correct before code? Did green satisfy only the approved tests and upstream contracts? |
+| Auto close | 05 | (none — script-checked, with artefacts for later inspection) | Do runtime tokens, smoke evidence, and tracking close cleanly? |
 
 Rejection at any gate sends work back to the earliest stage that owns
 the defect. The agent does not advance past the gate until the human
 approves.
+
+## Gate vocabulary
+
+CLAD uses several kinds of gates. Keep the names distinct:
+
+| Name | Blocks agent progress? | Decided by | Used for |
+|---|---|---|---|
+| Feature gate | Yes | Human reviewer | The three major design reviews: Requirements, Architecture, Executable spec. |
+| TDD phase approval | Yes | Human reviewer | Stage 04 red/green handoffs. Red tests must be approved before implementation; green evidence must be approved before the next red phase. |
+| Automated verify | Yes on failure | Script or command exit code | Stage-local and cross-stage consistency checks that allow auto-advance when green. |
+| CI merge gate | Yes for merge | CI plus PR reviewer | Repository-level checks required before changes land on `main`. |
+| Advisory check | No by itself | Script, CI warning, or reviewer | Signals that require human judgment but do not automatically block progress. |
 
 ## The stage contract
 
@@ -396,7 +410,9 @@ approved Pattern D exposure from 03a. This stage decides the
 `04_implement/CONTEXT.md` is a router: its **Process** points at the
 five sub-stages below, and its **Outputs** list is empty (sub-stages
 own all artefacts). Sub-stages run in order `04a → 04b → 04c → 04d →
-04e`; the human gates after each.
+04e`. `04a` and `04b` auto-advance on automated verify, `04c` opens
+Gate 3, and the `04d`/`04e` red/green child stages require TDD phase
+approval at each handoff.
 
 #### Stage 04a — `04a_storage-mapping/`
 
@@ -467,7 +483,7 @@ errors.
 **Output:** `<scenario>-flow-test.md` per scenario; stub test files
 under `reference-impl/<profile>/...`.
 
-**Gate:** **Gate 3 (Executable specification).** Default human approval. The human reviews the .feature files (Gherkin track) or flow-test markdown specs (Native track) as the executable form of the use case. After approval, the agent auto-advances through Stages 04d, 04e, and 05 without further gates.
+**Gate:** **Gate 3 (Executable specification).** Default human approval. The human reviews the .feature files (Gherkin track) or flow-test markdown specs (Native track) as the executable form of the use case. After approval, the agent proceeds into Stage 04d. Stage 04d and 04e still require the TDD phase approvals defined in `TDD.md` and R8.
 
 The `04c` artifact is therefore not only an output contract. It is also
 the choreography contract that `04e` must satisfy when making the flow
@@ -499,7 +515,7 @@ not belong here; they belong in `04e`.
 produces `concept-test-derivation.md`; `04d_green-impl/` produces green
 concept code and tests in the selected profile.
 
-**Gate:** Auto-advances through Stage 05. Sub-stages 04d-red and 04d-green auto-advance with verify_concept_test_derivation.py as the gate.
+**Gate:** TDD phase approvals. `04d-red` stops for human approval of the red tests before `04d-green` starts. `04d-green` stops for human approval of the green implementation evidence before Stage 04e starts. `verify_concept_test_derivation.py` and the selected build/test command must pass before the relevant approval can be requested.
 
 #### Stage 04e — `04e_sync-tdd/` (router)
 
@@ -538,7 +554,7 @@ waiver.
 produces `sync-test-derivation.md`; `04e_green-impl/` produces green
 sync code/tests and green flow tests.
 
-**Gate:** Auto-advances through Stage 05. Sub-stages 04e-red and 04e-green auto-advance.
+**Gate:** TDD phase approvals. `04e-red` stops for human approval of the red sync tests before `04e-green` starts. `04e-green` stops for human approval of the green sync and flow-test evidence before Stage 05 starts.
 
 Gate evidence must include one executed build-and-test command result
 showing: 1) test compilation succeeded, 2) sync tests are green, and
@@ -598,7 +614,7 @@ short-circuited inside the controller / route handler.
 **Output:** `trace.md` (with `Resume point:` line), `findings.md` if
 anything failed verify, `smoke.md`, `tracking.md`.
 
-**Gate:** Auto-closes. The agent runs verification scripts and records results in trace.md, smoke.md, and tracking.md. No human gate required — the human inspects the results at their convenience. Findings that surface in trace.md send work back to the owning stage, but no gate blocks delivery.
+**Gate:** Auto-closes. The agent runs verification scripts and records results in trace.md, smoke.md, and tracking.md. No feature gate or TDD phase approval is required — the human inspects the results at their convenience. Findings that surface in trace.md send work back to the owning stage, but no additional gate blocks closure.
 
 
 
@@ -642,4 +658,5 @@ reviewing at the gate?" Read top to bottom for a single feature.
 | **1 (Requirements)** | 01 → 02a → 02b | Project brief (Stage 00) | usecase.md, responsibility-map.md, chain-table.md | Actors/goals correct? Scenarios cover all flows? Concept boundaries right? Action chains plausible? |
 | **2 (Architecture)** | 02 → 03 → 03a → 03b | Approved requirements | concept.md, sync.md, dep-cards, data-model.md | Concept state machines cover the chains? Sync coordination declarative? Pattern D reads intentional? Data model complete? |
 | **3 (Executable)** | 04a → 04b → 04c | Approved architecture | storage.md, spec.md, flow-test specs or .feature files | Tests capture the right scenarios and inputs? |
-| **Auto (Delivery)** | 04d → 04e → 05 | (nothing — all upstream artefacts approved) | concept code, sync code, test code, trace.md, smoke.md, tracking.md | (none — script-checked: `mvn test` passes, quality-gate scripts pass) |
+| **TDD phase approvals** | 04d-red → 04d-green → 04e-red → 04e-green | Explicit approval at each red/green handoff | concept code, sync code, test code, green flow evidence | Red tests are approved before code; green evidence satisfies approved tests and upstream contracts. |
+| **Auto close** | 05 | (nothing — all upstream artefacts approved) | trace.md, smoke.md, tracking.md | (none — script-checked closure artefacts) |

@@ -60,12 +60,14 @@ Run the child stages strictly in order, gating after each:
 
 ## Gate
 
-Auto-advances through Stage 05. Sub-stages 04d-red and 04d-green
-auto-advance; `verify_concept_test_derivation.py` is the gate
-between them.
+TDD phase approvals. `04d-red` stops for human approval of the red
+concept tests before `04d-green` starts. `04d-green` stops for human
+approval of the green implementation evidence before Stage 04e starts.
+`verify_concept_test_derivation.py` and the selected build/test command
+must pass before the relevant approval can be requested.
 
 ## Next stage
 
 -> [`04d_red-tests/CONTEXT.md`](04d_red-tests/CONTEXT.md) — Concept test derivation (red)
 
-The agent proceeds without a human gate.
+The agent proceeds only after the required TDD phase approval.

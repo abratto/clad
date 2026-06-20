@@ -54,12 +54,13 @@ Run the child stages strictly in order, gating after each:
 
 ## Gate
 
-Auto-advances through Stage 05. Sub-stages 04e-red and 04e-green
-auto-advance. The flow tests from 04c must go green at the end of
-04e-green.
+TDD phase approvals. `04e-red` stops for human approval of the red sync
+tests before `04e-green` starts. `04e-green` stops for human approval of
+the green sync and flow-test evidence before Stage 05 starts. The flow
+tests from 04c must go green at the end of 04e-green.
 
 ## Next stage
 
 -> [`04e_red-tests/CONTEXT.md`](04e_red-tests/CONTEXT.md) — Sync test derivation (red)
 
-The agent proceeds without a human gate.
+The agent proceeds only after the required TDD phase approval.
