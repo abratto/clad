@@ -60,6 +60,25 @@ the approved SPEC outcomes.
 
 ### Text block shape
 
+whereClause (completion-shaped trigger — outcomes and fields are direct
+properties of the action node):
+
+```java
+@Override
+protected String whereClause() {
+  return """
+    ?_when_1 :concept <%s> ;
+         :name    "lookupByUsername" ;
+         :flow    ?_flow ;
+         :outcome "FOUND" ;
+         :userId  ?_userId .
+    """.formatted(UserConcept.IRI);
+}
+```
+
+whereClause (bootstrap-shaped trigger — matches the Web request action's
+input node):
+
 ```java
 @Override
 protected String whereClause() {
@@ -71,6 +90,34 @@ protected String whereClause() {
     ?_inp :route ?_route ;
         :copyId ?_copyId ;
         :memberId ?_memberId .
+    """.formatted(WEB_IRI);
+}
+```
+
+thenBindings (non-respond — input arguments as a blank node):
+
+```java
+@Override
+protected String thenBindings() {
+  return """
+    ?_then_1 :concept <%s> ;
+         :name    "grant" ;
+         :input   [ :userId ?_userId ] .
+    """.formatted(SessionConcept.IRI);
+}
+```
+
+thenBindings (respond — status code and payload fields as blank-node
+properties):
+
+```java
+@Override
+protected String thenBindings() {
+  return """
+    ?_then_1 :concept <%s> ;
+         :name    "respond" ;
+         :input   [ :statusCode ?_statusCode ;
+                    :sessionToken ?_sessionToken ] .
     """.formatted(WEB_IRI);
 }
 ```
@@ -104,7 +151,6 @@ Reserved variables owned by the engine:
 - `?_when_1`
 - `?_flow`
 - `?_then_1`
-- `?_then_input`
 
 Do not redefine those names.
 
@@ -117,20 +163,22 @@ For each approved sync:
    Keep `outputStatus` null unless the dispatcher contract is explicitly
    extended to index by outcome.
 2. **Lower the trigger match into `whereClause()`.**
-   Match the authored action node, shared `?_flow`, and either its
-   `:output` node or, for the bootstrap exception below, its `:input`
-   node.
+   Match the authored action node, shared `?_flow`, and its direct
+   `:outcome` and field properties. For the bootstrap exception, match
+   the root request action's `:input` node and its properties instead
+   (see Bootstrap handoff exception below).
 3. **Lower the trigger outcome literally.**
-   If the sync fires on `FOUND`, match `:_outcome "FOUND"`.
-   Do not rename, normalize, or infer synonyms.
+   If the sync fires on `FOUND`, match `:outcome "FOUND"` directly on
+   the action node. Do not rename, normalize, or infer synonyms.
 4. **Lower each Stage 03 binding pattern deterministically.**
    Pattern A/B/C/D each have one mapping shape; see below.
 5. **Lower the `then` target into `thenBindings()`.**
    Emit exactly one `?_then_1` invocation with `:concept`, `:name`, and
-   `:input ?_then_input`.
-6. **Lower the downstream arguments into `?_then_input`.**
-   Every argument in the approved `then` signature becomes one triple on
-   `?_then_input`, using the exact upstream field names and literals.
+   `:input` carrying a blank node.
+6. **Lower the downstream arguments into the blank-node input.**
+   Every argument in the approved `then` signature becomes one property
+   on the `:input` blank node, using the exact upstream field names and
+   literals.
 
 ## Pattern mapping
 
@@ -144,8 +192,8 @@ where: A: username = when.username
 
 Java/Jena lowering:
 
-- If the trigger is realized as an action completion, bind from that
-  action's `:output` node.
+- If the trigger is realized as an action completion, bind directly from
+  that action node's properties (no `:output` indirection).
 - If the trigger is the bootstrap handoff exception, bind from the root
   request action's `:input` node.
 
@@ -153,9 +201,8 @@ Completion-shaped example:
 
 ```java
 """
-?_when_1 :output ?_out .
-?_out :outcome "FOUND" ;
-  :username ?_username .
+?_when_1 :outcome "FOUND" ;
+    :username ?_username .
 """
 ```
 
@@ -181,7 +228,9 @@ where: B: userId = result_of(User.lookupByUsername).userId
 Java/Jena lowering:
 
 - Match the prior action node in the same `?_flow`.
-- Read the needed field from its `:output` node.
+- Read the needed field as a direct property of that action node (outcome
+  and data fields are properties of the action, not of a separate output
+  node).
 
 Example:
 
@@ -190,9 +239,8 @@ Example:
 ?_lookup :concept <...User...> ;
          :name    "lookupByUsername" ;
          :flow    ?_flow ;
-         :output  ?_lookup_out .
-?_lookup_out :outcome "FOUND" ;
-             :userId  ?_userId .
+         :outcome "FOUND" ;
+         :userId  ?_userId .
 """
 ```
 
@@ -206,16 +254,27 @@ where: C: statusCode = 200
 
 Java/Jena lowering:
 
-- Do not bind a Java local.
-- Write the literal directly in `thenBindings()` unless a test/helper
-  contract explicitly requires an intermediate variable.
+- Declare the constant as a `private static final String` field.
+- Reference a bindable variable in the SPARQL fragment.
+- Bind the literal value via `bindLiteral(...)` in `parameterizeSparql(...)`.
 
-Example:
+Example in `thenBindings()`:
 
 ```java
 """
-?_then_input :statusCode 200 .
+?_then_1 :input [ :statusCode ?_statusCode ] .
 """
+```
+
+Example in `parameterizeSparql(...)`:
+
+```java
+private static final String STATUS_200 = "200";
+
+@Override
+protected String parameterizeSparql(String sparql) {
+  return bindLiteral(sparql, "_statusCode", STATUS_200);
+}
 ```
 
 ### Pattern D — concept-state join
@@ -266,7 +325,8 @@ That is the only lowering exception to keep in mind:
 - Java/Jena runtime level: the sync matches the persisted `Web/request`
   action that bootstrapped the flow
 
-All non-bootstrap syncs still lower from completed action outputs.
+All non-bootstrap syncs still lower from completed action outcomes (now
+direct `:outcome` properties on the action node).
 
 ## Sink sync lowering (`Web.respond`)
 
@@ -276,7 +336,9 @@ transport adapter.
 
 Rules:
 
-- status code literals are written directly in `thenBindings()`
+- status code literals are bound via `bindLiteral(...)` in
+  `parameterizeSparql(...)` and referenced in `thenBindings()` via a
+  bindable variable
 - response payload fields come only from approved upstream outcomes or
   approved constants
 - do not assemble ad hoc payload objects in Java; write the RDF input
@@ -288,9 +350,8 @@ Example:
 """
 ?_then_1 :concept <%s> ;
          :name    "respond" ;
-         :input   ?_then_input .
-?_then_input :statusCode   200 ;
-             :sessionToken ?_sessionToken .
+         :input   [ :statusCode ?_statusCode ;
+                    :sessionToken ?_sessionToken ] .
 """.formatted(WEB_IRI)
 ```
 
@@ -343,9 +404,8 @@ return """
   ?_when_1 :concept <%s> ;
        :name    "check" ;
        :flow    ?_flow ;
-       :output  ?_check_out .
-  ?_check_out :outcome "OK" ;
-        :userId  ?_userId .
+       :outcome "OK" ;
+       :userId  ?_userId .
   """.formatted(PasswordAuthConcept.IRI);
 ```
 
@@ -355,8 +415,7 @@ return """
 return """
   ?_then_1 :concept <%s> ;
        :name    "grant" ;
-       :input   ?_then_input .
-  ?_then_input :userId ?_userId .
+       :input   [ :userId ?_userId ] .
   """.formatted(SessionConcept.IRI);
 ```
 
@@ -366,9 +425,8 @@ return """
 return """
   ?_then_1 :concept <%s> ;
        :name    "respond" ;
-       :input   ?_then_input .
-  ?_then_input :statusCode   200 ;
-         :sessionToken ?_sessionToken .
+       :input   [ :statusCode ?_statusCode ;
+                  :sessionToken ?_sessionToken ] .
   """.formatted(WEB_IRI);
 ```
 

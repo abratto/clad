@@ -101,6 +101,18 @@ file `methodology/` is the source of truth for what each version contains.
   example, and guidance that generated transport docs remain subordinate
   to CLAD's upstream artefacts.
 
+### Tooling & CI
+
+- **RDF-star action log migration**: The action log model under
+  `reference-impl/java-micronaut-jena/` was migrated from RDF reification
+  (`:actions` self-ref, `:output <iri>` + `<iri> :outcome`) to
+  RDF-star/SPARQL-star (direct `:outcome` on action nodes, annotation
+  syntax `{| |}` for output, blank nodes for input). Eliminates ~2
+  triples per action, shortens every sync WHERE clause by one JOIN, and
+  removes IRI minting for input/output nodes. SyncAgent now uses
+  `parameterizeSparql(String)` instead of `buildSparql()`. SYNC_LOWERING.md
+  updated with star pattern examples.
+
 ## [0.2.0] — 2026-05-12
 
 ### Methodology

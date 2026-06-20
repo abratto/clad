@@ -64,7 +64,7 @@ explicitly instead of placing it ad hoc.
   never calls another concept's class. Cross-concept information must
   arrive via `bindings` on an `ActionRecord`.
 - A sync's `thenBindings()` must include exactly one
-  `?_then_1 :concept <…> ; :name "…" ; :input ?_then_input .` triple
+  `?_then_1 :concept <…> ; :name "…" ; :input [ … ] .` triple
   pattern. The base class parses this string to determine which
   concept's pending-invocation poll to schedule next tick — keep the
   format stable.
@@ -80,9 +80,9 @@ These conventions apply only to this Java/Jena profile.
   provide only `whereClause()` and `thenBindings()` fragments. The base
   class assembles `INSERT ... WHERE` and dedup logic.
 - **Engine-owned variables are reserved.** Do not redefine `?_when_1`,
-  `?_flow`, `?_then_1`, or `?_then_input`.
+  `?_flow`, `?_then_1`, or `?_when_1`.
 - **One invocation per sync firing.** `thenBindings()` must create
-  exactly one `?_then_1` invocation and one `?_then_input` node.
+  exactly one `?_then_1` invocation.
 - **Join via flow token.** Cross-concept coordination joins through
   action-log nodes that share `?_flow`; do not read another concept's
   named graph directly.
