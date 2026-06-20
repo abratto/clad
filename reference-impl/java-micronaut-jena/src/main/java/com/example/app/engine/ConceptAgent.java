@@ -88,7 +88,7 @@ public abstract class ConceptAgent {
                                  :input    ?input ;
                                  :flow     ?_flow .
                         OPTIONAL { ?input ?inputPred ?inputVal . }
-                        FILTER NOT EXISTS { ?_action :outcome [] }
+                        FILTER NOT EXISTS { ?_action :outcome ?_any_outcome }
                     }
                 }
                 """);
