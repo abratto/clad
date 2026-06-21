@@ -101,6 +101,21 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
 
 ## Verify
 
+### Gate progression pre-flight
+
+Before any work, verify that the previous gate (if any) was approved:
+
+```
+python3 ../../../../quality-gate/verify_gate_progression.py \
+  --current-stage 05_verify \
+  --resume-feature ../../RESUME.md
+```
+
+- **verify_gate_progression.py:** ensures human gates are not skipped
+  during auto-advance. If a preceding gate is missing approval, the
+  script fails — the agent must present for review before continuing.
+
+
 - Every scenario has an entry in `trace.md`.
 - `findings.md`, if present, names the owning stage for each finding.
 - `trace.md` is backed by captured runtime evidence from the profile's

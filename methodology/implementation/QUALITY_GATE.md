@@ -158,7 +158,16 @@ hook is convenience, not the gate itself.
 
 The repo ships a set of profile-agnostic verification scripts under
 [`quality-gate/`](../../quality-gate/) that automate cross-stage
-consistency checks across the CLAD artefact chain:
+consistency checks across the CLAD artefact chain.
+
+**Pre-flight check (runs before every stage):**
+
+`verify_gate_progression.py` ensures the previous human gate was
+approved before the agent auto-advances. If a gate's approval is
+missing from the feature's RESUME.md, the script fails immediately
+and the agent must present for review before proceeding.
+
+**Stage-specific checks:**
 
 | Script | Stage(s) | What it checks |
 |---|---|---|
@@ -172,6 +181,7 @@ consistency checks across the CLAD artefact chain:
 | `verify_test_framework_config.py` | 04c | Pre-flight: CUCUMBER/NATIVE config matches produced artefacts |
 | `verify_gherkin_derivation.py` | 04c (Gherkin) | `.feature` file derivation per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1 |
 | `verify_concept_test_derivation.py` | 04d | Every SPEC outcome has a matching concept test row and Java method |
+| `verify_gate_progression.py` | All | Pre-flight: ensures the previous human gate was approved before auto-advance to subsequent stages |
 | `run_feature_gate.py` | Any supported feature stage | Stage-aware wrapper around the checks above; supports text and JSON output |
 
 Each script returns exit code 0 on pass, 1 on fail, with a structured

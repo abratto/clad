@@ -48,6 +48,21 @@ helper fields.
 
 ## Verify
 
+### Gate progression pre-flight
+
+Before any work, verify that the previous gate (if any) was approved:
+
+```
+python3 ../../../../quality-gate/verify_gate_progression.py \
+  --current-stage 03b_data-model \
+  --resume-feature ../../RESUME.md
+```
+
+- **verify_gate_progression.py:** ensures human gates are not skipped
+  during auto-advance. If a preceding gate is missing approval, the
+  script fails — the agent must present for review before continuing.
+
+
 ### Automated checks
 
 Run the following before requesting the human gate:

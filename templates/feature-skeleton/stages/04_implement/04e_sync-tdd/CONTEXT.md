@@ -46,6 +46,21 @@ Run the child stages strictly in order, gating after each:
 
 ## Verify
 
+### Gate progression pre-flight
+
+Before any work, verify that the previous gate (if any) was approved:
+
+```
+python3 ../../../../../quality-gate/verify_gate_progression.py \
+  --current-stage 04_implement/04e_sync-tdd \
+  --resume-feature ../../../RESUME.md
+```
+
+- **verify_gate_progression.py:** ensures human gates are not skipped
+  during auto-advance. If a preceding gate is missing approval, the
+  script fails — the agent must present for review before continuing.
+
+
 - `04e_red-tests/` was gated before `04e_green-impl/` started.
 - `04e_red-tests/output/sync-test-derivation.md` exists.
 - All approved sync tests are green at the end of `04e_green-impl/`.

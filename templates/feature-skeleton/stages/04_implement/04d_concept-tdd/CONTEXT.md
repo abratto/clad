@@ -50,6 +50,21 @@ Run the child stages strictly in order, gating after each:
 
 ## Verify
 
+### Gate progression pre-flight
+
+Before any work, verify that the previous gate (if any) was approved:
+
+```
+python3 ../../../../../quality-gate/verify_gate_progression.py \
+  --current-stage 04_implement/04d_concept-tdd \
+  --resume-feature ../../../RESUME.md
+```
+
+- **verify_gate_progression.py:** ensures human gates are not skipped
+  during auto-advance. If a preceding gate is missing approval, the
+  script fails — the agent must present for review before continuing.
+
+
 - `04d_red-tests/` was gated before `04d_green-impl/` started.
 - `04d_red-tests/output/concept-test-derivation.md` exists.
 - All approved concept tests are green at the end of `04d_green-impl/`.

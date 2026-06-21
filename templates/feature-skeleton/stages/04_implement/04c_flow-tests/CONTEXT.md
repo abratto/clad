@@ -130,6 +130,21 @@ acceptable.
 
 ## Verify
 
+### Gate progression pre-flight
+
+Before any work, verify that the previous gate (if any) was approved:
+
+```
+python3 ../../../../../quality-gate/verify_gate_progression.py \
+  --current-stage 04_implement/04c_flow-tests \
+  --resume-feature ../../../RESUME.md
+```
+
+- **verify_gate_progression.py:** ensures human gates are not skipped
+  during auto-advance. If a preceding gate is missing approval, the
+  script fails — the agent must present for review before continuing.
+
+
 ### Pre-flight: test framework config check
 
 Run this **before** any other 04c work. It ensures the track
