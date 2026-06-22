@@ -151,9 +151,29 @@ python3 ../../../../quality-gate/verify_test_framework_config.py \
   but no `-flow-test.md` exists, the agent must create the markdown
   specs first.
 
-### Automated checks
+### Automated checks — Gherkin track
 
-Run the following before requesting the human gate:
+When `TEST_FRAMEWORK=CUCUMBER`, run:
+
+```
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "<feature-name>.feature,…"  # one .feature file per use case
+python3 ../../../../quality-gate/verify_gherkin_derivation.py \
+  --usecase ../../01_usecase/output/usecase.md \
+  --feature <relevant>.feature \
+  --sync-dir ../../03_syncs/output
+```
+
+- **verify_file_manifest.py:** `output/` contains exactly the expected
+  `.feature` file(s) — no separate markdown flow-test spec required.
+- **verify_gherkin_derivation.py:** every use-case scenario has a
+  matching Gherkin Scenario, every Scenario has Given/When/Then,
+  response status codes match sync spec `then` clauses (per
+  GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1).
+
+### Automated checks — Native track
+
+When `TEST_FRAMEWORK=NATIVE`, run:
 
 ```
 python3 ../../../../quality-gate/verify_file_manifest.py \
@@ -163,22 +183,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 - **verify_file_manifest.py:** `output/` contains exactly one
   flow-test markdown spec per scenario.
 
-When the Gherkin track is active (`TEST_FRAMEWORK=CUCUMBER` in
-`_config/test-framework.md` or `clad.properties`), also run the Gherkin derivation check:
-
-```
-python3 ../../../../quality-gate/verify_gherkin_derivation.py \
-  --usecase ../../01_usecase/output/usecase.md \
-  --feature <relevant>.feature \
-  --sync-dir ../../03_syncs/output
-```
-
-- **verify_gherkin_derivation.py:** every use-case scenario has a
-  matching Gherkin Scenario, every Scenario has Given/When/Then,
-  response status codes match sync spec `then` clauses (per
-  GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1).
-
-### Gherkin track
+### Semantic checks — Gherkin track
 
 - Every named scenario in `usecase.md` has a corresponding Gherkin
   `Scenario` (happy path) or `Scenario Outline` (failure branches).
