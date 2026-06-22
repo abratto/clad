@@ -21,7 +21,7 @@
     <micronaut.version>4.6.3</micronaut.version>
     <micronaut.maven.plugin.version>5.0.0</micronaut.maven.plugin.version>
     <micronaut.test.resources.version>4.0.0</micronaut.test.resources.version>
-    <micronaut.openapi.version>7.0.0</micronaut.openapi.version>
+    <micronaut.openapi.version>6.12.3</micronaut.openapi.version>
     <jena.version>5.2.0</jena.version>
     <junit.version>5.11.0</junit.version>
     <archunit.version>1.3.0</archunit.version>
