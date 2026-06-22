@@ -20,7 +20,7 @@
     <exec.mainClass>com.example.app.Application</exec.mainClass>
     <micronaut.version>4.10.16</micronaut.version>
     <micronaut.core.version>4.10.25</micronaut.core.version>
-    <micronaut.maven.plugin.version>5.0.0</micronaut.maven.plugin.version>
+    <micronaut.maven.plugin.version>4.7.2</micronaut.maven.plugin.version>
     <micronaut.test.resources.version>4.0.0</micronaut.test.resources.version>
     <micronaut.openapi.version>6.20.0</micronaut.openapi.version>
     <jena.version>5.2.0</jena.version>
