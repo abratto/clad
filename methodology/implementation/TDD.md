@@ -68,11 +68,14 @@ them). `04b` is not optional when later stages consume SPECs.
 
 Do not collapse these gates:
 
-- `04c` stops after red flow specs/stubs and waits for approval.
-- `04d` stops after red concept tests, waits for approval, then stops
-   again after green implementation and waits for approval.
-- `04e` turns the outer loop green and then waits for approval before
-   Stage 05.
+- **`04c` stops after flow test specs/stubs and waits for human
+   approval (Gate 3).** This is the last design-stage human gate —
+   the Gherkin `.feature` file IS the executable use case.
+- `04d` and `04e` auto-advance because their tests are mechanically
+   derived from already-approved artefacts (04c flow tests, 04b SPECs,
+   chain tables, sync specs). The quality-gate scripts serve as the
+   automated gate between red and green phases.
+- The flow tests enabled at 04e-green must all pass before Stage 05.
 
 For multi-model workflows, treat `04d` and `04e` as structural handoff
 boundaries with their own child-stage folders:

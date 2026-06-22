@@ -99,15 +99,10 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-**Human gate required — London School handoff (R8).** The agent stops,
-presents the red sync tests for human approval, and waits.
-Implementation must not begin until the human signals approval.
-
-The `verify_sync_matrix.py` and `verify_scenario_coverage.py` scripts
-must pass before requesting the gate.
+Auto-advances to 04e-green. Sync tests are mechanically derived from
+approved chain tables and sync specs. The `verify_sync_matrix.py` and
+`verify_scenario_coverage.py` scripts must pass before advancing.
 
 ## Next stage
 
 -> [`../04e_green-impl/CONTEXT.md`](../04e_green-impl/CONTEXT.md) — Implement approved sync tests only
-
-The human says: **"Proceed to green."**

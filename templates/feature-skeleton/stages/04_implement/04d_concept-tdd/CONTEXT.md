@@ -60,10 +60,11 @@ Run the child stages strictly in order, gating after each:
 
 ## Gate
 
-Auto-advances through Stage 05. Sub-stage 04d-red requires explicit
-human approval (per R8) before 04d-green begins. The
-`verify_concept_test_derivation.py` script is the automated check
-that must pass before requesting that approval.
+Auto-advances through Stage 05. Concept tests are mechanically derived
+from the approved use case (04c) and SPECs (04b). The red→green handoff
+is automated — `verify_concept_test_derivation.py` is the gate between
+04d-red and 04d-green. No human approval is required at this boundary;
+the design was settled at 04c (Gate 3).
 
 ## Next stage
 

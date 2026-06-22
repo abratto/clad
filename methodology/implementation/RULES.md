@@ -76,25 +76,24 @@ be walkable for every observable effect. If you find an effect that
 does not back-trace, you have either an unauthorised behaviour (fix the
 code) or an incomplete use case (amend the contract).
 
-## R8. Tests before implementation — no exceptions
+## R8. Outer-loop tests before implementation — inner loops are derived
 
-In stages 04d and 04e, tests must be written, committed, and confirmed
-**red** before any implementation code is written. This is not a
-guideline; it is a hard gate.
+In Stage 04c, flow tests (Gherkin `.feature` or native equivalents) are
+the executable form of the use case. They must be written, reviewed,
+and approved by the human before any implementation begins. This is
+Gate 3 (Executable specification) — the last design-stage human gate.
 
-- Write the test file(s).
-- Stop. Present the tests to the human.
-- Wait for explicit human approval that the tests are correct.
-- Only then write the implementation to make them green.
+In Stages 04d and 04e, concept tests and sync tests are **mechanically
+derived** from already-approved artefacts (04c flow tests, 04b SPECs,
+chain tables, sync specs). They verify implementation fidelity, not
+design. The red→green handoff in 04d and 04e is automated — the
+quality-gate scripts (`verify_concept_test_derivation.py`,
+`verify_sync_matrix.py`) serve as the gate. No human approval is
+required at these inner boundaries.
 
-An agent that writes implementation code before receiving approval on
-the tests has violated this rule. If you find yourself thinking "I'll
-write the test and the implementation together to save time" — stop.
-Write the test only. Wait for approval.
-
-This applies per concept in 04d (one concept's tests approved before
-that concept's implementation), and per sync in 04e (one sync's tests
-approved before that sync's implementation).
+An agent that writes concept or sync implementation before the
+corresponding red tests exist has violated this rule. The flow test
+(04c) must be approved before any inner loop begins.
 
 ## R9. Every SPEC outcome maps to a distinct implementation branch
 

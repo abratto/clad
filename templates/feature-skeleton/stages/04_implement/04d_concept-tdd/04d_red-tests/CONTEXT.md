@@ -47,7 +47,10 @@ here.
    `output/concept-test-derivation.md`: approved test files, exact
    package/class/method names, red evidence command, expected red
    outcome, and the next implementation target.
-5. Stop and present the red tests for human approval.
+ 5. Record the derivation map and the handoff bundle. The automated
+    gate (`verify_concept_test_derivation.py`) will confirm the tests
+    cover all SPEC outcomes. No human approval is required at this
+    boundary — the design was settled at 04c (Gate 3).
 
 ## Outputs
 
@@ -95,17 +98,14 @@ python3 ../../../../quality-gate/verify_concept_test_derivation.py \
 
 ## Gate
 
-**Human gate required — London School handoff (R8).** The agent stops,
-presents the red tests for human approval, and waits. Implementation
-must not begin until the human signals approval.
-
-The `verify_concept_test_derivation.py` and `verify_file_manifest.py`
-scripts must pass before requesting the gate. If either fails, the
-agent stops — the derivation does not match the SPEC outcomes or the
-expected files are missing.
+Auto-advances to 04d-green. Concept tests are mechanically derived
+from approved artefacts (Gate 3 flow tests + 04b SPECs) — they verify
+implementation fidelity, not settle design. The
+`verify_concept_test_derivation.py` and `verify_file_manifest.py`
+scripts must pass before advancing. If either fails, the agent stops
+— the derivation does not match the SPEC outcomes or the expected
+files are missing.
 
 ## Next stage
 
 -> [`../04d_green-impl/CONTEXT.md`](../04d_green-impl/CONTEXT.md) — Implement approved concept tests only
-
-The human says: **"Proceed to green."**

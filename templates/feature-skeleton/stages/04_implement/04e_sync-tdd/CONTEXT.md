@@ -54,9 +54,11 @@ Run the child stages strictly in order, gating after each:
 
 ## Gate
 
-Auto-advances through Stage 05. Sub-stage 04e-red requires explicit
-human approval (per R8) before 04e-green begins. The flow tests from
-04c must go green at the end of 04e-green.
+Auto-advances through Stage 05. Sync tests are mechanically derived
+from approved chain tables and sync specs. The `verify_sync_matrix.py`
+and `verify_scenario_coverage.py` scripts are the automated gates.
+No human approval is required at the 04e-red boundary. The flow tests
+from 04c must go green at the end of 04e-green.
 
 ## Next stage
 

@@ -95,10 +95,14 @@ doubt, use one-stage-per-turn.
 
 ## Gate
 
-Auto-advances to Stage 04c. Sub-stages 04a–04c each auto-advance
-without a human gate. Sub-stages 04d and 04e follow the London School
-red→green handoff: each requires explicit human approval of the red
-tests (per R8) before the matching green implementation begins.
+Auto-advances to Stage 04c. Sub-stages 04a and 04b auto-advance.
+**Sub-stage 04c (flow tests) is Gate 3 (Executable specification) —
+human reviews the Gherkin `.feature` files or native flow-test specs
+as the executable form of the use case.** After 04c is approved, sub-
+stages 04d and 04e auto-advance because their tests are mechanically
+derived from already-approved artefacts (SPECs, chain tables, sync
+specs). The inner loops verify implementation fidelity; the design
+was settled at 04c.
 
 ## Next stage
 
