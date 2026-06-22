@@ -389,7 +389,7 @@ approved Pattern D exposure from 03a. This stage decides the
 
 **Output:** `<Name>.data-model.md` per concept.
 
-**Gate:** **Gate 2 (Architecture).** Default human approval. The human reviews concept state machines, sync coordination, cross-concept coupling, and the conceptual data model together. After approval, the agent auto-advances through Stages 04a–04c without a gate.
+**Gate:** **Gate 2 (Architecture).** Default human approval. The human reviews concept state machines, sync coordination, cross-concept coupling, and the conceptual data model together. After approval, the agent auto-advances through Stages 04a–04b without a gate, then stops at Stage 04c for **Gate 3 (Executable specification)** — the last design-stage human gate.
 
 ### Stage 04 — `04_implement/` (router)
 
