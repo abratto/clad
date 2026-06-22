@@ -78,28 +78,18 @@ or types beyond opaque ids.
 Run the following before requesting the human gate:
 
 ```
-python3 ../../../../quality-gate/verify_outcome_alignment.py \
-  --chain-dir ../02b_chain-table/output --spec-dir ../04_implement/04b_spec/output
-python3 ../../../../quality-gate/verify_action_chain.py \
-  --resp-map ../02a_responsibility-map/output/responsibility-map.md \
-  --chain-dir ../02b_chain-table/output \
-  --concept-dir output \
-  --sync-dir ../03_syncs/output \
-  --dep-dir ../03a_dependency-review/output \
-  --spec-dir ../04_implement/04b_spec/output
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output \
   --expected "<Name>.concept.md,…"  # one per concept in the responsibility map
 ```
 
-- **verify_outcome_alignment.py:** every chain-table outcome matches a
-  SPEC outcome enum (character-for-character after PascalCase→SCREAMING_SNAKE_CASE
-  normalization).
-- **verify_action_chain.py:** every action used in chain tables flows
-  consistently through the responsibility map, concept specs, syncs,
-  dependency cards, and SPECs.
 - **verify_file_manifest.py:** `output/` contains exactly one
   `.concept.md` file per concept in the responsibility map.
+
+> **Note:** Cross-stage checks `verify_outcome_alignment.py` and
+> `verify_action_chain.py` run at Stage 04b instead, because they
+> require sync specs (Stage 03), dependency cards (Stage 03a), and
+> SPECs (Stage 04b) as inputs.
 
 ### Semantic checks (human)
 
@@ -116,9 +106,8 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Auto-advances to Stage 03b. The quality-gate scripts
-(`verify_outcome_alignment.py`, `verify_action_chain.py`,
-`verify_file_manifest.py`) must all pass before advancing.
+Auto-advances to Stage 03b. The quality-gate script
+(`verify_file_manifest.py`) must pass before advancing.
 
 ## Next stage
 

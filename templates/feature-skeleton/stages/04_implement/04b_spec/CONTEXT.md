@@ -53,12 +53,27 @@ Run the following before requesting the human gate:
 ```
 python3 ../../../../quality-gate/verify_spec_parity.py \
   --concept-dir ../../02_concepts/output --spec-dir output
+python3 ../../../../quality-gate/verify_outcome_alignment.py \
+  --chain-dir ../../02b_chain-table/output --spec-dir output
+python3 ../../../../quality-gate/verify_action_chain.py \
+  --resp-map ../../02a_responsibility-map/output/responsibility-map.md \
+  --chain-dir ../../02b_chain-table/output \
+  --concept-dir ../../02_concepts/output \
+  --sync-dir ../../03_syncs/output \
+  --dep-dir ../../03a_dependency-review/output \
+  --spec-dir output
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<Name>.spec.md,…"  # one per business concept
 ```
 
 - **verify_spec_parity.py:** every action name in every concept spec
   has a matching entry in the corresponding SPEC file, and vice versa.
+- **verify_outcome_alignment.py:** every chain-table outcome matches a
+  SPEC outcome enum (character-for-character after PascalCase→SCREAMING_SNAKE_CASE
+  normalization).
+- **verify_action_chain.py:** every action used in chain tables flows
+  consistently through the responsibility map, concept specs, syncs,
+  dependency cards, and SPECs.
 - **verify_file_manifest.py:** one `.spec.md` file per business concept.
 
 ### Semantic checks (human)
@@ -73,8 +88,9 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Auto-advances to Stage 04c. The `verify_spec_parity.py` script must
-pass before advancing.
+Auto-advances to Stage 04c. The `verify_spec_parity.py`,
+`verify_outcome_alignment.py`, and `verify_action_chain.py` scripts
+must all pass before advancing.
 
 ## Next stage
 
