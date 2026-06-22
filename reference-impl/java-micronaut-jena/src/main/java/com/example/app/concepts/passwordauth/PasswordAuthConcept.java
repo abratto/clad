@@ -32,6 +32,13 @@ public final class PasswordAuthConcept extends ConceptAgent {
 
     public static final String IRI = "https://clad.dev/concept/passwordauth";
 
+    private static final int LOCKOUT_THRESHOLD = 5;
+    private static final long LOCKOUT_WINDOW_MILLIS = 15L * 60L * 1000L;
+    private static final String CRED_PATH = "cred/";
+    private static final String CRED_BINDING = "cred";
+    private static final String FAILED_ATTEMPTS_BINDING = "failedAttempts";
+    private static final String LOCKED_UNTIL_BINDING = "lockedUntil";
+    private static final String USER_ID_BINDING = "userId";
     private static final String GRAPH = RdfVocabulary.conceptGraph("passwordauth");
     private static final String NS = "https://clad.dev/concept/passwordauth#";
 
@@ -62,30 +69,37 @@ public final class PasswordAuthConcept extends ConceptAgent {
 
     /** Test/seed helper. */
     public void seedCredential(String userId, String password) {
+        replaceAuthState(userId, verify(password), 0, null);
+    }
+
+    private void replaceAuthState(String userId, String verifier, int failedAttempts, Long lockedUntilMillis) {
+        deleteAuthState(userId);
+
         var pss = new ParameterizedSparqlString();
         pss.setNsPrefix("p", NS);
-        pss.setCommandText("""
-                DELETE { GRAPH ?g { ?cred p:verifier ?old } }
-                INSERT { GRAPH ?g { ?cred p:verifier ?new } }
-                WHERE  { GRAPH ?g { OPTIONAL { ?cred p:verifier ?old } } }
-                """);
+        String lockedUntilTriple = lockedUntilMillis == null ? "" : " ; p:lockedUntil ?" + LOCKED_UNTIL_BINDING;
+        pss.setCommandText("INSERT DATA { GRAPH ?g { ?cred p:verifier ?verifier ; p:failedAttempts ?failedAttempts"
+                + lockedUntilTriple + " . } }");
         pss.setIri("g", GRAPH);
-        pss.setIri("cred", NS + "cred/" + userId);
-        pss.setLiteral("new", verify(password));
+        pss.setIri(CRED_BINDING, NS + CRED_PATH + userId);
+        pss.setLiteral("verifier", verifier);
+        pss.setLiteral(FAILED_ATTEMPTS_BINDING, failedAttempts);
+        if (lockedUntilMillis != null) {
+            pss.setLiteral(LOCKED_UNTIL_BINDING, lockedUntilMillis);
+        }
         actionLog.update(pss.toString());
-        // Ensure cred resource is asserted even if no prior verifier existed.
-        var insert = new ParameterizedSparqlString();
-        insert.setNsPrefix("p", NS);
-        insert.setCommandText("INSERT DATA { GRAPH ?g { ?cred p:verifier ?v } }");
-        insert.setIri("g", GRAPH);
-        insert.setIri("cred", NS + "cred/" + userId);
-        insert.setLiteral("v", verify(password));
-        // Idempotent INSERT DATA is fine here for the simple reference profile.
-        if (!hasCredential(userId)) actionLog.update(insert.toString());
+    }
+
+    private void deleteAuthState(String userId) {
+        var pss = new ParameterizedSparqlString();
+        pss.setCommandText("DELETE WHERE { GRAPH ?g { ?cred ?p ?o } }");
+        pss.setIri("g", GRAPH);
+        pss.setIri(CRED_BINDING, NS + CRED_PATH + userId);
+        actionLog.update(pss.toString());
     }
 
     private void doSet(ActionRecord invocation) {
-        String userId = invocation.binding("userId");
+        String userId = invocation.binding(USER_ID_BINDING);
         String password = invocation.binding("password");
         if (userId == null || password == null) {
             writeError(invocation, "missing userId or password");
@@ -94,49 +108,69 @@ public final class PasswordAuthConcept extends ConceptAgent {
         seedCredential(userId, password);
         writeCompletion(invocation, Map.of(
                 "outcome", ResourceFactory.createStringLiteral("SET"),
-                "userId", ResourceFactory.createStringLiteral(userId)));
+                USER_ID_BINDING, ResourceFactory.createStringLiteral(userId)));
     }
 
     private void doCheck(ActionRecord invocation) {
-        String userId = invocation.binding("userId");
+        String userId = invocation.binding(USER_ID_BINDING);
         String password = invocation.binding("password");
         if (userId == null || password == null) {
             writeError(invocation, "missing userId or password");
             return;
         }
         String outcome;
-        String stored = lookupVerifier(userId);
-        if (stored == null) {
+        AuthState state = lookupAuthState(userId);
+        long now = System.currentTimeMillis();
+        if (state == null) {
             outcome = "NO_CREDENTIAL";
-        } else if (stored.equals(verify(password))) {
+        } else if (state.lockedUntilMillis() != null && state.lockedUntilMillis() > now) {
+            outcome = "LOCKED";
+        } else if (state.verifier().equals(verify(password))) {
+            replaceAuthState(userId, state.verifier(), 0, null);
             outcome = "OK";
         } else {
+            int failedAttempts = state.failedAttempts() + 1;
+            Long lockedUntilMillis = failedAttempts >= LOCKOUT_THRESHOLD
+                    ? now + LOCKOUT_WINDOW_MILLIS
+                    : null;
+            replaceAuthState(userId, state.verifier(), failedAttempts, lockedUntilMillis);
             outcome = "BAD_PASSWORD";
         }
         writeCompletion(invocation, Map.of(
                 "outcome", ResourceFactory.createStringLiteral(outcome),
-                "userId", ResourceFactory.createStringLiteral(userId)));
+            USER_ID_BINDING, ResourceFactory.createStringLiteral(userId)));
     }
 
-    private boolean hasCredential(String userId) {
+    private AuthState lookupAuthState(String userId) {
         var pss = new ParameterizedSparqlString();
         pss.setNsPrefix("p", NS);
-        pss.setCommandText("ASK { GRAPH ?g { ?cred p:verifier ?v } }");
+        pss.setCommandText("""
+                SELECT ?v ?failedAttempts ?lockedUntil
+                WHERE {
+                  GRAPH ?g {
+                    ?cred p:verifier ?v .
+                    OPTIONAL { ?cred p:failedAttempts ?failedAttempts }
+                    OPTIONAL { ?cred p:lockedUntil ?lockedUntil }
+                  }
+                }
+                LIMIT 1
+                """);
         pss.setIri("g", GRAPH);
-        pss.setIri("cred", NS + "cred/" + userId);
-        return actionLog.ask(pss.toString());
-    }
-
-    private String lookupVerifier(String userId) {
-        var pss = new ParameterizedSparqlString();
-        pss.setNsPrefix("p", NS);
-        pss.setCommandText("SELECT ?v WHERE { GRAPH ?g { ?cred p:verifier ?v } } LIMIT 1");
-        pss.setIri("g", GRAPH);
-        pss.setIri("cred", NS + "cred/" + userId);
+        pss.setIri(CRED_BINDING, NS + CRED_PATH + userId);
         List<Map<String, String>> rows = actionLog.select(pss.toString());
         if (rows.isEmpty()) return null;
-        return rows.get(0).get("v");
+        Map<String, String> row = rows.get(0);
+        return new AuthState(
+                row.get("v"),
+                row.get(FAILED_ATTEMPTS_BINDING) == null
+                    ? 0
+                    : Integer.parseInt(row.get(FAILED_ATTEMPTS_BINDING)),
+                row.get(LOCKED_UNTIL_BINDING) == null
+                    ? null
+                    : Long.parseLong(row.get(LOCKED_UNTIL_BINDING)));
     }
+
+    private record AuthState(String verifier, int failedAttempts, Long lockedUntilMillis) {}
 
     /** Trivial verifier — DO NOT USE IN PRODUCTION. */
     private static String verify(String password) {

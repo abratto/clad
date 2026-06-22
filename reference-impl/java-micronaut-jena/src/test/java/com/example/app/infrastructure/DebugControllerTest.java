@@ -66,10 +66,11 @@ class DebugControllerTest {
                         "loginLookupTriggersAuth",
                         "loginRespondUnknownUser",
                         "loginGrantsSession",
+                        "loginRespondLocked",
                         "loginRespondWrongPassword",
                         "loginRespondSuccess"),
                 login.stream().map(row -> (String) row.get("sync")).toList());
-        assertEquals(List.of(1, 2, 2, 3, 3, 4), login.stream()
+            assertEquals(List.of(1, 2, 2, 3, 3, 3, 4), login.stream()
                 .map(row -> ((Number) row.get("step")).intValue())
                 .toList());
     }

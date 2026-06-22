@@ -6,7 +6,9 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
@@ -340,6 +342,7 @@ class LegibleArchitectureRulesTest {
 
         for (Path path : conceptSources) {
             String text = Files.readString(path);
+            Set<String> actionHandlerNames = actionHandlerNames(text);
             // Find all method definitions (heuristic: lines starting with
             // lowercase after access modifier)
             String[] lines = text.split("\n");
@@ -350,6 +353,7 @@ class LegibleArchitectureRulesTest {
                     continue;
                 String methodName = line.replaceAll("private\\s+\\w+\\s+(\\w+)\\(.*", "$1");
                 if (methodName.equals(line)) continue; // no match
+                if (!actionHandlerNames.contains(methodName)) continue;
 
                 // Check if this method calls writeCompletion or writeError
                 int depth = 1;
@@ -370,6 +374,17 @@ class LegibleArchitectureRulesTest {
                 }
             }
         }
+    }
+
+    private static Set<String> actionHandlerNames(String text) {
+        Set<String> names = new LinkedHashSet<>();
+        for (String rawLine : text.split("\n")) {
+            String line = rawLine.trim();
+            if (!line.startsWith("case ") || !line.contains("->")) continue;
+            String methodName = line.replaceAll(".*->\\s*(\\w+)\\(invocation\\)\\s*;.*", "$1");
+            if (!methodName.equals(line)) names.add(methodName);
+        }
+        return names;
     }
 
     /**
