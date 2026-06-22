@@ -69,6 +69,33 @@ be generated directly from the bootstrap boundary. Keep it narrow:
 - do not move domain rules, scenario branching, or concept semantics into
   the transport documentation layer
 
+## Where response serialization belongs
+
+The authored result is a domain-level outcome (status code + field-value
+pairs). The sync spec declares it — for example,
+`Web.respond(status=200, body={sessionToken: sessionId})`. The translation
+of that authored result into a transport response (JSON/XML serialization,
+header setting) belongs in the **transport boundary**, not in the engine
+and not in sync code.
+
+Specifically:
+
+- **Syncs** author the response *shape* (status + field names). They do
+  not assemble JSON, set HTTP headers, or perform I/O.
+- **The engine** reads the completed `Web/respond` action from the action
+  log and returns the field-value map to the caller. It does not serialize
+  the map to JSON or any other format.
+- **The transport boundary** (controller / route handler) receives the
+  field-value map and converts it to a typed DTO or passes it to the
+  profile's JSON serializer. This is where format-specific concerns like
+  JSON escaping, content-type negotiation, and response-header setting
+  belong.
+
+A reference profile that uses string concatenation to build JSON inside
+the engine (`buildJsonBody()`) has violated this boundary. The fix is to
+move response serialization to the transport boundary and let a standard
+JSON library (Jackson, Gson, etc.) handle it.
+
 ## Implementation check for Stage 04
 
 When implementing a bootstrap concept, the allowed shape is narrow:

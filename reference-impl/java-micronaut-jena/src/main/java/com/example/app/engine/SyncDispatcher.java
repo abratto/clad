@@ -27,6 +27,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>This is the only scheduler in the system. There is no Java event bus —
  * all coordination happens through reading and writing RDF triples in the
  * Jena Dataset (WYSIWID Rule 4).
+ *
+ * <p>The engine only reads response status and fields from the action graph.
+ * Response body serialization to JSON is handled by Micronaut's Jackson
+ * serializer at the HTTP boundary — not by string concatenation in the
+ * engine. See {@code ResponseAssembler} for typed DTO construction.
  */
 @Singleton
 public class SyncDispatcher {
@@ -127,7 +132,7 @@ public class SyncDispatcher {
         actionLog.archiveFlow(flowToken);
         var httpStatus = io.micronaut.http.HttpStatus.valueOf(data.statusCode());
         return Optional.of(addFlowTokenHeader(
-                io.micronaut.http.HttpResponse.<String>status(httpStatus).body(data.body()),
+                io.micronaut.http.HttpResponse.status(httpStatus).body(data.fields()),
                 flowToken));
     }
 
@@ -218,36 +223,11 @@ public class SyncDispatcher {
                     fields.put(predUri.substring(SCHEMA.length()), value);
                 }
             }
-            return new ResponseData(buildJsonBody(fields), statusCode);
+            return new ResponseData(fields, statusCode);
         } finally {
             ds.end();
         }
     }
 
-    private record ResponseData(String body, int statusCode) {}
-
-    private static String buildJsonBody(Map<String, String> fields) {
-        if (fields.isEmpty()) return "{}";
-        StringBuilder json = new StringBuilder("{");
-        boolean first = true;
-        for (Map.Entry<String, String> entry : fields.entrySet()) {
-            if (!first) json.append(",");
-            first = false;
-            String v = entry.getValue();
-            json.append("\"").append(escapeJsonValue(entry.getKey())).append("\":");
-            if (v.startsWith("[") || v.startsWith("{")) {
-                json.append(v);
-            } else if (v.matches("-?\\d+")) {
-                json.append(v);
-            } else {
-                json.append("\"").append(escapeJsonValue(v)).append("\"");
-            }
-        }
-        json.append("}");
-        return json.toString();
-    }
-
-    private static String escapeJsonValue(String s) {
-        return s.replace("\\", "\\\\").replace("\"", "\\\"");
-    }
+    private record ResponseData(Map<String, String> fields, int statusCode) {}
 }
