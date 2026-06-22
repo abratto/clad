@@ -6,7 +6,7 @@ Java stack:
 | Layer | Technology |
 |---|---|
 | Language | Java 21 |
-| DI / HTTP runtime | Micronaut 4.x |
+| DI / HTTP runtime | Micronaut Platform 4.10.16 |
 | Persistence vocabulary | Apache Jena 5.x (RDF / SPARQL) |
 | Tests | JUnit 5 |
 | Architecture rules | ArchUnit 1.x |

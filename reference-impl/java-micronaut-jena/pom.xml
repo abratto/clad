@@ -18,10 +18,11 @@
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
     <exec.mainClass>com.example.app.Application</exec.mainClass>
-    <micronaut.version>4.6.3</micronaut.version>
+    <micronaut.version>4.10.16</micronaut.version>
+    <micronaut.core.version>4.10.25</micronaut.core.version>
     <micronaut.maven.plugin.version>5.0.0</micronaut.maven.plugin.version>
     <micronaut.test.resources.version>4.0.0</micronaut.test.resources.version>
-    <micronaut.openapi.version>7.0.0</micronaut.openapi.version>
+    <micronaut.openapi.version>6.20.0</micronaut.openapi.version>
     <jena.version>5.2.0</jena.version>
     <junit.version>5.11.0</junit.version>
     <archunit.version>1.3.0</archunit.version>
@@ -143,7 +144,7 @@
             <path>
               <groupId>io.micronaut</groupId>
               <artifactId>micronaut-inject-java</artifactId>
-              <version>${micronaut.version}</version>
+              <version>${micronaut.core.version}</version>
             </path>
             <path>
               <groupId>io.micronaut.openapi</groupId>

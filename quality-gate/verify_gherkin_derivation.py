@@ -81,9 +81,20 @@ def parse_sync_status_codes(sync_dir):
         # Find Web.respond(status=...) in then clause
         for m in re.finditer(r"Web\.respond\((\d+)", content):
             codes.add(int(m.group(1)))
-        # Also find status codes in allowed literals
-        for m in re.finditer(r"\|\s*(\d+)\s*\|", content):
-            codes.add(int(m.group(1)))
+        # Find status codes in the Allowed literals column of the Sync Contract Matrix.
+        # The matrix has format:
+        #   | Source row | Target row | when sig | then sig | Allowed literals |
+        # Target row column numbers (e.g. | 8 |) are NOT status codes.
+        # Parse only the last column (Allowed literals), which may contain
+        # values like "200, true" or "422" or '200, "/dashboard"'.
+        for line in content.splitlines():
+            line = line.strip()
+            if line.startswith("|") and line.endswith("|"):
+                cells = [c.strip() for c in line.split("|")]
+                if len(cells) >= 6:
+                    allowed = cells[-1]
+                    for m in re.finditer(r"(\d+)", allowed):
+                        codes.add(int(m.group(1)))
     return codes
 
 
