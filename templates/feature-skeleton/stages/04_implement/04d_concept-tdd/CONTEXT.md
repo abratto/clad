@@ -60,9 +60,10 @@ Run the child stages strictly in order, gating after each:
 
 ## Gate
 
-Auto-advances through Stage 05. Sub-stages 04d-red and 04d-green
-auto-advance; `verify_concept_test_derivation.py` is the gate
-between them.
+Auto-advances through Stage 05. Sub-stage 04d-red requires explicit
+human approval (per R8) before 04d-green begins. The
+`verify_concept_test_derivation.py` script is the automated check
+that must pass before requesting that approval.
 
 ## Next stage
 

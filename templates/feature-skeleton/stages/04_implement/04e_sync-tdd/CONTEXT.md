@@ -54,9 +54,9 @@ Run the child stages strictly in order, gating after each:
 
 ## Gate
 
-Auto-advances through Stage 05. Sub-stages 04e-red and 04e-green
-auto-advance. The flow tests from 04c must go green at the end of
-04e-green.
+Auto-advances through Stage 05. Sub-stage 04e-red requires explicit
+human approval (per R8) before 04e-green begins. The flow tests from
+04c must go green at the end of 04e-green.
 
 ## Next stage
 

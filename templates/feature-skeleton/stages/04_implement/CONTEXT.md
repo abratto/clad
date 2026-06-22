@@ -95,8 +95,10 @@ doubt, use one-stage-per-turn.
 
 ## Gate
 
-Auto-advances to Stage 04c. The router points to sub-stages 04a–04e;
-each auto-advances without a human gate.
+Auto-advances to Stage 04c. Sub-stages 04a–04c each auto-advance
+without a human gate. Sub-stages 04d and 04e follow the London School
+red→green handoff: each requires explicit human approval of the red
+tests (per R8) before the matching green implementation begins.
 
 ## Next stage
 
