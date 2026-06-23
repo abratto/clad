@@ -80,7 +80,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 **Gate 2 (Architecture).** Default human approval. The human reviews
 concept state machines, sync coordination, cross-concept coupling,
 and the conceptual data model together. After approval, the agent
-auto-advances through Stages 04a–04c without a gate.
+auto-advances through Stages 04a–04b without a gate, then stops at Stage 04c for **Gate 3 (Executable specification)** — human reviews the Gherkin `.feature` files or native flow-test specs as the executable form of the use case.
 
 The `verify_data_model.py` and `verify_file_manifest.py` scripts must
 pass before requesting the gate.

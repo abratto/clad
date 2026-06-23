@@ -111,7 +111,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 **Gate 1 (Requirements).** Default human approval. The human reviews
 the complete design picture: use case scenarios, concept boundaries,
 and action choreography together. After approval, the agent
-auto-advances through Stages 02–03b without further gates.
+auto-advances through Stage 02 (concept specs) without a human gate, then stops at Stage 03b for **Gate 2 (Architecture)** — human reviews concepts, syncs, and data model together.
 
 The `verify_file_manifest.py` script must pass before requesting the
 gate.
