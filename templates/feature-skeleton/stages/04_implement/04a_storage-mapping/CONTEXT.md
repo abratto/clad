@@ -1,5 +1,12 @@
 # Stage 04a — Storage mapping (optional)
 
+## Pre-condition (agent must verify before starting)
+
+**Gate 2 (Stage 03b) must have been approved by the human.** Check
+`RESUME.md` in the feature root for a `## Gate snapshot` section with
+`Gate 2: Approved`. If it is missing, stop and tell the human that
+Stage 04a cannot begin until Gate 2 is approved.
+
 ## Why this stage exists
 
 For profiles with a persistent store, this is where each concept's

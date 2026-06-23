@@ -1,5 +1,12 @@
 # Stage 02 — Concept specs
 
+## Pre-condition (agent must verify before starting)
+
+**Gate 1 (Stage 02b) must have been approved by the human.** Check
+`RESUME.md` in the feature root for a `## Gate snapshot` section with
+`Gate 1: Approved`. If it is missing, stop and tell the human that
+Stage 02 cannot begin until Gate 1 is approved.
+
 ## Why this stage exists
 
 Locks down each concept's full anatomy — state, action signatures with
