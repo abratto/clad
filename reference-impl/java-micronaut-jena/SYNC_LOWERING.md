@@ -154,6 +154,72 @@ Reserved variables owned by the engine:
 
 Do not redefine those names.
 
+### How the action graph is structured — plain triples vs. RDF-star
+
+The action graph uses **two layers of triples** on each action node. Only
+one of these layers is visible to sync `whereClause()` fragments.
+
+**Plain triples (the sync layer).** Concept agents write action properties
+as plain subject-predicate-object triples directly on the action IRI
+node. These are what sync `whereClause()` fragments match against:
+
+```sparql
+INSERT DATA {
+  GRAPH <action-graph> {
+    <action-iri> :concept <concept-iri> ;
+                 :name    "check" ;
+                 :outcome "OK" ;
+                 :userId  "ada-0001" .
+  }
+}
+```
+
+Sync `whereClause()` matches these plain triples:
+
+```java
+return """
+  ?_when_1 :concept <%s> ;
+           :name    "check" ;
+           :flow    ?_flow ;
+           :outcome "OK" ;
+           :userId  ?_userId .
+  """.formatted(PasswordAuthConcept.IRI);
+```
+
+**RDF-star annotation (the engine layer).** The engine wraps the `:outcome`
+triple with an RDF-star annotation carrying the flow token. This creates
+a second, separate triple in the graph that ties the outcome event to its
+flow for archival and traceability. It does **not** replace the plain
+`:outcome` triple — it annotates it:
+
+```sparql
+INSERT DATA {
+  GRAPH <action-graph> {
+    <action-iri> :outcome "OK" .                                        # ← plain, sync-visible
+    << <action-iri> :outcome "OK" >> :flow <flow-token> .               # ← RDF-star, engine-only
+  }
+}
+```
+
+ConceptAgent writes this via `writeCompletion()`:
+
+```java
+// ConceptAgent.java (actual code)
+sparql.append("    << <").append(invocation.actionIri()).append("> :outcome ")
+      .append(NodeFmtLib.str(output.get("outcome").asNode(), (PrefixMap) null))
+      .append(" >> :flow <").append(invocation.flowToken()).append("> .\n");
+```
+
+**What sync authors need to know:**
+
+- The `?_flow` variable used in `whereClause()` comes from the engine-owned
+  outer `INSERT ... WHERE` shape. Syncs bind it; do not redefine it.
+- The RDF-star annotation is invisible to sync fragments. Syncs match the
+  plain `:outcome` and field triples exactly as documented below.
+- The only consumer of the RDF-star annotations is `ActionLog.archiveFlow()`,
+  which moves completed action annotations between the active and archive
+  graphs without touching the plain action property triples.
+
 ## Lowering algorithm
 
 For each approved sync:
