@@ -220,6 +220,142 @@ sparql.append("    << <").append(invocation.actionIri()).append("> :outcome ")
   which moves completed action annotations between the active and archive
   graphs without touching the plain action property triples.
 
+## RDF-star cookbook
+
+These are the only places in the engine that use RDF-star. Everything
+else — sync `whereClause()`, sync `thenBindings()`, concept state queries —
+uses plain RDF triples.
+
+### 1. Write an action completion (success outcome)
+
+Location: `ConceptAgent.writeCompletion()`.
+
+```java
+// actionIri and flowToken are strings, output is Map<String,RDFNode>
+sparql.append("INSERT DATA {\n");
+sparql.append("  GRAPH <action-graph> {\n");
+// Plain triples for action properties (sync-visible)
+for (var entry : output.entrySet()) {
+    sparql.append("    <").append(actionIri).append("> :")
+          .append(entry.getKey()).append(" ")
+          .append(NodeFmtLib.str(entry.getValue().asNode(), null))
+          .append(" .\n");
+}
+// RDF-star annotation tying the outcome to its flow
+sparql.append("    << <").append(actionIri).append("> :outcome ")
+      .append(NodeFmtLib.str(output.get("outcome").asNode(), null))
+      .append(" >> :flow <").append(flowToken).append("> .\n");
+sparql.append("  }\n}\n");
+```
+
+Produces:
+
+```sparql
+INSERT DATA {
+  GRAPH <https://clad.dev/actions> {
+    <action-iri> :concept <https://clad.dev/concept/user> ;
+                 :name    "lookupByUsername" ;
+                 :outcome "FOUND" ;
+                 :userId  "ada-0001" .
+    << <action-iri> :outcome "FOUND" >> :flow <https://clad.dev/flow/uuid> .
+  }
+}
+```
+
+### 2. Write an error completion
+
+Location: `ConceptAgent.writeError()`.
+
+```sparql
+INSERT DATA {
+  GRAPH <action-graph> {
+    <action-iri> :concept <concept-iri> ;
+                 :name    "check" ;
+                 :error   "Bad credentials" .
+    << <action-iri> :outcome "error" >>
+                            # no :flow — errors are not archived per-flow
+  }
+}
+```
+
+### 3. Archive a completed flow
+
+Location: `ActionLog.archiveFlow()`.
+
+```sparql
+DELETE { GRAPH <active> {
+    << ?a :outcome ?outcome >> ?p ?o .
+} }
+INSERT { GRAPH <archive> {
+    << ?a :outcome ?outcome >> ?p ?o .
+} }
+WHERE  { GRAPH <active> {
+    << ?a :outcome ?outcome >> ?p ?o .
+    ?a :flow <flow-token> .
+} }
+```
+
+This moves all RDF-star-annotated outcome annotations for a given flow
+token from the active graph to the archive graph. The plain action
+property triples stay in the active graph — only the `<< ... >>`
+annotations are moved.
+
+### 4. How NOT to use RDF-star
+
+Sync `whereClause()` should never contain RDF-star syntax. Match only
+plain triples on the action node:
+
+```java
+/* CORRECT — plain triples */
+"""
+?_when_1 :concept <%s> ;
+         :name    "check" ;
+         :flow    ?_flow ;
+         :outcome "OK" ;
+         :userId  ?_userId .
+""".formatted(PasswordAuthConcept.IRI);
+```
+
+```java
+/* WRONG — RDF-star in sync whereClause */
+"""
+<< ?_when_1 :outcome "OK" >> :flow ?_flow .
+?_when_1 :userId ?_userId .
+"""
+// This won't match. Syncs match plain triples, not reified nodes.
+```
+
+Sync `thenBindings()` should also never use RDF-star. Write plain
+triples with blank-node input:
+
+```java
+/* CORRECT — blank-node input */
+"""
+?_then_1 :concept <%s> ;
+         :name    "grant" ;
+         :input   [ :userId ?_userId ] .
+""".formatted(SessionConcept.IRI);
+```
+
+### 5. Why RDF-star instead of blank-node reification
+
+Before RDF-star, the engine used blank-node reification to attach flow
+tokens to outcome events:
+
+```sparql
+# OLD (pre-star) — verbose, requires triple the triples
+[a :subject <action> ; :predicate :outcome ; :object "FOUND"] :flow <token> .
+```
+
+RDF-star collapses this to a single readable line:
+
+```sparql
+# NEW (star) — compact, readable
+<< <action> :outcome "FOUND" >> :flow <token> .
+```
+
+Jena 5.x supports RDF-star natively. The engine migrated in CHANGELOG.md.
+
 ## Lowering algorithm
 
 For each approved sync:
