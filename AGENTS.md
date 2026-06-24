@@ -154,7 +154,6 @@ Current keys:
 
 | Key | Values | Purpose |
 |---|---|---|
-| `test.framework` | `NATIVE` (default) or `CUCUMBER` | Selects the outer-red flow-test track at Stage 04c |
 | `test.command` | Shell command | The single command to run tests for this profile |
 | `storage.layer` | Free text | Describes the persistence technology in use |
 
@@ -165,10 +164,8 @@ Current keys:
 3. Stage-level `CONTEXT.md` — stage-specific override (when explicitly
    documented)
 
-For example, `test.framework` from `clad.properties` is the global
-default. If a feature sets `TEST_FRAMEWORK=CUCUMBER` in its
-`_config/test-framework.md`, that feature uses Cucumber while the rest
-of the project stays on NATIVE.
+Outer flow tests at Stage 04c use Cucumber/BDD (Gherkin `.feature` files
++ step definitions) — see `methodology/architecture/GHERKIN_INTEGRATION.md`.
 
 ## 5. Hard rules
 

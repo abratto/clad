@@ -10,21 +10,11 @@ stay red through 04d (concept TDD) and go **green at the end of 04e**
 pass, the scenario passes; if they don't exist, the scenario isn't
 covered.
 
-**Two tracks are available, selected by the profile's test framework:**
+Flow tests use **Cucumber/BDD (Gherkin)**, the sole outer-red track.
+The `.feature` file IS the spec — a Gherkin Scenario maps 1:1 to a
+use-case scenario, with no invented steps.
 
-| Track | Profile requirement | 04c outer-red artefact |
-|---|---|---|
-| **Gherkin** | Cucumber/Gherkin support (Java, Ruby, JS, .NET, Python, Go — Cucumber-ecosystem profiles) | `<feature>.feature` (Gherkin) + `<Feature>StepDefinitions.java` skeleton |
-| **Native** | No Cucumber support, or profile opts out of Gherkin | `<scenario>-flow-test.md` (markdown) + `<Scenario>FlowTest.java` stub |
-
-Both tracks produce the same verification surface in Stage 05. The
-choice is a profile capability, not a methodology difference. The
-track is declared in `../../../_config/test-framework.md` by setting
-`TEST_FRAMEWORK=CUCUMBER` or `TEST_FRAMEWORK=NATIVE`. Default to the
-Gherkin track when the profile supports Cucumber; fall back to native
-otherwise.
-
-**Feeds (Gherkin track):**
+**Feeds:**
 
 - `<feature>.feature` → 04e (Cucumber scenarios go green at the end);
   05 (Gherkin scenario names link the trace to executable specs).
@@ -33,16 +23,9 @@ otherwise.
 - `../../../../templates/feature.feature` → Gherkin output template
   with derivation rules.
 
-**Feeds (native track):**
-
-- `<scenario>-flow-test.md` → 04e; 05.
-- `<Scenario>FlowTest.java` (`@Disabled`) → outer loop of TDD.
-
 **Agent stance for this stage:** these tests must read like the use
 case. If they read like a unit test, you are testing the wrong layer.
-Read `methodology/implementation/TDD.md` before writing anything. On
-the Gherkin track, the `.feature` file IS the spec — a Gherkin Scenario
-should map 1:1 to a use-case scenario, with no invented steps.
+Read `methodology/implementation/TDD.md` before writing anything.
 
 ## Inputs
 
@@ -54,20 +37,12 @@ should map 1:1 to a use-case scenario, with no invented steps.
 | `../04b_spec/output/` | 4 | Action signatures and outcome values |
 | `../../../_config/build-and-test.md` | 3 | Canonical build/test command for compilation evidence |
 | `../../../_config/package-and-layout.md` | 3 | Canonical test-source root and package layout |
-| `../../../_config/test-framework.md` | 3 | Declares Gherkin or native track |
 | `../../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics, casing rules, payload rules |
 | `../../../../../methodology/implementation/TDD.md` | 3 | London School double-loop discipline |
-| `../../../../../templates/feature.feature` | 3 | Gherkin output template (Gherkin track only) |
-| `../../../../../templates/step-definitions.java` | 3 | Step-def skeleton template (Gherkin track only) |
+| `../../../../../templates/feature.feature` | 3 | Gherkin output template with derivation rules |
+| `../../../../../templates/step-definitions.java` | 3 | Step-def skeleton template |
 
 ## Process
-
-Choose the track by reading `TEST_FRAMEWORK` from
-`../../../_config/test-framework.md`. When `TEST_FRAMEWORK=CUCUMBER`,
-use the Gherkin track. When `TEST_FRAMEWORK=NATIVE` or the file is
-absent, use the native track.
-
-### Gherkin track
 
 1. **Derive** a Gherkin `.feature` file from `../../01_usecase/output/usecase.md`
    using the derivation rules in `../../../../../templates/feature.feature`:
@@ -78,38 +53,21 @@ absent, use the native track.
    `../../02b_chain-table/output/` (action chain per scenario) and
    `../04b_spec/output/` (action signatures, outcome enums) using the
    template at `../../../../../templates/step-definitions.java`.
-   One method per chain-table row. `@Disabled` the skeleton or the
-   Cucumber runner so the tests start red.
-3. Add a Cucumber JUnit runner class (e.g. `CucumberTest.java`) under
-   `APP_TEST_SOURCE_ROOT`, packaged under `APP_PACKAGE_ROOT`, pointing
+   One method per chain-table row. `@Disabled` the skeleton so the tests
+   start red.
+3. Ensure a Cucumber JUnit runner class (e.g. `CucumberTest.java`) exists
+   under `APP_TEST_SOURCE_ROOT`, packaged under `APP_PACKAGE_ROOT`, pointing
    at the `.feature` file's resource directory.
 4. Place the `.feature` file under
    `APP_TEST_SOURCE_ROOT/resources/features/<feature-name>.feature`.
    Place step-definition classes under `APP_PACKAGE_ROOT.steps`.
-
-### Native track
-
-1. For each named scenario in the use case, write a markdown spec:
-   HTTP request → expected sequence of flow tokens → expected authored
-   action chain → expected response.
-2. Add a stub test under `APP_TEST_SOURCE_ROOT`, packaged under
-   `APP_PACKAGE_ROOT`, starting `@Disabled` (red). Place it in the
-   `flows` test location defined by
-   `../../../_config/package-and-layout.md`.
-3. One scenario = one markdown spec file + one stub test file. Do not
-   replace required per-scenario files with a single consolidated
-   artefact. A consolidated overview is optional only after all required
-   per-scenario artefacts exist.
-
-### Both tracks
-
-Before claiming "red and ready", run the canonical build-and-test
-command from `../../../_config/build-and-test.md` (or the targeted
-equivalent documented there) and verify test compilation succeeds. At
-this stage, acceptable red evidence is either
-disabled/skipped tests (when stubs are intentionally `@Disabled`)
-or failing tests if enabled; compilation errors are not
-acceptable.
+5. Before claiming "red and ready", run the canonical build-and-test
+   command from `../../../_config/build-and-test.md` (or the targeted
+   equivalent documented there) and verify test compilation succeeds. At
+   this stage, acceptable red evidence is either
+   disabled/skipped tests (when stubs are intentionally `@Disabled`)
+   or failing tests if enabled; compilation errors are not
+   acceptable.
 
 **Token chain rules (read `FLOW_TOKENS.md` in full before writing):**
 - Outcome values MUST be SCREAMING_SNAKE_CASE, copied from the SPEC slice.
@@ -118,42 +76,26 @@ acceptable.
 
 ## Outputs
 
-### Gherkin track
-
 - `output/<feature-name>.feature` — one feature file per use case
 - (Side effect:) `CucumberTest.java` (runner) + `<Feature>StepDefinitions.java` (skeleton, `@Disabled`)
 
-### Native track
-
-- `output/<scenario>-flow-test.md` per scenario
-- (Side effect:) a stub test file under `reference-impl/<profile>/...`
-
 ## Verify
 
-### Pre-flight: test framework config check
+### Pre-flight: feature file presence
 
-Run this **before** any other 04c work. It ensures the track
-(CUCUMBER or NATIVE) is correctly configured and that the expected
-artefact type exists before writing new files:
+Run this **before** any other 04c work. It ensures a `.feature` file
+exists for the feature:
 
 ```
-python3 ../../../../quality-gate/verify_test_framework_config.py \
-  --config-dir ../../_config \
-  --clad-properties ../../../../clad.properties \
+python3 ../../../../quality-gate/verify_feature_file_presence.py \
   --feature-output-dir output \
   --feature-files-dir ../../../../app/backend/src/test/resources/features/
 ```
 
-- **verify_test_framework_config.py:** asserts that the active test
-  framework has the corresponding artefacts. If `TEST_FRAMEWORK=CUCUMBER`
-  but no `.feature` file exists, the script fails — the agent must
-  derive a `.feature` file before proceeding. If `TEST_FRAMEWORK=NATIVE`
-  but no `-flow-test.md` exists, the agent must create the markdown
-  specs first.
+- **verify_feature_file_presence.py:** asserts that a `.feature` file
+  exists in `output/` and in the Cucumber discovery path.
 
-### Automated checks — Gherkin track
-
-When `TEST_FRAMEWORK=CUCUMBER`, run:
+### Automated checks
 
 ```
 python3 ../../../../quality-gate/verify_file_manifest.py \
@@ -165,25 +107,13 @@ python3 ../../../../quality-gate/verify_gherkin_derivation.py \
 ```
 
 - **verify_file_manifest.py:** `output/` contains exactly the expected
-  `.feature` file(s) — no separate markdown flow-test spec required.
+  `.feature` file(s).
 - **verify_gherkin_derivation.py:** every use-case scenario has a
   matching Gherkin Scenario, every Scenario has Given/When/Then,
   response status codes match sync spec `then` clauses (per
   GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1).
 
-### Automated checks — Native track
-
-When `TEST_FRAMEWORK=NATIVE`, run:
-
-```
-python3 ../../../../quality-gate/verify_file_manifest.py \
-  --dir output --expected "<scenario>-flow-test.md,…"  # one per scenario
-```
-
-- **verify_file_manifest.py:** `output/` contains exactly one
-  flow-test markdown spec per scenario.
-
-### Semantic checks — Gherkin track
+### Semantic checks
 
 - Every named scenario in `usecase.md` has a corresponding Gherkin
   `Scenario` (happy path) or `Scenario Outline` (failure branches).
@@ -203,17 +133,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 - No Gherkin `Scenario` or step exists without a corresponding
   use-case element.
 
-### Native track
-
-- Every scenario has one flow-test markdown spec.
-- Every scenario's markdown spec names an explicit expected authored
-  action chain, not just a final response and token count.
-- Every scenario has a corresponding stub flow test file under the
-  configured `APP_TEST_SOURCE_ROOT` test tree.
-- Every stub test is `@Disabled` (or red) and carries a `TODO` linking
-  back to the scenario name.
-
-### Both tracks
+### Cross-stage checks
 
 - An executed build-and-test command proves test compilation succeeds;
   no compile errors.
@@ -234,16 +154,15 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 **Gate 3 (Executable specification).** STOP and present the artefacts
 for human review. Wait for explicit approval before continuing. The
-human reviews the `.feature` files (Gherkin track) or flow-test
-markdown specs (Native track) as the executable form of the use case.
+human reviews the `.feature` files as the executable form of the use
+case.
 
 After approval, the agent records the gate result in `RESUME.md` (see
 pre-condition check in Stage 04d), then auto-advances through Stages
 04d, 04e, and 05 without further gates.
 
-The `verify_file_manifest.py` script must pass before requesting the
-gate. When the Gherkin track is active, `verify_gherkin_derivation.py`
-must also pass.
+The `verify_file_manifest.py` and `verify_gherkin_derivation.py` scripts
+must pass before requesting the gate.
 
 **Do the artefacts match your intent? If approved, I'll proceed.**
 

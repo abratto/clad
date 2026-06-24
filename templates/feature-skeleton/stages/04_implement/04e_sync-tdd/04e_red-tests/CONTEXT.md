@@ -87,7 +87,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   package/class/method names, the red evidence command, expected red
   outcome, and the next implementation target.
 
-### Gherkin track only (when `TEST_FRAMEWORK=CUCUMBER` in `../../../../_config/test-framework.md`)
+### Flow-test coverage
 
 - Every Gherkin `Scenario` in `../../04c_flow-tests/output/*.feature` is
   covered by at least one sync test row in the derivation map.

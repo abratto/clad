@@ -12,6 +12,13 @@ file `methodology/` is the source of truth for what each version contains.
 
 ### Methodology
 
+- **Test framework single-sourced**: Cucumber/BDD became the sole outer-red
+  flow-test track. Removed `test.framework` from `clad.properties`, the
+  per-feature `_config/test-framework.md` override pattern, and the NATIVE
+  track (markdown flow-test specs + separate JUnit flow tests). Gherkin
+  `.feature` files are now the single source of truth for flow assertions.
+  Simplifies Stage 04c to one path and eliminates one config file per
+  feature.
 - **Gate restructure**: Reduced per-feature human gates from 15 to 3
   (Requirements at 02b, Architecture at 03b, Executable spec at 04c).
   All other stages auto-advance with quality-gate scripts as the
@@ -29,13 +36,12 @@ file `methodology/` is the source of truth for what each version contains.
   config file at repo root for `test.framework`, `test.command`, and
   `storage.layer`. Per-feature overrides via `_config/<key>.md`.
   Documented resolution order in AGENTS.md and README.
-- **Gherkin/Cucumber BDD track (optional outer-red flow tests)**: Stage
+- **Gherkin/Cucumber BDD track**: Stage
   04c can now mechanically derive executable Gherkin `.feature` files and
   step-definition skeletons from upstream CLAD artefacts (usecase.md,
   chain tables, SPECs, sync specs), replacing hand-written markdown flow
   specs with executable specifications that go green at the end of 04e.
-  The track is profile-optional — set `TEST_FRAMEWORK=CUCUMBER` in
-  `_config/test-framework.md` to opt in. Includes a comprehensive
+  Includes a comprehensive
   reference at `methodology/architecture/GHERKIN_INTEGRATION.md` with
   structured derivation rules (G1–G5, S1–S3, E1), cross-stage
   consistency checks, and a worked example in the Java reference profile.

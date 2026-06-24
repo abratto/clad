@@ -356,6 +356,160 @@ RDF-star collapses this to a single readable line:
 
 Jena 5.x supports RDF-star natively. The engine migrated in CHANGELOG.md.
 
+## Concept implementation SPARQL patterns
+
+Sync `whereClause()` / `thenBindings()` fragments are governed by the
+previous sections. Concept agents have their own SPARQL patterns for
+reading and writing state in their named graph. This section captures
+the patterns that agents must follow when implementing `doXxx` handlers
+inside a `ConceptAgent` subclass.
+
+### SELECT — look up concept state
+
+Use the **specific IRI** for the entity, not a generic `?entity` variable.
+The lookup must target the exact entity, or it will match any entity in
+the graph and always succeed.
+
+```java
+// CORRECT — targets the specific prescription IRI
+String lookupSparql = "PREFIX p: <" + NS + ">"
+    + " SELECT ?status WHERE { GRAPH <" + GRAPH + "> {"
+    + "   <" + NS + "prescription/" + prescriptionId + "> p:status ?status ."
+    + " } } LIMIT 1";
+
+// WRONG — matches any prescription in the graph
+String lookupSparql = "PREFIX p: <" + NS + ">"
+    + " SELECT ?status WHERE { GRAPH <" + GRAPH + "> {"
+    + "   ?prescription p:status ?status ."
+    + " } } LIMIT 1";
+```
+
+Build the IRI by concatenating the concept's namespace and the
+identifier:
+
+```java
+String entityIri = NS + "prescription/" + prescriptionId;
+// produces: https://clad.dev/concept/prescription#prescription/rx-001
+```
+
+### UPDATE — modify concept state with `WITH <graph>`
+
+Use the `WITH <graph>` form for SPARQL UPDATE. Avoid nesting
+`GRAPH ?g {}` inside `DELETE {}` / `INSERT {}` blocks — `ParameterizedSparqlString`
+interprets the nested graph variable as a parameter and produces parse
+errors.
+
+```java
+// CORRECT — WITH <graph> syntax
+String updSparql = "PREFIX p: <" + NS + ">"
+    + " WITH <" + GRAPH + ">"
+    + " DELETE { <" + NS + "prescription/" + prescriptionId + "> p:autoRefillEnabled ?old }"
+    + " INSERT { <" + NS + "prescription/" + prescriptionId + "> p:autoRefillEnabled \"true\" }"
+    + " WHERE { OPTIONAL { <" + NS + "prescription/" + prescriptionId + "> p:autoRefillEnabled ?old } }";
+actionLog.update(updSparql);
+
+// WRONG — nested GRAPH ?g inside DELETE/INSERT (ParameterizedSparqlString parse error)
+String updSparql = "DELETE { GRAPH ?g { ?prescription p:autoRefillEnabled ?old } }"
+    + " INSERT { GRAPH ?g { ?prescription p:autoRefillEnabled \"true\" } }"
+    + " WHERE { GRAPH ?g { OPTIONAL { ?prescription p:autoRefillEnabled ?old } } }";
+```
+
+The `WHERE` clause must bind every variable used in `DELETE`. When the
+property being updated might not exist yet (first write), use `OPTIONAL`
+to handle the unbound case.
+
+### Direct string building vs ParameterizedSparqlString
+
+| Context | Recommended approach |
+|---|---|
+| Sync `whereClause()` / `thenBindings()` fragments | Java text blocks with `.formatted()` + `bindLiteral()` as documented in the SPARQL fragment construction section |
+| Concept SELECT / UPDATE queries | **Direct string concatenation** — no `ParameterizedSparqlString`. Build the full SPARQL string with string concatenation (`+`), interpolating IRIs and values directly |
+| Concept `seedXxx()` / test fixtures | Direct string concatenation with `INSERT DATA` |
+
+Rationale: `ParameterizedSparqlString` adds a layer of indirection that
+works well for simple SELECT queries but produces parse errors with
+`DELETE/INSERT WHERE`, nested `GRAPH ?g`, or `OPTIONAL` inside `WHERE`.
+The generated SPARQL from `ParameterizedSparqlString` can also silently
+produce invalid syntax when mixing named-graph patterns with UPDATE
+clauses. Direct string building avoids these issues entirely and keeps
+the SPARQL visible at the construction site.
+
+### `writeCompletion` — how outcomes reach sync `whereClause`
+
+Concept actions signal their result through
+`writeCompletion(invocation, Map.of(...))` or
+`writeError(invocation, message)`:
+
+```java
+// Success outcome — each Map entry becomes a plain triple on the action node
+writeCompletion(invocation, Map.of(
+    "outcome", ResourceFactory.createStringLiteral("Ok"),
+    "prescriptionId", ResourceFactory.createStringLiteral(prescriptionId),
+    "autoRefillEnabled", ResourceFactory.createStringLiteral(autoRefillEnabled)));
+
+// Error outcome — produces :outcome "error" + :error "message"
+writeCompletion(invocation, Map.of(
+    "outcome", ResourceFactory.createStringLiteral("NotFound")));
+```
+
+The sync's `whereClause()` must match these plain triples exactly.
+Outcome names (`"Ok"`, `"NotFound"`, `"NotEligible"`) must match
+character-for-character between the concept's `writeCompletion` and the
+sync's `whereClause`. No synonyms, no renamings.
+
+### Concept test fixtures — write test actions and read outcomes
+
+Concept tests follow a three-part pattern:
+
+**1. Write a test action into the action log:**
+
+```java
+private void writeSetAutoRefillAction(String flowToken, String actionIri,
+        String prescriptionId, String autoRefillEnabled) {
+    String sparql = "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n"
+        + "INSERT DATA {\n"
+        + "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n"
+        + "    <" + actionIri + "> :concept <" + PrescriptionConcept.IRI + "> ;\n"
+        + "                     :name    \"setAutoRefill\" ;\n"
+        + "                     :input   [ :prescriptionId \"" + prescriptionId
+        + "\" ; :autoRefillEnabled \"" + autoRefillEnabled + "\" ] ;\n"
+        + "                     :flow    <" + flowToken + "> .\n"
+        + "  }\n"
+        + "}\n";
+    actionLog.update(sparql);
+}
+```
+
+**2. Poll and process the action:**
+
+```java
+concept.pollAndProcess("setAutoRefill");
+```
+
+**3. Read the outcome:**
+
+```java
+private String readOutcome(String actionIri) {
+    List<Map<String, String>> rows = actionLog.select(
+        "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n"
+        + "SELECT ?outcome WHERE {\n"
+        + "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n"
+        + "    <" + actionIri + "> :outcome ?outcome .\n"
+        + "  }\n"
+        + "}\n");
+    return rows.isEmpty() ? null : rows.get(0).get("outcome");
+}
+```
+
+### Common antipatterns
+
+| Antipattern | Why it fails | Correct approach |
+|---|---|---|
+| `?entity p:predicate ?val` without IRIs | Matches any entity in the graph — lookup always succeeds even when the target entity doesn't exist | Use the specific entity IRI in subject position |
+| Nested `GRAPH ?g` inside `DELETE`/`INSERT` | `ParameterizedSparqlString` can't resolve nested `?g` in UPDATE triples | Use `WITH <graph>` syntax |
+| `ParameterizedSparqlString` for complex UPDATEs | Silent parse errors on `DELETE/INSERT WHERE` with `OPTIONAL` | Use direct string concatenation |
+| `setLiteral("new", "value")` with unbound `?old` | `?old` variable in DELETE clause requires WHERE binding, but falls through PSS | Use direct string concatenation to control variable binding |
+
 ## Lowering algorithm
 
 For each approved sync:

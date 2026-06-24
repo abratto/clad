@@ -117,7 +117,7 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
 - **Cross-stage check (back):** every flow token observed at runtime
   back-traces to a use-case scenario.
 
-### Gherkin track only (when `TEST_FRAMEWORK=CUCUMBER` in `../04_implement/04c_flow-tests/../../../_config/test-framework.md` — or equivalently the active feature's `_config/test-framework.md`)
+### Gherkin/Cucumber coverage
 
 - Every Gherkin scenario name in
   `../04_implement/04c_flow-tests/output/*.feature` appears as a

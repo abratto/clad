@@ -32,6 +32,7 @@ upstream prose, but it may not redesign approved tests.
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
 | `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (only when this profile is selected) | 3 | Profile conventions |
 | `../../../../../../reference-impl/java-micronaut-jena/CANONICAL_EXEMPLAR.md` (only when this profile is selected) | 3 | Profile realization pattern, not source of truth |
+| `../../../../../../reference-impl/java-micronaut-jena/SYNC_LOWERING.md` (only when this profile is selected) | 3 | Concept SPARQL patterns: SELECT, UPDATE, writeCompletion, test fixtures |
 
 ## Process
 

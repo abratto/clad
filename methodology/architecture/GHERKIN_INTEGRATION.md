@@ -1,31 +1,18 @@
 # Gherkin Integration — outer-red BDD flow tests
 
-This document is the **stable reference** for CLAD's optional Gherkin
+This document is the **stable reference** for CLAD's Gherkin/Cucumber
 integration. It answers three questions for agents and humans:
 
-1. **What** is the Gherkin track and when is it used?
+1. **What** is the Gherkin track?
 2. **How** are Gherkin artefacts mechanically derived from upstream
    CLAD artefacts?
 3. **How** does the Gherkin track interact with existing CLAD stages
    (04c, 04e, 05)?
 
----
-
-## 1. Overview
-
-CLAD offers two tracks for the outer-red flow tests at Stage 04c:
-
-| Track | Format | Executable? | Suitable for |
-|---|---|---|---|
-| **Gherkin** | `.feature` file + step-definition classes | Yes (Cucumber) | Profiles with Cucumber support (Java, Ruby, JS, .NET, Python, Go) |
-| **Native** | Markdown spec + profile-native test stub | Partially | Profiles without Cucumber, or opting out |
-
-Both tracks produce the same verification surface in Stage 05: a
-flow-token trace back to the use case. The choice is a profile
-capability, not a methodology difference.
-
-The Gherkin track is selected by setting `TEST_FRAMEWORK=CUCUMBER` in
-`_config/test-framework.md`.
+Cucumber/BDD is the **sole outer-red flow-test track** in CLAD. Gherkin
+`.feature` files are the single source of truth for flow assertions,
+replacing earlier markdown flow-test specs with executable scenarios
+that go green at the end of Stage 04e.
 
 ### Gherkin track artefact chain
 
@@ -46,38 +33,24 @@ are derived from chain-table rows and SPEC outcome enums.
 
 ---
 
-## 2. Track selection
+## 2. Cucumber/BDD standard
 
-### 2.1 Declaring the track
+Cucumber/BDD is the sole outer-red flow-test track. No config file or
+track selection is needed — every CLAD feature uses Gherkin `.feature`
+files and step-definition classes at Stage 04c.
 
-Create or edit `_config/test-framework.md`:
-
-```ini
-TEST_FRAMEWORK=CUCUMBER
-```
-
-Valid values: `CUCUMBER` or `NATIVE`. When absent, default is `NATIVE`
-(backward compatible).
-
-### 2.2 When to set it
-
-Set once when the feature skeleton is first copied. The choice is a
-profile capability, not a per-scenario decision. Do not change it mid-
-feature — the 04c outputs will not match the profile's actual runner,
-causing compilation failures at Stage 04e.
-
-### 2.3 How each stage reads it
-
-| Stage | Reads from | Effect |
-|---|---|---|
-| 04c | `_config/test-framework.md` | Selects Gherkin or Native Process/Outputs/Verify |
-| 04e-red | same config | Gherkin track: expects every `.feature` scenario to have a sync test |
-| 04e-green | same config | Gherkin track: enables runner, captures Cucumber report |
-| 05 | same config | Gherkin track: cross-references scenario names in trace |
+| Stage | Effect |
+|---|---|
+| 04c | Produces Gherkin `.feature` file + step-definition skeleton |
+| 04e-red | Every `.feature` scenario must have a sync test |
+| 04e-green | Cucumber runner executes all scenarios |
+| 05 | Gherkin scenario names cross-reference in trace |
 
 ---
 
 ## 3. Derivation rules: usecase.md → .feature
+
+> Rules G1–G5 below. Templates at `templates/feature.feature`.
 
 These rules are documented in the template at
 [`../../templates/feature.feature`](../../templates/feature.feature)
@@ -220,7 +193,7 @@ values.
 
 ## 6. Cross-stage consistency checks
 
-### Stage 04c verify (Gherkin track)
+### Stage 04c verify
 
 - Every named scenario in `usecase.md` has a corresponding Gherkin
   `Scenario` or `Scenario Outline`.
@@ -234,14 +207,14 @@ values.
   (`cucumber --dry-run` or profile equivalent).
 - No Gherkin step exists without a corresponding use-case element.
 
-### Stage 04e-red verify (Gherkin track)
+### Stage 04e-red verify
 
 - Every Gherkin `Scenario` has at least one sync test row in the
   derivation map.
 - The sync test's trigger pattern matches the `When` step's expected
   token-chain root.
 
-### Stage 04e-green verify (Gherkin track)
+### Stage 04e-green verify
 
 - All Gherkin scenarios are green via the Cucumber runner.
 - Cucumber report (HTML/JSON) is captured as gate evidence.
@@ -250,7 +223,7 @@ values.
 - The lockout scenario (if present and not yet implemented) is honestly
   red — this is a coverage signal, not a defect.
 
-### Stage 05 verify (Gherkin track)
+### Stage 05 verify
 
 - Every Gherkin scenario name appears as a heading or cross-reference
   in `trace.md`.
@@ -283,11 +256,10 @@ step executes, via `ensureServerRunning()`.
 
 ## 8. Agent instructions summary
 
-When operating on the Gherkin track at Stage 04c, follow this checklist:
+When operating at Stage 04c, follow this checklist:
 
 ```
-□ 1. Read _config/test-framework.md → confirm TEST_FRAMEWORK=CUCUMBER
-□ 2. Read 01_usecase/output/usecase.md → extract:
+□ 1. Read 01_usecase/output/usecase.md → extract:
      - Feature name (H1)
      - Primary actor (## Actors)
      - Goal + rationale (## Operational principle)
@@ -327,6 +299,5 @@ When operating on the Gherkin track at Stage 04c, follow this checklist:
 | Gherkin template | [`../../templates/feature.feature`](../../templates/feature.feature) | Output template with derivation rules |
 | Step-def skeleton template | [`../../templates/step-definitions.java`](../../templates/step-definitions.java) | Step-def derivation rules |
 | 04c CONTEXT | [`../../templates/feature-skeleton/stages/04_implement/04c_flow-tests/CONTEXT.md`](../../templates/feature-skeleton/stages/04_implement/04c_flow-tests/CONTEXT.md) | Stage process, verify items |
-| Track config | [`../../templates/feature-skeleton/_config/test-framework.md`](../../templates/feature-skeleton/_config/test-framework.md) | `TEST_FRAMEWORK` declaration |
 | Worked example | [`../../reference-impl/java-micronaut-jena/src/test/resources/features/login.feature`](../../reference-impl/java-micronaut-jena/src/test/resources/features/login.feature) | Real `.feature` file |
 | Worked example | [`../../reference-impl/java-micronaut-jena/src/test/java/com/example/app/steps/LoginStepDefinitions.java`](../../reference-impl/java-micronaut-jena/src/test/java/com/example/app/steps/LoginStepDefinitions.java) | Real step-definition class |

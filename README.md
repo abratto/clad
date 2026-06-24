@@ -195,12 +195,11 @@ control. CLAD is the missing piece:
   CSDP data-model structure ([`verify_data_model.py`](quality-gate/verify_data_model.py)),
   and SPEC parity ([`verify_spec_parity.py`](quality-gate/verify_spec_parity.py)).
   See [`methodology/implementation/QUALITY_GATE.md`](methodology/implementation/QUALITY_GATE.md).
-- **Outer-loop BDD tests (optional Gherkin/Cucumber track).** Stage 04c
-  can mechanically derive executable Gherkin `.feature` files and
-  step-definition skeletons from the use case, chain tables, and SPECs,
-  replacing hand-written markdown flow specs with executable
-  specifications that go green at the end of 04e. Chosen per-feature via
-  `_config/test-framework.md`. See
+- **Outer-loop BDD tests (Cucumber/Gherkin).** Stage 04c
+  derives executable Gherkin `.feature` files and step-definition
+  skeletons from the use case, chain tables, and SPECs, replacing
+  hand-written markdown flow specs with executable specifications
+  that go green at the end of 04e. See
   [methodology/architecture/GHERKIN_INTEGRATION.md](methodology/architecture/GHERKIN_INTEGRATION.md).
 - **Optional overlays, not mandates.** Tracking
   ([methodology/overlays/TRACKING.md](methodology/overlays/TRACKING.md))
@@ -295,10 +294,6 @@ project's global defaults. The file is committed and works with any
 agent framework (Cline, Copilot, Cursor, Roo, Codex, …).
 
 ```properties
-# Test framework: CUCUMBER uses Gherkin/.feature files (requires Cucumber);
-#                 NATIVE (default) uses markdown flow-test specs + JUnit.
-test.framework=NATIVE
-
 # The single command that runs the full test suite.
 test.command=mvn test
 
@@ -306,24 +301,21 @@ test.command=mvn test
 storage.layer=Jena TDB2 named graph (Java/Micronaut profile)
 ```
 
-**Resolution order** (lower number wins):
-
-1. `clad.properties` — global default for all features
-2. `features/UC-XX/_config/test-framework.md` — per-feature override (if present)
-3. Stage-level `CONTEXT.md` — stage-specific override (when explicitly documented)
-
-For example, if most features use `NATIVE` but one feature needs
-Cucumber, set `TEST_FRAMEWORK=CUCUMBER` in that feature's
-`_config/test-framework.md` and leave `clad.properties` as-is.
+Outer flow tests at Stage 04c use Cucumber/BDD (Gherkin `.feature` files
++ step definitions) — see
+[methodology/architecture/GHERKIN_INTEGRATION.md](methodology/architecture/GHERKIN_INTEGRATION.md).
+The Java reference profile ships a Cucumber integration; build and test
+with a single `mvn test` that runs concept unit tests, sync integration
+tests, and BDD flow tests together.
 
 If you plan to adopt the Java reference profile, read
 [`reference-impl/java-micronaut-jena/README.md`](reference-impl/java-micronaut-jena/README.md)
 after Stage 00 passes and before Stage 04 implementation work. That file
 shows how to copy the starter profile into your real app root, how to run
 it locally, and how the Java package/source-root conventions map back into
-`_config/package-and-layout.md`. The Java profile also ships a Cucumber
-integration for the Gherkin track — set `TEST_FRAMEWORK=CUCUMBER` in
-`_config/test-framework.md` to use it (see
+`_config/package-and-layout.md`. The Java profile ships a Cucumber
+integration; build and test with a single `mvn test` that runs concept
+unit tests, sync integration tests, and BDD flow tests together (see
 [methodology/architecture/GHERKIN_INTEGRATION.md](methodology/architecture/GHERKIN_INTEGRATION.md)).
 
 If you want to sequence multiple goals before implementation, adopt the
@@ -399,15 +391,12 @@ Edit [`clad.properties`](clad.properties) at the repo root to set your
 project's global defaults:
 
 ```properties
-test.framework=NATIVE          # CUCUMBER or NATIVE
 test.command=mvn -f reference-impl/java-micronaut-jena/pom.xml test
 storage.layer=Jena TDB2 named graph (Java/Micronaut profile)
 ```
 
 `clad.properties` is committed to the repo and works with any agent
-framework (Cline, Copilot, Cursor, Roo, Codex, …). Per-feature overrides
-go in `features/UC-XX/_config/<key>.md` (e.g. `_config/test-framework.md`
-overrides `test.framework`).
+framework (Cline, Copilot, Cursor, Roo, Codex, …).
 
 Legacy per-developer config (Cline/Roo only, gitignored):
 
