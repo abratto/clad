@@ -153,10 +153,14 @@ python3 ../../../../quality-gate/verify_gherkin_derivation.py \
 
 ## Gate
 
-**Gate 3 (Executable specification).** STOP and present the artefacts
-for human review. Wait for explicit approval before continuing. The
-human reviews the `.feature` files as the executable form of the use
-case.
+**Gate 3 (Executable specification).** Before asking for approval, list
+every artefact file produced since the last gate grouped by stage (04a,
+04b, 04c) with a one-line description per file, including side-effect
+files (`.feature`, runner, step definitions). Then:
+
+STOP and present the artefacts for human review. Wait for explicit
+approval before continuing. The human reviews the `.feature` files as
+the executable form of the use case.
 
 After approval, the agent records the gate result in `RESUME.md` (see
 pre-condition check in Stage 04d), then auto-advances through Stages

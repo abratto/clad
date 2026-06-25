@@ -44,6 +44,13 @@ file `methodology/` is the source of truth for what each version contains.
 
 ### Methodology
 
+- **Gate summary rule**: Added operating principle 11 to `AGENTS.md §2`
+  requiring the agent to list every artefact file produced since the last
+  gate, grouped by stage, before presenting the approval question at each
+  human gate. Updated Gate sections in all four gate-stage CONTEXT.md files
+  (Stage 00, 02b, 03b, 04c) to mandate the summary before approval. The
+  human can identify review targets without inspecting the filesystem or
+  `git diff`.
 - **AGENTS.md §7 capability profiles** now include explicit fences: "No
   implementation code or test files" for Requirements Analysis and Structural
   Modelling groups; "Red phase: tests only. Green phase: implementation only"

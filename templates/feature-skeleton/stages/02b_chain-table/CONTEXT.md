@@ -109,10 +109,14 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-**Gate 1 (Requirements).** STOP and present the artefacts for human
-review. Wait for explicit approval before continuing. The human reviews
-the complete design picture: use case scenarios, concept boundaries,
-and action choreography together.
+**Gate 1 (Requirements).** Before asking for approval, list every
+artefact file produced since the last gate grouped by stage (01, 02a,
+02b) with a one-line description per file. Then:
+
+STOP and present the artefacts for human review. Wait for explicit
+approval before continuing. The human reviews the complete design
+picture: use case scenarios, concept boundaries, and action choreography
+together.
 
 After approval, the agent records the gate result in `RESUME.md` (see
 pre-condition check in Stage 02), then auto-advances through Stage 02

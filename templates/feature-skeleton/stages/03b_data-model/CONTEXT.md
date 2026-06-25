@@ -78,10 +78,14 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-**Gate 2 (Architecture).** STOP and present the artefacts for human
-review. Wait for explicit approval before continuing. The human reviews
-concept state machines, sync coordination, cross-concept coupling,
-and the conceptual data model together.
+**Gate 2 (Architecture).** Before asking for approval, list every
+artefact file produced since the last gate grouped by stage (02, 03,
+03a, 03b) with a one-line description per file. Then:
+
+STOP and present the artefacts for human review. Wait for explicit
+approval before continuing. The human reviews concept state machines,
+sync coordination, cross-concept coupling, and the conceptual data model
+together.
 
 After approval, the agent records the gate result in `RESUME.md` (see
 pre-condition check in Stage 04a), then auto-advances through Stages

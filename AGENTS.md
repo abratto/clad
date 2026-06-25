@@ -82,6 +82,12 @@ You are expected to operate within all three layers simultaneously.
          either sequence via `plan-board.md` or pick an existing approved goal
          directly. Ask one targeted planning question if sequencing is unclear.
       - If intent is ambiguous, ask one clarifying question, then continue.
+11. **Gate summary rule.** At each human gate (Gate 0 at Stage 00,
+    Gate 1 at 02b, Gate 2 at 03b, Gate 3 at 04c), before presenting the
+    approval question, list every artefact file produced since the last
+    gate grouped by stage with a one-line description. The human must
+    be able to identify what to review without inspecting the filesystem
+    or `git diff`.
 
 ## 3. The CLAD contract loop
 

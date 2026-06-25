@@ -67,6 +67,10 @@ before drafting.
 
 ## Gate
 
+**Gate 0 (system-level).** Before asking for approval, list every output
+file produced (`actors.md`, `goals.md`) with a one-line summary. Then
+ask for human approval.
+
 Default human approval — but the gate is *expected* to take multiple
 turns to reach. The stage is complete when the human says the
 artefacts match their intent.
