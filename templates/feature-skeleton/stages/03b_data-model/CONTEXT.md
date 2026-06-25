@@ -22,6 +22,7 @@ property IRI, migration, or schema library, you are too far downstream.
 |---|---|---|
 | `../02_concepts/output/` | 4 | Approved concept state sections |
 | `../03a_dependency-review/output/pattern-d-summary.md` | 4 | Approved cross-concept fields that must be exposed conceptually |
+| Skill: `clad-data-modeling` | 3 | Data modeling reference (see skills/ directory) |
 | `../../../../methodology/architecture/DATA_MODEL_NOTES.md` | 3 | Conceptual data-model procedure |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R2 |
 | `../../../../templates/data-model.md` | 3 | Output template |
@@ -86,12 +87,12 @@ After approval, the agent records the gate result in `RESUME.md` (see
 pre-condition check in Stage 04a), then auto-advances through Stages
 04a–04b without a gate, then stops at Stage 04c for **Gate 3
 (Executable specification)** — human reviews the Gherkin `.feature`
-files or native flow-test specs as the executable form of the use case.
+files as the executable form of the use case.
 
 The `verify_data_model.py` and `verify_file_manifest.py` scripts must
 pass before requesting the gate.
 
-**Do you agree with this artefact? Any corrections before I continue?**
+**Do you agree with this step? Any corrections before I continue?**
 
 ## Next stage
 

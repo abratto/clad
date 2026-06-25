@@ -47,7 +47,7 @@ table, no more.
 
 ## Payload rules
 
-The `payload` field is subject to three hard rules:
+The `payload` field is subject to three constraints:
 
 1. **No secrets.** Passwords, tokens, private keys, and any other
    credential MUST NOT appear in any flow token payload. Ever. Flow

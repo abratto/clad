@@ -59,20 +59,12 @@ a single commit using the message convention:
 feat(UC-XX): Stage NN — <artefact name>
 ```
 
-Example commit sequence for a feature:
+Example commit sequence for a feature (one commit per gate):
 
 ```
-feat(UC-01): Stage 01 — use case artefact (usecase.md)
-feat(UC-01): Stage 02a — responsibility map artefact
-feat(UC-01): Stage 02b — chain tables artefact
-feat(UC-01): Stage 03 — syncs artefacts
-feat(UC-01): Stage 03b — data model artefact
-feat(UC-01): Stage 04a — storage mapping artefact
-feat(UC-01): Stage 04b — spec artefact
-feat(UC-01): Stage 04c — flow tests artefact
-feat(UC-01): Stage 04d — concept TDD artefact
-feat(UC-01): Stage 04e — sync TDD artefact
-feat(UC-01): Stage 05 — verification trace, smoke, tracking
+feat(UC-01): Gate 1 — requirements (stages 01–02b)
+feat(UC-01): Gate 2 — architecture (stages 02–03b)
+feat(UC-01): Gate 3 — executable (stages 04a–04c)
 ```
 
 The branch squash-merges to `main` as a single commit at the end of

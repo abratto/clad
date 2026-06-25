@@ -28,6 +28,7 @@ that the deployable thing actually runs (Part 2, smoke). Without it,
 | `../04_implement/04c_flow-tests/output/` | 4 | Outer test specs for cross-reference (.feature or markdown) |
 | (a flow-token log from a representative test run) | 4 | Runtime evidence |
 | (Cucumber HTML/JSON report, Gherkin track only) | 4 | Supplementary scenario-pass evidence |
+| Skill: `clad-verification` | 3 | Verification reference (see skills/ directory) |
 | `../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics |
 | `../../../../reference-impl/java-micronaut-jena/README.md` | 3 | Example runtime debug surface for the Java profile |
 | `../../../../methodology/overlays/TRACKING.md` | 3 | Optional — only if the TRACKING overlay is in use |

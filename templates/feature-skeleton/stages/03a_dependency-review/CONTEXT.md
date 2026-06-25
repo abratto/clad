@@ -28,6 +28,7 @@ If a card needs an action that doesn't exist yet, you are mid-violation
 | `../02b_chain-table/output/` | 4 | The flows the syncs implement |
 | `../02a_responsibility-map/output/responsibility-map.md` | 4 | The set of concepts to produce a card for |
 | `../02_concepts/output/` | 4 | Action and field names to cite |
+| Skill: `clad-dependency-review` | 3 | Dependency review reference (see skills/ directory) |
 | `../../../../methodology/architecture/SYNC_PATTERNS.md` | 3 | The four patterns (A/B/C/D) and the rule that D is the only legal cross-concept read |
 | `../../../../templates/dependency-review-card.md` | 3 | Per-concept card template |
 | `../../../../templates/pattern-d-summary.md` | 3 | Cross-flow Pattern D summary template |
@@ -109,7 +110,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Auto-advances to Stage 03b. The `verify_file_manifest.py` script
+Auto-advances (next human gate: Stage 03b). The `verify_file_manifest.py` script
 must pass before advancing.
 
 ## Next stage

@@ -1,4 +1,4 @@
-<!-- Template for Stage 03b (03b_data-model). Purpose: capture a profile-neutral conceptual data model with explicit CSDP steps. -->
+<!-- Template for Stage 03b (03b_data-model). Purpose: see methodology/architecture/DATA_MODEL_NOTES.md. -->
 
 # <Concept> — conceptual data model
 

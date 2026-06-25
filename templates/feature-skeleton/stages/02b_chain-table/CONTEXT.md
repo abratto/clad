@@ -22,6 +22,7 @@ trigger, the concept set is wrong — go back to 02a, do not invent.
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Scenarios to choreograph |
 | `../02a_responsibility-map/output/responsibility-map.md` | 4 | Available concepts and their actions |
+| Skill: `clad-chain-table` | 3 | Chain table reference (see skills/ directory) |
 | `../../../../methodology/architecture/SYNCHRONIZATIONS.md` | 3 | What syncs are (so the chain table can be lifted into them later) |
 | `../../../../templates/chain-table.md` | 3 | Output template |
 

@@ -32,6 +32,7 @@ agreement. Do not create any UC folder during this stage.
 | Path | Layer | Why |
 |---|---|---|
 | (the human's brief) | — | Source of intent |
+| Skill: `clad-system-scoping` | 3 | System scoping reference (see skills/ directory) |
 | `../../../templates/actors.md` | 3 | Output template |
 | `../../../templates/goals.md` | 3 | Output template |
 | `../../../methodology/implementation/STAGES.md` | 3 | §"Scope: system-level vs per-UC" and §"Stage 00 — `00_actor-goal/`" — collaboration semantics |

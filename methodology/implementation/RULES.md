@@ -106,6 +106,15 @@ If you find yourself returning one outcome for two different
 conditions, check the SPEC — they are almost certainly distinct
 outcomes that were defined separately for a reason.
 
+**Outcome branching checklist** — verify before claiming green:
+
+- [ ] Each SPEC outcome has its own `if` / `switch` branch — not shared with another outcome
+- [ ] Each branch returns the correct `OutcomeType` enum value
+- [ ] `message` is null on success outcomes, non-null on failure outcomes
+- [ ] `id` fields are non-null on creation success outcomes, null on failure outcomes
+- [ ] Numeric status codes match the approved chain-table row exactly — no type coercion
+- [ ] No two constructor signatures or methods with the same erasure (Java compile error)
+
 ---
 
 Four of these rules — R1, R3, R8, and R9 — fail most often by accident.

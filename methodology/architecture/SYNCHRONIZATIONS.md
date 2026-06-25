@@ -12,7 +12,7 @@ business-level wiring lives here.
 ```
 Sync: LoginGrantsSession
   when:  PasswordAuth.verify(userId, password) -> Ok
-  where: session = freshSessionId()
+  where: C: session = "auto-generated"
   then:  Session.open(userId, session)
          Web.respond(token: session)
 ```

@@ -114,7 +114,7 @@ Auto (Delivery):        04d → 04e → 05    (no human gates)
 |---|---|---|---|
 | 1 — Requirements | 01 → 02a → 02b | use case, concept boundaries, chain tables | Do we have the right actors/goals? Do the flows cover all scenarios? |
 | 2 — Architecture | 02 → 03 → 03a → 03b | concept state machines, sync coordination, dependency coupling, data model | Do the state machines make sense? Are there missing or invalid transitions? |
-| 3 — Executable spec | 04a → 04b → 04c | .feature files (Gherkin) or flow-test markdown specs | Do the tests capture the right scenarios and inputs? |
+| 3 — Executable spec | 04a → 04b → 04c | .feature files (Gherkin) | Do the tests capture the right scenarios and inputs? |
 | Auto (Delivery) | 04d → 04e → 05 | (none — script-checked) | All quality checks pass? |
 
 Rejection at any gate sends work back to the earliest stage that owns
@@ -141,8 +141,7 @@ When a stage depends on configuration or profile-specific commands, use
 this precedence order unless the stage contract states otherwise:
 
 1. feature-local `_config/` files named in the stage `Inputs`
-2. local workspace runtime config (`.cline-clad-config` / `.roo-clad-config`)
-   for executable command values only
+2. `clad.properties` at the repo root for executable command values only
 3. reference-profile docs for patterns and conventions only
 
 If the needed value is still missing after that order, stop and ask the
@@ -203,7 +202,7 @@ useful visual distinction.
 
 **Output:** `usecase.md`.
 
-**Gate:** Auto-advances to Stage 02b. The agent runs the Verify items as self-audit and proceeds. If any item fails, the agent stops and surfaces the defect.
+**Gate:** Auto-advances (next human gate: Stage 02b). The agent runs the Verify items as self-audit and proceeds. If any item fails, the agent stops and surfaces the defect.
 
 ### Stage 02a — `02a_responsibility-map/`
 
@@ -223,7 +222,7 @@ that does not fit goes in *Out of scope*.
 
 **Output:** `responsibility-map.md`.
 
-**Gate:** Auto-advances to Stage 02b. Same self-audit rule.
+**Gate:** Auto-advances (next human gate: Stage 02b). Same self-audit rule.
 
 ### Stage 02b — `02b_chain-table/`
 
@@ -315,7 +314,7 @@ stages.
 
 **Output:** one `<Name>.concept.md` per business concept.
 
-**Gate:** Auto-advances to Stage 03b. The quality-gate scripts verify outcome alignment and action chain consistency.
+**Gate:** Auto-advances (next human gate: Stage 03b). The quality-gate scripts verify outcome alignment and action chain consistency.
 
 ### Stage 03 — `03_syncs/`
 
@@ -338,7 +337,7 @@ instead of guessing inside Stage 03.
 
 **Output:** one `<name>.sync.md` per coordination rule.
 
-**Gate:** Auto-advances to Stage 03b. The verify_sync_matrix.py and verify_scenario_coverage.py scripts must pass.
+**Gate:** Auto-advances (next human gate: Stage 03b). The verify_sync_matrix.py and verify_scenario_coverage.py scripts must pass.
 
 ### Stage 03a — `03a_dependency-review/`
 
@@ -374,7 +373,7 @@ elsewhere, the dependency card is where that gets surfaced.
 **Output:** `<concept>-card.md` per concept named in 02a's map;
 `pattern-d-summary.md` consolidating Pattern D across the feature.
 
-**Gate:** Auto-advances to Stage 03b.
+**Gate:** Auto-advances (next human gate: Stage 03b).
 
 ### Stage 03b — `03b_data-model/`
 
@@ -396,12 +395,12 @@ approved Pattern D exposure from 03a. This stage decides the
 `04_implement/CONTEXT.md` is a router: its **Process** points at the
 five sub-stages below, and its **Outputs** list is empty (sub-stages
 own all artefacts). Sub-stages run in order `04a → 04b → 04c → 04d →
-04e`; the human gates after each.
+04e`; the agent gates (auto or human) after each.
 
 #### Stage 04a — `04a_storage-mapping/`
 
 **Input:** `03b_data-model/output/`, the chosen profile's reference
-docs, [`../implementation/STORAGE_MAPPING.md`](STORAGE_MAPPING.md).
+docs, [`STORAGE_MAPPING.md`](STORAGE_MAPPING.md).
 
 **Process:** if the profile uses a relational/RDF/document store, map
 each approved conceptual data model into the profile's storage
@@ -413,7 +412,7 @@ approved model from 03b in a specific profile.
 
 **Output:** `<Name>.storage.md` per concept (or `_NOT_APPLICABLE.md`).
 
-**Gate:** Auto-advances to Stage 04c. The verify_file_manifest.py script must pass.
+**Gate:** Auto-advances (next human gate: Stage 04c). The verify_file_manifest.py script must pass.
 
 #### Stage 04b — `04b_spec/`
 
@@ -433,7 +432,7 @@ guidance beyond what is mechanically present in the concept spec.
 
 **Output:** `<Name>.spec.md` per concept.
 
-**Gate:** Auto-advances to Stage 04c. The verify_spec_parity.py script must pass.
+**Gate:** Auto-advances (next human gate: Stage 04c). The verify_spec_parity.py script must pass.
 
 #### Stage 04c — `04c_flow-tests/`
 
@@ -441,20 +440,18 @@ guidance beyond what is mechanically present in the concept spec.
 `04b_spec/output/`, `features/UC-XX/_config/build-and-test.md`,
 `features/UC-XX/_config/package-and-layout.md`.
 
-**Process:** for each named scenario in the use case, write the
-**outer** test as a markdown spec (HTTP request → expected sequence of
-flow tokens → expected response), plus an explicit expected authored
-action chain for that scenario, and a stub test under the chosen
-profile's `src/test/.../flows/`. Tests start `@Disabled` (or red); they
-go green only at the end of `04e`.
+**Process:** for each named scenario in the use case, produce per-scenario
+flow-test artefacts: a Gherkin `.feature` file, a step-definition skeleton,
+a Cucumber runner, and stub flow tests. The `.feature` file is the spec.
+One use case → one `.feature` file; one scenario → one Gherkin
+`Scenario`/`Scenario Outline`. Step-definition methods map 1:1 to
+chain-table rows.
 
 Stub flow tests live under the feature's configured
 `APP_TEST_SOURCE_ROOT`; agents must not guess the test tree from the
 reference profile when the feature config says otherwise.
 
-One scenario means one markdown spec and one stub test file. A single
-consolidated markdown file is not a substitute for the required
-per-scenario artefacts.
+One scenario means one Gherkin Scenario and one step-definition method.
 
 Before claiming this stage is "red and ready", run the canonical
 build-and-test command from `features/UC-XX/_config/build-and-test.md`
@@ -464,10 +461,10 @@ disabled/skipped flow tests (when stubs are intentionally `@Disabled`)
 or failing flow tests (if enabled early) — but never compilation
 errors.
 
-**Output:** `<scenario>-flow-test.md` per scenario; stub test files
-under `reference-impl/<profile>/...`.
+**Output:** `<feature>.feature` per use case, a `CucumberTest.java`
+runner, and `<Feature>StepDefinitions.java` skeletons (`@Disabled`).
 
-**Gate:** **Gate 3 (Executable specification).** Default human approval. The human reviews the .feature files (Gherkin track) or flow-test markdown specs (Native track) as the executable form of the use case. After approval, the agent auto-advances through Stages 04d, 04e, and 05 without further gates.
+**Gate:** **Gate 3 (Executable specification).** Default human approval. The human reviews the `.feature` files as the executable form of the use case. After approval, the agent auto-advances through Stages 04d, 04e, and 05 without further gates.
 
 The `04c` artifact is therefore not only an output contract. It is also
 the choreography contract that `04e` must satisfy when making the flow
@@ -641,5 +638,5 @@ reviewing at the gate?" Read top to bottom for a single feature.
 |---|---|---|---|---|
 | **1 (Requirements)** | 01 → 02a → 02b | Project brief (Stage 00) | usecase.md, responsibility-map.md, chain-table.md | Actors/goals correct? Scenarios cover all flows? Concept boundaries right? Action chains plausible? |
 | **2 (Architecture)** | 02 → 03 → 03a → 03b | Approved requirements | concept.md, sync.md, dep-cards, data-model.md | Concept state machines cover the chains? Sync coordination declarative? Pattern D reads intentional? Data model complete? |
-| **3 (Executable)** | 04a → 04b → 04c | Approved architecture | storage.md, spec.md, flow-test specs or .feature files | Tests capture the right scenarios and inputs? |
+| **3 (Executable)** | 04a → 04b → 04c | Approved architecture | storage.md, spec.md, .feature files | Tests capture the right scenarios and inputs? |
 | **Auto (Delivery)** | 04d → 04e → 05 | (nothing — all upstream artefacts approved) | concept code, sync code, test code, trace.md, smoke.md, tracking.md | (none — script-checked: `mvn test` passes, quality-gate scripts pass) |

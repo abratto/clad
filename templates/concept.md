@@ -9,7 +9,7 @@
 
 > The data this concept owns. No other concept may read or write it.
 > Use Alloy-style relational notation: `relation(subject: Type) -> field: Type  -- multiplicity`
-> Multiplicity annotations: `mandatory` | `optional` | `conditional mandatory: <condition>`
+> Multiplicity annotations: `mandatory` | `optional` | `conditional mandatory: <condition>` | `zero or more`
 > For stateless concepts write: `*None.* <ConceptName> is stateless.`
 
 ```
@@ -48,7 +48,8 @@
 ```
 <actionName> [ <arg>: <Type> ; <arg2>: <Type> ] => [ <field>: <Type> ]
     <description of happy path and effect on state>
-    flow token: { action: "<ConceptName>.<actionName>", <fields> }
+    flow token: { id, parent, action: "<ConceptName>.<actionName>", actor, at,
+                  outcome: "<outcome>", payload: { <fields> } }
 
 <actionName> [ <arg>: <Type> ] => [ error: "<errorName>" ]
     <condition under which this error fires>

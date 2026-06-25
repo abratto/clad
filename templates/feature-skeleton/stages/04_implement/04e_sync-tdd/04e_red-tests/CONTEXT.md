@@ -29,6 +29,7 @@ no sync implementation belongs here.
 | `../../04d_concept-tdd/04d_red-tests/output/` | 4 | Approved concept-level test derivation |
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for red evidence |
 | `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
+| Skill: `clad-sync-tdd` | 3 | Sync TDD reference (see skills/ directory) |
 | `../../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |

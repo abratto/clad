@@ -156,8 +156,8 @@ consumer need that?**
 | `<Name>.data-model.md` | 03b | 04a | Approved fact types and constraints | The storage mapping must realize this model without drift. |
 | `<Name>.storage.md` (or `_NOT_APPLICABLE.md`) | 04a | 04d | Storage shape for the test fixture | The concept TDD builds against this mapping when persistence exists. |
 | `<Name>.spec.md` | 04b | 04c, 04d, 04e | Action signatures the test code compiles against | All inner-loop and outer-loop tests reference SPECs, not prose. |
-| `<scenario>-flow-test.md` | 04c | 04e | The test that must go green | When the last sync goes green, the flow test must too. |
-| `<scenario>-flow-test.md` | 04c | 05 | Expected runtime token chain | The back-trace evidence comes from running this. |
+| `<feature>.feature` + `<Feature>StepDefinitions.java` | 04c | 04e | The flow test that must go green | When the last sync goes green, the flow test must too. |
+| `<feature>.feature` + runner | 04c | 05 | Expected runtime token chain + Gherkin scenarios | The back-trace evidence comes from running this. |
 | `concept-test-derivation.md` | 04d | 04e | What concept actions are already-green | The sync TDD relies on these as its substrate. |
 | `concept-test-derivation.md` | 04d | 05 | Test coverage map for actions | Distinguishes "covered by unit test" from "covered only by flow test." |
 | `<Name>ConceptTest.java` + `<Name>Concept.java` | 04d | 04e, 05 | Running concept layer | The substrate the syncs orchestrate; the back-trace target. |

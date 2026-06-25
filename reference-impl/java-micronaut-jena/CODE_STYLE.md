@@ -139,6 +139,17 @@ protected String parameterizeSparql(String sparql) {
 }
 ```
 
+## Constructor discipline
+
+- Match what the tests instantiate: if tests call `new Account()`, the
+  class must have a no-arg constructor. No constructor signature mismatch.
+- No two constructors or methods with the same erasure (Java compile error).
+- Prefer `HashMap` over `Map.of()` when entries must be added after
+  construction — `Map.of()` returns an unmodifiable map.
+- When the storage layer is configured, use it. Do not substitute an
+  in-memory collection (e.g. `HashMap`) for the configured persistence
+  technology.
+
 ## Tests
 
 - `ConceptTestBase`, `SyncTestBase`, `FlowTestBase` in `src/test/java/com/example/app/`.

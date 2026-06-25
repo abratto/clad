@@ -10,7 +10,7 @@ stay red through 04d (concept TDD) and go **green at the end of 04e**
 pass, the scenario passes; if they don't exist, the scenario isn't
 covered.
 
-Flow tests use **Cucumber/BDD (Gherkin)**, the sole outer-red track.
+Flow tests use **Cucumber/BDD (Gherkin)**, the recommended outer-red track.
 The `.feature` file IS the spec — a Gherkin Scenario maps 1:1 to a
 use-case scenario, with no invented steps.
 
@@ -37,6 +37,7 @@ Read `methodology/implementation/TDD.md` before writing anything.
 | `../04b_spec/output/` | 4 | Action signatures and outcome values |
 | `../../../_config/build-and-test.md` | 3 | Canonical build/test command for compilation evidence |
 | `../../../_config/package-and-layout.md` | 3 | Canonical test-source root and package layout |
+| Skill: `clad-flow-testing` | 3 | Flow testing reference (see skills/ directory) |
 | `../../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics, casing rules, payload rules |
 | `../../../../../methodology/implementation/TDD.md` | 3 | London School double-loop discipline |
 | `../../../../../templates/feature.feature` | 3 | Gherkin output template with derivation rules |
@@ -89,7 +90,7 @@ exists for the feature:
 ```
 python3 ../../../../quality-gate/verify_feature_file_presence.py \
   --feature-output-dir output \
-  --feature-files-dir ../../../../app/backend/src/test/resources/features/
+  --feature-files-dir <APP_TEST_SOURCE_ROOT>/resources/features/
 ```
 
 - **verify_feature_file_presence.py:** asserts that a `.feature` file
@@ -164,7 +165,7 @@ pre-condition check in Stage 04d), then auto-advances through Stages
 The `verify_file_manifest.py` and `verify_gherkin_derivation.py` scripts
 must pass before requesting the gate.
 
-**Do the artefacts match your intent? If approved, I'll proceed.**
+**Do you agree with this step? Any corrections before I continue?**
 
 ## Next stage
 

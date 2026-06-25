@@ -29,6 +29,7 @@ not redesign approved tests.
 | `../04e_red-tests/output/` | 4 | Approved red sync tests and handoff bundle |
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for green evidence |
 | `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
+| Skill: `clad-sync-tdd` | 3 | Sync TDD reference (see skills/ directory) |
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
 | `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (only when this profile is selected) | 3 | Profile conventions |

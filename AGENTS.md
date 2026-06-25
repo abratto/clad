@@ -104,20 +104,25 @@ Mapped to the ICM stages of a feature folder:
 | Stage | Folder | Produces | Gate |
 |---|---|---|---|
 | 0 | `features/_system/stages/00_actor-goal/` *(system scope — run once per brief)* | `actors.md`, `goals.md` (collaborative — see [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)) | `00 — system-level` |
-| 1 | `stages/01_usecase/` | `usecase.md` (operational principle, actors, scenarios) | Auto → 02b |
-| 2a | `stages/02a_responsibility-map/` | `responsibility-map.md` (one row per concept: state, actions) | Auto → 02b |
+| 1 | `stages/01_usecase/` | `usecase.md` (operational principle, actors, scenarios) | Auto¹ → 02b |
+| 2a | `stages/02a_responsibility-map/` | `responsibility-map.md` (one row per concept: state, actions) | Auto¹ → 02b |
 | 2b | `stages/02b_chain-table/` | `<scenario>-chain.md` per use-case scenario (action choreography) | **Gate 1 (Requirements)** |
-| 2 | `stages/02_concepts/` | One `*.concept.md` per concept (full anatomy) | Auto → 03b |
-| 3 | `stages/03_syncs/` | One `*.sync.md` per coordination rule | Auto → 03b |
-| 3a | `stages/03a_dependency-review/` | One `*-card.md` per concept + `pattern-d-summary.md` (cross-concept coupling surface) | Auto → 03b |
+| 2 | `stages/02_concepts/` | One `*.concept.md` per concept (full anatomy) | Auto¹ → 03b |
+| 3 | `stages/03_syncs/` | One `*.sync.md` per coordination rule | Auto¹ → 03b |
+| 3a | `stages/03a_dependency-review/` | One `*-card.md` per concept + `pattern-d-summary.md` (cross-concept coupling surface) | Auto¹ → 03b |
 | 3b | `stages/03b_data-model/` | One `*.data-model.md` per concept (profile-neutral conceptual data model) | **Gate 2 (Architecture)** |
-| 4 | `stages/04_implement/` | Router; top-level sub-stages `04a_storage-mapping`, `04b_spec`, `04c_flow-tests`, `04d_concept-tdd`, `04e_sync-tdd`, where `04d` and `04e` each split into structural red/green child stages | Auto → 04c |
-| 4a | `stages/04a_storage-mapping/` | Storage mapping (profile-specific) | Auto → 04c |
-| 4b | `stages/04b_spec/` | Spec | Auto → 04c |
+| 4 | `stages/04_implement/` | Router; top-level sub-stages `04a_storage-mapping`, `04b_spec`, `04c_flow-tests`, `04d_concept-tdd`, `04e_sync-tdd`, where `04d` and `04e` each split into structural red/green child stages | Auto¹ → 04c |
+| 4a | `stages/04a_storage-mapping/` | Storage mapping (profile-specific) | Auto¹ → 04c |
+| 4b | `stages/04b_spec/` | Spec | Auto¹ → 04c |
 | 4c | `stages/04c_flow-tests/` | Flow tests (outer red) | **Gate 3 (Executable)** |
 | 4d | `stages/04d_concept-tdd/` | Concept TDD (inner red→green) | Auto → 05 |
 | 4e | `stages/04e_sync-tdd/` | Sync TDD (inner red→green) | Auto → 05 |
 | 5 | `stages/05_verify/` | Trace from running behaviour back to `usecase.md`, plus closure (smoke + tracking) | Auto (close) |
+
+¹ Auto-advance means the agent proceeds to the immediate next stage without a
+human gate. The name after `→` is the next human gate stage, not the immediate
+next stage. Consult each stage's `## Next stage` section for the actual
+successor.
 
 Stage 04 is the **outside-in TDD double-loop**: `04c` is the outer red
 test (a flow), `04d` and `04e` are the inner red→green TDD on concepts
@@ -167,6 +172,46 @@ Current keys:
 Outer flow tests at Stage 04c use Cucumber/BDD (Gherkin `.feature` files
 + step definitions) — see `methodology/architecture/GHERKIN_INTEGRATION.md`.
 
+## 4b. Agent Skills
+
+CLAD ships portable, on-demand expertise packages as [Agent Skills](https://agentskills.io)
+under the `skills/` directory. Each skill is a folder containing a
+`SKILL.md` file with YAML frontmatter and Markdown instructions.
+
+Skills use **progressive disclosure**:
+1. **Metadata** — the agent's system prompt carries every skill's `name`
+   and `description` (~100 tokens each).
+2. **Instructions** — loaded on-demand when a task matches a skill's
+   description.
+3. **Resources** — referenced files loaded only when needed.
+
+Stage `CONTEXT.md` Inputs tables list skill names alongside file paths.
+Agents that support Skills discover them automatically; agents that do
+not fall back to the raw file paths. The stage contract chain is
+unchanged — skills replace only the "how to perform task X" instructions,
+not the "what must be produced" contract.
+
+Current skills:
+
+| Skill | Loaded at |
+|---|---|
+| `clad-system-scoping` | Stage 00 |
+| `clad-usecase-authoring` | Stage 01 |
+| `clad-responsibility-mapping` | Stage 02a |
+| `clad-chain-table` | Stage 02b |
+| `clad-concept-design` | Stage 02 |
+| `clad-sync-design` | Stage 03 |
+| `clad-dependency-review` | Stage 03a |
+| `clad-data-modeling` | Stage 03b |
+| `clad-storage-mapping` | Stage 04a |
+| `clad-spec-extraction` | Stage 04b |
+| `clad-flow-testing` | Stage 04c |
+| `clad-concept-tdd` | Stage 04d |
+| `clad-sync-tdd` | Stage 04e |
+| `clad-verification` | Stage 05 |
+| `clad-handover` | Any session start |
+| `clad-quality-gate` | Between stages |
+
 ## 5. Hard rules
 
 These are non-negotiable. Violating any of them is a defect.
@@ -174,7 +219,7 @@ These are non-negotiable. Violating any of them is a defect.
 1. **No concept imports another concept.** In code: no Java import across
    concept packages. In specs: no `*.concept.md` mentions another concept's
    state by name. Cross-concept coordination is only legal inside syncs.
-2. **One named graph per concept.** When concepts persist state (e.g. via
+2. **One named persistence region per concept.** When concepts persist state (e.g. via
    RDF/Jena under the Java profile), each concept owns its graph; no
    concept reads another's graph directly.
 3. **Syncs are declarative, not imperative.** A sync says
@@ -185,6 +230,12 @@ These are non-negotiable. Violating any of them is a defect.
 5. **Every action emits a flow token.** A flow token is a small,
    addressable record (id, who, when, what) that lets `05_verify/` trace
    from a runtime effect back to the use case.
+
+Rules R1–R5 above are the WYSIWID architectural rules. Four additional
+process/discipline rules (R6–R9) are defined in
+[`methodology/implementation/RULES.md`](methodology/implementation/RULES.md)
+and are equally binding. Stage CONTEXT.md Inputs tables reference the
+full rule set as needed.
 
 If a rule appears to be in conflict with a request, **stop and ask** —
 do not silently relax it.
@@ -224,11 +275,11 @@ capability** each stage group requires. Map these to whatever models
 or agents you have available — the names and providers are your
 operator concern, not CLAD's.
 
-| Stage group | Stages | Required capability |
-|---|---|---|
-| **Requirements analysis** | 00–02b | Collaborative clarification, structured prose, use-case writing. Depth of reasoning matters less than fluency and willingness to iterate with the human. |
-| **Structural modelling** | 02–03b | Cross-concept consistency, chain-table derivation, sync authoring, dependency analysis. This is the hardest reasoning load in CLAD — use your strongest model here. |
-| **Implementation** | 04a–05 | Test-first discipline, spec-to-code fidelity, storage-layer compliance. Needs strong code generation and the ability to follow multi-step TDD sequences without drifting. |
+| Stage group | Stages | Required capability | Fence |
+|---|---|---|---|---|
+| **Requirements analysis** | 00–02b | Collaborative clarification, structured prose, use-case writing. Depth of reasoning matters less than fluency and willingness to iterate with the human. | No implementation code or test files |
+| **Structural modelling** | 02–03b | Cross-concept consistency, chain-table derivation, sync authoring, dependency analysis. This is the hardest reasoning load in CLAD — use your strongest model here. | No implementation code or test files |
+| **Implementation** | 04a–05 | Test-first discipline, spec-to-code fidelity, storage-layer compliance. Needs strong code generation and the ability to follow multi-step TDD sequences without drifting. | Red phase: tests only, no implementation. Green phase: implementation only, do not rewrite approved tests |
 
 > **Operator note:** if you run CLAD with a local setup (e.g. Continue +
 > Roo in VS Code), create a local config file (outside this repo) that
@@ -259,4 +310,5 @@ operator concern, not CLAD's.
 - Optional planning/intake shortcuts: [`methodology/overlays/PLANNING.md`](methodology/overlays/PLANNING.md)
 - Optional decision log: [`methodology/overlays/DECISIONS.md`](methodology/overlays/DECISIONS.md)
 - Optional local-model context overlay: [`methodology/overlays/LOCAL_LLM.md`](methodology/overlays/LOCAL_LLM.md)
+- Agent Skills reference: [`skills/`](skills/)
 - Citations: [`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md)

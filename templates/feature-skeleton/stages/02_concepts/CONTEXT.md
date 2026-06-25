@@ -39,6 +39,7 @@ sync, not in this file.
 | `../02a_responsibility-map/output/responsibility-map.md` | 4 | The agreed concept set |
 | `../02b_chain-table/output/` | 4 | The agreed action choreography (per scenario) — **read every file before naming any outcome** |
 | `../00_actor-goal/output/actors.md` | 4 | For cross-stage check |
+| Skill: `clad-concept-design` | 3 | Concept design reference (see skills/ directory) |
 | `../../../../methodology/architecture/CONCEPTS.md` | 3 | Concept anatomy |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R2 |
 | `../../../../templates/concept.md` | 3 | Output template |
@@ -123,7 +124,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Auto-advances to Stage 03b. The quality-gate scripts
+Auto-advances (next human gate: Stage 03b). The quality-gate scripts
 (`verify_outcome_alignment.py`, `verify_action_chain.py`,
 `verify_file_manifest.py`) must all pass before advancing.
 

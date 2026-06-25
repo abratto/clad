@@ -10,7 +10,8 @@ When suggesting code or edits in this repository:
 2. Identify which **feature** (`features/UC-XX/`) and which **stage**
    (`stages/NN_*/`) the user is working in. Open that stage's
    `CONTEXT.md` before suggesting anything.
-3. Load only the files that the stage's `Inputs` table names.
+3. Load only the files that the stage's `Inputs` table names. When a
+   `Skill:` entry is present, load that skill from `skills/` first.
 4. Honour the hard rules in `AGENTS.md` §5 — especially "no concept
    imports another concept" and "syncs are declarative."
 5. Write outputs only into the stage's `output/` folder.
