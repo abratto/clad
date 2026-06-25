@@ -1,5 +1,7 @@
 package com.example.app.engine;
 
+import com.example.app.api.LoginFailureResponse;
+import com.example.app.api.LoginSuccessResponse;
 import jakarta.inject.Singleton;
 
 import java.util.Map;
@@ -11,22 +13,31 @@ import java.util.Map;
  * in the action graph as RDF triples. This assembler reads them and returns
  * a typed DTO that Jackson serializes at the HTTP boundary.
  *
- * <p>Each flow type (login, refill, …) has its own assembly method.
- * The assembler sits at the transport boundary, not in the engine core.
+ * <p>Each flow type has its own assembly method. The assembler sits at the
+ * transport boundary, not in the engine core. Transport adapters (REST,
+ * GraphQL) call this to convert raw engine output into typed responses.
  */
 @Singleton
 public class ResponseAssembler {
 
     /**
-     * Returns the response body to be delivered by the controller. The given
-     * {@code fields} map was read from the completed {@code Web/respond}
-     * action's input triples in the action graph.
+     * Returns the response body for the given flow, typed when possible.
      *
-     * <p>For simple flows the fields map is returned as-is — Micronaut's
-     * Jackson serializer converts it to JSON. For flows that need typed
-     * DTOs, subclass or extend this assembler with flow-specific methods.
+     * @param flowName the CLAD flow name (e.g. {@code "login"})
+     * @param fields   the field-value map from the completed {@code Web/respond} action
+     * @return a typed DTO if a mapper exists, otherwise the raw fields map
      */
-    public Map<String, String> assemble(String flowName, Map<String, String> fields) {
-        return fields;
+    public Object assemble(String flowName, Map<String, String> fields) {
+        return switch (flowName) {
+            case "login" -> new LoginSuccessResponse(fields.get("sessionToken"));
+            default -> fields;
+        };
+    }
+
+    /** Build a typed error DTO from field map. */
+    public LoginFailureResponse toError(Map<String, String> fields) {
+        String msg = fields.get("message");
+        return new LoginFailureResponse(
+                msg != null ? msg : "An error occurred");
     }
 }

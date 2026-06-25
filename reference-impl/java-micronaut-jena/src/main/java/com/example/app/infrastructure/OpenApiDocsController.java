@@ -11,6 +11,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
+/**
+ * Serves the OpenAPI spec and Swagger UI. The spec is a declarative
+ * transport contract that complements CLAD's declarative sync layer.
+ */
 @Hidden
 @Controller
 final class OpenApiDocsController {
@@ -18,7 +22,7 @@ final class OpenApiDocsController {
     private static final String OPENAPI_SPEC = "META-INF/swagger/clad-java-reference-api-0.1.0.yml";
     private static final String SWAGGER_UI_ROOT = "META-INF/swagger/views/swagger-ui/";
 
-    @Get(uri = "/swagger/clad-java-reference-api-0.1.0.yml", produces = {"application/yaml", MediaType.TEXT_PLAIN})
+    @Get(uri = "/swagger/empower-patient-api-0.1.0.yml", produces = {"application/yaml", MediaType.TEXT_PLAIN})
     HttpResponse<String> openApiYaml() {
         return readText(OPENAPI_SPEC)
                 .<HttpResponse<String>>map(HttpResponse::ok)

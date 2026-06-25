@@ -1,0 +1,91 @@
+openapi: 3.0.1
+info:
+  title: Empower Patient API
+  description: CLAD login flow — REST transport contract. Same login engine drives all surfaces (REST, GraphQL, Web UI, Mobile).
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+    description: Local CLAD development server
+tags:
+  - name: auth
+    description: Authentication endpoints
+  - name: web
+    description: Legacy login endpoint
+paths:
+  /api/login:
+    post:
+      tags: [auth]
+      operationId: apiLogin
+      summary: Authenticate with username and password (REST)
+      description: Starts the CLAD login flow. Same engine, same flow tokens as the legacy /login and GraphQL surfaces.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginSuccessResponse'
+        '401':
+          description: Credential failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginFailureResponse'
+  /login:
+    post:
+      tags: [web]
+      operationId: loginLegacy
+      summary: Authenticate a user (legacy)
+      description: Legacy login endpoint. Same CLAD engine behind the same Web/request → engine → Web/respond pipeline.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginSuccessResponse'
+        '401':
+          description: Credential failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginFailureResponse'
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Username to authenticate.
+          example: ada
+        password:
+          type: string
+          description: Plain-text password.
+          example: correct-horse-battery-staple
+    LoginSuccessResponse:
+      type: object
+      properties:
+        sessionToken:
+          type: string
+          description: Opaque session token minted by the Session concept.
+          example: 8f6b8b9b-6c7f-4e4b-8f59-dac6bd6c2b52
+    LoginFailureResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Non-enumerating credential failure message.
+          example: username or password didn't match

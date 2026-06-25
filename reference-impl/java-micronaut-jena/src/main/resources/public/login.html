@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLAD Login — Ports & Adapters</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 400px; margin: 4rem auto; padding: 0 1rem; }
+        h1 { font-size: 1.5rem; margin-bottom: 1.5rem; }
+        label { display: block; margin: 1rem 0 0.25rem; font-weight: 600; }
+        input { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { margin-top: 1.5rem; width: 100%; padding: 0.75rem; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; }
+        button:hover { background: #1d4ed8; }
+        #result { margin-top: 1.5rem; padding: 1rem; border-radius: 4px; display: none; }
+        .success { background: #dcfce7; color: #166534; }
+        .error { background: #fef2f2; color: #991b1b; }
+        small { color: #6b7280; display: block; margin-top: 0.25rem; }
+    </style>
+</head>
+<body>
+    <h1>CLAD Login</h1>
+    <p>This form calls <code>POST /api/login</code> — the REST adapter that wraps the CLAD engine. Same engine, same flow tokens, different transport surface.</p>
+    <form id="loginForm">
+        <label for="username">Username</label>
+        <input id="username" type="text" placeholder="ada" required>
+        <small>Pre-seeded test user: <code>ada</code></small>
+
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="correct-horse-battery-staple" required>
+        <small>Pre-seeded test password: <code>lovelace</code></small>
+
+        <button type="submit">Login</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const result = document.getElementById('result');
+
+            try {
+                const resp = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await resp.json();
+                result.style.display = 'block';
+                if (resp.ok) {
+                    result.className = 'success';
+                    result.innerHTML = `<strong>Login succeeded</strong><br>Session token: <code>${data.sessionToken}</code><br>Flow token: <code>${resp.headers.get('X-Flow-Token') || 'N/A'}</code>`;
+                } else {
+                    result.className = 'error';
+                    result.innerHTML = `<strong>Login failed</strong><br>${data.message || 'Unknown error'}`;
+                }
+            } catch (err) {
+                result.style.display = 'block';
+                result.className = 'error';
+                result.innerHTML = `<strong>Error</strong><br>${err.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
