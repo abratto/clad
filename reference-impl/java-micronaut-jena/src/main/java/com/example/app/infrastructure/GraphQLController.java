@@ -75,6 +75,8 @@ public class GraphQLController {
         }
     }
 
+    private static final ThreadLocal<String> lastFlowToken = new ThreadLocal<>();
+
     @Post(value = "/graphql", produces = MediaType.APPLICATION_JSON)
     public HttpResponse<?> handle(@Body Map<String, Object> body) {
         if (graphQL.get() == null) {
@@ -86,12 +88,17 @@ public class GraphQLController {
         try {
             var input = ExecutionInput.newExecutionInput().query(query).build();
             var result = graphQL.get().execute(input);
+            var response = HttpResponse.ok(Map.of("data", result.getData()));
             if (!result.getErrors().isEmpty()) {
-                return HttpResponse.ok(Map.of("errors", result.getErrors()));
+                response = HttpResponse.ok(Map.of("errors", result.getErrors()));
             }
-            return HttpResponse.ok(Map.of("data", result.getData()));
+            String ft = lastFlowToken.get();
+            if (ft != null) response.header(SyncDispatcher.FLOW_TOKEN_HEADER, ft);
+            return response;
         } catch (Exception e) {
             return HttpResponse.serverError(Map.of("error", e.getMessage()));
+        } finally {
+            lastFlowToken.remove();
         }
     }
 
@@ -106,6 +113,7 @@ public class GraphQLController {
                                                    ResponseAssembler ra, String name,
                                                    Map<String, String> params) {
         ActionRecord root = fm.rootAction(name, params);
+        lastFlowToken.set(root.flowToken());
         try {
             var resp = sd.awaitResponse(root.flowToken()).toFuture().get();
             Object body = resp.body();

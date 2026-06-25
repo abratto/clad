@@ -65,6 +65,8 @@ class MultiSurfaceConsistencyTest {
         assertEquals(HttpStatus.OK, resp.getStatus());
         assertTrue(resp.body().contains("sessionToken"));
         assertFalse(resp.body().contains("errors"));
+        assertNotNull(resp.getHeaders().get("X-Flow-Token"),
+                "GraphQL should emit X-Flow-Token header");
     }
 
     @Test
