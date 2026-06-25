@@ -100,8 +100,12 @@
                 } else {
                     const loginData = data.data && data.data.login ? data.data.login : {};
                     sessionToken = loginData.sessionToken;
-                    errorMsg = loginData.error
+                    let raw = loginData.error
                         || (data.errors ? data.errors.map(e => e.message).join(', ') : null);
+                    if (raw && raw.startsWith('Exception while fetching data')) {
+                        raw = raw.replace(/^Exception while fetching data \(.*?\) : /, '');
+                    }
+                    errorMsg = raw;
                 }
 
                 result.style.display = 'block';

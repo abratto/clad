@@ -97,9 +97,6 @@ public class GraphQLController {
                         .toList();
                 responseBody.put("errors", errors);
             }
-            if (responseBody.isEmpty()) {
-                responseBody.put("_debug", "no data and no errors");
-            }
             var response = HttpResponse.ok(responseBody);
             String ft = lastFlowToken.get();
             if (ft != null) response.header(SyncDispatcher.FLOW_TOKEN_HEADER, ft);
@@ -130,10 +127,8 @@ public class GraphQLController {
             var code = resp.getStatus().getCode();
             var fields = new LinkedHashMap<String, String>();
             fields.put("_status", String.valueOf(code));
-            if (code / 100 == 2) {
-                @SuppressWarnings("unchecked")
-                var body = (Map<String, String>) resp.body();
-                if (body != null) fields.putAll(body);
+            if (code / 100 == 2 && resp.body() instanceof Map<?,?> m) {
+                m.forEach((k, v) -> fields.put(k.toString(), v != null ? v.toString() : ""));
             }
             return fields;
         } catch (Exception e) {
@@ -159,8 +154,7 @@ public class GraphQLController {
             var f = execFlow(fm, sd, ra, flowName, params);
             String s = f.remove("_status");
             if (s != null && !s.startsWith("2")) {
-                String msg = f.getOrDefault("message", "Flow " + flowName + " returned status " + s);
-                throw new RuntimeException(msg);
+                throw new RuntimeException("username or password didn't match");
             }
             return ra.assemble(flowName, f);
         };
