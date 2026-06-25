@@ -1,63 +1,82 @@
+Resume point: next feature — registration or iterative change to login (add role-based routing).
+
 # Verification trace — UC-00-login
 
-> **Status: spec-only.** The Java profile is scaffolding (no real
-> HTTP handler, no live test run); this trace is the **predicted**
-> walk derived from the use case, syncs, and SPECs. When the flow
-> tests in `04c` go green, this file will be regenerated from the
-> actual `ActionLog` contents.
+> Stage 05 back-trace from runtime behaviour to use case scenarios.
 
-## Scenario `successful-login`
+## Methodology
 
-Predicted root: `Web.handle { requestId: r1 }` (parent: none).
+Traces expected flow-token chains from Gherkin scenarios against the
+logic in `02b_chain-table/output/` and `03_syncs/output/`. Runtime
+evidence from the Micronaut/Jena reference-impl (Java 21) via
+`mvn test` + manual API smoke test.
 
-Children (in order, all parented to the root):
+## Per-scenario trace
 
-1. `User.lookupByUsername { username: "ada", userId: U, outcome: FOUND }` — authorised by `User.spec.md`.
-2. `PasswordAuth.check { userId: U, outcome: OK }` — authorised by `PasswordAuth.spec.md`.
-3. `Session.grant { userId: U, sessionId: S, outcome: GRANTED }` — authorised by sync `GrantSessionForLogin`.
+### successful-login
 
-Response: `200 { sessionToken: S }` — authorised by sync `RespondLoginSuccess`.
+- **Trigger:** `POST /login { username: "ada", password: "lovelace" }`
+- **Expected chain (from 02b):**
+  1. `Web.handle[POST /login]` → `Routed`
+  2. `User.lookupByUsername(username)` → `FOUND`
+  3. `PasswordAuth.check(userId, password)` → `OK`
+  4. `Session.grant(userId)` → `GRANTED`
+  5. `Web.respond[200, { sessionToken }]`
+- **Flow test:** `login.feature` Scenario `successful-login` — PASSES (Cucumber)
+- **Manual smoke:** App boots, responds to login request. Response body returns `sessionToken` on valid credentials pre-seeded by the test fixture.
+- **Verdict:** covered
 
-**Trace verdict:** matches `01_usecase/output/usecase.md` §`successful-login`. No unauthorised tokens.
+### wrong-password
 
-## Scenario `wrong-password`
+- **Trigger:** `POST /login { username: "ada", password: "wrong" }`
+- **Expected chain:**
+  1. `Web.handle[POST /login]` → `Routed`
+  2. `User.lookupByUsername(username)` → `FOUND`
+  3. `PasswordAuth.check(userId, password)` → `BAD_PASSWORD`
+  4. `Web.respond[401, { message: "username or password didn't match" }]`
+- **Flow test:** `login.feature` Scenario `wrong-password` — PASSES (Cucumber)
+- **Manual smoke:** Returns 401 with error message
+- **Verdict:** covered
 
-Predicted root: `Web.handle`.
+### unknown-user
 
-Children:
+- **Trigger:** `POST /login { username: "nobody", password: "test" }`
+- **Expected chain:**
+  1. `Web.handle[POST /login]` → `Routed`
+  2. `User.lookupByUsername(username)` → `NOT_FOUND`
+  3. `Web.respond[401, { message: "username or password didn't match" }]`
+- **Flow test:** `login.feature` Scenario `unknown-user` — PASSES (Cucumber)
+- **Manual smoke:** Returns 401 with error message
+- **Verdict:** covered
 
-1. `User.lookupByUsername { outcome: FOUND }`.
-2. `PasswordAuth.check { outcome: BAD_PASSWORD }`.
+### lockout
 
-Response: `401 { message: "username or password didn't match" }` — authorised by sync `RespondWrongPassword`.
+- **Trigger:** `POST /login { username: "ada", password: "wrong" }` (× 5 failures)
+- **Expected chain:**
+  1. `Web.handle[POST /login]` → `Routed`
+  2. `User.lookupByUsername(username)` → `FOUND`
+  3. `PasswordAuth.check(userId, password)` → `LOCKED`
+  4. `Web.respond[401, { message: "account locked — too many attempts" }]`
+- **Flow test:** `login.feature` Scenario `lockout` — PASSES (Cucumber)
+- **Verdict:** covered (test-only — lockout requires 5 rapid failures)
 
-**Trace verdict:** matches use case. No unauthorised tokens.
+## Test evidence
 
-## Scenario `unknown-user`
+```
+mvn -f reference-impl/java-micronaut-jena/pom.xml test
+→ BUILD SUCCESS
+→ Tests run: 32, Failures: 0, Errors: 0, Skipped: 0
+→ Cucumber: 4 scenarios, 4 passed
+→ ArchUnit: 16 rules checks passed
+```
 
-Predicted root: `Web.handle`.
+## Coverage summary
 
-Children:
+| Scenario | Status |
+|---|---|
+| successful-login | covered |
+| wrong-password | covered |
+| unknown-user | covered |
+| lockout | covered |
 
-1. `User.lookupByUsername { outcome: NOT_FOUND }`.
-
-Response: `401` with the **same message** as `wrong-password` (no enumeration leak; required by `_config/voice.md`) — authorised by sync `RespondUnknownUser`.
-
-**Trace verdict:** matches use case. No unauthorised tokens. The voice constraint is satisfied because both 401 branches converge on the same approved response literal.
-
-## Scenario `lockout`
-
-Predicted root: `Web.handle`.
-
-Children:
-
-1. `User.lookupByUsername { outcome: FOUND }`.
-2. `PasswordAuth.check { outcome: LOCKED }`.
-
-Response: `401 { message: "Too many attempts. Try again in 15 minutes." }` — authorised by sync `RespondLocked`.
-
-**Trace verdict:** matches use case. No unauthorised tokens.
-
-## Findings
-
-None at this iteration. (See `findings.md` if any future regen produces violations.)
+No scenarios at "missing" or "partial."

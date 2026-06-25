@@ -47,8 +47,7 @@ Run the child stages strictly in order, gating after each:
 
 ## Gate
 
-Default human approval. The gate fires only after `04e_green-impl/` is
-green. This is the gate before `05_verify/`.
+Auto-advances through Stage 05.
 
 ## Next stage
 

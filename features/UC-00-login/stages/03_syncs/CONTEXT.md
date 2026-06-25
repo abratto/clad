@@ -92,8 +92,7 @@ canonical sync files and introduces no new logic.
 
 ## Gate
 
-Default human approval, with an explicit pass/fail check for the output
-filename contract.
+Auto-advances (next human gate: Stage 03b).
 
 ## Next stage
 

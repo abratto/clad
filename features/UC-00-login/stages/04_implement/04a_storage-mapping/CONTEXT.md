@@ -45,7 +45,7 @@ move on.
 
 ## Gate
 
-Default.
+Auto-advances (next human gate: Stage 04c).
 
 ## Next stage
 

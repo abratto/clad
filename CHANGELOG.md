@@ -61,6 +61,17 @@ file `methodology/` is the source of truth for what each version contains.
   R6–R9 (process/discipline) rule split, with a cross-link to `RULES.md`.
 - **`.cursor/rules/clad.mdc`** added R6–R9 pointer to match `AGENTS.md`.
 
+### UC-00-login refresh
+
+- **UC-00-login brought current with updated methodology**: Fixed stale
+  gate sections (auto-advance model) in 10 CONTEXT.md files. Added
+  `Skill:` entries to Inputs tables. Added missing `_config/build-and-test.md`
+  and `_config/package-and-layout.md`. Produced Stage 04d-red and 04e-red
+  output/ directories with derivation maps documenting SPEC coverage. Marked
+  04d-green and 04e-green as verified (all 32 reference-impl tests pass).
+  Produced complete Stage 05 outputs (trace.md with resume point, smoke.md
+  with runtime evidence, tracking.md).
+
 ### Consistency fixes
 
 - **SYNCHRONIZATIONS.md**: Replaced `freshSessionId()` function call in

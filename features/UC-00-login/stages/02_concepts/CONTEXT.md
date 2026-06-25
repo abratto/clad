@@ -61,8 +61,7 @@ its anatomy is described in
 
 ## Gate
 
-Default human approval. **Do you agree with this step? Any
-corrections before I continue?**
+Auto-advances (next human gate: Stage 03b).
 
 ## Next stage
 

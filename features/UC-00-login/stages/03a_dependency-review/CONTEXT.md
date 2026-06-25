@@ -69,7 +69,7 @@ that earlier stage rather than fixing the mismatch inside 03a.
 
 ## Gate
 
-Default human approval.
+Auto-advances (next human gate: Stage 03b).
 
 **Do you agree with this step? Any corrections before I continue?**
 
