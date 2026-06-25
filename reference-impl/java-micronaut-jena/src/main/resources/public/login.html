@@ -93,12 +93,16 @@
                 const data = await resp.json();
 
                 const surfaceLabel = surface === 'rest' ? 'REST' : 'GraphQL';
-                const sessionToken = surface === 'rest'
-                    ? data.sessionToken
-                    : (data.data && data.data.login ? data.data.login.sessionToken : null);
-                const errorMsg = surface === 'rest'
-                    ? data.message
-                    : (data.errors ? data.errors.map(e => e.message).join(', ') : null);
+                let sessionToken, errorMsg;
+                if (surface === 'rest') {
+                    sessionToken = data.sessionToken;
+                    errorMsg = data.message;
+                } else {
+                    const loginData = data.data && data.data.login ? data.data.login : {};
+                    sessionToken = loginData.sessionToken;
+                    errorMsg = loginData.error
+                        || (data.errors ? data.errors.map(e => e.message).join(', ') : null);
+                }
 
                 result.style.display = 'block';
                 if (resp.ok && sessionToken) {

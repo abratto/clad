@@ -88,15 +88,26 @@ public class GraphQLController {
         try {
             var input = ExecutionInput.newExecutionInput().query(query).build();
             var result = graphQL.get().execute(input);
-            var response = HttpResponse.ok(Map.of("data", result.getData()));
+            var responseBody = new LinkedHashMap<String, Object>();
+            if (result.getData() != null) responseBody.put("data", result.getData());
             if (!result.getErrors().isEmpty()) {
-                response = HttpResponse.ok(Map.of("errors", result.getErrors()));
+                var errors = result.getErrors().stream()
+                        .map(e -> Map.of("message",
+                                e.getMessage() != null ? e.getMessage() : "null-message"))
+                        .toList();
+                responseBody.put("errors", errors);
             }
+            if (responseBody.isEmpty()) {
+                responseBody.put("_debug", "no data and no errors");
+            }
+            var response = HttpResponse.ok(responseBody);
             String ft = lastFlowToken.get();
             if (ft != null) response.header(SyncDispatcher.FLOW_TOKEN_HEADER, ft);
             return response;
         } catch (Exception e) {
-            return HttpResponse.serverError(Map.of("error", e.getMessage()));
+            return HttpResponse.ok(Map.of("errors",
+                    java.util.List.of(Map.of("message",
+                            e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()))));
         } finally {
             lastFlowToken.remove();
         }
@@ -116,18 +127,20 @@ public class GraphQLController {
         lastFlowToken.set(root.flowToken());
         try {
             var resp = sd.awaitResponse(root.flowToken()).toFuture().get();
-            Object body = resp.body();
-            if (body instanceof Map<?,?> m) {
+            var code = resp.getStatus().getCode();
+            var fields = new LinkedHashMap<String, String>();
+            fields.put("_status", String.valueOf(code));
+            if (code / 100 == 2) {
                 @SuppressWarnings("unchecked")
-                Map<String, String> fields = (Map<String, String>) m;
-                return fields;
+                var body = (Map<String, String>) resp.body();
+                if (body != null) fields.putAll(body);
             }
-            if (body instanceof String s) {
-                return new LinkedHashMap<>(Map.of("message", s));
-            }
-            return new LinkedHashMap<>(Map.of("message", "Unexpected response"));
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException("Flow " + name + " failed", e);
+            return fields;
+        } catch (Exception e) {
+            var fields = new LinkedHashMap<String, String>();
+            fields.put("_status", "exception");
+            fields.put("message", e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
+            return fields;
         }
     }
 
@@ -143,7 +156,13 @@ public class GraphQLController {
                     if (val != null) params.put(name, val.toString());
                 }
             }
-            return ra.assemble(flowName, execFlow(fm, sd, ra, flowName, params));
+            var f = execFlow(fm, sd, ra, flowName, params);
+            String s = f.remove("_status");
+            if (s != null && !s.startsWith("2")) {
+                String msg = f.getOrDefault("message", "Flow " + flowName + " returned status " + s);
+                throw new RuntimeException(msg);
+            }
+            return ra.assemble(flowName, f);
         };
     }
 
