@@ -46,13 +46,6 @@ final class OpenApiDocsController {
                 .orElseGet(HttpResponse::notFound);
     }
 
-    @Get(uri = "/login.html", produces = MediaType.TEXT_HTML)
-    HttpResponse<String> loginPage() {
-        return readText("public/login.html")
-                .<HttpResponse<String>>map(HttpResponse::ok)
-                .orElseGet(HttpResponse::notFound);
-    }
-
     private static Optional<String> readText(String resourcePath) {
         return readBytes(resourcePath).map(bytes -> new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
     }
