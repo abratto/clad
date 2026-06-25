@@ -19,13 +19,15 @@ import java.util.Optional;
 @Controller
 final class OpenApiDocsController {
 
-    private static final String OPENAPI_SPEC = "META-INF/swagger/clad-java-reference-api-0.1.0.yml";
+    private static final String OPENAPI_SPEC = "META-INF/swagger/empower-patient-api-0.1.0.yml";
+    private static final String OPENAPI_SPEC_ALT = "META-INF/swagger/clad-java-reference-api-0.1.0.yml";
     private static final String SWAGGER_UI_ROOT = "META-INF/swagger/views/swagger-ui/";
 
     @Get(uri = "/swagger/empower-patient-api-0.1.0.yml", produces = {"application/yaml", MediaType.TEXT_PLAIN})
     HttpResponse<String> openApiYaml() {
         return readText(OPENAPI_SPEC)
                 .<HttpResponse<String>>map(HttpResponse::ok)
+                .or(() -> readText(OPENAPI_SPEC_ALT).map(HttpResponse::ok))
                 .orElseGet(HttpResponse::notFound);
     }
 
@@ -41,6 +43,13 @@ final class OpenApiDocsController {
         }
         return readBytes(SWAGGER_UI_ROOT + path)
                 .map(bytes -> HttpResponse.ok(bytes).contentType(contentType(path)))
+                .orElseGet(HttpResponse::notFound);
+    }
+
+    @Get(uri = "/login.html", produces = MediaType.TEXT_HTML)
+    HttpResponse<String> loginPage() {
+        return readText("public/login.html")
+                .<HttpResponse<String>>map(HttpResponse::ok)
                 .orElseGet(HttpResponse::notFound);
     }
 
