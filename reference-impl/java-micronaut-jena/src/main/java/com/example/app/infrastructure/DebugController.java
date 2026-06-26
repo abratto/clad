@@ -91,7 +91,7 @@ public final class DebugController {
                 "    ?action :concept ?concept ;\n" +
                 "            :name ?name ;\n" +
                 "            :flow ?flow .\n" +
-                "    FILTER NOT EXISTS { ?action :outcome [] }\n" +
+                "    FILTER NOT EXISTS { << ?action :outcome ?o >> ?p ?v }\n" +
                 "  }\n" +
                 "}\n" +
                 "ORDER BY ?action\n");
@@ -220,31 +220,20 @@ public final class DebugController {
     }
 
     private Map<String, String> outputFields(String graph, String actionIri) {
-        List<Map<String, String>> outcomeRows = actionLog.select(
-                PREFIX +
-                "SELECT ?value\n" +
-                "WHERE {\n" +
-                "  GRAPH <" + graph + "> {\n" +
-                "    <" + actionIri + "> :outcome ?value .\n" +
-                "  }\n" +
-                "}\n");
-
-        Map<String, String> fields = new LinkedHashMap<>();
-        if (!outcomeRows.isEmpty()) {
-            fields.put("outcome", outcomeRows.get(0).get("value"));
-        }
-
         List<Map<String, String>> starRows = actionLog.select(
                 PREFIX +
-                "SELECT ?predicate ?value\n" +
+                "SELECT ?_outcome ?predicate ?value\n" +
                 "WHERE {\n" +
                 "  GRAPH <" + graph + "> {\n" +
-                "    <" + actionIri + "> :outcome ?_outcome .\n" +
                 "    << <" + actionIri + "> :outcome ?_outcome >> ?predicate ?value .\n" +
                 "  }\n" +
                 "}\n" +
                 "ORDER BY ?predicate\n");
 
+        Map<String, String> fields = new LinkedHashMap<>();
+        if (!starRows.isEmpty()) {
+            fields.put("outcome", starRows.get(0).get("_outcome"));
+        }
         for (Map<String, String> row : starRows) {
             fields.put(localName(row.get("predicate")), row.get("value"));
         }
