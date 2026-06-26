@@ -41,56 +41,68 @@ class under `<APP_PACKAGE_ROOT>.syncs` that:
 Use the approved sync name for the class name with standard Java class
 capitalization. Use lower camel case for `syncName()`.
 
-## SPARQL fragment construction
+## SPARQL-star fragment construction
+
+CLAD uses RDF-star/SPARQL-star (Jena 5.x native). Outcomes are written
+only as RDF-star annotations (`<< >>`), never as plain triples. This
+eliminates the double-write where `:outcome` appeared in both plain and
+star form. Sync `whereClause()` fragments match the star annotation
+directly.
 
 Use Java text blocks for `whereClause()` and `thenBindings()` fragments.
 Interpolate IRI constants via `.formatted()`.
 
-When a sync needs a non-outcome string literal such as a route name,
-message text, or other discriminator, declare it as a
-`private static final String` constant and bind it through
-`ParameterizedSparqlString`. In the CLAD reference profile, prefer the
-base-class hook `parameterizeSparql(...)` instead of rebuilding the
-outer update manually in each subclass.
+### Template: whereClause (completion-shaped trigger)
 
-Keep outcome literals explicit in the SPARQL text. Do not parameterize
-`"FOUND"`, `"OK"`, `"GRANTED"`, and similar outcome values, because the
-lowering contract needs those branches to stay visibly one-to-one with
-the approved SPEC outcomes.
-
-### Text block shape
-
-whereClause (completion-shaped trigger — outcomes and fields are direct
-properties of the action node):
+Outcomes and non-outcome action fields are matched separately —
+non-outcome fields (`:userId`, `:sessionToken`) are plain triples on
+the action node; `:outcome` is matched inside the RDF-star annotation:
 
 ```java
 @Override
 protected String whereClause() {
   return """
     ?_when_1 :concept <%s> ;
-         :name    "lookupByUsername" ;
-         :flow    ?_flow ;
-         :outcome "FOUND" ;
-         :userId  ?_userId .
+             :name    "lookupByUsername" ;
+             :userId  ?_userId .
+    << ?_when_1 :outcome "FOUND" >> :flow ?_flow .
     """.formatted(UserConcept.IRI);
 }
 ```
 
-whereClause (bootstrap-shaped trigger — matches the Web request action's
-input node):
+### Template: whereClause (bootstrap-shaped trigger)
+
+Bootstrap triggers match the Web request action's `:input` node — no
+outcome filtering:
 
 ```java
 @Override
 protected String whereClause() {
   return """
     ?_when_1 :concept <%s> ;
-         :name    "request" ;
-         :input   ?_inp ;
-         :flow    ?_flow .
+             :name    "request" ;
+             :input   ?_inp ;
+             :flow    ?_flow .
     ?_inp :route ?_route ;
-        :copyId ?_copyId ;
-        :memberId ?_memberId .
+         :username ?_username .
     """.formatted(WEB_IRI);
+}
+```
+
+### Template: whereClause with variable outcome + FILTER
+
+When a sync fires on multiple outcomes, match `:outcome` as a variable
+inside `<< >>` and filter:
+
+```java
+@Override
+protected String whereClause() {
+  return """
+    ?_when_1 :concept <%s> ;
+             :name    "check" .
+    << ?_when_1 :outcome ?_outcome >> :flow ?_flow .
+    FILTER (?_outcome IN ("BAD_PASSWORD", "NO_CREDENTIAL"))
+    """.formatted(PasswordAuthConcept.IRI);
 }
 ```
 
@@ -759,9 +771,8 @@ RespondLoginSuccess:
 return """
   ?_when_1 :concept <%s> ;
        :name    "check" ;
-       :flow    ?_flow ;
-       :outcome "OK" ;
        :userId  ?_userId .
+  << ?_when_1 :outcome "OK" >> :flow ?_flow .
   """.formatted(PasswordAuthConcept.IRI);
 ```
 

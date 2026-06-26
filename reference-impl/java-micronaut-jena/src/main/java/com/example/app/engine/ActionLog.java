@@ -163,7 +163,6 @@ public class ActionLog {
             "INSERT { GRAPH <" + archive + "> { << ?a :outcome ?outcome >> ?p ?o } }\n" +
             "WHERE  { GRAPH <" + active + "> {\n" +
             "  ?a :flow <" + flowToken + "> .\n" +
-            "  ?a :outcome ?outcome .\n" +
             "  << ?a :outcome ?outcome >> ?p ?o .\n" +
             "} }\n";
 

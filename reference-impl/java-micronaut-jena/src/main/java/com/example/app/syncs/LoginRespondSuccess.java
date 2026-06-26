@@ -43,9 +43,8 @@ public final class LoginRespondSuccess extends SyncAgent {
         return """
             ?_when_1 :concept <%s> ;
                      :name    "grant" ;
-                     :outcome      "GRANTED" ;
-                     :sessionToken ?_sessionToken ;
-                     :flow    ?_flow .
+                     :sessionToken ?_sessionToken .
+            << ?_when_1 :outcome "GRANTED" >> :flow ?_flow .
             """.formatted(SessionConcept.IRI);
     }
 

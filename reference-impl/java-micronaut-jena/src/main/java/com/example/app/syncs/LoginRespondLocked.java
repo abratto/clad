@@ -44,9 +44,8 @@ public final class LoginRespondLocked extends SyncAgent {
     protected String whereClause() {
         return """
             ?_when_1 :concept <%s> ;
-                     :name    "check" ;
-                     :outcome "LOCKED" ;
-                     :flow    ?_flow .
+                     :name    "check" .
+            << ?_when_1 :outcome "LOCKED" >> :flow ?_flow .
             """.formatted(PasswordAuthConcept.IRI);
     }
 

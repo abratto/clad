@@ -49,9 +49,8 @@ public final class LoginRespondWrongPassword extends SyncAgent {
         // must be indistinguishable from unknown-user externally.
         return """
             ?_when_1 :concept <%s> ;
-                     :name    "check" ;
-                     :outcome ?_outcome ;
-                     :flow    ?_flow .
+                     :name    "check" .
+            << ?_when_1 :outcome ?_outcome >> :flow ?_flow .
             FILTER (?_outcome IN ("BAD_PASSWORD", "NO_CREDENTIAL"))
             """.formatted(PasswordAuthConcept.IRI);
     }

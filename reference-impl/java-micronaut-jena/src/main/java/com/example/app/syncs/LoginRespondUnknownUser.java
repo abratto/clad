@@ -45,9 +45,8 @@ public final class LoginRespondUnknownUser extends SyncAgent {
     protected String whereClause() {
         return """
             ?_when_1 :concept <%s> ;
-                     :name    "lookupByUsername" ;
-                     :outcome "UNKNOWN" ;
-                     :flow    ?_flow .
+                     :name    "lookupByUsername" .
+            << ?_when_1 :outcome "UNKNOWN" >> :flow ?_flow .
             """.formatted(UserConcept.IRI);
     }
 
