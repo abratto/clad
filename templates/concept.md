@@ -1,20 +1,19 @@
 <!-- Template for Stage 02 (02_concepts). Purpose: see methodology/architecture/CONCEPTS.md. -->
 
-# <ConceptName> — <one-line capability>
-
-> Concept template. Fill in each section. Keep the whole file under one
-> screen if you can.
+concept <ConceptName> [<TypeParams>]
+purpose
+    <one-line capability statement>
 
 ## State
 
 > The data this concept owns. No other concept may read or write it.
-> Use Alloy-style relational notation: `relation(subject: Type) -> field: Type  -- multiplicity`
+> Use paper-style relational notation: `field: SubjectType -> FieldType  -- multiplicity`
 > Multiplicity annotations: `mandatory` | `optional` | `conditional mandatory: <condition>` | `zero or more`
 > For stateless concepts write: `*None.* <ConceptName> is stateless.`
 
 ```
-<conceptName>(<id>: <IdType>) -> <field>: <Type>   -- mandatory
-<conceptName>(<id>: <IdType>) -> <field>: <Type>   -- optional
+<fieldName>: <SubjectType> -> <FieldType>   -- mandatory
+<fieldName>: <SubjectType> -> <FieldType>   -- optional
 ```
 
 ## Actions
@@ -48,10 +47,9 @@
 ```
 <actionName> [ <arg>: <Type> ; <arg2>: <Type> ] => [ <field>: <Type> ]
     <description of happy path and effect on state>
-    flow token: { id, parent, action: "<ConceptName>.<actionName>", actor, at,
-                  outcome: "<outcome>", payload: { <fields> } }
+    flow token: { action: "<ConceptName>.<actionName>", <args>, outcome: "<outcome>" }
 
-<actionName> [ <arg>: <Type> ] => [ error: "<errorName>" ]
+<actionName> [ <arg>: <Type> ; ... ] => [ error: "<errorName>" ]
     <condition under which this error fires>
 ```
 
@@ -60,11 +58,12 @@
 > A witness trace of the typical happy path, written in sync notation
 > (`after`/`then`). This proves the actions compose correctly and serves
 > as the WYSIWID heart of the spec. Happy path only — one sequence,
-> no branching.
+> no branching. Action names are fully qualified (concept prefix included)
+> for direct traceability to sync specs.
 
 ```
 after  <ConceptName>/<action>: [ <param>: <value> ] => [ <result>: <value> ]
-then   <ConceptName>/<action>: [ <param>: <value> ] => [ <result>: <value> ]
+then  <ConceptName>/<action>: [ <param>: <value> ] => [ <result>: <value> ]
 ```
 
 ## Notes

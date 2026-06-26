@@ -43,18 +43,35 @@ If any action signature, outcome name, argument name, or literal differs
 between `../02b_chain-table/output/` and `../02_concepts/output/`, stop
 and reopen Stage 02. Stage 03 does not normalize earlier-stage drift.
 
-Syncs are declarative `when … where … then …`; no imperative branching,
-no state, no I/O. `where` is data routing only. It may use field-path
-references and sync constants, but it may not invent convenience fields.
-It is binding-only: no JSON assembly, no ad hoc nested projection
-extraction, and no payload reshaping. If the downstream action needs a
-different shape, an upstream concept action must emit it explicitly.
+Syncs use paper-style block syntax: `sync <Name>`, `when { }` / `where { }` /
+`then { }`, with `Concept/action:` namespace qualifiers (slash separator,
+colon after action), `?variable` bindings, and `=> [ outcome ]` for
+outcome matching. All `?variable`s are scoped across the entire sync.
+
+The `where` clause is a **declarative query language** supporting:
+
+| Construct | Purpose | Example |
+|---|---|---|
+| `bind ( uuid() as ?x )` | Identifier minting | `bind ( uuid() as ?user )` |
+| `Concept: { ... }` | State query (Pattern D) | `User: { ?user email: ?email }` |
+| `OPTIONAL { ... }` | Conditional read | `OPTIONAL { Tag: { ?a tag: ?t } }` |
+| `BIND ( ?x AS ?_eachthen )` | GROUP BY aggregation | `BIND ( ?article AS ?_eachthen )` |
+
+What `where` still must NOT do:
+- **Branch on business conditions** — `if ?role = "admin"` belongs in a concept's outcomes
+- **Perform I/O or side effects** — reads are for binding; writes belong in `then`
+- **Mutate state** — `where` is read-only
+- **Execute custom computation** — hashing, signing, arithmetic, JSON assembly all belong in concept actions
+
 Response bodies may use only constants from the target chain row or
 fields explicitly emitted by an earlier approved outcome and declared in
 `where`. Exact literals are locked: numeric status codes stay numeric,
 and string/status values keep their approved casing and hyphenation.
 
 Each sync's `Cites` section names the use-case scenarios it satisfies.
+Each sync also includes a "Where clause patterns" table mapping every
+binding to its Pattern (A/B/C/D) for Stage 03a's audit.
+
 An optional `output/<scenario-name>.sync-summary.md` may be emitted as a
 derived, non-canonical per-scenario review table (`Step | Sync | When |
 Then | Where summary | Key`) if it is copied mechanically from the

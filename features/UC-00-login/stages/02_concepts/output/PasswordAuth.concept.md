@@ -1,15 +1,14 @@
-# PasswordAuth — verify a principal by userId + password
+concept PasswordAuth [UserId]
+purpose
+    to verify a principal by userId + password
 
 ## State
 
 ```
-credentials(userId: UserId) -> passwordHash: PasswordHash   -- mandatory
-failedAttempts(userId: UserId) -> count: Int                -- mandatory, default 0
-lockedUntil(userId: UserId) -> timestamp: Timestamp         -- optional
+passwordHash: UserId -> PasswordHash     -- mandatory
+failedAttempts: UserId -> Int            -- mandatory, default 0
+lockedUntil: UserId -> Timestamp         -- optional
 ```
-
-(`PasswordHash` is an opaque type for a salted, slow-hashed password.
-The hashing scheme is an implementation detail, not part of the spec.)
 
 ## Actions
 
@@ -39,21 +38,18 @@ check [ userId: UserId ; password: String ] => [ error: "locked" ]
 
 ```
 after  PasswordAuth/setCredential: [ userId: u ; password: p ] => [ ok ]
-then   PasswordAuth/check:         [ userId: u ; password: p ] => [ ok ]
+then  PasswordAuth/check:         [ userId: u ; password: p ] => [ ok ]
 -- repeated wrong passwords accumulate --
-then   PasswordAuth/check:         [ userId: u ; password: wrong ] => [ error: "badPassword" ]
--- (× 5 — account locks) --
-then   PasswordAuth/check:         [ userId: u ; password: p ] => [ error: "locked" ]
+then  PasswordAuth/check:         [ userId: u ; password: wrong ] => [ error: "badPassword" ]
+-- (x 5 — account locks) --
+then  PasswordAuth/check:         [ userId: u ; password: p ] => [ error: "locked" ]
 ```
 
 ## Notes
 
 - `PasswordAuth` does not know anything about usernames, sessions, or
-    HTTP. Its only currency is `UserId`.
+  HTTP. Its only currency is `UserId`.
 - The lockout threshold (5) and duration (15 min) are implementation
   parameters, not part of the contract surface.
 - `unknown-user` is resolved upstream by `User.lookupByUsername`; UC-00
-    therefore does not need an `unknownPrincipal` outcome here.
-- Stage 02b renders the three `check` outcomes as `Ok`, `BadPassword`,
-    and `Locked`; those tokens are the chain-table/sync view of the three
-    action cases above.
+  therefore does not need an `unknownPrincipal` outcome here.

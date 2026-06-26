@@ -4,21 +4,20 @@
 
 | Action | Flow (sync) | Data received | Pattern | Source |
 |---|---|---|---|---|
-| `grant` | `GrantSessionForLogin` (`successful-login`) | `userId` | B | `result_of(PasswordAuth.check).userId` |
+| `grant` | `GrantSessionForLogin` (`successful-login`) | `userId` | B | `PasswordAuth/check` completion `?user` |
 
 ## Section 2 — Named-region reads by others (inbound Pattern D)
 
 None — no other concept's sync reads `Session`'s named region. The
-`sessionId` returned by `grant` is consumed by the same sync's
-`Web.respond` invocation (Pattern B — flow-sibling output of
-`Session.grant`) and so is not a Pattern D read against `Session`'s
-state.
+`sessionId` returned by `grant` is consumed by `RespondLoginSuccess`
+(Pattern B — flow-sibling output of `Session/grant`) and so is not a
+Pattern D read against `Session`'s state.
 
 ## Inconsistencies and risks
 
-- None at this time. (A previous draft of the sync pack
-  used `Session.open` and `PasswordAuth.verify`; reconciled to the
-  canonical chain-table names `Session.grant` and `PasswordAuth.check`.)
+- None at this time. (A previous draft of the sync pack used `Session/open`
+  and `PasswordAuth/verify`; reconciled to the canonical chain-table names
+  `Session/grant` and `PasswordAuth/check`.)
 
 ## Cross-checks
 

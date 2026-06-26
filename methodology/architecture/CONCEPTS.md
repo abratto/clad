@@ -9,29 +9,37 @@ named actions.
 
 ## Anatomy
 
-Every concept spec has four sections.
+Every concept spec has five sections.
 
-### 1. Name and one-line purpose
+### 1. Concept header
 
 ```
-# PasswordAuth — verify a principal by username + password
+concept PasswordAuth [UserId]
+purpose
+    to verify a principal by userId + password
 ```
 
-A concept name is a **noun**, in PascalCase, and refers to a capability,
-not an entity. (`User` is fine because there is something called a user;
+The `concept` keyword announces a spec in the WYSIWID language. The
+name is a **noun** in PascalCase, referring to a capability, not an
+entity. (`User` is fine because there is something called a user;
 `UserService` is not, because the service-ness is incidental.)
 
-### 2. State — Alloy-style relational notation
+Type parameters in brackets make the concept polymorphic: `PasswordAuth
+[UserId]` says `PasswordAuth` can manage credentials for any kind of
+user identifier without depending on the `User` concept.
+
+### 2. State — relational notation
 
 The data the concept owns, expressed as typed relations with multiplicity
-annotations. This notation is drawn from Daniel Jackson's Alloy (see
-`../reference/CITATIONS.md`) and used here without the Alloy toolchain —
-it adds precision without requiring a model checker.
+annotations. This notation is adapted from the WYSIWID paper (Meng &
+Jackson, Onward! 2025), which uses the form `field: SubjectType -> FieldType`.
+Multiplicity annotations are a CLAD extension required by Stage 03b's
+CSDP data modeling.
 
 ```
-credentials(userId: UserId) -> passwordHash: PasswordHash   -- mandatory
-failedAttempts(userId: UserId) -> count: Int                -- mandatory, default 0
-lockedUntil(userId: UserId) -> timestamp: Timestamp         -- optional
+passwordHash: UserId -> PasswordHash        -- mandatory
+failedAttempts: UserId -> Int               -- mandatory, default 0
+lockedUntil: UserId -> Timestamp            -- optional
 ```
 
 Multiplicity annotations:
@@ -42,7 +50,7 @@ Multiplicity annotations:
 
 For stateless concepts:
 ```
-*None.* TasteMatch is stateless. All data is read on-demand from
+*None.* <ConceptName> is stateless. All data is read on-demand from
 flow tokens and upstream action payloads.
 ```
 
@@ -122,13 +130,31 @@ then   PasswordAuth/verify:      [ userId: u ; password: p ]     => [ error: "lo
 
 ## Notation provenance
 
-The relational state notation (`relation(subject) -> field: Type -- multiplicity`)
-is adapted from Alloy (Jackson, *Software Abstractions*, MIT Press 2006/2012).
-The case-split action notation and `after`/`then` operational principle trace
-are drawn from the WYSIWID paper (Meng & Jackson, Onward! 2025) and
-first applied in full in `abratto/tastetag`. Neither the Alloy toolchain
-nor the Alloy Analyzer is required — the notation is used for precision
-and readability only. See `../reference/CITATIONS.md`.
+The state notation (`field: SubjectType -> FieldType`) is drawn from
+the WYSIWID paper (Meng & Jackson, Onward! 2025), where Section 4
+defines it with the form `field: Type -> Type`. CLAD adapts this to
+`field: SubjectType -> FieldType` and adds multiplicity annotations
+(as `-- mandatory | optional | ...`) for use in Stage 03b data modeling.
+
+The case-split action notation (`actionName [ params ] => [ outputs ]`)
+and the `after`/`then` operational principle trace are also from the
+paper (Section 4). The underlying relational model owes a debt to
+Alloy (Jackson, *Software Abstractions*, MIT Press 2006/2012). Neither
+the Alloy toolchain nor the Alloy Analyzer is required — both notations
+are used for precision and human readability only.
+
+See `../reference/CITATIONS.md` for full attributions.
+
+## Relationship to the Meng & Jackson paper
+
+CLAD's concept specification language is aligned with the paper's
+Section 4 with three intentional divergences:
+
+| Area | Paper | CLAD |
+|---|---|---|
+| Web actions | `Web/request` | `Web/handle` — more precise about the responsibility ("handle" an HTTP request, not just "request") |
+| Multiplicity annotations | Not present | Added as `-- mandatory / optional / ...` comments for Stage 03b data modeling |
+| Operational principle | Unqualified action names: `after set [...]` | Fully qualified: `after PasswordAuth/setPassword: [...]` — maintains traceability to the concept boundary |
 
 ## Authoring a concept (for agents)
 

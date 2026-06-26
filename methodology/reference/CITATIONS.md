@@ -24,6 +24,18 @@ and an RDF/SPARQL action log. The summaries in
 they are not derivative copies of the paper's prose. Implementations
 that follow the WYSIWID pattern should cite the paper.
 
+**Notation alignment.** CLAD's concept and synchronization specification
+languages are aligned with the paper's Sections 4–5 syntax: paper-style
+state notation (`field: SubjectType -> FieldType`), `concept <Name>
+[TypeParams]` header with `purpose` section, `sync <Name>` header with
+`when { }` / `where { }` / `then { }` block syntax, `Concept/action:`
+namespace qualifiers, `?variable` binding, and `bind()` / `OPTIONAL` /
+`?_eachthen` in `where` clauses. Three controlled divergences are
+documented in [`../architecture/CONCEPTS.md`](../architecture/CONCEPTS.md)
+(multiplicity annotations, qualified operational principles) and
+[`../architecture/WEB_CONCEPT.md`](../architecture/WEB_CONCEPT.md)
+(Web entry action is `handle` not `request`).
+
 ## Alloy — relational state and operational principle notation
 
 Daniel Jackson. **Software Abstractions: Logic, Language, and Analysis.**

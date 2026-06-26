@@ -16,6 +16,15 @@ CLAD. Other transports use the same pattern under a different name:
 | Kafka / event stream | `Stream` | `consume(event)` | `publish(topic, payload)` |
 | CLI | `Cli` | `invoke(args)` | `print(exitCode, output)` |
 
+Note on naming: the WYSIWID paper (Meng & Jackson, Onward! 2025)
+calls the Web entry action `request`. CLAD uses `handle` instead,
+because "handling" a request is more precise about what the bootstrap
+concept does — it receives an HTTP request, normalises it, and routes
+it into the action chain. The symmetry of `handle(request)` /
+`respond(status, body)` also mirrors the request/response cycle more
+naturally than `request(...)` / `respond(...)`. This is a controlled
+divergence (see [`SYNCHRONIZATIONS.md`](SYNCHRONIZATIONS.md)).
+
 The pattern is identical in all cases. Only the transport vocabulary
 changes. Hard rule R4 applies to every bootstrap concept: **no
 business concept may own a transport entry point**.
@@ -95,6 +104,42 @@ A reference profile that uses string concatenation to build JSON inside
 the engine (`buildJsonBody()`) has violated this boundary. The fix is to
 move response serialization to the transport boundary and let a standard
 JSON library (Jackson, Gson, etc.) handle it.
+
+## Optional `Web/format` action
+
+The paper's case study (Appendix C.1) introduces an additional bootstrap
+concept action called `Web/format` that factors out response assembly
+when a single HTTP response needs data from multiple concepts. CLAD
+supports this as an **optional** pattern for complex response shapes.
+
+The basic pattern:
+
+```
+sync FormatArticleResponse
+when {
+    Web/format: [ type: "article" ; article: ?article ; request: ?request ] => []
+}
+where {
+    Article: { ?article title: ?title ; body: ?body ; slug: ?slug ; author: ?author }
+    User: { ?author name: ?authorName }
+    Profile: { ?author profile: ?profile . ?profile bio: ?authorBio ; image: ?authorImage }
+    OPTIONAL { Tag: { ?article tag: ?tag } }
+    BIND ( ?article AS ?_eachthen )
+}
+then {
+    Web/respond: [ request: ?request ; body: [ article: [ slug: ?slug ; ... ] ] ]
+}
+```
+
+Use `Web/format` when a response body aggregates fields from two or more
+concepts (e.g. an article plus its author's profile). In simple cases
+where the response is a single concept's output (e.g. `Session.grant`
+returning a `sessionId`), a direct sync from the concept action to
+`Web/respond` is cleaner and does not need `Web/format`.
+
+When `Web/format` is used, it counts as a concept action in the
+responsibility map and appears in chain tables as an intermediate step
+between the last business concept action and the final `Web/respond`.
 
 ## Implementation check for Stage 04
 

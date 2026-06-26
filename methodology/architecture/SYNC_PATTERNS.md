@@ -21,18 +21,20 @@ from prior work documented in `methodology/reference/CITATIONS.md`.
 
 ### Pattern A — Flow-token join
 
-The sync reads from the **original request** that started the chain
-(the root `Web.handle` flow token). Every action in the chain shares
-the same flow-token id, so the original inputs are always reachable.
+The `then` clause uses a `?variable` that was declared in the `when`
+clause's action pattern. The variable binds through the shared flow
+token — every action in the chain can see it without a cross-concept
+read.
 
 ```
-when:  <SomeConcept>.<action>(...) -> <Outcome>
-where: payload = lookupRequest(flowToken).body
-       email   = payload.email
-then:  <NextConcept>.<action>(email)
+when:  Web/handle: [ method: "register" ; email: ?email ] => [ routed ]
+then:  User/register: [ email: ?email ]
 ```
 
-- **Where:** the root `Web.handle` invocation for this flow.
+The `?email` variable was bound by the trigger event (the `Web/handle`
+completion). It flows into `then` through the shared flow token.
+
+- **Source:** the trigger token's input or output fields.
 - **Key:** the flow-token id (implicit; shared by every action in the
   chain).
 - **Use when:** the data was submitted in the original HTTP request
@@ -40,16 +42,26 @@ then:  <NextConcept>.<action>(email)
 
 ### Pattern B — Flow-sibling join
 
-The sync reads from the **output of an earlier action in the same
-chain** (a "sibling" — same flow token, completed earlier).
+The sync reads a `?variable` that was **emitted by an earlier action
+in the same chain** (a "sibling" — same flow token, completed earlier).
+In paper sync syntax, this looks the same as Pattern A: a `?variable`
+declared in the `when` clause's output that flows into `then`. The
+distinction is that the binding originated from a sibling action's
+completion, not from the root trigger.
 
 ```
-when:  PasswordAuth.verify(...) -> Ok
-where: userId = result_of(User.lookupByUsername).userId
-then:  Session.grant(userId)
+when: {
+    User/lookupByUsername: [ username: ?u ] => [ userId: ?id ]
+}
+then: {
+    Session/grant: [ userId: ?id ]
+}
 ```
 
-- **Where:** an earlier action's completion record in the same flow.
+`?id` was emitted by `User/lookupByUsername`'s completion (a sibling
+action in the same flow). It is not a field from the original request.
+
+- **Source:** an earlier action's completion record in the same flow.
 - **Key:** the flow-token id (matches the prior action's record in
   the action log / engine state).
 - **Use when:** the value was produced by a previous concept action
@@ -57,18 +69,25 @@ then:  Session.grant(userId)
 
 ### Pattern C — Sync constant
 
-The sync injects a **value baked into the rule itself** — not joined
-from anywhere, just a literal. This is the point where the system's
+The `then` clause uses a **literal value baked into the rule itself**
+— not joined from anywhere. This is the point where the system's
 generality (a concept that takes any role) collapses into a specific
-flow (a registration sync that always passes `role = CONSUMER`).
+flow (a response sync that always passes status 200).
 
 ```
-when:  Web.handle(POST /register/consumer, body) -> Routed
-where: role = "CONSUMER"     -- fixed by which sync this is
-then:  User.register(body.username, role)
+when: {
+    Session/grant: [ userId: ?id ] => [ sessionId: ?sid ]
+}
+then: {
+    Web/respond: [ status: 200 ; body: { sessionToken: ?sid } ]
+}
 ```
 
-- **Where:** nowhere — the value is part of the sync's text.
+The literal `200` is determined by *which sync this is*, not by runtime
+data. `?sid` is Pattern B (flow-sibling join) — the status code literal
+is Pattern C.
+
+- **Source:** nowhere — the value is part of the sync's text.
 - **Key:** none.
 - **Use when:** the value is determined by *which sync this is*, not
   by runtime data. The concept stays general; the sync names the
@@ -76,18 +95,32 @@ then:  User.register(body.username, role)
 
 ### Pattern D — Concept-state join
 
-The sync reads from **another concept's named region** (its named
-graph / table / collection). This is the **only** pattern that
-crosses a concept boundary at read time.
+The `where` clause reads from **another concept's named region** (its
+named graph / table / collection). This is the **only** pattern that
+crosses a concept boundary at read time. In paper sync syntax, this
+appears as a `Concept: { ... }` block inside `where { }`.
 
 ```
-when:  Web.handle(POST /password/reset, body) -> Routed
-where: user = lookup(concept = User, byUsername = body.username)
-       email = user.email
-then:  Mailer.send(email, resetLink(user.id))
+sync PasswordResetNotification
+
+when {
+    Web/handle: [ method: "password_reset" ; identifier: ?username ] => [ routed ]
+}
+where {
+    User: { ?user email: ?email .
+            name: ?username }
+}
+then {
+    Mailer/send: [ to: ?email ; body: "Your reset link: ..." ]
+}
 ```
 
-- **Where:** another concept's named region.
+The `User: { ... }` block reads the `User` concept's named region at
+runtime, joined on `?username` (which was bound by the `when` clause).
+This is explicitly visible in the sync spec and appears in the Stage 03a
+dependency review as a Pattern D read.
+
+- **Source:** another concept's named region.
 - **Key:** an identifier that the trigger output carried (or that
   Pattern A made available from the request).
 - **Use when:** the value lives in a different concept's persistent
@@ -127,6 +160,21 @@ differs.
 
 ---
 
+## Pattern labels as audit annotations
+
+Pattern labels (A/B/C/D) are no longer the primary surface syntax inside
+sync specs. The sync's `when { }` / `where { }` / `then { }` blocks use
+paper syntax directly (see [`SYNCHRONIZATIONS.md`](SYNCHRONIZATIONS.md)).
+The labels survive as **audit annotations** — each sync's "Where clause
+patterns" table (see [`templates/sync.md`](../../templates/sync.md))
+maps every binding to its pattern for Stage 03a's dependency review.
+
+| Stage | Uses patterns for |
+|---|---|
+| 03 (sync authoring) | Label each binding in the Where clause patterns table |
+| 03a (dependency review) | Scan for Pattern D (concept-state join) rows; flag cross-concept reads |
+| 05 (verification) | Cross-check that every observed data flow has an authorised pattern |
+
 ## What goes in Stage 02b vs Stage 03
 
 Stage 02b stays concrete: `# | When | Then | Inputs | Outcome | Why this
@@ -134,19 +182,19 @@ step`. It does **not** carry `Where` / `Key` columns. At that stage,
 the table captures causal choreography only.
 
 Stage 03 is the first place where join provenance is spelled out. The
-sync's Contract Matrix and `where:` clause make the data source explicit
-using pattern notation (`A: ...`, `B: ...`, `C: ...`, `D: ...`). That
-keeps the derivation path reviewable:
+sync's Contract Matrix and rule clause (`when { }` / `where { } / `then { }`)
+make the data source explicit. The Where clause patterns table maps each
+binding to its pattern (A/B/C/D). This keeps the derivation path reviewable:
 
 - Stage 02b says exactly which `When -> Then` edge is approved.
 - Stage 03 says where the downstream action's arguments come from.
 - Stage 03a audits those joins per concept.
 
-Stage 03 `where` clauses are binding-only. They may bind fields from a
-flow token, prior action output, sync constant, or named concept graph.
-They may not compute values, assemble JSON, or reshape payloads. If a
-downstream action needs a new shape, the upstream concept action must
-emit that shape explicitly.
+Stage 03 `where` clauses may use `bind()`, `OPTIONAL`, and state queries
+as described in [`SYNCHRONIZATIONS.md`](SYNCHRONIZATIONS.md). They may
+**not** branch on business conditions, perform I/O, mutate state, or
+execute custom computation. If a downstream action needs a new shape,
+the upstream concept action must emit that shape explicitly.
 
 Worked examples live in
 [`../../templates/sync.md`](../../templates/sync.md)

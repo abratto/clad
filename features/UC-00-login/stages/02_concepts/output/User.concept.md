@@ -1,9 +1,11 @@
-# User — registered account holder
+concept User [UserId]
+purpose
+    to associate usernames with opaque user identifiers
 
 ## State
 
 ```
-user(userId: UserId) -> username: String   -- mandatory, unique across all users
+username: UserId -> String   -- mandatory, unique across all users
 ```
 
 ## Actions
@@ -11,28 +13,26 @@ user(userId: UserId) -> username: String   -- mandatory, unique across all users
 ```
 register [ username: String ] => [ userId: UserId ]
     username is not already in use
-    mints a fresh UserId and records username -> userId
-    flow token: { action: "User.register", username, userId, outcome: "created" }
+    mints a fresh UserId and records the username mapping
+    flow token: { action: "User.register", username, userId, outcome: "REGISTERED" }
 
 register [ username: String ] => [ error: "usernameTaken" ]
-    username is already in use
-    no state change
+    username is already in use — no state change
 
 lookupByUsername [ username: String ] => [ userId: UserId ]
     username is registered — returns the corresponding UserId
     no state change
-    flow token: { action: "User.lookupByUsername", username, userId, outcome: "found" }
+    flow token: { action: "User.lookupByUsername", username, userId, outcome: "FOUND" }
 
 lookupByUsername [ username: String ] => [ error: "notFound" ]
-    username is not registered
-    no state change
+    username is not registered — no state change
 ```
 
 ## Operational principle
 
 ```
 after  User/register:         [ username: "alice" ] => [ userId: u ]
-then   User/lookupByUsername:  [ username: "alice" ] => [ userId: u ]
+then  User/lookupByUsername:  [ username: "alice" ] => [ userId: u ]
 ```
 
 ## Notes
@@ -43,6 +43,3 @@ then   User/lookupByUsername:  [ username: "alice" ] => [ userId: u ]
 - UC-00-login does not invoke `register`; account creation is out of
   scope. The action is listed because the concept owns the lifecycle
   and would not be coherent without it.
-- Stage 02b renders the happy-path lookup outcome as
-    `Found(userId)` and the miss path as `NotFound`; those tokens are the
-    chain-table/sync view of the same two action cases above.

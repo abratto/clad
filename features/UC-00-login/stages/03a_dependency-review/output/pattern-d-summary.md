@@ -5,12 +5,11 @@
 No Pattern D reads in this feature.
 
 Every `where` clause across the UC-00 sync pack uses either:
-
-- A trigger pattern variable (data already bound by the `when`
-  clause),
-- Pattern B (a flow-sibling output — e.g. `userId` from
-  `PasswordAuth.check` consumed by `GrantSessionForLogin`, or
-  `sessionId` from `Session.grant` consumed by `RespondLoginSuccess` in
+- A trigger pattern variable (Pattern A — data already bound by the
+  `when` clause),
+- Pattern B (a flow-sibling output — e.g. `?user` from
+  `User/lookupByUsername` consumed by `CheckCredentialForLogin`, or
+  `?sid` from `Session/grant` consumed by `RespondLoginSuccess` in
   the same flow), or
 - Pattern C (a literal constant — e.g. `status: 200` / `401`).
 
@@ -21,8 +20,8 @@ has **zero cross-concept state coupling at runtime**.
 
 - None.
 - (A previous iteration flagged action-name discrepancies between
-  sync specs and chain tables — `Session.open` vs `Session.grant`,
-  `PasswordAuth.verify` vs `PasswordAuth.check`. Reconciled in the
+  sync specs and chain tables — `Session/open` vs `Session/grant`,
+  `PasswordAuth/verify` vs `PasswordAuth/check`. Reconciled in the
   sync specs; chain tables remain canonical.)
 
 ## What this feeds
