@@ -28,7 +28,7 @@
 
 > Updated at the end of every working session.
 
-- **Last gate passed:** `UC-00-login` Stage 04 (worked example shipped)
+- **Last gate passed:** `UC-00-login` Stage 05 (worked example shipped)
 - **Next stage:** start `UC-01-<slug>` Stage 00 (actor/goal)
 - **Blockers:** none
-- **Last updated:** 2026-05-07
+- **Last updated:** 2026-06-26 — methodology infrastructure: spec languages aligned with Meng & Jackson (Onward! 2025) paper syntax (concept headers, `Concept/action:` qualifiers, `when { }`/`where { }`/`then { }` sync blocks, enriched `where` clause with `bind()`, `OPTIONAL`, `?_eachthen`). UC-00-login worked example migrated; 43 tests + all gate scripts green.
