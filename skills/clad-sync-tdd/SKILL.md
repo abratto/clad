@@ -56,3 +56,28 @@ Load these files:
 - Implement exactly the approved Stage 03 sync set — no extras.
 - Outer flow tests must go green at the end of `04e-green`.
 - Sync logic is declarative (R3).
+
+## Test naming (London School BDD)
+
+Follow the London School interaction-focused convention for sync unit tests:
+
+- **Class name:** `<SyncName>Test` (e.g. `LoginGrantsSessionTest`)
+- **`@Nested` class:** `When<Trigger>` groups by the trigger outcome
+  (e.g. `WhenCheckOk`, `WhenCheckBadPassword`)
+- **Method name:** `should<Trigger><Then>` verifies interactions
+  (e.g. `shouldFireSessionGrant`, `shouldNotFire`)
+- **Assertions:** verify the downstream action was scheduled (SPARQL
+  CONSTRUCT or engine state), not the downstream action's own behavior
+- **Comment blocks:** `// GIVEN` / `// WHEN` / `// THEN`
+
+```java
+class LoginGrantsSessionTest {
+    @Nested class WhenCheckOk {
+        @Test void shouldFireSessionGrant() {
+            // GIVEN: a PasswordAuth.check action completed with outcome OK
+            // WHEN: the sync dispatcher runs
+            // THEN: a Session.grant invocation is scheduled
+        }
+    }
+}
+```

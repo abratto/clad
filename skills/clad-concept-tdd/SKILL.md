@@ -56,3 +56,38 @@ Load these files:
 - Distinct SPEC outcomes remain distinct in code paths (R9).
 - Do not substitute an in-memory store for the configured storage layer.
 - Use the exact package/source-root from `_config/package-and-layout.md`.
+
+## Test naming (London School BDD)
+
+Follow the London School outside-in convention for concept unit tests:
+
+- **Class name:** `<Concept><Action>Test` (e.g. `UserLookupByUsernameTest`)
+- **`@Nested` class:** `When<Precondition>` groups outcomes by required state
+  (e.g. `WhenUserExists`, `WhenUserUnknown`)
+- **Method name:** `should<Behavior>When<Condition>` uses business language
+  (e.g. `shouldReturnUserId`, `shouldReturnNotFound`)
+- **Assertions:** verify interactions — outcome type, flow token presence —
+  not internal concept state
+- **Comment blocks:** `// GIVEN` / `// WHEN` / `// THEN` instead of
+  Arrange-Act-Assert
+- **Ubiquitous language:** use terms from the concept spec and use case,
+  not technical jargon (`shouldReturnUserId`, not `shouldReturnHttp200`)
+
+```java
+class UserLookupByUsernameTest {
+    @Nested class WhenUserExists {
+        @Test void shouldReturnUserId() {
+            // GIVEN: a user "ada" is registered
+            // WHEN: lookupByUsername("ada") is called
+            // THEN: outcome is FOUND with the user's userId
+        }
+    }
+    @Nested class WhenUserUnknown {
+        @Test void shouldReturnNotFound() {
+            // GIVEN: no user named "nobody" exists
+            // WHEN: lookupByUsername("nobody") is called
+            // THEN: outcome is UNKNOWN
+        }
+    }
+}
+```

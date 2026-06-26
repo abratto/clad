@@ -165,6 +165,23 @@ London School forces the question "does this scenario pass?" before any
 implementation is written, which is exactly what CLAD's legibility property
 requires.
 
+## Test naming
+
+CLAD uses London School BDD naming conventions for concept and sync
+unit tests (Stages 04d and 04e). Flow tests (Stage 04c) use Gherkin
+`.feature` files with scenario-level naming.
+
+See [`../../templates/test-intent-derivation-map.md`](../../templates/test-intent-derivation-map.md)
+for the full conventions:
+
+- **Class name:** `<Concept><Action>Test` or `<SyncName>Test`
+- **`@Nested` classes:** `When<Precondition>` / `When<Trigger>` group outcomes
+- **Method name:** `should<Behavior>When<Condition>` or `should<Trigger><Then>`
+- **Comment blocks:** `// GIVEN` / `// WHEN` / `// THEN` (Given-When-Then)
+- **Assertions:** verify interactions (outcome type, scheduled actions), not
+  internal state
+- **Ubiquitous language:** use terms from concept specs and use cases
+
 ## Capability profiles
 
 CLAD defines three capability profiles that apply during Stage 04

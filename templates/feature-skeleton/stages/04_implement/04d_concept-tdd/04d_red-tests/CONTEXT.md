@@ -56,7 +56,7 @@ here.
 ## Outputs
 
 - `output/concept-test-derivation.md` — derivation map plus handoff bundle
-- (Side effect:) `<Name>ConceptTest.java` (or profile equivalent) per concept
+- (Side effect:) `<Concept><Action>Test.java` (or profile equivalent) per concept action
 
 ## Verify
 
