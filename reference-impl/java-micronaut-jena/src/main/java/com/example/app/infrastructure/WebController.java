@@ -3,6 +3,7 @@ package com.example.app.infrastructure;
 import com.example.app.api.LoginFailureResponse;
 import com.example.app.engine.ActionRecord;
 import com.example.app.engine.FlowManager;
+import com.example.app.engine.ResponseAssembler;
 import com.example.app.engine.SyncDispatcher;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;

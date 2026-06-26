@@ -76,7 +76,25 @@ explicitly instead of placing it ad hoc.
 
 These conventions apply only to this Java/Jena profile.
 
-- **Sync fragments, not full updates.** In `SyncAgent` subclasses,
+### SPARQL-star outcome matching
+
+CLAD uses RDF-star/SPARQL-star for outcome tracking. Outcomes are
+written only inside RDF-star annotations (`<< >>`), never as plain
+triples. Sync `whereClause()` fragments match the star annotation:
+
+```java
+// Correct — SPARQL-star pattern
+?_when_1 :concept <%s> ; :name "check" ; :userId ?_userId .
+<< ?_when_1 :outcome "OK" >> :flow ?_flow .
+
+// Wrong — plain :outcome triple (removed — the engine no longer writes it)
+?_when_1 :concept <%s> ; :name "check" ; :outcome "OK" ; :flow ?_flow .
+```
+
+Non-outcome field bindings (`:userId`, `:sessionToken`) remain as
+plain triples on the action node.
+
+### Sync fragment construction In `SyncAgent` subclasses,
   provide only `whereClause()` and `thenBindings()` fragments. The base
   class assembles `INSERT ... WHERE` and dedup logic.
 - **Engine-owned variables are reserved.** Do not redefine `?_when_1`,
@@ -138,6 +156,17 @@ protected String parameterizeSparql(String sparql) {
   return bindLiteral(sparql, "_route", ROUTE);
 }
 ```
+
+## Constructor discipline
+
+- Match what the tests instantiate: if tests call `new Account()`, the
+  class must have a no-arg constructor. No constructor signature mismatch.
+- No two constructors or methods with the same erasure (Java compile error).
+- Prefer `HashMap` over `Map.of()` when entries must be added after
+  construction — `Map.of()` returns an unmodifiable map.
+- When the storage layer is configured, use it. Do not substitute an
+  in-memory collection (e.g. `HashMap`) for the configured persistence
+  technology.
 
 ## Tests
 

@@ -24,6 +24,7 @@ the sync just says *"when outcome X fires → then call Y."*
 | `../01_usecase/output/usecase.md` | 4 | Scenarios to satisfy |
 | `../02_concepts/output/` | 4 | Concepts available to coordinate |
 | `../02b_chain-table/output/` | 4 | The action chain each sync formalises |
+| Skill: `clad-sync-design` | 3 | Sync design reference (see skills/ directory) |
 | `../../../../methodology/architecture/SYNCHRONIZATIONS.md` | 3 | Sync semantics |
 | `../../../../methodology/architecture/SYNC_PATTERNS.md` | 3 | The four legal `where` patterns (A/B/C/D) |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
@@ -155,7 +156,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Auto-advances to Stage 03b. The `verify_sync_matrix.py` and
+Auto-advances (next human gate: Stage 03b). The `verify_sync_matrix.py` and
 `verify_scenario_coverage.py` scripts must pass before advancing.
 
 ## Next stage

@@ -22,6 +22,7 @@ property IRI, migration, or schema library, you are too far downstream.
 |---|---|---|
 | `../02_concepts/output/` | 4 | Approved concept state sections |
 | `../03a_dependency-review/output/pattern-d-summary.md` | 4 | Approved cross-concept fields that must be exposed conceptually |
+| Skill: `clad-data-modeling` | 3 | Data modeling reference (see skills/ directory) |
 | `../../../../methodology/architecture/DATA_MODEL_NOTES.md` | 3 | Conceptual data-model procedure |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R2 |
 | `../../../../templates/data-model.md` | 3 | Output template |
@@ -77,13 +78,25 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-**Gate 2 (Architecture).** Default human approval. The human reviews
-concept state machines, sync coordination, cross-concept coupling,
-and the conceptual data model together. After approval, the agent
-auto-advances through Stages 04a–04c without a gate.
+**Gate 2 (Architecture).** Before asking for approval, list every
+artefact file produced since the last gate grouped by stage (02, 03,
+03a, 03b) with a one-line description per file. Then:
+
+STOP and present the artefacts for human review. Wait for explicit
+approval before continuing. The human reviews concept state machines,
+sync coordination, cross-concept coupling, and the conceptual data model
+together.
+
+After approval, the agent records the gate result in `RESUME.md` (see
+pre-condition check in Stage 04a), then auto-advances through Stages
+04a–04b without a gate, then stops at Stage 04c for **Gate 3
+(Executable specification)** — human reviews the Gherkin `.feature`
+files as the executable form of the use case.
 
 The `verify_data_model.py` and `verify_file_manifest.py` scripts must
 pass before requesting the gate.
+
+**Do you agree with this step? Any corrections before I continue?**
 
 ## Next stage
 

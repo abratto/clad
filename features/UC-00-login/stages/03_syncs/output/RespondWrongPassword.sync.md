@@ -1,17 +1,26 @@
-# RespondWrongPassword — bad credentials return the opaque 401 response
+sync RespondWrongPassword
 
 ## Sync Contract Matrix
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `3b` | `4b` | `PasswordAuth.check[BadPassword]` | `Web.respond(status=401, body={ message: "username or password didn't match" })` | `401`, `"username or password didn't match"` |
+| `3b` | `4b` | `PasswordAuth/check: [...] => [ badPassword ]` | `Web/respond: [ status: 401 ; body: { message: "username or password didn't match" } ]` | `401`, `"username or password didn't match"` |
 
 ## Rule
 
-```
-when:  PasswordAuth.check[BadPassword]
-then:  Web.respond(status=401, body={ message: "username or password didn't match" })
-```
+when {
+    PasswordAuth/check: [ userId: ?user ; password: ?p ] => [ error: "badPassword" ]
+}
+then {
+    Web/respond: [ status: 401 ; body: { message: "username or password didn't match" } ]
+}
+
+## Where clause patterns (for Stage 03a audit)
+
+| Binding | Pattern | Source |
+|---|---|---|
+| `401` | C | Sync constant |
+| `"username or password didn't match"` | C | Sync constant |
 
 ## Cites
 

@@ -28,6 +28,7 @@ that the deployable thing actually runs (Part 2, smoke). Without it,
 | `../04_implement/04c_flow-tests/output/` | 4 | Outer test specs for cross-reference (.feature or markdown) |
 | (a flow-token log from a representative test run) | 4 | Runtime evidence |
 | (Cucumber HTML/JSON report, Gherkin track only) | 4 | Supplementary scenario-pass evidence |
+| Skill: `clad-verification` | 3 | Verification reference (see skills/ directory) |
 | `../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics |
 | `../../../../reference-impl/java-micronaut-jena/README.md` | 3 | Example runtime debug surface for the Java profile |
 | `../../../../methodology/overlays/TRACKING.md` | 3 | Optional — only if the TRACKING overlay is in use |
@@ -117,7 +118,7 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
 - **Cross-stage check (back):** every flow token observed at runtime
   back-traces to a use-case scenario.
 
-### Gherkin track only (when `TEST_FRAMEWORK=CUCUMBER` in `../04_implement/04c_flow-tests/../../../_config/test-framework.md` — or equivalently the active feature's `_config/test-framework.md`)
+### Gherkin/Cucumber coverage
 
 - Every Gherkin scenario name in
   `../04_implement/04c_flow-tests/output/*.feature` appears as a

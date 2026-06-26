@@ -195,12 +195,11 @@ control. CLAD is the missing piece:
   CSDP data-model structure ([`verify_data_model.py`](quality-gate/verify_data_model.py)),
   and SPEC parity ([`verify_spec_parity.py`](quality-gate/verify_spec_parity.py)).
   See [`methodology/implementation/QUALITY_GATE.md`](methodology/implementation/QUALITY_GATE.md).
-- **Outer-loop BDD tests (optional Gherkin/Cucumber track).** Stage 04c
-  can mechanically derive executable Gherkin `.feature` files and
-  step-definition skeletons from the use case, chain tables, and SPECs,
-  replacing hand-written markdown flow specs with executable
-  specifications that go green at the end of 04e. Chosen per-feature via
-  `_config/test-framework.md`. See
+- **Outer-loop BDD tests (Cucumber/Gherkin).** Stage 04c
+  derives executable Gherkin `.feature` files and step-definition
+  skeletons from the use case, chain tables, and SPECs, replacing
+  hand-written markdown flow specs with executable specifications
+  that go green at the end of 04e. See
   [methodology/architecture/GHERKIN_INTEGRATION.md](methodology/architecture/GHERKIN_INTEGRATION.md).
 - **Optional overlays, not mandates.** Tracking
   ([methodology/overlays/TRACKING.md](methodology/overlays/TRACKING.md))
@@ -295,10 +294,6 @@ project's global defaults. The file is committed and works with any
 agent framework (Cline, Copilot, Cursor, Roo, Codex, …).
 
 ```properties
-# Test framework: CUCUMBER uses Gherkin/.feature files (requires Cucumber);
-#                 NATIVE (default) uses markdown flow-test specs + JUnit.
-test.framework=NATIVE
-
 # The single command that runs the full test suite.
 test.command=mvn test
 
@@ -306,24 +301,21 @@ test.command=mvn test
 storage.layer=Jena TDB2 named graph (Java/Micronaut profile)
 ```
 
-**Resolution order** (lower number wins):
-
-1. `clad.properties` — global default for all features
-2. `features/UC-XX/_config/test-framework.md` — per-feature override (if present)
-3. Stage-level `CONTEXT.md` — stage-specific override (when explicitly documented)
-
-For example, if most features use `NATIVE` but one feature needs
-Cucumber, set `TEST_FRAMEWORK=CUCUMBER` in that feature's
-`_config/test-framework.md` and leave `clad.properties` as-is.
+Outer flow tests at Stage 04c use Cucumber/BDD (Gherkin `.feature` files
++ step definitions) — see
+[methodology/architecture/GHERKIN_INTEGRATION.md](methodology/architecture/GHERKIN_INTEGRATION.md).
+The Java reference profile ships a Cucumber integration; build and test
+with a single `mvn test` that runs concept unit tests, sync integration
+tests, and BDD flow tests together.
 
 If you plan to adopt the Java reference profile, read
 [`reference-impl/java-micronaut-jena/README.md`](reference-impl/java-micronaut-jena/README.md)
 after Stage 00 passes and before Stage 04 implementation work. That file
 shows how to copy the starter profile into your real app root, how to run
 it locally, and how the Java package/source-root conventions map back into
-`_config/package-and-layout.md`. The Java profile also ships a Cucumber
-integration for the Gherkin track — set `TEST_FRAMEWORK=CUCUMBER` in
-`_config/test-framework.md` to use it (see
+`_config/package-and-layout.md`. The Java profile ships a Cucumber
+integration; build and test with a single `mvn test` that runs concept
+unit tests, sync integration tests, and BDD flow tests together (see
 [methodology/architecture/GHERKIN_INTEGRATION.md](methodology/architecture/GHERKIN_INTEGRATION.md)).
 
 If you want to sequence multiple goals before implementation, adopt the
@@ -332,100 +324,30 @@ optional planning overlay:
 - [methodology/overlays/PLANNING.md](methodology/overlays/PLANNING.md)
 - [templates/plan-board.md](templates/plan-board.md)
 
-### Cline setup (optional — local agentic loop)
+### Agent platform integration
 
-If you are using [Cline](https://docs.cline.bot/) in VS Code, CLAD now
-ships workspace rules under `.clinerules/` that preserve the old
-Roo-mode workflow as closely as Cline allows. Cline already reads
-`AGENTS.md`; the additional rule files let you manually toggle the
-current CLAD phase:
+CLAD is framework-agnostic. `AGENTS.md` is the canonical instruction source
+for Copilot, Cline, Cursor, and other agents. What changes by tool is only
+the local wiring — the process contract is shared.
 
-- `10-clad-architect.md` for Stages `00`-`03` and `05`
-- `20-clad-red.md` for red test/spec work in `04c`-`04e`
-- `30-clad-green.md` for green implementation after explicit approval
+Platforms that support the [agentskills.io](https://agentskills.io) standard
+(Claude Code, Copilot, Cursor, OpenCode, Gemini CLI, and 30+ others) will
+automatically discover CLAD skills from the `skills/` directory. Skills
+provide on-demand domain expertise via progressive disclosure — the agent
+loads only the skill relevant to the current stage.
 
-Enable exactly one of those phase rules at a time in the Cline Rules
-panel.
-
-The underlying CLAD process prompt does **not** change across local
-agent frameworks. `AGENTS.md` remains the canonical instruction source
-for Copilot, Cline, Roo, Cursor, and other agents. What changes by tool
-is only the local wiring:
-
-- Roo used custom modes and mode-specific rule files.
-- Cline uses Plan/Act plus `.clinerules/` toggles.
-- Copilot uses repository instructions plus normal tool permissions.
-
-In other words: when someone clones this repo from the template, they
-should not need a different CLAD methodology prompt just because they
-prefer Cline over Roo. The process contract is shared; the shell around
-it is tool-specific.
-
-#### Manual Cline settings
-
-Set these locally in Cline before long CLAD sessions:
-
-- Enable **Auto Compact**.
-- If you prefer different models for planning and implementation,
-  enable **Use different models for Plan and Act**.
-- Keep the CLAD phase rules visible in the Rules panel and toggle only
-  one of `10-clad-architect.md`, `20-clad-red.md`, or
-  `30-clad-green.md` at a time.
-
-Important: current Cline documentation describes Auto Compact as a
-feature, but does **not** document a portable repo-committed settings
-file for an Auto Compact threshold or custom compaction prompt. Because
-of that, CLAD does not commit a fake `.cline/` settings file for those
-values. Auto Compact behavior is currently a **per-user Cline setting**,
-not a team-shared repository config.
-
-Plan/Act and CLAD phase are **orthogonal**:
-
-- `Plan` means read/search/discuss only.
-- `Act` means Cline may edit files and run commands.
-- `10-clad-architect.md` / `20-clad-red.md` / `30-clad-green.md`
-  decide **what kind of work** CLAD allows.
-
-Typical CLAD-on-Cline combinations:
-
-- `Plan` + `10-clad-architect.md`: inspect stage context, review artefacts, plan the stage.
-- `Act` + `10-clad-architect.md`: write Stage `00`-`03` or `05` artefacts.
-- `Act` + `20-clad-red.md`: write Stage `04` red tests/specs.
-- `Act` + `30-clad-green.md`: implement approved Stage `04` work.
-
-One manual step is recommended before Stage `04` implementation work:
-
-Edit [`clad.properties`](clad.properties) at the repo root to set your
+`clad.properties` is committed to the repo and works with any agent
+framework (Cline, Copilot, Cursor, Roo, Codex, …). Edit it to set your
 project's global defaults:
 
 ```properties
-test.framework=NATIVE          # CUCUMBER or NATIVE
 test.command=mvn -f reference-impl/java-micronaut-jena/pom.xml test
 storage.layer=Jena TDB2 named graph (Java/Micronaut profile)
 ```
 
-`clad.properties` is committed to the repo and works with any agent
-framework (Cline, Copilot, Cursor, Roo, Codex, …). Per-feature overrides
-go in `features/UC-XX/_config/<key>.md` (e.g. `_config/test-framework.md`
-overrides `test.framework`).
-
-Legacy per-developer config (Cline/Roo only, gitignored):
-
-```bash
-cp .cline-clad-config.example .cline-clad-config
-cp .roo-clad-config.example .roo-clad-config
-```
-
-These exist for backward compatibility with existing agent setups and
-will be deprecated in a future release.
-
-Cline will detect `.clinerules/` and `AGENTS.md` automatically on
-workspace open. Use `.clineignore` to keep generated/build files out of
-automatic context gathering.
-
-Limitation versus Roo: Cline rules do not enforce Roo-style `fileRegex`
-edit fences. The phase boundaries are preserved as rule instructions,
-not as hard tool-level write restrictions.
+The gate model (AGENTS.md §6) and stage CONTEXT.md contracts govern
+behaviour regardless of platform. No platform-specific rule files or
+mode toggles are required.
 
 ## Repository layout
 
@@ -443,12 +365,9 @@ clad/
 ├── .github/copilot-instructions.md  Adapter -> AGENTS.md
 ├── .cursor/rules/clad.mdc           Adapter -> AGENTS.md
 ├── clad.properties                  Project-wide settings (any agent framework)
-├── .clinerules/                     Cline workspace rules for CLAD phases
-├── .clineignore                     Cline automatic-context exclusions
-├── .cline-clad-config.example       Legacy per-developer Cline config (gitignored at runtime)
-├── CONTEXT.md                       Workspace routing (ICM Layer 1)
-├── .roomodes                        Legacy Roo custom modes
-├── .roo-clad-config.example         Legacy Roo per-developer config (gitignored at runtime)
+├── skills/                            Portable agent skills (agentskills.io standard)
+├── .clineignore                       Cline automatic-context exclusions
+├── CONTEXT.md                         Workspace routing (ICM Layer 1)
 │
 ├── methodology/
 │   ├── README.md                    Reading order

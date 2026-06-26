@@ -1,18 +1,26 @@
-# LookupUserForLogin — route login requests to user lookup
+sync LookupUserForLogin
 
 ## Sync Contract Matrix
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `1` | `2` | `Web.handle[Routed]` | `User.lookupByUsername(username)` | `<none>` |
+| `1` | `2` | `Web/handle: [...] => [ routed ]` | `User/lookupByUsername: [ username: ?u ]` | `<none>` |
 
 ## Rule
 
-```
-when:  Web.handle[Routed]
-where: A: username = body.username
-then:  User.lookupByUsername(username)
-```
+when {
+    Web/handle: [ method: "POST /login" ; username: ?u ; password: ?p ] => [ routed ]
+}
+then {
+    User/lookupByUsername: [ username: ?u ]
+}
+
+## Where clause patterns (for Stage 03a audit)
+
+| Binding | Pattern | Source |
+|---|---|---|
+| `?u` | A | Trigger token — `Web/handle` input |
+| `?p` | A | Trigger token — `Web/handle` input |
 
 ## Cites
 

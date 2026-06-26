@@ -41,56 +41,68 @@ class under `<APP_PACKAGE_ROOT>.syncs` that:
 Use the approved sync name for the class name with standard Java class
 capitalization. Use lower camel case for `syncName()`.
 
-## SPARQL fragment construction
+## SPARQL-star fragment construction
+
+CLAD uses RDF-star/SPARQL-star (Jena 5.x native). Outcomes are written
+only as RDF-star annotations (`<< >>`), never as plain triples. This
+eliminates the double-write where `:outcome` appeared in both plain and
+star form. Sync `whereClause()` fragments match the star annotation
+directly.
 
 Use Java text blocks for `whereClause()` and `thenBindings()` fragments.
 Interpolate IRI constants via `.formatted()`.
 
-When a sync needs a non-outcome string literal such as a route name,
-message text, or other discriminator, declare it as a
-`private static final String` constant and bind it through
-`ParameterizedSparqlString`. In the CLAD reference profile, prefer the
-base-class hook `parameterizeSparql(...)` instead of rebuilding the
-outer update manually in each subclass.
+### Template: whereClause (completion-shaped trigger)
 
-Keep outcome literals explicit in the SPARQL text. Do not parameterize
-`"FOUND"`, `"OK"`, `"GRANTED"`, and similar outcome values, because the
-lowering contract needs those branches to stay visibly one-to-one with
-the approved SPEC outcomes.
-
-### Text block shape
-
-whereClause (completion-shaped trigger — outcomes and fields are direct
-properties of the action node):
+Outcomes and non-outcome action fields are matched separately —
+non-outcome fields (`:userId`, `:sessionToken`) are plain triples on
+the action node; `:outcome` is matched inside the RDF-star annotation:
 
 ```java
 @Override
 protected String whereClause() {
   return """
     ?_when_1 :concept <%s> ;
-         :name    "lookupByUsername" ;
-         :flow    ?_flow ;
-         :outcome "FOUND" ;
-         :userId  ?_userId .
+             :name    "lookupByUsername" ;
+             :userId  ?_userId .
+    << ?_when_1 :outcome "FOUND" >> :flow ?_flow .
     """.formatted(UserConcept.IRI);
 }
 ```
 
-whereClause (bootstrap-shaped trigger — matches the Web request action's
-input node):
+### Template: whereClause (bootstrap-shaped trigger)
+
+Bootstrap triggers match the Web request action's `:input` node — no
+outcome filtering:
 
 ```java
 @Override
 protected String whereClause() {
   return """
     ?_when_1 :concept <%s> ;
-         :name    "request" ;
-         :input   ?_inp ;
-         :flow    ?_flow .
+             :name    "request" ;
+             :input   ?_inp ;
+             :flow    ?_flow .
     ?_inp :route ?_route ;
-        :copyId ?_copyId ;
-        :memberId ?_memberId .
+         :username ?_username .
     """.formatted(WEB_IRI);
+}
+```
+
+### Template: whereClause with variable outcome + FILTER
+
+When a sync fires on multiple outcomes, match `:outcome` as a variable
+inside `<< >>` and filter:
+
+```java
+@Override
+protected String whereClause() {
+  return """
+    ?_when_1 :concept <%s> ;
+             :name    "check" .
+    << ?_when_1 :outcome ?_outcome >> :flow ?_flow .
+    FILTER (?_outcome IN ("BAD_PASSWORD", "NO_CREDENTIAL"))
+    """.formatted(PasswordAuthConcept.IRI);
 }
 ```
 
@@ -153,6 +165,362 @@ Reserved variables owned by the engine:
 - `?_then_1`
 
 Do not redefine those names.
+
+### How the action graph is structured — plain triples vs. RDF-star
+
+The action graph uses **two layers of triples** on each action node. Only
+one of these layers is visible to sync `whereClause()` fragments.
+
+**Plain triples (the sync layer).** Concept agents write action properties
+as plain subject-predicate-object triples directly on the action IRI
+node. These are what sync `whereClause()` fragments match against:
+
+```sparql
+INSERT DATA {
+  GRAPH <action-graph> {
+    <action-iri> :concept <concept-iri> ;
+                 :name    "check" ;
+                 :outcome "OK" ;
+                 :userId  "ada-0001" .
+  }
+}
+```
+
+Sync `whereClause()` matches these plain triples:
+
+```java
+return """
+  ?_when_1 :concept <%s> ;
+           :name    "check" ;
+           :flow    ?_flow ;
+           :outcome "OK" ;
+           :userId  ?_userId .
+  """.formatted(PasswordAuthConcept.IRI);
+```
+
+**RDF-star annotation (the engine layer).** The engine wraps the `:outcome`
+triple with an RDF-star annotation carrying the flow token. This creates
+a second, separate triple in the graph that ties the outcome event to its
+flow for archival and traceability. It does **not** replace the plain
+`:outcome` triple — it annotates it:
+
+```sparql
+INSERT DATA {
+  GRAPH <action-graph> {
+    <action-iri> :outcome "OK" .                                        # ← plain, sync-visible
+    << <action-iri> :outcome "OK" >> :flow <flow-token> .               # ← RDF-star, engine-only
+  }
+}
+```
+
+ConceptAgent writes this via `writeCompletion()`:
+
+```java
+// ConceptAgent.java (actual code)
+sparql.append("    << <").append(invocation.actionIri()).append("> :outcome ")
+      .append(NodeFmtLib.str(output.get("outcome").asNode(), (PrefixMap) null))
+      .append(" >> :flow <").append(invocation.flowToken()).append("> .\n");
+```
+
+**What sync authors need to know:**
+
+- The `?_flow` variable used in `whereClause()` comes from the engine-owned
+  outer `INSERT ... WHERE` shape. Syncs bind it; do not redefine it.
+- The RDF-star annotation is invisible to sync fragments. Syncs match the
+  plain `:outcome` and field triples exactly as documented below.
+- The only consumer of the RDF-star annotations is `ActionLog.archiveFlow()`,
+  which moves completed action annotations between the active and archive
+  graphs without touching the plain action property triples.
+
+## RDF-star cookbook
+
+These are the only places in the engine that use RDF-star. Everything
+else — sync `whereClause()`, sync `thenBindings()`, concept state queries —
+uses plain RDF triples.
+
+### 1. Write an action completion (success outcome)
+
+Location: `ConceptAgent.writeCompletion()`.
+
+```java
+// actionIri and flowToken are strings, output is Map<String,RDFNode>
+sparql.append("INSERT DATA {\n");
+sparql.append("  GRAPH <action-graph> {\n");
+// Plain triples for action properties (sync-visible)
+for (var entry : output.entrySet()) {
+    sparql.append("    <").append(actionIri).append("> :")
+          .append(entry.getKey()).append(" ")
+          .append(NodeFmtLib.str(entry.getValue().asNode(), null))
+          .append(" .\n");
+}
+// RDF-star annotation tying the outcome to its flow
+sparql.append("    << <").append(actionIri).append("> :outcome ")
+      .append(NodeFmtLib.str(output.get("outcome").asNode(), null))
+      .append(" >> :flow <").append(flowToken).append("> .\n");
+sparql.append("  }\n}\n");
+```
+
+Produces:
+
+```sparql
+INSERT DATA {
+  GRAPH <https://clad.dev/actions> {
+    <action-iri> :concept <https://clad.dev/concept/user> ;
+                 :name    "lookupByUsername" ;
+                 :outcome "FOUND" ;
+                 :userId  "ada-0001" .
+    << <action-iri> :outcome "FOUND" >> :flow <https://clad.dev/flow/uuid> .
+  }
+}
+```
+
+### 2. Write an error completion
+
+Location: `ConceptAgent.writeError()`.
+
+```sparql
+INSERT DATA {
+  GRAPH <action-graph> {
+    <action-iri> :concept <concept-iri> ;
+                 :name    "check" ;
+                 :error   "Bad credentials" .
+    << <action-iri> :outcome "error" >>
+                            # no :flow — errors are not archived per-flow
+  }
+}
+```
+
+### 3. Archive a completed flow
+
+Location: `ActionLog.archiveFlow()`.
+
+```sparql
+DELETE { GRAPH <active> {
+    << ?a :outcome ?outcome >> ?p ?o .
+} }
+INSERT { GRAPH <archive> {
+    << ?a :outcome ?outcome >> ?p ?o .
+} }
+WHERE  { GRAPH <active> {
+    << ?a :outcome ?outcome >> ?p ?o .
+    ?a :flow <flow-token> .
+} }
+```
+
+This moves all RDF-star-annotated outcome annotations for a given flow
+token from the active graph to the archive graph. The plain action
+property triples stay in the active graph — only the `<< ... >>`
+annotations are moved.
+
+### 4. How NOT to use RDF-star
+
+Sync `whereClause()` should never contain RDF-star syntax. Match only
+plain triples on the action node:
+
+```java
+/* CORRECT — plain triples */
+"""
+?_when_1 :concept <%s> ;
+         :name    "check" ;
+         :flow    ?_flow ;
+         :outcome "OK" ;
+         :userId  ?_userId .
+""".formatted(PasswordAuthConcept.IRI);
+```
+
+```java
+/* WRONG — RDF-star in sync whereClause */
+"""
+<< ?_when_1 :outcome "OK" >> :flow ?_flow .
+?_when_1 :userId ?_userId .
+"""
+// This won't match. Syncs match plain triples, not reified nodes.
+```
+
+Sync `thenBindings()` should also never use RDF-star. Write plain
+triples with blank-node input:
+
+```java
+/* CORRECT — blank-node input */
+"""
+?_then_1 :concept <%s> ;
+         :name    "grant" ;
+         :input   [ :userId ?_userId ] .
+""".formatted(SessionConcept.IRI);
+```
+
+### 5. Why RDF-star instead of blank-node reification
+
+Before RDF-star, the engine used blank-node reification to attach flow
+tokens to outcome events:
+
+```sparql
+# OLD (pre-star) — verbose, requires triple the triples
+[a :subject <action> ; :predicate :outcome ; :object "FOUND"] :flow <token> .
+```
+
+RDF-star collapses this to a single readable line:
+
+```sparql
+# NEW (star) — compact, readable
+<< <action> :outcome "FOUND" >> :flow <token> .
+```
+
+Jena 5.x supports RDF-star natively. The engine migrated in CHANGELOG.md.
+
+## Concept implementation SPARQL patterns
+
+Sync `whereClause()` / `thenBindings()` fragments are governed by the
+previous sections. Concept agents have their own SPARQL patterns for
+reading and writing state in their named graph. This section captures
+the patterns that agents must follow when implementing `doXxx` handlers
+inside a `ConceptAgent` subclass.
+
+### SELECT — look up concept state
+
+Use the **specific IRI** for the entity, not a generic `?entity` variable.
+The lookup must target the exact entity, or it will match any entity in
+the graph and always succeed.
+
+```java
+// CORRECT — targets the specific prescription IRI
+String lookupSparql = "PREFIX p: <" + NS + ">"
+    + " SELECT ?status WHERE { GRAPH <" + GRAPH + "> {"
+    + "   <" + NS + "prescription/" + prescriptionId + "> p:status ?status ."
+    + " } } LIMIT 1";
+
+// WRONG — matches any prescription in the graph
+String lookupSparql = "PREFIX p: <" + NS + ">"
+    + " SELECT ?status WHERE { GRAPH <" + GRAPH + "> {"
+    + "   ?prescription p:status ?status ."
+    + " } } LIMIT 1";
+```
+
+Build the IRI by concatenating the concept's namespace and the
+identifier:
+
+```java
+String entityIri = NS + "prescription/" + prescriptionId;
+// produces: https://clad.dev/concept/prescription#prescription/rx-001
+```
+
+### UPDATE — modify concept state with `WITH <graph>`
+
+Use the `WITH <graph>` form for SPARQL UPDATE. Avoid nesting
+`GRAPH ?g {}` inside `DELETE {}` / `INSERT {}` blocks — `ParameterizedSparqlString`
+interprets the nested graph variable as a parameter and produces parse
+errors.
+
+```java
+// CORRECT — WITH <graph> syntax
+String updSparql = "PREFIX p: <" + NS + ">"
+    + " WITH <" + GRAPH + ">"
+    + " DELETE { <" + NS + "prescription/" + prescriptionId + "> p:autoRefillEnabled ?old }"
+    + " INSERT { <" + NS + "prescription/" + prescriptionId + "> p:autoRefillEnabled \"true\" }"
+    + " WHERE { OPTIONAL { <" + NS + "prescription/" + prescriptionId + "> p:autoRefillEnabled ?old } }";
+actionLog.update(updSparql);
+
+// WRONG — nested GRAPH ?g inside DELETE/INSERT (ParameterizedSparqlString parse error)
+String updSparql = "DELETE { GRAPH ?g { ?prescription p:autoRefillEnabled ?old } }"
+    + " INSERT { GRAPH ?g { ?prescription p:autoRefillEnabled \"true\" } }"
+    + " WHERE { GRAPH ?g { OPTIONAL { ?prescription p:autoRefillEnabled ?old } } }";
+```
+
+The `WHERE` clause must bind every variable used in `DELETE`. When the
+property being updated might not exist yet (first write), use `OPTIONAL`
+to handle the unbound case.
+
+### Direct string building vs ParameterizedSparqlString
+
+| Context | Recommended approach |
+|---|---|
+| Sync `whereClause()` / `thenBindings()` fragments | Java text blocks with `.formatted()` + `bindLiteral()` as documented in the SPARQL fragment construction section |
+| Concept SELECT / UPDATE queries | **Direct string concatenation** — no `ParameterizedSparqlString`. Build the full SPARQL string with string concatenation (`+`), interpolating IRIs and values directly |
+| Concept `seedXxx()` / test fixtures | Direct string concatenation with `INSERT DATA` |
+
+Rationale: `ParameterizedSparqlString` adds a layer of indirection that
+works well for simple SELECT queries but produces parse errors with
+`DELETE/INSERT WHERE`, nested `GRAPH ?g`, or `OPTIONAL` inside `WHERE`.
+The generated SPARQL from `ParameterizedSparqlString` can also silently
+produce invalid syntax when mixing named-graph patterns with UPDATE
+clauses. Direct string building avoids these issues entirely and keeps
+the SPARQL visible at the construction site.
+
+### `writeCompletion` — how outcomes reach sync `whereClause`
+
+Concept actions signal their result through
+`writeCompletion(invocation, Map.of(...))` or
+`writeError(invocation, message)`:
+
+```java
+// Success outcome — each Map entry becomes a plain triple on the action node
+writeCompletion(invocation, Map.of(
+    "outcome", ResourceFactory.createStringLiteral("Ok"),
+    "prescriptionId", ResourceFactory.createStringLiteral(prescriptionId),
+    "autoRefillEnabled", ResourceFactory.createStringLiteral(autoRefillEnabled)));
+
+// Error outcome — produces :outcome "error" + :error "message"
+writeCompletion(invocation, Map.of(
+    "outcome", ResourceFactory.createStringLiteral("NotFound")));
+```
+
+The sync's `whereClause()` must match these plain triples exactly.
+Outcome names (`"Ok"`, `"NotFound"`, `"NotEligible"`) must match
+character-for-character between the concept's `writeCompletion` and the
+sync's `whereClause`. No synonyms, no renamings.
+
+### Concept test fixtures — write test actions and read outcomes
+
+Concept tests follow a three-part pattern:
+
+**1. Write a test action into the action log:**
+
+```java
+private void writeSetAutoRefillAction(String flowToken, String actionIri,
+        String prescriptionId, String autoRefillEnabled) {
+    String sparql = "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n"
+        + "INSERT DATA {\n"
+        + "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n"
+        + "    <" + actionIri + "> :concept <" + PrescriptionConcept.IRI + "> ;\n"
+        + "                     :name    \"setAutoRefill\" ;\n"
+        + "                     :input   [ :prescriptionId \"" + prescriptionId
+        + "\" ; :autoRefillEnabled \"" + autoRefillEnabled + "\" ] ;\n"
+        + "                     :flow    <" + flowToken + "> .\n"
+        + "  }\n"
+        + "}\n";
+    actionLog.update(sparql);
+}
+```
+
+**2. Poll and process the action:**
+
+```java
+concept.pollAndProcess("setAutoRefill");
+```
+
+**3. Read the outcome:**
+
+```java
+private String readOutcome(String actionIri) {
+    List<Map<String, String>> rows = actionLog.select(
+        "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n"
+        + "SELECT ?outcome WHERE {\n"
+        + "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n"
+        + "    <" + actionIri + "> :outcome ?outcome .\n"
+        + "  }\n"
+        + "}\n");
+    return rows.isEmpty() ? null : rows.get(0).get("outcome");
+}
+```
+
+### Common antipatterns
+
+| Antipattern | Why it fails | Correct approach |
+|---|---|---|
+| `?entity p:predicate ?val` without IRIs | Matches any entity in the graph — lookup always succeeds even when the target entity doesn't exist | Use the specific entity IRI in subject position |
+| Nested `GRAPH ?g` inside `DELETE`/`INSERT` | `ParameterizedSparqlString` can't resolve nested `?g` in UPDATE triples | Use `WITH <graph>` syntax |
+| `ParameterizedSparqlString` for complex UPDATEs | Silent parse errors on `DELETE/INSERT WHERE` with `OPTIONAL` | Use direct string concatenation |
+| `setLiteral("new", "value")` with unbound `?old` | `?old` variable in DELETE clause requires WHERE binding, but falls through PSS | Use direct string concatenation to control variable binding |
 
 ## Lowering algorithm
 
@@ -403,9 +771,8 @@ RespondLoginSuccess:
 return """
   ?_when_1 :concept <%s> ;
        :name    "check" ;
-       :flow    ?_flow ;
-       :outcome "OK" ;
        :userId  ?_userId .
+  << ?_when_1 :outcome "OK" >> :flow ?_flow .
   """.formatted(PasswordAuthConcept.IRI);
 ```
 

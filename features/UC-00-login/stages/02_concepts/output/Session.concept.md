@@ -1,10 +1,12 @@
-# Session — bearer-token sessions for a principal
+concept Session [SessionId, UserId]
+purpose
+    to manage bearer-token sessions for a principal
 
 ## State
 
 ```
-session(sessionId: SessionId) -> userId: UserId      -- mandatory
-session(sessionId: SessionId) -> openedAt: Timestamp -- mandatory
+userId: SessionId -> UserId       -- mandatory
+openedAt: SessionId -> Timestamp  -- mandatory
 ```
 
 ## Actions
@@ -12,12 +14,12 @@ session(sessionId: SessionId) -> openedAt: Timestamp -- mandatory
 ```
 grant [ userId: UserId ] => [ sessionId: SessionId ]
     mints a fresh, unguessable SessionId and records userId + now()
-    flow token: { action: "Session.grant", userId, sessionId, outcome: "granted" }
+    flow token: { action: "Session.grant", userId, sessionId, outcome: "GRANTED" }
 
 lookup [ sessionId: SessionId ] => [ userId: UserId ]
     session exists — returns the principal it represents
     no state change
-    flow token: { action: "Session.lookup", sessionId, outcome: "found" }
+    flow token: { action: "Session.lookup", sessionId, outcome: "FOUND" }
 
 lookup [ sessionId: SessionId ] => [ error: "unknown" ]
     no such session exists
@@ -27,9 +29,9 @@ lookup [ sessionId: SessionId ] => [ error: "unknown" ]
 ## Operational principle
 
 ```
-after  Session/grant:   [ userId: u ]          => [ sessionId: s ]
-then   Session/lookup:  [ sessionId: s ]       => [ userId: u ]
-then   Session/lookup:  [ sessionId: missing ] => [ error: "unknown" ]
+after  Session/grant:  [ userId: u ]       => [ sessionId: s ]
+then  Session/lookup:  [ sessionId: s ]    => [ userId: u ]
+then  Session/lookup:  [ sessionId: missing ] => [ error: "unknown" ]
 ```
 
 ## Notes
@@ -37,10 +39,5 @@ then   Session/lookup:  [ sessionId: missing ] => [ error: "unknown" ]
 - `SessionId` must be unguessable (e.g. 128 bits of randomness,
   base64url). The exact scheme is an implementation detail.
 - `Session` does not authenticate anyone — that is `PasswordAuth`'s
-  job — it only records that an authentication has happened and exposes
-  its consequence.
-- Logout is out of scope for UC-00-login, so `close` is omitted from
-    this feature slice.
-- Stage 02b renders the happy-path `grant` outcome as
-    `Granted(sessionId)`; that token is the chain-table/sync view of the
-    action case above.
+  job — it only records that an authentication has happened.
+- Logout is out of scope for UC-00-login.

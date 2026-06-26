@@ -44,7 +44,7 @@ flow implemented by:
 - `syncs/LoginRespondWrongPassword.java`
 - `syncs/LoginRespondUnknownUser.java`
 - `src/test/java/com/example/app/flows/LoginFlowTest.java`
-- `features/UC-00-login/stages/04_implement/04c_flow-tests/output/login-flow-test.md`
+- `features/UC-00-login/stages/04_implement/04c_flow-tests/output/login.feature`
 
 ## What to copy from this exemplar
 

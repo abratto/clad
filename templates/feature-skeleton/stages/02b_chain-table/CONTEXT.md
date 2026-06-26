@@ -22,6 +22,7 @@ trigger, the concept set is wrong — go back to 02a, do not invent.
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Scenarios to choreograph |
 | `../02a_responsibility-map/output/responsibility-map.md` | 4 | Available concepts and their actions |
+| Skill: `clad-chain-table` | 3 | Chain table reference (see skills/ directory) |
 | `../../../../methodology/architecture/SYNCHRONIZATIONS.md` | 3 | What syncs are (so the chain table can be lifted into them later) |
 | `../../../../templates/chain-table.md` | 3 | Output template |
 
@@ -108,10 +109,20 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-**Gate 1 (Requirements).** Default human approval. The human reviews
-the complete design picture: use case scenarios, concept boundaries,
-and action choreography together. After approval, the agent
-auto-advances through Stages 02–03b without further gates.
+**Gate 1 (Requirements).** Before asking for approval, list every
+artefact file produced since the last gate grouped by stage (01, 02a,
+02b) with a one-line description per file. Then:
+
+STOP and present the artefacts for human review. Wait for explicit
+approval before continuing. The human reviews the complete design
+picture: use case scenarios, concept boundaries, and action choreography
+together.
+
+After approval, the agent records the gate result in `RESUME.md` (see
+pre-condition check in Stage 02), then auto-advances through Stage 02
+(concept specs) without a human gate, then stops at Stage 03b for
+**Gate 2 (Architecture)** — human reviews concepts, syncs, and data
+model together.
 
 The `verify_file_manifest.py` script must pass before requesting the
 gate.

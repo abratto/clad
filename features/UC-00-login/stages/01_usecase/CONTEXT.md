@@ -25,6 +25,7 @@ under-specifying them.
 |---|---|---|
 | `../00_actor-goal/output/actors.md` | 4 | Confirmed actors |
 | `../00_actor-goal/output/goals.md` | 4 | Confirmed goals |
+| Skill: `clad-usecase-authoring` | 3 | Use case authoring reference (see skills/ directory) |
 | `../../../../methodology/core/CLAD.md` | 3 | Methodology |
 | `../../../../templates/usecase.md` | 3 | Output template |
 | `../../_config/voice.md` | 3 | Feature voice |
@@ -69,8 +70,8 @@ useful visual structure.
 
 ## Gate
 
-Default human approval. The use case is the contract every later
-stage compiles against; gate carefully.
+Auto-advances (next human gate: Stage 02b). The agent runs the Verify
+items as a self-audit and proceeds.
 
 ## Next stage
 

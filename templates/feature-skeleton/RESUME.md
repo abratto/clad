@@ -15,8 +15,16 @@
 
 ## Gate snapshot (must be current before commit)
 
+<!--
+  The agent updates this section after EVERY human gate approval.
+  Stages 02 and 04a check this snapshot before starting — if the
+  required gate is not approved, the agent must stop and surface the
+  defect before writing any artefacts.
+-->
+- **Gate 1 (Requirements):** `pending` | `approved` | `rejected`
+- **Gate 2 (Architecture):** `pending` | `approved` | `rejected`
+- **Gate 3 (Executable spec):** `pending` | `approved` | `rejected`
 - **Last completed stage:** `TBD`
-- **Gate outcome:** `TBD`
 - **Corrections at last gate:** `TBD`
 - **Deferred concepts:** `TBD`
 - **Next stage:** `TBD`

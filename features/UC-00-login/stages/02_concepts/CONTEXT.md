@@ -35,10 +35,12 @@ sync, not in this file.
 ## Process
 
 For each row in `02a_responsibility-map/output/responsibility-map.md`,
-draft `<Name>.concept.md` per the template — full state, full action
-signatures (inputs, outcomes, effect on state, flow-token fields), and
-operational principle. Outcomes must match the ones used in
-`02b_chain-table/output/`. R1: no concept references another.
+draft `<Name>.concept.md` per the template — concept header with type
+parameters, purpose, state (paper-syntax relational notation with
+multiplicity annotations), full action signatures (inputs, outcomes,
+effect on state, flow-token fields), and operational principle.
+Outcomes must match the ones used in `02b_chain-table/output/`.
+R1: no concept references another.
 
 (`Web` is the bootstrap concept and does not get a `Web.concept.md` —
 its anatomy is described in
@@ -61,8 +63,7 @@ its anatomy is described in
 
 ## Gate
 
-Default human approval. **Do you agree with this step? Any
-corrections before I continue?**
+Auto-advances (next human gate: Stage 03b).
 
 ## Next stage
 

@@ -95,9 +95,9 @@ doubt, use one-stage-per-turn.
 
 ## Gate
 
-Auto-advances to Stage 04c. Sub-stages 04a and 04b auto-advance.
+Auto-advances (next human gate: Stage 04c). Sub-stages 04a and 04b auto-advance.
 **Sub-stage 04c (flow tests) is Gate 3 (Executable specification) —
-human reviews the Gherkin `.feature` files or native flow-test specs
+human reviews the Gherkin `.feature` files as the executable form of the use case.
 as the executable form of the use case.** After 04c is approved, sub-
 stages 04d and 04e auto-advance because their tests are mechanically
 derived from already-approved artefacts (SPECs, chain tables, sync

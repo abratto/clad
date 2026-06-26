@@ -141,6 +141,9 @@ public abstract class ConceptAgent {
         sparql.append("INSERT DATA {\n");
         sparql.append("  GRAPH <").append(actionGraphIRI()).append("> {\n");
         for (Map.Entry<String, RDFNode> entry : output.entrySet()) {
+            // Skip plain :outcome — the RDF-star annotation below carries it.
+            // This eliminates double-writing. Syncs match via << >> patterns.
+            if ("outcome".equals(entry.getKey())) continue;
             sparql.append("    <").append(invocation.actionIri()).append("> :")
                   .append(entry.getKey()).append(" ")
                   .append(NodeFmtLib.str(entry.getValue().asNode(), (PrefixMap) null))

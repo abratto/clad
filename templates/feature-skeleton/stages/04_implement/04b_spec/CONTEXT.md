@@ -22,6 +22,7 @@ upstream (Stage 02), not here.
 | Path | Layer | Why |
 |---|---|---|
 | `../../02_concepts/output/` | 4 | Concept specs |
+| Skill: `clad-spec-extraction` | 3 | SPEC extraction reference (see skills/ directory) |
 | `../../../../../templates/spec.md` | 3 | Output template |
 
 ## Process
@@ -73,7 +74,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Auto-advances to Stage 04c. The `verify_spec_parity.py` script must
+Auto-advances (next human gate: Stage 04c). The `verify_spec_parity.py` script must
 pass before advancing.
 
 ## Next stage

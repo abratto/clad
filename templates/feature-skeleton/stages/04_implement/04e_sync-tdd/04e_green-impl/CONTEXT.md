@@ -29,6 +29,7 @@ not redesign approved tests.
 | `../04e_red-tests/output/` | 4 | Approved red sync tests and handoff bundle |
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for green evidence |
 | `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
+| Skill: `clad-sync-tdd` | 3 | Sync TDD reference (see skills/ directory) |
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
 | `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (only when this profile is selected) | 3 | Profile conventions |
@@ -80,16 +81,15 @@ not redesign approved tests.
 - Executed command evidence shows: test compilation succeeds, sync tests
   are green, and flow tests are green.
 
-### Gherkin track only (when `TEST_FRAMEWORK=CUCUMBER` in `../../../../_config/test-framework.md`)
+### Flow-test verification
 
 - All Gherkin scenarios in `../../04c_flow-tests/output/*.feature` are
   green via the Cucumber runner.
 - The Cucumber report (HTML or JSON) is captured alongside the executed
   build-and-test evidence and shows 0 failed scenarios.
 - The runtime token chain observed by each passing Gherkin scenario
-  matches the chain-table row sequence recorded in Step 6 of the
-  ../../04c_flow-tests Process. (This is equivalent to the "expected
-  authored action chain" check for the native track.)
+  matches the expected authored action chain recorded in
+  `../../04c_flow-tests/output/` for each scenario.
 - Behavior is traceable first to the approved upstream artefacts; any
    profile exemplar was used only as a realization pattern.
 - Every generated sync test/implementation pair corresponds to exactly

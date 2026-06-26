@@ -32,6 +32,7 @@ agreement. Do not create any UC folder during this stage.
 | Path | Layer | Why |
 |---|---|---|
 | (the human's brief) | — | Source of intent |
+| Skill: `clad-system-scoping` | 3 | System scoping reference (see skills/ directory) |
 | `../../../templates/actors.md` | 3 | Output template |
 | `../../../templates/goals.md` | 3 | Output template |
 | `../../../methodology/implementation/STAGES.md` | 3 | §"Scope: system-level vs per-UC" and §"Stage 00 — `00_actor-goal/`" — collaboration semantics |
@@ -65,6 +66,10 @@ before drafting.
   that to the human before the gate closes.
 
 ## Gate
+
+**Gate 0 (system-level).** Before asking for approval, list every output
+file produced (`actors.md`, `goals.md`) with a one-line summary. Then
+ask for human approval.
 
 Default human approval — but the gate is *expected* to take multiple
 turns to reach. The stage is complete when the human says the

@@ -1,18 +1,26 @@
-# RespondLoginSuccess — granted sessions return the 200 token response
+sync RespondLoginSuccess
 
 ## Sync Contract Matrix
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `4a` | `5` | `Session.grant[Granted(sessionId)]` | `Web.respond(status=200, body={ sessionToken: sessionId })` | `200` |
+| `4a` | `5` | `Session/grant: [...] => [ sessionId ]` | `Web/respond: [ status: 200 ; body: { sessionToken: ?sid } ]` | `200` |
 
 ## Rule
 
-```
-when:  Session.grant[Granted(sessionId)]
-where: B: sessionId = result_of(Session.grant).sessionId
-then:  Web.respond(status=200, body={ sessionToken: sessionId })
-```
+when {
+    Session/grant: [ userId: ?user ] => [ sessionId: ?sid ]
+}
+then {
+    Web/respond: [ status: 200 ; body: { sessionToken: ?sid } ]
+}
+
+## Where clause patterns (for Stage 03a audit)
+
+| Binding | Pattern | Source |
+|---|---|---|
+| `?sid` | B | Flow-sibling output — `Session/grant` completion |
+| `200` | C | Sync constant |
 
 ## Cites
 
@@ -20,4 +28,4 @@ then:  Web.respond(status=200, body={ sessionToken: sessionId })
 
 ## Notes
 
-- This is the UC-00 worked example's canonical Pattern B binding: the response body reuses the session id emitted by `Session.grant` in the same flow.
+- Pattern B binding: the response body reuses the session id emitted by `Session/grant` in the same flow.

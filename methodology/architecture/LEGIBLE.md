@@ -47,10 +47,10 @@ auditable. Legible/WYSIWID is that architecture:
    *state*, *actions*, and an *operational principle* (a one-paragraph
    story of how the concept is meant to be used).
 2. **Synchronizations.** See
-   [`SYNCHRONIZATIONS.md`](SYNCHRONIZATIONS.md). Declarative rules
-   that fire when a concept action completes; their body invokes
-   actions on other concepts. No business logic lives here, only
-   wiring.
+   [`SYNCHRONIZATIONS.md`](SYNCHRONIZATIONS.md). Declarative `when { }`
+   / `where { }` / `then { }` rules that fire when concept actions
+   complete; they invoke other concept actions. No business logic lives
+   here, only wiring.
 3. **Flow tokens.** See [`FLOW_TOKENS.md`](FLOW_TOKENS.md). Every
    action emits one; they are the breadcrumbs that make stage 5
    verification possible.

@@ -1,5 +1,12 @@
 # Stage 04a — Storage mapping (optional)
 
+## Pre-condition (agent must verify before starting)
+
+**Gate 2 (Stage 03b) must have been approved by the human.** Check
+`RESUME.md` in the feature root for a `## Gate snapshot` section with
+`Gate 2: Approved`. If it is missing, stop and tell the human that
+Stage 04a cannot begin until Gate 2 is approved.
+
 ## Why this stage exists
 
 For profiles with a persistent store, this is where each concept's
@@ -24,6 +31,7 @@ back to Stage 03b and repair the conceptual model first.
 |---|---|---|
 | `../../03b_data-model/output/` | 4 | Approved conceptual data models |
 | `../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings for this feature |
+| Skill: `clad-storage-mapping` | 3 | Storage mapping reference (see skills/ directory) |
 | `../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R2 |
 | `../../../../../methodology/implementation/STORAGE_MAPPING.md` | 3 | Profile mapping procedure |
 | `../../../../../templates/storage.md` | 3 | Default storage-mapping output shape |
@@ -96,7 +104,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Auto-advances to Stage 04c. The `verify_file_manifest.py` script
+Auto-advances (next human gate: Stage 04c). The `verify_file_manifest.py` script
 must pass before advancing.
 
 ## Next stage

@@ -10,8 +10,110 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
 
+### Agent Skills
+
+- **Agent Skills standard adoption**: Added 16 portable `SKILL.md` files under
+  `skills/` following the [agentskills.io](https://agentskills.io) open
+  standard. Each skill maps to a CLAD stage or cross-cutting concern
+  (system-scoping, usecase-authoring, chain-table, concept-design, sync-design,
+  dependency-review, data-modeling, storage-mapping, spec-extraction,
+  flow-testing, concept-tdd, sync-tdd, verification, handover, quality-gate).
+  Skills use progressive disclosure — metadata always loaded, instructions on
+  demand — and reference `methodology/` and `templates/` files by path.
+- **Stage CONTEXT.md Inputs tables** now list `Skill:` entries alongside raw
+  file paths. Skills-aware agents discover and load them automatically;
+  non-skilled agents fall back to raw paths.
+- **AGENTS.md §4b** documents the skill layer, progressive disclosure model,
+  and full skill-to-stage mapping.
+
+### Platform Integration
+
+- **Removed platform-specific rule files**: Deleted `.clinerules/` (4 Cline
+  phase rules), `.roorules-clad-*` (3 Roo mode files), `.roomodes` (Roo
+  config), `.cline-clad-config.example`, and `.roo-clad-config.example`.
+  These were created for Roo/Cline harnesses no longer in use and contained
+  outdated references (`.cline-clad-config`/`.roo-clad-config`). All unique
+  guidance migrated into `AGENTS.md`, `methodology/implementation/RULES.md`,
+  and `reference-impl/java-micronaut-jena/CODE_STYLE.md`.
+- **README.md** "Cline setup" section replaced with platform-agnostic "Agent
+  platform integration" section covering Skills and `clad.properties`.
+- **TDD.md** "Phase switching in Cline" section replaced with capability
+  profiles reference.
+- **STAGES.md** config precedence updated from `.cline-clad-config` /
+  `.roo-clad-config` to `clad.properties`.
+
 ### Methodology
 
+- **Gate summary rule**: Added operating principle 11 to `AGENTS.md §2`
+  requiring the agent to list every artefact file produced since the last
+  gate, grouped by stage, before presenting the approval question at each
+  human gate. Updated Gate sections in all four gate-stage CONTEXT.md files
+  (Stage 00, 02b, 03b, 04c) to mandate the summary before approval. The
+  human can identify review targets without inspecting the filesystem or
+  `git diff`.
+- **AGENTS.md §7 capability profiles** now include explicit fences: "No
+  implementation code or test files" for Requirements Analysis and Structural
+  Modelling groups; "Red phase: tests only. Green phase: implementation only"
+  for Implementation group.
+- **RULES.md §R9** extended with an outcome branching checklist (6
+  verification checks for implementation correctness).
+- **AGENTS.md §5** now documents the R1–R5 (WYSIWID architectural) and
+  R6–R9 (process/discipline) rule split, with a cross-link to `RULES.md`.
+- **`.cursor/rules/clad.mdc`** added R6–R9 pointer to match `AGENTS.md`.
+
+### UC-00-login refresh
+
+- **UC-00-login brought current with updated methodology**: Fixed stale
+  gate sections (auto-advance model) in 10 CONTEXT.md files. Added
+  `Skill:` entries to Inputs tables. Added missing `_config/build-and-test.md`
+  and `_config/package-and-layout.md`. Produced Stage 04d-red and 04e-red
+  output/ directories with derivation maps documenting SPEC coverage. Marked
+  04d-green and 04e-green as verified (all 32 reference-impl tests pass).
+  Produced complete Stage 05 outputs (trace.md with resume point, smoke.md
+  with runtime evidence, tracking.md).
+
+### Consistency fixes
+
+- **SYNCHRONIZATIONS.md**: Replaced `freshSessionId()` function call in
+  `where` clause example with a Pattern C constant, resolving contradiction
+  with `templates/sync.md`'s no-computation-in-where rule.
+- **DELIVERY.md**: Commit example changed from per-stage (11) to per-gate (3)
+  to match the commit rule in both `DELIVERY.md` and `AGENTS.md`.
+- **STAGES.md + 5 CONTEXT.md files**: "Auto-advances to Stage X" changed to
+  "Auto-advances (next human gate: Stage X)" — the `→` now correctly means
+  the gate destination, not the immediate next stage.
+- **STAGES.md**: "the human gates after each" corrected to "the agent gates
+  (auto or human) after each" for 04 sub-stages.
+- **Gate approval phrasing**: Standardized human-gate CONTEXT.md files (02b,
+  03b, 04c) to use the single phrase from `templates/stage-CONTEXT.md`.
+- **AGENTS.md §3 table**: Added footnote documenting the "Auto → X"
+  convention (X = next human gate, not immediate next stage).
+- **Terminology unification**: AGENTS.md R2 changed from "named graph"
+  (RDF-specific) to "named persistence region" (storage-agnostic) to match
+  `RULES.md`. Applied same fix to `.cursor/rules/clad.mdc`.
+- **FLOW_TOKENS.md**: Renamed "three hard rules" to "three constraints" to
+  avoid collision with canonical R1-R9.
+- **templates/concept.md**: Added missing `zero or more` multiplicity
+  annotation; updated flow token template to list all 7 required fields.
+- **templates/data-model.md**, **templates/storage.md**: Added methodology
+  file references to header comments.
+- **STAGES.md 04c outputs**: Aligned to describe Gherkin `.feature` files
+  as the sole output format (Native/markdown track removed).
+- **Hardcoded Java paths**: Replaced in two CONTEXT.md Verify sections with
+  `<APP_TEST_SOURCE_ROOT>` config references.
+
+### Native track cleanup
+
+- **STAGES.md**: Removed all dual-track (Gherkin/Native) language from Gate 3
+  table, 04c Process, Output, Gate, and summary table.
+- **04_implement/CONTEXT.md**, **03b_data-model/CONTEXT.md**: Removed "or
+  native flow-test specs" from gate descriptions.
+- **ARTEFACT_MAP.md**: Replaced `<scenario>-flow-test.md` artefact entries
+  with Gherkin `.feature` equivalents.
+- **WALKTHROUGH.md**, **UC-00-login/README.md**, **UC-00-login 04c
+  CONTEXT.md**, **reference-impl/README.md**, **CANONICAL_EXEMPLAR.md**:
+  Updated all references from native-track markdown specs to Gherkin
+  `.feature` files.
 - **Gate restructure**: Reduced per-feature human gates from 15 to 3
   (Requirements at 02b, Architecture at 03b, Executable spec at 04c).
   All other stages auto-advance with quality-gate scripts as the
@@ -29,13 +131,12 @@ file `methodology/` is the source of truth for what each version contains.
   config file at repo root for `test.framework`, `test.command`, and
   `storage.layer`. Per-feature overrides via `_config/<key>.md`.
   Documented resolution order in AGENTS.md and README.
-- **Gherkin/Cucumber BDD track (optional outer-red flow tests)**: Stage
+- **Gherkin/Cucumber BDD track**: Stage
   04c can now mechanically derive executable Gherkin `.feature` files and
   step-definition skeletons from upstream CLAD artefacts (usecase.md,
   chain tables, SPECs, sync specs), replacing hand-written markdown flow
   specs with executable specifications that go green at the end of 04e.
-  The track is profile-optional — set `TEST_FRAMEWORK=CUCUMBER` in
-  `_config/test-framework.md` to opt in. Includes a comprehensive
+  Includes a comprehensive
   reference at `methodology/architecture/GHERKIN_INTEGRATION.md` with
   structured derivation rules (G1–G5, S1–S3, E1), cross-stage
   consistency checks, and a worked example in the Java reference profile.

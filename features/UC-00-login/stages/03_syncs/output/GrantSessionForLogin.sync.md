@@ -1,18 +1,25 @@
-# GrantSessionForLogin — successful checks open a session
+sync GrantSessionForLogin
 
 ## Sync Contract Matrix
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `3b` | `4a` | `PasswordAuth.check[Ok]` | `Session.grant(userId)` | `<none>` |
+| `3b` | `4a` | `PasswordAuth/check: [...] => [ ok ]` | `Session/grant: [ userId: ?user ]` | `<none>` |
 
 ## Rule
 
-```
-when:  PasswordAuth.check[Ok]
-where: B: userId = result_of(PasswordAuth.check).userId
-then:  Session.grant(userId)
-```
+when {
+    PasswordAuth/check: [ userId: ?user ; password: ?p ] => [ ok ]
+}
+then {
+    Session/grant: [ userId: ?user ]
+}
+
+## Where clause patterns (for Stage 03a audit)
+
+| Binding | Pattern | Source |
+|---|---|---|
+| `?user` | B | Flow-sibling output — `PasswordAuth/check` completion |
 
 ## Cites
 
@@ -20,6 +27,4 @@ then:  Session.grant(userId)
 
 ## Notes
 
-- `userId` is rebound explicitly from the successful
-	`PasswordAuth.check` completion so the sync satisfies the
-	declare-before-use rule.
+- `userId` is rebound from the successful `PasswordAuth/check` completion.

@@ -1,0 +1,6 @@
+micronaut:
+  router:
+    static-resources:
+      public:
+        paths: classpath:public
+        mapping: /**

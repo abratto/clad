@@ -7,9 +7,13 @@ sync spec → dependency card → SPEC.
 Why this exists:
   An action name can change in one artefact (e.g. a refactor in the chain table)
   without being updated downstream (concept spec, sync, card, SPEC). This script
-  cross-references every Concept.action pair across all 6 artefact types and
+  cross-references every Concept/action pair across all 6 artefact types and
   reports any that appear in one but not another. The chain tables are the
   reference — every action they invoke must appear everywhere downstream.
+
+  The internal representation uses "/" as the separator (matching the paper's
+  URI hierarchy scheme). Sync files use paper syntax (Concept/action:). Chain
+  tables use dot notation (Concept.action) and are normalized on extraction.
 
 Usage:
   python3 verify_action_chain.py \
@@ -28,7 +32,7 @@ import sys
 
 
 def parse_resp_map_actions(path):
-    """Return set of Concept.action from the responsibility map's Owned actions column."""
+    """Return set of Concept/action from the responsibility map's Owned actions column."""
     actions = set()
     with open(path) as f:
         in_table = False
@@ -47,12 +51,16 @@ def parse_resp_map_actions(path):
                     concept = parts[1].strip("`")
                     owned_actions = parts[3]
                     for a in re.findall(r"`([^`]+)`", owned_actions):
-                        actions.add(f"{concept}.{a}")
+                        actions.add(f"{concept}/{a}")
     return actions
 
 
 def parse_chain_table_actions(chain_dir):
-    """Return set of Concept.action from chain-table Then columns (column 3)."""
+    """Return set of Concept/action from chain-table Then columns (column 3).
+    
+    Chain tables use dot notation (Concept.action). This function normalises
+    to slash notation (Concept/action) for internal cross-referencing.
+    """
     actions = set()
     if not os.path.isdir(chain_dir):
         return actions
@@ -71,12 +79,12 @@ def parse_chain_table_actions(chain_dir):
                 then_col = parts[3]
                 m = re.search(r"`([A-Za-z]+)\.([A-Za-z]+)", then_col)
                 if m:
-                    actions.add(f"{m.group(1)}.{m.group(2)}")
+                    actions.add(f"{m.group(1)}/{m.group(2)}")
     return actions
 
 
 def parse_concept_actions(concept_dir):
-    """Return set of Concept.action from concept spec files."""
+    """Return set of Concept/action from concept spec files."""
     actions = set()
     if not os.path.isdir(concept_dir):
         return actions
@@ -88,12 +96,21 @@ def parse_concept_actions(concept_dir):
             for line in f:
                 m = re.match(r"^([a-z]\w+)\s+\[", line.strip())
                 if m:
-                    actions.add(f"{concept}.{m.group(1)}")
+                    actions.add(f"{concept}/{m.group(1)}")
     return actions
 
 
 def parse_sync_actions(sync_dir):
-    """Return set of Concept.action from sync spec `then` clauses and sync Java files."""
+    """Return set of Concept/action from sync spec `then` clauses and sync Java files.
+    
+    Sync `.sync.md` files use paper block syntax:
+        then {
+            Concept/action: [ args ]
+        }
+    
+    Java `@SyncMetadata` files use "Concept/action" directly.
+    Both are normalised to Concept/action format.
+    """
     actions = set()
     if not os.path.isdir(sync_dir):
         return actions
@@ -102,26 +119,33 @@ def parse_sync_actions(sync_dir):
         filepath = os.path.join(sync_dir, fname)
 
         if fname.endswith(".sync.md"):
-            # Parse then clause: `then:  User.lookupByUsername(username)`
             with open(filepath) as f:
+                in_then = False
                 for line in f:
-                    m = re.search(r"^then:\s+([A-Za-z]+)\.([A-Za-z]+)", line.strip())
-                    if m:
-                        actions.add(f"{m.group(1)}.{m.group(2)}")
+                    line_s = line.strip()
+                    if line_s == "then {":
+                        in_then = True
+                        continue
+                    if in_then:
+                        if line_s == "}":
+                            in_then = False
+                            continue
+                        m = re.search(r"([A-Za-z]+)/([A-Za-z]+):", line)
+                        if m:
+                            actions.add(f"{m.group(1)}/{m.group(2)}")
 
         elif fname.endswith(".java"):
-            # Parse @SyncMetadata fires = "Concept/action"
             with open(filepath) as f:
                 for line in f:
                     m = re.search(r'fires\s*=\s*"([A-Za-z]+)/([A-Za-z]+)', line)
                     if m:
-                        actions.add(f"{m.group(1)}.{m.group(2)}")
+                        actions.add(f"{m.group(1)}/{m.group(2)}")
 
     return actions
 
 
 def parse_dep_card_actions(dep_dir):
-    """Return set of Concept.action from dependency review cards."""
+    """Return set of Concept/action from dependency review cards."""
     actions = set()
     if not os.path.isdir(dep_dir):
         return actions
@@ -134,12 +158,12 @@ def parse_dep_card_actions(dep_dir):
                 # Card rows: | `<action>` | `<Sync>` | ...
                 m = re.match(r"^\|\s*`(\w+)`\s*\|", line)
                 if m:
-                    actions.add(f"{concept}.{m.group(1)}")
+                    actions.add(f"{concept}/{m.group(1)}")
     return actions
 
 
 def parse_spec_actions(spec_dir):
-    """Return set of Concept.action from SPEC files."""
+    """Return set of Concept/action from SPEC files."""
     actions = set()
     if not os.path.isdir(spec_dir):
         return actions
@@ -151,7 +175,7 @@ def parse_spec_actions(spec_dir):
             for line in f:
                 m = re.match(r"^###\s+`(\w+)\(", line.strip())
                 if m:
-                    actions.add(f"{concept}.{m.group(1)}")
+                    actions.add(f"{concept}/{m.group(1)}")
     return actions
 
 
@@ -183,7 +207,7 @@ def main():
 
     # Filter out Web actions for all sources (Web is bootstrap)
     for name in sources:
-        sources[name] = {a for a in sources[name] if not a.startswith("Web.")}
+        sources[name] = {a for a in sources[name] if not a.startswith("Web/")}
 
     if not any(sources.values()):
         print("FAIL  no actions parsed from any source")

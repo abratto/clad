@@ -44,8 +44,7 @@ specs (Stage 02) and do **not** describe choreography (Stage 02b).
 
 ## Gate
 
-Default human approval. **Do you agree with this step? Any
-corrections before I continue?**
+Auto-advances (next human gate: Stage 02b).
 
 ## Next stage
 

@@ -29,6 +29,7 @@ no sync implementation belongs here.
 | `../../04d_concept-tdd/04d_red-tests/output/` | 4 | Approved concept-level test derivation |
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for red evidence |
 | `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
+| Skill: `clad-sync-tdd` | 3 | Sync TDD reference (see skills/ directory) |
 | `../../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
@@ -65,10 +66,16 @@ Run the following before requesting the human gate:
 ```
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "sync-test-derivation.md"
+python3 ../../../../quality-gate/verify_test_naming.py \
+  --test-source-root <APP_TEST_SOURCE_ROOT> \
+  --scope syncs
 ```
 
 - **verify_file_manifest.py:** `output/` contains exactly
   `sync-test-derivation.md`.
+- **verify_test_naming.py:** every sync test class follows London School
+  naming conventions (class: `<SyncName>Test`, method prefix: `should`,
+  `@Nested` groups present, `// GIVEN/WHEN/THEN` comments).
 
 ### Semantic checks (human)
 
@@ -87,7 +94,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   package/class/method names, the red evidence command, expected red
   outcome, and the next implementation target.
 
-### Gherkin track only (when `TEST_FRAMEWORK=CUCUMBER` in `../../../../_config/test-framework.md`)
+### Flow-test coverage
 
 - Every Gherkin `Scenario` in `../../04c_flow-tests/output/*.feature` is
   covered by at least one sync test row in the derivation map.

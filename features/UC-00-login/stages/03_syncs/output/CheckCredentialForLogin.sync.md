@@ -1,18 +1,26 @@
-# CheckCredentialForLogin — found users proceed to credential verification
+sync CheckCredentialForLogin
 
 ## Sync Contract Matrix
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `2` | `3b` | `User.lookupByUsername[Found(userId)]` | `PasswordAuth.check(userId, password)` | `<none>` |
+| `2` | `3b` | `User/lookupByUsername: [...] => [ userId ]` | `PasswordAuth/check: [ userId: ?user ; password: ?pass ]` | `<none>` |
 
 ## Rule
 
-```
-when:  User.lookupByUsername[Found(userId)]
-where: A: password = body.password
-then:  PasswordAuth.check(userId, password)
-```
+when {
+    User/lookupByUsername: [ username: ?u ] => [ userId: ?user ]
+}
+then {
+    PasswordAuth/check: [ userId: ?user ; password: ?p ]
+}
+
+## Where clause patterns (for Stage 03a audit)
+
+| Binding | Pattern | Source |
+|---|---|---|
+| `?user` | B | Flow-sibling output — `User/lookupByUsername` completion |
+| `?p` | A | Trigger token — `Web/handle` input (shared flow) |
 
 ## Cites
 
@@ -20,4 +28,4 @@ then:  PasswordAuth.check(userId, password)
 
 ## Notes
 
-- `userId` is carried by the `User.lookupByUsername` completion; only the raw password is rebound from the original request.
+- `userId` is carried by the `User/lookupByUsername` completion; the raw password is rebound from the original request via shared flow token.

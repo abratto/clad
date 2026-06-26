@@ -1,6 +1,6 @@
 <!-- Template for Stage 03 (03_syncs). Purpose: see methodology/architecture/SYNCHRONIZATIONS.md. -->
 
-# <SyncName> — <one-line purpose>
+sync <SyncName>
 
 > Sync template. Declarative only — no branching, no state, no I/O.
 
@@ -8,7 +8,7 @@
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `<#>` | `<#>` | `<explicit When token from 02b row>` | `<explicit Then token from 02b row + args>` | `<none \/ 200 / on-loan / ...>` |
+| `<#>` | `<#>` | `<Concept>/<action>: [...] => [ <outcome> ]` | `<Concept>/<action>: [ <arg>: <value> ; ... ]` | `<none \/ 200 / "message" / ...>` |
 
 <!-- ⚠️ SYNC AUTHORING RULES — READ BEFORE WRITING THE RULE BLOCK
 
@@ -16,112 +16,84 @@ ONE SYNC PER CHAIN-TABLE ROW
   Each row transition in the approved chain table becomes exactly one sync
   file. Do not collapse multiple transitions into one sync. Count the rows
   in 02b_chain-table/output/ for this scenario; you must produce that many
-  syncs (minus the Web.handle row, which is the entry point, not a sync
-  trigger — unless Web.handle itself is the `when`).
+  syncs (minus the Web/handle row, which is the entry point, not a sync
+  trigger — unless Web/handle itself is the `when`).
 
-WHERE CLAUSE — DATA ROUTING ONLY
-  The `where` clause declares how data flows from the `when` outcome to
-  the `then` call. It is a field-path binding list, not a computation engine.
-
-  ALLOWED:
-    email    = when.email          (read a field declared by the trigger token)
-    userId   = result_of(#2).id    (read a field from an earlier outcome)
-    status   = "active"            (sync constant — Pattern C)
-
-  NOT ALLOWED:
-    passwordHash = hash(body.password)   (computation — belongs in the concept)
-    token        = jwt.sign(payload)     (I/O — belongs in the concept)
-    count        = items.length + 1      (arithmetic — belongs in the concept)
-    summary      = toJson(result.items)  (reshaping — belongs in the concept)
-
-ASSEMBLY AND EXTRACTION LOCK
-  `where` may not assemble JSON, extract ad hoc nested projections, or
-  reshape payloads. If the downstream action needs a different shape,
-  that shape must be emitted by the upstream concept action explicitly.
-
-  Pattern A binds only from names already declared by the approved
-  `when` token. It may not reach into raw HTTP/body/request structure.
-
-  NOT ALLOWED:
-    where: A: email = body.email
-    where: A: identifier = request.body.identifier
-
-  REQUIRED:
-    Stage 02b names the carried fields explicitly, e.g.
-    `Web.handle[Routed(email, identifier)]`
-    where: A: email = when.email
-           A: identifier = when.identifier
-
-  NOT ALLOWED:
-    where: B: productScores = result_of(TasteMatch.compute).scores[*].calibratedScore
-    where: B: body = {sessionToken: result_of(Session.grant).sessionId}
+WHERE CLAUSE — DECLARATIVE QUERIES ONLY
+  The `where` clause uses paper-style declarative syntax. It is a query
+  language, not a computation engine.
 
   ALLOWED:
-    where: B: sessionId = result_of(Session.grant).sessionId
-    then:  Web.respond(status=200, body={sessionToken: sessionId})
-
-  If you find yourself writing a function call in `where`, stop. The
-  computation belongs inside the concept action that receives the data.
-  Pass the raw field through and let the concept hash/sign/transform it.
-
-LABEL EVERY WHERE PATTERN
-  Every `where` line must be prefixed with its pattern label:
-    A: — trigger-token join (field declared by the approved `when` token)
-    B: — flow-sibling join (field from an earlier action's output)
-    C: — sync constant (literal value)
-    D: — concept-state join (named region of another concept's state)
-
-DECLARE BEFORE USE
-  Every variable referenced in the `then` line must either come directly
-  from the `when` outcome's flow token, or be declared explicitly in a
-  `where` line. You may not reference a name in `then` that does not
-  appear in `when` or `where`.
+    bind ( uuid() as ?newId )                         (identifier minting)
+    User: { ?user email: ?email }                      (concept-state read — Pattern D)
+    OPTIONAL { Tag: { ?article tag: ?tag } }           (conditional read)
+    BIND ( ?article AS ?_eachthen )                    (aggregation grouping)
 
   NOT ALLOWED:
-    then: Web.respond(status=422, body={errors: validationErrors})
-    — if validationErrors is not declared in `where`, this is invalid.
+    if ?role = "admin"                                 (business branching)
+    passwordHash = hash(body.password)                  (computation — belongs in concept)
+    token        = jwt.sign(payload)                    (I/O — belongs in concept)
+    summary      = toJson(result.items)                 (reshaping — belongs in concept)
 
-  ALLOWED:
-    where: B: validationErrors = result_of(Account.validate).errors
-    then:  Web.respond(status=422, body={errors: validationErrors})
-
-UPSTREAM CONTRACT CHECK
-  If a needed Pattern A name does not appear in the approved Stage 02b
-  trigger token, stop and reopen Stage 02b. Stage 03 must not invent a
-  source by reading `body.*`, `request.*`, or another undeclared payload
-  path.
+  Computation, I/O, and business decisions belong in concept action
+  outcomes. If you find yourself writing a function call in `where`, stop.
+  The computation belongs inside the concept action that receives the data.
 
 LITERAL LOCK
   Copy literals and signature tokens exactly from the approved Stage 02b
   row and Stage 02 concept signature.
 
   REQUIRED:
-    Web.respond(status=409, body={reason: "on-loan"})
+    Web/respond: [ status: 409 ; body: { reason: "on-loan" } ]
 
   NOT ALLOWED:
-    Web.respond(status="409", body={reason: "OnLoan"})
+    Web/respond: [ status: "409" ; body: { reason: "OnLoan" } ]
 
 NO INVENTED PAYLOAD FIELDS
   Response bodies and downstream calls may use only:
   - constants explicitly present in the target chain row
   - fields explicitly emitted by an earlier approved action outcome and
     declared in `where`
+  - bindings from the `when` clause's ?variables
 
-  NOT ALLOWED:
-    then: Web.respond(status=409, body={message: reason, count: total})
-    — if `message`, `reason`, or `total` were not present in the approved
-      chain row / action outcomes.
+DECLARE BEFORE USE
+  Every variable referenced in the `then` clause must either come directly
+  from the `when` outcome's flow token or be declared explicitly in a
+  `where` line. You may not reference a name in `then` that does not
+  appear in `when` or `where`.
+
+UPSTREAM CONTRACT CHECK
+  If a needed name does not appear in the approved Stage 02b trigger token
+  or concept outcome, stop and reopen Stage 02b. Stage 03 must not invent
+  a source by reading `body.*`, `request.*`, or another undeclared payload
+  path.
 -->
 
 ## Rule
 
 ```
-when:  <explicit When token from approved 02b row>
-where: A: <local> = when.<field declared by the approved trigger token>
-       B: <local> = result_of(<Concept>.<action>).<field>
-  C: <local> = <exact literal from approved contract>
-then:  <Concept>.<action>(<args>)
+when {
+    <Concept>/<action>: [ <param>: ?<var> ; ... ] => [ <output>: ?<var> ]
+}
+where {
+    bind ( <expr> as ?<var> )
+    <Concept>: { ?<id> <field>: ?<var> ; ... }
+    OPTIONAL { <Concept>: { ?<id> <field>: ?<var> } }
+    BIND ( ?<var> AS ?_eachthen )
+}
+then {
+    <Concept>/<action>: [ <param>: ?<var> ; ... ]
+}
 ```
+
+## Where clause patterns (for Stage 03a audit)
+
+| Binding | Pattern | Source |
+|---|---|---|
+| `?<var>` | A | Trigger token (`when` clause) |
+| `?<var>` | B | Flow-sibling output |
+| `<literal>` | C | Sync constant |
+| `<Concept>: { ... }` | D | Concept-state read |
 
 ## Cites
 

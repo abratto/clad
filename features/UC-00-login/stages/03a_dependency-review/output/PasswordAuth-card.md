@@ -4,10 +4,9 @@
 
 | Action | Flow (sync) | Data received | Pattern | Source |
 |---|---|---|---|---|
-| `check` | `CheckCredentialForLogin` (`successful-login`, `wrong-password`, `lockout`) | `userId`, `password` | A | `password` from `body.password`; `userId` carried directly by `when: User.lookupByUsername[Found(userId)]` |
+| `check` | `CheckCredentialForLogin` (`successful-login`, `wrong-password`, `lockout`) | `userId`, `password` | A + B | `?p` from `Web/handle` trigger (A); `?user` from `User/lookupByUsername` completion (B) |
 
-> `PasswordAuth.check` is now a normal sync target under
-> `CheckCredentialForLogin`; the lockout branch is expressed by the
+> `PasswordAuth/check`'s lockout branch is expressed by the
 > `Locked` outcome plus `RespondLocked`, not by a separate `lock`
 > action.
 
@@ -18,7 +17,7 @@ None — no other concept's sync reads `PasswordAuth`'s named region.
 ## Inconsistencies and risks
 
 - None at this time. `PasswordAuth` owns the failed-attempt and lockout
-  state internally, and Stage 03 now branches only on the approved
+  state internally, and Stage 03 branches only on the approved
   `Ok` / `BadPassword` / `Locked` outcomes.
 
 ## Cross-checks

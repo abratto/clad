@@ -12,8 +12,8 @@ covered.
 
 **Feeds:**
 
-- `<scenario>-flow-test.md` → 04e (when the last sync's tests go green, these tests must too); 05 (the runtime token chain captured by these tests is the back-trace evidence).
-- the stub test files in `reference-impl/<profile>/.../flows/` → the outer loop of TDD itself.
+- `login.feature` → 04e (when the last sync's tests go green, this too); 05 (scenario names cross-reference in trace).
+- `LoginStepDefinitions.java` → the outer loop of TDD itself.
 
 **Agent stance for this stage:** these tests must read like the use
 case. If they read like a unit test, you are testing the wrong layer.
@@ -26,29 +26,30 @@ case. If they read like a unit test, you are testing the wrong layer.
 | `../../03_syncs/output/` | 4 | Expected coordination |
 | `../04b_spec/output/` | 4 | Action signatures |
 | `../../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics |
+| `../../../../../methodology/architecture/GHERKIN_INTEGRATION.md` | 3 | Gherkin derivation rules |
 
 ## Process
 
-For each named scenario in the use case, write a flow-test markdown
-spec (HTTP request → expected sequence of flow tokens → expected
-authored action chain → expected response) and a stub Java test under
-`reference-impl/java-micronaut-jena/src/test/java/com/example/app/flows/`
-starting `@Disabled`. The tests go green at the end of `04e`.
+For the login use case, produce a Gherkin `.feature` file with one
+`Scenario` per use-case scenario (`successful-login`, `wrong-password`,
+`unknown-user`, `lockout`). Derive a `LoginStepDefinitions.java` skeleton
+from the chain-table rows, annotated `@Disabled`. Flow tests stay red
+until the end of `04e`.
+
+> A historical native-track markdown spec (`login-flow-test.md`) is
+> preserved in `output/` for reference — see `output/_NOTE.md`.
 
 ## Outputs
 
-- `output/login-flow-test.md` — covers `successful-login`, `wrong-password`, `unknown-user`, `lockout`
-- (Side effect:) `LoginFlowTest.java` (`@Disabled`) under the Java profile
+- `output/login.feature` — Gherkin feature file with all 4 scenarios
+- (Side effect:) `LoginStepDefinitions.java` skeleton + `CucumberTest.java` runner
 
 ## Verify
 
-- Each scenario has an entry in the markdown spec.
-- Each scenario names an explicit expected authored action chain.
-- The stub Java test is `@Disabled` and links back to the markdown.
-- **Cross-stage check (back):** the predicted token chain matches the syncs in `03_syncs/output/` (no surprise tokens).
-- **Cross-stage check (forward):** the expected authored action chain is
-	concrete enough that `04e` can prove the scenario went green through
-	authorised concept actions and syncs, not by response-only shortcuts.
+- Each use-case scenario has a Gherkin `Scenario` in `login.feature`.
+- Step-definition methods map 1:1 to chain-table rows.
+- Compiled flow tests are `@Disabled` (or red) — not green.
+- **Cross-stage check (back):** the predicted token chain matches the syncs in `03_syncs/output/`.
 
 ## Gate
 
@@ -56,6 +57,6 @@ Default. After this gate the outer loop is red.
 
 ## Next stage
 
-→ [`../04d_concept-tdd/CONTEXT.md`](../04d_concept-tdd/CONTEXT.md) — Inner red→green per concept
+→ [`../04d_concept-tdd/CONTEXT.md`](../04d_concept-tdd/CONTEXT.md)
 
 To advance, the human says: **"Proceed to Stage 04d."**

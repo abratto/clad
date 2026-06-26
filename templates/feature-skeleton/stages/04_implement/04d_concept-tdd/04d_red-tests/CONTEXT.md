@@ -28,6 +28,7 @@ here.
 | `../../04c_flow-tests/output/` | 4 | Drives test derivation |
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for red evidence |
 | `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
+| Skill: `clad-concept-tdd` | 3 | Concept TDD reference (see skills/ directory) |
 | `../../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School derivation rules |
@@ -55,7 +56,7 @@ here.
 ## Outputs
 
 - `output/concept-test-derivation.md` — derivation map plus handoff bundle
-- (Side effect:) `<Name>ConceptTest.java` (or profile equivalent) per concept
+- (Side effect:) `<Concept><Action>Test.java` (or profile equivalent) per concept action
 
 ## Verify
 
@@ -69,7 +70,10 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 python3 ../../../../quality-gate/verify_concept_test_derivation.py \
   --spec-dir ../../04b_spec/output \
   --derivation output/concept-test-derivation.md \
-  --test-source-root ../../../../../../app/backend/src/test/java
+  --test-source-root <APP_TEST_SOURCE_ROOT>
+python3 ../../../../quality-gate/verify_test_naming.py \
+  --test-source-root <APP_TEST_SOURCE_ROOT> \
+  --scope concepts
 ```
 
 - **verify_file_manifest.py:** `output/` contains exactly
@@ -77,6 +81,9 @@ python3 ../../../../quality-gate/verify_concept_test_derivation.py \
 - **verify_concept_test_derivation.py:** every SPEC outcome has a matching
   test row in the derivation map; every named test method exists in the
   Java source; outcome names match verbatim.
+- **verify_test_naming.py:** every concept test class follows London School
+  naming conventions (class: `<Concept><Action>Test`, method prefix: `should`,
+  `@Nested` groups present, `// GIVEN/WHEN/THEN` comments).
 
 ### Semantic checks (human)
 

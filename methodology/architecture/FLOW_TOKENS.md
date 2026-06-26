@@ -47,7 +47,7 @@ table, no more.
 
 ## Payload rules
 
-The `payload` field is subject to three hard rules:
+The `payload` field is subject to three constraints:
 
 1. **No secrets.** Passwords, tokens, private keys, and any other
    credential MUST NOT appear in any flow token payload. Ever. Flow
@@ -105,6 +105,15 @@ extracts the named scenarios, and for each scenario:
 A failure at step 4 is a *legibility violation*: the running system did
 something its specs did not say it would. Either the specs are
 incomplete (amend them) or the implementation drifted (fix it).
+
+## Relationship to the Meng & Jackson paper
+
+The paper mentions flow tokens abstractly in its architectural sections
+(6.3 Scoping via Flows, 6.6 Provenance and Firing Consistency) as the
+mechanism for associating action records with a causal chain. CLAD
+extends this concept with a concrete 7-field structure (`id`, `parent`,
+`action`, `actor`, `at`, `outcome`, `payload`) and the SCREAMING_SNAKE_CASE
+outcome-casing rule — details the paper does not constrain.
 
 ## Cost
 

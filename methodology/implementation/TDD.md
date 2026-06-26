@@ -165,31 +165,38 @@ London School forces the question "does this scenario pass?" before any
 implementation is written, which is exactly what CLAD's legibility property
 requires.
 
-## Phase switching in Cline
+## Test naming
 
-The red→green boundary now maps to Cline rule toggles rather than Roo
-custom modes:
+CLAD uses London School BDD naming conventions for concept and sync
+unit tests (Stages 04d and 04e). Flow tests (Stage 04c) use Gherkin
+`.feature` files with scenario-level naming.
 
-| What just happened | Rule to enable |
-|---|---|
-| Starting 04c, 04d (tests), or 04e (tests) | `20-clad-red.md` |
-| Human has **explicitly approved** the red tests | Disable red, enable `30-clad-green.md` |
-| Human has **explicitly approved** the green implementation | Disable green, re-enable `20-clad-red.md` for the next red stage |
+See [`../../templates/test-intent-derivation-map.md`](../../templates/test-intent-derivation-map.md)
+for the full conventions:
+
+- **Class name:** `<Concept><Action>Test` or `<SyncName>Test`
+- **`@Nested` classes:** `When<Precondition>` / `When<Trigger>` group outcomes
+- **Method name:** `should<Behavior>When<Condition>` or `should<Trigger><Then>`
+- **Comment blocks:** `// GIVEN` / `// WHEN` / `// THEN` (Given-When-Then)
+- **Assertions:** verify interactions (outcome type, scheduled actions), not
+  internal state
+- **Ubiquitous language:** use terms from concept specs and use cases
+
+## Capability profiles
+
+CLAD defines three capability profiles that apply during Stage 04
+(see `AGENTS.md §7`):
+
+| Profile | Stages | Fence |
+|---|---|---|
+| Red (test derivation) | 04c, 04d-red, 04e-red | Tests and derivation maps only — no implementation code |
+| Green (implementation) | 04d-green, 04e-green | Implementation only — do not rewrite approved tests |
 
 This boundary is also the recommended model-switch point in multi-model
 workflows: use a design/derivation-capable model in red, and an
 implementation-capable model in green.
 
-Keep exactly one CLAD phase rule enabled at a time.
-
-**Do not switch phases without explicit human approval.** Approval is a
-statement like "approved — proceed to implementation" or "approved — proceed
-to 04e". Silence, a question, or "looks good" is not approval.
-
-Unlike Roo, Cline rules do not enforce tool-level file write fences.
-Treat the red/green boundary as a hard instruction boundary and stop at
-the gate if the current phase no longer matches the requested work.
-
-Do not use the lack of tool-enforced write fences as permission to merge
-sub-stages or skip executable artefacts. The stage contracts still
-govern what must be written, run, and gated.
+**Do not switch from red to green without explicit human approval.**
+Approval is a statement like "approved — proceed to implementation" or
+"approved — proceed to 04e". Silence, a question, or "looks good" is
+not approval.

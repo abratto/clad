@@ -19,6 +19,9 @@ performing any action.
   under `stages/`. Each stage has a `CONTEXT.md` (Inputs / Process /
   Outputs) and an `output/` folder.
 - Load only the files named in the current stage's `Inputs` table.
+  Prefer any `Skill:` entry first — it names a portable skill under
+  `skills/` whose SKILL.md body lists the `methodology/` and
+  `templates/` files to load next.
 - Write outputs only into the current stage's `output/` folder.
 - Stop at the review gate after each stage. Do not anticipate the next
   stage in the current stage's output.
@@ -26,10 +29,14 @@ performing any action.
 ## Hard rules (do not relax)
 
 1. No concept imports another concept.
-2. One named graph per concept (when persistence applies).
+2. One named persistence region per concept (when persistence applies).
 3. Syncs are declarative (`when … then …`), not imperative branching.
 4. `Web` (or equivalent HTTP entry) is the sole bootstrap concept.
 5. Every action emits a flow token.
+
+R1–R5 are the WYSIWID architectural rules. Four additional process rules
+(R6–R9) are defined in `methodology/implementation/RULES.md` and are
+equally binding.
 
 If a request would require violating any of these, stop and ask.
 

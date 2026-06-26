@@ -54,8 +54,8 @@ Run the child stages strictly in order, gating after each:
 
 ## Gate
 
-Default human approval. The gate fires only after `04d_green-impl/` is
-green.
+Auto-advances (next human gate: Stage 04c already passed). The gate fires
+only after `04d_green-impl/` is green.
 
 ## Next stage
 

@@ -42,6 +42,12 @@ Treat the approved Stage 03 sync files as token-locked input. Copy
 action names, argument names, field names, pattern labels, keys, status
 codes, and literals exactly. This stage is an audit, not a repair step.
 
+Pattern D detection scans each sync's "Where clause patterns" table
+(see [`../../../../templates/sync.md`](../../../../templates/sync.md))
+for rows with pattern label D (`Concept: { ... }`). These rows
+represent cross-concept state reads and must be flagged in the card's
+Section 2. Patterns A, B, and C do not cross concept boundaries.
+
 If a card or summary would need to rename, re-case, re-type, or otherwise
 normalize a token from Stage 03, stop and reopen Stage 03 instead. If
 the approved Stage 03 syncs disagree with Stage 02b or Stage 02, reopen
@@ -69,7 +75,7 @@ that earlier stage rather than fixing the mismatch inside 03a.
 
 ## Gate
 
-Default human approval.
+Auto-advances (next human gate: Stage 03b).
 
 **Do you agree with this step? Any corrections before I continue?**
 

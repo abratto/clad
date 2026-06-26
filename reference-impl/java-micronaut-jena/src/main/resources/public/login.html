@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLAD Login — Ports &amp; Adapters</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 420px; margin: 4rem auto; padding: 0 1rem; }
+        h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        p.desc { color: #6b7280; font-size: 0.875rem; margin-bottom: 1.5rem; line-height: 1.4; }
+
+        .toggle { display: flex; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; margin-bottom: 1.5rem; }
+        .toggle label { display: flex; align-items: center; justify-content: center; flex: 1; padding: 0.5rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: #6b7280; background: #f9fafb; border-right: 1px solid #d1d5db; user-select: none; transition: background 0.15s; }
+        .toggle label:last-child { border-right: none; }
+        .toggle input { display: none; }
+        .toggle input:checked + span { background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; flex: 1; padding: 0.5rem 0; font-size: 0.85rem; font-weight: 600; }
+
+        .field { margin-top: 1rem; }
+        .field label.fld { display: block; margin-bottom: 0.25rem; font-weight: 600; font-size: 0.875rem; }
+        .field input { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .field small { color: #6b7280; display: block; margin-top: 0.25rem; font-size: 0.8rem; }
+        button { margin-top: 1.5rem; width: 100%; padding: 0.75rem; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: 600; }
+        button:hover { background: #1d4ed8; }
+
+        #result { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; display: none; font-size: 0.875rem; line-height: 1.5; }
+        .success { background: #dcfce7; color: #166534; }
+        .error { background: #fef2f2; color: #991b1b; }
+    </style>
+</head>
+<body>
+    <h1>CLAD Login</h1>
+    <p class="desc">Same engine, same flow tokens — choose your transport surface.</p>
+
+    <div class="toggle">
+        <label>
+            <input type="radio" name="surface" value="rest" checked>
+            <span>REST</span>
+        </label>
+        <label>
+            <input type="radio" name="surface" value="graphql">
+            <span>GraphQL</span>
+        </label>
+    </div>
+
+    <form id="loginForm">
+        <div class="field">
+            <label class="fld" for="username">Username</label>
+            <input id="username" type="text" placeholder="ada" required>
+            <small>Pre-seeded test user: <code>ada</code></small>
+        </div>
+
+        <div class="field">
+            <label class="fld" for="password">Password</label>
+            <input id="password" type="password" placeholder="correct-horse-battery-staple" required>
+            <small>Pre-seeded test password: <code>correct-horse-battery-staple</code></small>
+        </div>
+
+        <button type="submit">Login</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        document.querySelectorAll('.toggle input').forEach(radio => {
+            radio.addEventListener('change', () => {
+                document.querySelectorAll('.toggle span.sel').forEach(s => s.classList.remove('sel'));
+                radio.nextElementSibling.classList.add('sel');
+            });
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const surface = document.querySelector('input[name="surface"]:checked').value;
+            const result = document.getElementById('result');
+
+            try {
+                let url, body, method = 'POST';
+                const headers = { 'Content-Type': 'application/json' };
+
+                if (surface === 'rest') {
+                    url = '/api/login';
+                    body = JSON.stringify({ username, password });
+                } else {
+                    url = '/graphql';
+                    body = JSON.stringify({
+                        query: `mutation { login(loginRequestInput: { username: "${username}", password: "${password}" }) { sessionToken } }`
+                    });
+                }
+
+                const resp = await fetch(url, { method, headers, body });
+                const data = await resp.json();
+
+                const surfaceLabel = surface === 'rest' ? 'REST' : 'GraphQL';
+                let sessionToken, errorMsg;
+                if (surface === 'rest') {
+                    sessionToken = data.sessionToken;
+                    errorMsg = data.message;
+                } else {
+                    const loginData = data.data && data.data.login ? data.data.login : {};
+                    sessionToken = loginData.sessionToken;
+                    let raw = loginData.error
+                        || (data.errors ? data.errors.map(e => e.message).join(', ') : null);
+                    if (raw && raw.startsWith('Exception while fetching data')) {
+                        raw = raw.replace(/^Exception while fetching data \(.*?\) : /, '');
+                    }
+                    errorMsg = raw;
+                }
+
+                result.style.display = 'block';
+                if (resp.ok && sessionToken) {
+                    result.className = 'success';
+                    result.innerHTML = `<strong>Login succeeded</strong> <small>(via ${surfaceLabel})</small><br>Session token: <code>${sessionToken}</code><br>Flow token: <code>${resp.headers.get('X-Flow-Token') || 'N/A'}</code>`;
+                } else {
+                    result.className = 'error';
+                    result.innerHTML = `<strong>Login failed</strong> <small>(via ${surfaceLabel})</small><br>${errorMsg || 'Unknown error'}`;
+                }
+            } catch (err) {
+                result.style.display = 'block';
+                result.className = 'error';
+                result.innerHTML = `<strong>Error</strong><br>${err.message}`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -43,9 +43,8 @@ public final class LoginGrantsSession extends SyncAgent {
         return """
             ?_when_1 :concept <%s> ;
                      :name    "check" ;
-                     :outcome "OK" ;
-                     :userId  ?_userId ;
-                     :flow    ?_flow .
+                     :userId  ?_userId .
+            << ?_when_1 :outcome "OK" >> :flow ?_flow .
             """.formatted(PasswordAuthConcept.IRI);
     }
 

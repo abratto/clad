@@ -21,6 +21,7 @@ signatures or coordination here. Names and one-line state only.
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Scenarios to cover |
 | `../00_actor-goal/output/actors.md` | 4 | For cross-stage check |
+| Skill: `clad-responsibility-mapping` | 3 | Responsibility map reference (see skills/ directory) |
 | `../../../../methodology/architecture/CONCEPTS.md` | 3 | What counts as a concept |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rule R1 |
 | `../../../../templates/responsibility-map.md` | 3 | Output template |
@@ -95,7 +96,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Auto-advances to Stage 02b. Same self-audit rule. The
+Auto-advances (next human gate: Stage 02b). Same self-audit rule. The
 `verify_file_manifest.py` script must pass before advancing.
 
 ## Next stage
