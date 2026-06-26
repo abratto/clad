@@ -66,10 +66,16 @@ Run the following before requesting the human gate:
 ```
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "sync-test-derivation.md"
+python3 ../../../../quality-gate/verify_test_naming.py \
+  --test-source-root <APP_TEST_SOURCE_ROOT> \
+  --scope syncs
 ```
 
 - **verify_file_manifest.py:** `output/` contains exactly
   `sync-test-derivation.md`.
+- **verify_test_naming.py:** every sync test class follows London School
+  naming conventions (class: `<SyncName>Test`, method prefix: `should`,
+  `@Nested` groups present, `// GIVEN/WHEN/THEN` comments).
 
 ### Semantic checks (human)
 
