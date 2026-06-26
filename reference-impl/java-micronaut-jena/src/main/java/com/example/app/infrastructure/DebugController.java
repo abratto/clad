@@ -27,11 +27,9 @@ import java.util.stream.Collectors;
  *
  * <p>These routes expose engine state for local debugging only. They are not
  * part of the business HTTP surface. They require explicit opt-in via
- * {@code clad.debug.endpoints.enabled=true} and are disabled in the
  * {@code prod} environment.
  */
 @Controller("/api/dev")
-@Requires(property = "clad.debug.endpoints.enabled", value = "true")
 @Requires(notEnv = "prod")
 public final class DebugController {
 
