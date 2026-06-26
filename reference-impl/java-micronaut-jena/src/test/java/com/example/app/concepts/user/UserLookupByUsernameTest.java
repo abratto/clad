@@ -19,20 +19,27 @@ import static org.junit.jupiter.api.Assertions.*;
 @DisplayName("UserLookupByUsername")
 class UserLookupByUsernameTest extends ConceptTestBase {
 
-    private static final String ACTION_IRI = RdfVocabulary.ACTION_NODE_PREFIX + "lookup-test-1";
-
     private UserConcept concept;
+    private int actionCounter = 0;
+    private String lastActionIri;
+
+    private String freshActionIri() {
+        actionCounter++;
+        lastActionIri = RdfVocabulary.ACTION_NODE_PREFIX + "lookup-test-" + actionCounter;
+        return lastActionIri;
+    }
 
     private void initConcept() {
         concept = new UserConcept(log, bus);
     }
 
     private void writePendingInvocation(String username) {
+        String actionIri = freshActionIri();
         log.update(
             "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n" +
             "INSERT DATA {\n" +
             "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
-            "    <" + ACTION_IRI + "> :concept <" + UserConcept.IRI + "> ;\n" +
+            "    <" + actionIri + "> :concept <" + UserConcept.IRI + "> ;\n" +
             "                     :name    \"lookupByUsername\" ;\n" +
             "                     :input   _:inp ;\n" +
             "                     :flow    <" + flow.mintFlowToken() + "> .\n" +
@@ -46,7 +53,7 @@ class UserLookupByUsernameTest extends ConceptTestBase {
             "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n" +
             "SELECT ?_outcome WHERE {\n" +
             "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
-            "    << <" + ACTION_IRI + "> :outcome ?_outcome >> :flow ?_flow .\n" +
+            "    << <" + lastActionIri + "> :outcome ?_outcome >> :flow ?_flow .\n" +
             "  }\n" +
             "}\n");
         return rows.isEmpty() ? null : rows.get(0).get("_outcome");
@@ -57,7 +64,7 @@ class UserLookupByUsernameTest extends ConceptTestBase {
             "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n" +
             "SELECT ?value WHERE {\n" +
             "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
-            "    <" + ACTION_IRI + "> :" + fieldName + " ?value .\n" +
+            "    <" + lastActionIri + "> :" + fieldName + " ?value .\n" +
             "  }\n" +
             "}\n");
         return rows.isEmpty() ? null : rows.get(0).get("value");

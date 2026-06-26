@@ -14,22 +14,30 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @DisplayName("PasswordAuthCheck")
 class PasswordAuthCheckTest extends ConceptTestBase {
 
-    private static final String ACTION_IRI = RdfVocabulary.ACTION_NODE_PREFIX + "check-test-1";
     private static final String USER_ID = "ada-0001";
     private static final String PASSWORD = "correct-horse-battery-staple";
 
     private PasswordAuthConcept concept;
+    private int actionCounter = 0;
+    private String lastActionIri;
+
+    private String freshActionIri() {
+        actionCounter++;
+        lastActionIri = RdfVocabulary.ACTION_NODE_PREFIX + "check-test-" + actionCounter;
+        return lastActionIri;
+    }
 
     private void initConcept() {
         concept = new PasswordAuthConcept(log, bus);
     }
 
     private void writePendingInvocation(String userId, String password) {
+        String actionIri = freshActionIri();
         log.update(
             "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n" +
             "INSERT DATA {\n" +
             "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
-            "    <" + ACTION_IRI + "> :concept <" + PasswordAuthConcept.IRI + "> ;\n" +
+            "    <" + actionIri + "> :concept <" + PasswordAuthConcept.IRI + "> ;\n" +
             "                     :name    \"check\" ;\n" +
             "                     :input   _:inp ;\n" +
             "                     :flow    <" + flow.mintFlowToken() + "> .\n" +
@@ -44,7 +52,7 @@ class PasswordAuthCheckTest extends ConceptTestBase {
             "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n" +
             "SELECT ?_outcome WHERE {\n" +
             "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
-            "    << <" + ACTION_IRI + "> :outcome ?_outcome >> :flow ?_flow .\n" +
+            "    << <" + lastActionIri + "> :outcome ?_outcome >> :flow ?_flow .\n" +
             "  }\n" +
             "}\n");
         return rows.isEmpty() ? null : rows.get(0).get("_outcome");
