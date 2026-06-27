@@ -2,10 +2,16 @@
 
 ## Pre-condition (agent must verify before starting)
 
-**Gate 1 (Stage 02b) must have been approved by the human.** Check
-`RESUME.md` in the feature root for a `## Gate snapshot` section with
-`Gate 1: Approved`. If it is missing, stop and tell the human that
-Stage 02 cannot begin until Gate 1 is approved.
+Run the following **before** writing any artefacts for this stage:
+
+```
+python3 ../../../../quality-gate/verify_gate_approval.py \
+  --feature ../../ \
+  --required-gates 1
+```
+
+If this script exits with a non-zero status, stop immediately.
+Gate 1 has not been approved — do not proceed.
 
 ## Why this stage exists
 

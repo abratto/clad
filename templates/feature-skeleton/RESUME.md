@@ -17,9 +17,9 @@
 
 <!--
   The agent updates this section after EVERY human gate approval.
-  Stages 02 and 04a check this snapshot before starting — if the
-  required gate is not approved, the agent must stop and surface the
-  defect before writing any artefacts.
+  Stages 02 and 04a run verify_gate_approval.py before starting — if the
+  required gate is not approved, the script stops the pipeline.
+  The agent must NOT skip updating this section after each gate approval.
 -->
 - **Gate 1 (Requirements):** `pending` | `approved` | `rejected`
 - **Gate 2 (Architecture):** `pending` | `approved` | `rejected`

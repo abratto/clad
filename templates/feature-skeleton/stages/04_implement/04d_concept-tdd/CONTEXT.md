@@ -2,9 +2,20 @@
 
 ## Pre-condition (agent must verify before starting)
 
-**`../04c_flow-tests/output/` must be non-empty.** If it is empty, stop
-immediately and tell the human that Stage 04c must be completed and
-gated before Stage 04d can begin.
+Run the following **before** writing any artefacts for this stage:
+
+```
+python3 ../../../../../quality-gate/verify_gate_approval.py \
+  --feature ../../../ \
+  --required-gates 3
+```
+
+If this script exits with a non-zero status, stop immediately.
+Gate 3 has not been approved — do not proceed.
+
+**Additionally:** `../04c_flow-tests/output/` must be non-empty.
+If it is empty, stop and tell the human that Stage 04c flow tests
+have not been produced.
 
 ## Why this stage exists
 
