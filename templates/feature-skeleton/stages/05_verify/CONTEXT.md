@@ -1,5 +1,19 @@
 # Stage 05 — Verify and close
 
+## Pre-condition (agent must verify before starting)
+
+Run the following **before** writing any verify artefacts:
+
+```
+python3 ../../../../quality-gate/verify_stage_output.py \
+  --feature ../.. \
+  --required-stages 01,02a,02b,02,03,03a,03b,04a,04b,04c,04d,04e
+```
+
+Additionally, the full test suite must pass (`mvn test`).
+If either check fails, stop — do not proceed to verification
+until all upstream stages are complete and tests pass.
+
 This stage has two parts. **Verify** is the back-trace from runtime
 flow tokens to the use case (this is what Stage 05 has always been).
 **Close** is the deliberate hand-off — smoke the running instance,

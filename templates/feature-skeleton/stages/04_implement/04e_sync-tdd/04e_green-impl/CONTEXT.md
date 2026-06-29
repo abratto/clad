@@ -2,9 +2,17 @@
 
 ## Pre-condition (agent must verify before starting)
 
-**`../04e_red-tests/output/sync-test-derivation.md` must exist and be
-human-approved.** If the red sync tests are missing or not yet approved,
-stop and send the work back to `04e-red`.
+Run the following **before** writing any sync implementation code:
+
+```
+python3 ../../../../../../quality-gate/verify_stage_output.py \
+  --feature ../../../../ \
+  --required-stages 04e
+```
+
+If this script exits with a non-zero status, stop immediately.
+Stage 04e-red sync test derivation is missing — do not implement
+before sync tests are derived.
 
 ## Why this stage exists
 

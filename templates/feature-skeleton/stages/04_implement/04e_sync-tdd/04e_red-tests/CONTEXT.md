@@ -2,9 +2,17 @@
 
 ## Pre-condition (agent must verify before starting)
 
-**`../../04d_concept-tdd/04d_green-impl/` must be complete and approved.**
-If concept green work is not approved, stop and tell the human that
-`04d-green` must finish before `04e-red` can begin.
+Run the following **before** writing any sync test artefacts:
+
+```
+python3 ../../../../../../quality-gate/verify_stage_output.py \
+  --feature ../../../../ \
+  --required-stages 04d
+```
+
+Additionally, concept tests must be green (`mvn test` passes).
+If either check fails, stop — concept implementation must be
+complete before sync tests can be derived.
 
 ## Why this stage exists
 

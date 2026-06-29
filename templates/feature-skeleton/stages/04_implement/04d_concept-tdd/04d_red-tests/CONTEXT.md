@@ -2,9 +2,16 @@
 
 ## Pre-condition (agent must verify before starting)
 
-**`../../04c_flow-tests/output/` must be non-empty.** If it is empty,
-stop immediately and tell the human that Stage 04c must be completed and
-gated before `04d-red` can begin.
+Run the following **before** writing any artefacts for this stage:
+
+```
+python3 ../../../../../../quality-gate/verify_stage_output.py \
+  --feature ../../../../ \
+  --required-stages 02,04b,04c
+```
+
+If this script exits with a non-zero status, stop immediately.
+Required upstream stage outputs are missing — do not proceed.
 
 ## Why this stage exists
 

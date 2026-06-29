@@ -2,9 +2,17 @@
 
 ## Pre-condition (agent must verify before starting)
 
-**`../04d_red-tests/output/concept-test-derivation.md` must exist and be
-human-approved.** If the red tests are missing or not yet approved, stop
-and send the work back to `04d-red`.
+Run the following **before** writing any implementation code:
+
+```
+python3 ../../../../../../quality-gate/verify_stage_output.py \
+  --feature ../../../../ \
+  --required-stages 04d
+```
+
+If this script exits with a non-zero status, stop immediately.
+Stage 04d-red concept test derivation is missing — do not implement
+before tests are derived.
 
 ## Why this stage exists
 
