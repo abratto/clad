@@ -76,27 +76,45 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 - **Cross-stage check (back):** every Pattern D field in
   `pattern-d-summary.md` appears in the owner concept's data model.
 
-## Gate
+## Gate instruction — STOP AND PRESENT
 
-**Gate 2 (Architecture).** Before asking for approval, list every
-artefact file produced since the last gate grouped by stage (02, 03,
-03a, 03b) with a one-line description per file. Then:
+### Step 1 — Present artefacts
 
-STOP and present the artefacts for human review. Wait for explicit
-approval before continuing. The human reviews concept state machines,
-sync coordination, cross-concept coupling, and the conceptual data model
-together.
+Run:
 
-After approval, the agent records the gate result in `RESUME.md` (see
-pre-condition check in Stage 04a), then auto-advances through Stages
-04a–04b without a gate, then stops at Stage 04c for **Gate 3
-(Executable specification)** — human reviews the Gherkin `.feature`
-files as the executable form of the use case.
+```
+python3 ../../../../quality-gate/present_gate.py \
+  --feature ../../../ \
+  --gate 2
+```
+
+Present the output to the human. **Do NOT proceed past this point.**
+
+### Step 2 — Wait for human approval
+
+Wait for the human to say "approved" (or "Gate 2 approved").
+Do NOT update RESUME.md yourself.
+
+### Step 3 — Record approval
+
+Only after the human explicitly approves, run:
+
+```
+python3 ../../../../quality-gate/approve_gate.py \
+  --feature ../../../ \
+  --gate 2
+```
+
+This updates RESUME.md to mark Gate 2 as approved.
+
+### Step 4 — Proceed
+
+After `approve_gate.py` exits successfully, proceed to Stage 04a
+(storage mapping). Stages 04a–04b auto-advance. The next human gate is
+**Gate 3 (Executable specification)** at Stage 04c.
 
 The `verify_data_model.py` and `verify_file_manifest.py` scripts must
 pass before requesting the gate.
-
-**Do you agree with this step? Any corrections before I continue?**
 
 ## Next stage
 

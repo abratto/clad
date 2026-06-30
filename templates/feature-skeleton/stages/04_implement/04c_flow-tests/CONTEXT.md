@@ -151,25 +151,44 @@ python3 ../../../../quality-gate/verify_gherkin_derivation.py \
   The stub test files and the executed compilation evidence are part of
   the stage contract.
 
-## Gate
+## Gate instruction — STOP AND PRESENT
 
-**Gate 3 (Executable specification).** Before asking for approval, list
-every artefact file produced since the last gate grouped by stage (04a,
-04b, 04c) with a one-line description per file, including side-effect
-files (`.feature`, runner, step definitions). Then:
+### Step 1 — Present artefacts
 
-STOP and present the artefacts for human review. Wait for explicit
-approval before continuing. The human reviews the `.feature` files as
-the executable form of the use case.
+Run:
 
-After approval, the agent records the gate result in `RESUME.md` (see
-pre-condition check in Stage 04d), then auto-advances through Stages
-04d, 04e, and 05 without further gates.
+```
+python3 ../../../../../quality-gate/present_gate.py \
+  --feature ../../../ \
+  --gate 3
+```
+
+Present the output to the human. **Do NOT proceed past this point.**
+
+### Step 2 — Wait for human approval
+
+Wait for the human to say "approved" (or "Gate 3 approved").
+Do NOT update RESUME.md yourself.
+
+### Step 3 — Record approval
+
+Only after the human explicitly approves, run:
+
+```
+python3 ../../../../../quality-gate/approve_gate.py \
+  --feature ../../../ \
+  --gate 3
+```
+
+This updates RESUME.md to mark Gate 3 as approved.
+
+### Step 4 — Proceed
+
+After `approve_gate.py` exits successfully, proceed through stages
+04d, 04e, and 05 (auto-advance, no further human gates).
 
 The `verify_file_manifest.py` and `verify_gherkin_derivation.py` scripts
 must pass before requesting the gate.
-
-**Do you agree with this step? Any corrections before I continue?**
 
 ## Next stage
 

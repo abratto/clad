@@ -107,27 +107,44 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   Do not combine distinct `Web.respond[...]` contracts or distinct next
   actions into one canonical row.
 
-## Gate
+## Gate instruction — STOP AND PRESENT
 
-**Gate 1 (Requirements).** Before asking for approval, list every
-artefact file produced since the last gate grouped by stage (01, 02a,
-02b) with a one-line description per file. Then:
+### Step 1 — Present artefacts
 
-STOP and present the artefacts for human review. Wait for explicit
-approval before continuing. The human reviews the complete design
-picture: use case scenarios, concept boundaries, and action choreography
-together.
+Run:
 
-After approval, the agent records the gate result in `RESUME.md` (see
-pre-condition check in Stage 02), then auto-advances through Stage 02
-(concept specs) without a human gate, then stops at Stage 03b for
-**Gate 2 (Architecture)** — human reviews concepts, syncs, and data
-model together.
+```
+python3 ../../../quality-gate/present_gate.py \
+  --feature ../../ \
+  --gate 1
+```
 
-The `verify_file_manifest.py` script must pass before requesting the
-gate.
+Present the output to the human. **Do NOT proceed past this point.**
 
-**Do you agree with this step? Any corrections before I continue?**
+### Step 2 — Wait for human approval
+
+Wait for the human to say "approved" (or "Gate 1 approved").
+Do NOT update RESUME.md yourself.
+
+### Step 3 — Record approval
+
+Only after the human explicitly approves, run:
+
+```
+python3 ../../../quality-gate/approve_gate.py \
+  --feature ../../ \
+  --gate 1
+```
+
+This updates RESUME.md to mark Gate 1 as approved.
+
+### Step 4 — Proceed
+
+After `approve_gate.py` exits successfully, proceed to Stage 02
+(concept specs). Stages 02, 03 auto-advance. The next human gate is
+**Gate 2 (Architecture)** at Stage 03b.
+
+The `verify_file_manifest.py` script must pass before requesting the gate.
 
 ## Next stage
 
