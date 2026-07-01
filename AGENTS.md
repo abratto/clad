@@ -167,6 +167,14 @@ Current keys:
 |---|---|---|
 | `test.command` | Shell command | The single command to run tests for this profile |
 | `storage.layer` | Free text | Describes the persistence technology in use |
+| `stages.usecase.require-sequence-diagram` | `true` or `false` | Whether Mermaid sequence diagrams are required in Stage 01. Default `true`. Set to `false` if the LLM struggles with diagram generation. |
+
+**Resolution order** (lower number wins):
+
+1. `clad.properties` (repo root) — project-wide default
+2. `features/UC-XX/_config/<key>.md` — per-feature override
+3. Stage-level `CONTEXT.md` — stage-specific override (when explicitly
+   documented)
 
 **Resolution order** (lower number wins):
 
@@ -302,7 +310,52 @@ operator concern, not CLAD's.
 - If the human has edited a previous stage's output, **re-read it**.
   Treat the edit as authoritative.
 
-## 9. Pointers
+## 9. Critical Context — hard-learned implementation rules
+
+These rules come from defects discovered while implementing 13 Conduit
+use cases. They supplement §5 and are equally binding.
+
+### R10 — Sync SPARQL variables MUST use the engine's reserved names
+
+`SyncAgent.assembleSparql()` binds three variables in the outer `WHERE` /
+`INSERT` shape: `?_when_1` (trigger action node), `?_flow` (flow token),
+`?_then_1` (new invocation). Subclass `whereClause()` and `thenBindings()`
+MUST use exactly these three names. Never introduce synonyms
+(`?_w`, `?_f`, `?article`). Using a different flow variable causes
+`?_then_1 :flow ?_flow` to write the wrong flow token; using a different
+trigger variable causes the dedup guard to mark the wrong node. See
+`app/backend/CODE_STYLE.md` § "Reserved variable names".
+
+### R11 — Every sync that fires on a shared business-concept action MUST filter by route
+
+`Session/grant[GRANTED]` fires for login, sign-in, AND register flows.
+If a respond sync does not include `?_root :route ?_route` with a
+`bindLiteral` in `parameterizeSparql`, it will fire for all three flows,
+producing wrong HTTP status codes (e.g., login returning 200 instead of
+register's 201). Syncs that trigger on `Web/request` already have the
+route — others MUST add it. See `app/backend/CODE_STYLE.md` § "Must
+filter by route".
+
+### R12 — Concept writeCompletion MUST write a plain `:outcome` triple
+
+`ConceptAgent.findPendingInvocations()` uses
+`FILTER NOT EXISTS { ?_action :outcome ?_any_outcome }` to skip
+already-processed actions. Without a plain `:outcome` triple, the filter
+never matches the RDF-star annotation, and completed actions are
+re-processed (causing e.g. duplicate user registrations, runaway sync
+firing). The RDF-star `<< action :outcome VALUE >>` annotation is
+separate and used by syncs for outcome matching. Both forms are required.
+
+### R13 — Jackson must serialize null values (`Include.ALWAYS`)
+
+CLAD syncs author field-value maps where missing fields imply null.
+Jackson's default `NON_NULL` omits these fields, making Conduit spec
+assertions like `jsonpath "$.user.bio" == null` fail with `none` not
+`null`. Configure `jackson.serialization-inclusion: always` in
+`application.yml` or equivalent for your profile. See `clad.properties`
+for the canonical setting.
+
+## 10. Pointers
 
 - Methodology reading order: [`methodology/README.md`](methodology/README.md)
 - Worked example: [`features/UC-00-login/README.md`](features/UC-00-login/README.md)
