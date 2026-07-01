@@ -120,6 +120,7 @@ public class SyncDispatcher {
                     return;
                 }
             }
+            actionLog.archiveFlow(flowToken);
             sink.success(addFlowTokenHeader(
                     io.micronaut.http.HttpResponse.serverError(TIMEOUT_MESSAGE),
                     flowToken));

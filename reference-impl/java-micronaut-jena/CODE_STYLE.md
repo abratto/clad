@@ -76,34 +76,89 @@ explicitly instead of placing it ad hoc.
 
 These conventions apply only to this Java/Jena profile.
 
-### SPARQL-star outcome matching
+### Reserved variable names — MUST use exactly these names
 
-CLAD uses RDF-star/SPARQL-star for outcome tracking. Outcomes are
-written only inside RDF-star annotations (`<< >>`), never as plain
-triples. Sync `whereClause()` fragments match the star annotation:
+The `SyncAgent` base class assembles `INSERT ... WHERE` around your
+fragments. The outer shape binds these three variables:
+
+| Variable | Purpose | Set by |
+|---|---|---|
+| `?_when_1` | The trigger action node (concept action that just completed) | Engine boilerplate `GRAPH` pattern |
+| `?_flow` | The flow-token IRI shared across the causal chain | Engine boilerplate `GRAPH` pattern |
+| `?_then_1` | The new downstream action node the sync creates | Engine `BIND(IRI(...))` |
+
+**Your `whereClause()` and `thenBindings()` MUST use exactly these
+three names when referring to the trigger action, flow token, and
+new invocation.** NEVER use `?_w` for the trigger or `?_f` for the flow.
+Other variables for request fields (`?_slug`, `?_token`, `?_userId`,
+`?_root`, `?_ri`, `?_route`, etc.) are free-form.
+If you use a different flow variable, the engine's `?_then_1 :flow
+?_flow` INSERT will write the wrong flow token, and downstream
+concepts / syncs will not match. If you use a different trigger
+variable, the `FILTER NOT EXISTS { ?_when_1 :syncName [] }` dedup
+guard will mark the wrong node, causing runaway re-firing.
 
 ```java
-// Correct — SPARQL-star pattern
-?_when_1 :concept <%s> ; :name "check" ; :userId ?_userId .
-<< ?_when_1 :outcome "OK" >> :flow ?_flow .
+// Correct — uses the three reserved names
+@Override
+protected String whereClause() {
+  return """
+    ?_when_1 :concept <%s> ;
+             :name    "getBySlug" ;
+             :slug    ?_s .
+    << ?_when_1 :outcome "FOUND" >> :flow ?_flow .
+    ?_root :concept <%s> ;
+           :name    "request" ;
+           :input   ?_ri ;
+           :flow    ?_flow .
+    """.formatted(ArticleConcept.IRI, WEB_IRI);
+}
 
-// Wrong — plain :outcome triple (removed — the engine no longer writes it)
-?_when_1 :concept <%s> ; :name "check" ; :outcome "OK" ; :flow ?_flow .
+// Wrong — uses custom names (?_fw, ?_myFlow). These are separate
+// SPARQL variables from the engine's ?_when_1 / ?_flow.
+?_fw :concept <%s> ; :name "lookup" ; :flow ?_myFlow .
 ```
 
-Non-outcome field bindings (`:userId`, `:sessionToken`) remain as
-plain triples on the action node.
+### SPARQL-star outcome matching
 
-### Sync fragment construction In `SyncAgent` subclasses,
-  provide only `whereClause()` and `thenBindings()` fragments. The base
-  class assembles `INSERT ... WHERE` and dedup logic.
-- **Engine-owned variables are reserved.** Do not redefine `?_when_1`,
-  `?_flow`, `?_then_1`, or `?_when_1`.
+CLAD uses RDF-star for outcome tracking. `ConceptAgent.writeCompletion`
+writes BOTH a plain `:outcome` triple (to prevent reprocessing) AND an
+RDF-star annotation (for sync matching). Sync `whereClause()` fragments
+match the star annotation:
+
+```java
+// Correct — SPARQL-star pattern (matches the engine's annotation)
+?_when_1 :concept <%s> ; :name "check" ; :userId ?_userId .
+<< ?_when_1 :outcome "OK" >> :flow ?_flow .
+```
+
+The plain `:outcome` triple exists only to block reprocessing via
+`FILTER NOT EXISTS { ?_action :outcome ?_any_outcome }` in
+`ConceptAgent.findPendingInvocations()`. Syncs should never rely on
+it — use the RDF-star form exclusively for outcome conditions.
+
+Non-outcome field bindings (`:userId`, `:sessionToken`) are plain
+triples on the action node.
+
+### Sync fragment construction
+
+- **Must filter by route.** Every sync that writes a `Web/respond` (or
+  any action) based on a business-concept completion MUST include the
+  root route in its `whereClause()`. Two syncs can fire on
+  `Session/grant[GRANTED]` — one for login and one for register. Without
+  a route filter, both fire for every flow. The pattern:
+  ```java
+  ?_root :concept <web> ; :name "request" ; :input ?_ri ; :flow ?_flow .
+  ?_ri :route ?_route ; ...
+  ```
+  combined with `bindLiteral(sparql, "_route", "login")` in
+  `parameterizeSparql`. Syncs that only fire on `Web/request` already
+  have the route in their trigger — business-concept syncs MUST add it.
 - **One invocation per sync firing.** `thenBindings()` must create
   exactly one `?_then_1` invocation.
 - **Join via flow token.** Cross-concept coordination joins through
   action-log nodes that share `?_flow`; do not read another concept's
-  named graph directly.
+  named graph directly. Use only the engine's `?_flow` variable.
 - **Keep outcomes explicit.** Match concrete outcome literals in
   `whereClause()` so each SPEC outcome maps to a distinct path.
 - **Deterministic projection for reads.** In concept-side `SELECT`, only

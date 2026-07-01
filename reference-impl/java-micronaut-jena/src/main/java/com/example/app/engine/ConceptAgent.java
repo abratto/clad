@@ -140,9 +140,13 @@ public abstract class ConceptAgent {
         sparql.append("PREFIX : <").append(RdfVocabulary.ACTION_SCHEMA_IRI).append(">\n");
         sparql.append("INSERT DATA {\n");
         sparql.append("  GRAPH <").append(actionGraphIRI()).append("> {\n");
+        RDFNode outcomeNode = output.get("outcome");
+        sparql.append("    <").append(invocation.actionIri()).append("> :outcome ")
+              .append(NodeFmtLib.str(outcomeNode.asNode(), (PrefixMap) null))
+              .append(" .\n");
         for (Map.Entry<String, RDFNode> entry : output.entrySet()) {
-            // Skip plain :outcome — the RDF-star annotation below carries it.
-            // This eliminates double-writing. Syncs match via << >> patterns.
+            // Skip plain :outcome — already written above to prevent reprocessing.
+            // RDF-star annotation below carries the outcome for sync matching.
             if ("outcome".equals(entry.getKey())) continue;
             sparql.append("    <").append(invocation.actionIri()).append("> :")
                   .append(entry.getKey()).append(" ")
