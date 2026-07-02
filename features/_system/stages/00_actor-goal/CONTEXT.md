@@ -22,6 +22,9 @@ mechanical.
 - `goals.md` → one `features/UC-XX-<slug>/` folder per in-scope goal,
   created **after** this gate is passed. Out-of-scope goals lift into
   each use case's *Out of scope* section.
+- `port-spec.md` (optional) → Stage 04b and Stage 04c when an external
+  adapter contract exists; Delivery uses it to require a contract test
+  tier in CI.
 
 **Agent stance for this stage:** propose, ask ≤5 questions, iterate.
 Do not write `actors.md` / `goals.md` until the human signals
@@ -35,6 +38,7 @@ agreement. Do not create any UC folder during this stage.
 | Skill: `clad-system-scoping` | 3 | System scoping reference (see skills/ directory) |
 | `../../../templates/actors.md` | 3 | Output template |
 | `../../../templates/goals.md` | 3 | Output template |
+| `../../../templates/port-spec.md` | 3 | Optional output template when an external adapter contract exists |
 | `../../../methodology/implementation/STAGES.md` | 3 | §"Scope: system-level vs per-UC" and §"Stage 00 — `00_actor-goal/`" — collaboration semantics |
 
 ## Process
@@ -43,8 +47,15 @@ agreement. Do not create any UC folder during this stage.
 
 1. **Proposes** an initial actor/goal list inferred from the human's brief.
 2. **Asks at most 5 clarifying questions** in a single turn.
-3. Iterates with the human until they signal agreement.
-4. **Only then** writes `actors.md` and `goals.md` per the templates.
+3. Asks whether an existing API contract, published spec, or external
+  test suite constrains the system's adapter surface.
+4. If yes, obtains the contract source, records adapter compliance as a
+  system-level constraint in `goals.md`, and prepares `port-spec.md`
+  from the template. If no, records that the adapter format is a design
+  choice for Stage 04b and omits `port-spec.md`.
+5. Iterates with the human until they signal agreement.
+6. **Only then** writes `actors.md`, `goals.md`, and optional
+  `port-spec.md` per the templates.
 
 The agent does not invent goals the human has not confirmed. If the
 brief is too thin to propose anything, the agent asks for more context
@@ -55,12 +66,18 @@ before drafting.
 - `output/actors.md` — one row per actor (name, role, primary concerns)
 - `output/goals.md` — one row per goal with a short `Goal` phrase, a
   separate `Rationale`, plus priority and in/out-of-scope flag
+- `output/port-spec.md` — optional, only when an external adapter
+  contract exists
 
 ## Verify
 
 - Every actor in `actors.md` has at least one in-scope goal in `goals.md`.
 - Every in-scope goal cites a confirmed actor.
 - The out-of-scope section in `goals.md` is non-empty (forces explicit boundary).
+- If an external adapter contract exists, `port-spec.md` names its source,
+  fixed conventions, and contract test suite (if any).
+- If no external adapter contract exists, `goals.md` says the adapter
+  format is a Stage 04b design choice and `port-spec.md` is absent.
 - **Forward-check:** count the in-scope goals. That many UC folders
   will be created next; if the count seems too high or too low, surface
   that to the human before the gate closes.
@@ -68,8 +85,8 @@ before drafting.
 ## Gate
 
 **Gate 0 (system-level).** Before asking for approval, list every output
-file produced (`actors.md`, `goals.md`) with a one-line summary. Then
-ask for human approval.
+file produced (`actors.md`, `goals.md`, and optional `port-spec.md`) with
+a one-line summary. Then ask for human approval.
 
 Default human approval — but the gate is *expected* to take multiple
 turns to reach. The stage is complete when the human says the

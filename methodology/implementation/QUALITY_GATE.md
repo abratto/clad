@@ -75,6 +75,8 @@ not relax the *intent*.
    When a diff touches `features/UC-*/stages/03_syncs/`:
    - **Automated:** Run `quality-gate/verify_sync_matrix.py`
      to verify every sync has a complete Sync Contract Matrix.
+   - **Automated:** Run `quality-gate/verify_sync_route_filters.py`
+     to detect shared-trigger syncs that are missing route filters.
    - **Automated:** Run `quality-gate/verify_file_manifest.py`
      to check output files match the expected list exactly.
    - **Automated:** Run `quality-gate/verify_scenario_coverage.py`
@@ -102,6 +104,9 @@ not relax the *intent*.
        `quality-gate/verify_gherkin_derivation.py` to validate derivation.
      - **Automated:** Run `quality-gate/verify_concept_test_derivation.py`
        to check every SPEC outcome has a matching concept test.
+     - **Semantic:** Confirm concept tests assert primary completion
+       field values, not only outcome tokens, for every field downstream
+       syncs consume.
      - The automated checks replace the previous semantic (human) checks.
        04d and 04e auto-advance; the scripts are the gate.
 
@@ -141,11 +146,12 @@ consistency checks across the CLAD artefact chain:
 | `verify_outcome_alignment.py` | 02 | Chain-table outcomes match SPEC enums |
 | `verify_action_chain.py` | 02–04b | Action names consistent across all artefacts |
 | `verify_sync_matrix.py` | 03 | Every sync has a complete Sync Contract Matrix |
+| `verify_sync_route_filters.py` | 03, 03a | Shared-trigger syncs carry route filters |
 | `verify_data_model.py` | 03b | CSDP structure, storage-leakage prevention |
 | `verify_spec_parity.py` | 04b | Action name parity between concept specs and SPECs |
 | `verify_feature_file_presence.py` | 04c | Pre-flight: `.feature` file exists in output + Cucumber discovery path |
 | `verify_gherkin_derivation.py` | 04c | `.feature` file derivation per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1 |
-| `verify_concept_test_derivation.py` | 04d | Every SPEC outcome has a matching concept test row and Java method |
+| `verify_concept_test_derivation.py` | 04d | Every SPEC outcome has a matching concept test row and Java method; semantic review confirms field-value assertions |
 
 Each script returns exit code 0 on pass, 1 on fail, with a structured
 report. They are invoked by the relevant stage's `## Verify` section

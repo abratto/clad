@@ -25,6 +25,7 @@ case. If they read like a unit test, you are testing the wrong layer.
 | `../../01_usecase/output/usecase.md` | 4 | Scenarios to test |
 | `../../03_syncs/output/` | 4 | Expected coordination |
 | `../04b_spec/output/` | 4 | Action signatures |
+| `../../../../../features/_system/stages/00_actor-goal/output/port-spec.md` | 4 | Required when present; external adapter contract for `@contract` scenarios |
 | `../../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics |
 | `../../../../../methodology/architecture/GHERKIN_INTEGRATION.md` | 3 | Gherkin derivation rules |
 
@@ -35,6 +36,13 @@ For the login use case, produce a Gherkin `.feature` file with one
 `unknown-user`, `lockout`). Derive a `LoginStepDefinitions.java` skeleton
 from the chain-table rows, annotated `@Disabled`. Flow tests stay red
 until the end of `04e`.
+
+If `../../../../../features/_system/stages/00_actor-goal/output/port-spec.md`
+exists, add at least one `@contract` scenario per HTTP endpoint. These
+scenarios assert exact JSON paths, field types constrained by the
+external contract, and the primary failure path's exact error envelope
+shape. Keep these distinct from `@happy-path` and `@failure-path`
+intent scenarios.
 
 > A historical native-track markdown spec (`login-flow-test.md`) is
 > preserved in `output/` for reference — see `output/_NOTE.md`.
@@ -47,6 +55,8 @@ until the end of `04e`.
 ## Verify
 
 - Each use-case scenario has a Gherkin `Scenario` in `login.feature`.
+- When `port-spec.md` exists, every HTTP endpoint has at least one
+  `@contract` scenario with exact JSON path/type/envelope assertions.
 - Step-definition methods map 1:1 to chain-table rows.
 - Compiled flow tests are `@Disabled` (or red) — not green.
 - **Cross-stage check (back):** the predicted token chain matches the syncs in `03_syncs/output/`.

@@ -22,6 +22,7 @@ upstream (Stage 02), not here.
 | Path | Layer | Why |
 |---|---|---|
 | `../../02_concepts/output/` | 4 | Concept specs |
+| `../../../../../features/_system/stages/00_actor-goal/output/port-spec.md` | 4 | Required when present; external adapter response-shape contract |
 | `../../../../../templates/spec.md` | 3 | Output template |
 
 ## Process
@@ -29,6 +30,12 @@ upstream (Stage 02), not here.
 Mechanically derive the SPEC slice from each concept spec: action
 signatures, outcome enums, flow-token shape. No prose, no edge-case
 discussion (those stay in `02_concepts/`).
+
+If `../../../../../features/_system/stages/00_actor-goal/output/port-spec.md`
+exists, add a separate **Response shapes** section to the relevant SPEC
+output. Derive it from the port spec, not from local implementation
+preference. It must name exact JSON paths, field types, wrappers, and
+error envelope values required by the external contract.
 
 ## Outputs
 
@@ -40,6 +47,9 @@ discussion (those stay in `02_concepts/`).
 
 - Every public action in `02_concepts/output/` has a SPEC entry.
 - **Cross-stage check (back):** the set of action names in `04b/output/` equals the set of action names in `02_concepts/output/`.
+- When `port-spec.md` exists, SPEC output includes exact response shape
+	examples for each relevant HTTP endpoint: JSON paths, field types,
+	wrappers, and error envelope values.
 
 ## Gate
 

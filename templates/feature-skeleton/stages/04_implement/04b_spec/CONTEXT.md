@@ -22,6 +22,7 @@ upstream (Stage 02), not here.
 | Path | Layer | Why |
 |---|---|---|
 | `../../02_concepts/output/` | 4 | Concept specs |
+| `../../../../../features/_system/stages/00_actor-goal/output/port-spec.md` | 4 | Required when present; external adapter response-shape contract |
 | Skill: `clad-spec-extraction` | 3 | SPEC extraction reference (see skills/ directory) |
 | `../../../../../templates/spec.md` | 3 | Output template |
 
@@ -40,6 +41,12 @@ normalize upstream bootstrap drift by continuing mechanically.
 SPEC files must not include correction history, methodology
 interpretation, remediation notes, design commentary, or implementation
 guidance beyond what is mechanically present in the concept spec.
+
+If `../../../../../features/_system/stages/00_actor-goal/output/port-spec.md`
+exists, add a separate **Response shapes** section to the relevant SPEC
+output. Derive it from the port spec, not from local implementation
+preference. It must name exact JSON paths, field types, wrappers, and
+error envelope values required by the external contract.
 
 ## Outputs
 
@@ -71,6 +78,9 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 - **Mechanical extraction only:** no SPEC file contains correction
   history, methodology interpretation, remediation notes, or
   implementation guidance not present in the concept spec.
+- **Port-spec response shapes:** when `port-spec.md` exists, SPEC output
+  includes exact response shape examples for each relevant HTTP endpoint:
+  JSON paths, field types, wrappers, and error envelope values.
 
 ## Gate
 

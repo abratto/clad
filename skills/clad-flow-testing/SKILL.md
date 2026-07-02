@@ -31,6 +31,8 @@ Load these files:
 9. `features/UC-XX-<slug>/stages/04b_spec/output/` —
    SPEC slices to compile against
 10. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
+11. `features/_system/stages/00_actor-goal/output/port-spec.md` — only
+   when it exists; external adapter contract for `@contract` scenarios
 
 ## Process
 
@@ -38,8 +40,11 @@ Load these files:
    `01_usecase` + `02b_chain-table` + `04b_spec`.
 2. Derive step-definition skeletons from chain-table rows and SPEC
    outcome enums.
-3. Produce per-scenario markdown flow specs and stub flow test files.
-4. Stop at the gate (Gate 3 — human reviews the executable specification).
+3. If `port-spec.md` exists, add at least one `@contract` scenario per
+   HTTP endpoint. Assert exact JSON paths, constrained field types, and
+   the primary error envelope shape.
+4. Produce per-scenario markdown flow specs and stub flow test files.
+5. Stop at the gate (Gate 3 — human reviews the executable specification).
 
 ## Hard constraints
 
@@ -47,4 +52,6 @@ Load these files:
   changes, do not hand-edit.
 - `04b_spec` must exist before `04c` begins.
 - Markdown alone does not complete the stage; stub flow tests must exist.
+- When a port spec exists, `@contract` scenarios are required and must
+   use exact JSON path/type/envelope assertions rather than string-contains.
 - Do not merge `04c`, `04d`, and `04e` into one pass.

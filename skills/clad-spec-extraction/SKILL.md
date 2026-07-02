@@ -25,6 +25,8 @@ Load these files:
 5. `features/UC-XX-<slug>/stages/02b_chain-table/output/` —
    approved chain tables (outcome names)
 6. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
+7. `features/_system/stages/00_actor-goal/output/port-spec.md` — only
+   when it exists; external adapter response-shape contract
 
 ## Process
 
@@ -33,10 +35,16 @@ Load these files:
    - Every outcome name (verbatim from chain tables)
    - The flow-token shape
 2. Write `output/<Name>.spec.md` per concept.
-3. Auto-advance to Stage 04c.
+3. If `port-spec.md` exists, add a separate **Response shapes** section
+   with exact JSON paths, field types, wrappers, and error envelope
+   values for each relevant HTTP endpoint.
+4. Auto-advance to Stage 04c.
 
 ## Hard constraints
 
 - No new design — SPEC extraction is mechanical.
 - Outcome names and action signatures must match the concept spec and
   chain tables exactly.
+- When a port spec exists, response-shape assertions are derived only
+   from that external contract and stay separate from concept action
+   signatures.

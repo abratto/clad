@@ -35,6 +35,7 @@ Read `methodology/implementation/TDD.md` before writing anything.
 | `../../02b_chain-table/output/` | 4 | Action chain per scenario — step-definition derivation |
 | `../../03_syncs/output/` | 4 | Expected coordination |
 | `../04b_spec/output/` | 4 | Action signatures and outcome values |
+| `../../../../../features/_system/stages/00_actor-goal/output/port-spec.md` | 4 | Required when present; external adapter contract for `@contract` scenarios |
 | `../../../_config/build-and-test.md` | 3 | Canonical build/test command for compilation evidence |
 | `../../../_config/package-and-layout.md` | 3 | Canonical test-source root and package layout |
 | Skill: `clad-flow-testing` | 3 | Flow testing reference (see skills/ directory) |
@@ -69,6 +70,12 @@ Read `methodology/implementation/TDD.md` before writing anything.
    disabled/skipped tests (when stubs are intentionally `@Disabled`)
    or failing tests if enabled; compilation errors are not
    acceptable.
+6. If `../../../../../features/_system/stages/00_actor-goal/output/port-spec.md`
+  exists, add at least one `@contract` scenario per HTTP endpoint. These
+  scenarios assert exact JSON paths, field types constrained by the
+  external contract, and the primary failure path's exact error envelope
+  shape. Keep these distinct from `@happy-path` and `@failure-path`
+  intent scenarios.
 
 **Token chain rules (read `FLOW_TOKENS.md` in full before writing):**
 - Outcome values MUST be SCREAMING_SNAKE_CASE, copied from the SPEC slice.
@@ -118,6 +125,13 @@ python3 ../../../../quality-gate/verify_gherkin_derivation.py \
 
 - Every named scenario in `usecase.md` has a corresponding Gherkin
   `Scenario` (happy path) or `Scenario Outline` (failure branches).
+- When `port-spec.md` exists, every HTTP endpoint has at least one
+  `@contract` scenario.
+- Every `@contract` scenario asserts exact JSON paths and constrained
+  field types; it does not use string-contains as a substitute for shape
+  checks.
+- Every `@contract` scenario asserts the exact error envelope shape for
+  the primary failure path.
 - Every Gherkin `Given` step traces back to a use-case precondition.
 - Every Gherkin `When` step traces back to a use-case main-flow step 1.
 - Every Gherkin `Then` step traces back to an expected outcome or

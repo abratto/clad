@@ -17,7 +17,8 @@ Load these files:
 
 1. `methodology/implementation/TDD.md` — London School handoff semantics,
    derivation rules, collaborator isolation
-2. `methodology/implementation/RULES.md` — hard rules R1, R5, R8, R9
+2. `methodology/implementation/RULES.md` — hard rules R1, R5, R8, R9,
+   R14, R16
 3. `templates/test-intent-derivation-map.md` — coverage template format
 4. `features/UC-XX-<slug>/stages/02_concepts/output/` —
    concept specs
@@ -46,11 +47,35 @@ Load these files:
    class names, and signatures. Implement only what is needed to make
    tests pass. Do not redesign approved tests.
 
+## Field-value assertion requirement
+
+Every concept unit test must include field-value assertions. After
+asserting the outcome token, assert the primary fields that
+`writeCompletion` writes and that downstream syncs will consume.
+
+```java
+// Insufficient - only asserts outcome token
+assertThat(completion.binding("outcome")).isEqualTo("FOUND");
+
+// Required - also asserts the fields downstream syncs will read
+assertThat(completion.binding("outcome")).isEqualTo("FOUND");
+assertThat(completion.binding("slug")).isEqualTo(inputSlug);
+assertThat(completion.binding("title")).isNotEmpty();
+assertThat(completion.binding("authorId")).isNotEmpty();
+```
+
+Silent field-mapping bugs (wrong variable name, PSS substitution
+collision, missing SPARQL binding) return null values for downstream
+consumers without causing any exception. An outcome-only test will pass;
+a field-value test will catch the null immediately.
+
 ## Hard constraints
 
 - **Red phase**: tests and derivation maps only — no implementation code.
 - **Green phase**: implementation only — do not rewrite approved tests.
 - One test class per concept action.
+- Every concept unit test asserts the outcome and the primary completion
+   field values that downstream syncs consume.
 - No cross-concept imports (R1).
 - Every public action emits a flow token (R5).
 - Distinct SPEC outcomes remain distinct in code paths (R9).

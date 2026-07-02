@@ -21,3 +21,17 @@
 - **Inputs:** ...
 - **Outcomes (enum):** ...
 - **Flow token:** ...
+
+## Response shapes
+
+<!-- Optional. Include this section only when
+     features/_system/stages/00_actor-goal/output/port-spec.md exists.
+     Derive these assertions from the external adapter contract, not from
+     implementation preference. -->
+
+### `<METHOD> <path>`
+
+- **Success wrapper:** `<JSON path or envelope>`
+- **Required fields:**
+  - `<json.path>` — `<type>` — `<notes>`
+- **Primary error envelope:** `<exact JSON path/value shape>`

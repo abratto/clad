@@ -165,7 +165,28 @@ fabricate goals beyond what the human confirms.
 **Output:** `actors.md`, `goals.md` (per
 [`../../templates/actors.md`](../../templates/actors.md) and
 [`../../templates/goals.md`](../../templates/goals.md), with one row per
-goal using a short `Goal` phrase plus separate `Rationale`).
+goal using a short `Goal` phrase plus separate `Rationale`). Optional:
+`port-spec.md` when an externally imposed adapter contract exists.
+
+#### Optional: Port Specification
+
+When the system must conform to an externally imposed adapter contract
+(an existing API spec, an OpenAPI document, a published test suite),
+produce `port-spec.md` alongside `actors.md` and `goals.md`. This
+document:
+
+- Names the contract and its source.
+- Lists the serialization conventions that the contract imposes and
+   that are not derivable from use-case analysis (error envelope shape,
+   ID types, nesting requirements, etc.).
+- References the external contract test suite if one exists.
+
+The port spec is not a use-case artefact. It describes the skin of the
+adapter, not the behaviour of the system. It feeds Stage 04b and Stage
+04c only.
+
+When no external contract exists, this artefact is omitted. The adapter
+format is then a design choice made at Stage 04b.
 
 **Gate:** human approval — but the gate is *expected* to take multiple
 turns to reach.
@@ -363,6 +384,14 @@ syncs. If 03a discovers token drift, it surfaces the defect and sends
 work back to Stage 03 (or earlier if Stage 03 already reflects earlier
 contract drift).
 
+#### Route-filter completeness check
+
+For every sync, identify its trigger action. If that trigger action is
+produced by more than one named route, the sync must carry a route
+filter or carry a documented justification. Record the finding in the
+`*-card.md` dependency review artefact. A sync that fires on a shared
+trigger without a route filter is a defect, not a design choice.
+
 This stage produces no new design — it makes the cross-concept
 coupling that already exists in the syncs **visible** so the human
 can spot a flow-inconsistent invocation or an unintended state
@@ -416,7 +445,9 @@ approved model from 03b in a specific profile.
 
 #### Stage 04b — `04b_spec/`
 
-**Input:** `02_concepts/output/`, `templates/spec.md`.
+**Input:** `02_concepts/output/`, `templates/spec.md`. If system-level
+`features/_system/stages/00_actor-goal/output/port-spec.md` exists, it
+is also a required input.
 
 **Process:** derive the SPEC contract slice mechanically from each
 concept spec — action signatures, outcome enums, flow-token shape.
@@ -430,6 +461,18 @@ SPEC files must not include correction history, methodology
 interpretation, remediation notes, design commentary, or implementation
 guidance beyond what is mechanically present in the concept spec.
 
+#### When `port-spec.md` exists
+
+The `spec.md` for each use case must include a **Response shapes**
+section derived from `port-spec.md`. This section specifies:
+
+- Exact JSON path for every significant field in the success response.
+- Exact JSON path and value for every error response envelope.
+- Field type constraints (integer, boolean, ISO-8601 string, etc.).
+
+These are the assertions that Stage 04c contract-compliance scenarios
+will verify.
+
 **Output:** `<Name>.spec.md` per concept.
 
 **Gate:** Auto-advances (next human gate: Stage 04c). The verify_spec_parity.py script must pass.
@@ -438,7 +481,9 @@ guidance beyond what is mechanically present in the concept spec.
 
 **Input:** `01_usecase/output/usecase.md`, `03_syncs/output/`,
 `04b_spec/output/`, `features/UC-XX/_config/build-and-test.md`,
-`features/UC-XX/_config/package-and-layout.md`.
+`features/UC-XX/_config/package-and-layout.md`. If system-level
+`features/_system/stages/00_actor-goal/output/port-spec.md` exists, it
+is also a required input.
 
 **Process:** for each named scenario in the use case, produce per-scenario
 flow-test artefacts: a Gherkin `.feature` file, a step-definition skeleton,
@@ -460,6 +505,20 @@ compiles. The expected outcome at this stage is either
 disabled/skipped flow tests (when stubs are intentionally `@Disabled`)
 or failing flow tests (if enabled early) — but never compilation
 errors.
+
+#### Contract-compliance scenarios
+
+When `port-spec.md` exists, each `.feature` file must include at least
+one **contract-compliance scenario** per HTTP endpoint that:
+
+- Asserts the exact JSON path of every required field (not
+   string-contains).
+- Asserts field types where the contract constrains them.
+- Asserts the exact error envelope shape for the primary failure path.
+
+These scenarios are distinct from the intent-level scenarios. Label
+them `@contract` to distinguish them from `@happy-path` and
+`@failure-path`.
 
 **Output:** `<feature>.feature` per use case, a `CucumberTest.java`
 runner, and `<Feature>StepDefinitions.java` skeletons (`@Disabled`).

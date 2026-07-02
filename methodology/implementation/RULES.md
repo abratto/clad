@@ -115,7 +115,41 @@ outcomes that were defined separately for a reason.
 - [ ] Numeric status codes match the approved chain-table row exactly — no type coercion
 - [ ] No two constructor signatures or methods with the same erasure (Java compile error)
 
+## R14. Concept unit tests assert field values, not only outcome tokens
+
+Every concept unit test must assert the action outcome and the primary
+fields written by `writeCompletion`. A test that only checks
+`outcome == "FOUND"` is insufficient because downstream syncs consume
+the named completion fields, not the outcome token alone.
+
+At minimum, a concept unit test asserts:
+
+- The `outcome` value.
+- The primary output fields written by the concept action.
+- No primary output field is null or an empty string when inputs are
+  valid.
+
+## R15. Shared-trigger syncs declare route scope
+
+A sync whose trigger action can be produced by more than one named
+flow/route must either carry an explicit route filter or document why
+route-agnostic firing is correct. Stage 03a records this in the
+dependency review cards.
+
+A sync that fires on a shared trigger without a route filter or explicit
+route-agnostic justification is a defect.
+
+## R16. Stage 04d tests assert completion field values
+
+`writeCompletion` writes named fields that downstream syncs consume. If
+a field-mapping bug exists (wrong variable name, PSS substitution
+collision, missing SPARQL binding), an outcome-only test will pass while
+all downstream consumers receive null or empty values.
+
+Stage 04d red tests must therefore include field-value assertions for
+every primary completion field that downstream syncs read.
+
 ---
 
-Four of these rules — R1, R3, R8, and R9 — fail most often by accident.
-When reviewing PRs, look for them first.
+Six of these rules — R1, R3, R8, R9, R14, and R15 — fail most often by
+accident. When reviewing PRs, look for them first.

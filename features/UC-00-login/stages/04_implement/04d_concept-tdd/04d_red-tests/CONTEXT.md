@@ -29,7 +29,7 @@ here.
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for red evidence |
 | `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
 | `../../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
-| `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5 |
+| `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5, R14, R16 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School derivation rules |
 | `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` | 3 | Java profile conventions |
 
@@ -40,14 +40,17 @@ here.
    from `04b_spec/output/` that are not exercised by the flow tests.
 2. Write the concept test file(s) only under `APP_TEST_SOURCE_ROOT`.
    Do not write or modify production implementation code in this stage.
-3. Run the canonical command from `../../../../_config/build-and-test.md`
+3. After asserting each outcome token, assert the primary completion
+  fields that `writeCompletion` writes and downstream syncs consume.
+  Outcome-only tests are incomplete.
+4. Run the canonical command from `../../../../_config/build-and-test.md`
    and confirm the result is true red: test compilation succeeds and the
    tests fail for behavioral reasons.
-4. Record the derivation map and the red-to-green handoff bundle in
+5. Record the derivation map and the red-to-green handoff bundle in
    `output/concept-test-derivation.md`: approved test files, exact
    package/class/method names, red evidence command, expected red
    outcome, and the next implementation target.
-5. Stop and present the red tests for human approval.
+6. Stop and present the red tests for human approval.
 
 ## Outputs
 
@@ -60,6 +63,9 @@ here.
 - Every test row traces back to an approved `04c` flow test or an
   approved `04b` SPEC outcome. No test case was invented without one of
   those sources.
+- Every concept test asserts the outcome and the primary completion
+  fields downstream syncs consume; no valid-input primary field assertion
+  accepts null or empty string.
 - Tests live under `APP_TEST_SOURCE_ROOT` and packages consistent with
   `APP_PACKAGE_ROOT`.
 - Executed red evidence shows successful test compilation and

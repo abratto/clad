@@ -48,6 +48,13 @@ for rows with pattern label D (`Concept: { ... }`). These rows
 represent cross-concept state reads and must be flagged in the card's
 Section 2. Patterns A, B, and C do not cross concept boundaries.
 
+For every sync, identify its trigger action. If that trigger action is
+produced by more than one named route, the sync must carry a route
+filter or carry a documented justification for route-agnostic firing.
+Record the finding in the relevant `*-card.md`. A sync that fires on a
+shared trigger without either a route filter or a justification is a
+defect.
+
 If a card or summary would need to rename, re-case, re-type, or otherwise
 normalize a token from Stage 03, stop and reopen Stage 03 instead. If
 the approved Stage 03 syncs disagree with Stage 02b or Stage 02, reopen
@@ -70,6 +77,9 @@ that earlier stage rather than fixing the mismatch inside 03a.
 - Every action name, argument name, field name, pattern label, key,
 	status code, and literal matches the approved Stage 03 sync file
 	exactly.
+- Every sync whose trigger action is produced by more than one named
+	route records the routes, the route filter status, and any
+	route-agnostic justification in a dependency card.
 - Any mismatch is surfaced as a Stage 03 or earlier-stage defect rather
 	than being normalized in the dependency review output.
 

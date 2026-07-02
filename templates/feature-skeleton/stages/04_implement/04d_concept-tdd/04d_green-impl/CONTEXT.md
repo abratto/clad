@@ -37,7 +37,7 @@ upstream prose, but it may not redesign approved tests.
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for green evidence |
 | `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
 | Skill: `clad-concept-tdd` | 3 | Concept TDD reference (see skills/ directory) |
-| `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5, R8, R9 |
+| `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5, R8, R9, R14, R16 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
 | `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (only when this profile is selected) | 3 | Profile conventions |
 | `../../../../../../reference-impl/java-micronaut-jena/CANONICAL_EXEMPLAR.md` (only when this profile is selected) | 3 | Profile realization pattern, not source of truth |
@@ -77,6 +77,8 @@ upstream prose, but it may not redesign approved tests.
 ## Verify
 
 - All approved concept tests are green.
+- Green tests include assertions for primary completion field values,
+  not only outcome tokens.
 - Every required concept test and implementation file exists in the
   selected profile's source tree.
 - Behavior is traceable first to the approved upstream artefacts; any

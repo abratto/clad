@@ -109,7 +109,7 @@ Mapped to the ICM stages of a feature folder:
 
 | Stage | Folder | Produces | Gate |
 |---|---|---|---|
-| 0 | `features/_system/stages/00_actor-goal/` *(system scope — run once per brief)* | `actors.md`, `goals.md` (collaborative — see [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)) | `00 — system-level` |
+| 0 | `features/_system/stages/00_actor-goal/` *(system scope — run once per brief)* | `actors.md`, `goals.md`, *(optional)* `port-spec.md` when an externally imposed adapter contract exists (collaborative — see [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)) | `00 — system-level` |
 | 1 | `stages/01_usecase/` | `usecase.md` (operational principle, actors, scenarios) | Auto¹ → 02b |
 | 2a | `stages/02a_responsibility-map/` | `responsibility-map.md` (one row per concept: state, actions) | Auto¹ → 02b |
 | 2b | `stages/02b_chain-table/` | `<scenario>-chain.md` per use-case scenario (action choreography) | **Gate 1 (Requirements)** |
@@ -119,7 +119,7 @@ Mapped to the ICM stages of a feature folder:
 | 3b | `stages/03b_data-model/` | One `*.data-model.md` per concept (profile-neutral conceptual data model) | **Gate 2 (Architecture)** |
 | 4 | `stages/04_implement/` | Router; top-level sub-stages `04a_storage-mapping`, `04b_spec`, `04c_flow-tests`, `04d_concept-tdd`, `04e_sync-tdd`, where `04d` and `04e` each split into structural red/green child stages | Auto¹ → 04c |
 | 4a | `stages/04a_storage-mapping/` | Storage mapping (profile-specific) | Auto¹ → 04c |
-| 4b | `stages/04b_spec/` | Spec | Auto¹ → 04c |
+| 4b | `stages/04b_spec/` | Spec. When `port-spec.md` exists, `spec.md` must include exact response shape examples (JSON path, field type, error envelope) for every HTTP endpoint, not only field presence. | Auto¹ → 04c |
 | 4c | `stages/04c_flow-tests/` | Flow tests (outer red) | **Gate 3 (Executable)** |
 | 4d | `stages/04d_concept-tdd/` | Concept TDD (inner red→green) | Auto → 05 |
 | 4e | `stages/04e_sync-tdd/` | Sync TDD (inner red→green) | Auto → 05 |
@@ -245,11 +245,26 @@ These are non-negotiable. Violating any of them is a defect.
    addressable record (id, who, when, what) that lets `05_verify/` trace
    from a runtime effect back to the use case.
 
+Additional hard rules:
+
+- **R14 — Concept unit tests MUST assert field values, not only outcome tokens.**
+   A test that only checks `outcome == "FOUND"` is insufficient. Every
+   concept unit test must assert at least the primary output fields of
+   `writeCompletion` (e.g. `slug`, `title`, `userId`) to catch silent
+   field-mapping bugs.
+- **R15 — Every sync that fires on a shared trigger MUST declare its route scope.**
+   A sync whose trigger action can be produced by more than one flow
+   (e.g. `User/getProfile[FOUND]`) must either carry an explicit route
+   filter via `parameterizeSparql`, or carry a documented justification
+   for why it is intentionally route-agnostic. This property must be
+   verified at Stage 03a.
+
 Rules R1–R5 above are the WYSIWID architectural rules. Four additional
 process/discipline rules (R6–R9) are defined in
 [`methodology/implementation/RULES.md`](methodology/implementation/RULES.md)
-and are equally binding. Stage CONTEXT.md Inputs tables reference the
-full rule set as needed.
+and are equally binding. R14 and R15 above are additional hard rules for
+the testing and dependency-review stages. Stage CONTEXT.md Inputs tables
+reference the full rule set as needed.
 
 If a rule appears to be in conflict with a request, **stop and ask** —
 do not silently relax it.
@@ -354,6 +369,19 @@ assertions like `jsonpath "$.user.bio" == null` fail with `none` not
 `null`. Configure `jackson.serialization-inclusion: always` in
 `application.yml` or equivalent for your profile. See `clad.properties`
 for the canonical setting.
+
+### R16 — Stage 04d tests must assert completion field values
+
+`writeCompletion` writes named fields that downstream syncs consume. If
+a field-mapping bug exists (wrong variable name, PSS substitution
+collision, missing SPARQL binding), an outcome-only test will pass while
+all downstream consumers receive null or empty values. The minimum for
+any concept unit test:
+
+- Assert the `outcome` value.
+- Assert the primary fields the concept's `writeCompletion` writes.
+- Assert that no primary field is null or empty string when the inputs
+   are valid.
 
 ## 10. Pointers
 

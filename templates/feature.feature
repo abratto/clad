@@ -82,3 +82,11 @@ Feature: <Feature name>
       | branch-condition | field1 | field2 | status | message | expected token chain |
       | <condition 1>    | <val>  | <val>  | <code> | <msg>   | <token seq>          |
       | <condition 2>    | <val>  | <val>  | <code> | <msg>   | <token seq>          |
+
+  @contract @<endpoint-slug>
+  Scenario: <METHOD> <path> matches the external contract
+    When <trigger action from main-flow step 1>
+    Then the response status is <expected HTTP status>
+    And the response body has JSON path <json.path> with type <type>
+    And the response body has JSON path <json.path> with value <value>
+    And the primary error response body matches envelope <exact error envelope>

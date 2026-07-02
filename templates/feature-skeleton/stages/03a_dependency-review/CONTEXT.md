@@ -57,6 +57,12 @@ For each concept that appears in any chain table or sync:
 4. Note any inconsistency (same action invoked via different
    patterns across flows; same field read via D in one flow and
    reconstructed via A/B in another).
+5. For every sync, identify its trigger action. If that trigger action
+   is produced by more than one named route, the sync must carry a route
+   filter or carry a documented justification for route-agnostic firing.
+   Record the finding in the relevant `*-card.md`. A sync that fires on
+   a shared trigger without either a route filter or a justification is
+   a defect.
 
 If a sync name, action signature, field name, key, pattern label, or
 literal in 03a would differ from the approved Stage 03 file, stop and
@@ -105,6 +111,10 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 - **Exact-token audit:** every action name, argument name, field name,
    pattern label, key, status code, and literal matches the approved
    Stage 03 sync file exactly.
+- **Route-filter completeness:** every sync whose trigger action is
+   produced by more than one named route records the routes, the route
+   filter status, and any route-agnostic justification in a dependency
+   card.
 - **Escalation discipline:** any mismatch found in 03a is surfaced as a
    defect in Stage 03 or earlier; 03a does not repair or reinterpret it.
 

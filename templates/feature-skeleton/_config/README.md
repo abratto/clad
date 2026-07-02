@@ -13,3 +13,8 @@ This folder holds **Layer-3, feature-scoped reference** material: conventions th
 
 Stage 04c uses Cucumber/BDD (Gherkin `.feature` files + step definitions)
 for outer-red flow tests — see `methodology/architecture/GHERKIN_INTEGRATION.md`.
+
+If `features/_system/stages/00_actor-goal/output/port-spec.md` exists,
+every Stage 04b and Stage 04c `CONTEXT.md` Inputs table must list it as
+a required Layer-4 input. Stage 04b uses it for exact response shapes;
+Stage 04c uses it for `@contract` scenarios.
