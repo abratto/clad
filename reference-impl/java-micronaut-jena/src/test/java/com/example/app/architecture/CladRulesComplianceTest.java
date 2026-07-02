@@ -1,4 +1,4 @@
-package org.clad.conduit.architecture;
+package com.example.app.architecture;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,9 +40,9 @@ class CladRulesComplianceTest {
      */
     @Test
     void writeCompletionWritesPlainOutcomeTriple() throws Exception {
-        var clz = Class.forName("org.clad.conduit.engine.ConceptAgent");
+        var clz = Class.forName("com.example.app.engine.ConceptAgent");
         var method = clz.getDeclaredMethod("writeCompletion",
-                org.clad.conduit.engine.ActionRecord.class, java.util.Map.class);
+            com.example.app.engine.ActionRecord.class, java.util.Map.class);
         assertNotNull(method,
                 "R12: writeCompletion method must exist");
         // We can't easily introspect the bytecode for string constants,
