@@ -81,10 +81,10 @@ def main():
         for root, dirs, files in os.walk(os.path.join(feature_root, "stages")):
             if root.endswith("/output"):
                 real_dirs.append(root)
-        
+
         # Match by stage
         matching = [d for d in real_dirs if f"_{stage_id}" in d or f"/{stage_id}_" in d or f"0{stage_id}" in d]
-        
+
         if not matching:
             # Try broader match
             for d in real_dirs:
@@ -93,7 +93,7 @@ def main():
                     if stage_id in part:
                         matching.append(d)
                         break
-        
+
         if matching:
             out_dir = matching[0]
             files = [f for f in os.listdir(out_dir) if f != ".gitkeep" and f != ".gitkeep.md" and not f.startswith(".")]
