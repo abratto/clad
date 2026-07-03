@@ -340,7 +340,8 @@ MUST use exactly these three names. Never introduce synonyms
 (`?_w`, `?_f`, `?article`). Using a different flow variable causes
 `?_then_1 :flow ?_flow` to write the wrong flow token; using a different
 trigger variable causes the dedup guard to mark the wrong node. See
-`app/backend/CODE_STYLE.md` § "Reserved variable names".
+`reference-impl/java-micronaut-jena/CODE_STYLE.md` § "Reserved variable
+names".
 
 ### R11 — Every sync that fires on a shared business-concept action MUST filter by route
 
@@ -349,8 +350,9 @@ If a respond sync does not include `?_root :route ?_route` with a
 `bindLiteral` in `parameterizeSparql`, it will fire for all three flows,
 producing wrong HTTP status codes (e.g., login returning 200 instead of
 register's 201). Syncs that trigger on `Web/request` already have the
-route — others MUST add it. See `app/backend/CODE_STYLE.md` § "Must
-filter by route".
+route — others MUST add it. See
+`reference-impl/java-micronaut-jena/CODE_STYLE.md` § "Must filter by
+route".
 
 ### R12 — Concept writeCompletion MUST write a plain `:outcome` triple
 

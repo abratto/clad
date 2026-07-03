@@ -3,17 +3,16 @@
 
 | Sync | When-pattern | Expected `then` action | Test name | Status |
 |---|---|---|---|---|
-| WhenWebHandleRoutedThenUserLookupByUsernameForLogin | `Web.handle { outcome: ROUTED }` | `User.lookupByUsername(username)` | `routed_login_invokes_user_lookup` | stub |
-| WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin | `User.lookupByUsername { outcome: FOUND }` | `PasswordAuth.check(userId, password)` | `found_user_invokes_password_check` | stub |
-| WhenUserLookupByUsernameNotFoundThenWebRespondForLogin | `User.lookupByUsername { outcome: NOT_FOUND }` | `Web.respond(401, opaqueMessage)` | `unknown_user_returns_opaque_401` | stub |
-| WhenPasswordAuthCheckOkThenSessionGrantForLogin | `PasswordAuth.check { outcome: OK }` | `Session.grant(userId)` | `ok_check_grants_session` | stub |
-| WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin | `PasswordAuth.check { outcome: BAD_PASSWORD }` | `Web.respond(401, opaqueMessage)` | `bad_password_returns_opaque_401` | stub |
-| WhenPasswordAuthCheckLockedThenWebRespondForLogin | `PasswordAuth.check { outcome: LOCKED }` | `Web.respond(401, lockoutMessage)` | `locked_account_returns_lockout_401` | stub |
-| WhenSessionGrantGrantedThenWebRespondForLogin | `Session.grant { outcome: GRANTED }` | `Web.respond(200, sessionToken)` | `granted_session_returns_token` | stub |
+| WhenWebHandleRoutedThenUserLookupByUsernameForLogin | `Web.handle { outcome: ROUTED }` | `User.lookupByUsername(username)` | `routed_login_invokes_user_lookup` | green — flow coverage |
+| WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin | `User.lookupByUsername { outcome: FOUND }` | `PasswordAuth.check(userId, password)` | `found_user_invokes_password_check` | green — flow coverage |
+| WhenUserLookupByUsernameNotFoundThenWebRespondForLogin | `User.lookupByUsername { outcome: NOT_FOUND }` | `Web.respond(401, opaqueMessage)` | `unknown_user_returns_opaque_401` | green — flow coverage |
+| WhenPasswordAuthCheckOkThenSessionGrantForLogin | `PasswordAuth.check { outcome: OK }` | `Session.grant(userId)` | `ok_check_grants_session` | green — unit + flow coverage |
+| WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin | `PasswordAuth.check { outcome: BAD_PASSWORD }` | `Web.respond(401, opaqueMessage)` | `bad_password_returns_opaque_401` | green — flow coverage |
+| WhenPasswordAuthCheckLockedThenWebRespondForLogin | `PasswordAuth.check { outcome: LOCKED }` | `Web.respond(401, lockoutMessage)` | `locked_account_returns_lockout_401` | green — flow coverage |
+| WhenSessionGrantGrantedThenWebRespondForLogin | `Session.grant { outcome: GRANTED }` | `Web.respond(200, sessionToken)` | `granted_session_returns_token` | green — flow coverage |
 
 ## Status
 
-All rows currently `stub`. The success-path stubs already line up with
-the disabled `LoginFlowTest.successful_login_grants_session_and_returns_token`
-in the outside loop; an inner-loop unit test under
-`com.example.app.syncs` will be added in the next iteration.
+All seven sync implementation classes exist. `WhenPasswordAuthCheckOkThenSessionGrantForLogin`
+has a dedicated sync unit test; the remaining syncs are covered by the
+green LoginFlowTest and Cucumber scenarios.

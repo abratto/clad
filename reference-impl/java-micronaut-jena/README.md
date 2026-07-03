@@ -296,10 +296,14 @@ useful after a request has already produced `Web/respond`.
 ## Status
 
 The engine is **fully wired** and the UC-00-login flow runs end-to-end:
-the three concepts (`User`, `PasswordAuth`, `Session`) and the six
-syncs (`LoginRequestStartsLookup`, `LoginLookupTriggersAuth`,
-`LoginGrantsSession`, `LoginRespondSuccess`, `LoginWhenPasswordAuthCheckBadPasswordThenWebRespondForLogin`,
-`LoginWhenUserLookupByUsernameNotFoundThenWebRespondForLogin`) produce the predicted token chains exercised
+the three concepts (`User`, `PasswordAuth`, `Session`) and the seven
+rule-shaped syncs (`WhenWebHandleRoutedThenUserLookupByUsernameForLogin`,
+`WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin`,
+`WhenUserLookupByUsernameNotFoundThenWebRespondForLogin`,
+`WhenPasswordAuthCheckOkThenSessionGrantForLogin`,
+`WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin`,
+`WhenPasswordAuthCheckLockedThenWebRespondForLogin`, and
+`WhenSessionGrantGrantedThenWebRespondForLogin`) produce the predicted token chains exercised
 by the Gherkin flow tests in
 `features/UC-00-login/stages/04_implement/04c_flow-tests/output/login.feature`.
 

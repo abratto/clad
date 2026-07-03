@@ -220,8 +220,8 @@ values.
 - Cucumber report (HTML/JSON) is captured as gate evidence.
 - The runtime token chain observed by each passing scenario matches
   the chain-table row sequence.
-- The lockout scenario (if present and not yet implemented) is honestly
-  red — this is a coverage signal, not a defect.
+- Any intentionally deferred scenario is honestly red and documented as
+  deferred — this is a coverage signal, not a hidden pass.
 
 ### Stage 05 verify
 

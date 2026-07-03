@@ -35,23 +35,23 @@
 | Action | Outcome | Test coverage | Location |
 |---|---|---|---|
 | `grant` | `GRANTED` | Covered — successful-login scenario | `LoginFlowTest` / `CucumberTest` |
-| `lookup` | `FOUND` | Covered — successful-login scenario | `LoginFlowTest` / `CucumberTest` |
+| `lookup` | `FOUND` | Uncovered by login flow | — (needs unit test) |
 | `lookup` | `UNKNOWN` | Uncovered by login flow | — (needs unit test) |
 
 ## Summary
 
 - **Total SPEC outcomes:** 11
-- **Covered by flow tests:** 7 (all login-scenario outcomes)
-- **Uncovered:** 4 (`register`/REGISTERED, `register`/USERNAME_TAKEN, `setCredential`/STORED, `lookup`/UNKNOWN)
+- **Covered by flow tests:** 6 (all login-scenario outcomes)
+- **Uncovered:** 5 (`register`/REGISTERED, `register`/USERNAME_TAKEN, `setCredential`/STORED, `lookup`/FOUND, `lookup`/UNKNOWN)
 - **Architecture compliance:** Verified — `LegibleArchitectureRulesTest` passes R1–R5
 
 ## Notes
 
-The reference-impl tests concepts through flow-level integration tests
-(LoginFlowTest + CucumberTest + LegibleArchitectureRulesTest). Per-concept
-unit tests as separate test classes are not implemented. All 32 tests pass
-with `mvn test`. Adding per-concept unit tests for the 4 uncovered outcomes
-would complete 04d-red contract compliance.
+The reference implementation tests login-critical concept behavior through
+`UserLookupByUsernameTest`, `PasswordAuthCheckTest`, LoginFlowTest,
+CucumberTest, and LegibleArchitectureRulesTest. Dedicated concept tests for
+the 5 uncovered non-login outcomes would complete 04d-red contract coverage.
+The current baseline is `mvn verify` with 46 tests and 0 failures.
 
 ---
 

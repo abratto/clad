@@ -37,12 +37,13 @@ flow implemented by:
 - `concepts/user/UserConcept.java`
 - `concepts/passwordauth/PasswordAuthConcept.java`
 - `concepts/session/SessionConcept.java`
-- `syncs/LoginRequestStartsLookup.java`
-- `syncs/LoginLookupTriggersAuth.java`
-- `syncs/LoginGrantsSession.java`
-- `syncs/LoginRespondSuccess.java`
-- `syncs/LoginWhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.java`
-- `syncs/LoginWhenUserLookupByUsernameNotFoundThenWebRespondForLogin.java`
+- `syncs/WhenWebHandleRoutedThenUserLookupByUsernameForLogin.java`
+- `syncs/WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin.java`
+- `syncs/WhenUserLookupByUsernameNotFoundThenWebRespondForLogin.java`
+- `syncs/WhenPasswordAuthCheckOkThenSessionGrantForLogin.java`
+- `syncs/WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.java`
+- `syncs/WhenPasswordAuthCheckLockedThenWebRespondForLogin.java`
+- `syncs/WhenSessionGrantGrantedThenWebRespondForLogin.java`
 - `src/test/java/com/example/app/flows/LoginFlowTest.java`
 - `features/UC-00-login/stages/04_implement/04c_flow-tests/output/login.feature`
 

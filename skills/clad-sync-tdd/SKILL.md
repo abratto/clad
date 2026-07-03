@@ -61,7 +61,8 @@ Load these files:
 
 Follow the London School interaction-focused convention for sync unit tests:
 
-- **Class name:** `<SyncName>Test` (e.g. `LoginGrantsSessionTest`)
+- **Class name:** `<SyncName>Test` (e.g.
+   `WhenPasswordAuthCheckOkThenSessionGrantForLoginTest`)
 - **`@Nested` class:** `When<Trigger>` groups by the trigger outcome
   (e.g. `WhenCheckOk`, `WhenCheckBadPassword`)
 - **Method name:** `should<Trigger><Then>` verifies interactions
@@ -71,7 +72,7 @@ Follow the London School interaction-focused convention for sync unit tests:
 - **Comment blocks:** `// GIVEN` / `// WHEN` / `// THEN`
 
 ```java
-class LoginGrantsSessionTest {
+class WhenPasswordAuthCheckOkThenSessionGrantForLoginTest {
     @Nested class WhenCheckOk {
         @Test void shouldFireSessionGrant() {
             // GIVEN: a PasswordAuth.check action completed with outcome OK

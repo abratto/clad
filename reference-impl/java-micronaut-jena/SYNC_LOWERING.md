@@ -49,10 +49,10 @@ Use lower camel case for `syncName()`.
 ## SPARQL-star fragment construction
 
 CLAD uses RDF-star/SPARQL-star (Jena 5.x native). Outcomes are written
-only as RDF-star annotations (`<< >>`), never as plain triples. This
-eliminates the double-write where `:outcome` appeared in both plain and
-star form. Sync `whereClause()` fragments match the star annotation
-directly.
+twice with different roles: a plain `:outcome` triple prevents action
+reprocessing, and an RDF-star annotation (`<< action :outcome value >>`)
+ties the outcome to its flow token for sync matching and archival. Sync
+`whereClause()` fragments match the star annotation directly.
 
 Use Java text blocks for `whereClause()` and `thenBindings()` fragments.
 Interpolate IRI constants via `.formatted()`.
@@ -173,12 +173,14 @@ Do not redefine those names.
 
 ### How the action graph is structured — plain triples vs. RDF-star
 
-The action graph uses **two layers of triples** on each action node. Only
-one of these layers is visible to sync `whereClause()` fragments.
+The action graph uses **two layers of triples** on each completed action
+node. They have separate jobs, and sync authors must use the right one.
 
-**Plain triples (the sync layer).** Concept agents write action properties
-as plain subject-predicate-object triples directly on the action IRI
-node. These are what sync `whereClause()` fragments match against:
+**Plain triples (the reprocessing guard and field layer).** Concept
+agents write action properties as plain subject-predicate-object triples
+directly on the action IRI node. The plain `:outcome` triple prevents the
+concept worker from reprocessing the same action; non-outcome fields are
+also plain triples that syncs can bind:
 
 ```sparql
 INSERT DATA {
@@ -191,23 +193,23 @@ INSERT DATA {
 }
 ```
 
-Sync `whereClause()` matches these plain triples:
+Sync `whereClause()` matches non-outcome fields as plain triples, but
+matches outcomes through the RDF-star annotation:
 
 ```java
 return """
   ?_when_1 :concept <%s> ;
            :name    "check" ;
-           :flow    ?_flow ;
-           :outcome "OK" ;
            :userId  ?_userId .
+  << ?_when_1 :outcome "OK" >> :flow ?_flow .
   """.formatted(PasswordAuthConcept.IRI);
 ```
 
-**RDF-star annotation (the engine layer).** The engine wraps the `:outcome`
-triple with an RDF-star annotation carrying the flow token. This creates
-a second, separate triple in the graph that ties the outcome event to its
-flow for archival and traceability. It does **not** replace the plain
-`:outcome` triple — it annotates it:
+**RDF-star annotation (the sync and engine layer).** The engine wraps the
+`:outcome` triple with an RDF-star annotation carrying the flow token.
+This creates a second, separate triple in the graph that ties the outcome
+event to its flow for sync matching, archival, and traceability. It does
+**not** replace the plain `:outcome` triple — it annotates it:
 
 ```sparql
 INSERT DATA {
@@ -222,6 +224,10 @@ ConceptAgent writes this via `writeCompletion()`:
 
 ```java
 // ConceptAgent.java (actual code)
+sparql.append("    <").append(invocation.actionIri()).append("> :outcome ")
+  .append(NodeFmtLib.str(outcomeNode.asNode(), (PrefixMap) null))
+  .append(" .\n");
+
 sparql.append("    << <").append(invocation.actionIri()).append("> :outcome ")
       .append(NodeFmtLib.str(output.get("outcome").asNode(), (PrefixMap) null))
       .append(" >> :flow <").append(invocation.flowToken()).append("> .\n");
@@ -231,17 +237,18 @@ sparql.append("    << <").append(invocation.actionIri()).append("> :outcome ")
 
 - The `?_flow` variable used in `whereClause()` comes from the engine-owned
   outer `INSERT ... WHERE` shape. Syncs bind it; do not redefine it.
-- The RDF-star annotation is invisible to sync fragments. Syncs match the
-  plain `:outcome` and field triples exactly as documented below.
-- The only consumer of the RDF-star annotations is `ActionLog.archiveFlow()`,
-  which moves completed action annotations between the active and archive
-  graphs without touching the plain action property triples.
+- Syncs match outcomes with RDF-star (`<< ?_when_1 :outcome "OK" >> :flow ?_flow`)
+  and match non-outcome fields as plain triples on `?_when_1`.
+- The plain `:outcome` triple exists to block reprocessing in
+  `ConceptAgent.findPendingInvocations()`. Do not use it as the sync's
+  outcome condition.
 
 ## RDF-star cookbook
 
-These are the only places in the engine that use RDF-star. Everything
-else — sync `whereClause()`, sync `thenBindings()`, concept state queries —
-uses plain RDF triples.
+These are the places that use RDF-star. Sync `whereClause()` fragments
+use RDF-star for outcome conditions and plain RDF triples for non-outcome
+fields; sync `thenBindings()` and concept state queries use plain RDF
+triples.
 
 ### 1. Write an action completion (success outcome)
 
@@ -317,29 +324,28 @@ token from the active graph to the archive graph. The plain action
 property triples stay in the active graph — only the `<< ... >>`
 annotations are moved.
 
-### 4. How NOT to use RDF-star
+### 4. How to use RDF-star in syncs
 
-Sync `whereClause()` should never contain RDF-star syntax. Match only
-plain triples on the action node:
+Sync `whereClause()` must use RDF-star syntax for outcome conditions and
+plain triples for non-outcome fields:
 
 ```java
-/* CORRECT — plain triples */
+/* CORRECT — RDF-star outcome plus plain field binding */
 """
 ?_when_1 :concept <%s> ;
          :name    "check" ;
-         :flow    ?_flow ;
-         :outcome "OK" ;
          :userId  ?_userId .
+<< ?_when_1 :outcome "OK" >> :flow ?_flow .
 """.formatted(PasswordAuthConcept.IRI);
 ```
 
 ```java
-/* WRONG — RDF-star in sync whereClause */
+/* WRONG — plain outcome in sync whereClause */
 """
-<< ?_when_1 :outcome "OK" >> :flow ?_flow .
-?_when_1 :userId ?_userId .
+?_when_1 :outcome "OK" ;
+         :userId ?_userId .
 """
-// This won't match. Syncs match plain triples, not reified nodes.
+// This ignores the engine-owned flow annotation and can break route scoping.
 ```
 
 Sync `thenBindings()` should also never use RDF-star. Write plain
@@ -574,8 +580,8 @@ Completion-shaped example:
 
 ```java
 """
-?_when_1 :outcome "FOUND" ;
-    :username ?_username .
+?_when_1 :username ?_username .
+<< ?_when_1 :outcome "FOUND" >> :flow ?_flow .
 """
 ```
 

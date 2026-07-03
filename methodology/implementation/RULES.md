@@ -78,10 +78,10 @@ code) or an incomplete use case (amend the contract).
 
 ## R8. Outer-loop tests before implementation — inner loops are derived
 
-In Stage 04c, flow tests (Gherkin `.feature` or native equivalents) are
-the executable form of the use case. They must be written, reviewed,
-and approved by the human before any implementation begins. This is
-Gate 3 (Executable specification) — the last design-stage human gate.
+In Stage 04c, flow tests (Gherkin `.feature` files) are the executable
+form of the use case. They must be written, reviewed, and approved by
+the human before any implementation begins. This is Gate 3 (Executable
+specification) — the last design-stage human gate.
 
 In Stages 04d and 04e, concept tests and sync tests are **mechanically
 derived** from already-approved artefacts (04c flow tests, 04b SPECs,

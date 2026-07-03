@@ -44,14 +44,14 @@ All 4 Cucumber scenarios pass (0 failures).
 - **Total syncs:** 7 (matching chain-table transitions)
 - **All syncs covered by flow tests:** Yes — 100%
 - **Outer flow tests green:** Yes — all 4 Gherkin scenarios pass
-- **All 32 tests pass:** Yes — `mvn test` BUILD SUCCESS
+- **All 46 tests pass:** Yes — `mvn verify` BUILD SUCCESS
 
 ## Notes
 
-The reference-impl tests syncs through flow-level integration tests (LoginFlowTest
-+ CucumberTest). Dedicated per-sync unit tests as separate test classes are not
-implemented. All sync implementations exist under `com.example.app.syncs` with
-matching test coverage through the flow tests.
+The reference implementation tests syncs through flow-level integration
+tests (LoginFlowTest + CucumberTest) and a dedicated unit test for
+`WhenPasswordAuthCheckOkThenSessionGrantForLogin`. All sync implementations
+exist under `com.example.app.syncs` with matching spec artefacts.
 
 ---
 

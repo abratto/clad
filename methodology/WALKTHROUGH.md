@@ -268,12 +268,11 @@ branching, no state, no I/O. Every `where` clause labels its pattern
 For UC-00 the agent writes:
 
 - [`WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md`](../features/UC-00-login/stages/03_syncs/output/WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md) — `when PasswordAuth.check(userId, password) -> Ok` then `Session.grant(userId)` then `Web.respond(200, { sessionToken })`. The `where: B: sessionId = result_of(Session.grant).sessionId` is **Pattern B** (flow-sibling); see [`SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md).
-- [`WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md`](../features/UC-00-login/stages/03_syncs/output/WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md) — spec-only at this round.
+- [`WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md`](../features/UC-00-login/stages/03_syncs/output/WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md) — lockout response path.
 
-The unhappy paths (`wrong-password`, `unknown-user`) need **no sync**
-— `Web` translates the non-`Ok` outcome to a 401 directly. The sync
-pack's notes call this out explicitly so Stage 03a's reviewer doesn't
-look for syncs that shouldn't exist.
+The unhappy paths (`wrong-password`, `unknown-user`, `lockout`) are also
+syncs. Stage 03 remains the single declarative coordination surface for
+both success and failure responses.
 
 **Gate question (canonical).**
 

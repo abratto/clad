@@ -56,8 +56,8 @@ the canonical table: one table row, one arrow.
 
 This stage exists to give the human a single, scenario-shaped review
 surface **before** Stage 03 commits the choreography to declarative
-sync rules. Reviewing six syncs at once is harder than reviewing one
-chain table per scenario.
+sync rules. Reviewing a full sync pack at once is harder than reviewing
+one chain table per scenario.
 
 ## Outputs
 

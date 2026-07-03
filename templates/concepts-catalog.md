@@ -22,7 +22,7 @@
 | Concept | One-line capability | Owning feature | Used by | Notes |
 |---|---|---|---|---|
 | `User` | Identify a person to the system | UC-00-login | UC-00-login | Username uniqueness |
-| `PasswordAuth` | Verify a password against a stored credential | UC-00-login | UC-00-login | Lockout policy spec-only today |
+| `PasswordAuth` | Verify a password against a stored credential | UC-00-login | UC-00-login | Includes lockout outcome |
 | `Session` | Issue and look up authenticated sessions | UC-00-login | UC-00-login | TTL fixed at issue time |
 | `Web` | HTTP entry point (bootstrap) | UC-00-login | (every feature) | See `methodology/architecture/WEB_CONCEPT.md` |
 | ... | ... | ... | ... | ... |

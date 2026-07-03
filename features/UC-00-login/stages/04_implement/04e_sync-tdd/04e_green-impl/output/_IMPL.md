@@ -15,7 +15,7 @@ Implementation classes exist under `reference-impl/java-micronaut-jena/src/main/
 
 ```
 mvn -f reference-impl/java-micronaut-jena/pom.xml test
-→ BUILD SUCCESS (32 tests, 0 failures)
+→ BUILD SUCCESS (46 tests, 0 failures)
 ```
 
 - All sync tests pass (Cucumber: 4 scenarios, 0 failed)

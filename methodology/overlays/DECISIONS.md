@@ -71,7 +71,7 @@ Aim for one screen of text. Long ADRs do not get re-read.
 When a stage's output rests on a recorded decision, cite it:
 
 ```
-> See [DR-0003](../../../../docs/decisions/0003-jena-over-postgres.md).
+> See DR-0003 (`docs/decisions/0003-jena-over-postgres.md`).
 ```
 
 Citing a decision is what makes it load-bearing. An ADR that nothing
