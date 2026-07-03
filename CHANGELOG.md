@@ -44,6 +44,12 @@ file `methodology/` is the source of truth for what each version contains.
 
 ### Methodology
 
+- **Documentation freshness sweep**: Refreshed CLAD methodology and
+  reference-profile examples after the sync naming migration. Updated
+  `CANONICAL_EXEMPLAR.md`, `SYNC_LOWERING.md`, `WALKTHROUGH.md`,
+  Gherkin guidance, sync-test templates, and UC-00 stage outputs so they
+  match the current rule-shaped sync names, RDF-star outcome matching,
+  Gherkin-only Stage 04c flow tests, and 46-test Java reference baseline.
 - **R17 — Iterative-change parity rule**: Added hard rule R17 to
   `AGENTS.md §9`. Before modifying any sync or concept implementation
   file, the agent must classify the change per
@@ -94,7 +100,7 @@ file `methodology/` is the source of truth for what each version contains.
   `Skill:` entries to Inputs tables. Added missing `_config/build-and-test.md`
   and `_config/package-and-layout.md`. Produced Stage 04d-red and 04e-red
   output/ directories with derivation maps documenting SPEC coverage. Marked
-  04d-green and 04e-green as verified (all 32 reference-impl tests pass).
+  04d-green and 04e-green as verified (all 46 reference-impl tests pass).
   Produced complete Stage 05 outputs (trace.md with resume point, smoke.md
   with runtime evidence, tracking.md).
 
