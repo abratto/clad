@@ -63,6 +63,9 @@ here.
 - Every test row traces back to an approved `04c` flow test or an
   approved `04b` SPEC outcome. No test case was invented without one of
   those sources.
+- Run `quality-gate/verify_concept_field_assertions.py` with the UC-00
+  SPEC directory and Java test source root; every concept test that
+  asserts an outcome must also assert required completion fields.
 - Every concept test asserts the outcome and the primary completion
   fields downstream syncs consume; no valid-input primary field assertion
   accepts null or empty string.

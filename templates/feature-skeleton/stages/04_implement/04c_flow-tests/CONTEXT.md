@@ -95,7 +95,7 @@ Run this **before** any other 04c work. It ensures a `.feature` file
 exists for the feature:
 
 ```
-python3 ../../../../quality-gate/verify_feature_file_presence.py \
+python3 ../../../../../quality-gate/verify_feature_file_presence.py \
   --feature-output-dir output \
   --feature-files-dir <APP_TEST_SOURCE_ROOT>/resources/features/
 ```
@@ -106,12 +106,16 @@ python3 ../../../../quality-gate/verify_feature_file_presence.py \
 ### Automated checks
 
 ```
-python3 ../../../../quality-gate/verify_file_manifest.py \
+python3 ../../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<feature-name>.feature,…"  # one .feature file per use case
-python3 ../../../../quality-gate/verify_gherkin_derivation.py \
+python3 ../../../../../quality-gate/verify_gherkin_derivation.py \
   --usecase ../../01_usecase/output/usecase.md \
   --feature <relevant>.feature \
   --sync-dir ../../03_syncs/output
+python3 ../../../../../quality-gate/verify_port_spec_contract.py \
+  --port-spec ../../../../../features/_system/stages/00_actor-goal/output/port-spec.md \
+  --spec-dir ../04b_spec/output \
+  --feature-dir output
 ```
 
 - **verify_file_manifest.py:** `output/` contains exactly the expected
@@ -120,6 +124,9 @@ python3 ../../../../quality-gate/verify_gherkin_derivation.py \
   matching Gherkin Scenario, every Scenario has Given/When/Then,
   response status codes match sync spec `then` clauses (per
   GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1).
+- **verify_port_spec_contract.py:** skips when no `port-spec.md` exists;
+  otherwise checks response-shape SPEC output and `@contract` scenarios
+  are present.
 
 ### Semantic checks
 

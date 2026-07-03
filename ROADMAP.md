@@ -31,4 +31,4 @@
 - **Last gate passed:** `UC-00-login` Stage 05 (worked example shipped)
 - **Next stage:** start `UC-01-<slug>` Stage 00 (actor/goal)
 - **Blockers:** none
-- **Last updated:** 2026-06-26 — methodology infrastructure: spec languages aligned with Meng & Jackson (Onward! 2025) paper syntax (concept headers, `Concept/action:` qualifiers, `when { }`/`where { }`/`then { }` sync blocks, enriched `where` clause with `bind()`, `OPTIONAL`, `?_eachthen`). UC-00-login worked example migrated; 43 tests + all gate scripts green.
+- **Last updated:** 2026-07-02 — methodology maintenance: added deterministic quality-gate checks for external `port-spec.md` consumption and R14/R16 Java concept field assertions. UC-00-login reference tests now assert completion fields; 46 Java tests + roadmap/R1/new guardrail scripts green.

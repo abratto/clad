@@ -58,6 +58,17 @@ class PasswordAuthCheckTest extends ConceptTestBase {
         return rows.isEmpty() ? null : rows.get(0).get("_outcome");
     }
 
+    private String readField(String fieldName) {
+        List<Map<String, String>> rows = log.select(
+            "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n" +
+            "SELECT ?value WHERE {\n" +
+            "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
+            "    <" + lastActionIri + "> :" + fieldName + " ?value .\n" +
+            "  }\n" +
+            "}\n");
+        return rows.isEmpty() ? null : rows.get(0).get("value");
+    }
+
     @Nested
     @DisplayName("WhenCredentialsMatch")
     class WhenCredentialsMatch {
@@ -75,6 +86,7 @@ class PasswordAuthCheckTest extends ConceptTestBase {
 
             // THEN: outcome is OK
             assertEquals("OK", readOutcome());
+            assertEquals(USER_ID, readField("userId"));
         }
     }
 
@@ -95,6 +107,7 @@ class PasswordAuthCheckTest extends ConceptTestBase {
 
             // THEN: outcome is BAD_PASSWORD
             assertEquals("BAD_PASSWORD", readOutcome());
+            assertEquals(USER_ID, readField("userId"));
         }
     }
 
@@ -119,6 +132,7 @@ class PasswordAuthCheckTest extends ConceptTestBase {
 
             // THEN: outcome is LOCKED
             assertEquals("LOCKED", readOutcome());
+            assertEquals(USER_ID, readField("userId"));
         }
     }
 }

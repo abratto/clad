@@ -59,15 +59,21 @@ error envelope values required by the external contract.
 Run the following before requesting the human gate:
 
 ```
-python3 ../../../../quality-gate/verify_spec_parity.py \
+python3 ../../../../../quality-gate/verify_spec_parity.py \
   --concept-dir ../../02_concepts/output --spec-dir output
-python3 ../../../../quality-gate/verify_file_manifest.py \
+python3 ../../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<Name>.spec.md,…"  # one per business concept
+python3 ../../../../../quality-gate/verify_port_spec_contract.py \
+  --port-spec ../../../../../features/_system/stages/00_actor-goal/output/port-spec.md \
+  --spec-dir output
 ```
 
 - **verify_spec_parity.py:** every action name in every concept spec
   has a matching entry in the corresponding SPEC file, and vice versa.
 - **verify_file_manifest.py:** one `.spec.md` file per business concept.
+- **verify_port_spec_contract.py:** skips when no `port-spec.md` exists;
+  otherwise checks the port spec is concrete and at least one SPEC file
+  contains response-shape assertions.
 
 ### Semantic checks (human)
 

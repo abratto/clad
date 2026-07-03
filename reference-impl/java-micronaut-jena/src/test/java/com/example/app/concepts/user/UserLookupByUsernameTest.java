@@ -87,6 +87,8 @@ class UserLookupByUsernameTest extends ConceptTestBase {
 
             // THEN: outcome is FOUND with the user's userId
             assertEquals("FOUND", readOutcome());
+            assertNotNull(readField("username"));
+            assertEquals("ada", readField("username"));
             assertNotNull(readField("userId"));
             assertEquals("ada-0001", readField("userId"));
         }
@@ -108,6 +110,8 @@ class UserLookupByUsernameTest extends ConceptTestBase {
 
             // THEN: outcome is UNKNOWN
             assertEquals("UNKNOWN", readOutcome());
+            assertNotNull(readField("username"));
+            assertEquals("nobody", readField("username"));
         }
     }
 }

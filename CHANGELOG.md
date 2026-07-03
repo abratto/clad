@@ -44,6 +44,13 @@ file `methodology/` is the source of truth for what each version contains.
 
 ### Methodology
 
+- **Deterministic guardrails for new contract rules**: Added
+  `quality-gate/verify_port_spec_contract.py` to enforce Stage 04b response
+  shapes and Stage 04c `@contract` scenarios when Stage 00 produces
+  `port-spec.md`. Added `quality-gate/verify_concept_field_assertions.py` to
+  enforce R14/R16 for Java concept tests by requiring completion-field
+  assertions alongside outcome assertions. Wired both checks into
+  `QUALITY_GATE.md` and the Stage 04b/04c/04d templates.
 - **Gate summary rule**: Added operating principle 11 to `AGENTS.md §2`
   requiring the agent to list every artefact file produced since the last
   gate, grouped by stage, before presenting the approval question at each

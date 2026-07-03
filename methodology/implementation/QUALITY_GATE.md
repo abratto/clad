@@ -100,13 +100,16 @@ not relax the *intent*.
        as a pre-flight before any 04c work.
      - **Automated:** Run `quality-gate/verify_spec_parity.py`
        to check every concept spec action has a matching SPEC entry.
+     - **Automated:** Run `quality-gate/verify_port_spec_contract.py`
+       when `port-spec.md` exists to check Stage 04b response shapes and
+       Stage 04c `@contract` scenarios are present.
      - **Automated:** For the Gherkin track, run
        `quality-gate/verify_gherkin_derivation.py` to validate derivation.
      - **Automated:** Run `quality-gate/verify_concept_test_derivation.py`
        to check every SPEC outcome has a matching concept test.
-     - **Semantic:** Confirm concept tests assert primary completion
-       field values, not only outcome tokens, for every field downstream
-       syncs consume.
+     - **Automated:** For Java concept tests, run
+       `quality-gate/verify_concept_field_assertions.py` to confirm tests
+       assert required completion field values, not only outcome tokens.
      - The automated checks replace the previous semantic (human) checks.
        04d and 04e auto-advance; the scripts are the gate.
 
@@ -149,9 +152,11 @@ consistency checks across the CLAD artefact chain:
 | `verify_sync_route_filters.py` | 03, 03a | Shared-trigger syncs carry route filters |
 | `verify_data_model.py` | 03b | CSDP structure, storage-leakage prevention |
 | `verify_spec_parity.py` | 04b | Action name parity between concept specs and SPECs |
+| `verify_port_spec_contract.py` | 04b, 04c | When `port-spec.md` exists, response shapes and `@contract` scenarios are present |
 | `verify_feature_file_presence.py` | 04c | Pre-flight: `.feature` file exists in output + Cucumber discovery path |
 | `verify_gherkin_derivation.py` | 04c | `.feature` file derivation per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1 |
-| `verify_concept_test_derivation.py` | 04d | Every SPEC outcome has a matching concept test row and Java method; semantic review confirms field-value assertions |
+| `verify_concept_test_derivation.py` | 04d | Every SPEC outcome has a matching concept test row and Java method |
+| `verify_concept_field_assertions.py` | 04d | Java concept tests assert required completion fields from SPEC flow-token shapes |
 
 Each script returns exit code 0 on pass, 1 on fail, with a structured
 report. They are invoked by the relevant stage's `## Verify` section

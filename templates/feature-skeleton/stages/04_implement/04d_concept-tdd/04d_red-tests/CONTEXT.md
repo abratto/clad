@@ -75,13 +75,16 @@ here.
 Run the following before requesting the human gate:
 
 ```
-python3 ../../../../quality-gate/verify_file_manifest.py \
+python3 ../../../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "concept-test-derivation.md"
-python3 ../../../../quality-gate/verify_concept_test_derivation.py \
+python3 ../../../../../../quality-gate/verify_concept_test_derivation.py \
   --spec-dir ../../04b_spec/output \
   --derivation output/concept-test-derivation.md \
   --test-source-root <APP_TEST_SOURCE_ROOT>
-python3 ../../../../quality-gate/verify_test_naming.py \
+python3 ../../../../../../quality-gate/verify_concept_field_assertions.py \
+  --spec-dir ../../04b_spec/output \
+  --test-source-root <APP_TEST_SOURCE_ROOT>
+python3 ../../../../../../quality-gate/verify_test_naming.py \
   --test-source-root <APP_TEST_SOURCE_ROOT> \
   --scope concepts
 ```
@@ -91,6 +94,9 @@ python3 ../../../../quality-gate/verify_test_naming.py \
 - **verify_concept_test_derivation.py:** every SPEC outcome has a matching
   test row in the derivation map; every named test method exists in the
   Java source; outcome names match verbatim.
+- **verify_concept_field_assertions.py:** Java concept tests that assert
+  an outcome also assert every required completion field from the SPEC
+  flow-token shape.
 - **verify_test_naming.py:** every concept test class follows London School
   naming conventions (class: `<Concept><Action>Test`, method prefix: `should`,
   `@Nested` groups present, `// GIVEN/WHEN/THEN` comments).
