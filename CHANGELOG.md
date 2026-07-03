@@ -44,6 +44,19 @@ file `methodology/` is the source of truth for what each version contains.
 
 ### Methodology
 
+- **R17 — Iterative-change parity rule**: Added hard rule R17 to
+  `AGENTS.md §9`. Before modifying any sync or concept implementation
+  file, the agent must classify the change per
+  `methodology/core/ITERATIVE_CHANGES.md` and update the affected stage
+  artefacts in the same commit. A class without a matching spec is a
+  defect of the same severity as a cross-concept import (R1).
+- **`quality-gate/verify_implementation_parity.py`**: New quality-gate
+  script that mechanises R17's forward direction. For every sync
+  implementation class it checks that a `*.sync.md` exists in the
+  features tree; for every concept implementation class it checks that
+  a `*.concept.md` exists. Triggered by diffs that touch sync or concept
+  implementation source files. Added as gate check 12 in
+  `methodology/implementation/QUALITY_GATE.md`.
 - **Deterministic guardrails for new contract rules**: Added
   `quality-gate/verify_port_spec_contract.py` to enforce Stage 04b response
   shapes and Stage 04c `@contract` scenarios when Stage 00 produces

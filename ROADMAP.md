@@ -31,4 +31,4 @@
 - **Last gate passed:** `UC-00-login` Stage 05 (worked example shipped)
 - **Next stage:** start `UC-01-<slug>` Stage 00 (actor/goal)
 - **Blockers:** none
-- **Last updated:** 2026-07-02 — methodology maintenance: added deterministic quality-gate checks for external `port-spec.md` consumption and R14/R16 Java concept field assertions. UC-00-login reference tests now assert completion fields; 46 Java tests + roadmap/R1/new guardrail scripts green.
+- **Last updated:** 2026-07-03 — methodology maintenance: added R17 iterative-change parity rule plus `verify_implementation_parity.py` for concept/sync implementation-to-artefact checks. Prior contract guardrails remain green; new parity script passes for reference concepts and reports reference sync naming mismatches without crashing.

@@ -112,6 +112,20 @@ not relax the *intent*.
        assert required completion field values, not only outcome tokens.
      - The automated checks replace the previous semantic (human) checks.
        04d and 04e auto-advance; the scripts are the gate.
+12. **Implementation parity check (R17 enforcement).**
+    When a diff touches any implementation source file under a profile's
+    sync or concept packages (e.g. `app/backend/src/.../syncs/`,
+    `app/backend/src/.../concepts/`, or the equivalent in
+    `reference-impl/`):
+    - **Automated:** Run `quality-gate/verify_implementation_parity.py`
+      with `--sync-impl-dir` and/or `--concept-impl-dir` pointing at the
+      changed packages, and `--features-dir features/`. The check fails
+      if any implementation class lacks a corresponding spec artefact.
+    - **Semantic (human):** Verify the diff also contains updates to the
+      relevant `stages/02_concepts/output/` or `stages/03_syncs/output/`
+      artefacts. A Java-only diff with no artefact update is a hard-rule
+      (R17) violation even if the parity script passes (e.g. the spec
+      file exists but its content no longer matches the code).
 
 ## Java/Micronaut/Jena profile
 
@@ -153,6 +167,7 @@ consistency checks across the CLAD artefact chain:
 | `verify_data_model.py` | 03b | CSDP structure, storage-leakage prevention |
 | `verify_spec_parity.py` | 04b | Action name parity between concept specs and SPECs |
 | `verify_port_spec_contract.py` | 04b, 04c | When `port-spec.md` exists, response shapes and `@contract` scenarios are present |
+| `verify_implementation_parity.py` | 04+ | Implementation concept/sync classes have corresponding stage artefact specs |
 | `verify_feature_file_presence.py` | 04c | Pre-flight: `.feature` file exists in output + Cucumber discovery path |
 | `verify_gherkin_derivation.py` | 04c | `.feature` file derivation per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1 |
 | `verify_concept_test_derivation.py` | 04d | Every SPEC outcome has a matching concept test row and Java method |
@@ -162,7 +177,7 @@ Each script returns exit code 0 on pass, 1 on fail, with a structured
 report. They are invoked by the relevant stage's `## Verify` section
 (or at commit time via the quality gate). The automated checks
 complement — not replace — the semantic checks that require human
-judgment (noted as "Semantic (human)" in items 7–11 above).
+judgment (noted as "Semantic (human)" in items 7–12 above).
 
 ### What the ArchUnit rules enforce
 

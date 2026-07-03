@@ -263,8 +263,9 @@ Rules R1–R5 above are the WYSIWID architectural rules. Four additional
 process/discipline rules (R6–R9) are defined in
 [`methodology/implementation/RULES.md`](methodology/implementation/RULES.md)
 and are equally binding. R14 and R15 above are additional hard rules for
-the testing and dependency-review stages. Stage CONTEXT.md Inputs tables
-reference the full rule set as needed.
+the testing and dependency-review stages. Hard-learned implementation
+rules in §9 (R10–R13 and R16–R17) are equally binding. Stage CONTEXT.md
+Inputs tables reference the full rule set as needed.
 
 If a rule appears to be in conflict with a request, **stop and ask** —
 do not silently relax it.
@@ -382,6 +383,34 @@ any concept unit test:
 - Assert the primary fields the concept's `writeCompletion` writes.
 - Assert that no primary field is null or empty string when the inputs
    are valid.
+
+### R17 — Every change to a sync or concept MUST re-enter the CLAD stage pipeline
+
+`methodology/core/ITERATIVE_CHANGES.md` is binding. Before modifying any
+file that falls under:
+
+- `features/UC-*/stages/02_concepts/output/` (concept specs)
+- `features/UC-*/stages/03_syncs/output/` (sync specs)
+- any profile's implementation source for concepts or syncs
+  (e.g. `app/backend/src/.../{concepts,syncs}/`,
+   `reference-impl/java-micronaut-jena/src/.../concepts/` or `.../syncs/`)
+
+the agent MUST:
+
+1. Open `methodology/core/ITERATIVE_CHANGES.md` and classify the change
+   (Presentation / Behavioural / Structural).
+2. Identify the earliest stage whose `output/` is no longer accurate and
+   re-enter there.
+3. Update all affected stage artefacts (sync specs, concept specs, chain
+   tables) in the **same commit** as the implementation change.
+
+A Java sync class with no corresponding `*.sync.md`, or a Java concept
+class whose outcomes no longer match the approved `*.concept.md`, is a
+defect of the same severity as a cross-concept import (R1).
+
+`quality-gate/verify_implementation_parity.py` mechanises the forward
+direction of this rule: it fails if an implementation class exists with no
+corresponding spec artefact.
 
 ## 10. Pointers
 
