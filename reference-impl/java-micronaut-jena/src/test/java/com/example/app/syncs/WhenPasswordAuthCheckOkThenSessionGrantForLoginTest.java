@@ -13,8 +13,8 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DisplayName("GrantSessionForLogin")
-class GrantSessionForLoginTest extends ConceptTestBase {
+@DisplayName("WhenPasswordAuthCheckOkThenSessionGrantForLogin")
+class WhenPasswordAuthCheckOkThenSessionGrantForLoginTest extends ConceptTestBase {
 
     private static final String FLOW_TOKEN = RdfVocabulary.FLOW_TOKEN_PREFIX + "grants-test-1";
     private static final String TRIGGER_IRI = RdfVocabulary.ACTION_NODE_PREFIX + "grants-trigger";
@@ -29,7 +29,7 @@ class GrantSessionForLoginTest extends ConceptTestBase {
         void shouldFireSessionGrantWhenCheckOk() {
             // GIVEN: a PasswordAuth.check completed with outcome OK and userId
             writeCompletedTrigger();
-            var sync = new GrantSessionForLogin(log);
+            var sync = new WhenPasswordAuthCheckOkThenSessionGrantForLogin(log);
 
             // WHEN: the sync is executed by the dispatcher
             sync.execute();

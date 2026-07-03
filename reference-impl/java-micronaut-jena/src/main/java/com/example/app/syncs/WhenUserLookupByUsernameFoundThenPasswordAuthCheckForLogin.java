@@ -11,7 +11,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Sync: CheckCredentialForLogin
+ * Sync: WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin
  *
  * <p>When: {@code User/lookupByUsername[outcome=FOUND]} (in a login flow)
  * <p>Then: {@code PasswordAuth/check { userId, password }}
@@ -26,18 +26,18 @@ import jakarta.inject.Singleton;
         fires = "PasswordAuth/check",
         where = "same flow as the login request")
 @Singleton
-public final class CheckCredentialForLogin extends SyncAgent {
+public final class WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
     private static final String LOGIN_ROUTE = "login";
 
     @Inject
-    public CheckCredentialForLogin(ActionLog actionLog) {
+    public WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin(ActionLog actionLog) {
         super(actionLog);
     }
 
     @Override
-    public String syncName() { return "checkCredentialForLogin"; }
+    public String syncName() { return "whenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin"; }
 
     @Override
     public SyncTrigger trigger() {

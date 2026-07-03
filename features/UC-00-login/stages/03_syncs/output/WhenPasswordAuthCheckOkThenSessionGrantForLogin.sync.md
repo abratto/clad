@@ -1,15 +1,15 @@
-sync GrantSessionForLogin
+sync WhenPasswordAuthCheckOkThenSessionGrantForLogin
 
 ## Sync Contract Matrix
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `3b` | `4a` | `PasswordAuth/check: [...] => [ ok ]` | `Session/grant: [ userId: ?user ]` | `<none>` |
+| `3b` | `4a` | `PasswordAuth/check: [...] => [ ok ; userId ]` | `Session/grant: [ userId: ?user ]` | `<none>` |
 
 ## Rule
 
 when {
-    PasswordAuth/check: [ userId: ?user ; password: ?p ] => [ ok ]
+    PasswordAuth/check: [ userId: ?user ; password: ?p ] => [ ok ; userId: ?user ]
 }
 then {
     Session/grant: [ userId: ?user ]

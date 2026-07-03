@@ -211,10 +211,10 @@ public class LoginStepDefinitions {
      * Asserts the response body contains a specific string literal.
      *
      * Response body literals derived from 03_syncs/output/:
-     *   RespondUnknownUser.sync.md:    body={ message: "username or password didn't match" }
-     *   RespondWrongPassword.sync.md:  body={ message: "username or password didn't match" }
-     *   RespondLocked.sync.md:         body={ message: "Too many attempts. Try again in 15 minutes." }
-     *   RespondLoginSuccess.sync.md:   body={ sessionToken: sessionId }
+     *   WhenUserLookupByUsernameNotFoundThenWebRespondForLogin.sync.md:    body={ message: "username or password didn't match" }
+     *   WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md:  body={ message: "username or password didn't match" }
+     *   WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md:         body={ message: "Too many attempts. Try again in 15 minutes." }
+     *   WhenSessionGrantGrantedThenWebRespondForLogin.sync.md:   body={ sessionToken: sessionId }
      */
     @Then("the response body contains {string}")
     public void response_body_contains(String expectedContent) {

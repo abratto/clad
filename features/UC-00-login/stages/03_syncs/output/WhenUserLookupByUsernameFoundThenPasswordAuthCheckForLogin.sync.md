@@ -1,15 +1,15 @@
-sync CheckCredentialForLogin
+sync WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin
 
 ## Sync Contract Matrix
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `2` | `3b` | `User/lookupByUsername: [...] => [ userId ]` | `PasswordAuth/check: [ userId: ?user ; password: ?pass ]` | `<none>` |
+| `2` | `3b` | `User/lookupByUsername: [...] => [ found ; userId ]` | `PasswordAuth/check: [ userId: ?user ; password: ?pass ]` | `<none>` |
 
 ## Rule
 
 when {
-    User/lookupByUsername: [ username: ?u ] => [ userId: ?user ]
+    User/lookupByUsername: [ username: ?u ] => [ found ; userId: ?user ]
 }
 then {
     PasswordAuth/check: [ userId: ?user ; password: ?p ]

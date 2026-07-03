@@ -410,7 +410,8 @@ defect of the same severity as a cross-concept import (R1).
 
 `quality-gate/verify_implementation_parity.py` mechanises the forward
 direction of this rule: it fails if an implementation class exists with no
-corresponding spec artefact.
+corresponding spec artefact, or if a sync spec/class/runtime name does not
+lower mechanically from the Stage 03 sync rule.
 
 ## 10. Pointers
 

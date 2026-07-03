@@ -10,12 +10,12 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Sync: RespondUnknownUser
+ * Sync: WhenUserLookupByUsernameNotFoundThenWebRespondForLogin
  *
  * <p>When: {@code User/lookupByUsername[outcome=UNKNOWN]}
  * <p>Then: {@code Web/respond { statusCode: 401, message }}
  *
- * <p>Same message as {@link RespondWrongPassword} — no enumeration leak.
+ * <p>Same message as {@link WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin} — no enumeration leak.
  */
 @SyncMetadata(
         flow = "Login",
@@ -24,17 +24,17 @@ import jakarta.inject.Singleton;
         fires = "Web/respond[401]",
         where = "unknown-user path")
 @Singleton
-public final class RespondUnknownUser extends SyncAgent {
+public final class WhenUserLookupByUsernameNotFoundThenWebRespondForLogin extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
 
     @Inject
-    public RespondUnknownUser(ActionLog actionLog) {
+    public WhenUserLookupByUsernameNotFoundThenWebRespondForLogin(ActionLog actionLog) {
         super(actionLog);
     }
 
     @Override
-    public String syncName() { return "respondUnknownUser"; }
+    public String syncName() { return "whenUserLookupByUsernameNotFoundThenWebRespondForLogin"; }
 
     @Override
     public SyncTrigger trigger() {
@@ -61,6 +61,6 @@ public final class RespondUnknownUser extends SyncAgent {
 
     @Override
     protected String parameterizeSparql(String sparql) {
-        return bindLiteral(sparql, "_message", RespondWrongPassword.LOGIN_FAILURE_MESSAGE);
+        return bindLiteral(sparql, "_message", WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.LOGIN_FAILURE_MESSAGE);
     }
 }

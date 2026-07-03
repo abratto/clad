@@ -110,10 +110,10 @@ Row 1 is the root `Web.handle` entry; it is not itself a sync.
 
 For each non-root row's derived `When -> Then` transition:
 
-2. **Row 1→2:** When `Web.handle[Routed]`, invoke `User.lookupByUsername` → sync name: `LookupUserForLogin`
-3. **Row 2 [Found] → 3b:** When `User.lookupByUsername[Found(userId)]`, invoke `PasswordAuth.check` → sync: `CheckCredentialForLogin`
-4. **Row 2 [NotFound] → 3a:** When `User.lookupByUsername[NotFound]`, invoke `Web.respond[401]` → sync: `RespondUnknownUser`
-5. **Row 3b [Ok] → 4a:** When `PasswordAuth.check[Ok]`, invoke `Session.grant` → sync: `GrantSessionForLogin`
-6. **Row 3b [BadPassword] → 4b:** When `PasswordAuth.check[BadPassword]`, invoke `Web.respond[401]` → sync: `RespondWrongPassword`
-7. **Row 3b [Locked] → 4c:** When `PasswordAuth.check[Locked]`, invoke `Web.respond[401]` → sync: `RespondLocked`
-8. **Row 4a [Granted] → 5:** When `Session.grant[Granted(sessionId)]`, invoke `Web.respond[200]` → sync: `RespondLoginSuccess`
+2. **Row 1→2:** When `Web.handle[Routed]`, invoke `User.lookupByUsername` → sync name: `WhenWebHandleRoutedThenUserLookupByUsernameForLogin`
+3. **Row 2 [Found] → 3b:** When `User.lookupByUsername[Found(userId)]`, invoke `PasswordAuth.check` → sync: `WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin`
+4. **Row 2 [NotFound] → 3a:** When `User.lookupByUsername[NotFound]`, invoke `Web.respond[401]` → sync: `WhenUserLookupByUsernameNotFoundThenWebRespondForLogin`
+5. **Row 3b [Ok] → 4a:** When `PasswordAuth.check[Ok]`, invoke `Session.grant` → sync: `WhenPasswordAuthCheckOkThenSessionGrantForLogin`
+6. **Row 3b [BadPassword] → 4b:** When `PasswordAuth.check[BadPassword]`, invoke `Web.respond[401]` → sync: `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin`
+7. **Row 3b [Locked] → 4c:** When `PasswordAuth.check[Locked]`, invoke `Web.respond[401]` → sync: `WhenPasswordAuthCheckLockedThenWebRespondForLogin`
+8. **Row 4a [Granted] → 5:** When `Session.grant[Granted(sessionId)]`, invoke `Web.respond[200]` → sync: `WhenSessionGrantGrantedThenWebRespondForLogin`

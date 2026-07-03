@@ -1,4 +1,4 @@
-sync RespondLocked
+sync WhenPasswordAuthCheckLockedThenWebRespondForLogin
 
 ## Sync Contract Matrix
 
@@ -9,7 +9,7 @@ sync RespondLocked
 ## Rule
 
 when {
-    PasswordAuth/check: [ userId: ?user ; password: ?p ] => [ error: "locked" ]
+    PasswordAuth/check: [ userId: ?user ; password: ?p ] => [ locked ]
 }
 then {
     Web/respond: [ status: 401 ; body: { message: "Too many attempts. Try again in 15 minutes." } ]

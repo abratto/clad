@@ -41,8 +41,8 @@ flow implemented by:
 - `syncs/LoginLookupTriggersAuth.java`
 - `syncs/LoginGrantsSession.java`
 - `syncs/LoginRespondSuccess.java`
-- `syncs/LoginRespondWrongPassword.java`
-- `syncs/LoginRespondUnknownUser.java`
+- `syncs/LoginWhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.java`
+- `syncs/LoginWhenUserLookupByUsernameNotFoundThenWebRespondForLogin.java`
 - `src/test/java/com/example/app/flows/LoginFlowTest.java`
 - `features/UC-00-login/stages/04_implement/04c_flow-tests/output/login.feature`
 

@@ -1,4 +1,4 @@
-sync RespondWrongPassword
+sync WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin
 
 ## Sync Contract Matrix
 
@@ -9,7 +9,7 @@ sync RespondWrongPassword
 ## Rule
 
 when {
-    PasswordAuth/check: [ userId: ?user ; password: ?p ] => [ error: "badPassword" ]
+    PasswordAuth/check: [ userId: ?user ; password: ?p ] => [ badPassword ]
 }
 then {
     Web/respond: [ status: 401 ; body: { message: "username or password didn't match" } ]
@@ -28,4 +28,4 @@ then {
 
 ## Notes
 
-- The response literal is intentionally identical to `RespondUnknownUser` to preserve the no-enumeration property.
+- The response literal is intentionally identical to `WhenUserLookupByUsernameNotFoundThenWebRespondForLogin` to preserve the no-enumeration property.

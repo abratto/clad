@@ -4,7 +4,7 @@
 
 | Action | Flow (sync) | Data received | Pattern | Source |
 |---|---|---|---|---|
-| `lookupByUsername` | `LookupUserForLogin` (`successful-login`, `wrong-password`, `unknown-user`, `lockout`) | `username` | A | `Web/handle` trigger `?u` |
+| `lookupByUsername` | `WhenWebHandleRoutedThenUserLookupByUsernameForLogin` (`successful-login`, `wrong-password`, `unknown-user`, `lockout`) | `username` | A | `Web/handle` trigger `?u` |
 
 ## Section 2 — Named-region reads by others (inbound Pattern D)
 
@@ -20,7 +20,7 @@ None — no other concept's sync reads `User`'s named region.
 ## Cross-checks
 
 - `lookupByUsername` is declared in `../../02_concepts/output/User.concept.md`.
-- The sync `LookupUserForLogin` exists under `../../03_syncs/output/`.
+- The sync `WhenWebHandleRoutedThenUserLookupByUsernameForLogin` exists under `../../03_syncs/output/`.
 
 ---
 

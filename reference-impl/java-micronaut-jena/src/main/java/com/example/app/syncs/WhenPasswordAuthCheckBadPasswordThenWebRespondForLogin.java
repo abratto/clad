@@ -10,30 +10,33 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Sync: RespondLocked
+ * Sync: WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin
  *
- * <p>When: {@code PasswordAuth/check[outcome=LOCKED]}
+ * <p>When: {@code PasswordAuth/check[outcome=BAD_PASSWORD]}
  * <p>Then: {@code Web/respond { statusCode: 401, message }}
+ *
+ * <p>The message is intentionally identical to the unknown-user response so
+ * the API does not leak account enumeration.
  */
 @SyncMetadata(
         flow = "Login",
         step = 3,
-        triggeredBy = "PasswordAuth/check[LOCKED]",
+        triggeredBy = "PasswordAuth/check[BAD_PASSWORD|NO_CREDENTIAL]",
         fires = "Web/respond[401]",
-        where = "locked account path")
+        where = "credential failure path")
 @Singleton
-public final class RespondLocked extends SyncAgent {
+public final class WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
-    private static final String LOCKED_MESSAGE = "Too many attempts. Try again in 15 minutes.";
+    static final String LOGIN_FAILURE_MESSAGE = "username or password didn't match";
 
     @Inject
-    public RespondLocked(ActionLog actionLog) {
+    public WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin(ActionLog actionLog) {
         super(actionLog);
     }
 
     @Override
-    public String syncName() { return "respondLocked"; }
+    public String syncName() { return "whenPasswordAuthCheckBadPasswordThenWebRespondForLogin"; }
 
     @Override
     public SyncTrigger trigger() {
@@ -42,10 +45,13 @@ public final class RespondLocked extends SyncAgent {
 
     @Override
     protected String whereClause() {
+        // Match BAD_PASSWORD or NO_CREDENTIAL — both are credential failures and
+        // must be indistinguishable from unknown-user externally.
         return """
             ?_when_1 :concept <%s> ;
                      :name    "check" .
-            << ?_when_1 :outcome "LOCKED" >> :flow ?_flow .
+            << ?_when_1 :outcome ?_outcome >> :flow ?_flow .
+            FILTER (?_outcome IN ("BAD_PASSWORD", "NO_CREDENTIAL"))
             """.formatted(PasswordAuthConcept.IRI);
     }
 
@@ -60,6 +66,6 @@ public final class RespondLocked extends SyncAgent {
 
     @Override
     protected String parameterizeSparql(String sparql) {
-        return bindLiteral(sparql, "_message", LOCKED_MESSAGE);
+        return bindLiteral(sparql, "_message", LOGIN_FAILURE_MESSAGE);
     }
 }

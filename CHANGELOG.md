@@ -57,6 +57,12 @@ file `methodology/` is the source of truth for what each version contains.
   a `*.concept.md` exists. Triggered by diffs that touch sync or concept
   implementation source files. Added as gate check 12 in
   `methodology/implementation/QUALITY_GATE.md`.
+- **Sync naming grammar**: Added canonical sync names that read as
+  compressed rules:
+  `When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>]`.
+  Stage 03 sync file stems, `sync <Name>` headers, Java class names, and
+  Java `syncName()` values now lower from the same rule shape, and
+  `verify_implementation_parity.py` checks this deterministically.
 - **Deterministic guardrails for new contract rules**: Added
   `quality-gate/verify_port_spec_contract.py` to enforce Stage 04b response
   shapes and Stage 04c `@contract` scenarios when Stage 00 produces

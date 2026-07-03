@@ -1,15 +1,15 @@
-sync RespondLoginSuccess
+sync WhenSessionGrantGrantedThenWebRespondForLogin
 
 ## Sync Contract Matrix
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `4a` | `5` | `Session/grant: [...] => [ sessionId ]` | `Web/respond: [ status: 200 ; body: { sessionToken: ?sid } ]` | `200` |
+| `4a` | `5` | `Session/grant: [...] => [ granted ; sessionId ]` | `Web/respond: [ status: 200 ; body: { sessionToken: ?sid } ]` | `200` |
 
 ## Rule
 
 when {
-    Session/grant: [ userId: ?user ] => [ sessionId: ?sid ]
+    Session/grant: [ userId: ?user ] => [ granted ; sessionId: ?sid ]
 }
 then {
     Web/respond: [ status: 200 ; body: { sessionToken: ?sid } ]

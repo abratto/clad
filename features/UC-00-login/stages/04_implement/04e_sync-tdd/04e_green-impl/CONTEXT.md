@@ -71,6 +71,10 @@ not redesign approved tests.
 - All flow tests from `04c` are green.
 - Executed command evidence shows: test compilation succeeds, sync tests
   are green, and flow tests are green.
+- Run `quality-gate/verify_implementation_parity.py` with the Java sync
+   source directory and `--features-dir features/`. It must confirm every
+   sync class has a corresponding Stage 03 spec and mechanically follows
+   the `When<Trigger>Then<Target>[For<Scope>]` naming grammar.
 - Behavior is traceable first to the approved upstream artefacts; the
    Java exemplar was used only as a realization pattern.
 - Every generated sync test/implementation pair corresponds to exactly

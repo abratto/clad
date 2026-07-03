@@ -1,4 +1,4 @@
-sync RespondUnknownUser
+sync WhenUserLookupByUsernameNotFoundThenWebRespondForLogin
 
 ## Sync Contract Matrix
 
@@ -9,7 +9,7 @@ sync RespondUnknownUser
 ## Rule
 
 when {
-    User/lookupByUsername: [ username: ?u ] => [ error: "notFound" ]
+    User/lookupByUsername: [ username: ?u ] => [ notFound ]
 }
 then {
     Web/respond: [ status: 401 ; body: { message: "username or password didn't match" } ]
@@ -28,4 +28,4 @@ then {
 
 ## Notes
 
-- The response literal is intentionally identical to `RespondWrongPassword` to preserve the no-enumeration property.
+- The response literal is intentionally identical to `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin` to preserve the no-enumeration property.

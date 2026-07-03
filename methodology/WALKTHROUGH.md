@@ -267,8 +267,8 @@ branching, no state, no I/O. Every `where` clause labels its pattern
 
 For UC-00 the agent writes:
 
-- [`GrantSessionForLogin.sync.md`](../features/UC-00-login/stages/03_syncs/output/GrantSessionForLogin.sync.md) — `when PasswordAuth.check(userId, password) -> Ok` then `Session.grant(userId)` then `Web.respond(200, { sessionToken })`. The `where: B: sessionId = result_of(Session.grant).sessionId` is **Pattern B** (flow-sibling); see [`SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md).
-- [`RespondLocked.sync.md`](../features/UC-00-login/stages/03_syncs/output/RespondLocked.sync.md) — spec-only at this round.
+- [`WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md`](../features/UC-00-login/stages/03_syncs/output/WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md) — `when PasswordAuth.check(userId, password) -> Ok` then `Session.grant(userId)` then `Web.respond(200, { sessionToken })`. The `where: B: sessionId = result_of(Session.grant).sessionId` is **Pattern B** (flow-sibling); see [`SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md).
+- [`WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md`](../features/UC-00-login/stages/03_syncs/output/WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md) — spec-only at this round.
 
 The unhappy paths (`wrong-password`, `unknown-user`) need **no sync**
 — `Web` translates the non-`Ok` outcome to a 401 directly. The sync

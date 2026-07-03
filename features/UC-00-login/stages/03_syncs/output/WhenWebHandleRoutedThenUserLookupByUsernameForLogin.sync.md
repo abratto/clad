@@ -1,4 +1,4 @@
-sync LookupUserForLogin
+sync WhenWebHandleRoutedThenUserLookupByUsernameForLogin
 
 ## Sync Contract Matrix
 

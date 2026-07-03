@@ -46,7 +46,10 @@ and reopen Stage 02. Stage 03 does not normalize earlier-stage drift.
 Syncs use paper-style block syntax: `sync <Name>`, `when { }` / `where { }` /
 `then { }`, with `Concept/action:` namespace qualifiers (slash separator,
 colon after action), `?variable` bindings, and `=> [ outcome ]` for
-outcome matching. All `?variable`s are scoped across the entire sync.
+outcome matching. The sync name and file stem follow the compressed rule
+grammar from `SYNCHRONIZATIONS.md`:
+`When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>]`.
+All `?variable`s are scoped across the entire sync.
 
 The `where` clause is a **declarative query language** supporting:
 
@@ -79,13 +82,13 @@ canonical sync files and introduces no new logic.
 
 ## Outputs
 
-- `output/LookupUserForLogin.sync.md`
-- `output/CheckCredentialForLogin.sync.md`
-- `output/RespondUnknownUser.sync.md`
-- `output/GrantSessionForLogin.sync.md`
-- `output/RespondWrongPassword.sync.md`
-- `output/RespondLocked.sync.md`
-- `output/RespondLoginSuccess.sync.md`
+- `output/WhenWebHandleRoutedThenUserLookupByUsernameForLogin.sync.md`
+- `output/WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin.sync.md`
+- `output/WhenUserLookupByUsernameNotFoundThenWebRespondForLogin.sync.md`
+- `output/WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md`
+- `output/WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md`
+- `output/WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md`
+- `output/WhenSessionGrantGrantedThenWebRespondForLogin.sync.md`
 
 ## Verify
 
@@ -106,6 +109,8 @@ canonical sync files and introduces no new logic.
   `../01_usecase/output/usecase.md` is satisfied by at least one sync.
 - **Filename contract:** the files in `output/` match the `Outputs`
   section exactly, with no extras and no omissions.
+- **Sync naming:** every filename stem and `sync <Name>` header follows
+  the compressed `When<Trigger>Then<Target>` rule grammar.
 
 ## Gate
 

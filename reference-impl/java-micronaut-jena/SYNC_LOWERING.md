@@ -39,7 +39,12 @@ class under `<APP_PACKAGE_ROOT>.syncs` that:
   `thenBindings()`
 
 Use the approved sync name for the class name with standard Java class
-capitalization. Use lower camel case for `syncName()`.
+capitalization. The approved sync name is the Stage 03 file stem and
+must follow CLAD's compressed rule grammar:
+
+`When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>]`
+
+Use lower camel case for `syncName()`.
 
 ## SPARQL-star fragment construction
 
@@ -747,17 +752,17 @@ Example:
 ### Stage 03 syncs
 
 ```text
-LookupUserForLogin:
+WhenWebHandleRoutedThenUserLookupByUsernameForLogin:
   when:  Web.handle[Routed(username, password)]
   where: A: username = when.username
   then:  User.lookupByUsername(username)
 
-GrantSessionForLogin:
+WhenPasswordAuthCheckOkThenSessionGrantForLogin:
   when:  PasswordAuth.check[Ok(userId)]
   where: B: userId = result_of(PasswordAuth.check).userId
   then:  Session.grant(userId)
 
-RespondLoginSuccess:
+WhenSessionGrantGrantedThenWebRespondForLogin:
   when:  Session.grant[Granted(sessionToken)]
   where: B: sessionToken = result_of(Session.grant).sessionToken
   then:  Web.respond(statusCode=200, sessionToken)
@@ -765,7 +770,7 @@ RespondLoginSuccess:
 
 ### Java/Jena lowering
 
-`GrantSessionForLogin.whereClause()`:
+`WhenPasswordAuthCheckOkThenSessionGrantForLogin.whereClause()`:
 
 ```java
 return """
@@ -776,7 +781,7 @@ return """
   """.formatted(PasswordAuthConcept.IRI);
 ```
 
-`GrantSessionForLogin.thenBindings()`:
+`WhenPasswordAuthCheckOkThenSessionGrantForLogin.thenBindings()`:
 
 ```java
 return """
@@ -786,7 +791,7 @@ return """
   """.formatted(SessionConcept.IRI);
 ```
 
-`RespondLoginSuccess.thenBindings()`:
+`WhenSessionGrantGrantedThenWebRespondForLogin.thenBindings()`:
 
 ```java
 return """

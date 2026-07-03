@@ -1,8 +1,21 @@
 <!-- Template for Stage 03 (03_syncs). Purpose: see methodology/architecture/SYNCHRONIZATIONS.md. -->
 
-sync <SyncName>
+sync When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>]
 
 > Sync template. Declarative only — no branching, no state, no I/O.
+
+<!-- Naming rule
+
+The sync name and file stem MUST read as a compressed rule:
+
+  When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>]
+
+Derive the trigger and target parts from the first `when` and `then`
+signatures. Derive TriggerCompletion from the first token on the right
+side of the `when` arrow. Use PascalCase here; profile implementations
+lower this same stem mechanically (Java class name = PascalCase stem,
+Java syncName() = lower camel case stem).
+-->
 
 ## Sync Contract Matrix
 

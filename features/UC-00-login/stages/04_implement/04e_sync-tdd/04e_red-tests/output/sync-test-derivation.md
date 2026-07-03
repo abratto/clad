@@ -14,22 +14,22 @@
 
 | Sync | Chain table | Flow scenario | Tested by |
 |---|---|---|---|
-| `LookupUserForLogin` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `LoginFlowTest` + `CucumberTest` |
-| `CheckCredentialForLogin` | Row 2→3 | successful-login, wrong-pw, lockout | `LoginFlowTest` + `CucumberTest` |
-| `GrantSessionForLogin` | Row 3→4 | successful-login | `LoginFlowTest` + `CucumberTest` |
-| `RespondLoginSuccess` | Row 4→5 | successful-login | `LoginFlowTest` + `CucumberTest` |
-| `RespondWrongPassword` | Row 3a | wrong-password | `LoginFlowTest` + `CucumberTest` |
-| `RespondLocked` | Row 3b | lockout | `LoginFlowTest` + `CucumberTest` |
-| `RespondUnknownUser` | Row 2a | unknown-user | `LoginFlowTest` + `CucumberTest` |
+| `WhenWebHandleRoutedThenUserLookupByUsernameForLogin` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `LoginFlowTest` + `CucumberTest` |
+| `WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin` | Row 2→3 | successful-login, wrong-pw, lockout | `LoginFlowTest` + `CucumberTest` |
+| `WhenPasswordAuthCheckOkThenSessionGrantForLogin` | Row 3→4 | successful-login | `LoginFlowTest` + `CucumberTest` |
+| `WhenSessionGrantGrantedThenWebRespondForLogin` | Row 4→5 | successful-login | `LoginFlowTest` + `CucumberTest` |
+| `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin` | Row 3a | wrong-password | `LoginFlowTest` + `CucumberTest` |
+| `WhenPasswordAuthCheckLockedThenWebRespondForLogin` | Row 3b | lockout | `LoginFlowTest` + `CucumberTest` |
+| `WhenUserLookupByUsernameNotFoundThenWebRespondForLogin` | Row 2a | unknown-user | `LoginFlowTest` + `CucumberTest` |
 
 ## Gherkin scenario coverage
 
 | Scenario | Syncs exercised |
 |---|---|
-| `successful-login` | LookupUserForLogin, CheckCredentialForLogin, GrantSessionForLogin, RespondLoginSuccess |
-| `wrong-password` | LookupUserForLogin, CheckCredentialForLogin, RespondWrongPassword |
-| `lockout` | LookupUserForLogin, CheckCredentialForLogin, RespondLocked |
-| `unknown-user` | LookupUserForLogin, RespondUnknownUser |
+| `successful-login` | WhenWebHandleRoutedThenUserLookupByUsernameForLogin, WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckOkThenSessionGrantForLogin, WhenSessionGrantGrantedThenWebRespondForLogin |
+| `wrong-password` | WhenWebHandleRoutedThenUserLookupByUsernameForLogin, WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin |
+| `lockout` | WhenWebHandleRoutedThenUserLookupByUsernameForLogin, WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckLockedThenWebRespondForLogin |
+| `unknown-user` | WhenWebHandleRoutedThenUserLookupByUsernameForLogin, WhenUserLookupByUsernameNotFoundThenWebRespondForLogin |
 
 All 4 Cucumber scenarios pass (0 failures).
 
@@ -59,9 +59,9 @@ matching test coverage through the flow tests.
 
 - **Approved red tests:** None — existing tests are flow-level and pass green
 - **Sync package:** `com.example.app.syncs`
-- **Sync classes:** `LookupUserForLogin`, `CheckCredentialForLogin`,
-  `GrantSessionForLogin`, `RespondLoginSuccess`, `RespondWrongPassword`,
-  `RespondLocked`, `RespondUnknownUser`
+- **Sync classes:** `WhenWebHandleRoutedThenUserLookupByUsernameForLogin`, `WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin`,
+  `WhenPasswordAuthCheckOkThenSessionGrantForLogin`, `WhenSessionGrantGrantedThenWebRespondForLogin`, `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin`,
+  `WhenPasswordAuthCheckLockedThenWebRespondForLogin`, `WhenUserLookupByUsernameNotFoundThenWebRespondForLogin`
 - **Test command:** `mvn -f reference-impl/java-micronaut-jena/pom.xml test`
 - **Expected red outcome:** N/A — existing tests are green
 - **Next implementation target:** Stage 05 verification

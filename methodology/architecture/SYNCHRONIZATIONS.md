@@ -10,7 +10,7 @@ business-level wiring lives here.
 ## Shape
 
 ```
-sync GrantSessionForLogin
+sync WhenPasswordAuthCheckOkThenSessionGrantForLogin
 
 when {
     PasswordAuth/check: [ userId: ?user ; password: ?pass ] => [ ok ]
@@ -39,12 +39,50 @@ actions.
 
 | Element | Meaning | Example |
 |---|---|---|
-| `sync <Name>` | Declares a sync rule | `sync GrantSessionForLogin` |
+| `sync <Name>` | Declares a sync rule | `sync WhenPasswordAuthCheckOkThenSessionGrantForLogin` |
 | `Concept/action:` | Qualifies an action within its concept (slash separator, colon after) | `PasswordAuth/check:` |
 | `[ param: value ; ... ]` | Named argument brackets, semicolon-separated | `[ userId: ?user ; password: ?pass ]` |
 | `=> [ output: ?var ]` | Matches an action's completion output | `=> [ ok ]` or `=> [ userId: ?u ]` |
 | `?variable` | Binding scoped across the entire sync | `?user`, `?pass` |
 | `{ }` | Block delimiters for when/where/then | `when { ... }` |
+
+## Naming
+
+A sync name must read as a compressed `when X then Y` rule:
+
+```
+When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>]
+```
+
+Rules:
+
+- Prefix every sync name with `When`.
+- Use `Then` as the separator between the trigger side and target side.
+- Use PascalCase for the Stage 03 sync name and `.sync.md` file stem.
+- Derive `TriggerConcept`, `TriggerAction`, `TargetConcept`, and
+  `TargetAction` directly from the first `when` and `then` signatures.
+- Derive `TriggerCompletion` from the first completion token in the
+  `when` arrow's right side. For `[ ok ; userId: ?u ]`, use `Ok`; for
+  `[ error: "notFound" ]`, use `NotFound`.
+- Omit `TriggerCompletion` only when the trigger has no completion token.
+- Append `For<Scope>` when the same trigger/target edge can occur in
+  multiple routes, flows, use cases, or other scopes.
+- The `sync <Name>` header and filename stem must match exactly. Profile
+  implementations should lower the same stem mechanically; for Java, the
+  class name is the same PascalCase stem and `syncName()` is lower camel case.
+
+Example:
+
+```
+sync WhenPasswordAuthCheckOkThenSessionGrantForLogin
+
+when {
+    PasswordAuth/check: [ userId: ?user ; password: ?pass ] => [ ok ; userId: ?user ]
+}
+then {
+    Session/grant: [ userId: ?user ]
+}
+```
 
 ## What a sync must not do
 

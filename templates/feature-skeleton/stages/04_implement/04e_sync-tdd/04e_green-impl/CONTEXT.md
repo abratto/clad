@@ -88,6 +88,11 @@ not redesign approved tests.
 - All flow tests from `04c` are green.
 - Executed command evidence shows: test compilation succeeds, sync tests
   are green, and flow tests are green.
+- Run `quality-gate/verify_implementation_parity.py` with
+   `--sync-impl-dir <APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/syncs` and
+   `--features-dir ../../../../../../features`. It must confirm every sync class
+   has a corresponding Stage 03 spec and mechanically follows the
+   `When<Trigger>Then<Target>[For<Scope>]` naming grammar.
 
 ### Flow-test verification
 

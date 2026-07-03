@@ -48,7 +48,8 @@ between 02b and 02, stop and reopen Stage 02 before writing any sync
 file. Stage 03 derives coordination from approved contracts; it does not
 repair contract drift.
 
-For each transition, write one `<name>.sync.md`:
+For each transition, write one rule-shaped
+`When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>].sync.md`:
 - `when:` the outcome that fires (e.g. `Account.validate(...) -> Valid`)
 - `where:` data-routing only — field-path references and sync constants.
   No function calls, no arithmetic, no I/O. If you need a computation,
@@ -69,6 +70,11 @@ For each transition, write one `<name>.sync.md`:
   only constants from the target chain row, or fields explicitly emitted
   by the triggering/prior action outcomes and declared in `where:`.
 - `then:` the next concept action to invoke.
+
+The sync file stem and `sync <Name>` header must match the naming rule
+from `SYNCHRONIZATIONS.md`: prefix with `When`, use `Then` between the
+trigger and target sides, and append `For<Scope>` when the same edge can
+occur in multiple routes, flows, or use cases.
 
 Syncs are declarative — no imperative branching, no state, no I/O.
 Every sync's `Cites` section names the use-case scenario it satisfies.
@@ -112,6 +118,8 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 - **Sync count:** the number of sync files in `output/` equals the
   number of transitions in the chain table(s) for this feature (each
   chain-table row-to-row arrow = one sync).
+- **Sync naming:** every filename stem and `sync <Name>` header follows
+  `When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>]`.
 - **Where-clause discipline:** no `where` line contains a function call,
   arithmetic expression, or I/O operation. Every line is a field-path
   reference (`when.field`, `result_of(<#N>).field`) or a sync constant

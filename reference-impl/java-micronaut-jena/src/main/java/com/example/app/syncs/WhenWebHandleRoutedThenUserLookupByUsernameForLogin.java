@@ -10,7 +10,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Sync: LookupUserForLogin
+ * Sync: WhenWebHandleRoutedThenUserLookupByUsernameForLogin
  *
  * <p>When: {@code Web/request[route=login]}
  * <p>Then: {@code User/lookupByUsername { username }}
@@ -28,18 +28,18 @@ import jakarta.inject.Singleton;
         fires = "User/lookupByUsername",
         where = "route=login")
 @Singleton
-public final class LookupUserForLogin extends SyncAgent {
+public final class WhenWebHandleRoutedThenUserLookupByUsernameForLogin extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
     private static final String LOGIN_ROUTE = "login";
 
     @Inject
-    public LookupUserForLogin(ActionLog actionLog) {
+    public WhenWebHandleRoutedThenUserLookupByUsernameForLogin(ActionLog actionLog) {
         super(actionLog);
     }
 
     @Override
-    public String syncName() { return "lookupUserForLogin"; }
+    public String syncName() { return "whenWebHandleRoutedThenUserLookupByUsernameForLogin"; }
 
     @Override
     public SyncTrigger trigger() { return new SyncTrigger(WEB_IRI, "request", null); }

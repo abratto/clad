@@ -120,7 +120,10 @@ not relax the *intent*.
     - **Automated:** Run `quality-gate/verify_implementation_parity.py`
       with `--sync-impl-dir` and/or `--concept-impl-dir` pointing at the
       changed packages, and `--features-dir features/`. The check fails
-      if any implementation class lacks a corresponding spec artefact.
+      if any implementation class lacks a corresponding spec artefact,
+      or if any sync spec/class/runtime name does not mechanically follow
+      the `When<Trigger>Then<Target>[For<Scope>]` naming grammar derived
+      from the Stage 03 sync rule.
     - **Semantic (human):** Verify the diff also contains updates to the
       relevant `stages/02_concepts/output/` or `stages/03_syncs/output/`
       artefacts. A Java-only diff with no artefact update is a hard-rule
@@ -167,7 +170,7 @@ consistency checks across the CLAD artefact chain:
 | `verify_data_model.py` | 03b | CSDP structure, storage-leakage prevention |
 | `verify_spec_parity.py` | 04b | Action name parity between concept specs and SPECs |
 | `verify_port_spec_contract.py` | 04b, 04c | When `port-spec.md` exists, response shapes and `@contract` scenarios are present |
-| `verify_implementation_parity.py` | 04+ | Implementation concept/sync classes have corresponding stage artefact specs |
+| `verify_implementation_parity.py` | 04+ | Implementation concept/sync classes have corresponding stage artefact specs; sync names lower mechanically from Stage 03 rules |
 | `verify_feature_file_presence.py` | 04c | Pre-flight: `.feature` file exists in output + Cucumber discovery path |
 | `verify_gherkin_derivation.py` | 04c | `.feature` file derivation per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1 |
 | `verify_concept_test_derivation.py` | 04d | Every SPEC outcome has a matching concept test row and Java method |

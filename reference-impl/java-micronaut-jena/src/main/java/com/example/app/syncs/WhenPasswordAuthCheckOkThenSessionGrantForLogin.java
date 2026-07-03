@@ -10,9 +10,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Sync: GrantSessionForLogin
+ * Sync: WhenPasswordAuthCheckOkThenSessionGrantForLogin
  *
- * <p>Spec: {@code features/UC-00-login/stages/03_syncs/output/GrantSessionForLogin.sync.md}
+ * <p>Spec: {@code features/UC-00-login/stages/03_syncs/output/WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md}
  *
  * <p>When: {@code PasswordAuth/check[outcome=OK]}
  * <p>Then: {@code Session/grant { userId }}
@@ -23,15 +23,15 @@ import jakarta.inject.Singleton;
         triggeredBy = "PasswordAuth/check[OK]",
         fires = "Session/grant")
 @Singleton
-public final class GrantSessionForLogin extends SyncAgent {
+public final class WhenPasswordAuthCheckOkThenSessionGrantForLogin extends SyncAgent {
 
     @Inject
-    public GrantSessionForLogin(ActionLog actionLog) {
+    public WhenPasswordAuthCheckOkThenSessionGrantForLogin(ActionLog actionLog) {
         super(actionLog);
     }
 
     @Override
-    public String syncName() { return "grantSessionForLogin"; }
+    public String syncName() { return "whenPasswordAuthCheckOkThenSessionGrantForLogin"; }
 
     @Override
     public SyncTrigger trigger() {
