@@ -10,7 +10,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Sync: LoginRespondWrongPassword
+ * Sync: RespondWrongPassword
  *
  * <p>When: {@code PasswordAuth/check[outcome=BAD_PASSWORD]}
  * <p>Then: {@code Web/respond { statusCode: 401, message }}
@@ -25,18 +25,18 @@ import jakarta.inject.Singleton;
         fires = "Web/respond[401]",
         where = "credential failure path")
 @Singleton
-public final class LoginRespondWrongPassword extends SyncAgent {
+public final class RespondWrongPassword extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
     static final String LOGIN_FAILURE_MESSAGE = "username or password didn't match";
 
     @Inject
-    public LoginRespondWrongPassword(ActionLog actionLog) {
+    public RespondWrongPassword(ActionLog actionLog) {
         super(actionLog);
     }
 
     @Override
-    public String syncName() { return "loginRespondWrongPassword"; }
+    public String syncName() { return "respondWrongPassword"; }
 
     @Override
     public SyncTrigger trigger() {

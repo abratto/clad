@@ -3,13 +3,13 @@
 
 Implementation classes exist under `reference-impl/java-micronaut-jena/src/main/java/com/example/app/syncs/`:
 
-- `LoginRequestStartsLookup.java`
-- `LoginLookupTriggersAuth.java`
-- `LoginGrantsSession.java`
-- `LoginRespondSuccess.java`
-- `LoginRespondWrongPassword.java`
-- `LoginRespondLocked.java`
-- `LoginRespondUnknownUser.java`
+- `LookupUserForLogin.java`
+- `CheckCredentialForLogin.java`
+- `GrantSessionForLogin.java`
+- `RespondLoginSuccess.java`
+- `RespondWrongPassword.java`
+- `RespondLocked.java`
+- `RespondUnknownUser.java`
 
 ## Verification
 

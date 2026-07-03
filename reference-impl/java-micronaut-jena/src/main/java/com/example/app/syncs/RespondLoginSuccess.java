@@ -10,7 +10,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Sync: LoginRespondSuccess
+ * Sync: RespondLoginSuccess
  *
  * <p>When: {@code Session/grant[outcome=GRANTED]}
  * <p>Then: {@code Web/respond { statusCode: 200, sessionToken }}
@@ -21,17 +21,17 @@ import jakarta.inject.Singleton;
         triggeredBy = "Session/grant[GRANTED]",
         fires = "Web/respond[200]")
 @Singleton
-public final class LoginRespondSuccess extends SyncAgent {
+public final class RespondLoginSuccess extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
 
     @Inject
-    public LoginRespondSuccess(ActionLog actionLog) {
+    public RespondLoginSuccess(ActionLog actionLog) {
         super(actionLog);
     }
 
     @Override
-    public String syncName() { return "loginRespondSuccess"; }
+    public String syncName() { return "respondLoginSuccess"; }
 
     @Override
     public SyncTrigger trigger() {

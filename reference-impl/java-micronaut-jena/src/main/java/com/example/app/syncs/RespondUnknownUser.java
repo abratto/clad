@@ -10,12 +10,12 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Sync: LoginRespondUnknownUser
+ * Sync: RespondUnknownUser
  *
  * <p>When: {@code User/lookupByUsername[outcome=UNKNOWN]}
  * <p>Then: {@code Web/respond { statusCode: 401, message }}
  *
- * <p>Same message as {@link LoginRespondWrongPassword} — no enumeration leak.
+ * <p>Same message as {@link RespondWrongPassword} — no enumeration leak.
  */
 @SyncMetadata(
         flow = "Login",
@@ -24,17 +24,17 @@ import jakarta.inject.Singleton;
         fires = "Web/respond[401]",
         where = "unknown-user path")
 @Singleton
-public final class LoginRespondUnknownUser extends SyncAgent {
+public final class RespondUnknownUser extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
 
     @Inject
-    public LoginRespondUnknownUser(ActionLog actionLog) {
+    public RespondUnknownUser(ActionLog actionLog) {
         super(actionLog);
     }
 
     @Override
-    public String syncName() { return "loginRespondUnknownUser"; }
+    public String syncName() { return "respondUnknownUser"; }
 
     @Override
     public SyncTrigger trigger() {
@@ -61,6 +61,6 @@ public final class LoginRespondUnknownUser extends SyncAgent {
 
     @Override
     protected String parameterizeSparql(String sparql) {
-        return bindLiteral(sparql, "_message", LoginRespondWrongPassword.LOGIN_FAILURE_MESSAGE);
+        return bindLiteral(sparql, "_message", RespondWrongPassword.LOGIN_FAILURE_MESSAGE);
     }
 }

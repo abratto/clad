@@ -62,13 +62,13 @@ class DebugControllerTest {
         List<Map<String, Object>> login = asListOfMaps(flows.get("Login"));
         assertEquals(
                 List.of(
-                        "loginRequestStartsLookup",
-                        "loginLookupTriggersAuth",
-                        "loginRespondUnknownUser",
-                        "loginGrantsSession",
-                        "loginRespondLocked",
-                        "loginRespondWrongPassword",
-                        "loginRespondSuccess"),
+                    "lookupUserForLogin",
+                    "checkCredentialForLogin",
+                    "respondUnknownUser",
+                    "grantSessionForLogin",
+                    "respondLocked",
+                    "respondWrongPassword",
+                    "respondLoginSuccess"),
                 login.stream().map(row -> (String) row.get("sync")).toList());
             assertEquals(List.of(1, 2, 2, 3, 3, 3, 4), login.stream()
                 .map(row -> ((Number) row.get("step")).intValue())

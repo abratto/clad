@@ -10,7 +10,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Sync: LoginRespondLocked
+ * Sync: RespondLocked
  *
  * <p>When: {@code PasswordAuth/check[outcome=LOCKED]}
  * <p>Then: {@code Web/respond { statusCode: 401, message }}
@@ -22,18 +22,18 @@ import jakarta.inject.Singleton;
         fires = "Web/respond[401]",
         where = "locked account path")
 @Singleton
-public final class LoginRespondLocked extends SyncAgent {
+public final class RespondLocked extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
     private static final String LOCKED_MESSAGE = "Too many attempts. Try again in 15 minutes.";
 
     @Inject
-    public LoginRespondLocked(ActionLog actionLog) {
+    public RespondLocked(ActionLog actionLog) {
         super(actionLog);
     }
 
     @Override
-    public String syncName() { return "loginRespondLocked"; }
+    public String syncName() { return "respondLocked"; }
 
     @Override
     public SyncTrigger trigger() {

@@ -14,22 +14,22 @@
 
 | Sync | Chain table | Flow scenario | Tested by |
 |---|---|---|---|
-| `LoginRequestStartsLookup` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `LoginFlowTest` + `CucumberTest` |
-| `LoginLookupTriggersAuth` | Row 2→3 | successful-login, wrong-pw, lockout | `LoginFlowTest` + `CucumberTest` |
-| `LoginGrantsSession` | Row 3→4 | successful-login | `LoginFlowTest` + `CucumberTest` |
-| `LoginRespondSuccess` | Row 4→5 | successful-login | `LoginFlowTest` + `CucumberTest` |
-| `LoginRespondWrongPassword` | Row 3a | wrong-password | `LoginFlowTest` + `CucumberTest` |
-| `LoginRespondLocked` | Row 3b | lockout | `LoginFlowTest` + `CucumberTest` |
-| `LoginRespondUnknownUser` | Row 2a | unknown-user | `LoginFlowTest` + `CucumberTest` |
+| `LookupUserForLogin` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `LoginFlowTest` + `CucumberTest` |
+| `CheckCredentialForLogin` | Row 2→3 | successful-login, wrong-pw, lockout | `LoginFlowTest` + `CucumberTest` |
+| `GrantSessionForLogin` | Row 3→4 | successful-login | `LoginFlowTest` + `CucumberTest` |
+| `RespondLoginSuccess` | Row 4→5 | successful-login | `LoginFlowTest` + `CucumberTest` |
+| `RespondWrongPassword` | Row 3a | wrong-password | `LoginFlowTest` + `CucumberTest` |
+| `RespondLocked` | Row 3b | lockout | `LoginFlowTest` + `CucumberTest` |
+| `RespondUnknownUser` | Row 2a | unknown-user | `LoginFlowTest` + `CucumberTest` |
 
 ## Gherkin scenario coverage
 
 | Scenario | Syncs exercised |
 |---|---|
-| `successful-login` | LoginRequestStartsLookup, LoginLookupTriggersAuth, LoginGrantsSession, LoginRespondSuccess |
-| `wrong-password` | LoginRequestStartsLookup, LoginLookupTriggersAuth, LoginRespondWrongPassword |
-| `lockout` | LoginRequestStartsLookup, LoginLookupTriggersAuth, LoginRespondLocked |
-| `unknown-user` | LoginRequestStartsLookup, LoginRespondUnknownUser |
+| `successful-login` | LookupUserForLogin, CheckCredentialForLogin, GrantSessionForLogin, RespondLoginSuccess |
+| `wrong-password` | LookupUserForLogin, CheckCredentialForLogin, RespondWrongPassword |
+| `lockout` | LookupUserForLogin, CheckCredentialForLogin, RespondLocked |
+| `unknown-user` | LookupUserForLogin, RespondUnknownUser |
 
 All 4 Cucumber scenarios pass (0 failures).
 
@@ -59,9 +59,9 @@ matching test coverage through the flow tests.
 
 - **Approved red tests:** None — existing tests are flow-level and pass green
 - **Sync package:** `com.example.app.syncs`
-- **Sync classes:** `LoginRequestStartsLookup`, `LoginLookupTriggersAuth`,
-  `LoginGrantsSession`, `LoginRespondSuccess`, `LoginRespondWrongPassword`,
-  `LoginRespondLocked`, `LoginRespondUnknownUser`
+- **Sync classes:** `LookupUserForLogin`, `CheckCredentialForLogin`,
+  `GrantSessionForLogin`, `RespondLoginSuccess`, `RespondWrongPassword`,
+  `RespondLocked`, `RespondUnknownUser`
 - **Test command:** `mvn -f reference-impl/java-micronaut-jena/pom.xml test`
 - **Expected red outcome:** N/A — existing tests are green
 - **Next implementation target:** Stage 05 verification
