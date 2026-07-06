@@ -44,6 +44,10 @@ file `methodology/` is the source of truth for what each version contains.
 
 ### Methodology
 
+- **README workflow summary**: Added a high-level "How CLAD works"
+  section to `README.md` that explains the human/agent handshake,
+  Stage 00 system scoping, the three per-use-case review gates, and the
+  auto-advanced delivery stages in plain language.
 - **Java profile scale caveat**: Updated `README.md` and
   `reference-impl/java-micronaut-jena/README.md` to state explicitly that
   the shipped Java/Micronaut/Jena reference engine is functional but has

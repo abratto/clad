@@ -32,6 +32,34 @@ that tells the agent what to do, and an `output/` folder you can inspect
 and edit before the next stage runs. The full stage table lives in
 [`AGENTS.md`](AGENTS.md) §3.
 
+## How CLAD works
+
+CLAD is a staged workflow between a human reviewer and an AI coding agent.
+
+- The human provides the brief, reviews artefacts written to disk, and approves work at each gate.
+- The agent reads the current stage contract, produces only the allowed artefacts, and stops at the next gate.
+- Between gates, the agent can auto-advance through tightly scoped stages and run deterministic checks.
+- If a gate fails, work returns to the earliest stage that owns the defect rather than being patched ad hoc downstream.
+
+At a high level, the flow looks like this:
+
+```text
+Stage 00 (system scope):
+  brief -> actors/goals -> human approval
+
+Per use case:
+  Gate 1 (Requirements): use case -> responsibility map -> chain tables
+  Gate 2 (Architecture): concepts -> syncs -> dependency review -> data model
+  Gate 3 (Executable spec): storage mapping -> spec -> flow tests
+
+After Gate 3:
+  agent completes concept TDD -> sync TDD -> verification
+```
+
+In other words: one collaborative scoping gate for the system, then three
+review gates per use case before the final delivery stages run through to
+verification.
+
 ## Status
 
 **Public, pre-1.0, and still evolving.** This repo already contains a real
@@ -146,7 +174,8 @@ feature-specific material the agent shouldn't have yet.
 ### Your second prompt — start Stage 00
 
 > Open `features/_system/stages/00_actor-goal/CONTEXT.md` and read it.
-> Then run Stage 00 against this brief: *<one paragraph describing what
+> Then run Stage 00 against this brief, replacing the placeholder with
+> your own one-paragraph project brief: *<one paragraph describing what
 > you want the system to let users do>*.
 
 If you want a bare-minimum starting point, paste this exact prompt:
