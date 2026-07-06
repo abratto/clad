@@ -44,6 +44,12 @@ file `methodology/` is the source of truth for what each version contains.
 
 ### Methodology
 
+- **README quick-start onboarding refresh**: Simplified the Stage 00
+  starter prompts in `README.md`, added a concrete copy-paste library
+  lending brief, and turned the post-Stage-00 handoff into an exact
+  prompt for creating UC folders and entering Stage 01. New users can
+  now start CLAD with minimal prompt authoring while still following the
+  Stage 00 contract.
 - **Documentation freshness sweep**: Refreshed CLAD methodology and
   reference-profile examples after the sync naming migration. Updated
   `CANONICAL_EXEMPLAR.md`, `SYNC_LOWERING.md`, `WALKTHROUGH.md`,

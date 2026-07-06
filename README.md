@@ -257,22 +257,50 @@ feature-specific material the agent shouldn't have yet.
 
 > Open `features/_system/stages/00_actor-goal/CONTEXT.md` and read it.
 > Then run Stage 00 against this brief: *<one paragraph describing what
-> you want the system to let users do>*. Ask up to five clarifying
-> questions in one turn; after I answer and approve, write the final
-> artefacts to `features/_system/stages/00_actor-goal/output/actors.md`
-> and `features/_system/stages/00_actor-goal/output/goals.md`.
+> you want the system to let users do>*.
 
-The agent will run **Stage 00 (actor/goal)** at system scope: it
-proposes a draft actor list and goal list, asks up to five clarifying
-questions, and **waits for your answers** before writing the approved
-artefacts.
+If you want a bare-minimum starting point, paste this exact prompt:
+
+> Open `features/_system/stages/00_actor-goal/CONTEXT.md` and read it.
+> Then run Stage 00 against this brief:
+>
+> Let's build a library lending system. The system should prioritize ease
+> of access and self-sufficiency for patrons while supporting branch staff
+> operations needed to keep lending reliable. The system must provide a
+> unified digital portal where patrons can browse the full catalog in real
+> time, view item availability by branch, and manage their own account.
+> Patrons must be able to place holds, renew eligible loans, view due
+> dates, and receive automated reminders by email or SMS. Branch staff
+> must be able to manage hold fulfillment and check-in/check-out status so
+> patron-facing availability remains accurate. For this initial scope,
+> include lending and hold workflows; exclude acquisitions, catalog
+> metadata editing, and interlibrary loan. Treat patron self-service
+> lending as P0; assume no fixed external API contract unless one is
+> provided.
+
+To adapt this for your own project, keep the structure (actors, core
+capabilities, explicit in-scope/out-of-scope, priority hint, contract
+assumption) and replace only the domain details.
+
+Stage 00 will ask clarifying questions before writing the approved actor
+and goal artefacts.
+
+The agent will run **Stage 00 (actor/goal)** at system scope: it will
+propose actors and goals, ask clarifying questions, and wait for your
+approval before writing the artefacts.
 
 ### After Stage 00 passes
 
 Once `features/_system/stages/00_actor-goal/output/goals.md` is approved,
-tell the agent to proceed. The next action is mechanical and should be
-performed by the agent: create one UC folder per in-scope goal by
-copying the feature skeleton, then open Stage 01 in the first UC folder.
+send this exact prompt:
+
+> Proceed — create one `features/UC-XX-<slug>/` folder per in-scope goal
+> by copying `templates/feature-skeleton/`, then open
+> `features/UC-01-<slug>/stages/01_usecase/CONTEXT.md` and run Stage 01
+> for the first UC.
+
+That next step is mechanical: the agent creates the UC folders from the
+approved goals and moves into Stage 01 for the first one.
 
 ```bash
 # agent action, not required manual shell work:
