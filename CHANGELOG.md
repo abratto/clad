@@ -28,6 +28,10 @@ file `methodology/` is the source of truth for what each version contains.
 
 ### Platform Integration
 
+- **Repository governance hardening**: Added `.github/CODEOWNERS` with a
+  baseline maintainer owner map and documented recommended public-template
+  branch protection settings in `CONTRIBUTING.md` (PR-required merges,
+  required checks, code-owner review, and restricted direct pushes).
 - **Removed platform-specific rule files**: Deleted `.clinerules/` (4 Cline
   phase rules), `.roorules-clad-*` (3 Roo mode files), `.roomodes` (Roo
   config), `.cline-clad-config.example`, and `.roo-clad-config.example`.

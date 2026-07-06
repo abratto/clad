@@ -77,6 +77,19 @@ Highlights:
   [`methodology/implementation/QUALITY_GATE.md`](methodology/implementation/QUALITY_GATE.md)
   is the developer's mirror of CI; CI is authoritative.
 
+## Public template governance (recommended)
+
+If this repository is public and used as a template starter, keep
+maintainer control by enabling branch protection on `main`:
+
+- Require pull requests before merge.
+- Require status checks to pass (use CI jobs from `.github/workflows/ci.yml`).
+- Require review from Code Owners.
+- Restrict direct pushes to `main`.
+
+The baseline ownership map is in [`.github/CODEOWNERS`](.github/CODEOWNERS).
+Update it as maintainership changes.
+
 ## Style
 
 - Markdown: ATX headings, fenced code blocks with language tags, line wrap

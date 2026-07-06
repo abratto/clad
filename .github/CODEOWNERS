@@ -1,0 +1,6 @@
+# CLAD repository ownership
+#
+# Use this file with branch protection rules ("Require review from Code Owners")
+# to ensure all changes are reviewed by the maintainer before merge.
+
+* @abratto
