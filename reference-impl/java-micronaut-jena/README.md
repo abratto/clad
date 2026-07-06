@@ -307,6 +307,11 @@ rule-shaped syncs (`WhenWebHandleRoutedThenUserLookupByUsernameForLogin`,
 by the Gherkin flow tests in
 `features/UC-00-login/stages/04_implement/04c_flow-tests/output/login.feature`.
 
+This should currently be read as a **working reference engine**, not a
+scale claim. The current Micronaut/Jena sync-engine implementation has not
+yet been designed or vetted for scale; scale characteristics, storage
+backends, and operational hardening remain future profile work.
+
 The Jena dataset is in-memory transactional
 (`DatasetFactory.createTxnMem()`); a TDB2 / Fuseki backend is the next
 profile-level extension.

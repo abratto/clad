@@ -44,6 +44,27 @@ file `methodology/` is the source of truth for what each version contains.
 
 ### Methodology
 
+- **Java profile scale caveat**: Updated `README.md` and
+  `reference-impl/java-micronaut-jena/README.md` to state explicitly that
+  the shipped Java/Micronaut/Jena reference engine is functional but has
+  not yet been designed or vetted for scale; scaling work remains future
+  profile-level work.
+- **README implementation-profile clarification**: Updated `README.md` to
+  state explicitly that CLAD is methodology-level profile-agnostic, but this
+  repository currently ships only one concrete executable profile: the Java 21
+  + Micronaut + Apache Jena/TDB2 reference implementation.
+- **README structure and privacy cleanup**: Moved the Quick start section
+  ahead of the long origin narrative so public readers reach the runnable
+  path sooner, removed the public link to the private Tastetag repository,
+  and kept Tastetag only as unlinked historical context in the origin story.
+- **README dependency clarification**: Added a compact Requirements section
+  to `README.md` that separates the minimum needs for using CLAD as a
+  methodology starter from the extra dependencies for running Python
+  quality-gate scripts and the optional Java 21 + Maven reference profile.
+- **README public-launch framing**: Updated `README.md` to describe CLAD
+  as public but pre-1.0, added a short "Who this is for" section,
+  documented the pre-1.0 versioning contract explicitly, and credited
+  Alan Potosnak as CLAD's author with pointers to attribution sources.
 - **README quick-start onboarding refresh**: Simplified the Stage 00
   starter prompts in `README.md`, added a concrete copy-paste library
   lending brief, and turned the post-Stage-00 handoff into an exact

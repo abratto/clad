@@ -34,13 +34,44 @@ and edit before the next stage runs. The full stage table lives in
 
 ## Status
 
-**Seed.** This repo bootstraps the methodology, templates, agent guides, a
-worked example ([`features/UC-00-login/`](features/UC-00-login/README.md))
-taken end-to-end as the canonical example, and an optional runnable Java
-reference profile under [`reference-impl/java-micronaut-jena/`](reference-impl/java-micronaut-jena/).
-The broader reference implementation lives at
-[abratto/tastetag](https://github.com/abratto/tastetag) and will be ported
-into `reference-impl/` over subsequent PRs.
+**Public, pre-1.0, and still evolving.** This repo already contains a real
+methodology loop, templates, agent guides, a worked example
+([`features/UC-00-login/`](features/UC-00-login/README.md)) taken end-to-end
+as the canonical example, and an optional runnable Java reference profile
+under [`reference-impl/java-micronaut-jena/`](reference-impl/java-micronaut-jena/).
+It is usable today as a serious starter, but the methodology is still being
+refined and some contracts, templates, and guidance may change between minor
+releases.
+
+CLAD the methodology is profile-agnostic. However, this repository currently
+ships only one concrete executable implementation profile: a Java 21 +
+Micronaut + Apache Jena/TDB2 reference profile using CLAD's sync-engine style
+under [`reference-impl/java-micronaut-jena/`](reference-impl/java-micronaut-jena/).
+That engine is suitable as a reference implementation and working starter,
+but it has not yet been designed or vetted for scale; scaling work remains
+future profile-level work.
+
+### Who this is for
+
+- Teams that want strong human review over AI-generated implementation.
+- Builders willing to work stage-by-stage and inspect artefacts at gates.
+- Projects that benefit from explicit contracts, traceability, and reversible changes.
+- Not a fit for "just generate the code" workflows with minimal review discipline.
+
+### Stability and versioning
+
+- CLAD is currently **pre-1.0**.
+- Pre-1.0 minor releases may include breaking methodology changes.
+- After 1.0, versioning is intended to follow Semantic Versioning more strictly.
+- The source of truth is the current repository contracts: [`AGENTS.md`](AGENTS.md),
+  [`methodology/README.md`](methodology/README.md), and the active stage
+  `CONTEXT.md` files.
+
+### Author
+
+CLAD was created by **Alan Potosnak**. See [`NOTICE`](NOTICE) and
+[`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md)
+for attribution context and upstream influences.
 
 Important for template users: `reference-impl/` is a seeded **reference
 source**, not the main application root for your downstream product. If
@@ -51,6 +82,165 @@ and source roots in
 [`templates/feature-skeleton/_config/package-and-layout.md`](templates/feature-skeleton/_config/package-and-layout.md).
 Do not keep extending `reference-impl/` in place with product-specific
 code.
+
+## Quick start
+
+> **Using this as a starter for your own project?** Click **"Use this
+> template"** at the top of the GitHub repo (or
+> [follow this link](https://github.com/abratto/clad/generate)) to get
+> a clean copy with no fork relationship — then read on.
+
+When you later implement against a concrete profile, treat
+`reference-impl/` as upstream example material. Your real application
+code should live under your own chosen project root, not inside the
+starter's `reference-impl/` tree.
+
+### Requirements
+
+CLAD itself is mostly a repository of methodology, templates, and stage
+contracts, so the required stack depends on how far you want to go:
+
+- **To use CLAD as a methodology starter:** Git, a code editor, and an AI
+  coding agent/chat client are enough to read the contracts and begin Stage 00.
+- **To run CLAD's deterministic quality-gate scripts:** Python 3 is required.
+  The scripts under [`quality-gate/`](quality-gate/) are plain `python3`
+  command-line checks.
+- **To run the optional Java reference profile:** Java 21 and Maven are
+  required. The concrete Java stack is documented in
+  [`reference-impl/java-micronaut-jena/README.md`](reference-impl/java-micronaut-jena/README.md).
+
+At the moment, this Java/Micronaut/Jena/TDB2 profile is the only runnable
+implementation profile shipped with the repository.
+It is a working reference profile, not a claim that the current engine has
+already been designed or validated for production scale.
+
+If you are only evaluating the workflow, you do **not** need Java or Maven
+to start using CLAD.
+
+```bash
+git clone https://github.com/abratto/clad.git
+cd clad
+# Read in this order:
+#   1. README.md (you are here)
+#   2. AGENTS.md                       ← canonical guide for any AI coding agent
+#   3. methodology/README.md           ← reading order for the methodology
+#   4. methodology/WALKTHROUGH.md      ← annotated UC-00 session, turn by turn
+#   5. features/UC-00-login/README.md  ← the worked example itself
+```
+
+### Your first prompt — load the methodology
+
+After cloning, open a chat with your agent (Copilot, Claude, Cursor,
+Codex, …) in this workspace and send exactly this:
+
+> Read `AGENTS.md` in full, then `CONTEXT.md`, then
+> `methodology/README.md`, then `methodology/WALKTHROUGH.md`. Confirm you
+> understand the five-layer hierarchy and the stage flow, then wait for
+> my next instruction.
+
+That loads the binding rules (`AGENTS.md`), the workspace router
+(`CONTEXT.md`), the methodology reading order, and an annotated example
+of what a single CLAD turn looks like — without pulling in any
+feature-specific material the agent shouldn't have yet.
+
+### Your second prompt — start Stage 00
+
+> Open `features/_system/stages/00_actor-goal/CONTEXT.md` and read it.
+> Then run Stage 00 against this brief: *<one paragraph describing what
+> you want the system to let users do>*.
+
+If you want a bare-minimum starting point, paste this exact prompt:
+
+> Open `features/_system/stages/00_actor-goal/CONTEXT.md` and read it.
+> Then run Stage 00 against this brief:
+>
+> Let's build a library lending system. The system should prioritize ease
+> of access and self-sufficiency for patrons while supporting branch staff
+> operations needed to keep lending reliable. The system must provide a
+> unified digital portal where patrons can browse the full catalog in real
+> time, view item availability by branch, and manage their own account.
+> Patrons must be able to place holds, renew eligible loans, view due
+> dates, and receive automated reminders by email or SMS. Branch staff
+> must be able to manage hold fulfillment and check-in/check-out status so
+> patron-facing availability remains accurate. For this initial scope,
+> include lending and hold workflows; exclude acquisitions, catalog
+> metadata editing, and interlibrary loan. Treat patron self-service
+> lending as P0; assume no fixed external API contract unless one is
+> provided.
+
+To adapt this for your own project, keep the structure (actors, core
+capabilities, explicit in-scope/out-of-scope, priority hint, contract
+assumption) and replace only the domain details.
+
+Stage 00 will ask clarifying questions before writing the approved actor
+and goal artefacts.
+
+The agent will run **Stage 00 (actor/goal)** at system scope: it will
+propose actors and goals, ask clarifying questions, and wait for your
+approval before writing the artefacts.
+
+### After Stage 00 passes
+
+Once `features/_system/stages/00_actor-goal/output/goals.md` is approved,
+send this exact prompt:
+
+> Proceed — create one `features/UC-XX-<slug>/` folder per in-scope goal
+> by copying `templates/feature-skeleton/`, then open
+> `features/UC-01-<slug>/stages/01_usecase/CONTEXT.md` and run Stage 01
+> for the first UC.
+
+That next step is mechanical: the agent creates the UC folders from the
+approved goals and moves into Stage 01 for the first one.
+
+```bash
+# agent action, not required manual shell work:
+cp -R templates/feature-skeleton features/UC-01-<slug>
+# repeat for each remaining in-scope goal with the next UC number
+# then open:
+#   features/UC-01-<slug>/stages/01_usecase/CONTEXT.md
+```
+
+The human responsibility here is the gate: approve Stage 00 or send it
+back for correction. Once approved, the agent should continue the flow
+by creating the UC folders and moving into Stage 01 unless the human
+explicitly wants to pause.
+
+### Configuration
+
+Edit [`clad.properties`](clad.properties) at the repo root to set your
+project's global defaults. The file is committed and works with any
+agent framework (Cline, Copilot, Cursor, Roo, Codex, …).
+
+```properties
+# The single command that runs the full test suite.
+test.command=mvn test
+
+# Describe your persistence technology (used by the Stage 04a storage mapping).
+storage.layer=Jena TDB2 named graph (Java/Micronaut profile)
+```
+
+Outer flow tests at Stage 04c use Cucumber/BDD (Gherkin `.feature` files
++ step definitions) — see
+[methodology/architecture/GHERKIN_INTEGRATION.md](methodology/architecture/GHERKIN_INTEGRATION.md).
+The Java reference profile ships a Cucumber integration; build and test
+with a single `mvn test` that runs concept unit tests, sync integration
+tests, and BDD flow tests together.
+
+If you plan to adopt the Java reference profile, read
+[`reference-impl/java-micronaut-jena/README.md`](reference-impl/java-micronaut-jena/README.md)
+after Stage 00 passes and before Stage 04 implementation work. That file
+shows how to copy the starter profile into your real app root, how to run
+it locally, and how the Java package/source-root conventions map back into
+`_config/package-and-layout.md`. The Java profile ships a Cucumber
+integration; build and test with a single `mvn test` that runs concept
+unit tests, sync integration tests, and BDD flow tests together (see
+[methodology/architecture/GHERKIN_INTEGRATION.md](methodology/architecture/GHERKIN_INTEGRATION.md)).
+
+If you want to sequence multiple goals before implementation, adopt the
+optional planning overlay:
+
+- [methodology/overlays/PLANNING.md](methodology/overlays/PLANNING.md)
+- [templates/plan-board.md](templates/plan-board.md)
 
 ## Where this comes from
 
@@ -78,10 +268,9 @@ for the human. Concretely that means:
 The WYSIWID paper (Meng & Jackson, MIT CSAIL, *Onward!* 2025) was an
 immediate match for those properties. The next question was whether a
 non-trivial system could actually be built on it with an LLM partner.
-[abratto/tastetag](https://github.com/abratto/tastetag) — a
-Java/Micronaut/Jena backend with multi-domain taste matching — was
-chosen as the test bed precisely because it is non-trivial: real
-state, real coordination across concepts, real domain modelling.
+A private Java/Micronaut/Jena backend called Tastetag was chosen as the
+test bed precisely because it is non-trivial: real state, real
+coordination across concepts, real domain modelling.
 
 The architecture answered "what to build toward." It did not answer
 "how to drive the LLM there without losing control." That gap became
@@ -214,143 +403,6 @@ LLM speed without losing the audit trail.** Every stage produces a file
 you can diff, every action emits a flow token you can trace, every
 hard rule is checked by CI. The methodology amplifies one careful
 human's judgment rather than replacing it.
-
-## Quick start
-
-> **Using this as a starter for your own project?** Click **"Use this
-> template"** at the top of the GitHub repo (or
-> [follow this link](https://github.com/abratto/clad/generate)) to get
-> a clean copy with no fork relationship — then read on.
-
-When you later implement against a concrete profile, treat
-`reference-impl/` as upstream example material. Your real application
-code should live under your own chosen project root, not inside the
-starter's `reference-impl/` tree.
-
-```bash
-git clone https://github.com/abratto/clad.git
-cd clad
-# Read in this order:
-#   1. README.md (you are here)
-#   2. AGENTS.md                       ← canonical guide for any AI coding agent
-#   3. methodology/README.md           ← reading order for the methodology
-#   4. methodology/WALKTHROUGH.md      ← annotated UC-00 session, turn by turn
-#   5. features/UC-00-login/README.md  ← the worked example itself
-```
-
-### Your first prompt — load the methodology
-
-After cloning, open a chat with your agent (Copilot, Claude, Cursor,
-Codex, …) in this workspace and send exactly this:
-
-> Read `AGENTS.md` in full, then `CONTEXT.md`, then
-> `methodology/README.md`, then `methodology/WALKTHROUGH.md`. Confirm you
-> understand the five-layer hierarchy and the stage flow, then wait for
-> my next instruction.
-
-That loads the binding rules (`AGENTS.md`), the workspace router
-(`CONTEXT.md`), the methodology reading order, and an annotated example
-of what a single CLAD turn looks like — without pulling in any
-feature-specific material the agent shouldn't have yet.
-
-### Your second prompt — start Stage 00
-
-> Open `features/_system/stages/00_actor-goal/CONTEXT.md` and read it.
-> Then run Stage 00 against this brief: *<one paragraph describing what
-> you want the system to let users do>*.
-
-If you want a bare-minimum starting point, paste this exact prompt:
-
-> Open `features/_system/stages/00_actor-goal/CONTEXT.md` and read it.
-> Then run Stage 00 against this brief:
->
-> Let's build a library lending system. The system should prioritize ease
-> of access and self-sufficiency for patrons while supporting branch staff
-> operations needed to keep lending reliable. The system must provide a
-> unified digital portal where patrons can browse the full catalog in real
-> time, view item availability by branch, and manage their own account.
-> Patrons must be able to place holds, renew eligible loans, view due
-> dates, and receive automated reminders by email or SMS. Branch staff
-> must be able to manage hold fulfillment and check-in/check-out status so
-> patron-facing availability remains accurate. For this initial scope,
-> include lending and hold workflows; exclude acquisitions, catalog
-> metadata editing, and interlibrary loan. Treat patron self-service
-> lending as P0; assume no fixed external API contract unless one is
-> provided.
-
-To adapt this for your own project, keep the structure (actors, core
-capabilities, explicit in-scope/out-of-scope, priority hint, contract
-assumption) and replace only the domain details.
-
-Stage 00 will ask clarifying questions before writing the approved actor
-and goal artefacts.
-
-The agent will run **Stage 00 (actor/goal)** at system scope: it will
-propose actors and goals, ask clarifying questions, and wait for your
-approval before writing the artefacts.
-
-### After Stage 00 passes
-
-Once `features/_system/stages/00_actor-goal/output/goals.md` is approved,
-send this exact prompt:
-
-> Proceed — create one `features/UC-XX-<slug>/` folder per in-scope goal
-> by copying `templates/feature-skeleton/`, then open
-> `features/UC-01-<slug>/stages/01_usecase/CONTEXT.md` and run Stage 01
-> for the first UC.
-
-That next step is mechanical: the agent creates the UC folders from the
-approved goals and moves into Stage 01 for the first one.
-
-```bash
-# agent action, not required manual shell work:
-cp -R templates/feature-skeleton features/UC-01-<slug>
-# repeat for each remaining in-scope goal with the next UC number
-# then open:
-#   features/UC-01-<slug>/stages/01_usecase/CONTEXT.md
-```
-
-The human responsibility here is the gate: approve Stage 00 or send it
-back for correction. Once approved, the agent should continue the flow
-by creating the UC folders and moving into Stage 01 unless the human
-explicitly wants to pause.
-
-### Configuration
-
-Edit [`clad.properties`](clad.properties) at the repo root to set your
-project's global defaults. The file is committed and works with any
-agent framework (Cline, Copilot, Cursor, Roo, Codex, …).
-
-```properties
-# The single command that runs the full test suite.
-test.command=mvn test
-
-# Describe your persistence technology (used by the Stage 04a storage mapping).
-storage.layer=Jena TDB2 named graph (Java/Micronaut profile)
-```
-
-Outer flow tests at Stage 04c use Cucumber/BDD (Gherkin `.feature` files
-+ step definitions) — see
-[methodology/architecture/GHERKIN_INTEGRATION.md](methodology/architecture/GHERKIN_INTEGRATION.md).
-The Java reference profile ships a Cucumber integration; build and test
-with a single `mvn test` that runs concept unit tests, sync integration
-tests, and BDD flow tests together.
-
-If you plan to adopt the Java reference profile, read
-[`reference-impl/java-micronaut-jena/README.md`](reference-impl/java-micronaut-jena/README.md)
-after Stage 00 passes and before Stage 04 implementation work. That file
-shows how to copy the starter profile into your real app root, how to run
-it locally, and how the Java package/source-root conventions map back into
-`_config/package-and-layout.md`. The Java profile ships a Cucumber
-integration; build and test with a single `mvn test` that runs concept
-unit tests, sync integration tests, and BDD flow tests together (see
-[methodology/architecture/GHERKIN_INTEGRATION.md](methodology/architecture/GHERKIN_INTEGRATION.md)).
-
-If you want to sequence multiple goals before implementation, adopt the
-optional planning overlay:
-
-- [methodology/overlays/PLANNING.md](methodology/overlays/PLANNING.md)
-- [templates/plan-board.md](templates/plan-board.md)
 
 ### Agent platform integration
 
