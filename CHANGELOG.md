@@ -104,6 +104,13 @@ file `methodology/` is the source of truth for what each version contains.
   Stage 03 sync file stems, `sync <Name>` headers, Java class names, and
   Java `syncName()` values now lower from the same rule shape, and
   `verify_implementation_parity.py` checks this deterministically.
+- **Sync implementation parity**: Added
+  `quality-gate/verify_sync_implementation_parity.py` to check the opposite
+  direction: every approved Stage 03 sync contract must lower to a Java
+  `@Singleton` `SyncAgent` class during Stage 04e-green. Wired the check into
+  Stage 04e and the quality-gate process so missing sync classes fail before
+  Stage 05. Profiles whose runtime vocabulary mirrors Stage 03 can opt into
+  stricter trigger/fires metadata comparison with `--strict-trigger`.
 - **Deterministic guardrails for new contract rules**: Added
   `quality-gate/verify_port_spec_contract.py` to enforce Stage 04b response
   shapes and Stage 04c `@contract` scenarios when Stage 00 produces

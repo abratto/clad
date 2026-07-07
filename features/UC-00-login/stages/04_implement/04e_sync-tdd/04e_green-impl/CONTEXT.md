@@ -75,6 +75,10 @@ not redesign approved tests.
    source directory and `--features-dir features/`. It must confirm every
    sync class has a corresponding Stage 03 spec and mechanically follows
    the `When<Trigger>Then<Target>[For<Scope>]` naming grammar.
+- Run `quality-gate/verify_sync_implementation_parity.py` with
+  `--sync-dir ../../../03_syncs/output/` and the Java sync source directory.
+  It must confirm every approved Stage 03 sync contract has a corresponding
+   `@Singleton` `SyncAgent` class.
 - Behavior is traceable first to the approved upstream artefacts; the
    Java exemplar was used only as a realization pattern.
 - Every generated sync test/implementation pair corresponds to exactly

@@ -107,6 +107,9 @@ canonical sync files and introduces no new logic.
   instead of resolving the mismatch inside a sync.
 - **Cross-stage check (back):** every named scenario in
   `../01_usecase/output/usecase.md` is satisfied by at least one sync.
+- **Cross-stage check (forward):** every sync contract written here must
+  later lower to one Stage 04e `SyncAgent` implementation; Stage 04e-green
+  verifies this with `quality-gate/verify_sync_implementation_parity.py`.
 - **Filename contract:** the files in `output/` match the `Outputs`
   section exactly, with no extras and no omissions.
 - **Sync naming:** every filename stem and `sync <Name>` header follows

@@ -43,6 +43,9 @@ Run the child stages strictly in order, gating after each:
 - `04e_red-tests/output/sync-test-derivation.md` exists.
 - All approved sync tests are green at the end of `04e_green-impl/`.
 - All flow tests from `04c` are green at the end of `04e_green-impl/`.
+- Run `quality-gate/verify_sync_implementation_parity.py` with the active
+   Stage 03 sync output directory and Java sync source directory. It must
+   confirm every approved Stage 03 sync has a matching `SyncAgent` class.
 - No extra executable syncs exist without an approved Stage 03 sync.
 
 ## Gate

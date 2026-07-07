@@ -110,9 +110,13 @@ not relax the *intent*.
      - **Automated:** For Java concept tests, run
        `quality-gate/verify_concept_field_assertions.py` to confirm tests
        assert required completion field values, not only outcome tokens.
+     - **Automated:** At the end of Stage 04e-green, run
+       `quality-gate/verify_sync_implementation_parity.py` to confirm every
+       approved Stage 03 sync contract has a matching Java `SyncAgent`
+       implementation class.
      - The automated checks replace the previous semantic (human) checks.
        04d and 04e auto-advance; the scripts are the gate.
-12. **Implementation parity check (R17 enforcement).**
+12. **Implementation parity checks (R17 enforcement).**
     When a diff touches any implementation source file under a profile's
     sync or concept packages (e.g. `app/backend/src/.../syncs/`,
     `app/backend/src/.../concepts/`, or the equivalent in
@@ -124,6 +128,14 @@ not relax the *intent*.
       or if any sync spec/class/runtime name does not mechanically follow
       the `When<Trigger>Then<Target>[For<Scope>]` naming grammar derived
       from the Stage 03 sync rule.
+    - **Automated:** Run `quality-gate/verify_sync_implementation_parity.py`
+      with `--sync-impl-dir` pointing at the changed sync package and either
+      `--sync-dir` for the active feature or `--features-dir features/` for a
+      whole-tree gate. The check fails if any Stage 03 sync contract lacks a
+      matching `@Singleton` `SyncAgent` implementation. Profiles whose runtime
+      vocabulary mirrors Stage 03 exactly may add `--strict-trigger` to also
+      require trigger/fires metadata to match the contract's `when`/`then`
+      signatures.
     - **Semantic (human):** Verify the diff also contains updates to the
       relevant `stages/02_concepts/output/` or `stages/03_syncs/output/`
       artefacts. A Java-only diff with no artefact update is a hard-rule
@@ -171,6 +183,7 @@ consistency checks across the CLAD artefact chain:
 | `verify_spec_parity.py` | 04b | Action name parity between concept specs and SPECs |
 | `verify_port_spec_contract.py` | 04b, 04c | When `port-spec.md` exists, response shapes and `@contract` scenarios are present |
 | `verify_implementation_parity.py` | 04+ | Implementation concept/sync classes have corresponding stage artefact specs; sync names lower mechanically from Stage 03 rules |
+| `verify_sync_implementation_parity.py` | 04e | Stage 03 sync contracts have corresponding Java `SyncAgent` implementations |
 | `verify_feature_file_presence.py` | 04c | Pre-flight: `.feature` file exists in output + Cucumber discovery path |
 | `verify_gherkin_derivation.py` | 04c | `.feature` file derivation per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1 |
 | `verify_concept_test_derivation.py` | 04d | Every SPEC outcome has a matching concept test row and Java method |

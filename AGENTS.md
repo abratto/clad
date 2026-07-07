@@ -410,10 +410,13 @@ A Java sync class with no corresponding `*.sync.md`, or a Java concept
 class whose outcomes no longer match the approved `*.concept.md`, is a
 defect of the same severity as a cross-concept import (R1).
 
-`quality-gate/verify_implementation_parity.py` mechanises the forward
-direction of this rule: it fails if an implementation class exists with no
-corresponding spec artefact, or if a sync spec/class/runtime name does not
-lower mechanically from the Stage 03 sync rule.
+`quality-gate/verify_implementation_parity.py` mechanises the
+implementation-to-artefact direction of this rule: it fails if an
+implementation class exists with no corresponding spec artefact, or if a
+sync spec/class/runtime name does not lower mechanically from the Stage 03
+sync rule. `quality-gate/verify_sync_implementation_parity.py` mechanises
+the artefact-to-implementation direction for syncs: it fails if any Stage
+03 sync contract has no corresponding Stage 04e `SyncAgent` implementation.
 
 ## 10. Pointers
 
