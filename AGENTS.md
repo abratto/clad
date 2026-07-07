@@ -417,6 +417,13 @@ sync spec/class/runtime name does not lower mechanically from the Stage 03
 sync rule. `quality-gate/verify_sync_implementation_parity.py` mechanises
 the artefact-to-implementation direction for syncs: it fails if any Stage
 03 sync contract has no corresponding Stage 04e `SyncAgent` implementation.
+`quality-gate/verify_iterative_change_readiness.py` mechanises the intake
+direction: when the diff touches concept/sync specs or implementation, it
+fails unless an `_changes/` artefact records the change category, earliest
+re-entry stage, artefact-impact matrix, and re-derivation order.
+`quality-gate/verify_iterative_change_coupling.py` mechanises the same-batch
+direction: it fails if a concept/sync implementation changes without its
+matching Stage 02/03 artefact changing in the same diff.
 
 ## 10. Pointers
 

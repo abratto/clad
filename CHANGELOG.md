@@ -111,6 +111,12 @@ file `methodology/` is the source of truth for what each version contains.
   Stage 04e and the quality-gate process so missing sync classes fail before
   Stage 05. Profiles whose runtime vocabulary mirrors Stage 03 can opt into
   stricter trigger/fires metadata comparison with `--strict-trigger`.
+- **Iterative-change enforcement**: Added
+  `quality-gate/verify_iterative_change_readiness.py` and
+  `quality-gate/verify_iterative_change_coupling.py` to mechanise R17 before
+  and during Stage 04 implementation work. Iterative concept/sync changes now
+  require a structured `_changes/` artefact, and implementation changes must
+  land with their matching Stage 02/03 artefacts in the same diff.
 - **Deterministic guardrails for new contract rules**: Added
   `quality-gate/verify_port_spec_contract.py` to enforce Stage 04b response
   shapes and Stage 04c `@contract` scenarios when Stage 00 produces

@@ -33,6 +33,8 @@ sub-stage.
 | `../03b_data-model/output/` | 4 | Approved conceptual data models |
 | `../02_concepts/output/` | 4 | Concept specs |
 | `../03_syncs/output/` | 4 | Sync specs |
+| `../../../../methodology/core/ITERATIVE_CHANGES.md` | 3 | Re-entry workflow for post-green changes |
+| `../../../../templates/artefact-impact-matrix.md` | 3 | Required `_changes/` worksheet for iterative changes |
 | `../../../../methodology/implementation/STAGES.md` | 3 | Stage 04 routing contract |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rules |
 | `../../../../reference-impl/java-micronaut-jena/README.md` | 3 | Example runtime debug surface for the Java profile |
@@ -78,6 +80,9 @@ doubt, use one-stage-per-turn.
 ## Verify
 
 - Every sub-stage has been gated.
+- For iterative changes, `quality-gate/verify_iterative_change_readiness.py`
+  passes before 04d/04e work starts, and
+  `quality-gate/verify_iterative_change_coupling.py` passes before merge.
 - `04b` exists before any `04c`/`04d`/`04e` work.
 - `04d_red-tests/` is approved before `04d_green-impl/` starts.
 - `04e_red-tests/` is approved before `04e_green-impl/` starts.

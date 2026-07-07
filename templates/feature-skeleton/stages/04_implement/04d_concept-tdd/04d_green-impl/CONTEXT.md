@@ -77,6 +77,9 @@ upstream prose, but it may not redesign approved tests.
 ## Verify
 
 - All approved concept tests are green.
+- Run `quality-gate/verify_iterative_change_coupling.py` before merge when
+   concept implementation changed; matching Stage 02 concept artefacts must be
+   in the same diff.
 - Green tests include assertions for primary completion field values,
   not only outcome tokens.
 - Every required concept test and implementation file exists in the
