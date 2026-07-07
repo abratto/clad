@@ -8,6 +8,11 @@
 > its predecessor stage; CLAD's reversibility depends on you not
 > editing late-stage artefacts in isolation.
 
+- **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
+- **Change category:** `<presentation | behavioural | structural>`
+- **Earliest re-entry stage:** `<stage id and name>`
+- **Change summary:** `<one sentence>`
+
 | Artefact | Path | Touched? | How |
 |---|---|---|---|
 | Use case | `features/UC-XX/stages/01_usecase/output/usecase.md` | yes \| no | <what changes> |

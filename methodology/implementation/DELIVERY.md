@@ -144,7 +144,9 @@ A reviewer reads the PR against these:
    stage actually verified?
 3. **For iterative changes:** does the PR include the artefact-impact
    matrix (or its equivalent), and does the re-derivation order match
-   the change category (per `ITERATIVE_CHANGES.md` §2)?
+   the change category (per `ITERATIVE_CHANGES.md` §2)? Do
+   `verify_iterative_change_readiness.py` and
+   `verify_iterative_change_coupling.py` pass for the diff?
 4. **Hard rules.** No cross-concept imports, no imperative branching
    in syncs, no second bootstrap concept. CI catches the first; the
    reviewer catches the rest.

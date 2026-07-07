@@ -121,6 +121,15 @@ not relax the *intent*.
     sync or concept packages (e.g. `app/backend/src/.../syncs/`,
     `app/backend/src/.../concepts/`, or the equivalent in
     `reference-impl/`):
+    - **Automated:** Run `quality-gate/verify_iterative_change_readiness.py`
+      with `--feature features/UC-XX-<slug>`. The check fails when an
+      iterative concept/sync spec or implementation change lacks a structured
+      `_changes/` artefact with change category, earliest re-entry stage,
+      artefact-impact matrix, and re-derivation order.
+    - **Automated:** Run `quality-gate/verify_iterative_change_coupling.py`.
+      The check fails if a concept/sync implementation file changed without
+      its corresponding Stage 02 concept spec or Stage 03 sync spec changing
+      in the same diff.
     - **Automated:** Run `quality-gate/verify_implementation_parity.py`
       with `--sync-impl-dir` and/or `--concept-impl-dir` pointing at the
       changed packages, and `--features-dir features/`. The check fails
@@ -182,6 +191,8 @@ consistency checks across the CLAD artefact chain:
 | `verify_data_model.py` | 03b | CSDP structure, storage-leakage prevention |
 | `verify_spec_parity.py` | 04b | Action name parity between concept specs and SPECs |
 | `verify_port_spec_contract.py` | 04b, 04c | When `port-spec.md` exists, response shapes and `@contract` scenarios are present |
+| `verify_iterative_change_readiness.py` | 04+ | Iterative concept/sync spec or implementation changes have a structured `_changes/` classification and artefact-impact matrix |
+| `verify_iterative_change_coupling.py` | 04+ | Concept/sync implementation changes are committed with their matching Stage 02/03 artefacts |
 | `verify_implementation_parity.py` | 04+ | Implementation concept/sync classes have corresponding stage artefact specs; sync names lower mechanically from Stage 03 rules |
 | `verify_sync_implementation_parity.py` | 04e | Stage 03 sync contracts have corresponding Java `SyncAgent` implementations |
 | `verify_feature_file_presence.py` | 04c | Pre-flight: `.feature` file exists in output + Cucumber discovery path |

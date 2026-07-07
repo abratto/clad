@@ -86,6 +86,9 @@ not redesign approved tests.
 
 - All approved sync tests are green.
 - All flow tests from `04c` are green.
+- Run `quality-gate/verify_iterative_change_coupling.py` before merge when
+   sync implementation changed; matching Stage 03 sync artefacts must be in
+   the same diff.
 - Executed command evidence shows: test compilation succeeds, sync tests
   are green, and flow tests are green.
 - Run `quality-gate/verify_implementation_parity.py` with
