@@ -78,36 +78,54 @@ sub-stages; at each gate it stops for review, and a rejection loops back
 to the stage that owns the defect:
 
 ```mermaid
-stateDiagram-v2
-    direction LR
-    [*] --> Stage00
+flowchart TD
+    START(( ))
 
-    state "Stage 00 · system scope (actors + goals)" as Stage00
-    state g0 <<choice>>
-    Stage00 --> g0 : ready for review
-    g0 --> Stage00 : reject
-    g0 --> Reqs : Gate 0 approved
+    subgraph S00["Stage 00 · system scope"]
+        actors["actors + goals"]
+    end
 
-    state "Requirements · 01 → 02a → 02b" as Reqs
-    state g1 <<choice>>
-    Reqs --> g1 : ready for review
-    g1 --> Reqs : reject
-    g1 --> Arch : Gate 1 approved
+    G0{"Gate 0"}
+    START --> S00 --> G0
+    G0 -->|"reject"| S00
+    G0 -->|"approved"| REQS
 
-    state "Architecture · 02 → 03 → 03a → 03b" as Arch
-    state g2 <<choice>>
-    Arch --> g2 : ready for review
-    g2 --> Arch : reject
-    g2 --> Exec : Gate 2 approved
+    subgraph REQS["Requirements"]
+        direction LR
+        USECASE["use case"] --> RMAP["responsibility map"] --> CHAIN["chain table"]
+    end
 
-    state "Executable spec · 04a → 04b → 04c" as Exec
-    state g3 <<choice>>
-    Exec --> g3 : ready for review
-    g3 --> Exec : reject
-    g3 --> Delivery : Gate 3 approved
+    G1{"Gate 1"}
+    REQS --> G1
+    G1 -->|"reject"| REQS
+    G1 -->|"approved"| ARCH
 
-    state "Delivery · 04d → 04e → 05" as Delivery
-    Delivery --> [*] : verified & traced
+    subgraph ARCH["Architecture"]
+        direction LR
+        CONCS["concepts"] --> SYNCS["syncs"] --> DEP["dep. review"] --> DM["data model"]
+    end
+
+    G2{"Gate 2"}
+    ARCH --> G2
+    G2 -->|"reject"| ARCH
+    G2 -->|"approved"| SPEC
+
+    subgraph SPEC["Executable spec"]
+        direction LR
+        STORE["storage mapping"] --> SLICE["SPEC slice"] --> FLOW["flow tests"]
+    end
+
+    G3{"Gate 3"}
+    SPEC --> G3
+    G3 -->|"reject"| SPEC
+    G3 -->|"approved"| DELIVERY
+
+    subgraph DELIVERY["Delivery"]
+        direction LR
+        CTDD["concept TDD"] --> STDD["sync TDD"] --> VER["verify & close"]
+    end
+
+    DELIVERY --> END(( ))
 ```
 
 In other words: one collaborative scoping gate for the system, then three
