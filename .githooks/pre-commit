@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+#
+# CLAD pre-commit hook — local, deterministic enforcement of the stage
+# sequence (and, optionally, iterative-change coupling) at commit time.
+#
+# Why this exists:
+#   advance.py makes the *verdict* deterministic, but only if the agent
+#   chooses to run it. This hook makes the *check* unavoidable on the local
+#   machine: whenever a commit touches a feature's stage outputs, it runs the
+#   sequence guard and refuses the commit if a stage was skipped or a required
+#   human gate was not approved. It tells you exactly what was skipped and how
+#   to fix it.
+#
+# This hook is OPT-IN. It only runs after a human installs it once:
+#   ./quality-gate/install-hooks.sh
+# (which sets `git config core.hooksPath .githooks`). Git never auto-runs a
+# cloned repo's hooks, by design.
+#
+# Bypass (discouraged): `git commit --no-verify`.
+#
+# Optional strictness via environment variables:
+#   CLAD_HOOK_REQUIRE_RECEIPTS=1  also require a current .gate-receipt.json per
+#                                 stage (only meaningful if you drive stages
+#                                 with advance.py).
+#   CLAD_HOOK_SKIP=1              skip this hook for one commit without --no-verify.
+
+set -u
+
+if [ "${CLAD_HOOK_SKIP:-0}" = "1" ]; then
+    echo "CLAD pre-commit: skipped (CLAD_HOOK_SKIP=1)."
+    exit 0
+fi
+
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null)"
+if [ -z "$repo_root" ]; then
+    echo "CLAD pre-commit: not inside a git repository; skipping."
+    exit 0
+fi
+cd "$repo_root" || exit 0
+
+# Locate a Python interpreter.
+PY=""
+for candidate in python3 python; do
+    if command -v "$candidate" >/dev/null 2>&1; then
+        PY="$candidate"
+        break
+    fi
+done
+if [ -z "$PY" ]; then
+    echo "CLAD pre-commit: python3 not found; cannot run CLAD checks."
+    echo "  Install Python 3 or bypass once with: git commit --no-verify"
+    exit 1
+fi
+
+seq_guard="quality-gate/verify_stage_sequence.py"
+coupling="quality-gate/verify_iterative_change_coupling.py"
+
+# Staged, added/copied/modified/renamed files only.
+staged="$(git diff --cached --name-only --diff-filter=ACMR)"
+
+# Per-UC feature roots touched by this commit (Stage 00 / _system is exempt).
+features="$(printf '%s\n' "$staged" \
+    | grep -E '^features/UC-[^/]+/' \
+    | sed -E 's#^(features/UC-[^/]+)/.*#\1#' \
+    | sort -u)"
+
+fail=0
+
+if [ -n "$features" ] && [ -f "$seq_guard" ]; then
+    receipts_flag=""
+    if [ "${CLAD_HOOK_REQUIRE_RECEIPTS:-0}" = "1" ]; then
+        receipts_flag="--require-receipts"
+    fi
+    while IFS= read -r feature; do
+        [ -z "$feature" ] && continue
+        [ -d "$feature" ] || continue
+        if ! "$PY" "$seq_guard" --feature "$feature" $receipts_flag; then
+            fail=1
+        fi
+    done <<EOF
+$features
+EOF
+fi
+
+# Iterative-change coupling: a concept/sync implementation must not move
+# without its Stage 02/03 artefact in the same commit. The script self-detects
+# relevance from the staged diff and passes when nothing applies.
+if [ -f "$coupling" ]; then
+    if ! "$PY" "$coupling" --base HEAD; then
+        fail=1
+    fi
+fi
+
+if [ "$fail" -ne 0 ]; then
+    echo ""
+    echo "=================================================================="
+    echo "  COMMIT BLOCKED — CLAD stage-sequence / coupling violation"
+    echo "=================================================================="
+    echo "  The commit touches CLAD feature artefacts but the pipeline is not"
+    echo "  intact. The failing check(s) above name the skipped stage, the"
+    echo "  unapproved gate, or the decoupled implementation, and where the"
+    echo "  missing artefacts belong."
+    echo ""
+    echo "  To fix: complete the earliest failing stage in order, then re-run"
+    echo "    python3 quality-gate/advance.py --feature features/UC-XX-<slug>"
+    echo "  and commit again."
+    echo ""
+    echo "  To bypass this hook for one commit (discouraged):"
+    echo "    git commit --no-verify"
+    echo "=================================================================="
+    exit 1
+fi
+
+exit 0

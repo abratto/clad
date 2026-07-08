@@ -121,6 +121,90 @@ Rejection at any gate sends work back to the earliest stage that owns
 the defect. The agent does not advance past the gate until the human
 approves.
 
+## Gate-driven advance
+
+The agent does not self-select the next stage. Choosing the next step is
+where a model most often skips a stage or its verification, so that
+decision is owned by a deterministic script rather than the model.
+
+After a per-UC stage's `output/` is written, the agent ends its turn by
+running:
+
+```
+python3 quality-gate/advance.py --feature features/UC-XX-<slug>
+```
+
+`advance.py` is a thin composition over the existing pieces — it does not
+re-implement any check:
+
+1. **Sequence / entry guard.** It runs
+   [`../../quality-gate/verify_stage_sequence.py`](../../quality-gate/verify_stage_sequence.py),
+   which fails if any earlier stage's `output/` is empty (a skipped
+   stage) or if a human gate that precedes the current stage is not
+   `approved` in `RESUME.md`.
+2. **Stage checks.** It runs the `quality-gate/verify_*.py` scripts
+   mapped to that stage (the same scripts listed in
+   [`QUALITY_GATE.md`](QUALITY_GATE.md)). A check whose inputs do not
+   exist yet is reported as `skip`, not a failure.
+3. **Receipt.** It writes a `.gate-receipt.json` into the stage's
+   `output/` recording which checks ran, their exit codes, a content
+   hash of the outputs, and the overall result. `verify_stage_sequence.py
+   --require-receipts` can later confirm no stage was edited after its
+   checks last passed (stale-receipt detection).
+4. **Next instruction.** Based on the outcome it prints exactly one of:
+   - **PASS, no gate** → the next stage's `CONTEXT.md` path and a ready
+     prompt (and updates the `RESUME.md` pointer). Exit `0`.
+   - **PASS, human gate** → the artefact summary (via `present_gate.py`)
+     and the approval commands. Exit `10`. The agent presents the
+     summary and waits; after the human approves and `approve_gate.py`
+     records it, re-running `advance.py` crosses the gate.
+   - **FAIL** → the specific defects and a correction prompt scoped to
+     the current stage. Exit `1`. The agent must not advance.
+
+The stage model that `advance.py` and `verify_stage_sequence.py` share
+lives in [`../../quality-gate/clad_stages.py`](../../quality-gate/clad_stages.py)
+— the single source of truth for stage order, gate placement, and the
+stage→checks map.
+
+This is a local, per-stage gate: a defect is caught the moment the stage
+finishes, before later stages build on top of it — not at commit time.
+The pre-commit/CI gate in [`DELIVERY.md`](DELIVERY.md) remains the
+downstream backstop for anyone who bypasses the local loop; wiring the
+same scripts into a CI profile is encouraged but optional and is not
+shipped enabled in this template.
+
+Stage 00 (system scope) is exempt: it is the collaborative intake stage
+and runs before the per-UC advance loop exists.
+
+### Autonomy override (opt-in, human-only)
+
+Some operators want the agent to run the pipeline with less stopping.
+`advance.py` reads a `workflow.autonomy` setting (from `clad.properties`,
+the `CLAD_AUTONOMY` env var, or a `--autonomy` flag) with three levels:
+
+| Level | Human gates | Failing stage checks | Skipped-stage gap |
+|---|---|---|---|
+| `gated` (default) | Stop for approval (exit `10`) | Block (exit `1`) | Block (exit `1`) |
+| `auto` | Auto-approved, recorded as `auto-approved` | Block (exit `1`) | Block (exit `1`) |
+| `yolo` | Auto-approved, recorded as `auto-approved` | Downgraded to warnings; advance with receipt result `pass-with-warnings` | Block (exit `1`) |
+
+Two invariants hold at every level:
+
+1. **A fully skipped stage always hard-stops.** If an upstream stage's
+   `output/` is empty while a later stage is populated, the sequence
+   guard fails even under `yolo`. An entire missing stage is a
+   structural-integrity floor, not a quality preference.
+2. **Auto-approved gates are auditable.** They are written as
+   `auto-approved` (never `approved`) in `RESUME.md` and the receipt, so
+   a reviewer can always tell which gates a human never actually saw.
+   `verify_gate_approval.py` (the stricter CI-side check) still requires
+   a literal `approved`, so a CI profile can reject auto-approved gates.
+
+The agent must **never** raise the autonomy level itself. It is set by
+the human in `clad.properties` or by an explicit in-conversation
+instruction. When autonomy is anything other than `gated`, `advance.py`
+prints a prominent banner and the agent states so plainly to the human.
+
 ## The stage contract
 
 Each stage's `CONTEXT.md` follows the standard shape in

@@ -88,6 +88,42 @@ You are expected to operate within all three layers simultaneously.
     gate grouped by stage with a one-line description. The human must
     be able to identify what to review without inspecting the filesystem
     or `git diff`.
+12. **Advance rule (gate-driven transitions).** You do **not** decide
+    what stage comes next, and you do **not** open the next stage's
+    `CONTEXT.md` on your own initiative. After you finish a per-UC stage
+    (01–05) and its `output/` is written, end your turn by running:
+
+    ```
+    python3 quality-gate/advance.py --feature features/UC-XX-<slug>
+    ```
+
+    Treat that script's stdout as your next instruction. It runs the
+    stage's `Verify` checks and the sequence/entry guard, writes a
+    receipt, and then either (a) prints the next stage's `CONTEXT.md`
+    path and a ready prompt, (b) stops you at a human gate with the
+    artefact summary and the approval command, or (c) prints the
+    specific defects and a correction prompt for the current stage. If
+    it blocks (exit 1) or stops at a gate (exit 10), you must not
+    advance. Only after `advance.py` prints a NEXT STAGE block may you
+    open that stage. Stage 00 (system scope) is exempt — it is the
+    collaborative intake stage and precedes the per-UC advance loop.
+    See [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)
+    §"Gate-driven advance".
+13. **Autonomy rule (never self-select).** `advance.py` supports an
+    opt-in autonomy override (`workflow.autonomy` in `clad.properties`,
+    or the `--autonomy` flag / `CLAD_AUTONOMY` env). Its three levels are
+    `gated` (default — every human gate stops for approval), `auto`
+    (human gates are auto-approved but failing checks still block), and
+    `yolo` (human gates auto-approved **and** failing checks are
+    downgraded to warnings). You must **never** enable `auto` or `yolo`
+    yourself, and never pass `--autonomy` to raise the level. This is a
+    human-only decision, set by the operator in `clad.properties` or
+    given as an explicit in-conversation instruction. Even under `yolo`,
+    a fully skipped stage (an empty artefact-chain gap) remains a hard
+    stop. Auto-approved gates are recorded as `auto-approved` (not
+    `approved`) in `RESUME.md` and the receipt, so an auditor can tell a
+    human never reviewed them. If autonomy is anything other than
+    `gated`, say so plainly to the human at the start of the run.
 
 ## 3. The CLAD contract loop
 
@@ -168,6 +204,7 @@ Current keys:
 | `test.command` | Shell command | The single command to run tests for this profile |
 | `storage.layer` | Free text | Describes the persistence technology in use |
 | `stages.usecase.require-sequence-diagram` | `true` or `false` | Whether Mermaid sequence diagrams are required in Stage 01. Default `true`. Set to `false` if the LLM struggles with diagram generation. |
+| `workflow.autonomy` | `gated`, `auto`, or `yolo` | How `advance.py` handles human gates and check failures. `gated` (default) stops at every gate; `auto` auto-approves gates but checks still block; `yolo` auto-approves gates and downgrades check failures to warnings. A skipped-stage gap always hard-stops. Human-only setting — agents must never raise it. |
 
 **Resolution order** (lower number wins):
 

@@ -3,7 +3,9 @@
 - **Feature:** `UC-00-login`
 - **Branch:** `feat/UC-00-login`
 - **Last completed stage:** `Stage 05 — verify`
-- **Gate outcome:** `Approved`
+- **Gate 1 (Requirements):** `approved`
+- **Gate 2 (Architecture):** `approved`
+- **Gate 3 (Executable spec):** `approved`
 - **Corrections at last gate:** `None`
 - **Deferred concepts:** `None`
 - **Next stage:** `None — feature complete and merged`

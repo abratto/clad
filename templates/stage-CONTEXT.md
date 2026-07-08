@@ -70,3 +70,19 @@
 
 - Default: human approval of `output/` contents.
 - Stage-specific: <e.g. "agent must not have produced files outside the Outputs list">.
+
+## Advancing
+
+> Do not open the next stage's `CONTEXT.md` yourself. After this stage's
+> `output/` is written, end your turn by running the gate-driven advance
+> command, which runs this stage's checks, enforces stage ordering, and
+> tells you the next step:
+>
+> ```
+> python3 quality-gate/advance.py --feature features/UC-XX-<slug>
+> ```
+>
+> Treat its output as your next instruction. It advances you, stops you
+> at a human gate, or returns you to this stage with the defects to fix.
+> See AGENTS.md §2 principle 12 and
+> `methodology/implementation/STAGES.md` §"Gate-driven advance".

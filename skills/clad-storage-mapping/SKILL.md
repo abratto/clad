@@ -37,3 +37,13 @@ Load these files:
 
 - Storage mapping is profile-specific — do not re-derive the data model.
 - Follow the technology declared in `clad.properties`, not a substitute.
+- **Copy the engine; do not reimplement it.** If your project root does
+  not yet contain the CLAD engine/runtime, copy it verbatim from the
+  reference profile's `engine/` package (`ConceptAgent`, `SyncAgent`,
+  `ActionLog`, `SyncDispatcher`, `FlowManager`, plus the ArchUnit rule
+  test), changing only the package declaration to match
+  `APP_PACKAGE_ROOT`. This is reusable infrastructure and the only
+  execution profile shipped today — never author engine classes from
+  scratch. See
+  `features/UC-XX-<slug>/_config/package-and-layout.md` rule 6 and the
+  reference profile README's copy-out command.

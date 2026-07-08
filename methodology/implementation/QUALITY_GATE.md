@@ -182,6 +182,7 @@ consistency checks across the CLAD artefact chain:
 
 | Script | Stage(s) | What it checks |
 |---|---|---|
+| `verify_stage_sequence.py` | Any | No stage was skipped (contiguous prefix), and each cleared human gate is recorded as approved in `RESUME.md` |
 | `verify_file_manifest.py` | Any | `output/` contains exactly the expected files |
 | `verify_scenario_coverage.py` | 01, 02b, 03 | Goal → scenario → chain → sync coverage |
 | `verify_outcome_alignment.py` | 02 | Chain-table outcomes match SPEC enums |
@@ -205,6 +206,52 @@ report. They are invoked by the relevant stage's `## Verify` section
 (or at commit time via the quality gate). The automated checks
 complement — not replace — the semantic checks that require human
 judgment (noted as "Semantic (human)" in items 7–12 above).
+
+### Installing the local pre-commit hook (opt-in, strongly recommended)
+
+The scripts above run deterministically **when invoked**, but nothing
+forces the agent (or you) to invoke them before a commit. CLAD ships an
+opt-in git hook that closes that gap: it runs the sequence guard and the
+iterative-change coupling check automatically on every `git commit`, and
+**refuses commits that skip a stage or decouple an implementation from
+its spec**.
+
+Git never runs hooks from a fresh clone (the `.git/hooks/` directory is
+not version-controlled), so CLAD stores the hook under the tracked
+[`.githooks/`](../../.githooks/) directory and activates it with a
+one-time installer:
+
+```bash
+./quality-gate/install-hooks.sh
+```
+
+This runs `git config core.hooksPath .githooks` for your clone. After
+that, `git commit` runs [`.githooks/pre-commit`](../../.githooks/pre-commit),
+which:
+
+1. Reads the staged diff and finds every touched per-UC feature root
+   (`features/UC-*/`).
+2. Runs `verify_stage_sequence.py` for each of those features and
+   `verify_iterative_change_coupling.py` once.
+3. If any check fails, prints a `COMMIT BLOCKED` banner naming the
+   skipped stage (and where its artefacts belong) or the decoupled
+   change, and aborts the commit.
+
+Environment toggles:
+
+| Variable | Effect |
+|---|---|
+| `CLAD_HOOK_SKIP=1` | Skip the hook for this invocation |
+| `CLAD_HOOK_REQUIRE_RECEIPTS=1` | Also require a current gate receipt per populated stage (`--require-receipts`) |
+
+Bypass a single commit with `git commit --no-verify`; uninstall with
+`git config --unset core.hooksPath`.
+
+**Cloning CLAD as a template?** Run `./quality-gate/install-hooks.sh`
+once right after cloning. The hook is optional so CLAD stays usable
+without it, but it is the cheapest way to keep the stage pipeline honest
+— it turns "the agent should have run the sequence guard" into "the
+commit cannot land until the pipeline is intact."
 
 ### What the ArchUnit rules enforce
 

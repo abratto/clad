@@ -32,6 +32,15 @@ reference implementation when they are not correct for this project.
   Copy starter code/patterns from the selected reference profile into
   your own app/runtime directory and point this file at those real
   package and source roots.
+6. **Copy the engine; do not reimplement it.** The reference profile's
+  `engine/` package (e.g. `ConceptAgent`, `SyncAgent`, `ActionLog`,
+  `SyncDispatcher`, `FlowManager`) plus its ArchUnit rule test is
+  reusable runtime infrastructure and the only execution profile shipped
+  today. Copy those classes into `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/engine/`
+  **verbatim**, changing only the package declaration to match
+  `APP_PACKAGE_ROOT`. Never author engine/runtime classes from scratch
+  when the reference profile already provides them. Only concepts, syncs,
+  boundary DTOs, and the HTTP entry are written per feature.
 
 ## Java profile mapping hints
 

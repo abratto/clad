@@ -34,6 +34,21 @@ are documentation, templates, and worked examples, not application code.
 
 ## After cloning — one-time setup
 
+**Install the local stage-sequence hook (strongly recommended).** Run
+this once so `git commit` refuses commits that skip a CLAD stage or
+decouple an implementation from its spec:
+
+```bash
+./quality-gate/install-hooks.sh
+```
+
+It sets `git config core.hooksPath .githooks` for your clone. The hook
+is opt-in (git never runs hooks from a fresh clone), but it is the
+cheapest way to keep the stage pipeline honest — see
+[`methodology/implementation/QUALITY_GATE.md`](methodology/implementation/QUALITY_GATE.md)
+§"Installing the local pre-commit hook". Bypass a single commit with
+`git commit --no-verify`.
+
 The methodology runs the same with or without GitHub-side tracking. If you
 do want the tracking overlay (recommended for any project that will live
 longer than one feature), do this once after cloning:

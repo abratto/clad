@@ -3,6 +3,10 @@
 > A starter repository for building software with AI coding agents under a
 > discipline that keeps every decision **legible, reviewable, and reversible**.
 
+**TL;DR:** CLAD is a staged, contract-driven workflow that lets one human
+reviewer steer a fast AI coding agent — stage by stage, artefact by
+artefact — without losing control of the system being built.
+
 CLAD combines three ideas that, taken together, let a single human reviewer
 steer multi-step agent work without losing control of the system being built:
 
@@ -20,17 +24,44 @@ steer multi-step agent work without losing control of the system being built:
    folder the human can inspect and edit before the next stage runs.
    Adapted from Van Clief, *Interpretable Context Methodology*.
 
-```
-actors/goals -> use case -> responsibility map -> chain tables ->
-concepts -> syncs -> dependency review -> implement -> verify
-   (00)        (01)        (02a)              (02b)
-   (02)        (03)        (03a)              (04)        (05)
-```
-
-At every arrow there is a folder you can open, a `CONTEXT.md` contract
+At every stage there is a folder you can open, a `CONTEXT.md` contract
 that tells the agent what to do, and an `output/` folder you can inspect
-and edit before the next stage runs. The full stage table lives in
+and edit before the next stage runs. The [state diagram below](#how-clad-works)
+shows the full flow; the complete stage table lives in
 [`AGENTS.md`](AGENTS.md) §3.
+
+## What makes CLAD different
+
+Most "AI coding" workflows optimise for generating code fast. CLAD
+optimises for **keeping a human in control of a fast agent** without
+becoming the bottleneck. Concretely:
+
+- **Contracts before code.** Every stage is governed by a `CONTEXT.md`
+  that declares its Inputs, Process, and Outputs. The agent cannot work
+  off-contract, so its output is predictable and reviewable. See the
+  stage-contract template
+  [`templates/stage-CONTEXT.md`](templates/stage-CONTEXT.md).
+- **Everything is an artefact on disk.** Requirements, concepts, syncs,
+  data models, and specs are all files you can `diff`, edit, and revert —
+  not hidden chat state. Review happens in your editor, not by re-reading
+  a transcript.
+- **Legible architecture (WYSIWID).** Runtime is independent concepts
+  wired only by declarative syncs. No concept reaches into another, so a
+  change's blast radius is local and a single small context window is
+  enough to understand any one part. See
+  [`methodology/architecture/CONCEPTS.md`](methodology/architecture/CONCEPTS.md).
+- **Gate-driven and reversible.** Three human gates per use case (plus a
+  collaborative system-scoping gate). A rejected gate sends work back to
+  the earliest stage that owns the defect — never an ad-hoc downstream
+  patch. See
+  [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md).
+- **Deterministic enforcement, not vibes.** Plain `python3` checks under
+  [`quality-gate/`](quality-gate/) verify the artefact chain, and an
+  optional [pre-commit hook](quality-gate/install-hooks.sh) refuses
+  commits that skip a stage or decouple code from its spec.
+- **Model- and framework-agnostic.** The methodology is portable across
+  agents (Copilot, Claude, Cursor, Codex, …); only the reference
+  implementation profile is language-specific.
 
 ## How CLAD works
 
@@ -41,24 +72,48 @@ CLAD is a staged workflow between a human reviewer and an AI coding agent.
 - Between gates, the agent can auto-advance through tightly scoped stages and run deterministic checks.
 - If a gate fails, work returns to the earliest stage that owns the defect rather than being patched ad hoc downstream.
 
-At a high level, the flow looks like this:
+At a high level, CLAD is a state machine of stages punctuated by human
+gates. Between gates the agent auto-advances through tightly scoped
+sub-stages; at each gate it stops for review, and a rejection loops back
+to the stage that owns the defect:
 
-```text
-Stage 00 (system scope):
-  brief -> actors/goals -> human approval
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Stage00
 
-Per use case:
-  Gate 1 (Requirements): use case -> responsibility map -> chain tables
-  Gate 2 (Architecture): concepts -> syncs -> dependency review -> data model
-  Gate 3 (Executable spec): storage mapping -> spec -> flow tests
+    state "Stage 00 · system scope (actors + goals)" as Stage00
+    state g0 <<choice>>
+    Stage00 --> g0 : ready for review
+    g0 --> Stage00 : reject
+    g0 --> Reqs : Gate 0 approved
 
-After Gate 3:
-  agent completes concept TDD -> sync TDD -> verification
+    state "Requirements · 01 → 02a → 02b" as Reqs
+    state g1 <<choice>>
+    Reqs --> g1 : ready for review
+    g1 --> Reqs : reject
+    g1 --> Arch : Gate 1 approved
+
+    state "Architecture · 02 → 03 → 03a → 03b" as Arch
+    state g2 <<choice>>
+    Arch --> g2 : ready for review
+    g2 --> Arch : reject
+    g2 --> Exec : Gate 2 approved
+
+    state "Executable spec · 04a → 04b → 04c" as Exec
+    state g3 <<choice>>
+    Exec --> g3 : ready for review
+    g3 --> Exec : reject
+    g3 --> Delivery : Gate 3 approved
+
+    state "Delivery · 04d → 04e → 05" as Delivery
+    Delivery --> [*] : verified & traced
 ```
 
 In other words: one collaborative scoping gate for the system, then three
-review gates per use case before the final delivery stages run through to
-verification.
+review gates per use case (Requirements → Architecture → Executable spec)
+before the final delivery stages run through to verification. Stage 00
+runs once per system brief; stages 01–05 run once per in-scope goal.
 
 ## Status
 
@@ -102,14 +157,25 @@ CLAD was created by **Alan Potosnak**. See [`NOTICE`](NOTICE) and
 for attribution context and upstream influences.
 
 Important for template users: `reference-impl/` is a seeded **reference
-source**, not the main application root for your downstream product. If
-you adopt a profile from this repo, copy the chosen profile's starter
-code and patterns into your own project root or runtime folder
-(`app/`, `backend/`, `services/api/`, etc.) and set your real package
-and source roots in
+source**, not the main application root for your downstream product. It
+holds two kinds of code you must treat differently:
+
+1. **The reusable CLAD engine/runtime** — the `engine/` package
+   (`ConceptAgent`/`SyncAgent` base classes, `ActionLog`,
+   `SyncDispatcher`, `FlowManager`) plus the ArchUnit rule test. This is
+   the **only execution profile shipped today**, and it is infrastructure
+   you **copy and reuse as-is** — never reimplement it from scratch.
+2. **Example concept and sync code** (the UC-00 login classes) — these
+   you replace with your own concepts and syncs as you work the stages.
+
+If you adopt this profile, copy the **whole** profile — engine
+included — into your own project root or runtime folder (`app/`,
+`backend/`, `services/api/`, etc.) and set your real package and source
+roots in
 [`templates/feature-skeleton/_config/package-and-layout.md`](templates/feature-skeleton/_config/package-and-layout.md).
 Do not keep extending `reference-impl/` in place with product-specific
-code.
+code, and do not ask the agent to re-create the engine when it already
+exists here.
 
 ## Quick start
 
@@ -118,10 +184,16 @@ code.
 > [follow this link](https://github.com/abratto/clad/generate)) to get
 > a clean copy with no fork relationship — then read on.
 
-When you later implement against a concrete profile, treat
-`reference-impl/` as upstream example material. Your real application
-code should live under your own chosen project root, not inside the
-starter's `reference-impl/` tree.
+When you later implement against a concrete profile, copy the **whole**
+profile out of `reference-impl/` into your own project root: the CLAD
+engine/runtime is reusable infrastructure you copy **as-is** (it is the
+only execution profile that exists today), while only the example
+concepts and syncs are meant to be replaced. Your real application code
+should live under your own chosen project root, not inside the starter's
+`reference-impl/` tree — and the agent should reuse the shipped engine
+rather than reimplement it. The exact copy-out command and package/
+source-root setup are in
+[`reference-impl/java-micronaut-jena/README.md`](reference-impl/java-micronaut-jena/README.md).
 
 ### Requirements
 
@@ -156,83 +228,81 @@ cd clad
 #   5. features/UC-00-login/README.md  ← the worked example itself
 ```
 
-### Your first prompt — load the methodology
+**Recommended one-time setup.** Activate the opt-in stage-sequence hook so
+`git commit` refuses commits that skip a CLAD stage or decouple code from
+its spec:
+
+```bash
+./quality-gate/install-hooks.sh   # sets core.hooksPath; bypass with git commit --no-verify
+```
+
+The hook is optional (git never runs hooks from a fresh clone) but strongly
+recommended — see
+[`methodology/implementation/QUALITY_GATE.md`](methodology/implementation/QUALITY_GATE.md)
+§"Installing the local pre-commit hook".
+
+Getting started is really **two prompts** — `AGENTS.md` handles the
+rest. It tells the agent to load the workspace context automatically,
+routes a plain-language brief into Stage 00, and drives the stage-to-gate
+loop without further scripting from you.
+
+#### Step 1 — load the rules
 
 After cloning, open a chat with your agent (Copilot, Claude, Cursor,
-Codex, …) in this workspace and send exactly this:
+Codex, …) in this workspace and send:
 
-> Read `AGENTS.md` in full, then `CONTEXT.md`, then
-> `methodology/README.md`, then `methodology/WALKTHROUGH.md`. Confirm you
-> understand the five-layer hierarchy and the stage flow, then wait for
-> my next instruction.
+> Read `AGENTS.md` in full and follow it, then wait for my brief.
 
-That loads the binding rules (`AGENTS.md`), the workspace router
-(`CONTEXT.md`), the methodology reading order, and an annotated example
-of what a single CLAD turn looks like — without pulling in any
-feature-specific material the agent shouldn't have yet.
+`AGENTS.md` is self-bootstrapping: following it makes the agent load the
+workspace router (`CONTEXT.md`) and the methodology on its own. If you
+want to see a full turn-by-turn example first, skim
+[`methodology/WALKTHROUGH.md`](methodology/WALKTHROUGH.md) yourself.
 
-### Your second prompt — start Stage 00
+#### Step 2 — give your brief
 
-> Open `features/_system/stages/00_actor-goal/CONTEXT.md` and read it.
-> Then run Stage 00 against this brief, replacing the placeholder with
-> your own one-paragraph project brief: *<one paragraph describing what
-> you want the system to let users do>*.
+Just describe what you want to build in plain language and ask the agent
+to start system scoping:
 
-If you want a bare-minimum starting point, paste this exact prompt:
+> I want to build *<one paragraph describing what you want the system to
+> let users do>*. Run system-scope Stage 00 for this.
 
-> Open `features/_system/stages/00_actor-goal/CONTEXT.md` and read it.
-> Then run Stage 00 against this brief:
->
-> Let's build a library lending system. The system should prioritize ease
-> of access and self-sufficiency for patrons while supporting branch staff
-> operations needed to keep lending reliable. The system must provide a
-> unified digital portal where patrons can browse the full catalog in real
-> time, view item availability by branch, and manage their own account.
-> Patrons must be able to place holds, renew eligible loans, view due
-> dates, and receive automated reminders by email or SMS. Branch staff
-> must be able to manage hold fulfillment and check-in/check-out status so
-> patron-facing availability remains accurate. For this initial scope,
-> include lending and hold workflows; exclude acquisitions, catalog
-> metadata editing, and interlibrary loan. Treat patron self-service
-> lending as P0; assume no fixed external API contract unless one is
-> provided.
+The agent will run **Stage 00 (actor/goal)** at system scope: propose
+actors and goals, ask up to five clarifying questions, and wait for your
+approval before writing any artefact.
+
+<details>
+<summary>Worked example brief — a library lending system (click to expand)</summary>
+
+> I want to build a library lending system. The system should prioritize
+> ease of access and self-sufficiency for patrons while supporting branch
+> staff operations needed to keep lending reliable. The system must
+> provide a unified digital portal where patrons can browse the full
+> catalog in real time, view item availability by branch, and manage
+> their own account. Patrons must be able to place holds, renew eligible
+> loans, view due dates, and receive automated reminders by email or SMS.
+> Branch staff must be able to manage hold fulfillment and
+> check-in/check-out status so patron-facing availability remains
+> accurate. For this initial scope, include lending and hold workflows;
+> exclude acquisitions, catalog metadata editing, and interlibrary loan.
+> Treat patron self-service lending as P0; assume no fixed external API
+> contract unless one is provided. Run system-scope Stage 00 for this.
 
 To adapt this for your own project, keep the structure (actors, core
 capabilities, explicit in-scope/out-of-scope, priority hint, contract
 assumption) and replace only the domain details.
 
-Stage 00 will ask clarifying questions before writing the approved actor
-and goal artefacts.
+</details>
 
-The agent will run **Stage 00 (actor/goal)** at system scope: it will
-propose actors and goals, ask clarifying questions, and wait for your
-approval before writing the artefacts.
+#### From there on — the agent drives
 
-### After Stage 00 passes
-
-Once `features/_system/stages/00_actor-goal/output/goals.md` is approved,
-send this exact prompt:
-
-> Proceed — create one `features/UC-XX-<slug>/` folder per in-scope goal
-> by copying `templates/feature-skeleton/`, then open
-> `features/UC-01-<slug>/stages/01_usecase/CONTEXT.md` and run Stage 01
-> for the first UC.
-
-That next step is mechanical: the agent creates the UC folders from the
-approved goals and moves into Stage 01 for the first one.
-
-```bash
-# agent action, not required manual shell work:
-cp -R templates/feature-skeleton features/UC-01-<slug>
-# repeat for each remaining in-scope goal with the next UC number
-# then open:
-#   features/UC-01-<slug>/stages/01_usecase/CONTEXT.md
-```
-
-The human responsibility here is the gate: approve Stage 00 or send it
-back for correction. Once approved, the agent should continue the flow
-by creating the UC folders and moving into Stage 01 unless the human
-explicitly wants to pause.
+Once you approve Stage 00, you stop scripting prompts. The agent creates
+one `features/UC-XX-<slug>/` folder per in-scope goal and walks each
+feature through stages 01–05, pausing only at the three human gates
+(Requirements, Architecture, Executable spec). Your job is to review and
+approve — or reject, which loops work back to the stage that owns the
+defect. Steer in plain language: "what's next", "let's do UC-02", "redo
+the syncs". See the intent-routing and advance rules in
+[`AGENTS.md`](AGENTS.md) §2.
 
 ### Configuration
 
