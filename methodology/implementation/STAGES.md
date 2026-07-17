@@ -103,20 +103,6 @@ the quality-gate scripts as a self-audit and proceeds without human
 intervention. If any quality-gate check fails, the agent stops and
 surfaces the defect.
 
-```
-Gate 1 — Requirements:  01 → 02a → 02b   (human reviews after 02b)
-Gate 2 — Architecture:  02 → 03 → 03a → 03b (human reviews after 03b)
-Gate 3 — Executable:    04a → 04b → 04c   (human reviews after 04c)
-Auto (Delivery):        04d → 04e → 05    (no human gates)
-```
-
-| Gate | Stages | Human reviews | Questions answered |
-|---|---|---|---|
-| 1 — Requirements | 01 → 02a → 02b | use case, concept boundaries, chain tables | Do we have the right actors/goals? Do the flows cover all scenarios? |
-| 2 — Architecture | 02 → 03 → 03a → 03b | concept state machines, sync coordination, dependency coupling, data model | Do the state machines make sense? Are there missing or invalid transitions? |
-| 3 — Executable spec | 04a → 04b → 04c | .feature files (Gherkin) | Do the tests capture the right scenarios and inputs? |
-| Auto (Delivery) | 04d → 04e → 05 | (none — script-checked) | All quality checks pass? |
-
 Rejection at any gate sends work back to the earliest stage that owns
 the defect. The agent does not advance past the gate until the human
 approves.
@@ -233,512 +219,69 @@ human instead of guessing from examples or `.example` files.
 
 ## Stage-by-stage
 
-### Stage 00 — `00_actor-goal/`
-
-**Special semantics — collaborative.** This is the only stage whose
-process is intentionally multi-turn.
-
-**Input:** the human's brief.
-
-**Process:** the agent **proposes** an initial actor/goal list from the
-brief, then **asks targeted clarifying questions** (max 5 at a time),
-iterates with the human, and only writes the final `actors.md` and
-`goals.md` once the human signals agreement. The agent does not
-fabricate goals beyond what the human confirms.
-
-**Output:** `actors.md`, `goals.md` (per
-[`../../templates/actors.md`](../../templates/actors.md) and
-[`../../templates/goals.md`](../../templates/goals.md), with one row per
-goal using a short `Goal` phrase plus separate `Rationale`). Optional:
-`port-spec.md` when an externally imposed adapter contract exists.
-
-#### Optional: Port Specification
-
-When the system must conform to an externally imposed adapter contract
-(an existing API spec, an OpenAPI document, a published test suite),
-produce `port-spec.md` alongside `actors.md` and `goals.md`. This
-document:
-
-- Names the contract and its source.
-- Lists the serialization conventions that the contract imposes and
-   that are not derivable from use-case analysis (error envelope shape,
-   ID types, nesting requirements, etc.).
-- References the external contract test suite if one exists.
-
-The port spec is not a use-case artefact. It describes the skin of the
-adapter, not the behaviour of the system. It feeds Stage 04b and Stage
-04c only.
-
-When no external contract exists, this artefact is omitted. The adapter
-format is then a design choice made at Stage 04b.
-
-**Gate:** human approval — but the gate is *expected* to take multiple
-turns to reach.
-
-### Stage 01 — `01_usecase/`
-
-**Input:** `00_actor-goal/output/`, the human's brief.
-
-**Process:** draft `usecase.md` with: a one-paragraph operational
-principle for the *feature* (not for any single concept); the actors
-(carried forward from stage 00); and the named scenarios the feature
-must satisfy. Each scenario is a trigger + expected outcomes. Out of
-scope is non-empty.
-
-Name top-level scenarios for the user goal or trigger, not just the
-happy-path result, because Stage 02b derives one chain file from each
-top-level scenario and carries that scenario's extensions as separate
-branches inside the same file.
-
-An optional Mermaid `sequenceDiagram` may appear inside a scenario as a
-derived interaction sketch for humans. It is explanatory only and does
-not become a new source of truth: Stage 01 prose remains canonical, and
-Stage 02b chain tables remain the first canonical executable rendering
-of cross-concept choreography. Stage 01 sequence diagrams stay limited
-to actor/system interaction and must not introduce concept names, sync
-names, provenance details, or state claims that are not already stated
-in the prose use case.
-
-Default expectation: include the sequence diagram when it materially
-improves review clarity, especially for scenarios with branching
-extensions, opaque failure handling, or longer interaction sequences.
-Omit it when it would only restate a short linear path without adding a
-useful visual distinction.
-
-**Output:** `usecase.md`.
-
-**Gate:** Auto-advances (next human gate: Stage 02b). The agent runs the Verify items as self-audit and proceeds. If any item fails, the agent stops and surfaces the defect.
-
-### Stage 02a — `02a_responsibility-map/`
-
-**Input:** `01_usecase/output/usecase.md`,
-`templates/responsibility-map.md`.
-
-**Process:** identify the *concept set* the feature requires (one
-capability each). Produce one row per concept naming its owned state
-(one line) and its owned actions (names only — no signatures yet).
-Before finalizing the table, fill the template's derivation rubric from
-the approved use-case responsibilities and extensions: one candidate row
-per responsibility cluster, with an explicit reason why the capability is
-separate, why it is not bootstrap transport work, and why it is not owned
-by another listed concept. Only then run the *coverage check*: list each
-scenario from the use case and mark which concepts it touches. Anything
-that does not fit goes in *Out of scope*.
-
-**Output:** `responsibility-map.md`.
-
-**Gate:** Auto-advances (next human gate: Stage 02b). Same self-audit rule.
-
-### Stage 02b — `02b_chain-table/`
-
-**Input:** `01_usecase/output/usecase.md`,
-`02a_responsibility-map/output/responsibility-map.md`,
-`templates/chain-table.md`.
-
-**Process:** for each named scenario in the use case, draw the chain
-of concept actions that fulfils it as a numbered table
-(`# | When | Then | Inputs | Outcome | Why this step`) plus a
-Mermaid `stateDiagram-v2` diagram. The first row is always
-`Web/request[...] -> Web.handle`; the last row is always
-`... -> Web.respond[...]`.
-
-The file boundary follows Stage 01 top-level scenarios exactly: one
-top-level scenario becomes one chain file. Its failure extensions stay in
-that same chain file as separate branch rows when they share the same
-trigger and user goal. Only a separate top-level Stage 01 scenario gets a
-separate Stage 02b chain file.
-
-At this level, the `Then` column is the concrete rendering of the
-WYSIWID Level 2b **Then**. The corresponding `When` is explicit in the
-table so the reviewer can inspect the causal edge directly.
-If a downstream action needs request-originated data, the approved 02b
-row must name those carried fields on the trigger contract itself
-(for example `Web.handle[Routed(email, password)]`).
-`Inputs` name the downstream action's arguments only; they are **not**
-join provenance. `Where`/pattern A/B/C/D first appear in Stage 03.
-
-Each 02b row is one transition branch. Do not collapse multiple outcome
-branches that lead to different next effects into one row. If an action
-can end in `Ok`, `ValidationFailed`, and `AccountExists`, and those lead
-to different `Web.respond[...]` contracts or different next actions,
-they must appear as separate rows so the table and derived diagram stay
-structurally identical.
-
-The chain table is therefore the bridge between 02a (which concepts
-exist) and 03 (which syncs coordinate them).
-
-If the Stage 03 author cannot bind a Pattern A value from a name that is
-already declared by the approved 02b trigger token, that is an upstream
-defect in Stage 02b, not a local invitation to read `body.*` or
-`request.*`. Reopen 02b and fix the trigger contract before continuing.
-
-Declaring the names only on the original `Web/request[...]` token is not
-sufficient if the next row still consumes an unparameterized trigger such
-as `Web.handle[Routed]`. The carried names must appear on the actual
-handoff token used by the next row, for example:
-
-```text
-1 | Web/request[POST /register] | Web.handle | ... | Routed(name, identifier)
-2 | Web.handle[Routed(name, identifier)] | Member.register | name, identifier | ...
-```
-
-**Output:** `<scenario>-chain.md` per scenario.
-
-**Gate:** **Gate 1 (Requirements).** Default human approval. The human reviews the complete design picture: use case scenarios, concept boundaries, and action choreography together. After approval, the agent auto-advances through Stages 02–03b without further gates.
-
-A well-formed chain table is structurally equivalent to a finite
-state machine (states = outcomes, events = the outcome the previous
-row emitted, transitions = the next row's action). The table is the
-canonical source; any Mermaid diagram is **derived** from it and
-must be presented in the **same conversation turn** as the table —
-the gate cannot open over half a picture. See
-[`../../templates/chain-table.md`](../../templates/chain-table.md)
-§"The chain table is a finite state machine" for the FSM mapping and
-the derivation rules. One row in the table must correspond to one arrow
-in the diagram; if the diagram needs multiple arrows, the table must
-already have multiple rows.
-
-### Stage 02 — `02_concepts/`
-
-**Input:** `02a_responsibility-map/output/responsibility-map.md`,
-`02b_chain-table/output/`, `methodology/architecture/CONCEPTS.md`,
-`templates/concept.md`.
-
-**Process:** for each concept already named in the responsibility
-map, write the **full per-concept anatomy** in `<Name>.concept.md`:
-state, actions (with signatures, outcomes, and flow-token
-contributions), and an operational principle. Concepts whose
-responsibilities are bootstrap-only (e.g. `Web`) get no concept file —
-they are documented in `methodology/architecture/WEB_CONCEPT.md`. No
-concept references another.
-
-If a bootstrap concept file appears in `02_concepts/output/` without an
-explicit methodology deviation, Stage 02 is not complete; the agent must
-stop and reopen Stage 02 rather than carrying that file into downstream
-stages.
-
-**Output:** one `<Name>.concept.md` per business concept.
-
-**Gate:** Auto-advances (next human gate: Stage 03b). The quality-gate scripts verify outcome alignment and action chain consistency.
-
-### Stage 03 — `03_syncs/`
-
-**Input:** `02_concepts/output/`, the use case (for the `Cites`
-section), `methodology/architecture/SYNCHRONIZATIONS.md`,
-`templates/sync.md`.
-
-**Process:** for each scenario in the use case, identify the chain of
-concept actions that fulfils it. Each coordination link becomes one
-sync. Before writing sync prose, build a per-sync **Sync Contract
-Matrix** from the approved 02b rows and 02 concept signatures: source
-row id, target row id, exact `when`, exact `then`, and allowed literals.
-
-Stage 03 is under an exact-token lock. Outcome names, argument names,
-status values, casing, hyphenation, and numeric-vs-string literals must
-match the approved earlier-stage contracts exactly. `where:` is for join
-provenance only; it may not invent convenience payload fields. If any
-02b row and 02 concept signature disagree, stop and reopen Stage 02
-instead of guessing inside Stage 03.
-
-**Output:** one `<name>.sync.md` per coordination rule.
-
-**Gate:** Auto-advances (next human gate: Stage 03b). The verify_sync_matrix.py and verify_scenario_coverage.py scripts must pass.
-
-### Stage 03a — `03a_dependency-review/`
-
-**Input:** `03_syncs/output/`, `02b_chain-table/output/`,
-`02a_responsibility-map/output/responsibility-map.md`,
-`02_concepts/output/`,
-[`../architecture/SYNC_PATTERNS.md`](../architecture/SYNC_PATTERNS.md),
-[`../../templates/dependency-review-card.md`](../../templates/dependency-review-card.md),
-[`../../templates/pattern-d-summary.md`](../../templates/pattern-d-summary.md).
-
-**Process:** for each concept in 02a's map, produce a per-concept
-dependency card listing (1) every action invocation it receives from
-syncs, labelled by the data-flow pattern A/B/C/D from
-[`../architecture/SYNC_PATTERNS.md`](../architecture/SYNC_PATTERNS.md),
-and (2) every Pattern D read of its named region by other concepts.
-Then produce a single `pattern-d-summary.md` consolidating every
-Pattern D read in the feature.
-
-Stage 03a is an audit stage, not a repair stage. Cards and the Pattern D
-summary copy action names, argument names, field names, pattern labels,
-keys, status codes, and literals exactly from the approved Stage 03
-syncs. If 03a discovers token drift, it surfaces the defect and sends
-work back to Stage 03 (or earlier if Stage 03 already reflects earlier
-contract drift).
-
-#### Route-filter completeness check
-
-For every sync, identify its trigger action. If that trigger action is
-produced by more than one named route, the sync must carry a route
-filter or carry a documented justification. Record the finding in the
-`*-card.md` dependency review artefact. A sync that fires on a shared
-trigger without a route filter is a defect, not a design choice.
-
-This stage produces no new design — it makes the cross-concept
-coupling that already exists in the syncs **visible** so the human
-can spot a flow-inconsistent invocation or an unintended state
-coupling **before** Stage 04 turns it into code. Pattern D is the
-only legal cross-concept read; if a flow appears to need data from
-elsewhere, the dependency card is where that gets surfaced.
-
-**Output:** `<concept>-card.md` per concept named in 02a's map;
-`pattern-d-summary.md` consolidating Pattern D across the feature.
-
-**Gate:** Auto-advances (next human gate: Stage 03b).
-
-### Stage 03b — `03b_data-model/`
-
-**Input:** `02_concepts/output/`, `03a_dependency-review/output/`,
-[`../architecture/DATA_MODEL_NOTES.md`](../architecture/DATA_MODEL_NOTES.md).
-
-**Process:** for each approved concept spec, derive a profile-neutral
-conceptual data model: fact types, uniqueness, mandatory roles, and
-derived facts. Every fact must trace back to approved Stage 02 state or
-approved Pattern D exposure from 03a. This stage decides the
-**conceptual model**, not the storage technology.
-
-**Output:** `<Name>.data-model.md` per concept.
-
-**Gate:** **Gate 2 (Architecture).** Default human approval. The human reviews concept state machines, sync coordination, cross-concept coupling, and the conceptual data model together. After approval, the agent auto-advances through Stages 04a–04b without a gate, then stops at Stage 04c for **Gate 3 (Executable specification)** — the last design-stage human gate.
-
-### Stage 04 — `04_implement/` (router)
-
-`04_implement/CONTEXT.md` is a router: its **Process** points at the
-five sub-stages below, and its **Outputs** list is empty (sub-stages
-own all artefacts). Sub-stages run in order `04a → 04b → 04c → 04d →
-04e`; the agent gates (auto or human) after each.
-
-#### Stage 04a — `04a_storage-mapping/`
-
-**Input:** `03b_data-model/output/`, the chosen profile's reference
-docs, [`STORAGE_MAPPING.md`](STORAGE_MAPPING.md).
-
-**Process:** if the profile uses a relational/RDF/document store, map
-each approved conceptual data model into the profile's storage
-primitives. Otherwise write `_NOT_APPLICABLE.md` explaining why and
-skip.
-
-Stage 04a must not invent new facts or constraints. It realizes the
-approved model from 03b in a specific profile.
-
-**Output:** `<Name>.storage.md` per concept (or `_NOT_APPLICABLE.md`).
-
-**Gate:** Auto-advances (next human gate: Stage 04c). The verify_file_manifest.py script must pass.
-
-#### Stage 04b — `04b_spec/`
-
-**Input:** `02_concepts/output/`, `templates/spec.md`. If system-level
-`features/_system/stages/00_actor-goal/output/port-spec.md` exists, it
-is also a required input.
-
-**Process:** derive the SPEC contract slice mechanically from each
-concept spec — action signatures, outcome enums, flow-token shape.
-Nothing else.
-
-If `02_concepts/output/` contains a bootstrap concept file such as
-`Web.concept.md` without an explicit methodology deviation, `04b` must
-stop and send work back to Stage 02 instead of deriving a SPEC from it.
-
-SPEC files must not include correction history, methodology
-interpretation, remediation notes, design commentary, or implementation
-guidance beyond what is mechanically present in the concept spec.
-
-#### When `port-spec.md` exists
-
-The `spec.md` for each use case must include a **Response shapes**
-section derived from `port-spec.md`. This section specifies:
-
-- Exact JSON path for every significant field in the success response.
-- Exact JSON path and value for every error response envelope.
-- Field type constraints (integer, boolean, ISO-8601 string, etc.).
-
-These are the assertions that Stage 04c contract-compliance scenarios
-will verify.
-
-**Output:** `<Name>.spec.md` per concept.
-
-**Gate:** Auto-advances (next human gate: Stage 04c). The verify_spec_parity.py script must pass.
-
-#### Stage 04c — `04c_flow-tests/`
-
-**Input:** `01_usecase/output/usecase.md`, `03_syncs/output/`,
-`04b_spec/output/`, `features/UC-XX/_config/build-and-test.md`,
-`features/UC-XX/_config/package-and-layout.md`. If system-level
-`features/_system/stages/00_actor-goal/output/port-spec.md` exists, it
-is also a required input.
-
-**Process:** for each named scenario in the use case, produce per-scenario
-flow-test artefacts: a Gherkin `.feature` file, a step-definition skeleton,
-a Cucumber runner, and stub flow tests. The `.feature` file is the spec.
-One use case → one `.feature` file; one scenario → one Gherkin
-`Scenario`/`Scenario Outline`. Step-definition methods map 1:1 to
-chain-table rows.
-
-Stub flow tests live under the feature's configured
-`APP_TEST_SOURCE_ROOT`; agents must not guess the test tree from the
-reference profile when the feature config says otherwise.
-
-One scenario means one Gherkin Scenario and one step-definition method.
-
-Before claiming this stage is "red and ready", run the canonical
-build-and-test command from `features/UC-XX/_config/build-and-test.md`
-(or the targeted equivalent documented there) and verify the test tree
-compiles. The expected outcome at this stage is either
-disabled/skipped flow tests (when stubs are intentionally `@Disabled`)
-or failing flow tests (if enabled early) — but never compilation
-errors.
-
-#### Contract-compliance scenarios
-
-When `port-spec.md` exists, each `.feature` file must include at least
-one **contract-compliance scenario** per HTTP endpoint that:
-
-- Asserts the exact JSON path of every required field (not
-   string-contains).
-- Asserts field types where the contract constrains them.
-- Asserts the exact error envelope shape for the primary failure path.
-
-These scenarios are distinct from the intent-level scenarios. Label
-them `@contract` to distinguish them from `@happy-path` and
-`@failure-path`.
-
-**Output:** `<feature>.feature` per use case, a `CucumberTest.java`
-runner, and `<Feature>StepDefinitions.java` skeletons (`@Disabled`).
-
-**Gate:** **Gate 3 (Executable specification).** Default human approval. The human reviews the `.feature` files as the executable form of the use case. After approval, the agent auto-advances through Stages 04d, 04e, and 05 without further gates.
-
-The `04c` artifact is therefore not only an output contract. It is also
-the choreography contract that `04e` must satisfy when making the flow
-green.
-
-#### Stage 04d — `04d_concept-tdd/` (router)
-
-**Input:** `02_concepts/output/`, `04b_spec/output/`,
-`04c_flow-tests/output/`, `features/UC-XX/_config/build-and-test.md`,
-`features/UC-XX/_config/package-and-layout.md`.
-
-**Process:** route concept TDD through two structural child stages:
-
-- `04d_red-tests/`: derive executable concept tests from approved outer
-   artefacts, run them red, and record the handoff bundle
-- `04d_green-impl/`: implement only against the approved red tests until
-   they are green
-
-Implementation in `04d_green-impl/` is derived **first** from the
-feature's approved upstream artefacts (Stage 02 concept spec, `04b`
-SPEC slice, `04a` mapping when applicable, and approved red tests).
-Any selected profile example is a realization pattern only; it must not
-override or compete with those upstream artefacts.
-
-Tests that depend on another concept's state or on sync orchestration do
-not belong here; they belong in `04e`.
-
-**Output:** child-stage outputs and side effects. `04d_red-tests/`
-produces `concept-test-derivation.md`; `04d_green-impl/` produces green
-concept code and tests in the selected profile.
-
-**Gate:** Auto-advances through Stage 05. Sub-stages 04d-red and 04d-green auto-advance with verify_concept_test_derivation.py as the gate.
-
-#### Stage 04e — `04e_sync-tdd/` (router)
-
-**Input:** `03_syncs/output/`, `04b_spec/output/`,
-`04c_flow-tests/output/`, `features/UC-XX/_config/build-and-test.md`,
-`features/UC-XX/_config/package-and-layout.md`.
-
-**Process:** route sync TDD through two structural child stages:
-
-- `04e_red-tests/`: derive executable sync tests from approved sync
-   contracts, outer flow expectations, and the expected authored action
-   chain from `04c`, run them red, and record the handoff bundle
-- `04e_green-impl/`: implement only against the approved red sync tests
-   until they are green and the flow tests from `04c` go green
-
-Implementation in `04e_green-impl/` is derived **first** from the
-feature's approved upstream artefacts (Stage 03 sync specs, `04b` SPEC
-slice, `04c` expected authored action chain, and approved red sync
-tests). Any selected profile example is a realization pattern only; it
-must not override or compete with those upstream artefacts.
-
-There must be a 1:1 correspondence between approved Stage 03 sync specs
-and Stage 04e test/implementation pairs. Do not invent extra executable
-syncs with no upstream sync contract.
-
-Imperative orchestration is a fail condition in Stage 04e. An
-implementation does **not** satisfy the sync contract if it introduces a
-class that sequences ordered domain calls, branches on business
-conditions inline, or chooses the final response directly instead of
-authoring the branch through concept outcomes and declarative syncs.
-`*Coordinator` / `*Orchestrator` classes are therefore defects unless
-they are thin profile/runtime adapters with an explicit methodology
-waiver.
-
-**Output:** child-stage outputs and side effects. `04e_red-tests/`
-produces `sync-test-derivation.md`; `04e_green-impl/` produces green
-sync code/tests and green flow tests.
-
-**Gate:** Auto-advances through Stage 05. Sub-stages 04e-red and 04e-green auto-advance.
-
-Gate evidence must include one executed build-and-test command result
-showing: 1) test compilation succeeded, 2) sync tests are green, and
-3) flow tests from `04c` are green.
-
-Gate evidence must also show that green was reached through authorised
-concept actions and declarative syncs rather than through imperative
-scenario orchestration hidden in implementation code, and that the
-runtime action chain matches the expected authored action chain written
-in `04c`.
-
-When the selected profile exposes a runtime debug surface, Stage 04 uses
-that surface as the default tool for explaining observed behaviour while
-the flow is still being made green. In the Java reference profile, this
-means `/api/dev/flows`, `/api/dev/flow/{token}`, `/api/dev/stuck`, and
-`/api/dev/concept/{name}/triples`. Predicted tokens and test comments
-do not count as runtime evidence when such a surface exists.
-
-For bootstrap / `Web` implementations, Stage 04 must also preserve the
-transport boundary described in `WEB_CONCEPT.md`. A controller/route
-handler may normalize input, invoke the flow root, await the authored
-response, and translate transport output. It must not call business
-concept classes directly, branch on domain outcomes, compute domain
-policy, or read/mutate concept state.
-
-### Stage 05 — `05_verify/`
-
-Stage 05 has two parts: **Verify** (back-trace) and **Close** (smoke,
-tracking, resume-point). The full contract is in the stage seed at
-[`../../templates/feature-skeleton/stages/05_verify/CONTEXT.md`](../../templates/feature-skeleton/stages/05_verify/CONTEXT.md).
-
-**Input:** the use case, the sync specs, a flow-token log from a
-representative test execution, and the selected profile's runtime debug
-surface when one exists.
-
-**Process — verify:** for each named scenario, walk the flow-token
-tree and check that it matches the chain of syncs and concept actions
-the specs predict. Gather the runtime evidence for that walk from the
-profile's debug surface when available; in the Java reference profile,
-the default proof surface is `/api/dev/*`. Flag any tokens not
-authorised by a spec. Also check that transport entry and transport exit
-were reached through the authorised action/sync chain rather than being
-short-circuited inside the controller / route handler.
-
-**Process — close (only after verify is clean):**
-
-1. Smoke the running profile (boot → exercise each scenario's trigger
-   → record real responses) into `smoke.md`. This is the only step
-   that proves the deployable artefact, not just the test suite,
-   behaves.
-2. Update tracking (or note "not applicable") into `tracking.md` —
-   see [`../overlays/TRACKING.md`](../overlays/TRACKING.md) when the
-   overlay is in use.
-3. Append `Resume point: …` at the top of the trace file so the next
-   session lands on a known next step.
-
-**Output:** `trace.md` (with `Resume point:` line), `findings.md` if
-anything failed verify, `smoke.md`, `tracking.md`.
-
-**Gate:** Auto-closes. The agent runs verification scripts and records results in trace.md, smoke.md, and tracking.md. No human gate required — the human inspects the results at their convenience. Findings that surface in trace.md send work back to the owning stage, but no gate blocks delivery.
+Each stage's authoritative contract — inputs, process, outputs, verify
+checks, and gate rules — lives in that stage's `CONTEXT.md` file. The
+files below are the single source of truth for per-stage instructions:
+
+| Stage | CONTEXT.md path (relative to feature root) | Produces | Gate |
+|---|---|---|---|
+| 00 | `../../features/_system/stages/00_actor-goal/CONTEXT.md` *(system scope)* | `actors.md`, `goals.md`, *(optional)* `port-spec.md` | 00 — system-level |
+| 01 | `stages/01_usecase/CONTEXT.md` | `usecase.md` | Auto → 02b |
+| 02a | `stages/02a_responsibility-map/CONTEXT.md` | `responsibility-map.md` | Auto → 02b |
+| 02b | `stages/02b_chain-table/CONTEXT.md` | `<scenario>-chain.md` per scenario | **Gate 1 (Requirements)** |
+| 02 | `stages/02_concepts/CONTEXT.md` | `<Name>.concept.md` per business concept | Auto → 03b |
+| 03 | `stages/03_syncs/CONTEXT.md` | `<name>.sync.md` per coordination rule | Auto → 03b |
+| 03a | `stages/03a_dependency-review/CONTEXT.md` | `<concept>-card.md` + `pattern-d-summary.md` | Auto → 03b |
+| 03b | `stages/03b_data-model/CONTEXT.md` | `<Name>.data-model.md` per concept | **Gate 2 (Architecture)** |
+| 04a | `stages/04_implement/04a_storage-mapping/CONTEXT.md` | `<Name>.storage.md` or `_NOT_APPLICABLE.md` | Auto → 04c |
+| 04b | `stages/04_implement/04b_spec/CONTEXT.md` | `<Name>.spec.md` per concept | Auto → 04c |
+| 04c | `stages/04_implement/04c_flow-tests/CONTEXT.md` | `.feature` files + step definitions | **Gate 3 (Executable)** |
+| 04d | `stages/04_implement/04d_concept-tdd/CONTEXT.md` | Router → `04d_red-tests/` then `04d_green-impl/` | Auto → 05 |
+| 04e | `stages/04_implement/04e_sync-tdd/CONTEXT.md` | Router → `04e_red-tests/` then `04e_green-impl/` | Auto → 05 |
+| 05 | `stages/05_verify/CONTEXT.md` | `trace.md`, `findings.md`, `smoke.md`, `tracking.md` | Auto (close) |
+
+### What each stage group demands of the model
+
+| Stage group | Stages | Required capability | Fence |
+|---|---|---|---|
+| **Requirements analysis** | 00–02b | Collaborative clarification, structured prose, use-case writing | No implementation code or test files |
+| **Structural modelling** | 02–03b | Cross-concept consistency, chain-table derivation, sync authoring, dependency analysis | No implementation code or test files |
+| **Implementation** | 04a–05 | Test-first discipline, spec-to-code fidelity, storage-layer compliance | Red phase: tests only. Green phase: implementation only |
+
+Skill files under [`../../skills/`](../../skills/) provide on-demand stage guidance
+for agent frameworks that support Agent Skills. Stage `02_concepts/`, for
+example, has a companion at [`../../skills/clad-concept-design/SKILL.md`](../../skills/clad-concept-design/SKILL.md).
+
+### Stage-specific rules
+
+These rules apply to individual stages and do not appear in the
+`CONTEXT.md` files or skill instructions:
+
+- **Stage 00** is the only multi-turn collaborative stage. The agent
+  proposes, asks clarifying questions, iterates, and writes only after
+  the human signals agreement. It precedes the per-UC advance loop.
+- **Stage 02b chain tables** are the canonical resolver for
+  action/outcome disputes. If a sync spec disagrees with a chain table,
+  the table wins.
+- **Stage 03 sync names** must follow the compressed grammar:
+  `When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>]`.
+  See [`../architecture/SYNCHRONIZATIONS.md`](../architecture/SYNCHRONIZATIONS.md) §"Naming".
+- **Stage 03a** is an audit stage — it copies tokens exactly, produces
+  no new design, and surfaces drift back to the owning stage.
+- **Stage 04 implements the outside-in TDD double-loop:** 04c is the
+  outer red test (a flow), 04d and 04e are the inner red→green TDD on
+  concepts and syncs.
+- **Stage 04e imperative orchestration** is a fail condition. An
+  implementation that branches on business conditions or coordinates
+  domain calls in a `*Coordinator` class does not satisfy the sync
+  contract.
+- **Stage 04 bootstrap (`Web`) implementations** must remain
+  transport-only: normalize input, invoke the flow root, await the
+  response, translate output. No business-concept dependencies, no
+  domain branching, no concept-state reads/writes in the controller.
+- **Stage 05** is the closing of the contract loop. It proves runtime
+  behaviour matches the use case (back-trace) and that the deployable
+  artefact runs (smoke).
 
 
 
