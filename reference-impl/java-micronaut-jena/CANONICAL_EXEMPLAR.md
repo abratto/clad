@@ -39,7 +39,7 @@ flow implemented by:
 - `concepts/session/SessionConcept.java`
 - `syncs/WhenWebHandleRoutedThenUserLookupByUsernameForLogin.java`
 - `syncs/WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin.java`
-- `syncs/WhenUserLookupByUsernameNotFoundThenWebRespondForLogin.java`
+- `syncs/WhenUserLookupByUsernameRefusedThenWebRespondForLogin.java`
 - `syncs/WhenPasswordAuthCheckOkThenSessionGrantForLogin.java`
 - `syncs/WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.java`
 - `syncs/WhenPasswordAuthCheckLockedThenWebRespondForLogin.java`

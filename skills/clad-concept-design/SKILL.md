@@ -29,6 +29,13 @@ Load these files in order:
 1. For each concept in the responsibility map, produce one `.concept.md`.
 2. State: Alloy-style relational notation with multiplicity annotations.
 3. Actions: case-split notation — one block per outcome.
+   - **Format A (precondition/postcondition):** Use for actions whose
+     failures are pure state-guard violations (e.g. lookup not found).
+     Precondition failures cause refusal — the concept writes `:outcome
+     "refused"` and syncs match on `[ refused ]`.
+   - **Format B (case-split outcomes):** Use for actions whose failure
+     pathways still mutate state (e.g. incrementing a counter). Each
+     failure is a named `[ error: "..." ]` outcome.
 4. Operational principle: a single witness trace in `after`/`then` notation.
 5. Stop at the gate.
 

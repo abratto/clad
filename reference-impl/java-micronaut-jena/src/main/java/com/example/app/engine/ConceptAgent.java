@@ -23,7 +23,7 @@ import java.util.Map;
  *   <li>Polls the action log with a SPARQL CONSTRUCT to find pending invocations.</li>
  *   <li>Dispatches each invocation to {@link #processInvocation(ActionRecord)}.</li>
  *   <li>Writes completion triples back to the action log via
- *       {@link #writeCompletion} or {@link #writeError}.</li>
+ *       {@link #writeCompletion}, {@link #writeRefusal}, or {@link #writeError}.</li>
  * </ol>
  *
  * <p>Hard rule R1: a concept agent does not import or call any sibling concept's
@@ -169,6 +169,33 @@ public abstract class ConceptAgent {
      * already signal automatically.
      */
     protected void signalCompletion() {
+        completionBus.signal(conceptIRI());
+    }
+
+    /**
+     * Writes a refusal — the action's precondition failed, so the concept
+     * refused to execute it. No state change occurred. Writes a plain
+     * {@code :outcome "refused"} triple (for dedup via
+     * {@link #findPendingInvocations}), an optional {@code :refusalReason},
+     * and an RDF-star annotation so syncs can match on the refusal.
+     */
+    protected void writeRefusal(ActionRecord invocation, String reason) {
+        StringBuilder sparql = new StringBuilder();
+        sparql.append("PREFIX : <").append(RdfVocabulary.ACTION_SCHEMA_IRI).append(">\n");
+        sparql.append("INSERT DATA {\n");
+        sparql.append("  GRAPH <").append(actionGraphIRI()).append("> {\n");
+        sparql.append("    <").append(invocation.actionIri()).append("> :outcome \"refused\"");
+        if (reason != null && !reason.isBlank()) {
+            sparql.append(" ;\n");
+            sparql.append("         :refusalReason ")
+                  .append(NodeFmtLib.str(ResourceFactory.createStringLiteral(reason).asNode(), (PrefixMap) null));
+        }
+        sparql.append(" .\n");
+        sparql.append("    << <").append(invocation.actionIri()).append("> :outcome \"refused\" >>");
+        sparql.append(" :flow <").append(invocation.flowToken()).append("> .\n");
+        sparql.append("  }\n");
+        sparql.append("}\n");
+        actionLog.update(sparql.toString());
         completionBus.signal(conceptIRI());
     }
 

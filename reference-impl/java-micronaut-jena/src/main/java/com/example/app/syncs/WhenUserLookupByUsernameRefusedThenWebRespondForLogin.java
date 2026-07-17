@@ -10,31 +10,33 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Sync: WhenUserLookupByUsernameNotFoundThenWebRespondForLogin
+ * Sync: WhenUserLookupByUsernameRefusedThenWebRespondForLogin
  *
- * <p>When: {@code User/lookupByUsername[outcome=UNKNOWN]}
+ * <p>When: {@code User/lookupByUsername[refused]}
  * <p>Then: {@code Web/respond { statusCode: 401, message }}
  *
- * <p>Same message as {@link WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin} — no enumeration leak.
+ * <p>Matches the {@code :outcome "refused"} RDF-star annotation. Same message
+ * as {@link WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin} — no
+ * enumeration leak.
  */
 @SyncMetadata(
         flow = "Login",
         step = 2,
-        triggeredBy = "User/lookupByUsername[UNKNOWN]",
+        triggeredBy = "User/lookupByUsername[refused]",
         fires = "Web/respond[401]",
         where = "unknown-user path")
 @Singleton
-public final class WhenUserLookupByUsernameNotFoundThenWebRespondForLogin extends SyncAgent {
+public final class WhenUserLookupByUsernameRefusedThenWebRespondForLogin extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
 
     @Inject
-    public WhenUserLookupByUsernameNotFoundThenWebRespondForLogin(ActionLog actionLog) {
+    public WhenUserLookupByUsernameRefusedThenWebRespondForLogin(ActionLog actionLog) {
         super(actionLog);
     }
 
     @Override
-    public String syncName() { return "whenUserLookupByUsernameNotFoundThenWebRespondForLogin"; }
+    public String syncName() {         return "whenUserLookupByUsernameRefusedThenWebRespondForLogin"; }
 
     @Override
     public SyncTrigger trigger() {
@@ -46,7 +48,7 @@ public final class WhenUserLookupByUsernameNotFoundThenWebRespondForLogin extend
         return """
             ?_when_1 :concept <%s> ;
                      :name    "lookupByUsername" .
-            << ?_when_1 :outcome "UNKNOWN" >> :flow ?_flow .
+            << ?_when_1 :outcome "refused" >> :flow ?_flow .
             """.formatted(UserConcept.IRI);
     }
 

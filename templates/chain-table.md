@@ -37,6 +37,12 @@
 | 3 | `<PreviousName>.<previousAction>[<Outcome>]` | `<Name>.<actionName>` | `<args>` | `<Outcome>` | … |
 | 4 | `<Name>.<actionName>[<Outcome>]` | `Web.respond[<status>]` | `<status>`, `<body>` | `Sent` | Closes the request |
 
+> Outcomes can be success tokens (`Ok`, `FOUND`, `GRANTED`), error tokens
+> (`error: "badPassword"`), or **`Refused`** for precondition failures.
+> `Refused` means the action's precondition evaluated to false — the
+> concept did not execute, no state changed, and the sync layer routes the
+> refusal to an appropriate response (e.g. 401, 404, 422).
+
 > **Why this shape is Level 2b, not Level 3a.**
 > - The row's `Then` is the concrete rendering of the WYSIWID Level 2b
 >   **Then**.
@@ -102,11 +108,11 @@ A well-formed chain table is structurally equivalent to an FSM. This
 is not a metaphor — it is a property a reviewer can check by
 inspection of the table alone, before any sync is written.
 
-- **States** = action outcomes, typed as `Ok`/`<NamedFailure>`. The
+- **States** = action outcomes, typed as `Ok`/`<NamedFailure>`/`Refused`. The
   initial state is the row-1 `Web/request -> Web.handle` handoff; the
   terminal states are `Web.respond` invocations (success or failure).
 - **Events** = the outcomes that completing actions emit
-  (`Ok`, `BadPassword`, `NotFound`, …). Every completion emits
+  (`Ok`, `BadPassword`, `Refused`, …). Every completion emits
   exactly one event; every event triggers at most one transition per
   sync.
 - **Transitions** = each row's explicit `When -> Then` edge.

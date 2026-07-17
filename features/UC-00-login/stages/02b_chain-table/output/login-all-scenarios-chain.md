@@ -112,7 +112,7 @@ For each non-root row's derived `When -> Then` transition:
 
 2. **Row 1→2:** When `Web.handle[Routed]`, invoke `User.lookupByUsername` → sync name: `WhenWebHandleRoutedThenUserLookupByUsernameForLogin`
 3. **Row 2 [Found] → 3b:** When `User.lookupByUsername[Found(userId)]`, invoke `PasswordAuth.check` → sync: `WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin`
-4. **Row 2 [NotFound] → 3a:** When `User.lookupByUsername[NotFound]`, invoke `Web.respond[401]` → sync: `WhenUserLookupByUsernameNotFoundThenWebRespondForLogin`
+4. **Row 2 [Refused] → 3a:** When `User.lookupByUsername[Refused]`, invoke `Web.respond[401]` → sync: `WhenUserLookupByUsernameRefusedThenWebRespondForLogin`
 5. **Row 3b [Ok] → 4a:** When `PasswordAuth.check[Ok]`, invoke `Session.grant` → sync: `WhenPasswordAuthCheckOkThenSessionGrantForLogin`
 6. **Row 3b [BadPassword] → 4b:** When `PasswordAuth.check[BadPassword]`, invoke `Web.respond[401]` → sync: `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin`
 7. **Row 3b [Locked] → 4c:** When `PasswordAuth.check[Locked]`, invoke `Web.respond[401]` → sync: `WhenPasswordAuthCheckLockedThenWebRespondForLogin`

@@ -104,6 +104,14 @@ def has_outcome_assertion(body):
     return bool(re.search(r"assert\w*\s*\([^;]*(?:readOutcome\s*\(|\boutcome\b)", body))
 
 
+def is_refusal_test(body):
+    """A test that asserts 'refused' outcome or 'refusalReason' tests a
+    refused action — no happy-path flow-token fields are expected."""
+    has_refused_outcome = bool(re.search(r'"refused"', body))
+    has_refusal_reason = bool(re.search(r'refusalReason', body))
+    return has_refused_outcome or has_refusal_reason
+
+
 def has_field_assertion(body, field):
     field_ref = re.escape(field)
     patterns = [
@@ -149,6 +157,8 @@ def scan_tests(test_source_root, required_by_action):
                 continue
             for method_name, body in test_methods(text):
                 if not has_outcome_assertion(body):
+                    continue
+                if is_refusal_test(body):
                     continue
                 checked += 1
                 for field in sorted(required_fields):

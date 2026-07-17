@@ -41,8 +41,37 @@ purpose
 
 > The verbs this concept exposes. Each action is a local function call
 > from a sync or from `Web`.
-> Use case-split notation: one indented block per output case.
-> Flow token is declared inside the happy-path block.
+>
+> Two formats are available:
+>
+> **A. Precondition/postcondition (preferred for actions whose failures are pure state-guard violations):**
+>   - Precondition failure → refusal (`:outcome "refused"`). No state change.
+>     Syncs match on `[ refused ]`.
+>   - Postcondition describes the state transition for happy path.
+>   - Use this when the action either succeeds fully or is meaningless to
+>     attempt (e.g. "look up a user that doesn't exist").
+>
+> **B. Case-split outcomes (for actions whose failures are state-mutating):**
+>   - Each outcome is a named completion (`[ ok ]`, `[ error: "badPassword" ]`).
+>   - Use this when a failure pathway still mutates state (e.g. incrementing
+>     a failed-attempts counter).
+
+Format A — precondition/postcondition:
+
+```
+<actionName> [ <arg>: <Type> ; ... ] => [ <field>: <Type> ]
+    precondition {
+        <guard-1>
+        <guard-2>
+    }
+    postcondition {
+        <state-transition-assertion>
+    }
+    <description of effect on state>
+    flow token: { action: "<ConceptName>.<actionName>", <args>, outcome: "<outcome>" }
+```
+
+Format B — case-split outcomes:
 
 ```
 <actionName> [ <arg>: <Type> ; <arg2>: <Type> ] => [ <field>: <Type> ]

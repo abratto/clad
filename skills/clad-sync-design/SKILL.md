@@ -44,4 +44,6 @@ Load these files in order:
 - Every `where` line carries a pattern label.
 - Preserve literal identity exactly — no type coercion.
 - No invented payload fields.
+- `[ refused ]` is matched identically to any other outcome token in
+  `when` clauses.
 - If a 02b row and 02 concept signature disagree, stop and reopen Stage 02.

@@ -37,7 +37,7 @@ the description is the RDF graph, not in-memory routing).
 | `ActionLog` | `engine/ActionLog.java` | Owns the Jena `Dataset`; runs SPARQL `UPDATE`/`CONSTRUCT`/`ASK`/`SELECT` in transactions; archives completed flows. |
 | `CompletionBus` | `engine/CompletionBus.java` | Semaphore + concurrent set of triggered concept IRIs. |
 | `FlowManager` | `engine/FlowManager.java` | Mints flow tokens; writes the root `Web/request` action node. |
-| `ConceptAgent` | `engine/ConceptAgent.java` | Polls for pending invocations of a given action name; writes `writeCompletion` / `writeError` triples. |
+| `ConceptAgent` | `engine/ConceptAgent.java` | Polls for pending invocations of a given action name; writes `writeCompletion` / `writeRefusal` / `writeError` triples. |
 | `SyncAgent` | `engine/SyncAgent.java` | Declares `syncName`, `whereClause`, `thenBindings`, and `trigger`. The base class assembles a single `INSERT … WHERE …` SPARQL update with a per-sync dedup edge so each `when` invocation fires once. |
 | `SyncDispatcher` | `engine/SyncDispatcher.java` | The only scheduler. Indexes syncs by trigger concept and by target concept; on each tick, runs the concept agents whose work is pending, then batches every triggered sync's SPARQL into a single update. |
 

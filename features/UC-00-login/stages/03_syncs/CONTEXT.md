@@ -84,7 +84,7 @@ canonical sync files and introduces no new logic.
 
 - `output/WhenWebHandleRoutedThenUserLookupByUsernameForLogin.sync.md`
 - `output/WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin.sync.md`
-- `output/WhenUserLookupByUsernameNotFoundThenWebRespondForLogin.sync.md`
+- `output/WhenUserLookupByUsernameRefusedThenWebRespondForLogin.sync.md`
 - `output/WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md`
 - `output/WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md`
 - `output/WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md`

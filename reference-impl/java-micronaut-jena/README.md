@@ -299,7 +299,7 @@ The engine is **fully wired** and the UC-00-login flow runs end-to-end:
 the three concepts (`User`, `PasswordAuth`, `Session`) and the seven
 rule-shaped syncs (`WhenWebHandleRoutedThenUserLookupByUsernameForLogin`,
 `WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin`,
-`WhenUserLookupByUsernameNotFoundThenWebRespondForLogin`,
+`WhenUserLookupByUsernameRefusedThenWebRespondForLogin`,
 `WhenPasswordAuthCheckOkThenSessionGrantForLogin`,
 `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin`,
 `WhenPasswordAuthCheckLockedThenWebRespondForLogin`, and

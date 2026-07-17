@@ -10,8 +10,8 @@ registered user.
 | # | When | Then | Inputs | Outcome | Why this step |
 |---|---|---|---|---|---|
 | 1 | `Web/request[POST /login]` | `Web.handle` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
-| 2 | `Web.handle[Routed]` | `User.lookupByUsername` | `username` | `NotFound` | Username does not exist |
-| 3 | `User.lookupByUsername[NotFound]` | `Web.respond[401]` | `401`, `{ message: "username or password didn't match" }` | `Sent` | Same opaque message as `wrong-password` (no enumeration leak) |
+| 2 | `Web.handle[Routed]` | `User.lookupByUsername` | `username` | `Refused` | Username does not exist, precondition fails |
+| 3 | `User.lookupByUsername[Refused]` | `Web.respond[401]` | `401`, `{ message: "username or password didn't match" }` | `Sent` | Same opaque message as `wrong-password` (no enumeration leak) |
 
 ## Diagram
 
@@ -19,7 +19,7 @@ registered user.
 stateDiagram-v2
     [*] --> Web_handle : POST /login {username, password}
     Web_handle --> User_lookupByUsername : [Routed]
-    User_lookupByUsername --> Web_respond401 : [NotFound]
+    User_lookupByUsername --> Web_respond401 : [Refused]
     Web_respond401 --> [*]
 ```
 

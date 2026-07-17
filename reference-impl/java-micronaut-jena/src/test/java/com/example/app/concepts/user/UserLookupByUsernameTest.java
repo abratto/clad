@@ -77,15 +77,12 @@ class UserLookupByUsernameTest extends ConceptTestBase {
         @Test
         @DisplayName("shouldReturnUserIdWhenUserExists")
         void shouldReturnUserIdWhenUserExists() {
-            // GIVEN: a user "ada" is registered
             initConcept();
             concept.seedUser("ada-0001", "ada");
             writePendingInvocation("ada");
 
-            // WHEN: lookupByUsername("ada") is called
             concept.pollAll();
 
-            // THEN: outcome is FOUND with the user's userId
             assertEquals("FOUND", readOutcome());
             assertNotNull(readField("username"));
             assertEquals("ada", readField("username"));
@@ -99,19 +96,15 @@ class UserLookupByUsernameTest extends ConceptTestBase {
     class WhenUserUnknown {
 
         @Test
-        @DisplayName("shouldReturnNotFoundWhenUserUnknown")
-        void shouldReturnNotFoundWhenUserUnknown() {
-            // GIVEN: no user named "nobody" exists
+        @DisplayName("shouldRefuseWhenUserUnknown")
+        void shouldRefuseWhenUserUnknown() {
             initConcept();
             writePendingInvocation("nobody");
 
-            // WHEN: lookupByUsername("nobody") is called
             concept.pollAll();
 
-            // THEN: outcome is UNKNOWN
-            assertEquals("UNKNOWN", readOutcome());
-            assertNotNull(readField("username"));
-            assertEquals("nobody", readField("username"));
+            assertEquals("refused", readOutcome());
+            assertEquals("username not found: nobody", readField("refusalReason"));
         }
     }
 }

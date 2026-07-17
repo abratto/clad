@@ -64,6 +64,35 @@ The verbs the concept exposes. Each action lists every possible output as
 a separate indented case-split block. This makes exhaustiveness visible
 at a glance and maps directly to the TDD case-split in Stage 04.
 
+Two formats are available:
+
+**Format A — precondition/postcondition** (for actions whose failures are
+pure state-guard violations). A failed precondition causes **refusal**
+(`:outcome "refused"`) — the action does not execute, no state changes,
+and syncs match on `[ refused ]`. Use this when the action either succeeds
+fully or is meaningless to attempt.
+
+**Format B — case-split error outcomes** (for actions whose failures are
+state-mutating). Each failure is a named outcome (`[ ok ]`, `[ error:
+"badPassword" ]`). Use this when a failure pathway still mutates state
+(e.g. incrementing a counter).
+
+Format A example (precondition refusal):
+
+```
+lookupByUsername [ username: String ] => [ userId: UserId ]
+    precondition {
+        username in Dom(State.username)
+    }
+    postcondition {
+        State.username[userId] == username
+    }
+    no state change
+    flow token: { action: "User.lookupByUsername", username, userId, outcome: "FOUND" }
+```
+
+Format B example (case-split error outcomes):
+
 ```
 verify [ userId: UserId ; password: String ] => [ ok ]
     password matches credentials[userId] and account is not locked
@@ -86,6 +115,10 @@ verify [ userId: UserId ; password: String ] => [ error: "unknownPrincipal" ]
 
 Rules:
 - One block per outcome — do not collapse two outcomes into one block (R9).
+- **Precondition failures are refusals, not error outcomes.** If a failure
+  does not mutate state, use Format A with a `precondition` block. If a
+  failure does mutate state (e.g. incrementing a counter), use Format B
+  with a named `error:` outcome.
 - The flow token is declared in the happy-path block only.
 - The password is **never** in the flow token.
 - Actions are the *only* way the outside world influences the concept.

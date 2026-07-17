@@ -12,9 +12,11 @@ The sync name and file stem MUST read as a compressed rule:
 
 Derive the trigger and target parts from the first `when` and `then`
 signatures. Derive TriggerCompletion from the first token on the right
-side of the `when` arrow. Use PascalCase here; profile implementations
-lower this same stem mechanically (Java class name = PascalCase stem,
-Java syncName() = lower camel case stem).
+side of the `when` arrow. For `[ ok ; userId: ?u ]`, use `Ok`; for
+`[ error: "notFound" ]`, use `NotFound`; for `[ refused ]`, use
+`Refused`. Use PascalCase here; profile implementations lower this same
+stem mechanically (Java class name = PascalCase stem, Java syncName() =
+lower camel case stem).
 -->
 
 ## Sync Contract Matrix

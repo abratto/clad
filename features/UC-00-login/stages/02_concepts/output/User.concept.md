@@ -12,20 +12,24 @@ username: UserId -> String   -- mandatory, unique across all users
 
 ```
 register [ username: String ] => [ userId: UserId ]
-    username is not already in use
-    mints a fresh UserId and records the username mapping
+    precondition {
+        username not in Cod(State.username)
+    }
+    postcondition {
+        State.username'[userId] = username
+        userId is freshly minted
+    }
     flow token: { action: "User.register", username, userId, outcome: "REGISTERED" }
 
-register [ username: String ] => [ error: "usernameTaken" ]
-    username is already in use — no state change
-
 lookupByUsername [ username: String ] => [ userId: UserId ]
-    username is registered — returns the corresponding UserId
+    precondition {
+        username in Dom(State.username)
+    }
+    postcondition {
+        State.username[userId] == username
+    }
     no state change
     flow token: { action: "User.lookupByUsername", username, userId, outcome: "FOUND" }
-
-lookupByUsername [ username: String ] => [ error: "notFound" ]
-    username is not registered — no state change
 ```
 
 ## Operational principle
@@ -43,3 +47,9 @@ then  User/lookupByUsername:  [ username: "alice" ] => [ userId: u ]
 - UC-00-login does not invoke `register`; account creation is out of
   scope. The action is listed because the concept owns the lifecycle
   and would not be coherent without it.
+- Precondition failures cause **refusal** (`:outcome "refused"`) — the
+  action does not execute, no state changes, and refusal is surfaced as
+  an RDF-star completion that syncs match on. Error outcomes within the
+  concept formal vocabulary (`error: "..."`) are reserved for
+  state-mutating failures (e.g., `PasswordAuth.check` increments
+  `failedAttempts` even on a wrong password).

@@ -4,7 +4,7 @@
 
 | Action | Flow (sync) | Data received | Pattern | Source |
 |---|---|---|---|---|
-| `respond` | `WhenUserLookupByUsernameNotFoundThenWebRespondForLogin` (`unknown-user`) | `status: 401`, `body: { message: "username or password didn't match" }` | C | Both literal — pattern C constants baked into the sync |
+| `respond` | `WhenUserLookupByUsernameRefusedThenWebRespondForLogin` (`unknown-user`) | `status: 401`, `body: { message: "username or password didn't match" }` | C | Both literal — pattern C constants baked into the sync |
 | `respond` | `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin` (`wrong-password`) | `status: 401`, `body: { message: "username or password didn't match" }` | C | Both literal — pattern C constants baked into the sync |
 | `respond` | `WhenPasswordAuthCheckLockedThenWebRespondForLogin` (`lockout`) | `status: 401`, `body: { message: "Too many attempts. Try again in 15 minutes." }` | C | Both literal — pattern C constants baked into the sync |
 | `respond` | `WhenSessionGrantGrantedThenWebRespondForLogin` (`successful-login`) | `status: 200`, `body: { sessionToken: ?sid }` | C + B | C: `200` literal; B: `?sid` from `Session/grant` completion (same flow) |

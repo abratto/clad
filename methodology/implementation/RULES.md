@@ -112,6 +112,7 @@ outcomes that were defined separately for a reason.
 - [ ] Each branch returns the correct `OutcomeType` enum value
 - [ ] `message` is null on success outcomes, non-null on failure outcomes
 - [ ] `id` fields are non-null on creation success outcomes, null on failure outcomes
+- [ ] `refusalReason` is non-null on refused outcomes, null on success/error outcomes
 - [ ] Numeric status codes match the approved chain-table row exactly — no type coercion
 - [ ] No two constructor signatures or methods with the same erasure (Java compile error)
 

@@ -64,7 +64,7 @@ class DebugControllerTest {
                 List.of(
                     "whenWebHandleRoutedThenUserLookupByUsernameForLogin",
                     "whenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin",
-                    "whenUserLookupByUsernameNotFoundThenWebRespondForLogin",
+                    "whenUserLookupByUsernameRefusedThenWebRespondForLogin",
                     "whenPasswordAuthCheckBadPasswordThenWebRespondForLogin",
                     "whenPasswordAuthCheckLockedThenWebRespondForLogin",
                     "whenPasswordAuthCheckOkThenSessionGrantForLogin",

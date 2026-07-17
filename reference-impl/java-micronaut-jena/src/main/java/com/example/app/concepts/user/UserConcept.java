@@ -72,9 +72,7 @@ public final class UserConcept extends ConceptAgent {
         String username = invocation.binding("username");
         if (username == null) { writeError(invocation, "missing username"); return; }
         if (existsByUsername(username)) {
-            writeCompletion(invocation, Map.of(
-                    "outcome", ResourceFactory.createStringLiteral("USERNAME_TAKEN"),
-                    "username", ResourceFactory.createStringLiteral(username)));
+            writeRefusal(invocation, "username already taken: " + username);
             return;
         }
         String userId = UUID.randomUUID().toString();
@@ -90,9 +88,7 @@ public final class UserConcept extends ConceptAgent {
         if (username == null) { writeError(invocation, "missing username"); return; }
         String userId = findUserIdByUsername(username);
         if (userId == null) {
-            writeCompletion(invocation, Map.of(
-                    "outcome", ResourceFactory.createStringLiteral("UNKNOWN"),
-                    "username", ResourceFactory.createStringLiteral(username)));
+            writeRefusal(invocation, "username not found: " + username);
         } else {
             writeCompletion(invocation, Map.of(
                     "outcome", ResourceFactory.createStringLiteral("FOUND"),

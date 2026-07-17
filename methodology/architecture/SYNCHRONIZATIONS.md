@@ -63,7 +63,8 @@ Rules:
   `TargetAction` directly from the first `when` and `then` signatures.
 - Derive `TriggerCompletion` from the first completion token in the
   `when` arrow's right side. For `[ ok ; userId: ?u ]`, use `Ok`; for
-  `[ error: "notFound" ]`, use `NotFound`.
+  `[ error: "notFound" ]`, use `NotFound`; for `[ refused ]`, use
+  `Refused`.
 - Omit `TriggerCompletion` only when the trigger has no completion token.
 - Append `For<Scope>` when the same trigger/target edge can occur in
   multiple routes, flows, use cases, or other scopes.
