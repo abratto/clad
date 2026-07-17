@@ -97,14 +97,27 @@ public class SyncDispatcher {
      * Awaits a {@code Web/respond} completion for the given flow token, driving
      * the dispatch loop until the response is available or {@value #TIMEOUT}
      * is exceeded.
+     *
+     * <p>Within each tick the loop iterates concepts→syncs until quiescence
+     * (no more syncs fire), processing the full action chain for the current
+     * flow in a single tick rather than spreading it across multiple ticks.
+     * This eliminates the race window where a sync's downstream invocation
+     * would wait for the next tick boundary before being polled.
      */
     public Mono<io.micronaut.http.HttpResponse<?>> awaitResponse(String flowToken) {
         return Mono.<io.micronaut.http.HttpResponse<?>>create(sink -> {
             long deadline = System.currentTimeMillis() + TIMEOUT.toMillis();
             while (System.currentTimeMillis() < deadline) {
                 try {
-                    runConceptAgents();
-                    runSyncAgents();
+                    boolean workDone;
+                    do {
+                        workDone = false;
+                        runConceptAgents();
+                        if (runSyncAgents()) {
+                            workDone = true;
+                        }
+                    } while (workDone);
+
                     Optional<io.micronaut.http.HttpResponse<?>> resp = buildResponse(flowToken);
                     if (resp.isPresent()) {
                         sink.success(resp.get());
@@ -162,9 +175,14 @@ public class SyncDispatcher {
         return snapshot;
     }
 
-    private void runSyncAgents() {
+    /**
+     * Fires syncs for every concept that completed work on this tick.
+     * Returns true if any sync fired, so the caller can iterate until
+     * quiescence.
+     */
+    private boolean runSyncAgents() {
         Set<String> triggered = completionBus.drainTriggeredConcepts();
-        if (triggered.isEmpty()) return;
+        if (triggered.isEmpty()) return false;
         List<String> sparqlUpdates = new ArrayList<>();
         for (String conceptIri : triggered) {
             List<SyncAgent> relevant = triggerIndex.get(conceptIri);
@@ -186,6 +204,7 @@ public class SyncDispatcher {
                 }
             }
         }
+        return !sparqlUpdates.isEmpty();
     }
 
     private ResponseData checkForResponse(String flowToken) {

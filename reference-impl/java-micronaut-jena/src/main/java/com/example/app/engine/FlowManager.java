@@ -7,6 +7,8 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.out.NodeFmtLib;
 import org.apache.jena.riot.system.PrefixMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,6 +38,7 @@ public class FlowManager {
     private static final String SCHEMA = RdfVocabulary.ACTION_SCHEMA_IRI;
     private static final String INDENT_IRI = "    <";
     private static final String SUFFIX_SEMI = "> ;\n";
+    private static final Logger LOG = LoggerFactory.getLogger(FlowManager.class);
 
     private final ActionLog actionLog;
     private final CompletionBus completionBus;
@@ -58,7 +61,7 @@ public class FlowManager {
      */
     public ActionRecord rootAction(String route, Map<String, String> requestParams) {
         String flowToken = mintFlowToken();
-        System.out.println("[flow] " + route + " → " + flowToken);
+        LOG.debug("[flow] {} → {}", route, flowToken);
         String actionIri = RdfVocabulary.ACTION_NODE_PREFIX + UUID.randomUUID();
         String inputIri = actionIri + "/input";
 

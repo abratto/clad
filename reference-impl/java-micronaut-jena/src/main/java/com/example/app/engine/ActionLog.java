@@ -35,6 +35,7 @@ import java.util.Map;
 public class ActionLog {
 
     private final Dataset dataset;
+    private volatile boolean archiveEnabled = true;
 
     public ActionLog() {
         this(DatasetFactory.createTxnMem());
@@ -48,6 +49,16 @@ public class ActionLog {
     /** Returns the underlying Jena {@link Dataset}. */
     public Dataset dataset() {
         return dataset;
+    }
+
+    /**
+     * Controls whether completed flow triples are archived (default true).
+     * When false, {@link #archiveFlow} performs a plain delete instead of
+     * a move to the archive graph — useful in production to prevent
+     * unbounded heap growth from accumulated flow traces.
+     */
+    public void setArchiveEnabled(boolean enabled) {
+        this.archiveEnabled = enabled;
     }
 
     /** Executes a SPARQL UPDATE within a write transaction. */
@@ -139,10 +150,20 @@ public class ActionLog {
     }
 
     /**
-     * Moves all triples belonging to a completed flow from the active action
-     * graph to the archive graph, in a single atomic transaction.
+     * Removes all triples belonging to a completed flow from the active
+     * action graph. When archiving is enabled, the triples are moved to the
+     * archive graph for Stage 05 verification; when disabled, they are
+     * simply deleted.
      */
     public void archiveFlow(String flowToken) {
+        if (archiveEnabled) {
+            doArchiveFlow(flowToken);
+        } else {
+            doDeleteFlow(flowToken);
+        }
+    }
+
+    private void doArchiveFlow(String flowToken) {
         String schema = RdfVocabulary.ACTION_SCHEMA_IRI;
         String active = RdfVocabulary.ACTION_GRAPH_IRI;
         String archive = RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI;
@@ -167,5 +188,29 @@ public class ActionLog {
             "} }\n";
 
         updateBatch(List.of(moveStandard, moveStar));
+    }
+
+    private void doDeleteFlow(String flowToken) {
+        String schema = RdfVocabulary.ACTION_SCHEMA_IRI;
+        String active = RdfVocabulary.ACTION_GRAPH_IRI;
+
+        String deleteStandard =
+            "PREFIX : <" + schema + ">\n" +
+            "DELETE { GRAPH <" + active + "> { ?s ?p ?o } }\n" +
+            "WHERE  { GRAPH <" + active + "> {\n" +
+            "  ?a :flow <" + flowToken + "> .\n" +
+            "  { ?a ?p ?o . BIND(?a AS ?s) }\n" +
+            "  UNION { ?a :input ?s . ?s ?p ?o }\n" +
+            "} }\n";
+
+        String deleteStar =
+            "PREFIX : <" + schema + ">\n" +
+            "DELETE { GRAPH <" + active + "> { << ?a :outcome ?outcome >> ?p ?o } }\n" +
+            "WHERE  { GRAPH <" + active + "> {\n" +
+            "  ?a :flow <" + flowToken + "> .\n" +
+            "  << ?a :outcome ?outcome >> ?p ?o .\n" +
+            "} }\n";
+
+        updateBatch(List.of(deleteStandard, deleteStar));
     }
 }
