@@ -206,6 +206,11 @@ values.
 - The `.feature` file parses without syntax errors
   (`cucumber --dry-run` or profile equivalent).
 - No Gherkin step exists without a corresponding use-case element.
+- **Automated:** `verify_gherkin_derivation.py` enforces rules G1–G5, S1–S3, E1.
+- **Automated:** `verify_step_definition_parity.py` checks that every
+  step in every deployed `.feature` file has a matching step-definition
+  method with a non-empty body — catches stub-only implementations
+  before gate submission.
 
 ### Stage 04e-red verify
 
@@ -222,6 +227,9 @@ values.
   the chain-table row sequence.
 - Any intentionally deferred scenario is honestly red and documented as
   deferred — this is a coverage signal, not a hidden pass.
+- **Automated:** `verify_cucumber_green.py` runs the test command and
+  fails on any undefined, pending, skipped, or failing Cucumber
+  scenario. The gate does not pass until every Gherkin scenario is green.
 
 ### Stage 05 verify
 

@@ -97,6 +97,18 @@ not redesign approved tests.
    has a corresponding Stage 03 spec and mechanically follows the
    `When<Trigger>Then<Target>[For<Scope>]` naming grammar.
 
+### Cucumber-green gate
+
+```
+python3 ../../../../../../quality-gate/verify_cucumber_green.py \
+  --feature-root ../../../../ \
+  [--test-command <your-build-and-test-command>]
+```
+
+- **verify_cucumber_green.py:** runs the test command and confirms all
+  Cucumber scenarios pass. Fails on undefined/skipped/failing
+  scenarios. Passes only when every Gherkin scenario is green.
+
 ### Flow-test verification
 
 - All Gherkin scenarios in `../../04c_flow-tests/output/*.feature` are

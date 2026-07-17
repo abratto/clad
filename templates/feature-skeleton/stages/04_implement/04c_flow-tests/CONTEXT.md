@@ -112,6 +112,9 @@ python3 ../../../../../quality-gate/verify_gherkin_derivation.py \
   --usecase ../../01_usecase/output/usecase.md \
   --feature <relevant>.feature \
   --sync-dir ../../03_syncs/output
+python3 ../../../../../quality-gate/verify_step_definition_parity.py \
+  --feature-files-dir <APP_TEST_SOURCE_ROOT>/resources/features/ \
+  --glue-dir <APP_TEST_SOURCE_ROOT>/<APP_PACKAGE_ROOT_PATH>/steps/
 python3 ../../../../../quality-gate/verify_port_spec_contract.py \
   --port-spec ../../../../../features/_system/stages/00_actor-goal/output/port-spec.md \
   --spec-dir ../04b_spec/output \
