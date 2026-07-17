@@ -8,11 +8,12 @@ Without this, a sync like LoginRespondSuccess will fire for register flows
 too, producing wrong HTTP status codes.
 
 Usage:
-  python3 verify_sync_route_filters.py [--syncs-dir <path>]
+  python3 verify_sync_route_filters.py [--sync-impl-dir <path>]
 
 Exits 0 if all applicable syncs comply, 1 otherwise.
 """
 
+import argparse
 import re
 import sys
 import os
@@ -116,9 +117,14 @@ def check_file(filepath: str) -> List[str]:
     return violations
 
 def main():
-    syncs_dir = os.environ.get("SYNCS_DIR", None)
-    if syncs_dir:
-        root = Path(syncs_dir)
+    parser = argparse.ArgumentParser(
+        description="Verify business-concept syncs have route filters (R11)")
+    parser.add_argument("--sync-impl-dir", default="",
+                        help="Directory containing SyncAgent Java implementations")
+    args = parser.parse_args()
+
+    if args.sync_impl_dir and os.path.isdir(args.sync_impl_dir):
+        root = Path(args.sync_impl_dir)
     else:
         root = Path(__file__).resolve().parents[1]
         candidates = [

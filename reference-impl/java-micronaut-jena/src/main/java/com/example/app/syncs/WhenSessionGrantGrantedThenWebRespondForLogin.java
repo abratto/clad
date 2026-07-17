@@ -24,6 +24,7 @@ import jakarta.inject.Singleton;
 public final class WhenSessionGrantGrantedThenWebRespondForLogin extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
+    private static final String LOGIN_ROUTE = "login";
 
     @Inject
     public WhenSessionGrantGrantedThenWebRespondForLogin(ActionLog actionLog) {
@@ -45,7 +46,12 @@ public final class WhenSessionGrantGrantedThenWebRespondForLogin extends SyncAge
                      :name    "grant" ;
                      :sessionToken ?_sessionToken .
             << ?_when_1 :outcome "GRANTED" >> :flow ?_flow .
-            """.formatted(SessionConcept.IRI);
+            ?_web_req :concept <%s> ;
+                      :name    "request" ;
+                      :flow    ?_flow ;
+                      :input   ?_web_inp .
+            ?_web_inp :route ?_route .
+            """.formatted(SessionConcept.IRI, WEB_IRI);
     }
 
     @Override
@@ -55,5 +61,10 @@ public final class WhenSessionGrantGrantedThenWebRespondForLogin extends SyncAge
                      :name    "respond" ;
                      :input   [ :statusCode 200 ; :sessionToken ?_sessionToken ] .
             """.formatted(WEB_IRI);
+    }
+
+    @Override
+    protected String parameterizeSparql(String sparql) {
+        return bindLiteral(sparql, "_route", LOGIN_ROUTE);
     }
 }

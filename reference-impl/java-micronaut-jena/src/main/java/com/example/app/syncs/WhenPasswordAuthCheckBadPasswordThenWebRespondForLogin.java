@@ -28,6 +28,7 @@ import jakarta.inject.Singleton;
 public final class WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
+    private static final String LOGIN_ROUTE = "login";
     static final String LOGIN_FAILURE_MESSAGE = "username or password didn't match";
 
     @Inject
@@ -45,14 +46,17 @@ public final class WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin extend
 
     @Override
     protected String whereClause() {
-        // Match BAD_PASSWORD or NO_CREDENTIAL — both are credential failures and
-        // must be indistinguishable from unknown-user externally.
         return """
             ?_when_1 :concept <%s> ;
                      :name    "check" .
             << ?_when_1 :outcome ?_outcome >> :flow ?_flow .
             FILTER (?_outcome IN ("BAD_PASSWORD", "NO_CREDENTIAL"))
-            """.formatted(PasswordAuthConcept.IRI);
+            ?_web_req :concept <%s> ;
+                      :name    "request" ;
+                      :flow    ?_flow ;
+                      :input   ?_web_inp .
+            ?_web_inp :route ?_route .
+            """.formatted(PasswordAuthConcept.IRI, WEB_IRI);
     }
 
     @Override
@@ -66,6 +70,7 @@ public final class WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin extend
 
     @Override
     protected String parameterizeSparql(String sparql) {
+        sparql = bindLiteral(sparql, "_route", LOGIN_ROUTE);
         return bindLiteral(sparql, "_message", LOGIN_FAILURE_MESSAGE);
     }
 }

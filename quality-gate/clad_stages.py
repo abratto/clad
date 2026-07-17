@@ -21,9 +21,10 @@ input by some checks.
 
 from __future__ import annotations
 
+import configparser
 import os
 from dataclasses import dataclass, field
-from typing import Callable, List, Optional
+from typing import Callable, Dict, List, Optional
 
 
 # --------------------------------------------------------------------------
@@ -192,6 +193,80 @@ _ACTION_CHAIN = Check(
 
 
 # --------------------------------------------------------------------------
+# Profile-aware checks — require implementation paths from clad.properties.
+# These checks skip automatically when clad.properties is absent or the
+# relevant path keys are unset, making them safe to wire into the
+# design-time advance pipeline for all profiles.
+# --------------------------------------------------------------------------
+
+def _sync_impl_dir(feature_root: str) -> str:
+    return _prop_path(feature_root, "sync.impl.dir")
+
+def _concept_impl_dir(feature_root: str) -> str:
+    return _prop_path(feature_root, "concept.impl.dir")
+
+def _test_source_root(feature_root: str) -> str:
+    return _prop_path(feature_root, "test.source.root")
+
+def _features_dir(feature_root: str) -> str:
+    return os.path.dirname(feature_root)
+
+def _test_command(feature_root: str) -> str:
+    return _prop(feature_root, "test.command")
+
+_SYNC_ROUTE_FILTERS = Check(
+    name="sync_route_filters",
+    script="verify_sync_route_filters.py",
+    build_args=lambda r: [
+        "--sync-impl-dir", _sync_impl_dir(r),
+    ],
+    requires=lambda r: [_sync_impl_dir(r)],
+)
+
+_IMPL_PARITY = Check(
+    name="implementation_parity",
+    script="verify_implementation_parity.py",
+    build_args=lambda r: [
+        "--sync-impl-dir", _sync_impl_dir(r),
+        "--concept-impl-dir", _concept_impl_dir(r),
+        "--features-dir", _features_dir(r),
+    ],
+    requires=lambda r: [_sync_impl_dir(r)],
+)
+
+_SYNC_IMPL_PARITY = Check(
+    name="sync_implementation_parity",
+    script="verify_sync_implementation_parity.py",
+    build_args=lambda r: [
+        "--sync-impl-dir", _sync_impl_dir(r),
+        "--features-dir", _features_dir(r),
+    ],
+    requires=lambda r: [_sync_impl_dir(r)],
+)
+
+_FIELD_ASSERTIONS = Check(
+    name="concept_field_assertions",
+    script="verify_concept_field_assertions.py",
+    build_args=lambda r: [
+        "--spec-dir", _spec_dir(r),
+        "--test-source-root", _test_source_root(r),
+    ],
+    requires=lambda r: [_spec_dir(r), _test_source_root(r)],
+)
+
+_CUCUMBER_GREEN = Check(
+    name="cucumber_green",
+    script="verify_cucumber_green.py",
+    build_args=lambda r: [
+        "--feature-root", _features_dir(r),
+        "--test-command", _test_command(r),
+    ],
+    requires=lambda r: [r for r in [_features_dir(r)]
+                        if os.path.isdir(r)],
+)
+
+
+# --------------------------------------------------------------------------
 # The canonical per-UC stage order.
 # --------------------------------------------------------------------------
 
@@ -201,14 +276,18 @@ STAGES: List[Stage] = [
     Stage("02b", "Chain table", "02b_chain-table", gate_after=1),
     Stage("02", "Concept specs", "02_concepts"),
     Stage("03", "Syncs", "03_syncs", checks=[_SCENARIO_COVERAGE, _SYNC_MATRIX]),
-    Stage("03a", "Dependency review", "03a_dependency-review"),
+    Stage("03a", "Dependency review", "03a_dependency-review",
+          checks=[_SYNC_ROUTE_FILTERS]),
     Stage("03b", "Data model", "03b_data-model", gate_after=2, checks=[_DATA_MODEL]),
     Stage("04a", "Storage mapping", "04_implement/04a_storage-mapping"),
     Stage("04b", "SPEC", "04_implement/04b_spec",
           checks=[_SPEC_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN]),
-    Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3),
-    Stage("04d", "Concept TDD", "04_implement/04d_concept-tdd"),
-    Stage("04e", "Sync TDD", "04_implement/04e_sync-tdd"),
+    Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3,
+          checks=[_CUCUMBER_GREEN]),
+    Stage("04d", "Concept TDD", "04_implement/04d_concept-tdd",
+          checks=[_FIELD_ASSERTIONS]),
+    Stage("04e", "Sync TDD", "04_implement/04e_sync-tdd",
+          checks=[_IMPL_PARITY, _SYNC_IMPL_PARITY]),
     Stage("05", "Verify", "05_verify"),
 ]
 
@@ -265,3 +344,50 @@ def relpath(path: str, start: Optional[str] = None) -> str:
         return os.path.relpath(path, start or os.getcwd())
     except ValueError:
         return path
+
+
+# --------------------------------------------------------------------------
+# Profile-aware configuration (reads clad.properties)
+# --------------------------------------------------------------------------
+
+def _repo_root(feature_root: str) -> str:
+    return os.path.dirname(os.path.dirname(feature_root))
+
+
+def _read_config(feature_root: str) -> Dict[str, str]:
+    """Read clad.properties as a flat dict of key -> value.
+    Unprefixed keys (in the [DEFAULT] section) are stored as-is.
+    Section-prefixed keys use `section.key` notation.
+    """
+    path = os.path.join(_repo_root(feature_root), "clad.properties")
+    result: Dict[str, str] = {}
+    if not os.path.exists(path):
+        return result
+    cp = configparser.ConfigParser()
+    cp.read(path)
+    for key, value in cp.defaults().items():
+        result[key] = value
+    for section in cp.sections():
+        for key, value in cp.items(section):
+            result[f"{section}.{key}"] = value
+    return result
+
+
+def _prop_path(feature_root: str, key: str) -> str:
+    """Read a repo-root-relative path property and resolve to absolute.
+    Returns an empty string if the property is not set or the path does not
+    exist, causing downstream checks to skip (empty-string paths never exist).
+    """
+    cfg = _read_config(feature_root)
+    value = cfg.get(key)
+    if not value:
+        return ""
+    resolved = os.path.join(_repo_root(feature_root), value)
+    if not os.path.exists(resolved):
+        return ""
+    return resolved
+
+
+def _prop(feature_root: str, key: str) -> str:
+    """Read a plain string property from clad.properties."""
+    return _read_config(feature_root).get(key, "")

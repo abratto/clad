@@ -29,6 +29,7 @@ import jakarta.inject.Singleton;
 public final class WhenUserLookupByUsernameRefusedThenWebRespondForLogin extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
+    private static final String LOGIN_ROUTE = "login";
 
     @Inject
     public WhenUserLookupByUsernameRefusedThenWebRespondForLogin(ActionLog actionLog) {
@@ -49,7 +50,12 @@ public final class WhenUserLookupByUsernameRefusedThenWebRespondForLogin extends
             ?_when_1 :concept <%s> ;
                      :name    "lookupByUsername" .
             << ?_when_1 :outcome "refused" >> :flow ?_flow .
-            """.formatted(UserConcept.IRI);
+            ?_web_req :concept <%s> ;
+                      :name    "request" ;
+                      :flow    ?_flow ;
+                      :input   ?_web_inp .
+            ?_web_inp :route ?_route .
+            """.formatted(UserConcept.IRI, WEB_IRI);
     }
 
     @Override
@@ -63,6 +69,7 @@ public final class WhenUserLookupByUsernameRefusedThenWebRespondForLogin extends
 
     @Override
     protected String parameterizeSparql(String sparql) {
+        sparql = bindLiteral(sparql, "_route", LOGIN_ROUTE);
         return bindLiteral(sparql, "_message", WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.LOGIN_FAILURE_MESSAGE);
     }
 }

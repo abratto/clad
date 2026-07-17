@@ -25,6 +25,7 @@ import jakarta.inject.Singleton;
 public final class WhenPasswordAuthCheckLockedThenWebRespondForLogin extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
+    private static final String LOGIN_ROUTE = "login";
     private static final String LOCKED_MESSAGE = "Too many attempts. Try again in 15 minutes.";
 
     @Inject
@@ -46,7 +47,12 @@ public final class WhenPasswordAuthCheckLockedThenWebRespondForLogin extends Syn
             ?_when_1 :concept <%s> ;
                      :name    "check" .
             << ?_when_1 :outcome "LOCKED" >> :flow ?_flow .
-            """.formatted(PasswordAuthConcept.IRI);
+            ?_web_req :concept <%s> ;
+                      :name    "request" ;
+                      :flow    ?_flow ;
+                      :input   ?_web_inp .
+            ?_web_inp :route ?_route .
+            """.formatted(PasswordAuthConcept.IRI, WEB_IRI);
     }
 
     @Override
@@ -60,6 +66,7 @@ public final class WhenPasswordAuthCheckLockedThenWebRespondForLogin extends Syn
 
     @Override
     protected String parameterizeSparql(String sparql) {
+        sparql = bindLiteral(sparql, "_route", LOGIN_ROUTE);
         return bindLiteral(sparql, "_message", LOCKED_MESSAGE);
     }
 }
