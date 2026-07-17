@@ -92,8 +92,6 @@ or types beyond opaque ids.
 Run the following before requesting the human gate:
 
 ```
-python3 ../../../../quality-gate/verify_outcome_alignment.py \
-  --chain-dir ../02b_chain-table/output --spec-dir ../04_implement/04b_spec/output
 python3 ../../../../quality-gate/verify_action_chain.py \
   --resp-map ../02a_responsibility-map/output/responsibility-map.md \
   --chain-dir ../02b_chain-table/output \
@@ -106,9 +104,6 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   --expected "<Name>.concept.md,…"  # one per concept in the responsibility map
 ```
 
-- **verify_outcome_alignment.py:** every chain-table outcome matches a
-  SPEC outcome enum (character-for-character after PascalCase→SCREAMING_SNAKE_CASE
-  normalization).
 - **verify_action_chain.py:** every action used in chain tables flows
   consistently through the responsibility map, concept specs, syncs,
   dependency cards, and SPECs.
@@ -131,8 +126,8 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 ## Gate
 
 Auto-advances (next human gate: Stage 03b). The quality-gate scripts
-(`verify_outcome_alignment.py`, `verify_action_chain.py`,
-`verify_file_manifest.py`) must all pass before advancing.
+(`verify_action_chain.py`, `verify_file_manifest.py`) must all pass
+before advancing.
 
 ## Next stage
 

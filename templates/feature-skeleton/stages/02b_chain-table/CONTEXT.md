@@ -150,4 +150,5 @@ The `verify_file_manifest.py` script must pass before requesting the gate.
 
 → [`../02_concepts/CONTEXT.md`](../02_concepts/CONTEXT.md) — Concept specs (full anatomy)
 
-To advance, the human says: **"Proceed to Stage 02."**
+Do NOT open this file until the human approves Gate 1. After
+`approve_gate.py` exits successfully, open the next CONTEXT.md.
