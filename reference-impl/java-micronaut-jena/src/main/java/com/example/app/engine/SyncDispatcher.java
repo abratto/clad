@@ -40,9 +40,22 @@ public class SyncDispatcher {
 
     private static final String SCHEMA = RdfVocabulary.ACTION_SCHEMA_IRI;
     private static final Duration POLL_INTERVAL = Duration.ofMillis(50);
-    private static final Duration TIMEOUT = Duration.ofSeconds(5);
+
+    private final Duration timeout;
+    private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
     private static final String STATUS_CODE = "statusCode";
     private static final String TIMEOUT_MESSAGE = "Request timed out";
+
+    /** Max wall-clock time before returning a failure response.
+     *  Override with {@code clad.dispatch.timeout.seconds} system property. */
+    private static Duration resolveTimeout() {
+        String val = System.getProperty("clad.dispatch.timeout.seconds");
+        if (val != null) {
+            try { return Duration.ofSeconds(Long.parseLong(val)); }
+            catch (NumberFormatException ignored) {}
+        }
+        return DEFAULT_TIMEOUT;
+    }
 
     private final ActionLog actionLog;
     private final List<ConceptAgent> conceptAgents;
@@ -60,6 +73,7 @@ public class SyncDispatcher {
         this.actionLog = actionLog;
         this.conceptAgents = conceptAgents;
         this.completionBus = completionBus;
+        this.timeout = resolveTimeout();
         this.triggerIndex = buildTriggerIndex(syncAgents);
         this.pendingInvocationIndex = buildPendingInvocationIndex(syncAgents, conceptAgents);
     }
@@ -106,7 +120,7 @@ public class SyncDispatcher {
      */
     public Mono<io.micronaut.http.HttpResponse<?>> awaitResponse(String flowToken) {
         return Mono.<io.micronaut.http.HttpResponse<?>>create(sink -> {
-            long deadline = System.currentTimeMillis() + TIMEOUT.toMillis();
+            long deadline = System.currentTimeMillis() + timeout.toMillis();
             while (System.currentTimeMillis() < deadline) {
                 try {
                     runTick();
