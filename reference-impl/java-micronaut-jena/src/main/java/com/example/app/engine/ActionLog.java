@@ -1,5 +1,6 @@
 package com.example.app.engine;
 
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -37,11 +38,13 @@ public class ActionLog {
     private final Dataset dataset;
     private volatile boolean archiveEnabled = true;
 
+    /** Constructor used by tests that want to supply a custom Dataset. */
     public ActionLog() {
         this(DatasetFactory.createTxnMem());
     }
 
-    /** Constructor used by tests that want to inspect the underlying dataset. */
+    /** Constructor used by the Micronaut IoC container. */
+    @Inject
     public ActionLog(Dataset dataset) {
         this.dataset = dataset;
     }
