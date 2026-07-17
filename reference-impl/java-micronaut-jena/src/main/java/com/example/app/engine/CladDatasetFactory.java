@@ -2,6 +2,7 @@ package com.example.app.engine;
 
 import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Singleton;
+import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.apache.jena.tdb2.TDB2Factory;
@@ -21,14 +22,15 @@ import java.util.Properties;
  *       zero-setup, for development and testing.</li>
  *   <li>{@code tdb2} — persistent TDB2 store via local directory.</li>
  *   <li>{@code tdb2mem} — in-memory TDB2 store (single-writer only).</li>
+ *   <li>{@code fuseki-embedded} — TDB2 with embedded Fuseki HTTP admin
+ *       server on a random port. Jetty 12 runs alongside Micronaut's
+ *       Netty with an explicit pinned dependency.</li>
  * </ul>
  *
- * <p>Planned (requires RDFLink->DatasetGraph adapter):
+ * <p>Planned:
  * <ul>
- *   <li>{@code fuseki} — remote Fuseki/SPARQL endpoint via HTTP.
- *       Needs a {@code RemoteDatasetGraph} that delegates SPARQL
- *       execution to an {@code RDFLinkHTTP}. Infrastructure in
- *       {@code jena-rdfconnection} is ready; implementation pending.</li>
+ *   <li>{@code fuseki} — remote endpoint via SPARQL Graph Store Protocol.
+ *       Needs a {@code RemoteDatasetGraph} adapter.</li>
  * </ul>
  */
 @Factory
@@ -49,6 +51,9 @@ public class CladDatasetFactory {
         if ("tdb2mem".equalsIgnoreCase(type)) {
             return TDB2Factory.createDataset();
         }
+        if ("fuseki-embedded".equalsIgnoreCase(type)) {
+            return fusekiEmbedded(props);
+        }
         return DatasetFactory.createTxnMem();
     }
 
@@ -66,6 +71,22 @@ public class CladDatasetFactory {
             throw new RuntimeException("cannot create TDB2 directory: " + dir, e);
         }
         return dir;
+    }
+
+    private Dataset fusekiEmbedded(Properties props) {
+        String dir = resolveDir(props);
+        Dataset ds = TDB2Factory.connectDataset(dir);
+        int port = Integer.parseInt(System.getProperty(
+                "engine.dataset.fuseki.port", "0"));
+
+        FusekiServer server = FusekiServer.create()
+                .port(port)
+                .add("/ds", ds.asDatasetGraph(), true)
+                .build();
+        server.start();
+        System.out.println("[clad] fuseki-embedded admin on http://localhost:"
+                + server.getPort() + "/ds (store: " + dir + ")");
+        return ds;
     }
 
     private static Properties readCladProperties() {
