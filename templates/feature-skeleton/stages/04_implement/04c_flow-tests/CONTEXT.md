@@ -115,6 +115,9 @@ python3 ../../../../../quality-gate/verify_gherkin_derivation.py \
 python3 ../../../../../quality-gate/verify_step_definition_parity.py \
   --feature-files-dir <APP_TEST_SOURCE_ROOT>/resources/features/ \
   --glue-dir <APP_TEST_SOURCE_ROOT>/<APP_PACKAGE_ROOT_PATH>/steps/
+python3 ../../../../../quality-gate/verify_step_definition_derivation.py \
+  --chain-dir ../../02b_chain-table/output \
+  --glue-dir <APP_TEST_SOURCE_ROOT>/<APP_PACKAGE_ROOT_PATH>/steps/
 python3 ../../../../../quality-gate/verify_port_spec_contract.py \
   --port-spec ../../../../../features/_system/stages/00_actor-goal/output/port-spec.md \
   --spec-dir ../04b_spec/output \

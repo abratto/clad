@@ -200,7 +200,8 @@ consistency checks across the CLAD artefact chain:
 | `verify_gherkin_derivation.py` | 04c | `.feature` file derivation per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1 |
 | `verify_concept_test_derivation.py` | 04d | Every SPEC outcome has a matching concept test row and Java method |
 | `verify_concept_field_assertions.py` | 04d | Java concept tests assert required completion fields from SPEC flow-token shapes |
-| `verify_step_definition_parity.py` | 04c | Every Gherkin step in every deployed `.feature` file has a matching step-definition method with a non-empty body — catches empty stubs before gate submission |
+| `verify_step_definition_parity.py` | 04c | Every Gherkin step has a matching step-definition method with a non-empty body — catches empty stubs |
+| `verify_step_definition_derivation.py` | 04c | Every chain-table business action name appears in at least one step-definition method body — catches methods that don't exercise the chain-table actions they were derived from |
 | `verify_cucumber_green.py` | 04e-green | Runs the test command and confirms all Cucumber scenarios pass (fails on undefined, pending, skipped, or failing scenarios) |
 
 Each script returns exit code 0 on pass, 1 on fail, with a structured

@@ -208,9 +208,11 @@ values.
 - No Gherkin step exists without a corresponding use-case element.
 - **Automated:** `verify_gherkin_derivation.py` enforces rules G1–G5, S1–S3, E1.
 - **Automated:** `verify_step_definition_parity.py` checks that every
-  step in every deployed `.feature` file has a matching step-definition
-  method with a non-empty body — catches stub-only implementations
-  before gate submission.
+  step has a matching method with a non-empty body — catches stubs.
+- **Automated:** `verify_step_definition_derivation.py` checks that every
+  business-concept action name from the chain tables appears in at least
+  one step-definition method body — catches methods that compile but
+  don't exercise the chain-table action sequence.
 
 ### Stage 04e-red verify
 
