@@ -48,6 +48,9 @@ public class CladDatasetFactory {
             }
             return TDB2Factory.connectDataset(dir);
         }
+        if ("tdb2mem".equalsIgnoreCase(type)) {
+            return TDB2Factory.createDataset();
+        }
         return DatasetFactory.createTxnMem();
     }
 

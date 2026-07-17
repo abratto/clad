@@ -38,6 +38,13 @@ public class ActionLog {
     private final Dataset dataset;
     private volatile boolean archiveEnabled = true;
 
+    /**
+     * Per-thread batch accumulator. When non-null, {@link #update} and
+     * {@link #updateBatch} queue SPARQL rather than executing immediately.
+     * {@link #flushBatch} drains and executes in a single transaction.
+     */
+    private final ThreadLocal<List<String>> batchedUpdates = new ThreadLocal<>();
+
     /** Constructor used by tests that want to supply a custom Dataset. */
     public ActionLog() {
         this(DatasetFactory.createTxnMem());
@@ -64,8 +71,54 @@ public class ActionLog {
         this.archiveEnabled = enabled;
     }
 
+    // -- Write batching -------------------------------------------------------
+
+    /** Begins queuing writes on this thread; subsequent {@link #update} and
+     *  {@link #updateBatch} calls are deferred until {@link #flushBatch}. */
+    public void beginBatch() {
+        batchedUpdates.set(new ArrayList<>());
+    }
+
+    /** Commits all queued writes from this thread in a single transaction. */
+    public void flushBatch() {
+        List<String> queued = batchedUpdates.get();
+        if (queued == null || queued.isEmpty()) {
+            batchedUpdates.remove();
+            return;
+        }
+        batchedUpdates.remove();
+        executeBatch(queued);
+    }
+
+    /** Discards queued writes without committing. Call after an error. */
+    public void abortBatch() {
+        batchedUpdates.remove();
+    }
+
+    private void executeBatch(List<String> updates) {
+        dataset.begin(ReadWrite.WRITE);
+        try {
+            for (String u : updates) {
+                UpdateExecutionFactory.create(UpdateFactory.create(u), dataset).execute();
+            }
+            dataset.commit();
+        } catch (Exception e) {
+            dataset.abort();
+            throw e;
+        } finally {
+            dataset.end();
+        }
+    }
+
+    // -- Single writes --------------------------------------------------------
+
     /** Executes a SPARQL UPDATE within a write transaction. */
     public void update(String sparqlUpdate) {
+        List<String> batch = batchedUpdates.get();
+        if (batch != null) {
+            batch.add(sparqlUpdate);
+            return;
+        }
         dataset.begin(ReadWrite.WRITE);
         try {
             UpdateRequest request = UpdateFactory.create(sparqlUpdate);
@@ -85,6 +138,11 @@ public class ActionLog {
      */
     public void updateBatch(List<String> sparqlUpdates) {
         if (sparqlUpdates.isEmpty()) return;
+        List<String> batch = batchedUpdates.get();
+        if (batch != null) {
+            batch.addAll(sparqlUpdates);
+            return;
+        }
         dataset.begin(ReadWrite.WRITE);
         try {
             for (String sparqlUpdate : sparqlUpdates) {

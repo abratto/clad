@@ -109,14 +109,7 @@ public class SyncDispatcher {
             long deadline = System.currentTimeMillis() + TIMEOUT.toMillis();
             while (System.currentTimeMillis() < deadline) {
                 try {
-                    boolean workDone;
-                    do {
-                        workDone = false;
-                        runConceptAgents();
-                        if (runSyncAgents()) {
-                            workDone = true;
-                        }
-                    } while (workDone);
+                    runTick();
 
                     Optional<io.micronaut.http.HttpResponse<?>> resp = buildResponse(flowToken);
                     if (resp.isPresent()) {
@@ -138,6 +131,26 @@ public class SyncDispatcher {
                     io.micronaut.http.HttpResponse.serverError(TIMEOUT_MESSAGE),
                     flowToken));
         }).subscribeOn(reactor.core.scheduler.Schedulers.boundedElastic());
+    }
+
+    /**
+     * Runs one quiescence iteration: poll concepts, flush completions,
+     * fire syncs, repeat until no more syncs fire. Write batching reduces
+     * transaction count: all concept completions within one iteration
+     * commit in a single flush, and all sync invocations commit in a
+     * single flush.
+     */
+    private void runTick() {
+        boolean workDone;
+        do {
+            workDone = false;
+            actionLog.beginBatch();
+            runConceptAgents();
+            actionLog.flushBatch();
+            if (runSyncAgents()) {
+                workDone = true;
+            }
+        } while (workDone);
     }
 
     private Optional<io.micronaut.http.HttpResponse<?>> buildResponse(String flowToken) {
