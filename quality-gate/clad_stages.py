@@ -265,14 +265,40 @@ _CUCUMBER_GREEN = Check(
                         if os.path.isdir(r)],
 )
 
+# File-manifest checks for stages with predictable single-file outputs.
+# Stages with variable outputs use other checks or CONTEXT.md-level
+# verify_file_manifest.py invocations.
+
+_FILE_01 = Check(
+    name="file_manifest",
+    script="verify_file_manifest.py",
+    build_args=lambda r: [
+        "--dir", output_dir(r, "01_usecase"),
+        "--expected", "usecase.md",
+    ],
+    requires=lambda r: [output_dir(r, "01_usecase")],
+)
+
+_FILE_02A = Check(
+    name="file_manifest",
+    script="verify_file_manifest.py",
+    build_args=lambda r: [
+        "--dir", output_dir(r, "02a_responsibility-map"),
+        "--expected", "responsibility-map.md",
+    ],
+    requires=lambda r: [output_dir(r, "02a_responsibility-map")],
+)
+
 
 # --------------------------------------------------------------------------
 # The canonical per-UC stage order.
 # --------------------------------------------------------------------------
 
 STAGES: List[Stage] = [
-    Stage("01", "Use case", "01_usecase"),
-    Stage("02a", "Responsibility map", "02a_responsibility-map"),
+    Stage("01", "Use case", "01_usecase",
+          checks=[_FILE_01]),
+    Stage("02a", "Responsibility map", "02a_responsibility-map",
+          checks=[_FILE_02A]),
     Stage("02b", "Chain table", "02b_chain-table", gate_after=1),
     Stage("02", "Concept specs", "02_concepts"),
     Stage("03", "Syncs", "03_syncs", checks=[_SCENARIO_COVERAGE, _SYNC_MATRIX]),
