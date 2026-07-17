@@ -54,6 +54,16 @@ useful visual structure.
 
 ## Verify
 
+### Automated checks
+
+```
+python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected "usecase.md"
+```
+
+- **verify_file_manifest.py:** `output/` contains exactly the expected files.
+
+### Semantic checks (human)
+
 - Every scenario has an explicit trigger. *(The trigger names a user action or external event, not just "user does something".)*
 - Every scenario's main flow begins with an action by the primary actor.
 - All actors named in scenarios come from `../00_actor-goal/output/actors.md`.
@@ -70,11 +80,11 @@ useful visual structure.
 
 ## Gate
 
-Auto-advances (next human gate: Stage 02b). The agent runs the Verify
-items as a self-audit and proceeds.
+Auto-advances (next human gate: Stage 02b). The `verify_file_manifest.py`
+script must pass before advancing.
 
 ## Next stage
 
 → [`../02a_responsibility-map/CONTEXT.md`](../02a_responsibility-map/CONTEXT.md) — Responsibility map
 
-To advance, the human says: **"Proceed to Stage 02a."**
+The agent proceeds to Stage 02a without a human gate.

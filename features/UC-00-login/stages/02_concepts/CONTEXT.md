@@ -30,6 +30,7 @@ sync, not in this file.
 | `../00_actor-goal/output/actors.md` | 4 | Cross-stage check |
 | `../../../../methodology/architecture/CONCEPTS.md` | 3 | Concept anatomy |
 | `../../../../methodology/implementation/RULES.md` | 3 | R1, R2 |
+| Skill: `clad-concept-design` | 3 | Concept design reference |
 | `../../../../templates/concept.md` | 3 | Output template |
 
 ## Process
@@ -46,6 +47,15 @@ R1: no concept references another.
 its anatomy is described in
 [`../../../../methodology/architecture/WEB_CONCEPT.md`](../../../../methodology/architecture/WEB_CONCEPT.md).)
 
+## Pre-condition (agent must verify before starting)
+
+```
+python3 ../../../../quality-gate/verify_gate_approval.py --feature ../../ --required-gates 1
+```
+
+Gate 1 (Requirements) must be approved before Stage 02 begins. If this
+fails, return to Stage 02b and complete gate approval.
+
 ## Outputs
 
 - `output/User.concept.md`
@@ -53,6 +63,26 @@ its anatomy is described in
 - `output/Session.concept.md`
 
 ## Verify
+
+### Automated checks
+
+```
+python3 ../../../../quality-gate/verify_action_chain.py \
+  --resp-map ../02a_responsibility-map/output/responsibility-map.md \
+  --chain-dir ../02b_chain-table/output \
+  --concept-dir output \
+  --sync-dir ../03_syncs/output \
+  --dep-dir ../03a_dependency-review/output \
+  --spec-dir ../04_implement/04b_spec/output
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output \
+  --expected "User.concept.md,PasswordAuth.concept.md,Session.concept.md"
+```
+
+- **verify_action_chain.py:** every action used in chain tables flows consistently.
+- **verify_file_manifest.py:** `output/` contains exactly one `.concept.md` per business concept.
+
+### Semantic checks (human)
 
 - One file per non-`Web` row in the responsibility map.
 - Every action used in any `02b_chain-table/output/*-chain.md` is
@@ -63,10 +93,12 @@ its anatomy is described in
 
 ## Gate
 
-Auto-advances (next human gate: Stage 03b).
+Auto-advances (next human gate: Stage 03b). The quality-gate scripts
+(`verify_action_chain.py`, `verify_file_manifest.py`) must all pass
+before advancing.
 
 ## Next stage
 
 → [`../03_syncs/CONTEXT.md`](../03_syncs/CONTEXT.md) — Synchronizations
 
-To advance, the human says: **"Proceed to Stage 03."**
+The agent proceeds to Stage 03 without a human gate.

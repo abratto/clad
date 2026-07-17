@@ -23,6 +23,7 @@ signatures or coordination here. Names and one-line state only.
 | `../00_actor-goal/output/actors.md` | 4 | Cross-stage check |
 | `../../../../methodology/architecture/CONCEPTS.md` | 3 | What counts as a concept |
 | `../../../../methodology/implementation/RULES.md` | 3 | R1 |
+| Skill: `clad-responsibility-mapping` | 3 | Responsibility mapping reference |
 | `../../../../templates/responsibility-map.md` | 3 | Output template |
 
 ## Process
@@ -37,6 +38,16 @@ specs (Stage 02) and do **not** describe choreography (Stage 02b).
 
 ## Verify
 
+### Automated checks
+
+```
+python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected "responsibility-map.md"
+```
+
+- **verify_file_manifest.py:** `output/` contains exactly the expected files.
+
+### Semantic checks (human)
+
 - One row per concept; one-line state; action names only.
 - Every UC-00 actor with an in-scope goal is represented.
 - Every UC-00 scenario lists at least one concept; every concept
@@ -44,10 +55,11 @@ specs (Stage 02) and do **not** describe choreography (Stage 02b).
 
 ## Gate
 
-Auto-advances (next human gate: Stage 02b).
+Auto-advances (next human gate: Stage 02b). The `verify_file_manifest.py`
+script must pass before advancing.
 
 ## Next stage
 
 → [`../02b_chain-table/CONTEXT.md`](../02b_chain-table/CONTEXT.md) — Chain tables (one per scenario)
 
-To advance, the human says: **"Proceed to Stage 02b."**
+The agent proceeds to Stage 02b without a human gate.

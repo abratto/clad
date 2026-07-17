@@ -29,6 +29,7 @@ If a card needs an action that doesn't exist yet, you are mid-violation
 | `../02a_responsibility-map/output/responsibility-map.md` | 4 | The four concepts: `User`, `PasswordAuth`, `Session`, `Web` |
 | `../02_concepts/output/` | 4 | Action and field names |
 | `../../../../methodology/architecture/SYNC_PATTERNS.md` | 3 | Patterns A/B/C/D |
+| Skill: `clad-dependency-review` | 3 | Dependency review reference |
 | `../../../../templates/dependency-review-card.md` | 3 | Per-concept card |
 | `../../../../templates/pattern-d-summary.md` | 3 | Cross-flow Pattern D summary |
 
@@ -70,6 +71,16 @@ that earlier stage rather than fixing the mismatch inside 03a.
 
 ## Verify
 
+### Automated checks
+
+```
+python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected "User-card.md,PasswordAuth-card.md,Session-card.md,Web-card.md,pattern-d-summary.md"
+```
+
+- **verify_file_manifest.py:** `output/` contains exactly the expected review files.
+
+### Semantic checks (human)
+
 - Four cards, one per concept in 02a's map.
 - Every action row exists in the matching `*.concept.md`.
 - Every sync mentioned exists under `../03_syncs/output/`.
@@ -85,12 +96,11 @@ that earlier stage rather than fixing the mismatch inside 03a.
 
 ## Gate
 
-Auto-advances (next human gate: Stage 03b).
-
-**Do you agree with this step? Any corrections before I continue?**
+Auto-advances (next human gate: Stage 03b). The `verify_file_manifest.py`
+script must pass before advancing.
 
 ## Next stage
 
 → [`../03b_data-model/CONTEXT.md`](../03b_data-model/CONTEXT.md) — Data model
 
-To advance, the human says: **"Proceed to Stage 03b."**
+The agent proceeds to Stage 03b without a human gate.

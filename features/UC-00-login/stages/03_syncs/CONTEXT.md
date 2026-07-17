@@ -27,6 +27,7 @@ the sync just says *"when outcome X fires → then call Y."*
 | `../../../../methodology/architecture/SYNCHRONIZATIONS.md` | 3 | Sync semantics |
 | `../../../../methodology/architecture/SYNC_PATTERNS.md` | 3 | The four `where` patterns (A/B/C/D) |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rules (R3) |
+| Skill: `clad-sync-design` | 3 | Sync design reference |
 | `../../../../templates/sync.md` | 3 | Output template |
 
 ## Process
@@ -92,7 +93,24 @@ canonical sync files and introduces no new logic.
 
 ## Verify
 
-- Every scenario in the use case is satisfied by at least one sync.
+### Automated checks
+
+```
+python3 ../../../../quality-gate/verify_sync_matrix.py --sync-dir output --chain-dir ../02b_chain-table/output
+python3 ../../../../quality-gate/verify_scenario_coverage.py \
+  --goals ../../../_system/stages/00_actor-goal/output/goals.md \
+  --usecase ../01_usecase/output/usecase.md \
+  --chain-dir ../02b_chain-table/output \
+  --sync-dir output
+python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected "WhenWebHandleRoutedThenUserLookupByUsernameForLogin.sync.md,WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin.sync.md,WhenUserLookupByUsernameRefusedThenWebRespondForLogin.sync.md,WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md,WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md,WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md,WhenSessionGrantGrantedThenWebRespondForLogin.sync.md"
+```
+
+- **verify_sync_matrix.py:** every sync has a valid Sync Contract Matrix.
+- **verify_scenario_coverage.py:** every scenario is satisfied by at least one sync.
+- **verify_file_manifest.py:** `output/` contains exactly the expected sync files.
+
+### Semantic checks (human)
+
 - No sync contains `if`/`else` over business state.
 - No sync persists state.
 - Every sync has a one-row Sync Contract Matrix that names the exact
@@ -117,10 +135,12 @@ canonical sync files and introduces no new logic.
 
 ## Gate
 
-Auto-advances (next human gate: Stage 03b).
+Auto-advances (next human gate: Stage 03b). The quality-gate scripts
+(`verify_sync_matrix.py`, `verify_scenario_coverage.py`,
+`verify_file_manifest.py`) must all pass before advancing.
 
 ## Next stage
 
 → [`../03a_dependency-review/CONTEXT.md`](../03a_dependency-review/CONTEXT.md) — Dependency review
 
-To advance, the human says: **"Proceed to Stage 03a."**
+The agent proceeds to Stage 03a without a human gate.

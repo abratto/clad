@@ -24,6 +24,7 @@ the concept set is wrong — go back to 02a, do not invent.
 | `../01_usecase/output/usecase.md` | 4 | UC-00-login scenarios |
 | `../02a_responsibility-map/output/responsibility-map.md` | 4 | Available concepts and actions |
 | `../../../../methodology/architecture/SYNCHRONIZATIONS.md` | 3 | Forward link to Stage 03 |
+| Skill: `clad-chain-table` | 3 | Chain-table authoring reference |
 | `../../../../templates/chain-table.md` | 3 | Output template |
 
 ## Process
@@ -59,6 +60,16 @@ Template: `../../../../templates/consolidated-chain.md`.
 
 ## Verify
 
+### Automated checks
+
+```
+python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected "successful-login-chain.md,wrong-password-chain.md,unknown-user-chain.md,lockout-chain.md,login-all-scenarios-chain.md"
+```
+
+- **verify_file_manifest.py:** `output/` contains exactly the expected chain files.
+
+### Semantic checks (human)
+
 - Every scenario has exactly one chain file (canonical).
 - Consolidated chain (non-canonical):
   - Every row in the consolidated table traces back to a specific scenario chain.
@@ -70,17 +81,48 @@ Template: `../../../../templates/consolidated-chain.md`.
 - Every action used appears in the responsibility map.
 - Mermaid `stateDiagram-v2` diagrams render at [mermaid.live](https://mermaid.live) with no errors.
 
-## Gate
+## Gate instruction — STOP AND PRESENT
 
-Default human approval. Review all five chain files (four per-scenario + one consolidated). Verify:
-- Per-scenario chains are consistent with the use case scenarios.
-- Consolidated chain correctly merges all outcomes; no outcome is missing or duplicated.
-- All diagrams render correctly.
+### Step 1 — Present artefacts
 
-**Do you agree with this step? Any corrections before I continue?**
+Run:
+
+```
+python3 ../../../quality-gate/present_gate.py \
+  --feature ../../ \
+  --gate 1
+```
+
+Present the output to the human. **Do NOT proceed past this point.**
+
+### Step 2 — Wait for human approval
+
+Wait for the human to say "approved" (or "Gate 1 approved").
+Do NOT update RESUME.md yourself.
+
+### Step 3 — Record approval
+
+Only after the human explicitly approves, run:
+
+```
+python3 ../../../quality-gate/approve_gate.py \
+  --feature ../../ \
+  --gate 1
+```
+
+This updates RESUME.md to mark Gate 1 as approved.
+
+### Step 4 — Proceed
+
+After `approve_gate.py` exits successfully, proceed to Stage 02
+(concept specs). Stages 02, 03 auto-advance. The next human gate is
+**Gate 2 (Architecture)** at Stage 03b.
+
+The `verify_file_manifest.py` script must pass before requesting the gate.
 
 ## Next stage
 
 → [`../02_concepts/CONTEXT.md`](../02_concepts/CONTEXT.md) — Concept specs (full anatomy)
 
-To advance, the human says: **"Proceed to Stage 02."**
+Do NOT open this file until the human approves Gate 1. After
+`approve_gate.py` exits successfully, open the next CONTEXT.md.

@@ -22,7 +22,18 @@ that the deployable thing actually runs (Part 2, smoke). Without it,
 | `../04_implement/output/implementation-manifest.md` | 4 | What was built |
 | (a flow-token log from a representative test run) | 4 | Runtime evidence |
 | `../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics |
+| Skill: `clad-verification` | 3 | Verification reference |
 | `../../../../reference-impl/java-micronaut-jena/README.md` | 3 | Java runtime debug surface |
+
+## Pre-condition (agent must verify before starting)
+
+```
+python3 ../../../../quality-gate/verify_gate_approval.py --feature ../../ --required-gates 3
+```
+
+Gate 3 (Executable specification) must be approved and the full test
+suite must pass (`mvn test -f app/backend/pom.xml`) before Stage 05
+begins. If either fails, return to the owning stage.
 
 ## Process
 
@@ -74,6 +85,16 @@ alongside the trace.
 - Trace file begins with `Resume point:`.
 - **Cross-stage check (back):** every observed flow token back-traces
   to a use-case scenario.
+
+### Gherkin/Cucumber coverage
+
+- Every Gherkin scenario name (`login.feature` →
+  `features/UC-00-login/stages/04_implement/04c_flow-tests/output/`)
+  matches a `trace.md` heading/cross-reference.
+- The Cucumber report (from `mvn test`) shows 0 failed scenarios for
+  the scenarios smoked during verification.
+- Gherkin scenarios provide no additional coverage beyond what the use
+  case defines.
 
 ## Gate
 

@@ -87,4 +87,4 @@ Default — fires only after `04e_green-impl/` is green.
 
 For in-memory profiles, skip 04a and go straight to [`04b_spec/CONTEXT.md`](04b_spec/CONTEXT.md). Mark 04a with a `_NOT_APPLICABLE.md` note in its `output/`.
 
-To advance, the human says: **"Proceed to Stage 04a."** (or **"Skip 04a, proceed to 04b."**)
+The agent proceeds to the first applicable sub-stage without a human gate.
