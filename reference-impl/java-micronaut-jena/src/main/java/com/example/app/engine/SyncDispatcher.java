@@ -2,12 +2,6 @@ package com.example.app.engine;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.apache.jena.query.Dataset;
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QueryExecutionFactory;
-import org.apache.jena.query.ReadWrite;
-import org.apache.jena.query.ResultSet;
-import org.apache.jena.rdf.model.RDFNode;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -235,7 +229,6 @@ public class SyncDispatcher {
     }
 
     private ResponseData checkForResponse(String flowToken) {
-        String schemaStatusCode = SCHEMA + STATUS_CODE;
         String sparql = "PREFIX : <" + SCHEMA + ">\n" +
                 "SELECT ?pred ?value\n" +
                 "WHERE {\n" +
@@ -249,31 +242,23 @@ public class SyncDispatcher {
                 "  }\n" +
                 "}\n";
 
-        Dataset ds = actionLog.dataset();
-        ds.begin(ReadWrite.READ);
-        try (QueryExecution qexec = QueryExecutionFactory.create(sparql, ds)) {
-            ResultSet rs = qexec.execSelect();
-            if (!rs.hasNext()) return null;
+        List<Map<String, String>> rows = actionLog.select(sparql);
+        if (rows.isEmpty()) return null;
 
-            Map<String, String> fields = new LinkedHashMap<>();
-            int statusCode = 200;
-            while (rs.hasNext()) {
-                var row = rs.next();
-                String predUri = row.getResource("pred").getURI();
-                RDFNode valNode = row.get("value");
-                String value = valNode.isLiteral()
-                        ? valNode.asLiteral().getString()
-                        : valNode.asResource().getURI();
-                if (schemaStatusCode.equals(predUri)) {
-                    statusCode = Integer.parseInt(value);
-                } else {
-                    fields.put(predUri.substring(SCHEMA.length()), value);
-                }
+        String schemaStatusCode = SCHEMA + STATUS_CODE;
+        Map<String, String> fields = new LinkedHashMap<>();
+        int statusCode = 200;
+        for (var row : rows) {
+            String predUri = row.get("pred");
+            String value = row.get("value");
+            if (value == null) continue;
+            if (schemaStatusCode.equals(predUri)) {
+                statusCode = Integer.parseInt(value);
+            } else {
+                fields.put(predUri.substring(SCHEMA.length()), value);
             }
-            return new ResponseData(fields, statusCode);
-        } finally {
-            ds.end();
         }
+        return new ResponseData(fields, statusCode);
     }
 
     private record ResponseData(Map<String, String> fields, int statusCode) {}
