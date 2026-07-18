@@ -1,4 +1,4 @@
-package com.example.app.concepts.user;
+package com.example.app.concepts.session;
 
 import com.example.app.ConceptTestBase;
 import com.example.app.engine.RdfVocabulary;
@@ -11,34 +11,34 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DisplayName("UserLookupByUsername")
-class UserLookupByUsernameTest extends ConceptTestBase {
+@DisplayName("SessionGrant")
+class SessionGrantTest extends ConceptTestBase {
 
-    private UserConcept concept;
+    private SessionConcept concept;
     private int actionCounter = 0;
     private String lastActionIri;
 
     private String freshActionIri() {
         actionCounter++;
-        lastActionIri = RdfVocabulary.ACTION_NODE_PREFIX + "lookup-test-" + actionCounter;
+        lastActionIri = RdfVocabulary.ACTION_NODE_PREFIX + "grant-test-" + actionCounter;
         return lastActionIri;
     }
 
     private void initConcept() {
-        concept = new UserConcept(log, bus);
+        concept = new SessionConcept(log, bus);
     }
 
-    private void writePendingInvocation(String username) {
+    private void writePendingInvocation(String userId) {
         String actionIri = freshActionIri();
         log.update(
             "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n" +
             "INSERT DATA {\n" +
             "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
-            "    <" + actionIri + "> :concept <" + UserConcept.IRI + "> ;\n" +
-            "                     :name    \"lookupByUsername\" ;\n" +
+            "    <" + actionIri + "> :concept <" + SessionConcept.IRI + "> ;\n" +
+            "                     :name    \"grant\" ;\n" +
             "                     :input   _:inp ;\n" +
             "                     :flow    <" + flow.mintFlowToken() + "> .\n" +
-            "    _:inp :username \"" + username + "\" .\n" +
+            "    _:inp :userId \"" + userId + "\" .\n" +
             "  }\n" +
             "}\n");
     }
@@ -66,40 +66,22 @@ class UserLookupByUsernameTest extends ConceptTestBase {
     }
 
     @Nested
-    @DisplayName("WhenUserExists")
-    class WhenUserExists {
+    @DisplayName("WhenGrantingSession")
+    class WhenGrantingSession {
 
         @Test
-        @DisplayName("shouldReturnUserIdWhenUserExists")
-        void shouldReturnUserIdWhenUserExists() {
+        @DisplayName("shouldMintSessionTokenAndReturnUserId")
+        void shouldMintSessionTokenAndReturnUserId() {
             initConcept();
-            concept.seedUser("ada-0001", "ada");
-            writePendingInvocation("ada");
+            writePendingInvocation("user-0001");
 
             concept.pollAll();
 
-            assertEquals("FOUND", readOutcome());
-            assertNotNull(readField("username"));
-            assertEquals("ada", readField("username"));
+            assertEquals("GRANTED", readOutcome());
+            assertNotNull(readField("sessionToken"), "sessionToken must not be null");
+            assertFalse(readField("sessionToken").isEmpty(), "sessionToken must not be empty");
             assertNotNull(readField("userId"));
-            assertEquals("ada-0001", readField("userId"));
-        }
-    }
-
-    @Nested
-    @DisplayName("WhenUserUnknown")
-    class WhenUserUnknown {
-
-        @Test
-        @DisplayName("shouldRefuseWhenUserUnknown")
-        void shouldRefuseWhenUserUnknown() {
-            initConcept();
-            writePendingInvocation("nobody");
-
-            concept.pollAll();
-
-            assertEquals("refused", readOutcome());
-            assertEquals("username not found: nobody", readField("refusalReason"));
+            assertEquals("user-0001", readField("userId"));
         }
     }
 }

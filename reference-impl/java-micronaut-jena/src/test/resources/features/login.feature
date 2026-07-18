@@ -56,9 +56,9 @@ Feature: Login
 
   # Derived from usecase.md ### Scenario: unknown-user
   # Expected token chain (from 02b_chain-table/output/unknown-user-chain.md):
-  #   Web/request[POST /login] → Web.handle → User.lookupByUsername[NotFound]
+  #   Web/request[POST /login] → Web.handle → User.lookupByUsername[Refused]
   #   → Web.respond[401]
-  # Response literal from 03_syncs/output/WhenUserLookupByUsernameNotFoundThenWebRespondForLogin.sync.md:
+  # Response literal from 03_syncs/output/WhenUserLookupByUsernameRefusedThenWebRespondForLogin.sync.md:
   #   body={ message: "username or password didn't match" }
   # Postconditions — Failure: "No state is modified in any concept."
   @unknown-user @failure-path @no-state-change

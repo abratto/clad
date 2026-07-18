@@ -38,7 +38,7 @@ public class LoginStepDefinitions {
     // SPEC outcome enums (SCREAMING_SNAKE_CASE)
     // Source: features/UC-00-login/stages/04_implement/04b_spec/output/
     //
-    // User.spec.md:          FOUND, NOT_FOUND
+    // User.spec.md:          FOUND
     // PasswordAuth.spec.md:  OK, BAD_PASSWORD, LOCKED
     // Session.spec.md:       GRANTED
     // -----------------------------------------------------------------------
@@ -192,7 +192,7 @@ public class LoginStepDefinitions {
      * Derives from chain-table last row per scenario:
      *   successful-login: Session.grant → Web.respond[200]
      *   wrong-password:   PasswordAuth.check[BadPassword] → Web.respond[401]
-     *   unknown-user:     User.lookupByUsername[NotFound] → Web.respond[401]
+     *   unknown-user:     User.lookupByUsername[refused] → Web.respond[401]
      *   lockout:          PasswordAuth.check[Locked] → Web.respond[401]
      */
     @Then("the response status is {int}")
@@ -211,7 +211,7 @@ public class LoginStepDefinitions {
      * Asserts the response body contains a specific string literal.
      *
      * Response body literals derived from 03_syncs/output/:
-     *   WhenUserLookupByUsernameNotFoundThenWebRespondForLogin.sync.md:    body={ message: "username or password didn't match" }
+     *   WhenUserLookupByUsernameRefusedThenWebRespondForLogin.sync.md:    body={ message: "username or password didn't match" }
      *   WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md:  body={ message: "username or password didn't match" }
      *   WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md:         body={ message: "Too many attempts. Try again in 15 minutes." }
      *   WhenSessionGrantGrantedThenWebRespondForLogin.sync.md:   body={ sessionToken: sessionId }
