@@ -15,4 +15,4 @@
 
 All seven sync implementation classes exist. `WhenPasswordAuthCheckOkThenSessionGrantForLogin`
 has a dedicated sync unit test; the remaining syncs are covered by the
-green LoginFlowTest and Cucumber scenarios.
+green Cucumber scenarios.

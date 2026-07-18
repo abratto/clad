@@ -14,13 +14,13 @@
 
 | Sync | Chain table | Flow scenario | Tested by |
 |---|---|---|---|
-| `WhenWebHandleRoutedThenUserLookupByUsernameForLogin` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `LoginFlowTest` + `CucumberTest` |
-| `WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin` | Row 2→3 | successful-login, wrong-pw, lockout | `LoginFlowTest` + `CucumberTest` |
-| `WhenPasswordAuthCheckOkThenSessionGrantForLogin` | Row 3→4 | successful-login | `LoginFlowTest` + `CucumberTest` |
-| `WhenSessionGrantGrantedThenWebRespondForLogin` | Row 4→5 | successful-login | `LoginFlowTest` + `CucumberTest` |
-| `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin` | Row 3a | wrong-password | `LoginFlowTest` + `CucumberTest` |
-| `WhenPasswordAuthCheckLockedThenWebRespondForLogin` | Row 3b | lockout | `LoginFlowTest` + `CucumberTest` |
-| `WhenUserLookupByUsernameNotFoundThenWebRespondForLogin` | Row 2a | unknown-user | `LoginFlowTest` + `CucumberTest` |
+| `WhenWebHandleRoutedThenUserLookupByUsernameForLogin` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `CucumberTest` |
+| `WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin` | Row 2→3 | successful-login, wrong-pw, lockout | `CucumberTest` |
+| `WhenPasswordAuthCheckOkThenSessionGrantForLogin` | Row 3→4 | successful-login | `CucumberTest` |
+| `WhenSessionGrantGrantedThenWebRespondForLogin` | Row 4→5 | successful-login | `CucumberTest` |
+| `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin` | Row 3a | wrong-password | `CucumberTest` |
+| `WhenPasswordAuthCheckLockedThenWebRespondForLogin` | Row 3b | lockout | `CucumberTest` |
+| `WhenUserLookupByUsernameNotFoundThenWebRespondForLogin` | Row 2a | unknown-user | `CucumberTest` |
 
 ## Gherkin scenario coverage
 
@@ -49,7 +49,7 @@ All 4 Cucumber scenarios pass (0 failures).
 ## Notes
 
 The reference implementation tests syncs through flow-level integration
-tests (LoginFlowTest + CucumberTest) and a dedicated unit test for
+tests (CucumberTest) and a dedicated unit test for
 `WhenPasswordAuthCheckOkThenSessionGrantForLogin`. All sync implementations
 exist under `com.example.app.syncs` with matching spec artefacts.
 

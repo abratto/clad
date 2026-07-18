@@ -18,23 +18,23 @@
 |---|---|---|---|
 | `register` | `REGISTERED` | Uncovered by login flow | — (needs unit test) |
 | `register` | `USERNAME_TAKEN` | Uncovered by login flow | — (needs unit test) |
-| `lookupByUsername` | `FOUND` | Covered — successful-login scenario | `LoginFlowTest` / `CucumberTest` |
-| `lookupByUsername` | `NOT_FOUND` | Covered — unknown-user scenario | `LoginFlowTest` / `CucumberTest` |
+| `lookupByUsername` | `FOUND` | Covered — successful-login scenario | `CucumberTest` |
+| `lookupByUsername` | `NOT_FOUND` | Covered — unknown-user scenario | `CucumberTest` |
 
 ### PasswordAuth (2 actions, 4 outcomes)
 
 | Action | Outcome | Test coverage | Location |
 |---|---|---|---|
 | `setCredential` | `STORED` | Uncovered by login flow | — (needs unit test) |
-| `check` | `OK` | Covered — successful-login scenario | `LoginFlowTest` / `CucumberTest` |
-| `check` | `BAD_PASSWORD` | Covered — wrong-password scenario | `LoginFlowTest` / `CucumberTest` |
-| `check` | `LOCKED` | Covered — lockout scenario | `LoginFlowTest` / `CucumberTest` |
+| `check` | `OK` | Covered — successful-login scenario | `CucumberTest` |
+| `check` | `BAD_PASSWORD` | Covered — wrong-password scenario | `CucumberTest` |
+| `check` | `LOCKED` | Covered — lockout scenario | `CucumberTest` |
 
 ### Session (2 actions, 3 outcomes)
 
 | Action | Outcome | Test coverage | Location |
 |---|---|---|---|
-| `grant` | `GRANTED` | Covered — successful-login scenario | `LoginFlowTest` / `CucumberTest` |
+| `grant` | `GRANTED` | Covered — successful-login scenario | `CucumberTest` |
 | `lookup` | `FOUND` | Uncovered by login flow | — (needs unit test) |
 | `lookup` | `UNKNOWN` | Uncovered by login flow | — (needs unit test) |
 
@@ -48,7 +48,7 @@
 ## Notes
 
 The reference implementation tests login-critical concept behavior through
-`UserLookupByUsernameTest`, `PasswordAuthCheckTest`, LoginFlowTest,
+`UserLookupByUsernameTest`, `PasswordAuthCheckTest`, CucumberTest,
 CucumberTest, and LegibleArchitectureRulesTest. Dedicated concept tests for
 the 5 uncovered non-login outcomes would complete 04d-red contract coverage.
 The current baseline is `mvn verify` with 46 tests and 0 failures.

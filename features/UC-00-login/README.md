@@ -78,4 +78,4 @@ to navigate the feature:
 
 Spec-complete with a runnable Java reference profile. The Java profile
 compiles and `mvn test` runs the ArchUnit suite, the OpenAPI docs tests,
-and the active `LoginFlowTest` scenarios end-to-end.
+and Cucumber scenarios end-to-end.

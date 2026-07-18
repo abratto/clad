@@ -175,7 +175,7 @@ mvn test
 ```
 
 `mvn test` runs the ArchUnit suite **and** the outside-loop
-`LoginFlowTest`, which boots an embedded Micronaut server and exercises
+CucumberTest, which boots an embedded Micronaut server and exercises
 all three UC-00 scenarios (success, wrong password, unknown user)
 end-to-end through the dispatch loop.
 

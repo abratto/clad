@@ -44,7 +44,7 @@ flow implemented by:
 - `syncs/WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.java`
 - `syncs/WhenPasswordAuthCheckLockedThenWebRespondForLogin.java`
 - `syncs/WhenSessionGrantGrantedThenWebRespondForLogin.java`
-- `src/test/java/com/example/app/flows/LoginFlowTest.java`
+- `src/test/java/com/example/app/steps/LoginStepDefinitions.java`
 - `features/UC-00-login/stages/04_implement/04c_flow-tests/output/login.feature`
 
 ## What to copy from this exemplar

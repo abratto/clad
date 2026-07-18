@@ -19,6 +19,6 @@ mvn -f reference-impl/java-micronaut-jena/pom.xml test
 ```
 
 - All sync tests pass (Cucumber: 4 scenarios, 0 failed)
-- Outer flow tests green (LoginFlowTest: 3 tests, 0 failures)
+- Outer flow tests green (CucumberTest: 4 scenarios, 0 failures)
 - All syncs are declarative (R3) — no imperative coordinator classes
 - Sync count matches chain-table transitions (7)
