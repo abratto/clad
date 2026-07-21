@@ -55,7 +55,7 @@ flow tokens and upstream action payloads.
 ```
 
 State is **private** to the concept. No other concept may read it directly
-(hard rule R1). The only legal cross-concept read is a Pattern D `where`
+(hard rule R1). The only legal cross-concept read is a concept-state read in the `where`
 clause in a sync spec.
 
 ### 3. Actions — case-split notation

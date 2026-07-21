@@ -30,7 +30,7 @@ Three clauses, written as `{ }` blocks:
 
 A sync **fires only on a completion**, never mid-action. It cannot
 observe a concept's state directly (except via the `where` clause's
-explicit `Concept: { ... }` syntax — that is Pattern D and appears in
+explicit `Concept: { ... }` syntax — a concept-state read — appears in
 the 03a dependency review audit). It cannot call back into the concept
 whose action triggered it without going through that concept's public
 actions.
@@ -118,7 +118,7 @@ a `then` clause's arguments are bound:
 | **C** (sync constant) | A literal value baked into the sync rule itself | `status: 200` in a `Web/respond` call |
 | **D** (concept-state join) | A `Concept: { ... }` block inside the `where` clause that reads concept state | `User: { ?user email: ?email }` |
 
-Pattern D is the only one that crosses a concept boundary at read time,
+A concept-state read is the only data access that crosses a concept boundary at read time,
 which is what makes hard rule R1 enforceable by inspection of the sync
 spec. Patterns A and B both work through the shared flow token — the
 sync sees these bindings without any cross-concept read.
@@ -127,7 +127,7 @@ The full pattern catalogue, with worked examples, anti-patterns, and
 03a audit guidance, is in [`SYNC_PATTERNS.md`](SYNC_PATTERNS.md).
 In the sync's source file, patterns are documented in a "Where clause
 patterns" table (see the [`templates/sync.md`](../../templates/sync.md)).
-Stage 03a's dependency review scans this table for Pattern D rows.
+Stage 03a's dependency review scans this table for concept-state read rows.
 
 ## Where clause expressiveness
 
@@ -152,7 +152,7 @@ User: { ?user name: ?username ; email: ?email }
 Profile: { ?profile bio: ?bio ; image: ?image }
 ```
 
-Reads fields from named concept regions. This is Pattern D — every such
+Reads fields from named concept regions. This is a concept-state read — every such
 read is recorded in the Stage 03a dependency review. The syntax mirrors
 SPARQL property patterns: a subject variable, a semicolon-separated list
 of property bindings, and a dot (`.`) to terminate.

@@ -1,7 +1,7 @@
 # Data model notes — drafting per-concept conceptual data models
 
 CLAD's Stage 03b derives a **profile-neutral conceptual data model**
-from each concept's approved `state` section and any approved Pattern D
+from each concept's approved `state` section and any approved concept-state
 exposure from dependency review. This file is the procedural reference
 for that work: how to turn prose state into elementary facts, fact
 types, and constraints without smuggling in storage decisions.
@@ -97,7 +97,7 @@ Capture any remaining constraints that do not fit the earlier classes,
 then run final checks for:
 
 - consistency with the approved concept state
-- consistency with approved Pattern D exposure from 03a
+- consistency with approved concept-state read exposure from 03a
 - avoidable redundancy
 - completeness of the conceptual model for this concept
 

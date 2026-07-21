@@ -21,10 +21,10 @@ two things that play the same structural role.
 | Field / instance variable | State field in concept's named region | Concept spec `state:` section, then data model (`<Name>.data-model.md`), then storage mapping (`<Name>.storage.md`) |
 | Encapsulation (`private`) | One named region per concept (R2); no other concept reads it | Hard rule R2; per-concept named graph (Java/Jena) or schema |
 | Method call between objects | Sync: `then: OtherConcept.action(...)` | One `*.sync.md` per coordination link |
-| `someOther.getFoo()` (field access on another object) | **Pattern D** — sync `where:` reads another concept's named region | `where:` clause in sync; row in 03a dependency review |
-| Return value used by caller | Pattern B — flow-sibling output joined by flow-token id | `where:` clause; row in chain table |
-| Method parameter | Pattern A — read from the original `Web.handle` body | `where:` clause; row in chain table |
-| Hard-coded literal in a caller | Pattern C — sync constant | `where:` clause |
+| `someOther.getFoo()` (field access on another object) | **concept-state read** — sync `where:` reads another concept's named region | `where:` clause in sync; row in 03a dependency review |
+| Return value used by caller | internal flow data — flow-sibling output joined by flow-token id | `where:` clause; row in chain table |
+| Method parameter | internal flow data — read from the original `Web.handle` body | `where:` clause; row in chain table |
+| Hard-coded literal in a caller | internal flow data — sync constant | `where:` clause |
 | Sequence diagram | Chain table (Stage 02b) — table form is canonical, Mermaid is derived | `<scenario>-chain.md` |
 | CRC card | Per-concept dependency review card (Stage 03a) | `<concept>-card.md` |
 | `interface` / public API | Concept's `actions:` section + outcome enums | Concept spec; `<Name>.spec.md` |
@@ -96,7 +96,7 @@ artefact "lives" in CLAD, this is the full map:
   the others.
 - **Mutable shared references.** A concept never holds a pointer
   into another concept. If you need to reach `User`'s email from
-  `PasswordReset`, you do it via Pattern D (a typed read of the
+  `PasswordReset`, you do it via a concept-state read (a typed read of the
   named region by id) at the moment you need it, not via a cached
   reference.
 - **Constructors with side effects.** Concept "construction" (boot)

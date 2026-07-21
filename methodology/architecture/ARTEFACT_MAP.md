@@ -54,13 +54,13 @@ are still the authoritative contracts; this file just makes the
    │ <name>.sync.md       │ │   04a, 04b, 04d      │                 │
    │ when … where … then  │ └──────────────────────┘                 │
    └──────┬───────────────┘                                          │
-          │ (every then-call + every Pattern A/B/C/D where-clause)   │
+          │ (every then-call + every where-clause)   │
           ▼                                                          │
    ┌──────────────────────┐                                          │
    │ 03a_dependency-      │   <concept>-card.md + pattern-d-         │
    │   review/            │     summary.md                           │
    └──────┬───────────────┘                                          │
-          │ (cross-concept coupling surface; Pattern D field list)   │
+          │ (cross-concept coupling surface; concept-state reads)   │
           ▼                                                          │
    ┌──────────────────────┐                                          │
    │ 03b_data-model/      │   <Name>.data-model.md                   │
@@ -140,19 +140,19 @@ consumer need that?**
 | `<scenario>-chain.md` | 02b | 03a | Inbound calls per concept | Section 1 of each card is built from these. |
 | `<scenario>-chain.md` | 02b | 04c | End-to-end action sequence | The flow test asserts exactly this sequence at runtime. |
 | `<Name>.concept.md` | 02 | 03 | Action signatures + outcome enums | `when` and `then` clauses reference these. |
-| `<Name>.concept.md` | 02 | 03a | Action existence + state field declarations | Cards cite action names; Pattern D rows cite state fields. |
+| `<Name>.concept.md` | 02 | 03a | Action existence + state field declarations | Cards cite action names; concept-state read rows cite state fields. |
 | `<Name>.concept.md` | 02 | 04a | `state` section | The schema is derived from this; one named region per concept (R2). |
 | `<Name>.concept.md` | 02 | 04b | Action signatures + outcome enums + flow-token shape | Mechanically extracted into the SPEC slice. |
 | `<Name>.concept.md` | 02 | 04d | Operational principle + per-action effect on state | The TDD red tests are derived from these. |
-| `<name>.sync.md` | 03 | 03a | Every `then` call + every `where` clause | Tabulated per concept (cards), with Pattern A/B/C/D labelled. |
+| `<name>.sync.md` | 03 | 03a | Every `then` call + every `where` clause | Tabulated per concept (cards), with internal-flow vs concept-state source called out. |
 | `<name>.sync.md` | 03 | 04c | Expected coordination chain | Flow test's expected token sequence comes from here. |
 | `<name>.sync.md` | 03 | 04e | `when … where … then` | One inner red→green TDD pass per sync. |
 | `<name>.sync.md` | 03 | 05 | Authorisation surface | The verifier checks every observed call is authorised by either a sync `then` or a use-case scenario trigger. |
-| `<concept>-card.md` | 03a | 03b | Pattern D fields owned by this concept | Drives conceptual data-model coverage (the field must be exposed in this concept's region). |
+| `<concept>-card.md` | 03a | 03b | concept-state read fields owned by this concept | Drives conceptual data-model coverage (the field must be exposed in this concept's region). |
 | `<concept>-card.md` | 03a | 04b | Full inbound contract for this concept | The SPEC author sees every call this concept will receive. |
 | `<concept>-card.md` | 03a | 04d | Inbound action surface | The concept TDD knows what its boundary actually is. |
 | `<concept>-card.md` | 03a | 04e | Set of concepts this sync invokes | The sync TDD knows which concepts to double. |
-| `pattern-d-summary.md` | 03a | 03b | Single cross-cutting list of every Pattern D read | One conceptual data-model checklist for the whole feature. |
+| `pattern-d-summary.md` | 03a | 03b | Single cross-cutting list of every concept-state read | One conceptual data-model checklist for the whole feature. |
 | `<Name>.data-model.md` | 03b | 04a | Approved fact types and constraints | The storage mapping must realize this model without drift. |
 | `<Name>.storage.md` (or `_NOT_APPLICABLE.md`) | 04a | 04d | Storage shape for the test fixture | The concept TDD builds against this mapping when persistence exists. |
 | `<Name>.spec.md` | 04b | 04c, 04d, 04e | Action signatures the test code compiles against | All inner-loop and outer-loop tests reference SPECs, not prose. |
