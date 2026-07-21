@@ -30,7 +30,7 @@ final class StaticPageController {
     private static Optional<String> readText(String resourcePath) {
         try (InputStream input = StaticPageController.class.getClassLoader()
                 .getResourceAsStream(resourcePath)) {
-            if (input == null) return Optional.empty();
+            if (input == null) return Optional.empty(); // CLAD-ALLOW-TRANSPORT-BRANCH
             return Optional.of(new String(input.readAllBytes(),
                     java.nio.charset.StandardCharsets.UTF_8));
         } catch (IOException e) {

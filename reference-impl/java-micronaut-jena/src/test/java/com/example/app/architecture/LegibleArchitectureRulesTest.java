@@ -125,18 +125,23 @@ class LegibleArchitectureRulesTest {
     }
 
     /**
-     * R4 (heuristic) — Web boundary code must not perform imperative branching
-     * on business outcomes in controller source. If a transport-only branch is
-     * genuinely required, it must carry the explicit waiver marker.
+     * R4 (heuristic) — Infrastructure code must not perform imperative branching
+     * on business outcomes in any controller source. If a transport-only branch
+     * is genuinely required, it must carry the explicit waiver marker.
+     *
+     * <p>Scans all Java files under infrastructure/ — not just *Web*. A file
+     * named ArticleController or ProfileController with business branching is
+     * as much a violation as one named WebController. DebugController is
+     * excluded (it is diagnostic infrastructure, not a business controller).
      */
     @Test
-    void r4_web_boundary_has_no_imperative_branching_without_transport_waiver() throws IOException {
-        List<Path> webSources = Files.walk(Path.of(SOURCE_ROOT, "infrastructure"))
-                .filter(path -> path.getFileName().toString().contains("Web"))
+    void r4_infrastructure_has_no_imperative_branching_without_transport_waiver() throws IOException {
+        List<Path> infraSources = Files.walk(Path.of(SOURCE_ROOT, "infrastructure"))
                 .filter(path -> path.toString().endsWith(".java"))
+                .filter(path -> !path.getFileName().toString().equals("DebugController.java"))
                 .toList();
 
-        for (Path path : webSources) {
+        for (Path path : infraSources) {
             List<String> lines = Files.readAllLines(path);
             for (int index = 0; index < lines.size(); index++) {
                 String line = lines.get(index);
@@ -148,7 +153,7 @@ class LegibleArchitectureRulesTest {
                         && !trimmed.contains(TRANSPORT_BRANCH_WAIVER)) {
                     throw new AssertionError(
                             path + ":" + (index + 1)
-                                    + " contains imperative branching in Web boundary code."
+                                    + " contains imperative branching in infrastructure code."
                                     + " Move domain branching to syncs/concepts or annotate a transport-only exception with "
                                     + TRANSPORT_BRANCH_WAIVER + ".");
                 }

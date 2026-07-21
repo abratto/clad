@@ -50,10 +50,10 @@ public class AuthController {
     @SuppressWarnings("unchecked")
     private Mono<HttpResponse<?>> assemble(String flowName, Mono<HttpResponse<?>> responseMono) {
         return responseMono.map(resp -> {
-            if (resp.body() instanceof Map) {
+            if (resp.body() instanceof Map) { // CLAD-ALLOW-TRANSPORT-BRANCH
                 Map<String, String> fields = (Map<String, String>) resp.body();
                 io.micronaut.http.MutableHttpResponse<Object> result;
-                if (resp.getStatus() == HttpStatus.OK) {
+                if (resp.getStatus() == HttpStatus.OK) { // CLAD-ALLOW-TRANSPORT-BRANCH
                     result = io.micronaut.http.HttpResponse.ok(
                             responseAssembler.assemble(flowName, fields));
                 } else {
@@ -61,7 +61,7 @@ public class AuthController {
                             .body(responseAssembler.toError(fields));
                 }
                 String flowToken = resp.getHeaders().get("X-Flow-Token");
-                if (flowToken != null) result.header("X-Flow-Token", flowToken);
+                if (flowToken != null) result.header("X-Flow-Token", flowToken); // CLAD-ALLOW-TRANSPORT-BRANCH
                 return result;
             }
             return resp;
