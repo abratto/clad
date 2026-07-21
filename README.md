@@ -97,7 +97,53 @@ can't write working code. An agent that can't commit can't deliver.
 4. **Mechanically enforced.** The artefact gate blocks test feedback when
    a stage is skipped, a gate is unapproved, or implementation drifts from
    its spec. No harness, no framework-specific hooks — plain `python3`
-   checks.
+    checks.
+
+### Runtime architecture
+
+Every HTTP request in a CLAD system flows through exactly one path.
+Concepts do business work. Syncs coordinate. Infrastructure is transport-only.
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Controller as Infrastructure<br/>WebController
+    participant Engine as Engine<br/>FlowManager + SyncDispatcher
+    participant Concepts as Concepts<br/>User, Article, Session...
+    participant Syncs as Syncs<br/>when X → then Y
+
+    Client->>Controller: POST /api/login
+    Note over Controller: 1. Normalize input (HTTP → engine format)
+    Controller->>Engine: rootAction("request", { route, body })
+    Note over Engine: 2. Dispatch to first sync → concept action → sync → ...
+    Engine->>Concepts: lookupByUsername("alice")
+    Concepts-->>Engine: [FOUND] { userId, ... }
+    Engine->>Syncs: when User/lookupByUsername[FOUND]
+    Syncs->>Concepts: check(userId, password)
+    Concepts-->>Engine: [OK]
+    Engine->>Syncs: when PasswordAuth/check[OK]
+    Syncs->>Concepts: grant(userId)
+    Concepts-->>Engine: [GRANTED] { sessionToken }
+    Engine->>Syncs: when Session/grant[GRANTED]
+    Syncs->>Controller: respond { statusCode: 200, sessionToken }
+    Note over Engine: 3. Flow completes — dispatch loop returns response
+    Controller-->>Client: 200 { sessionToken: "..." }
+```
+
+**What's forbidden** (enforced by `verify_action_log_isolation.py`):
+
+| Violation | Example |
+|---|---|
+| Controller calls `actionLog.select()` | Bypasses the engine, no flow token created |
+| Controller calls `actionLog.update()` | Writes concept state directly, untraceable |
+| Controller references concept graph URIs | `GRAPH <concept:article>` in infrastructure code |
+| Controller contains business branching | `if (outcome.equals("OK"))` in a controller method |
+| Controller calls engine methods beyond the two allowed | Only `rootAction()` and `awaitResponse()` are permitted |
+
+There are only four things a controller is allowed to do: normalize input,
+call `flowManager.rootAction()`, call `syncDispatcher.awaitResponse()`,
+and translate the response to HTTP. Everything else belongs in concepts
+or syncs.
 
 ## Quick start
 
