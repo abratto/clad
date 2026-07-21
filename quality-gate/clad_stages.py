@@ -284,6 +284,27 @@ _ACTION_LOG_ISOLATION = Check(
     requires=lambda r: [_concept_impl_dir(r)],
 )
 
+_STEP_DEF_PARITY = Check(
+    name="step_definition_parity",
+    script="verify_step_definition_parity.py",
+    build_args=lambda r: [
+        "--feature-files-dir", output_dir(r, "04_implement/04c_flow-tests"),
+        "--glue-dir", _test_source_root(r),
+    ],
+    requires=lambda r: [output_dir(r, "04_implement/04c_flow-tests"),
+                        _test_source_root(r)],
+)
+
+_STEP_DEF_DERIVATION = Check(
+    name="step_definition_derivation",
+    script="verify_step_definition_derivation.py",
+    build_args=lambda r: [
+        "--chain-dir", CHAIN_DIR(r),
+        "--glue-dir", _test_source_root(r),
+    ],
+    requires=lambda r: [CHAIN_DIR(r), _test_source_root(r)],
+)
+
 # File-manifest checks for stages with predictable single-file outputs.
 # Stages with variable outputs use other checks or CONTEXT.md-level
 # verify_file_manifest.py invocations.
@@ -327,7 +348,8 @@ STAGES: List[Stage] = [
     Stage("04a", "Storage mapping", "04_implement/04a_storage-mapping"),
     Stage("04b", "SPEC", "04_implement/04b_spec",
           checks=[_SPEC_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN]),
-    Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3),
+    Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3,
+          checks=[_STEP_DEF_PARITY, _STEP_DEF_DERIVATION]),
     Stage("04d", "Concept TDD", "04_implement/04d_concept-tdd",
           checks=[_FIELD_ASSERTIONS]),
     Stage("04e", "Sync TDD", "04_implement/04e_sync-tdd",
