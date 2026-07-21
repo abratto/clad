@@ -54,35 +54,13 @@ RESUME_FILE = "RESUME.md"
 AUTONOMY_LEVELS = ("gated", "auto", "yolo")
 
 
-def read_clad_property(feature_root: str, key: str) -> str | None:
-    """Find clad.properties by walking up from the feature root and return the
-    value for `key`, or None."""
-    d = os.path.abspath(feature_root)
-    while True:
-        candidate = os.path.join(d, "clad.properties")
-        if os.path.isfile(candidate):
-            with open(candidate) as fh:
-                for line in fh:
-                    line = line.strip()
-                    if not line or line.startswith("#") or "=" not in line:
-                        continue
-                    k, _, v = line.partition("=")
-                    if k.strip() == key:
-                        return v.strip()
-            return None
-        parent = os.path.dirname(d)
-        if parent == d:
-            return None
-        d = parent
-
-
 def resolve_autonomy(feature_root: str, cli_value: str | None) -> str:
     """Precedence: --autonomy flag > CLAD_AUTONOMY env > clad.properties >
     default 'gated'. The agent must not set this itself; it comes from the
     human via config or an explicit in-conversation instruction."""
     value = (cli_value
              or os.environ.get("CLAD_AUTONOMY")
-             or read_clad_property(feature_root, "workflow.autonomy")
+             or cs.get_property(feature_root, "workflow.autonomy")
              or "gated").strip().lower()
     if value not in AUTONOMY_LEVELS:
         print(f"WARN  unknown workflow.autonomy '{value}', falling back to 'gated'")

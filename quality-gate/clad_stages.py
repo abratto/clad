@@ -21,7 +21,6 @@ input by some checks.
 
 from __future__ import annotations
 
-import configparser
 import os
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional
@@ -308,12 +307,11 @@ STAGES: List[Stage] = [
     Stage("04a", "Storage mapping", "04_implement/04a_storage-mapping"),
     Stage("04b", "SPEC", "04_implement/04b_spec",
           checks=[_SPEC_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN]),
-    Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3,
-          checks=[_CUCUMBER_GREEN]),
+    Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3),
     Stage("04d", "Concept TDD", "04_implement/04d_concept-tdd",
           checks=[_FIELD_ASSERTIONS]),
     Stage("04e", "Sync TDD", "04_implement/04e_sync-tdd",
-          checks=[_IMPL_PARITY, _SYNC_IMPL_PARITY]),
+          checks=[_IMPL_PARITY, _SYNC_IMPL_PARITY, _CUCUMBER_GREEN]),
     Stage("05", "Verify", "05_verify"),
 ]
 
@@ -382,20 +380,23 @@ def _repo_root(feature_root: str) -> str:
 
 def _read_config(feature_root: str) -> Dict[str, str]:
     """Read clad.properties as a flat dict of key -> value.
-    Unprefixed keys (in the [DEFAULT] section) are stored as-is.
-    Section-prefixed keys use `section.key` notation.
-    """
+    Handles the INI-free key=value format (no section headers required)."""
     path = os.path.join(_repo_root(feature_root), "clad.properties")
     result: Dict[str, str] = {}
     if not os.path.exists(path):
         return result
-    cp = configparser.ConfigParser()
-    cp.read(path)
-    for key, value in cp.defaults().items():
-        result[key] = value
-    for section in cp.sections():
-        for key, value in cp.items(section):
-            result[f"{section}.{key}"] = value
+    with open(path) as fh:
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, _, v = line.partition("=")
+            key = k.strip()
+            # Strip inline comments from values (e.g. 'value  # comment')
+            value = v.strip()
+            if "  #" in value:
+                value = value.split("  #")[0].rstrip()
+            result[key] = value
     return result
 
 
@@ -417,3 +418,12 @@ def _prop_path(feature_root: str, key: str) -> str:
 def _prop(feature_root: str, key: str) -> str:
     """Read a plain string property from clad.properties."""
     return _read_config(feature_root).get(key, "")
+
+
+def get_property(feature_root: str, key: str) -> str | None:
+    """Public API — read a single property from clad.properties.
+    Returns None if the file or key is not found. Walks up from
+    feature_root to find clad.properties, then reads the value."""
+    cfg = _read_config(feature_root)
+    value = cfg.get(key)
+    return value if value else None

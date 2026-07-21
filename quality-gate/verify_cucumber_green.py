@@ -55,10 +55,22 @@ def read_clad_test_command(feature_root):
                 for line in fh:
                     line = line.strip()
                     if line.startswith("test.command"):
-                        return line.split("=", 1)[1].strip()
+                        return line.split("=", 1)[1].strip(), str(d)
         parent = d.parent
         if parent == d:
-            return None
+            return None, None
+        d = parent
+
+
+def find_repo_root(any_path):
+    """Walk up from any_path to find the repo root (where clad.properties lives)."""
+    d = Path(any_path).resolve()
+    while True:
+        if (d / "clad.properties").is_file():
+            return str(d)
+        parent = d.parent
+        if parent == d:
+            return str(Path(any_path).resolve())
         d = parent
 
 
@@ -172,8 +184,14 @@ def main():
         print(f"FAIL  feature root not found: {feature_root}")
         sys.exit(1)
 
-    # Resolve test command
-    test_cmd = args.test_command or read_clad_test_command(feature_root)
+    # Resolve test command and repo root
+    test_cmd = None
+    repo_root = None
+    if args.test_command:
+        test_cmd = args.test_command
+        repo_root = find_repo_root(feature_root)
+    else:
+        test_cmd, repo_root = read_clad_test_command(feature_root)
     if not test_cmd:
         print(f"FAIL  could not determine test command. "
               f"Set test.command in clad.properties or pass --test-command.")
@@ -182,11 +200,11 @@ def main():
     # Resolve surefire dir
     surefire_dir = args.surefire_dir or find_surefire_reports(feature_root)
 
-    # Run tests
+    # Run tests from repo root so relative paths in test.command resolve correctly
     print(f"INFO  Running: {test_cmd}")
     result = subprocess.run(
         test_cmd, shell=True, capture_output=True, text=True,
-        cwd=feature_root)
+        cwd=repo_root)
 
     # Parse surefire
     summary = parse_surefire(surefire_dir)

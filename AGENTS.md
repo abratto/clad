@@ -31,14 +31,13 @@ You are expected to operate within all three layers simultaneously.
    stage. Do not keep executing a stale copied contract once the drift is
    visible.
 2. **Write to `output/` and stop at the gate.** Every stage ends with a
-   review gate. After you write the stage's outputs, summarise what you
-   produced and **wait** for the human to inspect/edit before moving on.
-   When the human approves, advance to the successor named in this
-   stage's `## Next stage` section (or, if absent, the next row of the
-   table in §3). Open that stage's `CONTEXT.md` next, not before.
-   "Ready for review" is not the same as "gate passed": a stage is ready
-   for review after it passes self-audit, but the gate passes only when
-   the human explicitly approves it.
+    review gate. After you write the stage's outputs, summarise what you
+    produced and **wait** for the human to inspect/edit before moving on.
+    After the human approves, end your turn by running `advance.py`
+    (see Principle 12) — never self-select the next stage. "Ready for
+    review" is not the same as "gate passed": a stage is ready for
+    review after it passes self-audit, but the gate passes only when
+    the human explicitly approves it.
 3. **One stage, one job.** Do not run two stages in one turn. Do not
    anticipate the next stage's work in the current stage's output.
 4. **No cross-concept references.** Code under `reference-impl/` and concept
@@ -218,13 +217,6 @@ Current keys:
 | `storage.layer` | Free text | Describes the persistence technology in use |
 | `stages.usecase.require-sequence-diagram` | `true` or `false` | Whether Mermaid sequence diagrams are required in Stage 01. Default `true`. Set to `false` if the LLM struggles with diagram generation. |
 | `workflow.autonomy` | `gated`, `auto`, or `yolo` | How `advance.py` handles human gates and check failures. `gated` (default) stops at every gate; `auto` auto-approves gates but checks still block; `yolo` auto-approves gates and downgrades check failures to warnings. A skipped-stage gap always hard-stops. Human-only setting — agents must never raise it. |
-
-**Resolution order** (lower number wins):
-
-1. `clad.properties` (repo root) — project-wide default
-2. `features/UC-XX/_config/<key>.md` — per-feature override
-3. Stage-level `CONTEXT.md` — stage-specific override (when explicitly
-   documented)
 
 **Resolution order** (lower number wins):
 
