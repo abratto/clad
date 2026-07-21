@@ -167,6 +167,9 @@ The methodology is profile-agnostic; the Java profile is the only runnable
 implementation today. Pre-1.0 releases may include breaking methodology
 changes.
 
+CLAD was created by **Alan Potosnak**. See [`NOTICE`](NOTICE) and
+[`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md).
+
 CLAD works with any agent framework. Agents that support
 [agentskills.io](https://agentskills.io) auto-discover CLAD skills from
 the `skills/` directory. No platform-specific configuration is required.
