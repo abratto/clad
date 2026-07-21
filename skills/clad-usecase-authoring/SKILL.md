@@ -27,7 +27,8 @@ Load these files in order:
 1. Open the approved goal from Stage 00.
 2. Derive the operational principle, actors, and scenarios.
 3. Write `output/usecase.md` following the template.
-4. Stop at the gate.
+4. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
+5. Stop at the gate.
 
 ## Hard constraints
 

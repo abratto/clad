@@ -17,13 +17,14 @@
 
 <!--
   The agent updates this section after EVERY human gate approval.
-  Stages 02 and 04a run verify_gate_approval.py before starting — if the
-  required gate is not approved, the script stops the pipeline.
-  The agent must NOT skip updating this section after each gate approval.
+  The quality-gate sequence guard validates gate approval before any
+  stage beyond a human gate can execute — an unapproved gate blocks
+  the pipeline. The agent must NOT skip updating this section after
+  each gate approval.
 -->
-- **Gate 1 (Requirements):** `pending` | `approved` | `rejected`
-- **Gate 2 (Architecture):** `pending` | `approved` | `rejected`
-- **Gate 3 (Executable spec):** `pending` | `approved` | `rejected`
+- **Gate 1 (Requirements):** `pending` | `approved` | `rejected` | `auto-approved`
+- **Gate 2 (Architecture):** `pending` | `approved` | `rejected` | `auto-approved`
+- **Gate 3 (Executable spec):** `pending` | `approved` | `rejected` | `auto-approved`
 - **Last completed stage:** `TBD`
 - **Corrections at last gate:** `TBD`
 - **Deferred concepts:** `TBD`

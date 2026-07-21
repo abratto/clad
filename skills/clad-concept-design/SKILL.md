@@ -37,7 +37,8 @@ Load these files in order:
      pathways still mutate state (e.g. incrementing a counter). Each
      failure is a named `[ error: "..." ]` outcome.
 4. Operational principle: a single witness trace in `after`/`then` notation.
-5. Stop at the gate.
+5. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
+6. Stop at the gate.
 
 ## Hard rules
 

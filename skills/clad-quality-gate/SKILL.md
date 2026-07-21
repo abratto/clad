@@ -7,7 +7,7 @@ description: Run CLAD quality-gate verification scripts between stages. Use when
 
 ## What this skill covers
 
-Self-audit discipline: running the 10 verification scripts between stages
+Self-audit discipline: running the verification scripts between stages
 to catch defects before human gates. Scripts check file manifests, scenario
 coverage, outcome alignment, action chains, sync matrices, data models,
 SPEC parity, Gherkin presence, Gherkin derivation, and concept test

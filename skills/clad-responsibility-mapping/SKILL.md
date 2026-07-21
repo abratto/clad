@@ -24,7 +24,8 @@ Load these files:
 1. Identify every concept needed by the use case scenarios.
 2. Assign one row per concept: name, owned state, action names, coverage.
 3. Produce `output/responsibility-map.md`.
-4. Stop at the gate.
+4. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
+5. Stop at the gate.
 
 ## Hard constraints
 

@@ -7,9 +7,9 @@ stage (furthest populated output/), and runs:
   1. The stage-sequence guard (no skipped stages, gates honoured).
   2. The per-stage deterministic checks wired in clad_stages.py.
 
-Checks that involve running the actual test framework (cucumber_green) are
-excluded — those are handled by the profile's test command that follows this
-script.
+Checks flagged with skip_in_artefact_gate (e.g. cucumber_green, which runs
+the actual test framework) are excluded — those are handled by the profile's
+test command that follows this script.
 
 Wire this into clad.properties as the first half of test.command:
     test.command=python3 quality-gate/verify_artefacts.py && mvn test
@@ -21,6 +21,8 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+
+import clad_stages as cs
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
@@ -45,7 +47,7 @@ def discover_features():
             yield d.name, str(d)
 
 
-def _current_stage(feature_root, cs):
+def _current_stage(feature_root):
     last = None
     for stage in cs.STAGES:
         if cs.dir_is_populated(stage.output_dir(feature_root)):
@@ -54,8 +56,6 @@ def _current_stage(feature_root, cs):
 
 
 def main():
-    import clad_stages as cs
-
     print(f"{BAR}")
     print("  CLAD artefact pipeline gate")
     print(f"{BAR}")
@@ -65,7 +65,7 @@ def main():
 
     for name, root in discover_features():
         any_features = True
-        stage = _current_stage(root, cs)
+        stage = _current_stage(root)
 
         if stage is None:
             print(f"\n  {name}: no populated stages — skipping")
@@ -88,7 +88,7 @@ def main():
                 print(f"          {line}")
 
         # --- 2. Per-stage checks ---
-        checks = [c for c in stage.checks if c.name != "cucumber_green"]
+        checks = [c for c in stage.checks if not c.skip_in_artefact_gate]
 
         if not checks:
             print("    Checks: (none deterministic at this stage)")

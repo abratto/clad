@@ -29,8 +29,10 @@ Load these files:
    current stage is the first with no output artefacts.
 4. Read all prior stages' output artefacts.
 5. Read `features/UC-XX-<slug>/RESUME.md` for fine-grained state.
-6. State out loud: feature, current stage, next task.
-7. Wait for explicit human confirmation.
+6. Run `python3 quality-gate/advance.py --feature features/UC-XX-<slug>`
+   to validate the pipeline state and identify the next action.
+7. State out loud: feature, current stage, next task.
+8. Wait for explicit human confirmation.
 
 ## Hard constraints
 

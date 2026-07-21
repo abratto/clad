@@ -38,7 +38,8 @@ Load these files:
 3. If `port-spec.md` exists, add a separate **Response shapes** section
    with exact JSON paths, field types, wrappers, and error envelope
    values for each relevant HTTP endpoint.
-4. Auto-advance to Stage 04c.
+4. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
+5. Auto-advance to Stage 04c.
 
 ## Hard constraints
 

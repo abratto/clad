@@ -44,7 +44,8 @@ Load these files:
    HTTP endpoint. Assert exact JSON paths, constrained field types, and
    the primary error envelope shape.
 4. Produce per-scenario markdown flow specs and stub flow test files.
-5. Stop at the gate (Gate 3 — human reviews the executable specification).
+5. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
+6. Stop at the gate (Gate 3 — human reviews the executable specification).
 
 ## Hard constraints
 

@@ -46,6 +46,7 @@ class Check:
     script: str
     build_args: Callable[[str], List[str]]
     requires: Callable[[str], List[str]]
+    skip_in_artefact_gate: bool = False
 
 
 # --------------------------------------------------------------------------
@@ -260,8 +261,9 @@ _CUCUMBER_GREEN = Check(
         "--feature-root", _features_dir(r),
         "--test-command", _test_command(r),
     ],
-    requires=lambda r: [r for r in [_features_dir(r)]
-                        if os.path.isdir(r)],
+    requires=lambda root: [d for d in [_features_dir(root)]
+                           if os.path.isdir(d)],
+    skip_in_artefact_gate=True,
 )
 
 # File-manifest checks for stages with predictable single-file outputs.

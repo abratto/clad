@@ -47,6 +47,8 @@ Load these files:
    class names, and signatures. Implement only what is needed to make
    tests pass. Do not redesign approved tests.
 
+Self-audit: run `python3 quality-gate/verify_artefacts.py` before advancing.
+
 ## Field-value assertion requirement
 
 Every concept unit test must include field-value assertions. After

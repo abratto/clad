@@ -48,6 +48,8 @@ Load these files:
    imperative coordinator classes. Run until sync tests are green AND
    the outer flow tests from `04c` are green.
 
+Self-audit: run `python3 quality-gate/verify_artefacts.py` before advancing.
+
 ## Hard constraints
 
 - **Red phase**: sync tests only — no implementation code.

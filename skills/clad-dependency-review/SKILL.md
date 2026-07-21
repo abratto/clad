@@ -38,7 +38,8 @@ Load these files:
     - If no filter: explicit justification for why route-agnostic firing
        is correct
 5. Produce `pattern-d-summary.md`: one row per Pattern D read.
-6. Stop — no new design; only audit.
+6. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
+7. Stop — no new design; only audit.
 
 ## Hard constraints
 

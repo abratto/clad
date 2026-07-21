@@ -31,7 +31,8 @@ Load these files:
 3. One transition branch per row — do not collapse multiple derived
    arrows into one canonical table row.
 4. Derive the Mermaid `stateDiagram-v2` mechanically from the table.
-5. Stop at the gate.
+5. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
+6. Stop at the gate.
 
 ## Hard constraints
 

@@ -165,7 +165,6 @@ Mapped to the ICM stages of a feature folder:
 | 3 | `stages/03_syncs/` | One `*.sync.md` per coordination rule | Auto¹ → 03b |
 | 3a | `stages/03a_dependency-review/` | One `*-card.md` per concept + `pattern-d-summary.md` (cross-concept coupling surface) | Auto¹ → 03b |
 | 3b | `stages/03b_data-model/` | One `*.data-model.md` per concept (profile-neutral conceptual data model) | **Gate 2 (Architecture)** |
-| 4 | `stages/04_implement/` | Router; top-level sub-stages `04a_storage-mapping`, `04b_spec`, `04c_flow-tests`, `04d_concept-tdd`, `04e_sync-tdd`, where `04d` and `04e` each split into structural red/green child stages | Auto¹ → 04c |
 | 4a | `stages/04a_storage-mapping/` | Storage mapping (profile-specific) | Auto¹ → 04c |
 | 4b | `stages/04b_spec/` | Spec. When `port-spec.md` exists, `spec.md` must include exact response shape examples (JSON path, field type, error envelope) for every HTTP endpoint, not only field presence. | Auto¹ → 04c |
 | 4c | `stages/04c_flow-tests/` | Flow tests (outer red) | **Gate 3 (Executable)** |
@@ -178,7 +177,7 @@ human gate. The name after `→` is the next human gate stage, not the immediate
 next stage. Consult each stage's `## Next stage` section for the actual
 successor.
 
-Stage 04 is the **outside-in TDD double-loop**: `04c` is the outer red
+Stages 04a–04e implement the **outside-in TDD double-loop**: `04c` is the outer red
 test (a flow), `04d` and `04e` are the inner red→green TDD on concepts
 and syncs. Stage 03b owns conceptual data modeling; Stage 04a owns only
 profile-specific storage mapping and is optional for in-memory profiles.
@@ -218,10 +217,15 @@ Current keys:
 | `stages.usecase.require-sequence-diagram` | `true` or `false` | Whether Mermaid sequence diagrams are required in Stage 01. Default `true`. Set to `false` if the LLM struggles with diagram generation. |
 | `workflow.autonomy` | `gated`, `auto`, or `yolo` | How `advance.py` handles human gates and check failures. `gated` (default) stops at every gate; `auto` auto-approves gates but checks still block; `yolo` auto-approves gates and downgrades check failures to warnings. A skipped-stage gap always hard-stops. Human-only setting — agents must never raise it. |
 
+Profile-specific keys (`sync.impl.dir`, `concept.impl.dir`, `test.source.root`,
+`engine.*`, `jackson.serialization-inclusion`) are documented inline in
+`clad.properties`. They control implementation-package scanning and serialization
+behaviour and are read by quality-gate scripts when present.
+
 **Resolution order** (lower number wins):
 
-1. `clad.properties` (repo root) — project-wide default
-2. `features/UC-XX/_config/<key>.md` — per-feature override
+1. `features/UC-XX/_config/<key>.md` — per-feature override
+2. `clad.properties` (repo root) — project-wide default
 3. Stage-level `CONTEXT.md` — stage-specific override (when explicitly
    documented)
 

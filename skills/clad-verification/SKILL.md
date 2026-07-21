@@ -30,7 +30,8 @@ Load these files:
 3. Smoke the deployable artefact.
 4. Produce `output/trace.md`, `output/findings.md`,
    `output/smoke.md`, `output/tracking.md`.
-5. Auto-close the feature.
+5. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
+6. Auto-close the feature.
 
 ## Hard constraints
 

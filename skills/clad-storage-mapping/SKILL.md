@@ -31,7 +31,8 @@ Load these files:
 2. If in-memory: write `_NOT_APPLICABLE.md` and stop.
 3. Otherwise: for each concept, produce a storage mapping that declares
    how each state field maps to the profile's persistence primitive.
-4. Auto-advance to Stage 04b.
+4. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
+5. Auto-advance to Stage 04b.
 
 ## Hard constraints
 

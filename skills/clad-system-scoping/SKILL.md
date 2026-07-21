@@ -35,7 +35,8 @@ Load these files:
 4. Iterate until agreement.
 5. Write `actors.md`, `goals.md`, and optional `port-spec.md` to
     `features/_system/stages/00_actor-goal/output/`.
-6. Stop at the gate.
+6. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
+7. Stop at the gate.
 
 ## Hard rules
 

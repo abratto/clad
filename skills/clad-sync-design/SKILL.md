@@ -35,7 +35,8 @@ Load these files in order:
 3. Add `where` clauses using pattern labels (A/B/C/D).
 4. Write the declarative rule block.
 5. Add `Cites` referencing the use-case scenario.
-6. Stop at the gate.
+6. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
+7. Stop at the gate.
 
 ## Hard constraints
 

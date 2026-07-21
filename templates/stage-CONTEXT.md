@@ -55,18 +55,12 @@
 > 00's collaboration loop may take multiple turns before this gate is
 > reached).
 >
-> **Standard gate phrasing.** When you reach the gate, end your turn
-> with this exact line (no embellishment, no apology, no preamble):
->
-> > **Do you agree with this step? Any corrections before I continue?**
->
-> "Ready for review" means the stage passed its `Verify` self-audit and
-> is being presented to the human. "Gate passed" means the human has
-> explicitly approved it. Do not treat these as the same state.
->
-> Use this phrasing in every stage's `Gate` section so the human sees
-> a consistent stop signal across stages. The rejection protocol in
-> [`../AGENTS.md`](../AGENTS.md) §6 takes over from here.
+> **Standard gate phrasing.** When you reach the gate, run
+> `python3 quality-gate/advance.py --feature features/UC-XX-<slug>`.
+> For human gates, `advance.py` will present the artefact summary and
+> the approval command. You do NOT write your own approval prompt —
+> the script owns the gate presentation. For auto-advance stages,
+> `advance.py` will print the next stage's CONTEXT.md path.
 
 - Default: human approval of `output/` contents.
 - Stage-specific: <e.g. "agent must not have produced files outside the Outputs list">.

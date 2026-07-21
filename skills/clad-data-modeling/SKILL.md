@@ -29,7 +29,8 @@ Load these files:
 1. For each concept, walk the CSDP 7 steps from concept state.
 2. Derive fact types, uniqueness constraints, and reference schemes.
 3. Produce one `output/<Name>.data-model.md` per concept.
-4. Auto-advance to Stage 04.
+4. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
+5. Auto-advance to Stage 04.
 
 ## Hard constraints
 
