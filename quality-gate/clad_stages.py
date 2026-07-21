@@ -275,6 +275,15 @@ _SYNC_DECLARATIVE = Check(
     requires=lambda r: [_sync_impl_dir(r)],
 )
 
+_ACTION_LOG_ISOLATION = Check(
+    name="action_log_isolation",
+    script="verify_action_log_isolation.py",
+    build_args=lambda r: [
+        "--app-source-root", os.path.dirname(_concept_impl_dir(r)),
+    ] if _concept_impl_dir(r) else [],
+    requires=lambda r: [_concept_impl_dir(r)],
+)
+
 # File-manifest checks for stages with predictable single-file outputs.
 # Stages with variable outputs use other checks or CONTEXT.md-level
 # verify_file_manifest.py invocations.
@@ -323,7 +332,7 @@ STAGES: List[Stage] = [
           checks=[_FIELD_ASSERTIONS]),
     Stage("04e", "Sync TDD", "04_implement/04e_sync-tdd",
           checks=[_IMPL_PARITY, _SYNC_IMPL_PARITY, _SYNC_DECLARATIVE,
-                  _CUCUMBER_GREEN]),
+                  _ACTION_LOG_ISOLATION, _CUCUMBER_GREEN]),
     Stage("05", "Verify", "05_verify"),
 ]
 

@@ -28,6 +28,10 @@ import java.util.stream.Collectors;
  * <p>These routes expose engine state for local debugging only. They are not
  * part of the business HTTP surface. They require explicit opt-in via
  * {@code prod} environment.
+ *
+ * <p>CLAD: ActionLog waiver — debug/introspection endpoints that inspect
+ * engine state. These are not business controllers; they do not participate
+ * in the flow-token chain and are disabled in production.
  */
 @Controller("/api/dev")
 @Requires(notEnv = "prod")
