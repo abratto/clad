@@ -167,6 +167,15 @@ The methodology is profile-agnostic; the Java profile is the only runnable
 implementation today. Pre-1.0 releases may include breaking methodology
 changes.
 
+### Built with CLAD
+
+A complete [RealWorld Conduit](https://github.com/gothinkster/realworld)
+backend (7 use cases, 40+ sync agents, 36 Cucumber scenarios) was built with
+CLAD by a single agent under human review:
+[`abratto/clad-realworld-conduit-app`](https://github.com/abratto/clad-realworld-conduit-app).
+**$2.91 total token cost, 0.2% rework, 74% coverage, 0 cross-concept imports,
+0 logic defects** — ~20–50× cheaper than typical agentic workflows.
+
 CLAD was created by **Alan Potosnak**. See [`NOTICE`](NOTICE) and
 [`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md).
 
