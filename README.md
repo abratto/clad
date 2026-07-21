@@ -63,6 +63,33 @@ becoming the bottleneck. Concretely:
   agents (Copilot, Claude, Cursor, Codex, …); only the reference
   implementation profile is language-specific.
 
+### What CLAD guarantees
+
+CLAD produces systems where every line of code has a documented reason to
+exist, and every requirement has a verifiable trace to running behaviour:
+
+1. **Requirements → code.** Every in-scope goal becomes a named use-case
+   scenario, which becomes a chain table, which becomes concept specs and
+   sync contracts, which become SPECs and TDD tests, which become
+   implementation. Nothing appears in code that doesn't trace back to a
+   requirement.
+
+2. **Code → requirements.** Every runtime action emits a flow token. At
+   Stage 05, the verifier walks the token tree and proves the running
+   system produced exactly the action sequence the chain table predicted.
+   Unauthorised actions are findings — no code runs off-contract.
+
+3. **Locally reviewable.** No concept imports another. Cross-concept
+   coordination lives only in declarative syncs — `when X completes then
+   Y`. A change to one concept has a blast radius you can see immediately
+   by reading one sync file and one dependency card.
+
+4. **Mechanically enforced.** The artefact pipeline gate
+   (`verify_artefacts.py`) blocks test feedback when a stage is skipped,
+   a gate is unapproved, or implementation drifts from its spec. The
+   pre-commit hook blocks commits with the same defect. Both run the same
+   deterministic Python checks — no harness, no framework-specific hooks.
+
 ## How CLAD works
 
 CLAD is a staged workflow between a human reviewer and an AI coding agent.
