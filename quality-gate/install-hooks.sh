@@ -35,5 +35,5 @@ git config core.hooksPath .githooks
 
 echo "CLAD hooks installed: core.hooksPath -> .githooks"
 echo "  pre-commit will now enforce stage sequence + iterative-change coupling."
-echo "  Bypass one commit with:  git commit --no-verify"
+echo "  Troubleshoot a blocked commit with:  CLAD_HOOK_SKIP=1 git commit"
 echo "  Uninstall with:          git config --unset core.hooksPath"

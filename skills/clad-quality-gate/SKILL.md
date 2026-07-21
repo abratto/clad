@@ -39,6 +39,16 @@ with `python3`:
 | `verify_gherkin_derivation.py` | `.feature` derivation rules compliance |
 | `verify_concept_test_derivation.py` | SPEC outcome→test coverage |
 
+An aggregator script runs all applicable checks for the current stage
+in one invocation:
+
+```
+python3 quality-gate/verify_artefacts.py
+```
+
+This is the same gate that `test.command` runs before any profile
+tests. Prefer it at the end of every stage for a single-pass check.
+
 ## Process
 
 1. Run every `Verify` item in the current stage's `CONTEXT.md`.

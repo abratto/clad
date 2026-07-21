@@ -133,6 +133,57 @@ review gates per use case (Requirements → Architecture → Executable spec)
 before the final delivery stages run through to verification. Stage 00
 runs once per system brief; stages 01–05 run once per in-scope goal.
 
+### How CLAD enforces determinism without a harness
+
+A common question: if everything runs inside the LLM's own process — no
+harness, no external watcher — how does CLAD prevent the agent from
+skipping stages, ignoring gate failures, or bypassing checks?
+
+The answer is that CLAD embeds the **same** deterministic Python gate
+(`verify_artefacts.py`) into three points on the agent's critical path.
+Each layer closes a different escape route, and the agent can't do useful
+work without passing the one it's currently blocked by:
+
+```mermaid
+flowchart LR
+    AGENT["LLM agent"] --> SELF["Self-audit<br/>end of every stage"]
+    AGENT --> TEST["Test loop<br/>test.command"]
+    AGENT --> COMMIT["Commit<br/>pre-commit hook"]
+
+    SELF --> GATE_S["verify_artefacts.py"]
+    TEST --> GATE_T["verify_artefacts.py"]
+    COMMIT --> GATE_C["stage sequence<br/>+ coupling check"]
+
+    GATE_S -->|pass| ADVANCE["advance to next stage"]
+    GATE_T -->|pass| MVN["mvn test runs"]
+    GATE_C -->|pass| PUSH["commit accepted"]
+
+    GATE_S -->|fail| STOP["blocked — no review"]
+    GATE_T -->|fail| STOP2["blocked — no test feedback"]
+    GATE_C -->|fail| STOP3["blocked — no commit"]
+```
+
+| Layer | When it fires | What it blocks | Why the agent can't skip it |
+|---|---|---|---|
+| **1. Self-audit** | End of every stage, including design stages 01–03b | Advancing or presenting work for review | AGENTS.md principle 14 requires it before `advance.py`; `advance.py` runs the same checks |
+| **2. Test loop** | Every invocation of `test.command` | Test feedback from the profile test framework | The agent *must* run tests to iterate; the gate is wired into `clad.properties` as `python3 quality-gate/verify_artefacts.py && mvn test` |
+| **3. Commit hook** | Every `git commit` | The commit itself | Installed via `core.hooksPath`; `--no-verify` is banned by rule R18; `CLAD_HOOK_SKIP=1` is the only escape, and only under human instruction |
+
+The key insight: **CLAD doesn't control what the agent does — it controls
+what feedback the agent receives.** An agent that skips a stage or leaves
+artefacts broken doesn't get test results. An agent that never runs tests
+can't write working code. An agent that can't commit can't deliver. At each
+layer, the agent's own goals (get feedback, make progress, ship work) align
+with the gate's requirement.
+
+No harness needed: the Python scripts are called by the LLM itself, not by
+an external process that intercepts its actions. The scripts are read-only
+and exit in under a second when artefacts are intact, so they add negligible
+overhead to the TDD loop. They are the same checks at all three layers —
+`verify_artefacts.py` wraps `verify_stage_sequence.py` plus the per-stage
+checks wired in `clad_stages.py`, so there is one source of truth for what
+"pipeline intact" means.
+
 ## Status
 
 **Public, pre-1.0, and still evolving.** This repo already contains a real
@@ -251,11 +302,13 @@ cd clad
 its spec:
 
 ```bash
-./quality-gate/install-hooks.sh   # sets core.hooksPath; bypass with git commit --no-verify
+./quality-gate/install-hooks.sh   # sets core.hooksPath
 ```
 
 The hook is optional (git never runs hooks from a fresh clone) but strongly
-recommended — see
+recommended. A blocked commit is a real defect — fix it, do not bypass it.
+The only acceptable bypass is `CLAD_HOOK_SKIP=1 git commit` under explicit
+human instruction. See
 [`methodology/implementation/QUALITY_GATE.md`](methodology/implementation/QUALITY_GATE.md)
 §"Installing the local pre-commit hook".
 
@@ -329,8 +382,10 @@ project's global defaults. The file is committed and works with any
 agent framework (Cline, Copilot, Cursor, Roo, Codex, …).
 
 ```properties
-# The single command that runs the full test suite.
-test.command=mvn test
+# The canonical test command — runs the CLAD artefact gate first,
+# then the test suite. The artefact gate blocks test execution when
+# stage artefacts are out of sync. Never run the test framework directly.
+test.command=python3 quality-gate/verify_artefacts.py && mvn test
 
 # Describe your persistence technology (used by the Stage 04a storage mapping).
 storage.layer=Jena TDB2 named graph (Java/Micronaut profile)

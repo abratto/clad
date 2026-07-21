@@ -46,8 +46,8 @@ It sets `git config core.hooksPath .githooks` for your clone. The hook
 is opt-in (git never runs hooks from a fresh clone), but it is the
 cheapest way to keep the stage pipeline honest — see
 [`methodology/implementation/QUALITY_GATE.md`](methodology/implementation/QUALITY_GATE.md)
-§"Installing the local pre-commit hook". Bypass a single commit with
-`git commit --no-verify`.
+§"Installing the local pre-commit hook". A blocked commit is a real defect —
+fix it, do not bypass it.
 
 The methodology runs the same with or without GitHub-side tracking. If you
 do want the tracking overlay (recommended for any project that will live

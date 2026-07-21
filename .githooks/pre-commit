@@ -16,13 +16,13 @@
 # (which sets `git config core.hooksPath .githooks`). Git never auto-runs a
 # cloned repo's hooks, by design.
 #
-# Bypass (discouraged): `git commit --no-verify`.
+# Bypass (discouraged): CLAD_HOOK_SKIP=1 git commit.
 #
 # Optional strictness via environment variables:
 #   CLAD_HOOK_REQUIRE_RECEIPTS=1  also require a current .gate-receipt.json per
 #                                 stage (only meaningful if you drive stages
 #                                 with advance.py).
-#   CLAD_HOOK_SKIP=1              skip this hook for one commit without --no-verify.
+#   CLAD_HOOK_SKIP=1              skip this hook for one commit (at operator discretion).
 
 set -u
 
@@ -48,7 +48,7 @@ for candidate in python3 python; do
 done
 if [ -z "$PY" ]; then
     echo "CLAD pre-commit: python3 not found; cannot run CLAD checks."
-    echo "  Install Python 3 or bypass once with: git commit --no-verify"
+    echo "  Install Python 3 or set CLAD_HOOK_SKIP=1 for one commit."
     exit 1
 fi
 
@@ -105,8 +105,8 @@ if [ "$fail" -ne 0 ]; then
     echo "    python3 quality-gate/advance.py --feature features/UC-XX-<slug>"
     echo "  and commit again."
     echo ""
-    echo "  To bypass this hook for one commit (discouraged):"
-    echo "    git commit --no-verify"
+  echo "  To temporarily skip this hook (discouraged):"
+  echo "    CLAD_HOOK_SKIP=1 git commit"
     echo "=================================================================="
     exit 1
 fi

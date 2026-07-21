@@ -124,6 +124,19 @@ You are expected to operate within all three layers simultaneously.
     `approved`) in `RESUME.md` and the receipt, so an auditor can tell a
     human never reviewed them. If autonomy is anything other than
     `gated`, say so plainly to the human at the start of the run.
+14. **Self-audit rule.** At the end of every stage — including pure design
+    stages 01–03b where no test framework runs — self-audit with:
+    ```
+    python3 quality-gate/verify_artefacts.py
+    ```
+    This runs the same artefact pipeline gate that `test.command` runs.
+    If it fails, the stage is not complete — fix the defect before
+    running `advance.py` or presenting work for human review. The gate
+    catches skipped stages, unapproved gates, missing files, and
+    cross-stage consistency violations. Do not rely on the human gate
+    or the pre-commit hook as your only check. In implementation stages
+    (04c–04e), `test.command` runs this gate automatically, so you do
+    not need to invoke it separately.
 
 ## 3. The CLAD contract loop
 
@@ -201,7 +214,7 @@ Current keys:
 
 | Key | Values | Purpose |
 |---|---|---|
-| `test.command` | Shell command | The single command to run tests for this profile |
+| `test.command` | Shell command | The single command to run the artefact pipeline gate then all tests for this profile. Never run the test framework directly — tests that pass without the gate may hide stale artefacts. |
 | `storage.layer` | Free text | Describes the persistence technology in use |
 | `stages.usecase.require-sequence-diagram` | `true` or `false` | Whether Mermaid sequence diagrams are required in Stage 01. Default `true`. Set to `false` if the LLM struggles with diagram generation. |
 | `workflow.autonomy` | `gated`, `auto`, or `yolo` | How `advance.py` handles human gates and check failures. `gated` (default) stops at every gate; `auto` auto-approves gates but checks still block; `yolo` auto-approves gates and downgrades check failures to warnings. A skipped-stage gap always hard-stops. Human-only setting — agents must never raise it. |
@@ -294,7 +307,19 @@ Additional hard rules:
    (e.g. `User/getProfile[FOUND]`) must either carry an explicit route
    filter via `parameterizeSparql`, or carry a documented justification
    for why it is intentionally route-agnostic. This property must be
-   verified at Stage 03a.
+       verified at Stage 03a.
+- **R18 — The quality gate is mandatory at commit time.** `git commit --no-verify`
+   is forbidden in a CLAD workspace. The pre-commit hook runs deterministic
+   checks (stage sequence, iterative-change coupling). If it blocks a commit,
+   the defect is real — a stage was skipped or code is decoupled from its spec.
+   The only acceptable bypass is `CLAD_HOOK_SKIP=1`, and only under explicit
+   human instruction.
+- **R19 — `test.command` is the sole valid test invocation.** The command
+   in `clad.properties` runs the artefact pipeline gate (`verify_artefacts.py`)
+   before any profile tests. Running the test framework directly (e.g.
+   `mvn test` by itself) skips artefact verification and produces invalid
+   feedback — tests may pass while stage artefacts are stale. Always use the
+   full command from `clad.properties`.
 
 Rules R1–R5 above are the WYSIWID architectural rules. Four additional
 process/discipline rules (R6–R9) are defined in

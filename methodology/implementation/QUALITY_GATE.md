@@ -247,8 +247,9 @@ Environment toggles:
 | `CLAD_HOOK_SKIP=1` | Skip the hook for this invocation |
 | `CLAD_HOOK_REQUIRE_RECEIPTS=1` | Also require a current gate receipt per populated stage (`--require-receipts`) |
 
-Bypass a single commit with `git commit --no-verify`; uninstall with
-`git config --unset core.hooksPath`.
+A blocked commit is a real defect — fix it, do not bypass it. The only
+acceptable bypass is `CLAD_HOOK_SKIP=1 git commit` under explicit human
+instruction. Uninstall with `git config --unset core.hooksPath`.
 
 **Cloning CLAD as a template?** Run `./quality-gate/install-hooks.sh`
 once right after cloning. The hook is optional so CLAD stays usable
