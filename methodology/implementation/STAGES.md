@@ -274,7 +274,9 @@ These rules apply to individual stages and do not appear in the
 - **Stage 04e imperative orchestration** is a fail condition. An
   implementation that branches on business conditions or coordinates
   domain calls in a `*Coordinator` class does not satisfy the sync
-  contract.
+  contract. This is enforced by `quality-gate/verify_sync_declarative.py`
+  which checks for imperative branching, coordinator/orchestrator class
+  names, and non-final fields in the sync implementation directory.
 - **Stage 04 bootstrap (`Web`) implementations** must remain
   transport-only: normalize input, invoke the flow root, await the
   response, translate output. No business-concept dependencies, no
