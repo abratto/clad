@@ -22,6 +22,11 @@ You are expected to operate within all three layers simultaneously.
 
 ## 2. Operating principles (apply to every action)
 
+**If you are joining an existing project and cannot load CLAD skills,**
+read these files directly instead: `AGENTS.md` §1–3, `CONTEXT.md`,
+`methodology/implementation/HANDOVER.md`, and the active feature's
+`RESUME.md`. See §4b for the full skill-to-file fallback table.
+
 1. **Read the contract first.** Before writing anything, open the relevant
    `CONTEXT.md` (workspace, then feature stage) and read its `Inputs`,
    `Process`, `Outputs` sections. Load only the files listed in `Inputs`.
@@ -232,45 +237,25 @@ behaviour and are read by quality-gate scripts when present.
 Outer flow tests at Stage 04c use Cucumber/BDD (Gherkin `.feature` files
 + step definitions) — see `methodology/architecture/GHERKIN_INTEGRATION.md`.
 
-## 4b. Agent Skills
+## 4b. Agent Skills (with fallback)
 
 CLAD ships portable, on-demand expertise packages as [Agent Skills](https://agentskills.io)
 under the `skills/` directory. Each skill is a folder containing a
 `SKILL.md` file with YAML frontmatter and Markdown instructions.
 
-Skills use **progressive disclosure**:
-1. **Metadata** — the agent's system prompt carries every skill's `name`
-   and `description` (~100 tokens each).
-2. **Instructions** — loaded on-demand when a task matches a skill's
-   description.
-3. **Resources** — referenced files loaded only when needed.
+**If your agent cannot load skills** (reports "skill not found" or only
+lists built-in skills), read the corresponding raw files instead using
+the table below. The content is identical — skills are just a shorter
+path to the same information.
 
-Stage `CONTEXT.md` Inputs tables list skill names alongside file paths.
-Agents that support Skills discover them automatically; agents that do
-not fall back to the raw file paths. The stage contract chain is
-unchanged — skills replace only the "how to perform task X" instructions,
-not the "what must be produced" contract.
-
-Current skills:
-
-| Skill | Loaded at |
+| Skill | Fallback files (read in order) |
 |---|---|
-| `clad-system-scoping` | Stage 00 |
-| `clad-usecase-authoring` | Stage 01 |
-| `clad-responsibility-mapping` | Stage 02a |
-| `clad-chain-table` | Stage 02b |
-| `clad-concept-design` | Stage 02 |
-| `clad-sync-design` | Stage 03 |
-| `clad-dependency-review` | Stage 03a |
-| `clad-data-modeling` | Stage 03b |
-| `clad-storage-mapping` | Stage 04a |
-| `clad-spec-extraction` | Stage 04b |
-| `clad-flow-testing` | Stage 04c |
-| `clad-concept-tdd` | Stage 04d |
-| `clad-sync-tdd` | Stage 04e |
-| `clad-verification` | Stage 05 |
-| `clad-handover` | Any session start |
-| `clad-quality-gate` | Between stages |
+| `clad-handover` (session start) | `AGENTS.md` §1–2, `CONTEXT.md`, `methodology/implementation/HANDOVER.md`, `features/UC-XX-<slug>/RESUME.md` |
+| `clad-quality-gate` (between stages) | `methodology/implementation/QUALITY_GATE.md`, then the current stage's `CONTEXT.md` §Verify |
+| Any stage skill (01–05) | The stage's `CONTEXT.md` and the files its `Inputs` table lists — load those directly, skip the skill |
+
+Agents that do support Skills discover them automatically; agents that do
+not use the fallback. The stage contracts are identical either way.
 
 ## 5. Hard rules
 
