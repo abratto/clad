@@ -4,23 +4,27 @@ verify_step_definition_parity.py — Stage gate: every Gherkin step has a
 non-stub step-definition method.
 
 Why this exists:
-  Stage 04c produces .feature files and step-definition stubs (the outer red).
-  An agent can write stub methods with empty bodies ({}), and the compilation
-  check passes because syntax is valid. But empty stubs are NOT valid red tests
-  — every step definition must have an actual implementation that exercises the
-  application. This script catches empty-stub methods BEFORE the gate, so the
-  agent doesn't advance with non-functional tests.
+    Stage 04c produces .feature files and step-definition stubs (the outer red).
+    An agent can write stub methods with empty bodies ({}), and the compilation
+    check passes because syntax is valid. But empty stubs are NOT valid red tests
+    — every step definition must have an actual implementation that exercises the
+    application. This script catches empty-stub methods BEFORE the gate, so the
+    agent doesn't advance with non-functional tests.
 
 Checks:
-  1. Every Given/When/Then step in every deployed .feature file has a matching
-     @Given/@When/@Then method in the glue directory.
-  2. Every matched method has a non-empty body (more than just whitespace, a
-     single ';', or a trivial no-op like 'return;').
+    1. Every Given/When/Then step in every deployed .feature file has a matching
+       @Given/@When/@Then method in the glue directory.
+    2. Every matched method has a non-empty body (more than just whitespace, a
+       single ';', or a trivial no-op like 'return;').
+
+    Handles Cucumber expression parameters ({string}, {int}, {float}, etc.)
+    by converting them to regex patterns for matching against literal feature
+    file step text.
 
 Usage:
-  python3 verify_step_definition_parity.py \\
-    --feature-files-dir <src/test/resources/features/> \\
-    --glue-dir <src/test/java/com/example/steps/>
+    python3 verify_step_definition_parity.py \
+      --feature-files-dir <src/test/resources/features/> \
+      --glue-dir <src/test/java/com/example/steps/>
 """
 
 import argparse
@@ -36,6 +40,21 @@ _METHOD_ANNOTATION = re.compile(
 _METHOD_BODY_START = re.compile(
     r'\b(public|protected|private)\s+\w+\s+(\w+)\s*\([^)]*\)'
     r'\s*(?:throws\s+\S+\s*)?\{')
+
+# Cucumber expression parameters and their regex equivalents
+_EXPR_TO_REGEX = {
+    "{string}": r'"([^"]*)"',
+    "{int}": r"\d+",
+    "{float}": r"\d+\.\d+",
+    "{word}": r"\w+",
+    "{double}": r"\d+\.\d+",
+    "{biginteger}": r"\d+",
+    "{bigdecimal}": r"\d+\.\d+",
+    "{byte}": r"\d+",
+    "{short}": r"\d+",
+    "{long}": r"\d+",
+}
+_EXPR_PARAM = re.compile(r'\{(?:string|int|float|word|double|biginteger|bigdecimal|byte|short|long)\}')
 
 
 def find_java_files(root):
@@ -56,11 +75,9 @@ def extract_feature_steps(feature_path):
 
 
 def extract_step_methods(java_sources):
-    """Return { (annotation_type, step_text): body_text } for every step def.
-
-    The key is (type, text) e.g. ('Given', 'the system is running').
-    The value is the body text between { and }.
-    """
+    """Return { (annotation_type, step_pattern): body_text } for every step def.
+    The step_pattern is the annotation text, which may contain Cucumber
+    expression parameters like {string}/{int}."""
     methods = {}
     for jpath in java_sources:
         with open(jpath, encoding='utf-8') as fh:
@@ -71,13 +88,11 @@ def extract_step_methods(java_sources):
             if not m:
                 break
             ann_type = m.group(1)
-            step_text = m.group(2)
-            # Find the next method body after this annotation
+            step_pattern = m.group(2)
             body_start = text.find('{', m.end())
             if body_start < 0:
                 pos = m.end()
                 continue
-            # Find matching closing brace (naive — good enough for step defs)
             depth = 0
             body_end = body_start
             for i in range(body_start, len(text)):
@@ -89,21 +104,85 @@ def extract_step_methods(java_sources):
                         body_end = i
                         break
             body = text[body_start + 1:body_end].strip()
-            methods[(ann_type, step_text)] = body
+            methods[(ann_type, step_pattern)] = body
             pos = body_end + 1
     return methods
 
 
 def is_trivial_body(body):
     """Return True if the method body is effectively empty."""
-    # Remove single-line comments
     cleaned = re.sub(r'//.*', '', body)
     cleaned = cleaned.strip().rstrip(';')
     if not cleaned:
         return True
-    # Single return statement with no value
     if cleaned == 'return':
         return True
+    return False
+
+
+def pattern_to_regex(pattern):
+    """Convert a Cucumber expression pattern (e.g. 'I have {int} items')
+    to a regex that matches literal step text (e.g. 'I have 5 items')."""
+    escaped = re.escape(pattern)
+    # Replace escaped Cucumber expression parameters with their regex
+    def replace_expr(m):
+        param = m.group(0)
+        # The parameter was escaped by re.escape, so {string} becomes \{string\}
+        # Unescape it back for the regex replacement
+        return _EXPR_TO_REGEX.get(param, param)
+    
+    # re.escape escapes { and }, so we need to handle that
+    result = escaped
+    for expr, regex in _EXPR_TO_REGEX.items():
+        escaped_expr = re.escape(expr)
+        result = result.replace(escaped_expr, regex)
+    
+    return re.compile('^' + result + '$')
+
+
+def has_cucumber_expressions(pattern):
+    """Check if a step-def pattern contains Cucumber expression parameters."""
+    return bool(_EXPR_PARAM.search(pattern))
+
+
+def normalize_annotation_pattern(pattern):
+    """Normalize a step-def annotation pattern captured from Java source.
+    
+    When the _METHOD_ANNOTATION regex extracts text from a @Given("...")
+    annotation in a Java source file, the captured string contains Java
+    escape sequences as they appear in source (\\/ for a literal /,
+    \\n for newline, etc.). This function converts those back to
+    their intended characters for matching against feature-file text.
+    """
+    return pattern.replace('\\\\/', '/').replace('\\\\"', '"').replace(
+        '\\\\n', '\n').replace('\\\\t', '\t')
+
+
+def match_step(step_text, step_pattern, step_type="", ann_type=""):
+    """Determine if a feature-file step matches a step-def annotation pattern.
+    Handles literal text, Cucumber expression parameters, and And/But
+    keyword matching (And/But in feature files are aliases for the
+    preceding Given/When/Then type)."""
+    # And/But match any annotation type (they're Cucumber keywords, not types)
+    if step_type not in ("And", "But") and step_type != ann_type:
+        return False
+
+    # Normalize the pattern and step text
+    pattern = normalize_annotation_pattern(step_pattern)
+    text = normalize_step(step_text)
+
+    # Try exact match first
+    if text == pattern:
+        return True
+
+    # If the pattern has Cucumber expressions, match via regex
+    if has_cucumber_expressions(pattern):
+        try:
+            regex = pattern_to_regex(pattern)
+            return bool(regex.match(text))
+        except re.error:
+            return False
+
     return False
 
 
@@ -122,7 +201,6 @@ def main():
     args = parser.parse_args()
 
     passed = True
-    warn_count = 0
 
     if not os.path.isdir(args.feature_files_dir):
         print(f"FAIL  feature files directory not found: "
@@ -150,28 +228,41 @@ def main():
     java_files = find_java_files(args.glue_dir)
     step_methods = extract_step_methods(java_files)
 
-    # Check parity
+    # Check parity — match feature steps against step-def patterns
     undefined = 0
     stub = 0
     for fname, step_type, step_text in all_steps:
         step_text = normalize_step(step_text)
-        key = (step_type, step_text)
-        if key not in step_methods:
-            print(f"FAIL  {fname}: no @{step_type} definition for \"{step_text}\"")
+        
+        # Find a matching step-def method
+        matched = False
+        matched_body = None
+        for (ann_type, pattern), body in step_methods.items():
+            if match_step(step_text, pattern, step_type, ann_type):
+                matched = True
+                matched_body = body
+                break
+        
+        if not matched:
+            print(f"FAIL  {fname}: no @{step_type} definition for "
+                  f"\"{step_text}\"")
             undefined += 1
             passed = False
-        elif is_trivial_body(step_methods[key]):
-            print(f"FAIL  {fname}: @{step_type}(\"{step_text}\") has an empty "
-                  f"stub body — implement the step definition "
+        elif is_trivial_body(matched_body):
+            print(f"FAIL  {fname}: @{step_type} step \"{step_text}\" has an "
+                  f"empty stub body — implement the step definition "
                   f"(method must contain actual test logic)")
             stub += 1
             passed = False
 
-    # Also warn about unused step definitions
-    used_keys = {(step_type, normalize_step(text)) for _, step_type, text in all_steps}
+    # Warn about unused step definitions
     unused = 0
-    for key in step_methods:
-        if key not in used_keys:
+    for (ann_type, pattern), body in step_methods.items():
+        used = any(
+            match_step(normalize_step(step_text), pattern, step_type, ann_type)
+            for _, step_type, step_text in all_steps
+        )
+        if not used:
             unused += 1
     if unused > 0:
         print(f"WARN  {unused} step definition(s) have no matching "
