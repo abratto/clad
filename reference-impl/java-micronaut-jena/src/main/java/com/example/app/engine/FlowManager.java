@@ -61,7 +61,8 @@ public class FlowManager {
      */
     public ActionRecord rootAction(String route, Map<String, String> requestParams) {
         String flowToken = mintFlowToken();
-        LOG.debug("[flow] {} → {}", route, flowToken);
+        String tokenId = flowToken.substring(flowToken.lastIndexOf('/') + 1);
+        LOG.info("[flow] {} → flowToken={} — inspect at GET /api/dev/flow/{}", route, tokenId, tokenId);
         String actionIri = RdfVocabulary.ACTION_NODE_PREFIX + UUID.randomUUID();
         String inputIri = actionIri + "/input";
 
