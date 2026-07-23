@@ -82,6 +82,14 @@ Read `methodology/implementation/TDD.md` before writing anything.
 - Token count = number of rows in the chain table — no phantom intermediate tokens.
 - Passwords and secrets MUST NOT appear in any token payload.
 
+
+## Progress checklist
+
+- [ ] One `.feature` file per use-case scenario
+- [ ] Gherkin scenarios derived from chain table (G1–G5)
+- [ ] Step-definition methods have non-empty bodies
+- [ ] Step-def bodies reference chain-table action names
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 - `output/<feature-name>.feature` — one feature file per use case

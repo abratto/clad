@@ -47,6 +47,14 @@ surface: *"these are the right concepts and they own the right
 things"* — before any choreography or coordination is committed to
 paper.
 
+
+## Progress checklist
+
+- [ ] One row per concept identified in the use case
+- [ ] State columns filled for each concept
+- [ ] Action columns filled with names + outcomes
+- [ ] Web bootstrap concept listed
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 - `output/responsibility-map.md` — the table

@@ -1,0 +1,164 @@
+#!/usr/bin/env bash
+# CLAD CLI — lightweight wrapper for quality-gate scripts.
+# Auto-discovers the active feature so you never type a feature path.
+#
+# Usage:
+#   ./clad advance       — run advance.py for the active feature
+#   ./clad approve 1     — approve gate 1 for the active feature
+#   ./clad approve-iter <name> — approve iterative change
+#   ./clad verify        — run verify_artefacts.py
+#   ./clad next          — show what stage comes next
+#   ./clad stages        — show all stages and their status
+#   ./clad checklists    — show task checklists for the current stage
+#   ./clad feature       — show the active feature
+#   ./clad help          — show this help
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+QG="$SCRIPT_DIR/quality-gate"
+
+active_feature() {
+    # Find the first UC-* feature with a RESUME.md that has active work.
+    # Prefer features with a non-None current stage.
+    for d in "$SCRIPT_DIR"/features/UC-*/; do
+        [ -d "$d" ] || continue
+        local resume="$d/RESUME.md"
+        [ -f "$resume" ] || continue
+        local stage
+        stage=$(grep 'Current stage' "$resume" 2>/dev/null | head -1 | sed 's/.*`\(.*\)`.*/\1/')
+        if [ -n "$stage" ] && ! echo "$stage" | grep -q 'feature complete' && [ "$stage" != "TBD" ]; then
+            basename "$d"
+            return 0
+        fi
+    done
+    # Fallback: first feature with a RESUME.md
+    for d in "$SCRIPT_DIR"/features/UC-*/; do
+        [ -d "$d" ] || continue
+        [ -f "$d/RESUME.md" ] || continue
+        basename "$d"
+        return 0
+    done
+    echo "" >&2
+    return 1
+}
+
+cmd_advance() {
+    local feat="${1:-$(active_feature)}"
+    [ -z "$feat" ] && { echo "No active feature found."; exit 1; }
+    shift || true
+    python3 "$QG/advance.py" --feature "features/$feat" "$@"
+}
+
+cmd_approve() {
+    local gate="${1:-}"
+    [ -z "$gate" ] && { echo "Usage: ./clad approve <gate-number>"; exit 1; }
+    local feat
+    feat=$(active_feature)
+    python3 "$QG/approve_gate.py" --feature "features/$feat" --gate "$gate"
+}
+
+cmd_approve_iter() {
+    local name="${1:-}"
+    [ -z "$name" ] && { echo "Usage: ./clad approve-iter <change-name>"; exit 1; }
+    local feat
+    feat=$(active_feature)
+    python3 "$QG/approve_gate.py" --feature "features/$feat" --iterative "$name"
+}
+
+cmd_verify() {
+    python3 "$QG/verify_artefacts.py" "$@"
+}
+
+cmd_next() {
+    local feat
+    feat=$(active_feature)
+    [ -z "$feat" ] && { echo "No active feature found."; exit 1; }
+    local resume="$SCRIPT_DIR/features/$feat/RESUME.md"
+    echo "Feature: $feat"
+    grep -E '(Current stage|Next stage|Next file|Gate [123]|Last completed)' "$resume" 2>/dev/null | sed 's/^/  /'
+}
+
+cmd_stages() {
+    local feat="${1:-$(active_feature)}"
+    [ -z "$feat" ] && { echo "No active feature found."; exit 1; }
+    # Handle both basename and features/XX path forms
+    local feat_path="$SCRIPT_DIR/features/$feat"
+    [ -d "$feat_path" ] || feat_path="$feat"
+    echo "Feature: $(basename "$feat_path")"
+    echo ""
+    python3 -c "
+import sys; sys.path.insert(0, '$QG')
+import clad_stages as cs
+feat_root = '$feat_path'
+for s in cs.STAGES:
+    d = s.output_dir(feat_root)
+    populated = '✓' if cs.dir_is_populated(d) else '·'
+    gate = f' [Gate {s.gate_after}]' if s.gate_after else ''
+    print(f'  {populated} Stage {s.id} {s.label:24s}{gate}')
+"
+}
+
+cmd_checklists() {
+    local feat
+    feat=$(active_feature)
+    [ -z "$feat" ] && { echo "No active feature found."; exit 1; }
+    local resume="$SCRIPT_DIR/features/$feat/RESUME.md"
+    local current
+    current=$(grep 'Current stage' "$resume" 2>/dev/null | head -1 | sed 's/.*`\(.*\)`.*/\1/')
+    [ -z "$current" ] && { echo "Could not determine current stage."; exit 1; }
+    
+    # Map stage label back to context path
+    python3 -c "
+import sys; sys.path.insert(0, '$QG')
+import clad_stages as cs
+for s in cs.STAGES:
+    if f'Stage {s.id} — {s.label}' == '$current':
+        path = s.context_path('$SCRIPT_DIR/features/$feat')
+        import os
+        if os.path.isfile(path):
+            with open(path) as f:
+                for line in f:
+                    if line.startswith('- [ ]') or line.startswith('- [x]'):
+                        print(line.rstrip())
+        break
+"
+}
+
+cmd_feature() {
+    local feat
+    feat=$(active_feature)
+    [ -z "$feat" ] && echo "No active feature." || echo "$feat"
+}
+
+cmd_help() {
+    cat << 'HELP'
+CLAD CLI — lightweight wrapper for quality-gate scripts.
+
+  ./clad advance [--stage <id>]  Run advance.py for the active feature
+  ./clad approve <1|2|3>        Approve a human gate
+  ./clad approve-iter <name>    Approve an iterative change
+  ./clad verify                  Run verify_artefacts.py (artefact gate)
+  ./clad next                    Show current stage and next steps
+  ./clad stages                  Show all stages and their completion status
+  ./clad checklists              Show task checklists for the current stage
+  ./clad feature                 Show the active feature name
+  ./clad help                    Show this help
+
+All commands auto-discover the active feature from RESUME.md.
+No need to type feature paths.
+HELP
+}
+
+# Route to subcommand
+case "${1:-help}" in
+    advance)     shift; cmd_advance "$@";;
+    approve)     shift; cmd_approve "$@";;
+    approve-iter) shift; cmd_approve_iter "$@";;
+    verify)      shift; cmd_verify "$@";;
+    next)        cmd_next;;
+    stages)      cmd_stages "${2:-}";;
+    checklists)  cmd_checklists;;
+    feature)     cmd_feature;;
+    help|--help|-h) cmd_help;;
+    *)           echo "Unknown command: ${1:-}"; echo "Try: ./clad help"; exit 1;;
+esac

@@ -53,6 +53,15 @@ Run the child stages strictly in order, gating after each:
    against the approved red sync tests until they and the `04c` flow
    tests are green.
 
+
+## Progress checklist
+
+- [ ] Red tests derived from Stage 03 sync specs
+- [ ] Green implementation makes all sync tests pass
+- [ ] Outer flow tests from 04c go green
+- [ ] No imperative branching in sync classes (R3)
+- [ ] Infrastructure controllers are transport-only (R4)
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 (none — child stages own outputs and side effects)

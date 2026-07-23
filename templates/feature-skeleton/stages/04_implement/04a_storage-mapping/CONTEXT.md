@@ -74,6 +74,13 @@ Before writing any implementation-adjacent artefact, read
 `APP_PACKAGE_ROOT` and `APP_SOURCE_ROOT`. Treat reference-profile
 package names as examples only.
 
+
+## Progress checklist
+
+- [ ] CSDP facts mapped to profile-specific storage
+- [ ] One named region per concept (R2)
+- [ ] Storage mapping consistent with data model
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 - `output/<Name>.storage.md` per concept — the profile-specific storage

@@ -106,6 +106,14 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
    change, or "no follow-up planned"). The next session's first read
    should land on it.
 
+
+## Progress checklist
+
+- [ ] Flow tokens back-traced to use-case scenarios
+- [ ] Every scenario marked covered/partial/missing
+- [ ] Deployable artefact smoke-tested
+- [ ] `trace.md`, `findings.md`, `smoke.md`, `tracking.md` produced
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 - `output/trace.md` — per-scenario verification walk; **also**

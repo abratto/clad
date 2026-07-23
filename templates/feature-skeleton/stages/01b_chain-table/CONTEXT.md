@@ -59,6 +59,14 @@ surface **before** Stage 03 commits the choreography to declarative
 sync rules. Reviewing a full sync pack at once is harder than reviewing
 one chain table per scenario.
 
+
+## Progress checklist
+
+- [ ] One chain file per use-case scenario
+- [ ] First row is bootstrap entry action (Web/handle[routed])
+- [ ] Last row is respond action with status code
+- [ ] Outcome values match those in the responsibility map
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 - `output/<scenario-name>-chain.md` — one per scenario in the use case

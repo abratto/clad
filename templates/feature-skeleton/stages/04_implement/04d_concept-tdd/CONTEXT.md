@@ -67,6 +67,14 @@ Run the child stages strictly in order, gating after each:
 2. [`04d_green-impl/`](04d_green-impl/CONTEXT.md) — implement only
    against the approved red tests until they are green.
 
+
+## Progress checklist
+
+- [ ] Red tests derived from SPEC outcomes
+- [ ] Every SPEC outcome has a matching test method
+- [ ] Tests assert field values, not just outcomes (R14/R16)
+- [ ] Green implementation makes all concept tests pass
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 (none — child stages own outputs and side effects)

@@ -43,6 +43,15 @@ approved Pattern D exposure from 03a. Do not add foreign keys,
 cross-concept joins, storage-specific indexes, or implementation-only
 helper fields.
 
+
+## Progress checklist
+
+- [ ] One `.data-model.md` per concept
+- [ ] All 7 CSDP steps present
+- [ ] Fact types derived from concept `state` section
+- [ ] Constraints derived from concept `actions` pre/post
+- [ ] No concept-state read fields missed (from 03a)
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 - `output/<Name>.data-model.md` per concept — profile-neutral conceptual data model following the seven-step CSDP structure

@@ -84,6 +84,15 @@ as `Step | Sync | When | Then | Where summary | Key`. If present, it
 must be mechanically derivable from the canonical per-sync files and may
 not introduce new logic.
 
+
+## Progress checklist
+
+- [ ] One `.sync.md` per chain-table row (When → Then)
+- [ ] `when` clause names trigger concept + action + outcome
+- [ ] `then` clause names target concept + action + inputs
+- [ ] Sync Contract Matrix complete for each sync
+- [ ] Shared-trigger syncs have route filters (R11/R15)
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 - `output/<name>.sync.md` — one per coordination rule

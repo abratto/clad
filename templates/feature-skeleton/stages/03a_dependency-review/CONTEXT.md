@@ -77,6 +77,15 @@ The point of this stage is **not** new design. It is making the
 existing cross-concept coupling visible so the human can spot it
 before Stage 04 turns it into code.
 
+
+## Progress checklist
+
+- [ ] One `-card.md` per concept
+- [ ] Section 1: inbound calls tabulated per concept
+- [ ] Section 2: concept-state reads listed (usually empty)
+- [ ] `pattern-d-summary.md` produced
+- [ ] Shared-trigger analysis complete
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 - `output/<concept>-card.md` — one per concept named in 01a's map.

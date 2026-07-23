@@ -60,6 +60,13 @@ and `Postconditions — Failure`. See
 [`../../../../templates/usecase.md`](../../../../templates/usecase.md)
 for level definitions and the rationale.
 
+
+## Progress checklist
+
+- [ ] Operational principle drafted
+- [ ] Actors identified
+- [ ] All in-scope goals mapped to scenarios with triggers and postconditions
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 - `output/usecase.md` — the use case spec (Fully Dressed)

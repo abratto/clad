@@ -81,6 +81,15 @@ file forward.
 R1 still applies: no concept names another concept's state, actions,
 or types beyond opaque ids.
 
+
+## Progress checklist
+
+- [ ] One `.concept.md` per non-Web concept
+- [ ] State section uses Alloy-like relational notation
+- [ ] Actions have case-split outcomes matching chain table
+- [ ] Operational principle includes witness traces
+- [ ] No cross-concept references (R1)
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 - `output/<Name>.concept.md` — one per concept in the responsibility map

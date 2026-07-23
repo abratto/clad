@@ -48,6 +48,15 @@ output. Derive it from the port spec, not from local implementation
 preference. It must name exact JSON paths, field types, wrappers, and
 error envelope values required by the external contract.
 
+
+## Progress checklist
+
+- [ ] One `.spec.md` per concept
+- [ ] Action signatures match concept spec exactly
+- [ ] Outcome enums match chain table
+- [ ] Flow-token shapes declared
+- [ ] Response shapes present if port-spec.md exists
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 - `output/<Name>.spec.md` per concept
