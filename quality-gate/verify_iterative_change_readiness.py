@@ -151,6 +151,30 @@ def validate_change_file(path, implementation_touched):
         failures.append((path, "diff touches implementation scope but Production code is not marked touched"))
     if not rederivation_steps(text):
         failures.append((path, "missing concrete Re-derivation order steps"))
+
+    # Receipt freshness: if a _changes/ artefact exists, the agent must have
+    # re-run advance.py for the earliest re-entry stage (producing a new
+    # .gate-receipt.json). Without this check, the agent can edit stage
+    # outputs, skip advance.py, and commit — bypassing human gate review.
+    reentry_stage = field_value(text, "Earliest re-entry stage")
+    if reentry_stage:
+        import clad_stages as cs
+        feature_root = os.path.dirname(os.path.dirname(path))
+        stage = cs.stage_by_id(reentry_stage)
+        if stage:
+            receipt_path = os.path.join(
+                stage.output_dir(feature_root), ".gate-receipt.json")
+            change_mtime = os.path.getmtime(path)
+            if not os.path.isfile(receipt_path):
+                failures.append((path,
+                    f"re-entry stage {reentry_stage} has no .gate-receipt.json "
+                    f"— run advance.py for the re-entered stage to regenerate it"))
+            elif os.path.getmtime(receipt_path) < change_mtime:
+                failures.append((path,
+                    f".gate-receipt.json for stage {reentry_stage} is older "
+                    f"than this change artefact — re-run advance.py for the "
+                    f"re-entered stage"))
+
     return failures
 
 
