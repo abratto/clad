@@ -49,6 +49,124 @@ Together they form the complete traceability chain.
 
 ---
 
+## Dependency graph
+
+How artefacts flow from human brief to running code. Each arrow reads
+"produces → consumed by":
+
+```mermaid
+flowchart TD
+    BRIEF[("human brief")]
+
+    subgraph S00["Stage 00 · system scope"]
+        ACTORS["actors.md"]
+        GOALS["goals.md"]
+        PORT["port-spec.md<br/><i>(optional)</i>"]
+    end
+
+    subgraph S01["Stage 01"]
+        USECASE["usecase.md"]
+    end
+
+    subgraph S02A["Stage 02a"]
+        RMAP["responsibility-map.md"]
+    end
+
+    subgraph S02B["Stage 02b"]
+        CHAIN["scenario-chain.md<br/><i>(per scenario)</i>"]
+    end
+
+    subgraph S02["Stage 02"]
+        CONCEPT["Name.concept.md<br/><i>(per concept)</i>"]
+    end
+
+    subgraph S03["Stage 03"]
+        SYNC["name.sync.md<br/><i>(per sync)</i>"]
+    end
+
+    subgraph S03A["Stage 03a"]
+        CARD["concept-card.md"]
+        PDSUM["pattern-d-summary.md"]
+    end
+
+    subgraph S03B["Stage 03b"]
+        DATAMODEL["Name.data-model.md"]
+    end
+
+    subgraph S04["Stage 04 · implementation"]
+        STORAGE["Name.storage.md<br/><i>(04a)</i>"]
+        SPEC["Name.spec.md<br/><i>(04b)</i>"]
+        FEATURE["feature.feature<br/><i>(04c)</i>"]
+        CONCEPTTEST["NameConceptTest.java<br/><i>(04d red)</i>"]
+        CONCEPTIMPL["NameConcept.java<br/><i>(04d green)</i>"]
+        SYNCTEST["SyncNameTest.java<br/><i>(04e red)</i>"]
+        SYNCIMPL["SyncName.java<br/><i>(04e green)</i>"]
+        CONTROLLER["infrastructure<br/>WebController.java<br/><i>(04e)</i>"]
+    end
+
+    subgraph S05["Stage 05 · verify"]
+        TRACE["trace.md"]
+        SMOKE["smoke.md"]
+    end
+
+    BRIEF --> ACTORS
+    BRIEF --> GOALS
+    ACTORS --> USECASE
+    GOALS --> USECASE
+
+    USECASE --> RMAP
+    USECASE --> CHAIN
+    RMAP --> CHAIN
+
+    USECASE --> CONCEPT
+    RMAP --> CONCEPT
+    CHAIN --> CONCEPT
+
+    CHAIN --> SYNC
+    CONCEPT --> SYNC
+
+    SYNC --> CARD
+    CARD --> PDSUM
+
+    CONCEPT --> DATAMODEL
+    CARD --> DATAMODEL
+    PDSUM --> DATAMODEL
+
+    DATAMODEL --> STORAGE
+
+    CONCEPT --> SPEC
+    PORT -.-> SPEC
+
+    USECASE --> FEATURE
+    CHAIN --> FEATURE
+
+    SPEC --> CONCEPTTEST
+    CONCEPT -.-> CONCEPTTEST
+    CONCEPTTEST --> CONCEPTIMPL
+    SPEC --> CONCEPTIMPL
+
+    SYNC --> SYNCTEST
+    CARD --> SYNCTEST
+    SYNCTEST --> SYNCIMPL
+
+    CHAIN --> CONTROLLER
+    SYNC --> CONTROLLER
+
+    CONCEPTIMPL --> TRACE
+    SYNCIMPL --> TRACE
+    CONTROLLER --> TRACE
+    FEATURE --> TRACE
+
+    CONTROLLER --> SMOKE
+```
+
+Dashed lines (`-.->`) indicate read-only references — the downstream
+artefact names the upstream one but doesn't depend on it being produced
+first (e.g. the concept spec informs the test's expectations, but the
+test is produced in the same stage).
+
+---
+
 ## How to read this
 
 **Down a column** (what happens to one artefact):
