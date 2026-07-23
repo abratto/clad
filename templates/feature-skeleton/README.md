@@ -29,6 +29,9 @@ Run Stage 00 (`features/_system/stages/00_actor-goal/`) to completion
 
 - `_config/voice.md` — placeholder explaining feature-scoped Layer-3 reference material
 - `_config/package-and-layout.md` — canonical package/source-root settings
+- `_changes/` — iterative-change artefacts directory; see
+  `templates/iterative-change/README.md` and
+  `methodology/core/ITERATIVE_CHANGES.md`
 - `stages/` — empty stage tree (`01_usecase`, `01a_responsibility-map`,
   `01b_chain-table`, `02_concepts`, `03_syncs`, `03a_dependency-review`,
   `04_implement` with sub-stages `04a..04e`, where `04d` and `04e`

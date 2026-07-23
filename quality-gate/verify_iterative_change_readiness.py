@@ -103,8 +103,8 @@ def matrix_rows(text):
         if not line.startswith("|"):
             continue
         cells = [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
-        if len(cells) >= 4 and cells[0] not in {"Artefact", "---"}:
-            rows[cells[0]] = {"touched": cells[2].lower(), "how": cells[3]}
+        if len(cells) >= 3 and cells[0] not in {"Artefact", "---"}:
+            rows[cells[0]] = {"touched": cells[1].lower(), "how": cells[2] if len(cells) > 2 else ""}
     return rows
 
 

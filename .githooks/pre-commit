@@ -54,6 +54,7 @@ fi
 
 seq_guard="quality-gate/verify_stage_sequence.py"
 coupling="quality-gate/verify_iterative_change_coupling.py"
+readiness="quality-gate/verify_iterative_change_readiness.py"
 
 # Staged, added/copied/modified/renamed files only.
 staged="$(git diff --cached --name-only --diff-filter=ACMR)"
@@ -89,6 +90,22 @@ if [ -f "$coupling" ]; then
     if ! "$PY" "$coupling" --base HEAD; then
         fail=1
     fi
+fi
+
+# Iterative-change readiness: when concept/sync specs or implementation
+# files change, a _changes/ artefact must exist classifying the change.
+# This closes the gate-discipline gap — an agent that bypasses advance.py
+# and edits stage outputs directly is caught here.
+if [ -f "$readiness" ] && [ -n "$features" ]; then
+    while IFS= read -r feature; do
+        [ -z "$feature" ] && continue
+        [ -d "$feature" ] || continue
+        if ! "$PY" "$readiness" --feature "$feature" --base HEAD; then
+            fail=1
+        fi
+    done <<EOF
+$features
+EOF
 fi
 
 if [ "$fail" -ne 0 ]; then
