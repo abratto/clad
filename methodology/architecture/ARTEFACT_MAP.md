@@ -13,6 +13,10 @@ It is a Layer 3 (stable) reference. The per-stage `CONTEXT.md` files
 are still the authoritative contracts; this file just makes the
 **graph between them** legible.
 
+For the companion traceability reference — what WYSIWID concept each
+artefact realizes, how it's verified, and where it lands in running code —
+see [`TRACEABILITY.md`](TRACEABILITY.md).
+
 ---
 
 ## 1. The diagram

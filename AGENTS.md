@@ -471,6 +471,8 @@ matching Stage 02/03 artefact changing in the same diff.
 ## 10. Pointers
 
 - Methodology reading order: [`methodology/README.md`](methodology/README.md)
+- Artefact dependency graph: [`methodology/architecture/ARTEFACT_MAP.md`](methodology/architecture/ARTEFACT_MAP.md)
+- Artefact-to-architecture-to-code traceability: [`methodology/architecture/TRACEABILITY.md`](methodology/architecture/TRACEABILITY.md)
 - Worked example: [`features/UC-00-login/README.md`](features/UC-00-login/README.md)
 - New-feature bootstrap: [`templates/feature-skeleton/`](templates/feature-skeleton/) (copy this, do **not** copy `features/UC-00-login/`)
 - Stage contract template: [`templates/stage-CONTEXT.md`](templates/stage-CONTEXT.md)
