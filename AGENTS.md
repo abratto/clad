@@ -38,8 +38,9 @@ read these files directly instead: `AGENTS.md` §1–3, `CONTEXT.md`,
 2. **Write to `output/` and stop at the gate.** Every stage ends with a
     review gate. After you write the stage's outputs, summarise what you
     produced and **wait** for the human to inspect/edit before moving on.
-    After the human approves, end your turn by running `advance.py`
-    (see Principle 12) — never self-select the next stage. "Ready for
+    After the human approves, end your turn by running `./clad advance`
+    (or `python3 quality-gate/advance.py --feature features/UC-XX-<slug>`)
+    — never self-select the next stage. "Ready for
     review" is not the same as "gate passed": a stage is ready for
     review after it passes self-audit, but the gate passes only when
     the human explicitly approves it.
@@ -98,8 +99,10 @@ read these files directly instead: `AGENTS.md` §1–3, `CONTEXT.md`,
     (01–05) and its `output/` is written, end your turn by running:
 
     ```
-    python3 quality-gate/advance.py --feature features/UC-XX-<slug>
+    ./clad advance
     ```
+    (Or the long form: `python3 quality-gate/advance.py --feature features/UC-XX-<slug>`.)
+    The CLI wrapper auto-discovers the active feature from <code>RESUME.md</code>.
 
     Treat that script's stdout as your next instruction. It runs the
     stage's `Verify` checks and the sequence/entry guard, writes a

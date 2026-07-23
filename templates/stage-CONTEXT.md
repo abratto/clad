@@ -73,8 +73,11 @@
 > tells you the next step:
 >
 > ```
-> python3 quality-gate/advance.py --feature features/UC-XX-<slug>
+> ./clad advance
 > ```
+>
+> (Long form: `python3 quality-gate/advance.py --feature features/UC-XX-<slug>`.)
+> The CLI wrapper auto-discovers the feature from `RESUME.md`.
 >
 > Treat its output as your next instruction. It advances you, stops you
 > at a human gate, or returns you to this stage with the defects to fix.

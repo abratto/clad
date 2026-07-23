@@ -118,6 +118,7 @@ running:
 
 ```
 python3 quality-gate/advance.py --feature features/UC-XX-<slug>
+./clad advance                    # shorthand — auto-discovers feature from RESUME.md
 ```
 
 `advance.py` is a thin composition over the existing pieces — it does not

@@ -70,7 +70,7 @@ currently blocked by:
 
 | Layer | When it fires | What it blocks | Why the agent can't skip it |
 |---|---|---|---|
-| **1. Self-audit** | End of every stage | Advancing or presenting for review | Required by AGENTS.md principle 14 before `advance.py` |
+| **1. Self-audit** | End of every stage | Advancing or presenting for review | Required by AGENTS.md principle 14 before `./clad advance` |
 | **2. Test loop** | Every `test.command` | Test feedback | The agent must run tests to iterate; the gate is wired into `clad.properties` as `python3 quality-gate/verify_artefacts.py && mvn test` |
 | **3. Commit hook** | Every `git commit` | The commit itself | Installed via `core.hooksPath`; `--no-verify` is banned by rule R18 |
 
