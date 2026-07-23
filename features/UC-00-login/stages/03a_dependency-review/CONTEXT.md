@@ -18,15 +18,15 @@ per [`SYNC_PATTERNS.md`](../../../../methodology/architecture/SYNC_PATTERNS.md);
 
 **Agent stance for this stage:** this stage produces **no new design**.
 If a card needs an action that doesn't exist yet, you are mid-violation
-— go back to Stage 02 or 02b.
+— go back to Stage 02 or 01b.
 
 ## Inputs
 
 | Path | Layer | Why |
 |---|---|---|
 | `../03_syncs/output/` | 4 | The UC-00 per-transition sync pack |
-| `../02b_chain-table/output/` | 4 | The four scenarios' action chains |
-| `../02a_responsibility-map/output/responsibility-map.md` | 4 | The four concepts: `User`, `PasswordAuth`, `Session`, `Web` |
+| `../01b_chain-table/output/` | 4 | The four scenarios' action chains |
+| `../01a_responsibility-map/output/responsibility-map.md` | 4 | The four concepts: `User`, `PasswordAuth`, `Session`, `Web` |
 | `../02_concepts/output/` | 4 | Action and field names |
 | `../../../../methodology/architecture/SYNC_PATTERNS.md` | 3 | Patterns A/B/C/D |
 | Skill: `clad-dependency-review` | 3 | Dependency review reference |
@@ -58,7 +58,7 @@ defect.
 
 If a card or summary would need to rename, re-case, re-type, or otherwise
 normalize a token from Stage 03, stop and reopen Stage 03 instead. If
-the approved Stage 03 syncs disagree with Stage 02b or Stage 02, reopen
+the approved Stage 03 syncs disagree with Stage 01b or Stage 02, reopen
 that earlier stage rather than fixing the mismatch inside 03a.
 
 ## Outputs
@@ -81,7 +81,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected
 
 ### Semantic checks (human)
 
-- Four cards, one per concept in 02a's map.
+- Four cards, one per concept in 01a's map.
 - Every action row exists in the matching `*.concept.md`.
 - Every sync mentioned exists under `../03_syncs/output/`.
 - The Pattern D summary is consistent with every card's Section 2.

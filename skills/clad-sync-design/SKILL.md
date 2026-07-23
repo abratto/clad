@@ -21,7 +21,7 @@ Load these files in order:
    patterns (A, B, C, D)
 3. `methodology/architecture/FLOW_TOKENS.md` — token structure and payload rules
 4. `templates/sync.md` — output shape with embedded authoring rules
-5. `features/UC-XX-<slug>/stages/02b_chain-table/output/` —
+5. `features/UC-XX-<slug>/stages/01b_chain-table/output/` —
    approved chain tables (source of every `when`/`then` edge)
 6. `features/UC-XX-<slug>/stages/02_concepts/output/` —
    approved concept specs (action signatures)
@@ -47,4 +47,4 @@ Load these files in order:
 - No invented payload fields.
 - `[ refused ]` is matched identically to any other outcome token in
   `when` clauses.
-- If a 02b row and 02 concept signature disagree, stop and reopen Stage 02.
+- If a 01b row and 02 concept signature disagree, stop and reopen Stage 02.

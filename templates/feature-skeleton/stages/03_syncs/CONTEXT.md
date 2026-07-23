@@ -23,7 +23,7 @@ the sync just says *"when outcome X fires → then call Y."*
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Scenarios to satisfy |
 | `../02_concepts/output/` | 4 | Concepts available to coordinate |
-| `../02b_chain-table/output/` | 4 | The action chain each sync formalises |
+| `../01b_chain-table/output/` | 4 | The action chain each sync formalises |
 | Skill: `clad-sync-design` | 3 | Sync design reference (see skills/ directory) |
 | `../../../../methodology/architecture/SYNCHRONIZATIONS.md` | 3 | Sync semantics |
 | `../../../../methodology/architecture/SYNC_PATTERNS.md` | 3 | The four legal `where` patterns (A/B/C/D) |
@@ -33,7 +33,7 @@ the sync just says *"when outcome X fires → then call Y."*
 ## Process
 
 Count the transitions in every approved chain table in
-`02b_chain-table/output/` for this feature. Each transition (row N →
+`01b_chain-table/output/` for this feature. Each transition (row N →
 row N+1) becomes exactly one sync file. Do not collapse multiple
 transitions into one sync.
 
@@ -44,7 +44,7 @@ signature, `then` signature, and allowed literals. Copy them verbatim.
 This is a preflight check, not a place to reinterpret names.
 
 If any action signature, outcome name, argument name, or literal differs
-between 02b and 02, stop and reopen Stage 02 before writing any sync
+between 01b and 02, stop and reopen Stage 02 before writing any sync
 file. Stage 03 derives coordination from approved contracts; it does not
 repair contract drift.
 
@@ -58,7 +58,7 @@ For each transition, write one rule-shaped
 - Pattern A binds only from names already declared by the approved
   `when` token. It may not read `body.*`, `request.*`, or other raw
   transport structure. If a needed Pattern A name is missing, reopen
-  Stage 02b and fix the trigger contract before continuing.
+  Stage 01b and fix the trigger contract before continuing.
 - `where:` is binding-only. No JSON assembly, no ad hoc projection
   extraction, and no payload reshaping. If a downstream action needs a
   different shape, the upstream concept action must emit it explicitly.
@@ -96,11 +96,11 @@ Run the following before requesting the human gate:
 
 ```
 python3 ../../../../quality-gate/verify_sync_matrix.py \
-  --sync-dir output --chain-dir ../02b_chain-table/output
+  --sync-dir output --chain-dir ../01b_chain-table/output
 python3 ../../../../quality-gate/verify_scenario_coverage.py \
   --goals ../00_actor-goal/output/goals.md \
   --usecase ../01_usecase/output/usecase.md \
-  --chain-dir ../02b_chain-table/output \
+  --chain-dir ../01b_chain-table/output \
   --sync-dir output
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<name>.sync.md,…"  # one per coordination rule
@@ -129,7 +129,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   name declared by the approved `when` token. No `body.*`, `request.*`,
   or other raw transport paths are permitted in Stage 03.
 - **Sync Contract Matrix:** each sync can be traced back to one source
-  row and one target row from 02b, with `when`/`then` signatures copied
+  row and one target row from 01b, with `when`/`then` signatures copied
   exactly from the approved contracts.
 - **Literal lock:** exact literal identity is preserved across stages.
   Numeric transport status codes stay numeric, string literals keep their
@@ -144,19 +144,19 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   explicitly declared in a `where` clause with a pattern label. No
   undeclared variable references permitted.
 - **Cross-stage signature lock:** if any 03 `when`/`then` signature does
-  not exactly match the corresponding 02b row or the 02 concept action
+  not exactly match the corresponding 01b row or the 02 concept action
   signature, stop and reopen Stage 02 instead of guessing.
 - **Cross-stage check (back):** every named scenario in
   `01_usecase/output/usecase.md` is satisfied by at least one sync, or
   is a `Web`-only failure path (call this out explicitly in the sync
   pack's notes).
-- **Cross-stage check (back to 02b) — repeated action backstop:** scan
+- **Cross-stage check (back to 01b) — repeated action backstop:** scan
   the full sync set for any `<Concept>.<action>` that appears as the
   `then` target of one sync and also as the `when` source of another,
   where both share the same concept action name. If the same
   `<Concept>.<action>` appears more than once across the `then` lines
   of the sync set, this indicates that the chain table contained a
-  repeated action invocation that was not caught at the 02b gate. Stop,
+  repeated action invocation that was not caught at the 01b gate. Stop,
   do not proceed to 03a, and surface the finding to the human: name the
   duplicated action and the chain table rows that produced it. The chain
   table must be corrected and re-approved before the syncs can be

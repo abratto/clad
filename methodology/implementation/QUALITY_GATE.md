@@ -59,7 +59,7 @@ not relax the *intent*.
      actor, and every scenario has an explicit trigger statement.
 8. **Stage 02 outcome alignment and chain-table checks.**
    When a diff touches `features/UC-*/stages/02_concepts/` or
-   `features/UC-*/stages/02b_chain-table/`:
+   `features/UC-*/stages/01b_chain-table/`:
    - **Automated:** Run `quality-gate/verify_outcome_alignment.py`
      to check every chain-table outcome matches a SPEC outcome enum.
    - **Automated:** Run `quality-gate/verify_action_chain.py`
@@ -184,7 +184,7 @@ consistency checks across the CLAD artefact chain:
 |---|---|---|
 | `verify_stage_sequence.py` | Any | No stage was skipped (contiguous prefix), and each cleared human gate is recorded as approved in `RESUME.md` |
 | `verify_file_manifest.py` | Any | `output/` contains exactly the expected files |
-| `verify_scenario_coverage.py` | 01, 02b, 03 | Goal → scenario → chain → sync coverage |
+| `verify_scenario_coverage.py` | 01, 01b, 03 | Goal → scenario → chain → sync coverage |
 | `verify_outcome_alignment.py` | 02 | Chain-table outcomes match SPEC enums |
 | `verify_action_chain.py` | 02–04b | Action names consistent across all artefacts |
 | `verify_sync_matrix.py` | 03 | Every sync has a complete Sync Contract Matrix |

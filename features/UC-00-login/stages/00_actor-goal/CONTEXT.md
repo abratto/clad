@@ -10,7 +10,7 @@ mechanical.
 
 **Feeds:**
 
-- `actors.md` → Stage 01 (verbatim actor list in `usecase.md`); Stage 02a (every in-scope actor must be represented by ≥1 concept).
+- `actors.md` → Stage 01 (verbatim actor list in `usecase.md`); Stage 01a (every in-scope actor must be represented by ≥1 concept).
 - `goals.md` → Stage 01 (every in-scope goal becomes ≥1 named scenario; out-of-scope goals lift into the use case's *Out of scope* section).
 
 **Agent stance for this stage:** propose, ask ≤5 questions, iterate. Do

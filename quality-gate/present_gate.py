@@ -18,7 +18,7 @@ import sys
 GATE_STAGES = {
     1: {
         "label": "Requirements",
-        "stages": ["01", "02a", "02b"],
+        "stages": ["01", "01a", "01b"],
         "description": "Use case, responsibility map, chain tables"
     },
     2: {
@@ -35,8 +35,8 @@ GATE_STAGES = {
 
 STAGE_NAMES = {
     "01": "Use case",
-    "02a": "Responsibility map",
-    "02b": "Chain table",
+    "01a": "Responsibility map",
+    "01b": "Chain table",
     "02": "Concept specs",
     "03": "Syncs",
     "03a": "Dependency review",
@@ -68,7 +68,7 @@ def main():
     for stage_id in gate_info["stages"]:
         stage_name = STAGE_NAMES.get(stage_id, stage_id)
         # Determine the output directory path
-        if stage_id in ("01", "02a", "02b", "02", "03", "03a", "03b"):
+        if stage_id in ("01", "01a", "01b", "02", "03", "03a", "03b"):
             out_dir = os.path.join(feature_root, "stages", f"{stage_id}_{STAGE_NAMES.get(stage_id, stage_id).lower().replace(' ', '_')}", "output")
         elif stage_id.startswith("04"):
             sub = {"04a": "04a_storage-mapping", "04b": "04b_spec", "04c": "04c_flow-tests"}[stage_id]

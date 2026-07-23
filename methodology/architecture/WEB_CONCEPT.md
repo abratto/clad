@@ -175,7 +175,7 @@ explicitly in source. The waiver marker is
 
 ## How a bootstrap concept participates in the chain
 
-Every chain table (Stage 02b) starts with the bootstrap concept's
+Every chain table (Stage 01b) starts with the bootstrap concept's
 entry action and ends with its exit action. The middle rows are
 business concepts. This makes the transport boundary *visible* in the
 choreography rather than ambient.
@@ -199,7 +199,7 @@ sequenceDiagram
 Stage 02 writes one `<Name>.concept.md` per *business* concept.
 Bootstrap concepts are fixtures of the system, not domain concepts;
 their anatomy is documented here rather than in a per-feature concept
-file. Stage 02a's responsibility map lists the bootstrap concept (so
+file. Stage 01a's responsibility map lists the bootstrap concept (so
 its row is visible in coverage checks) and points its *Notes* column
 at this document.
 
@@ -208,7 +208,7 @@ at this document.
 Every responsibility map must include a row for the bootstrap concept
 that owns this feature's transport boundary. A map without a bootstrap
 concept row is incomplete: the chain has no entry point and no exit
-point. The 02a CONTEXT.md Verify section enforces this as a named
+point. The 01a CONTEXT.md Verify section enforces this as a named
 check.
 
 ## Reviewing for R4 violations

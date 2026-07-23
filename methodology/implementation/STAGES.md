@@ -47,10 +47,10 @@ features/UC-XX-name/
     ├── 01_usecase/
     │   ├── CONTEXT.md
     │   └── output/              usecase.md
-    ├── 02a_responsibility-map/
+    ├── 01a_responsibility-map/
     │   ├── CONTEXT.md
     │   └── output/              responsibility-map.md
-    ├── 02b_chain-table/
+    ├── 01b_chain-table/
     │   ├── CONTEXT.md
     │   └── output/              <scenario>-chain.md (one per use-case scenario)
     ├── 02_concepts/
@@ -226,9 +226,9 @@ files below are the single source of truth for per-stage instructions:
 | Stage | CONTEXT.md path (relative to feature root) | Produces | Gate |
 |---|---|---|---|
 | 00 | `../../features/_system/stages/00_actor-goal/CONTEXT.md` *(system scope)* | `actors.md`, `goals.md`, *(optional)* `port-spec.md` | 00 — system-level |
-| 01 | `stages/01_usecase/CONTEXT.md` | `usecase.md` | Auto → 02b |
-| 02a | `stages/02a_responsibility-map/CONTEXT.md` | `responsibility-map.md` | Auto → 02b |
-| 02b | `stages/02b_chain-table/CONTEXT.md` | `<scenario>-chain.md` per scenario | **Gate 1 (Requirements)** |
+| 01 | `stages/01_usecase/CONTEXT.md` | `usecase.md` | Auto → 01b |
+| 01a | `stages/01a_responsibility-map/CONTEXT.md` | `responsibility-map.md` | Auto → 01b |
+| 01b | `stages/01b_chain-table/CONTEXT.md` | `<scenario>-chain.md` per scenario | **Gate 1 (Requirements)** |
 | 02 | `stages/02_concepts/CONTEXT.md` | `<Name>.concept.md` per business concept | Auto → 03b |
 | 03 | `stages/03_syncs/CONTEXT.md` | `<name>.sync.md` per coordination rule | Auto → 03b |
 | 03a | `stages/03a_dependency-review/CONTEXT.md` | `<concept>-card.md` + `pattern-d-summary.md` | Auto → 03b |
@@ -244,7 +244,7 @@ files below are the single source of truth for per-stage instructions:
 
 | Stage group | Stages | Required capability | Fence |
 |---|---|---|---|
-| **Requirements analysis** | 00–02b | Collaborative clarification, structured prose, use-case writing | No implementation code or test files |
+| **Requirements analysis** | 00–01b | Collaborative clarification, structured prose, use-case writing | No implementation code or test files |
 | **Structural modelling** | 02–03b | Cross-concept consistency, chain-table derivation, sync authoring, dependency analysis | No implementation code or test files |
 | **Implementation** | 04a–05 | Test-first discipline, spec-to-code fidelity, storage-layer compliance | Red phase: tests only. Green phase: implementation only |
 
@@ -260,7 +260,7 @@ These rules apply to individual stages and do not appear in the
 - **Stage 00** is the only multi-turn collaborative stage. The agent
   proposes, asks clarifying questions, iterates, and writes only after
   the human signals agreement. It precedes the per-UC advance loop.
-- **Stage 02b chain tables** are the canonical resolver for
+- **Stage 01b chain tables** are the canonical resolver for
   action/outcome disputes. If a sync spec disagrees with a chain table,
   the table wins.
 - **Stage 03 sync names** must follow the compressed grammar:
@@ -324,7 +324,7 @@ reviewing at the gate?" Read top to bottom for a single feature.
 
 | Gate | Stages | Human provides | Agent produces | Human reviews at gate |
 |---|---|---|---|---|
-| **1 (Requirements)** | 01 → 02a → 02b | Project brief (Stage 00) | usecase.md, responsibility-map.md, chain-table.md | Actors/goals correct? Scenarios cover all flows? Concept boundaries right? Action chains plausible? |
+| **1 (Requirements)** | 01 → 01a → 01b | Project brief (Stage 00) | usecase.md, responsibility-map.md, chain-table.md | Actors/goals correct? Scenarios cover all flows? Concept boundaries right? Action chains plausible? |
 | **2 (Architecture)** | 02 → 03 → 03a → 03b | Approved requirements | concept.md, sync.md, dep-cards, data-model.md | Concept state machines cover the chains? Sync coordination declarative? Concept-state reads intentional? Data model complete? |
 | **3 (Executable)** | 04a → 04b → 04c | Approved architecture | storage.md, spec.md, .feature files | Tests capture the right scenarios and inputs? |
 | **Auto (Delivery)** | 04d → 04e → 05 | (nothing — all upstream artefacts approved) | concept code, sync code, test code, trace.md, smoke.md, tracking.md | (none — script-checked: `mvn test` passes, quality-gate scripts pass) |

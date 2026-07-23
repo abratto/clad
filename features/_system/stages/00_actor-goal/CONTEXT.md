@@ -17,7 +17,7 @@ mechanical.
 **Feeds:**
 
 - `actors.md` → Stage 01 in each UC folder (verbatim actor list in
-  `usecase.md`); Stage 02a (every in-scope actor must be represented
+  `usecase.md`); Stage 01a (every in-scope actor must be represented
   by ≥1 concept).
 - `goals.md` → one `features/UC-XX-<slug>/` folder per in-scope goal,
   created **after** this gate is passed. Out-of-scope goals lift into

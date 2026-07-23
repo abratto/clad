@@ -60,10 +60,10 @@ read these files directly instead: `AGENTS.md` §1–3, `CONTEXT.md`,
    `git checkout -b feat/UC-XX-<slug> && git push -u origin feat/UC-XX-<slug>`.
    Do not write artefacts to `main` directly.
 8. **Commit rule.** After each of the three per-feature gates is approved
-   by the human (Gate 1: 02b, Gate 2: 03b, Gate 3: 04c), commit all
+   by the human (Gate 1: 01b, Gate 2: 03b, Gate 3: 04c), commit all
    accumulated stage outputs since the last gate to the feature branch.
    Use a single commit per gate with a message like
-   `feat(UC-XX): Gate 1 — requirements (stages 01–02b)`.
+   `feat(UC-XX): Gate 1 — requirements (stages 01–01b)`.
    The system-level Stage 00 is the only stage gated individually.
 9. **RESUME rule.** After each gate is approved by the human, overwrite
    `features/UC-XX-<slug>/RESUME.md` with the current feature state
@@ -87,7 +87,7 @@ read these files directly instead: `AGENTS.md` §1–3, `CONTEXT.md`,
          directly. Ask one targeted planning question if sequencing is unclear.
       - If intent is ambiguous, ask one clarifying question, then continue.
 11. **Gate summary rule.** At each human gate (Gate 0 at Stage 00,
-    Gate 1 at 02b, Gate 2 at 03b, Gate 3 at 04c), before presenting the
+    Gate 1 at 01b, Gate 2 at 03b, Gate 3 at 04c), before presenting the
     approval question, list every artefact file produced since the last
     gate grouped by stage with a one-line description. The human must
     be able to identify what to review without inspecting the filesystem
@@ -163,9 +163,9 @@ Mapped to the ICM stages of a feature folder:
 | Stage | Folder | Produces | Gate |
 |---|---|---|---|
 | 0 | `features/_system/stages/00_actor-goal/` *(system scope — run once per brief)* | `actors.md`, `goals.md`, *(optional)* `port-spec.md` when an externally imposed adapter contract exists (collaborative — see [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)) | `00 — system-level` |
-| 1 | `stages/01_usecase/` | `usecase.md` (operational principle, actors, scenarios) | Auto¹ → 02b |
-| 2a | `stages/02a_responsibility-map/` | `responsibility-map.md` (one row per concept: state, actions) | Auto¹ → 02b |
-| 2b | `stages/02b_chain-table/` | `<scenario>-chain.md` per use-case scenario (action choreography) | **Gate 1 (Requirements)** |
+| 1 | `stages/01_usecase/` | `usecase.md` (operational principle, actors, scenarios) | Auto¹ → 01b |
+| 1a | `stages/01a_responsibility-map/` | `responsibility-map.md` (one row per concept: state, actions) | Auto¹ → 01b |
+| 1b | `stages/01b_chain-table/` | `<scenario>-chain.md` per use-case scenario (action choreography) | **Gate 1 (Requirements)** |
 | 2 | `stages/02_concepts/` | One `*.concept.md` per concept (full anatomy) | Auto¹ → 03b |
 | 3 | `stages/03_syncs/` | One `*.sync.md` per coordination rule | Auto¹ → 03b |
 | 3a | `stages/03a_dependency-review/` | One `*-card.md` per concept + `pattern-d-summary.md` (cross-concept coupling surface) | Auto¹ → 03b |
@@ -350,7 +350,7 @@ operator concern, not CLAD's.
 
 | Stage group | Stages | Required capability | Fence |
 |---|---|---|---|---|
-| **Requirements analysis** | 00–02b | Collaborative clarification, structured prose, use-case writing. Depth of reasoning matters less than fluency and willingness to iterate with the human. | No implementation code or test files |
+| **Requirements analysis** | 00–01b | Collaborative clarification, structured prose, use-case writing. Depth of reasoning matters less than fluency and willingness to iterate with the human. | No implementation code or test files |
 | **Structural modelling** | 02–03b | Cross-concept consistency, chain-table derivation, sync authoring, dependency analysis. This is the hardest reasoning load in CLAD — use your strongest model here. | No implementation code or test files |
 | **Implementation** | 04a–05 | Test-first discipline, spec-to-code fidelity, storage-layer compliance. Needs strong code generation and the ability to follow multi-step TDD sequences without drifting. | Red phase: tests only, no implementation. Green phase: implementation only, do not rewrite approved tests |
 

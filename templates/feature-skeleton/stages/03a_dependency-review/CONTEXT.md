@@ -18,15 +18,15 @@ per [`SYNC_PATTERNS.md`](../../../../methodology/architecture/SYNC_PATTERNS.md);
 
 **Agent stance for this stage:** this stage produces **no new design**.
 If a card needs an action that doesn't exist yet, you are mid-violation
-— go back to Stage 02 or 02b.
+— go back to Stage 02 or 01b.
 
 ## Inputs
 
 | Path | Layer | Why |
 |---|---|---|
 | `../03_syncs/output/` | 4 | Every `then` invocation and every `where` clause to be tabulated |
-| `../02b_chain-table/output/` | 4 | The flows the syncs implement |
-| `../02a_responsibility-map/output/responsibility-map.md` | 4 | The set of concepts to produce a card for |
+| `../01b_chain-table/output/` | 4 | The flows the syncs implement |
+| `../01a_responsibility-map/output/responsibility-map.md` | 4 | The set of concepts to produce a card for |
 | `../02_concepts/output/` | 4 | Action and field names to cite |
 | Skill: `clad-dependency-review` | 3 | Dependency review reference (see skills/ directory) |
 | `../../../../methodology/architecture/SYNC_PATTERNS.md` | 3 | The four patterns (A/B/C/D) and the rule that D is the only legal cross-concept read |
@@ -66,7 +66,7 @@ For each concept that appears in any chain table or sync:
 
 If a sync name, action signature, field name, key, pattern label, or
 literal in 03a would differ from the approved Stage 03 file, stop and
-reopen Stage 03. If the Stage 03 file itself disagrees with 02b or 02,
+reopen Stage 03. If the Stage 03 file itself disagrees with 01b or 02,
 stop and reopen the earlier stage instead of patching the review card.
 
 Then produce `output/pattern-d-summary.md` from
@@ -79,7 +79,7 @@ before Stage 04 turns it into code.
 
 ## Outputs
 
-- `output/<concept>-card.md` — one per concept named in 02a's map.
+- `output/<concept>-card.md` — one per concept named in 01a's map.
 - `output/pattern-d-summary.md` — single consolidated cross-flow view.
 
 ## Verify

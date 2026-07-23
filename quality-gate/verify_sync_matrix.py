@@ -109,7 +109,7 @@ def main():
     parser.add_argument("--sync-dir", required=True,
                         help="Path to 03_syncs/output/")
     parser.add_argument("--chain-dir", required=False, default=None,
-                        help="Optional: path to 02b_chain-table/output/ for cross-ref")
+                        help="Optional: path to 01b_chain-table/output/ for cross-ref")
     args = parser.parse_args()
 
     failures = check_sync_matrix(args.sync_dir)

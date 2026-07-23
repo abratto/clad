@@ -26,7 +26,7 @@ Load these files:
 6. `methodology/architecture/FLOW_TOKENS.md` — token structure
 7. `features/UC-XX-<slug>/stages/01_usecase/output/usecase.md` —
    source scenarios
-8. `features/UC-XX-<slug>/stages/02b_chain-table/output/` —
+8. `features/UC-XX-<slug>/stages/01b_chain-table/output/` —
    approved chain tables
 9. `features/UC-XX-<slug>/stages/04b_spec/output/` —
    SPEC slices to compile against
@@ -37,7 +37,7 @@ Load these files:
 ## Process
 
 1. Derive one Gherkin `.feature` per use-case scenario from
-   `01_usecase` + `02b_chain-table` + `04b_spec`.
+   `01_usecase` + `01b_chain-table` + `04b_spec`.
 2. Derive step-definition skeletons from chain-table rows and SPEC
    outcome enums.
 3. If `port-spec.md` exists, add at least one `@contract` scenario per

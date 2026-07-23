@@ -47,7 +47,7 @@ names exactly as written in approved artefacts.
 
 ## Extra guardrail for Stage 03 with local models
 
-Before drafting sync prose, build a short token ledger from Stage 02b and
+Before drafting sync prose, build a short token ledger from Stage 01b and
 Stage 02 containing:
 
 - source row id
@@ -57,7 +57,7 @@ Stage 02 containing:
 - allowed literals
 
 Use that ledger as a copy source. If the signatures or literals differ
-between Stage 02b and Stage 02, stop and reopen Stage 02 instead of
+between Stage 01b and Stage 02, stop and reopen Stage 02 instead of
 asking the model to reconcile them from memory.
 
 ## Working-memory contract

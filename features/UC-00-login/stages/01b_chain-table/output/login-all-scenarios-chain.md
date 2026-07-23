@@ -4,7 +4,7 @@
 
 ## WYSIWID lineage and Stage 03 boundary
 
-This artefact remains a **Stage 02b causal chain**, not a sync spec:
+This artefact remains a **Stage 01b causal chain**, not a sync spec:
 
 - `Then` is the concrete rendering of the Level 2b **Then**.
 - `When` is explicit in each row so the causal edge is reviewable directly.

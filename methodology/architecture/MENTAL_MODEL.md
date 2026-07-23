@@ -25,7 +25,7 @@ two things that play the same structural role.
 | Return value used by caller | internal flow data — flow-sibling output joined by flow-token id | `where:` clause; row in chain table |
 | Method parameter | internal flow data — read from the original `Web.handle` body | `where:` clause; row in chain table |
 | Hard-coded literal in a caller | internal flow data — sync constant | `where:` clause |
-| Sequence diagram | Chain table (Stage 02b) — table form is canonical, Mermaid is derived | `<scenario>-chain.md` |
+| Sequence diagram | Chain table (Stage 01b) — table form is canonical, Mermaid is derived | `<scenario>-chain.md` |
 | CRC card | Per-concept dependency review card (Stage 03a) | `<concept>-card.md` |
 | `interface` / public API | Concept's `actions:` section + outcome enums | Concept spec; `<Name>.spec.md` |
 | Dependency injection of a service | A sync that wires `Web.handle → SomeService.action` | `*.sync.md` |
@@ -71,8 +71,8 @@ artefact "lives" in CLAD, this is the full map:
 
 | OO artefact | CLAD equivalent | Stage that produces it | Layer |
 |---|---|---|---|
-| Class diagram | Responsibility map | 02a | output |
-| Sequence diagram | Chain table | 02b | output |
+| Class diagram | Responsibility map | 01a | output |
+| Sequence diagram | Chain table | 01b | output |
 | Class definition (with methods) | Concept spec | 02 | output |
 | CRC card (responsibilities + collaborators) | Dependency review card | 03a | output |
 | Conceptual schema | Data model file | 03b | output |

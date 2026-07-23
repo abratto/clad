@@ -1,7 +1,7 @@
 # Responsibility map — UC-00-login
 
 > One row per concept the feature requires. Choreography lives in
-> `../02b_chain-table/output/`; full anatomy lives in
+> `../01b_chain-table/output/`; full anatomy lives in
 > `../02_concepts/output/<Name>.concept.md`.
 
 ## Concepts

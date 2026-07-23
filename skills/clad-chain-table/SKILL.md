@@ -1,9 +1,9 @@
 ---
 name: clad-chain-table
-description: Derive chain tables during CLAD Stage 02b. Use when translating use case scenarios into numbered When/Then action choreography tables and FSM diagrams, bridging to Stage 03 sync authoring.
+description: Derive chain tables during CLAD Stage 01b. Use when translating use case scenarios into numbered When/Then action choreography tables and FSM diagrams, bridging to Stage 03 sync authoring.
 ---
 
-# CLAD Chain Table Derivation (Stage 02b)
+# CLAD Chain Table Derivation (Stage 01b)
 
 ## What this skill covers
 
@@ -20,7 +20,7 @@ Load these files:
    diagram mechanics
 3. `features/UC-XX-<slug>/stages/01_usecase/output/usecase.md` —
    source scenarios
-4. `features/UC-XX-<slug>/stages/02a_responsibility-map/output/responsibility-map.md` —
+4. `features/UC-XX-<slug>/stages/01a_responsibility-map/output/responsibility-map.md` —
    the concept set
 5. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
 

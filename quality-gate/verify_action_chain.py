@@ -183,9 +183,9 @@ def main():
     parser = argparse.ArgumentParser(
         description="Verify action names flow consistently across all artefacts")
     parser.add_argument("--resp-map", required=True,
-                        help="Path to 02a responsibility-map.md")
+                        help="Path to 01a responsibility-map.md")
     parser.add_argument("--chain-dir", required=True,
-                        help="Path to 02b_chain-table/output/")
+                        help="Path to 01b_chain-table/output/")
     parser.add_argument("--concept-dir", required=True,
                         help="Path to 02_concepts/output/")
     parser.add_argument("--sync-dir", required=True,

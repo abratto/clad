@@ -1,4 +1,4 @@
-<!-- Template for Stage 02b (02b_chain-table). Purpose: see methodology/architecture/CONCEPTS.md, methodology/architecture/SYNCHRONIZATIONS.md, and methodology/implementation/STAGES.md §"Stage 02b chain-table". Fill every placeholder; delete this comment before committing. -->
+<!-- Template for Stage 01b (01b_chain-table). Purpose: see methodology/architecture/CONCEPTS.md, methodology/architecture/SYNCHRONIZATIONS.md, and methodology/implementation/STAGES.md §"Stage 01b chain-table". Fill every placeholder; delete this comment before committing. -->
 
 # Chain table — `<scenario-name>`
 
@@ -18,7 +18,7 @@
 > one canonical table row.
 >
 > The file boundary is deterministic: one Stage 01 **top-level scenario**
-> becomes one Stage 02b chain file. That chain file includes the
+> becomes one Stage 01b chain file. That chain file includes the
 > scenario's main flow and any extensions that share the same trigger and
 > user goal, rendered as separate branch rows. Do not create separate
 > chain files for ordinary failure extensions.
@@ -89,7 +89,7 @@ stateDiagram-v2
 ## Cross-checks
 
 - Every concept that appears in the table is also a row in
-  `../02a_responsibility-map/output/responsibility-map.md`.
+  `../01a_responsibility-map/output/responsibility-map.md`.
 - Every `Then` action that appears in the table is listed in the
   corresponding `<Name>.concept.md` (Stage 02) once that file exists.
 - The trigger and the final response match the scenario's *Trigger*
@@ -139,7 +139,7 @@ explicit sync rules:
 4. Stage 03 adds `where` provenance only when the downstream action
   needs data not carried directly by the triggering outcome.
 
-If a non-root row needs request-originated data, Stage 02b must expose
+If a non-root row needs request-originated data, Stage 01b must expose
 that data as named carried fields on the approved trigger token before
 Stage 03 begins. Stage 03 must not recover missing names by reaching
 back into raw HTTP/body structure.
@@ -158,7 +158,7 @@ Good:
 2 | Web.handle[Routed(name, identifier)] | Member.register | name, identifier | ...
 ```
 
-So Stage 02b answers *what fires what*; Stage 03 adds *where each
+So Stage 01b answers *what fires what*; Stage 03 adds *where each
 argument came from*.
 
 ### The table is canonical; the diagram is derived
@@ -205,7 +205,7 @@ mechanical:
 
 The chain table **and** its diagram must be presented in the **same
 conversation turn** when handing off for review. Splitting them
-across turns is not permitted: the gate at Stage 02b covers both
+across turns is not permitted: the gate at Stage 01b covers both
 artefacts together, and a gate cannot be opened over an incomplete
 picture. One scenario = one chain-table file = one table + one
 diagram.

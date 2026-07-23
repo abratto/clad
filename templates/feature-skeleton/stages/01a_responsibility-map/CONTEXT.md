@@ -1,16 +1,16 @@
-# Stage 02a — Responsibility map
+# Stage 01a — Responsibility map
 
 ## Why this stage exists
 
 A clean human-review surface for *"are these the right concepts and do
 they own the right things?"* — **before** any choreography or anatomy
-is committed to paper. Without 02a the human reviews concept fan-out
-(02b) and concept anatomy (02) at the same time, which doubles the
+is committed to paper. Without 01a the human reviews concept fan-out
+(01b) and concept anatomy (02) at the same time, which doubles the
 rework cost when a concept turns out to be wrong.
 
 **Feeds:**
 
-- `responsibility-map.md` → 02b (only listed concepts and actions may appear in chains), 02 (one `*.concept.md` is produced per row), 03a (one dependency-review card per concept).
+- `responsibility-map.md` → 01b (only listed concepts and actions may appear in chains), 02 (one `*.concept.md` is produced per row), 03a (one dependency-review card per concept).
 
 **Agent stance for this stage:** resist the urge to draft full
 signatures or coordination here. Names and one-line state only.
@@ -32,7 +32,7 @@ Identify the concepts the feature requires (one user-facing capability
 each). Produce a single flat table with one row per concept: name,
 owned state (one line), owned actions (names only). Do **not** draft
 full concept specs here — that is Stage 02. Do **not** describe how
-concepts coordinate — that is Stage 02b.
+concepts coordinate — that is Stage 01b.
 
 Before writing the final Concepts table, fill the **Derivation rubric**
 in `templates/responsibility-map.md`: one row per distinct use-case
@@ -96,11 +96,11 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Auto-advances (next human gate: Stage 02b). Same self-audit rule. The
+Auto-advances (next human gate: Stage 01b). Same self-audit rule. The
 `verify_file_manifest.py` script must pass before advancing.
 
 ## Next stage
 
-→ [`../02b_chain-table/CONTEXT.md`](../02b_chain-table/CONTEXT.md) — Chain tables (one per scenario)
+→ [`../01b_chain-table/CONTEXT.md`](../01b_chain-table/CONTEXT.md) — Chain tables (one per scenario)
 
-The agent proceeds to Stage 02b without a human gate.
+The agent proceeds to Stage 01b without a human gate.

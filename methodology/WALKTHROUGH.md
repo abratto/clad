@@ -146,15 +146,15 @@ to other use cases* (Registration, Logout, Password reset).
 
 > **Why this matters downstream:** the canonical action names
 > (`User.lookupByUsername`, `PasswordAuth.check`, `Session.grant`)
-> first appear in this file. Stage 02b will lock them in; Stage 03
+> first appear in this file. Stage 01b will lock them in; Stage 03
 > must not invent different names. Every Stage 04c flow test will
 > assert one scenario from this file.
 
 ---
 
-## Turn 4 — Stage 02a (Responsibility map)
+## Turn 4 — Stage 01a (Responsibility map)
 
-**CONTEXT loaded:** [`features/UC-00-login/stages/02a_responsibility-map/CONTEXT.md`](../features/UC-00-login/stages/02a_responsibility-map/CONTEXT.md)
+**CONTEXT loaded:** [`features/UC-00-login/stages/01a_responsibility-map/CONTEXT.md`](../features/UC-00-login/stages/01a_responsibility-map/CONTEXT.md)
 
 **Inputs opened:**
 
@@ -171,24 +171,24 @@ section pairing each scenario to the concepts it touches. Add an *Out
 of scope* section recording what was deliberately not made into a
 concept (e.g. `LoginAttemptHistory`).
 
-**Output written:** [`features/UC-00-login/stages/02a_responsibility-map/output/responsibility-map.md`](../features/UC-00-login/stages/02a_responsibility-map/output/responsibility-map.md).
+**Output written:** [`features/UC-00-login/stages/01a_responsibility-map/output/responsibility-map.md`](../features/UC-00-login/stages/01a_responsibility-map/output/responsibility-map.md).
 
 **Gate question (canonical).**
 
 > **Agent stance:** if you find yourself wanting to write
 > `lookupByUsername(username) -> Found(userId) | NotFound`, you are
-> doing Stage 02 work in Stage 02a. Names only.
+> doing Stage 02 work in Stage 01a. Names only.
 
 ---
 
-## Turn 5 — Stage 02b (Chain tables)
+## Turn 5 — Stage 01b (Chain tables)
 
-**CONTEXT loaded:** [`features/UC-00-login/stages/02b_chain-table/CONTEXT.md`](../features/UC-00-login/stages/02b_chain-table/CONTEXT.md)
+**CONTEXT loaded:** [`features/UC-00-login/stages/01b_chain-table/CONTEXT.md`](../features/UC-00-login/stages/01b_chain-table/CONTEXT.md)
 
 **Inputs opened:**
 
 - `../01_usecase/output/usecase.md` — scenarios.
-- `../02a_responsibility-map/output/responsibility-map.md` — available concepts and actions.
+- `../01a_responsibility-map/output/responsibility-map.md` — available concepts and actions.
 - [`methodology/architecture/SYNCHRONIZATIONS.md`](architecture/SYNCHRONIZATIONS.md) — so the chain can be lifted into syncs later.
 - [`templates/chain-table.md`](../templates/chain-table.md).
 
@@ -199,10 +199,10 @@ diagram. First row is always `Web.handle`; last row is always
 
 **Outputs written:**
 
-- [`successful-login-chain.md`](../features/UC-00-login/stages/02b_chain-table/output/successful-login-chain.md)
-- [`wrong-password-chain.md`](../features/UC-00-login/stages/02b_chain-table/output/wrong-password-chain.md)
-- [`unknown-user-chain.md`](../features/UC-00-login/stages/02b_chain-table/output/unknown-user-chain.md)
-- [`lockout-chain.md`](../features/UC-00-login/stages/02b_chain-table/output/lockout-chain.md)
+- [`successful-login-chain.md`](../features/UC-00-login/stages/01b_chain-table/output/successful-login-chain.md)
+- [`wrong-password-chain.md`](../features/UC-00-login/stages/01b_chain-table/output/wrong-password-chain.md)
+- [`unknown-user-chain.md`](../features/UC-00-login/stages/01b_chain-table/output/unknown-user-chain.md)
+- [`lockout-chain.md`](../features/UC-00-login/stages/01b_chain-table/output/lockout-chain.md)
 
 **Gate question (canonical).**
 
@@ -221,8 +221,8 @@ diagram. First row is always `Web.handle`; last row is always
 **Inputs opened:**
 
 - `../01_usecase/output/usecase.md`.
-- `../02a_responsibility-map/output/responsibility-map.md` — agreed concept set.
-- `../02b_chain-table/output/` — agreed action choreography (action names, outcomes).
+- `../01a_responsibility-map/output/responsibility-map.md` — agreed concept set.
+- `../01b_chain-table/output/` — agreed action choreography (action names, outcomes).
 - `../00_actor-goal/output/actors.md` — for cross-stage check.
 - [`methodology/architecture/CONCEPTS.md`](architecture/CONCEPTS.md), [`RULES.md`](implementation/RULES.md), [`templates/concept.md`](../templates/concept.md).
 
@@ -257,7 +257,7 @@ mention `User`'s state; it works with opaque `UserId`.
 
 - `../01_usecase/output/usecase.md` — scenarios to satisfy.
 - `../02_concepts/output/` — concepts to coordinate.
-- `../02b_chain-table/output/` — the action chain each sync formalises.
+- `../01b_chain-table/output/` — the action chain each sync formalises.
 - [`methodology/architecture/SYNCHRONIZATIONS.md`](architecture/SYNCHRONIZATIONS.md), [`SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md), [`RULES.md`](implementation/RULES.md), [`templates/sync.md`](../templates/sync.md).
 
 **Agent action:** one `*.sync.md` per cross-concept link in the
@@ -289,8 +289,8 @@ both success and failure responses.
 **Inputs opened:**
 
 - `../03_syncs/output/` — every `then` invocation, every `where` clause.
-- `../02b_chain-table/output/` — the flows.
-- `../02a_responsibility-map/output/responsibility-map.md` — concept set.
+- `../01b_chain-table/output/` — the flows.
+- `../01a_responsibility-map/output/responsibility-map.md` — concept set.
 - `../02_concepts/output/` — action and field names to cite.
 - [`methodology/architecture/SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md).
 - [`templates/dependency-review-card.md`](../templates/dependency-review-card.md), [`templates/pattern-d-summary.md`](../templates/pattern-d-summary.md).
@@ -317,7 +317,7 @@ now resolved (per PR #6 — the chain tables won).
 
 > **Agent stance:** *no new design here.* If a card needs an action
 > that doesn't yet exist in any `.concept.md`, you are mid-violation
-> — return to Stage 02 (or 02b first).
+> — return to Stage 02 (or 01b first).
 
 ---
 
@@ -336,7 +336,7 @@ with its own `CONTEXT.md`. For UC-00 in this round:
 - **04d (Concept TDD router):** structural handoff point for concept red/green. Open [`04d_concept-tdd/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04d_concept-tdd/CONTEXT.md), then run [`04d_red-tests/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04d_concept-tdd/04d_red-tests/CONTEXT.md) to derive red concept tests (automated gate: `verify_concept_test_derivation.py`), followed by [`04d_green-impl/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04d_concept-tdd/04d_green-impl/CONTEXT.md) to implement them.
 - **04e (Sync TDD router):** structural handoff point for sync red/green. Open [`04e_sync-tdd/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04e_sync-tdd/CONTEXT.md), then run [`04e_red-tests/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04e_sync-tdd/04e_red-tests/CONTEXT.md) to derive red sync tests (automated gate: `verify_sync_matrix.py`), followed by [`04e_green-impl/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04e_sync-tdd/04e_green-impl/CONTEXT.md) to implement them and turn the `04c` flow tests green.
 
-**Human gates across the loop:** Gate 1 (02b — Requirements), Gate 2 (03b — Architecture), **Gate 3 (04c — Executable specification)**. No human gates at 04d or 04e — those red→green handoffs are automated by quality-gate scripts.
+**Human gates across the loop:** Gate 1 (01b — Requirements), Gate 2 (03b — Architecture), **Gate 3 (04c — Executable specification)**. No human gates at 04d or 04e — those red→green handoffs are automated by quality-gate scripts.
 
 > **Agent stance for the whole of Stage 04:** the spec artefacts
 > from 02–03 are now your contract; if a test wants behaviour the

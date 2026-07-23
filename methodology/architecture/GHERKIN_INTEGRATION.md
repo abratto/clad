@@ -19,7 +19,7 @@ that go green at the end of Stage 04e.
 ```
   01_usecase/output/usecase.md ──────┐
                                      ├──→ 04c: login.feature
-  02b_chain-table/output/ ───────────┤         (Gherkin scenarios)
+  01b_chain-table/output/ ───────────┤         (Gherkin scenarios)
                                      ├──→ 04c: LoginStepDefinitions.java
   04b_spec/output/*.spec.md ─────────┤         (step-definition skeletons)
                                      │
@@ -254,7 +254,7 @@ contains a complete worked example of the Gherkin track:
 | Artefact | File | Derivation source |
 |---|---|---|
 | `.feature` file | `src/test/resources/features/login.feature` | `features/UC-00-login/stages/01_usecase/output/usecase.md` (scenarios, preconditions, triggers, postconditions) + `stages/03_syncs/output/` (response body literals) |
-| Step definitions | `src/test/java/.../steps/LoginStepDefinitions.java` | `stages/02b_chain-table/output/*-chain.md` (row 1 → `@When`, last row → `@Then`, middle rows → token chain) + `stages/04_implement/04b_spec/output/` (outcome enums) |
+| Step definitions | `src/test/java/.../steps/LoginStepDefinitions.java` | `stages/01b_chain-table/output/*-chain.md` (row 1 → `@When`, last row → `@Then`, middle rows → token chain) + `stages/04_implement/04b_spec/output/` (outcome enums) |
 | Cucumber runner | `src/test/java/.../steps/CucumberTest.java` | `@Suite` + `@SelectClasspathResource("features")` |
 
 The step definitions use **lazy server initialisation** (no Cucumber
@@ -276,7 +276,7 @@ When operating at Stage 04c, follow this checklist:
      - Named scenarios (### Scenario: <name>)
      - Pre-conditions, trigger, expected outcomes, postconditions
      - Extension branches
-□ 3. Read 02b_chain-table/output/*-chain.md → extract action sequence
+□ 3. Read 01b_chain-table/output/*-chain.md → extract action sequence
 □ 4. Read 04b_spec/output/*.spec.md → extract outcome enums
 □ 5. Read 03_syncs/output/*.sync.md → extract response body literals
 □ 6. Derive the .feature file using Rules G1–G5

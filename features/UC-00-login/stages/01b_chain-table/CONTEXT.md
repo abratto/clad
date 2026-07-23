@@ -1,9 +1,9 @@
-# Stage 02b — Chain table (UC-00-login)
+# Stage 01b — Chain table (UC-00-login)
 
 ## Why this stage exists
 
 The **choreography review surface** — one scenario per file, easier to
-read than four declarative syncs at once. 02b is also the **canonical
+read than four declarative syncs at once. 01b is also the **canonical
 resolver for action-name disputes**: if a sync spec (Stage 03)
 disagrees with a chain table, the table wins. That rule is what
 reconciled `Session.open` → `Session.grant` and `PasswordAuth.verify` →
@@ -15,14 +15,14 @@ reconciled `Session.open` → `Session.grant` and `PasswordAuth.verify` →
 
 **Agent stance for this stage:** every row is an explicit `When -> Then`
 edge with a named outcome. If you cannot name the outcome or trigger,
-the concept set is wrong — go back to 02a, do not invent.
+the concept set is wrong — go back to 01a, do not invent.
 
 ## Inputs
 
 | Path | Layer | Why |
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | UC-00-login scenarios |
-| `../02a_responsibility-map/output/responsibility-map.md` | 4 | Available concepts and actions |
+| `../01a_responsibility-map/output/responsibility-map.md` | 4 | Available concepts and actions |
 | `../../../../methodology/architecture/SYNCHRONIZATIONS.md` | 3 | Forward link to Stage 03 |
 | Skill: `clad-chain-table` | 3 | Chain-table authoring reference |
 | `../../../../templates/chain-table.md` | 3 | Output template |
@@ -31,7 +31,7 @@ the concept set is wrong — go back to 02a, do not invent.
 
 For each named scenario in `01_usecase/output/usecase.md`, produce
 `output/<scenario-name>-chain.md` using only concepts and actions
-from `02a_responsibility-map/output/responsibility-map.md`. The
+from `01a_responsibility-map/output/responsibility-map.md`. The
 chain is the ordered list of explicit `When -> Then` edges that
 fulfils the scenario; the last row is always a `... -> Web.respond`
 terminal response.
@@ -40,7 +40,7 @@ If the use case has 2+ scenarios: also produce
 `output/login-all-scenarios-chain.md` (consolidated view). This
 non-canonical artefact merges all scenario chains into one
 branching table and combined FSM diagram. It uses the same concrete
-Stage 02b shape as the per-scenario chains
+Stage 01b shape as the per-scenario chains
 (`Scenario(s) | When | Then | Inputs | Outcome | Why this path`)
 and keeps the WYSIWID `When -> Then` causality explicit in the table
 itself.
@@ -76,7 +76,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected
   - Every non-root row already states one explicit `When -> Then` transition for Stage 03.
   - Every error outcome from the four scenarios appears in the consolidated branching table.
   - Concept outcome enums match across all per-scenario files (e.g., PasswordAuth.check: [Ok, BadPassword, Locked] appears in all files that use it).
-  - `Inputs` expose downstream action arguments only; no `Where`/join provenance appears in Stage 02b.
+  - `Inputs` expose downstream action arguments only; no `Where`/join provenance appears in Stage 01b.
 - The first row of each scenario chain is `Web/request[...] -> Web.handle`; the last is `... -> Web.respond[...]`.
 - Every action used appears in the responsibility map.
 - Mermaid `stateDiagram-v2` diagrams render at [mermaid.live](https://mermaid.live) with no errors.

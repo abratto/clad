@@ -142,7 +142,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Verify chain-table outcomes align with SPEC outcome enums")
     parser.add_argument("--chain-dir", required=True,
-                        help="Path to 02b_chain-table/output/")
+                        help="Path to 01b_chain-table/output/")
     parser.add_argument("--spec-dir", required=True,
                         help="Path to 04b_spec/output/")
     args = parser.parse_args()

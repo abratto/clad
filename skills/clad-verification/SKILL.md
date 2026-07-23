@@ -18,7 +18,7 @@ Load these files:
 1. `methodology/architecture/FLOW_TOKENS.md` — token structure for trace
 2. `features/UC-XX-<slug>/stages/01_usecase/output/usecase.md` —
    use case scenarios to trace against
-3. `features/UC-XX-<slug>/stages/02b_chain-table/output/` —
+3. `features/UC-XX-<slug>/stages/01b_chain-table/output/` —
    approved chain tables for expected action sequences
 4. The running system (for live token inspection)
 5. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process

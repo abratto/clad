@@ -21,18 +21,18 @@ purpose
 <!-- ⚠️ OUTCOME ALIGNMENT CONTRACT
      Every output name in every action signature below MUST exactly match
      the outcome names used in the approved chain table(s) for this concept
-     in `02b_chain-table/output/`. Outcome names are the contract between
+     in `01b_chain-table/output/`. Outcome names are the contract between
      stages — a name that differs from the chain table by even one character
      will produce an invalid sync at Stage 03.
 
      Before naming any output:
-       1. Open every `02b_chain-table/output/*.chain-table.md` that involves
+       1. Open every `01b_chain-table/output/*.chain-table.md` that involves
           this concept.
        2. Copy the exact outcome strings from the Outcome column.
        3. Use those strings verbatim here — no synonyms, no renamings.
 
      If you need an outcome the chain table did not name, STOP. Return to
-     Stage 02b and amend the chain table first. Do not invent outcomes here.
+     Stage 01b and amend the chain table first. Do not invent outcomes here.
 
      Similarly: do not add state fields or action inputs that have no basis
      in the chain table or responsibility map. If a field is not in the chain

@@ -23,7 +23,7 @@ the sync just says *"when outcome X fires → then call Y."*
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Scenarios to satisfy |
 | `../02_concepts/output/` | 4 | Concepts available to coordinate |
-| `../02b_chain-table/output/` | 4 | The action chain each sync formalises |
+| `../01b_chain-table/output/` | 4 | The action chain each sync formalises |
 | `../../../../methodology/architecture/SYNCHRONIZATIONS.md` | 3 | Sync semantics |
 | `../../../../methodology/architecture/SYNC_PATTERNS.md` | 3 | The four `where` patterns (A/B/C/D) |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rules (R3) |
@@ -41,7 +41,7 @@ the source row id, target row id, exact `when` signature, exact `then`
 signature, and any allowed literals. Copy tokens verbatim.
 
 If any action signature, outcome name, argument name, or literal differs
-between `../02b_chain-table/output/` and `../02_concepts/output/`, stop
+between `../01b_chain-table/output/` and `../02_concepts/output/`, stop
 and reopen Stage 02. Stage 03 does not normalize earlier-stage drift.
 
 Syncs use paper-style block syntax: `sync <Name>`, `when { }` / `where { }` /
@@ -96,11 +96,11 @@ canonical sync files and introduces no new logic.
 ### Automated checks
 
 ```
-python3 ../../../../quality-gate/verify_sync_matrix.py --sync-dir output --chain-dir ../02b_chain-table/output
+python3 ../../../../quality-gate/verify_sync_matrix.py --sync-dir output --chain-dir ../01b_chain-table/output
 python3 ../../../../quality-gate/verify_scenario_coverage.py \
   --goals ../../../_system/stages/00_actor-goal/output/goals.md \
   --usecase ../01_usecase/output/usecase.md \
-  --chain-dir ../02b_chain-table/output \
+  --chain-dir ../01b_chain-table/output \
   --sync-dir output
 python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected "WhenWebHandleRoutedThenUserLookupByUsernameForLogin.sync.md,WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin.sync.md,WhenUserLookupByUsernameRefusedThenWebRespondForLogin.sync.md,WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md,WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md,WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md,WhenSessionGrantGrantedThenWebRespondForLogin.sync.md"
 ```
@@ -121,7 +121,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected
   and hyphenation.
 - Response payloads contain only chain-row constants or fields explicitly
   emitted by earlier approved outcomes and declared in `where:`.
-- If any 03 signature differs from 02b or 02, stop and reopen Stage 02
+- If any 03 signature differs from 01b or 02, stop and reopen Stage 02
   instead of resolving the mismatch inside a sync.
 - **Cross-stage check (back):** every named scenario in
   `../01_usecase/output/usecase.md` is satisfied by at least one sync.

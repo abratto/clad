@@ -2,7 +2,7 @@
 
 ## Completeness level
 
-- [x] **Fully Dressed** — promoted at the start of Stage 02a (the
+- [x] **Fully Dressed** — promoted at the start of Stage 01a (the
   feature is in active design).
 
 ## Operational principle

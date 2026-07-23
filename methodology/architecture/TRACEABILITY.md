@@ -27,8 +27,8 @@ Together they form the complete traceability chain.
 | 00 | `actors.md` | Human brief | (system boundary) | Human review at Gate 0 | — |
 | 00 | `goals.md` | Human brief, `actors.md` | (system boundary) | Human review; `verify_scenario_coverage.py` checks goal→scenario coverage | — |
 | 01 | `usecase.md` | `goals.md`, `actors.md` | Cockburn use case — trigger, actors, scenarios, postconditions | `verify_scenario_coverage.py` checks every goal has a scenario; human review at Gate 1 | — |
-| 02a | `responsibility-map.md` | `usecase.md` | Concept discovery — which concepts exist, what state they track, what actions they expose | `verify_file_manifest.py` | — |
-| 02b | `<scenario>-chain.md` | `usecase.md`, `responsibility-map.md` | Action choreography — the predicted runtime sequence of actions and outcomes | `verify_outcome_alignment.py` checks outcomes match SPEC; `verify_step_definition_derivation.py` checks chain actions appear in step defs | — |
+| 01a | `responsibility-map.md` | `usecase.md` | Concept discovery — which concepts exist, what state they track, what actions they expose | `verify_file_manifest.py` | — |
+| 01b | `<scenario>-chain.md` | `usecase.md`, `responsibility-map.md` | Action choreography — the predicted runtime sequence of actions and outcomes | `verify_outcome_alignment.py` checks outcomes match SPEC; `verify_step_definition_derivation.py` checks chain actions appear in step defs | — |
 | 02 | `<Name>.concept.md` | `usecase.md`, `responsibility-map.md`, `<scenario>-chain.md` | Concept state machine — state (Alloy-like relations), actions (case-split outcomes, pre/post), operational principle (witness trace) | `verify_outcome_alignment.py`; 04d tests assert post-conditions as field values (R14); 05 back-traces flow tokens against operational principle | `state` → `<Name>Concept.java` fields + named-graph triples; `actions` → public methods each emitting a flow token; `operational principle` → `<Name>ConceptTest.java` |
 | 03 | `<name>.sync.md` | `<scenario>-chain.md`, `<Name>.concept.md` | Declarative sync — "when ConceptA.completes → then ConceptB.action" | `verify_sync_matrix.py` checks contract matrix completeness; `verify_sync_route_filters.py` checks shared-trigger route scoping (R11); `verify_sync_declarative.py` catches imperative branching (R3) | `<SyncName>.java` extends `SyncAgent` — `whereClause()` + `thenBindings()` in SPARQL |
 | 03a | `<concept>-card.md` | `<name>.sync.md` (all syncs, read-only) | Dependency review — inbound calls + concept-state reads per concept | `verify_sync_route_filters.py`; human review at Gate 2 | — |
@@ -68,11 +68,11 @@ flowchart TD
         USECASE["usecase.md"]
     end
 
-    subgraph S02A["Stage 02a"]
+    subgraph S02A["Stage 01a"]
         RMAP["responsibility-map.md"]
     end
 
-    subgraph S02B["Stage 02b"]
+    subgraph S02B["Stage 01b"]
         CHAIN["scenario-chain.md<br/><i>(per scenario)</i>"]
     end
 

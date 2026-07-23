@@ -3,7 +3,7 @@
 ## Why this stage exists
 
 The use case is the **contract every later artefact compiles against**.
-Stages 02a, 02b, 02, 03, 04c and 05 each carry a back-cite to a
+Stages 01a, 01b, 02, 03, 04c and 05 each carry a back-cite to a
 scenario in this file. If the Postcondition rigour is skipped here
 (especially the *no state is modified* assertion on negative paths),
 Stage 04c cannot mechanically check the no-enumeration property and
@@ -13,7 +13,7 @@ sub-sections, mandatory.
 
 **Feeds:**
 
-- `usecase.md` → 02a (scenarios drive coverage), 02b (one chain table per scenario), 02 (each concept's operational principle must reference these scenarios), 03 (every sync's `Cites` names a scenario), 04c (one flow test per scenario), 05 (verifier walks each scenario's token tree).
+- `usecase.md` → 01a (scenarios drive coverage), 01b (one chain table per scenario), 02 (each concept's operational principle must reference these scenarios), 03 (every sync's `Cites` names a scenario), 04c (one flow test per scenario), 05 (verifier walks each scenario's token tree).
 
 **Agent stance for this stage:** you are writing the source of truth
 for everything downstream. Prefer over-specifying postconditions to
@@ -40,7 +40,7 @@ section by lifting out-of-scope goals from `goals.md` and adding any
 implicit exclusions.
 
 Use scenario names that can carry both the main flow and its extensions
-into Stage 02b. If a failure branch shares the same trigger and user
+into Stage 01b. If a failure branch shares the same trigger and user
 goal, keep it as an extension under that top-level scenario rather than
 creating a second top-level scenario with a success-only name.
 
@@ -76,7 +76,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 python3 ../../../../quality-gate/verify_scenario_coverage.py \
   --goals ../00_actor-goal/output/goals.md \
   --usecase output/usecase.md \
-  --chain-dir ../02b_chain-table/output \
+  --chain-dir ../01b_chain-table/output \
   --sync-dir ../03_syncs/output
 ```
 
@@ -106,16 +106,16 @@ python3 ../../../../quality-gate/verify_scenario_coverage.py \
   scenario in `usecase.md`.
 - Scenario names are not misleadingly happy-path-only when the scenario
   also contains failure extensions that will be carried into the same
-  Stage 02b chain file.
+  Stage 01b chain file.
 
 ## Gate
 
-Auto-advances (next human gate: Stage 02b). The agent runs the Verify items as a
+Auto-advances (next human gate: Stage 01b). The agent runs the Verify items as a
 self-audit and proceeds. If any item fails, the agent stops and
 surfaces the defect — it does not silently advance.
 
 ## Next stage
 
-→ [`../02a_responsibility-map/CONTEXT.md`](../02a_responsibility-map/CONTEXT.md) — Responsibility map
+→ [`../01a_responsibility-map/CONTEXT.md`](../01a_responsibility-map/CONTEXT.md) — Responsibility map
 
-The agent proceeds to Stage 02a without a human gate.
+The agent proceeds to Stage 01a without a human gate.

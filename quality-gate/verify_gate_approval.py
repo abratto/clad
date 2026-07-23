@@ -16,7 +16,7 @@ Usage:
     --required-gates 1[,2,3]
 
 Gate to stage output mapping (for cross-validation):
-  Gate 1 -> stages/02b_chain-table/output/
+  Gate 1 -> stages/01b_chain-table/output/
   Gate 2 -> stages/03b_data-model/output/
   Gate 3 -> stages/04_implement/04c_flow-tests/output/
 
@@ -38,7 +38,7 @@ GATE_LABELS = {
 }
 
 GATE_OUTPUT_DIRS = {
-    1: os.path.join("stages", "02b_chain-table", "output"),
+    1: os.path.join("stages", "01b_chain-table", "output"),
     2: os.path.join("stages", "03b_data-model", "output"),
     3: os.path.join("stages", "04_implement", "04c_flow-tests", "output"),
 }

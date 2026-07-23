@@ -30,7 +30,7 @@ lower camel case stem).
 ONE SYNC PER CHAIN-TABLE ROW
   Each row transition in the approved chain table becomes exactly one sync
   file. Do not collapse multiple transitions into one sync. Count the rows
-  in 02b_chain-table/output/ for this scenario; you must produce that many
+  in 01b_chain-table/output/ for this scenario; you must produce that many
   syncs (minus the Web/handle row, which is the entry point, not a sync
   trigger — unless Web/handle itself is the `when`).
 
@@ -55,7 +55,7 @@ WHERE CLAUSE — DECLARATIVE QUERIES ONLY
   The computation belongs inside the concept action that receives the data.
 
 LITERAL LOCK
-  Copy literals and signature tokens exactly from the approved Stage 02b
+  Copy literals and signature tokens exactly from the approved Stage 01b
   row and Stage 02 concept signature.
 
   REQUIRED:
@@ -78,8 +78,8 @@ DECLARE BEFORE USE
   appear in `when` or `where`.
 
 UPSTREAM CONTRACT CHECK
-  If a needed name does not appear in the approved Stage 02b trigger token
-  or concept outcome, stop and reopen Stage 02b. Stage 03 must not invent
+  If a needed name does not appear in the approved Stage 01b trigger token
+  or concept outcome, stop and reopen Stage 01b. Stage 03 must not invent
   a source by reading `body.*`, `request.*`, or another undeclared payload
   path.
 -->

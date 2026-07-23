@@ -32,7 +32,7 @@ sync, not in this file.
 
 > **Note:** in Round 4 the choreography review (which concepts exist;
 > what they own; how they fan out per scenario) was lifted into two
-> upstream stages — `02a_responsibility-map/` and `02b_chain-table/`.
+> upstream stages — `01a_responsibility-map/` and `01b_chain-table/`.
 > This stage now does **only** the per-concept anatomy: full state,
 > action signatures with outcomes, flow-token shape, and the
 > operational principle.
@@ -42,8 +42,8 @@ sync, not in this file.
 | Path | Layer | Why |
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Use case |
-| `../02a_responsibility-map/output/responsibility-map.md` | 4 | The agreed concept set |
-| `../02b_chain-table/output/` | 4 | The agreed action choreography (per scenario) — **read every file before naming any outcome** |
+| `../01a_responsibility-map/output/responsibility-map.md` | 4 | The agreed concept set |
+| `../01b_chain-table/output/` | 4 | The agreed action choreography (per scenario) — **read every file before naming any outcome** |
 | `../00_actor-goal/output/actors.md` | 4 | For cross-stage check |
 | Skill: `clad-concept-design` | 3 | Concept design reference (see skills/ directory) |
 | `../../../../methodology/architecture/CONCEPTS.md` | 3 | Concept anatomy |
@@ -53,16 +53,16 @@ sync, not in this file.
 ## Process
 
 For each concept already listed in
-`02a_responsibility-map/output/responsibility-map.md`, draft
+`01a_responsibility-map/output/responsibility-map.md`, draft
 `<Name>.concept.md` per the template — full state, full action
 signatures (inputs, outcomes, effect on state, flow-token fields),
 and an operational principle.
 
 **Outcome alignment is mandatory:** every action output name MUST
 exactly match the outcome strings used in the approved chain tables in
-`02b_chain-table/output/`. Open every chain table file before naming
+`01b_chain-table/output/`. Open every chain table file before naming
 any outcome. If you need an outcome the chain table did not name,
-return to Stage 02b and amend the chain table first — do not invent
+return to Stage 01b and amend the chain table first — do not invent
 outcomes here.
 
 **State and input discipline:** do not add state fields or action
@@ -93,8 +93,8 @@ Run the following before requesting the human gate:
 
 ```
 python3 ../../../../quality-gate/verify_action_chain.py \
-  --resp-map ../02a_responsibility-map/output/responsibility-map.md \
-  --chain-dir ../02b_chain-table/output \
+  --resp-map ../01a_responsibility-map/output/responsibility-map.md \
+  --chain-dir ../01b_chain-table/output \
   --concept-dir output \
   --sync-dir ../03_syncs/output \
   --dep-dir ../03a_dependency-review/output \
@@ -115,7 +115,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 - **Input/state discipline:** no state field or action input appears
   that has no basis in the chain table or responsibility map.
 - **Action discipline:** no action is declared that is not listed in
-  `02a_responsibility-map/output/responsibility-map.md`.
+  `01a_responsibility-map/output/responsibility-map.md`.
 - **Bootstrap exclusion:** no bootstrap concept file appears in
   `output/` unless the feature explicitly declares that deviation.
 - No concept names another concept's state, actions, or types.

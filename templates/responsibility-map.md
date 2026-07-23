@@ -1,10 +1,10 @@
-<!-- Template for Stage 02a (02a_responsibility-map). Purpose: see methodology/architecture/CONCEPTS.md and methodology/implementation/STAGES.md §"Stage 02a". -->
+<!-- Template for Stage 01a (01a_responsibility-map). Purpose: see methodology/architecture/CONCEPTS.md and methodology/implementation/STAGES.md §"Stage 01a". -->
 
 # Responsibility map — `<feature-name>`
 
 > One row per concept the feature requires. The map answers
 > *"which concepts exist and what does each own?"* — **not** how they
-> are wired together (that is Stage 02b) and **not** what their
+> are wired together (that is Stage 01b) and **not** what their
 > internal anatomy is (that is Stage 02 itself, in `*.concept.md`).
 >
 > Keep this file flat and readable in one screen. If a row is

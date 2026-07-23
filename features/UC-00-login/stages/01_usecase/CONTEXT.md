@@ -3,7 +3,7 @@
 ## Why this stage exists
 
 The use case is the **contract every later artefact compiles against**.
-Stages 02a, 02b, 02, 03, 04c and 05 each carry a back-cite to a
+Stages 01a, 01b, 02, 03, 04c and 05 each carry a back-cite to a
 scenario in this file. If the Postcondition rigour is skipped here
 (especially the *no state is modified* assertion on negative paths),
 Stage 04c cannot mechanically check the no-enumeration property and
@@ -13,7 +13,7 @@ sub-sections, mandatory.
 
 **Feeds:**
 
-- `usecase.md` → 02a (scenarios drive coverage), 02b (one chain table per scenario), 02 (each concept's operational principle must reference these scenarios), 03 (every sync's `Cites` names a scenario), 04c (one flow test per scenario), 05 (verifier walks each scenario's token tree).
+- `usecase.md` → 01a (scenarios drive coverage), 01b (one chain table per scenario), 02 (each concept's operational principle must reference these scenarios), 03 (every sync's `Cites` names a scenario), 04c (one flow test per scenario), 05 (verifier walks each scenario's token tree).
 
 **Agent stance for this stage:** you are writing the source of truth
 for everything downstream. Prefer over-specifying postconditions to
@@ -80,11 +80,11 @@ python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected
 
 ## Gate
 
-Auto-advances (next human gate: Stage 02b). The `verify_file_manifest.py`
+Auto-advances (next human gate: Stage 01b). The `verify_file_manifest.py`
 script must pass before advancing.
 
 ## Next stage
 
-→ [`../02a_responsibility-map/CONTEXT.md`](../02a_responsibility-map/CONTEXT.md) — Responsibility map
+→ [`../01a_responsibility-map/CONTEXT.md`](../01a_responsibility-map/CONTEXT.md) — Responsibility map
 
-The agent proceeds to Stage 02a without a human gate.
+The agent proceeds to Stage 01a without a human gate.

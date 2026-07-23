@@ -13,15 +13,15 @@
   extensions. Default for backlog items not yet in active design.
 - [ ] **Fully Dressed** — the entire template below, including
   mandatory **Postconditions** for every scenario. **Required** before
-  a use case enters Stage 02a.
+  a use case enters Stage 01a.
 
 A use case is **promoted** to Fully Dressed at the moment its first
-flow artefact is drafted (i.e. when Stage 02a starts). Do not
+flow artefact is drafted (i.e. when Stage 01a starts). Do not
 pre-emptively fully-dress use cases that are not in active design;
 the unused detail rots.
 
 A use case that is not yet Fully Dressed must not be used as input to
-Stage 02a, 02b, 03, or any 04 sub-stage. The Fully Dressed gate is
+Stage 01a, 01b, 03, or any 04 sub-stage. The Fully Dressed gate is
 load-bearing.
 
 ## Operational principle
@@ -37,7 +37,7 @@ load-bearing.
 ## Scenarios
 
 > Each scenario is a trigger + expected outcomes + **postconditions**.
-> Name them; the names are referenced by chain tables (Stage 02b),
+> Name them; the names are referenced by chain tables (Stage 01b),
 > syncs (Stage 03), and verification traces (Stage 05).
 
 ### Scenario: <name>
@@ -120,7 +120,7 @@ sequenceDiagram
   > - `alt` / `else` blocks mirror scenario extensions; label them with
   >   the extension id (`2a`, `3a`, ...) and condition.
   > - Keep response messages user-observable. Do not smuggle in concept
-  >   choreography; that belongs in Stage 02b chain tables.
+  >   choreography; that belongs in Stage 01b chain tables.
   > - If you cannot draw the diagram without inventing details, omit it.
 
 > **Both Postconditions sub-sections are mandatory in every Fully
@@ -145,7 +145,7 @@ sequenceDiagram
 >
 > **Naming rule for downstream derivation.** Name a top-level scenario
 > for the user goal or trigger, not just for the happy-path outcome.
-> Stage 02b derives one chain file from one top-level scenario, and that
+> Stage 01b derives one chain file from one top-level scenario, and that
 > chain file includes the scenario's main flow **and** its extensions as
 > distinct branches. Prefer names like `register-member` or
 > `submit-registration`, not `successful-registration`, unless the use

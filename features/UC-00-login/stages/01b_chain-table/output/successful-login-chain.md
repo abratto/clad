@@ -30,7 +30,7 @@ stateDiagram-v2
 ## Cross-checks
 
 - All four concepts are listed in
-  `../02a_responsibility-map/output/responsibility-map.md` and the
+  `../01a_responsibility-map/output/responsibility-map.md` and the
   scenario `successful-login` lists all four under *Coverage check*.
 - All five action calls use action names declared in the
   responsibility map.

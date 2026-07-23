@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>Derived from:
  * <ul>
  *   <li>{@code features/UC-00-login/stages/01_usecase/output/usecase.md} — scenario structure</li>
- *   <li>{@code features/UC-00-login/stages/02b_chain-table/output/} — action chain per scenario</li>
+ *   <li>{@code features/UC-00-login/stages/01b_chain-table/output/} — action chain per scenario</li>
  *   <li>{@code features/UC-00-login/stages/04_implement/04b_spec/output/} — SPEC outcome enums (SCREAMING_SNAKE_CASE)</li>
  *   <li>{@code features/UC-00-login/stages/03_syncs/output/} — response body literals</li>
  * </ul>
@@ -248,7 +248,7 @@ public class LoginStepDefinitions {
      * Derives from usecase.md Postconditions — Failure (unknown-user):
      * "No state is modified in any concept."
      *
-     * Chain-table (02b_chain-table/output/unknown-user-chain.md):
+     * Chain-table (01b_chain-table/output/unknown-user-chain.md):
      *   row 2: User.lookupByUsername[NotFound] → row 3: Web.respond[401]
      * PasswordAuth.check is never reached, so no counter is incremented.
      * This step validates that only User.lookupByUsername (read-only) and

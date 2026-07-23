@@ -32,7 +32,7 @@ Read `methodology/implementation/TDD.md` before writing anything.
 | Path | Layer | Why |
 |---|---|---|
 | `../../01_usecase/output/usecase.md` | 4 | Scenarios to test |
-| `../../02b_chain-table/output/` | 4 | Action chain per scenario — step-definition derivation |
+| `../../01b_chain-table/output/` | 4 | Action chain per scenario — step-definition derivation |
 | `../../03_syncs/output/` | 4 | Expected coordination |
 | `../04b_spec/output/` | 4 | Action signatures and outcome values |
 | `../../../../../features/_system/stages/00_actor-goal/output/port-spec.md` | 4 | Required when present; external adapter contract for `@contract` scenarios |
@@ -52,7 +52,7 @@ Read `methodology/implementation/TDD.md` before writing anything.
    named scenario, one `Given`/`When`/`Then` step per precondition/trigger/
    postcondition.
 2. **Derive** a step-definition class skeleton from
-   `../../02b_chain-table/output/` (action chain per scenario) and
+   `../../01b_chain-table/output/` (action chain per scenario) and
    `../04b_spec/output/` (action signatures, outcome enums) using the
    template at `../../../../../templates/step-definitions.java`.
    One method per chain-table row. `@Disabled` the skeleton so the tests
@@ -116,7 +116,7 @@ python3 ../../../../../quality-gate/verify_step_definition_parity.py \
   --feature-files-dir <APP_TEST_SOURCE_ROOT>/resources/features/ \
   --glue-dir <APP_TEST_SOURCE_ROOT>/<APP_PACKAGE_ROOT_PATH>/steps/
 python3 ../../../../../quality-gate/verify_step_definition_derivation.py \
-  --chain-dir ../../02b_chain-table/output \
+  --chain-dir ../../01b_chain-table/output \
   --glue-dir <APP_TEST_SOURCE_ROOT>/<APP_PACKAGE_ROOT_PATH>/steps/
 python3 ../../../../../quality-gate/verify_port_spec_contract.py \
   --port-spec ../../../../../features/_system/stages/00_actor-goal/output/port-spec.md \

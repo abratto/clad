@@ -1,9 +1,9 @@
 ---
 name: clad-responsibility-mapping
-description: Derive a responsibility map during CLAD Stage 02a. Use when listing concepts, their owned state, and action names from the approved use case, before writing chain tables or concept specs.
+description: Derive a responsibility map during CLAD Stage 01a. Use when listing concepts, their owned state, and action names from the approved use case, before writing chain tables or concept specs.
 ---
 
-# CLAD Responsibility Mapping (Stage 02a)
+# CLAD Responsibility Mapping (Stage 01a)
 
 ## What this skill covers
 

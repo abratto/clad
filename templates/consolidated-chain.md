@@ -1,4 +1,4 @@
-<!-- Template for consolidated chain (derived from Stage 02b per-scenario chains). Purpose: supplemental implementation safety view showing all scenario outcomes in one branching table and FSM diagram. This artefact is non-canonical; per-scenario chain files remain authoritative. -->
+<!-- Template for consolidated chain (derived from Stage 01b per-scenario chains). Purpose: supplemental implementation safety view showing all scenario outcomes in one branching table and FSM diagram. This artefact is non-canonical; per-scenario chain files remain authoritative. -->
 
 # Consolidated chain — `<use-case-name>`
 
@@ -33,14 +33,14 @@ Stage 03 and Stage 04 work.
 - The row's `Then` is the concrete rendering of the WYSIWID/Taste Tag
   **Then** column.
 - The row's `When` is explicit so the reviewer can inspect the causal
-  edge directly in Stage 02b.
+  edge directly in Stage 01b.
 - `Inputs` are the downstream action's implementation-facing arguments
   only. They are **not** Stage 03 `Where` provenance.
 - Stage 03 is the first place where join provenance and pattern labels
   (`A/B/C/D`, `Where`, `Key`) are formalised.
 
 Use this table to keep the causal choreography explicit without letting
-Stage 02b collapse into a pseudo-sync specification.
+Stage 01b collapse into a pseudo-sync specification.
 
 ## Reading the table as `When -> Then`
 
@@ -104,5 +104,5 @@ For each non-root row:
 3. Add Stage 03 `where` bindings only for arguments in `Inputs` that are
   not already carried by the triggering outcome.
 
-Stage 02b therefore answers **what action fires next**; Stage 03 adds
+Stage 01b therefore answers **what action fires next**; Stage 03 adds
 **where each argument came from**.

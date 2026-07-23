@@ -64,7 +64,7 @@ Examples:
 |---|---|---|
 | Presentation | Stage 04 sub-stage(s) only | The use case, concepts, and syncs are unchanged; only test text and code text move |
 | Behavioural | Stage 02 (concepts) **or** Stage 03 (syncs), whichever owns the change | If outcomes change → Stage 02; if only the chain of actions changes → Stage 03 |
-| Structural | Stage 02a (responsibility map) | The concept set itself is changing, so the map is no longer accurate |
+| Structural | Stage 01a (responsibility map) | The concept set itself is changing, so the map is no longer accurate |
 
 **Rule of thumb.** Find the *earliest* stage whose `output/` is no
 longer accurate after the change. Re-enter there. Re-running an
@@ -124,7 +124,7 @@ Things agents tend to do on iterative changes that they should not:
   Stage 03's output changes. Editing only the Java sync class drifts
   the spec from the code.
 - **Quietly add a new concept inside Stage 03 or 04.** A new concept
-  is a structural change; it must re-enter at Stage 02a so the human
+  is a structural change; it must re-enter at Stage 01a so the human
   can review the new concept set before any sync depends on it.
 - **Skip the impact matrix because the change "feels small".** The
   matrix is a few minutes; it is also where the human catches things

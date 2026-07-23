@@ -4,7 +4,7 @@ verify_stage_sequence.py — Generalised entry / sequence guard for a CLAD
 feature.
 
 Why this exists:
-  The per-feature workflow is an ordered pipeline (01 -> 02a -> 02b -> ...).
+  The per-feature workflow is an ordered pipeline (01 -> 01a -> 01b -> ...).
   `verify_gate_approval.py` guards the three *human* gate transitions. This
   script generalises that idea to *every* transition: it makes skipping a
   stage a hard, detectable error rather than something only a human might

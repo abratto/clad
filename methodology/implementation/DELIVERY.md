@@ -62,7 +62,7 @@ feat(UC-XX): Stage NN — <artefact name>
 Example commit sequence for a feature (one commit per gate):
 
 ```
-feat(UC-01): Gate 1 — requirements (stages 01–02b)
+feat(UC-01): Gate 1 — requirements (stages 01–01b)
 feat(UC-01): Gate 2 — architecture (stages 02–03b)
 feat(UC-01): Gate 3 — executable (stages 04a–04c)
 ```

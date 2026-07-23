@@ -37,7 +37,7 @@ see [`TRACEABILITY.md`](TRACEABILITY.md).
        ├──────────────────────────────┐                              │
        ▼                              ▼                              │
 ┌──────────────────────┐   ┌──────────────────────┐                  │
-│ 02a_responsibility-  │   │ 02b_chain-table/     │                  │
+│ 01a_responsibility-  │   │ 01b_chain-table/     │                  │
 │   map/               │   │ <scenario>-chain.md  │                  │
 │ responsibility-      │   │ (one per scenario)   │                  │
 │   map.md             │   └──────┬───────────────┘                  │
@@ -101,10 +101,10 @@ see [`TRACEABILITY.md`](TRACEABILITY.md).
 Key edges to notice:
 
 - **Use case is the contract every later stage cites.** The dashed
-  back-edges from 02a, 02b, 02, 03, 04c and 05 all land on
+  back-edges from 01a, 01b, 02, 03, 04c and 05 all land on
   `usecase.md`. That is what makes the loop *contract-driven*.
-- **Chain tables (02b) win over sync specs (03)** when action names
-  disagree — because 03 cites 02b, not the other way around. (See
+- **Chain tables (01b) win over sync specs (03)** when action names
+  disagree — because 03 cites 01b, not the other way around. (See
   PR #6 — `Session.open` reconciled to `Session.grant`.)
 - **03a is a pure-audit stage.** It has *no* downstream artefact of
   its own except the cards and summary; its value is making coupling
@@ -127,22 +127,22 @@ consumer need that?**
 | Artefact | Produced by | Consumed by | What the consumer needs from it | Why |
 |---|---|---|---|---|
 | `actors.md` | 00 | 01 | Verbatim actor list | The use case's *Actors* section must match — no inventing actors after Stage 00. |
-| `actors.md` | 00 | 02a | Set of in-scope actors | Coverage check: every in-scope actor must be represented by ≥1 concept. |
+| `actors.md` | 00 | 01a | Set of in-scope actors | Coverage check: every in-scope actor must be represented by ≥1 concept. |
 | `goals.md` | 00 | 01 | In-scope goal list | Each in-scope goal becomes ≥1 named scenario. |
 | `goals.md` | 00 | 01 | Out-of-scope goal list | Lifted into the use case's *Out of scope* section verbatim. |
-| `usecase.md` | 01 | 02a | Set of named scenarios | The responsibility map's *Coverage check* asserts every scenario is covered by ≥1 concept. |
-| `usecase.md` | 01 | 02b | One named scenario per chain file | One chain table per scenario; trigger and final response must match. |
+| `usecase.md` | 01 | 01a | Set of named scenarios | The responsibility map's *Coverage check* asserts every scenario is covered by ≥1 concept. |
+| `usecase.md` | 01 | 01b | One named scenario per chain file | One chain table per scenario; trigger and final response must match. |
 | `usecase.md` | 01 | 02 | Scenario names + Postconditions | Each concept's *operational principle* must reference these scenarios; the principle is what 04d tests against. |
 | `usecase.md` | 01 | 03 | Scenario names | Every sync's `Cites` block names a scenario it satisfies. |
 | `usecase.md` | 01 | 04c | Scenarios + Postconditions—Success/Failure | One outer-red flow test per scenario; Postconditions are what the test asserts (including the *no state is modified* assertion that mechanises no-enumeration). |
 | `usecase.md` | 01 | 05 | Full scenario set | The verifier walks each scenario's flow-token tree; any unauthorised observed action is a finding. |
-| `responsibility-map.md` | 02a | 02b | Concept set + action names per concept | The chain table may only reference these concepts and these actions. |
-| `responsibility-map.md` | 02a | 02 | Concept set | One `<Name>.concept.md` per row. |
-| `responsibility-map.md` | 02a | 03a | Concept set | One dependency-review card per concept. |
-| `<scenario>-chain.md` | 02b | 02 | Action names + outcome enums per concept | Concept spec must declare every action used in any chain, with the same outcome enum. **Canonical** when a sync spec disagrees. |
-| `<scenario>-chain.md` | 02b | 03 | Per-row links | Each row formalises into a sync `when` (the upstream outcome) → `then` (the downstream call). |
-| `<scenario>-chain.md` | 02b | 03a | Inbound calls per concept | Section 1 of each card is built from these. |
-| `<scenario>-chain.md` | 02b | 04c | End-to-end action sequence | The flow test asserts exactly this sequence at runtime. |
+| `responsibility-map.md` | 01a | 01b | Concept set + action names per concept | The chain table may only reference these concepts and these actions. |
+| `responsibility-map.md` | 01a | 02 | Concept set | One `<Name>.concept.md` per row. |
+| `responsibility-map.md` | 01a | 03a | Concept set | One dependency-review card per concept. |
+| `<scenario>-chain.md` | 01b | 02 | Action names + outcome enums per concept | Concept spec must declare every action used in any chain, with the same outcome enum. **Canonical** when a sync spec disagrees. |
+| `<scenario>-chain.md` | 01b | 03 | Per-row links | Each row formalises into a sync `when` (the upstream outcome) → `then` (the downstream call). |
+| `<scenario>-chain.md` | 01b | 03a | Inbound calls per concept | Section 1 of each card is built from these. |
+| `<scenario>-chain.md` | 01b | 04c | End-to-end action sequence | The flow test asserts exactly this sequence at runtime. |
 | `<Name>.concept.md` | 02 | 03 | Action signatures + outcome enums | `when` and `then` clauses reference these. |
 | `<Name>.concept.md` | 02 | 03a | Action existence + state field declarations | Cards cite action names; concept-state read rows cite state fields. |
 | `<Name>.concept.md` | 02 | 04a | `state` section | The schema is derived from this; one named region per concept (R2). |

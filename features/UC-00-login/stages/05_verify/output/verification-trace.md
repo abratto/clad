@@ -7,7 +7,7 @@ Resume point: next feature — registration or iterative change to login (add ro
 ## Methodology
 
 Traces expected flow-token chains from Gherkin scenarios against the
-logic in `02b_chain-table/output/` and `03_syncs/output/`. Runtime
+logic in `01b_chain-table/output/` and `03_syncs/output/`. Runtime
 evidence from the Micronaut/Jena reference-impl (Java 21) via
 `mvn test` + manual API smoke test.
 
@@ -16,7 +16,7 @@ evidence from the Micronaut/Jena reference-impl (Java 21) via
 ### successful-login
 
 - **Trigger:** `POST /login { username: "ada", password: "lovelace" }`
-- **Expected chain (from 02b):**
+- **Expected chain (from 01b):**
   1. `Web/handle[POST /login]` => `Routed`
   2. `User/lookupByUsername(username)` => `FOUND`
   3. `PasswordAuth/check(userId, password)` => `OK`

@@ -35,7 +35,7 @@ Strategy:
 
 Usage:
   python3 verify_step_definition_derivation.py \\
-    --chain-dir <02b_chain-table/output/> \\
+    --chain-dir <01b_chain-table/output/> \\
     --glue-dir <src/test/java/com/example/steps/>
 """
 
@@ -141,7 +141,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Verify step-def bodies reference chain-table action names")
     parser.add_argument("--chain-dir", required=True,
-                        help="Path to 02b_chain-table/output/")
+                        help="Path to 01b_chain-table/output/")
     parser.add_argument("--glue-dir", required=True,
                         help="Path to step-definition Java source directory")
     args = parser.parse_args()

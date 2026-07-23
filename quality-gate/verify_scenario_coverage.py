@@ -97,7 +97,7 @@ def main():
     parser.add_argument("--usecase", required=True,
                         help="Path to usecase.md from Stage 01")
     parser.add_argument("--chain-dir", required=True,
-                        help="Path to 02b_chain-table/output/")
+                        help="Path to 01b_chain-table/output/")
     parser.add_argument("--sync-dir", required=True,
                         help="Path to 03_syncs/output/")
     args = parser.parse_args()

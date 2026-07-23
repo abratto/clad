@@ -1,12 +1,12 @@
 // Template for Stage 04c step-definition skeletons (outer-red).
-// Derived from: ../02b_chain-table/output/<scenario>-chain.md
+// Derived from: ../01b_chain-table/output/<scenario>-chain.md
 //               ../02_concepts/output/<Name>.concept.md
 //               ../04b_spec/output/<Name>.spec.md
 //
 // Each Gherkin Given/When/Then step derives from a use-case precondition, trigger,
 // or postcondition. The method body invokes concept actions via the sync engine.
 //
-// Derivation rules (cross-reference with 02b chain-table rows):
+// Derivation rules (cross-reference with 01b chain-table rows):
 //   Given precondition fixture    ← chain-table row whose action seeds concept state
 //   When trigger method           ← chain-table row 1 (Web/request → Web.handle)
 //   Then response assertion       ← chain-table last row (Session.grant → Web.respond)
@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * Derived from:
  *   ../01_usecase/output/usecase.md  — scenario structure
- *   ../02b_chain-table/output/       — action chain per scenario
+ *   ../01b_chain-table/output/       — action chain per scenario
  *   ../04b_spec/output/              — SPEC action signatures and outcome enums
  *
  * One step-definition method per chain-table row. The method body
@@ -121,7 +121,7 @@ public class <FeatureName>StepDefinitions {
 
     // -----------------------------------------------------------------------
     // Scenario Outlines — step definitions shared across failure branches
-    // Derived from usecase.md Extensions: and 02b chain-table branch rows
+    // Derived from usecase.md Extensions: and 01b chain-table branch rows
     // -----------------------------------------------------------------------
 
     // Scenario Outlines reuse existing step definitions (login, response_status_is, etc.).

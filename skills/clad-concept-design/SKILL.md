@@ -20,7 +20,7 @@ Load these files in order:
    operational principle)
 3. `methodology/architecture/MENTAL_MODEL.md` — OO ↔ WYSIWID translation
 4. `templates/concept.md` — output shape to follow
-5. `features/UC-XX-<slug>/stages/02b_chain-table/output/` —
+5. `features/UC-XX-<slug>/stages/01b_chain-table/output/` —
    approved chain tables (outcomes must match exactly)
 6. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
 

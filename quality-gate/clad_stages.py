@@ -63,7 +63,7 @@ def _usecase(feature_root: str) -> str:
 
 def _resp_map(feature_root: str) -> str:
     return os.path.join(
-        feature_root, "stages", "02a_responsibility-map", "output",
+        feature_root, "stages", "01a_responsibility-map", "output",
         "responsibility-map.md")
 
 
@@ -80,7 +80,7 @@ def _dir(rel: str) -> Callable[[str], str]:
 
 
 # Convenience references to the per-stage output directories.
-CHAIN_DIR = _dir("02b_chain-table")
+CHAIN_DIR = _dir("01b_chain-table")
 CONCEPT_DIR = _dir("02_concepts")
 SYNC_DIR = _dir("03_syncs")
 DEP_DIR = _dir("03a_dependency-review")
@@ -323,10 +323,10 @@ _FILE_02A = Check(
     name="file_manifest",
     script="verify_file_manifest.py",
     build_args=lambda r: [
-        "--dir", output_dir(r, "02a_responsibility-map"),
+        "--dir", output_dir(r, "01a_responsibility-map"),
         "--expected", "responsibility-map.md",
     ],
-    requires=lambda r: [output_dir(r, "02a_responsibility-map")],
+    requires=lambda r: [output_dir(r, "01a_responsibility-map")],
 )
 
 
@@ -337,9 +337,9 @@ _FILE_02A = Check(
 STAGES: List[Stage] = [
     Stage("01", "Use case", "01_usecase",
           checks=[_FILE_01]),
-    Stage("02a", "Responsibility map", "02a_responsibility-map",
+    Stage("01a", "Responsibility map", "01a_responsibility-map",
           checks=[_FILE_02A]),
-    Stage("02b", "Chain table", "02b_chain-table", gate_after=1),
+    Stage("01b", "Chain table", "01b_chain-table", gate_after=1),
     Stage("02", "Concept specs", "02_concepts"),
     Stage("03", "Syncs", "03_syncs", checks=[_SCENARIO_COVERAGE, _SYNC_MATRIX]),
     Stage("03a", "Dependency review", "03a_dependency-review",

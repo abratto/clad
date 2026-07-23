@@ -22,7 +22,7 @@ Load these files:
 3. `templates/spec.md` — SPEC slice output shape
 4. `features/UC-XX-<slug>/stages/02_concepts/output/` —
    approved concept specs (source)
-5. `features/UC-XX-<slug>/stages/02b_chain-table/output/` —
+5. `features/UC-XX-<slug>/stages/01b_chain-table/output/` —
    approved chain tables (outcome names)
 6. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
 7. `features/_system/stages/00_actor-goal/output/port-spec.md` — only

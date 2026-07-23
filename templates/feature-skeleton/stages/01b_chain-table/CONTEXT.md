@@ -1,9 +1,9 @@
-# Stage 02b — Chain table (per scenario)
+# Stage 01b — Chain table (per scenario)
 
 ## Why this stage exists
 
 The **choreography review surface** — one scenario per file, easier to
-read than six declarative syncs at once. 02b is also the **canonical
+read than six declarative syncs at once. 01b is also the **canonical
 resolver for action-name disputes**: if a sync spec (Stage 03)
 disagrees with a chain table, the table wins. That rule keeps Stage 03
 from silently inventing names that nothing else will recognise.
@@ -14,14 +14,14 @@ from silently inventing names that nothing else will recognise.
 
 **Agent stance for this stage:** every row is an explicit `When -> Then`
 edge with a named outcome. If you cannot name the outcome or the
-trigger, the concept set is wrong — go back to 02a, do not invent.
+trigger, the concept set is wrong — go back to 01a, do not invent.
 
 ## Inputs
 
 | Path | Layer | Why |
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Scenarios to choreograph |
-| `../02a_responsibility-map/output/responsibility-map.md` | 4 | Available concepts and their actions |
+| `../01a_responsibility-map/output/responsibility-map.md` | 4 | Available concepts and their actions |
 | Skill: `clad-chain-table` | 3 | Chain table reference (see skills/ directory) |
 | `../../../../methodology/architecture/SYNCHRONIZATIONS.md` | 3 | What syncs are (so the chain table can be lifted into them later) |
 | `../../../../templates/chain-table.md` | 3 | Output template |
@@ -36,7 +36,7 @@ justification. Use the actions and concepts already named in the
 responsibility map — do not invent new ones.
 
 This mapping is deterministic: one top-level Stage 01 scenario becomes
-one Stage 02b chain file. Keep that scenario's extensions in the same
+one Stage 01b chain file. Keep that scenario's extensions in the same
 file as additional branch rows when they share the same trigger and user
 goal. Do not split ordinary failure extensions into separate chain files.
 
@@ -45,10 +45,10 @@ multiple outcomes that lead to different `Web.respond[...]` contracts or
 different next actions, split those branches into separate rows instead
 of collapsing them into one line.
 
-If a downstream action needs request-originated data, the approved 02b
+If a downstream action needs request-originated data, the approved 01b
 row must name those carried fields on the trigger contract itself
 (for example `Web.handle[Routed(email, password)]`). Stage 03 may bind
-Pattern A values only from names that 02b has already declared.
+Pattern A values only from names that 01b has already declared.
 
 Optionally include a Mermaid `stateDiagram-v2` as a derived view. Do not
 use `sequenceDiagram`. The diagram must be mechanically derivable from
@@ -85,7 +85,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   plus its extensions, not some narrower happy-path-only subset unless
   the Stage 01 scenario itself truly has no extensions.
 - Every concept and action that appears in a chain table is listed in
-  `02a_responsibility-map/output/responsibility-map.md`.
+  `01a_responsibility-map/output/responsibility-map.md`.
 - The first row of every chain is `Web/request[...] -> Web.handle` (R4);
   the last row of every chain is `... -> Web.respond[...]`.
 - **No repeated action invocations.** Each `<Concept>.<action>` pair

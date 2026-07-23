@@ -49,4 +49,4 @@ Load these files:
 - A sync without a route filter on a shared trigger is a dependency
    review finding that must be resolved before Gate 2 unless the card
    documents why route-agnostic firing is correct.
-- If a sync name disagrees with 02b or 02, stop and reopen the earlier stage.
+- If a sync name disagrees with 01b or 02, stop and reopen the earlier stage.
