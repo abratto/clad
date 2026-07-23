@@ -118,6 +118,24 @@ def main():
                 for line in detail.splitlines()[:6]:
                     print(f"          {line}")
 
+        # --- 3. Iterative-change readiness (cross-cutting) ---
+        code, out, err = run_script(
+            "verify_iterative_change_readiness.py",
+            ["--feature", root, "--base", "HEAD"],
+        )
+        detail = (out + err).strip()
+        ok = code == 0
+        if ok and "no iterative" in detail:
+            # No iterative changes in scope — don't clutter output
+            pass
+        else:
+            mark = "PASS" if ok else "FAIL"
+            print(f"    [{mark}] iterative_change_readiness")
+            if not ok:
+                all_pass = False
+                for line in detail.splitlines()[:6]:
+                    print(f"          {line}")
+
     if not any_features:
         print("\n  No UC-* features found — nothing to check.")
 
