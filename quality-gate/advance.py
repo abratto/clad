@@ -50,6 +50,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 BAR = "=" * 64
 AGENT_INSTRUCTION = "  >>> Agent instruction:"
 RESUME_FILE = "RESUME.md"
+CHANGES_DIR = "_changes"
 
 AUTONOMY_LEVELS = ("gated", "auto", "yolo")
 
@@ -120,6 +121,61 @@ def determine_stage(feature_root: str, explicit: str | None):
         print(BAR)
         sys.exit(0)
     return cs.STAGES[last]
+
+
+def discover_iterative_changes(feature_root: str) -> list[str]:
+    """Return sorted list of change files in _changes/, newest first."""
+    changes_dir = os.path.join(feature_root, CHANGES_DIR)
+    if not os.path.isdir(changes_dir):
+        return []
+    files = [os.path.join(changes_dir, f)
+             for f in os.listdir(changes_dir)
+             if f.endswith(".md")]
+    files.sort(key=os.path.getmtime, reverse=True)
+    return files
+
+
+def parse_change_file(path: str) -> dict:
+    """Extract key fields from a _changes/ markdown file."""
+    result = {}
+    with open(path) as fh:
+        text = fh.read()
+    for field in ("Change category", "Earliest re-entry stage", "Why"):
+        m = re.search(rf"\*\*{field}:\*\*\s*`?([^`\n]+)`?", text)
+        if m:
+            result[field.lower().replace(" ", "_")] = m.group(1).strip().strip("`")
+    # Extract impact matrix rows
+    rows = {}
+    in_table = False
+    for line in text.splitlines():
+        if line.strip().startswith("|") and not line.strip().startswith("|---"):
+            cells = [c.strip().strip("`") for c in line.strip().strip("|").split("|")]
+            if len(cells) >= 3:
+                if cells[0] == "Artefact" and cells[1] == "Changed?":
+                    in_table = True
+                    continue
+                if in_table and cells[1].lower() == "yes":
+                    rows[cells[0]] = cells[2] if len(cells) > 2 else ""
+        elif in_table and not line.strip():
+            break
+    result["impact"] = rows
+    return result
+
+
+def git_diff_changed(feature_root: str, change_path: str) -> str:
+    """Run git diff and return the output for review."""
+    try:
+        out = subprocess.run(
+            ["git", "diff", "--cached", "--", feature_root],
+            cwd=feature_root, capture_output=True, text=True)
+        if out.stdout.strip():
+            return out.stdout.strip()
+        out = subprocess.run(
+            ["git", "diff", "--", feature_root],
+            cwd=feature_root, capture_output=True, text=True)
+        return out.stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return "(could not run git diff)"
 
 
 def run_checks(feature_root: str, stage: cs.Stage) -> list[dict]:
@@ -259,6 +315,95 @@ def main() -> None:
             print("  Only a fully skipped stage (artefact-chain gap) still stops.")
         print(BAR)
 
+    # --- 0. Iterative change detection ---------------------------------------
+    # When _changes/ files exist, present a git diff review before any
+    # stage-specific logic. This catches iterative changes regardless of
+    # which stage the agent ran advance.py from.
+    change_files = discover_iterative_changes(feature_root)
+    if change_files:
+        latest_change = change_files[0]
+        change_info = parse_change_file(latest_change)
+        change_name = os.path.splitext(os.path.basename(latest_change))[0]
+
+        resume_iter_path = os.path.join(feature_root, RESUME_FILE)
+        resume_iter_text = ""
+        if os.path.isfile(resume_iter_path):
+            with open(resume_iter_path) as fh:
+                resume_iter_text = fh.read()
+
+        # Check if this iterative change has already been approved
+        iterative_approved = re.search(
+            rf"iterative.*{re.escape(change_name)}.*approved",
+            resume_iter_text, re.IGNORECASE)
+
+        if not iterative_approved:
+            # Run sequence guard as a pre-flight
+            seq_check = run_script("verify_stage_sequence.py",
+                                   ["--feature", feature_root, "--through", stage.id])
+            if seq_check.returncode != 0:
+                print(BAR)
+                print(f"  ADVANCE BLOCKED — sequence integrity failure")
+                print(f"  Feature: {feature_name}")
+                print(BAR)
+                for line in (seq_check.stdout + seq_check.stderr).splitlines():
+                    print(f"  {line}")
+                print()
+                print(AGENT_INSTRUCTION)
+                print("  Fix the stage sequence before reviewing iterative changes.")
+                print(BAR)
+                sys.exit(1)
+
+            # Run stage checks
+            results = run_checks(feature_root, stage)
+            failed = [r for r in results if r["status"] == "fail"]
+            if failed and autonomy != "yolo":
+                print(BAR)
+                print(f"  ADVANCE BLOCKED — checks failed for {change_name}")
+                print(BAR)
+                print_check_summary(results)
+                print_failures(results)
+                sys.exit(1)
+
+            diff_output = git_diff_changed(feature_root, latest_change)
+            receipt_path = write_receipt(feature_root, stage, results, "pass",
+                                         "iterative diff review", autonomy)
+
+            print(BAR)
+            print(f"  ITERATIVE CHANGE — {change_name}")
+            print(f"  Category: {change_info.get('change_category', 'unknown')}")
+            change_why = change_info.get('why', '')
+            if change_why:
+                print(f"  Why: {change_why}")
+            print(BAR)
+
+            if change_info.get('impact'):
+                print("  Impact matrix:")
+                for artefact, what in change_info['impact'].items():
+                    print(f"    {artefact}: {what}")
+                print()
+
+            if diff_output:
+                print("  Review diff:")
+                print(f"  {BAR}")
+                for line in diff_output.splitlines()[:40]:
+                    print(f"  {line}")
+                print(f"  {BAR}")
+            else:
+                print("  (no diff available — review stage outputs directly)")
+                print()
+
+            print_check_summary(results)
+            print(f"  Receipt: {cs.relpath(receipt_path, feature_root)}")
+            print()
+            print(AGENT_INSTRUCTION)
+            print("  Present the diff and impact matrix to the human for review.")
+            print("  When the human says 'approved', run:")
+            print(f"    python3 quality-gate/approve_gate.py "
+                  f"--feature {args.feature} --iterative {change_name}")
+            print("  then commit all changed files + _changes/ artefact together.")
+            print(BAR)
+            sys.exit(10)
+
     # --- 1. Sequence / entry guard -----------------------------------------
     seq = run_script("verify_stage_sequence.py",
                      ["--feature", feature_root, "--through", stage.id])
@@ -318,6 +463,44 @@ def main() -> None:
     # --- 3. Human gate boundary --------------------------------------------
     if stage.gate_after is not None:
         gate = stage.gate_after
+        resume_path = os.path.join(feature_root, RESUME_FILE)
+        resume_text = ""
+        if os.path.isfile(resume_path):
+            with open(resume_path) as fh:
+                resume_text = fh.read()
+        if not gate_approved(resume_text, gate):
+            if autonomy in ("auto", "yolo"):
+                wrote = set_gate_status(feature_root, gate, "auto-approved")
+                print(BAR)
+                print(f"  Stage {stage.id} PASSED. HUMAN GATE {gate} "
+                      f"({cs.GATE_LABELS[gate]}) AUTO-APPROVED "
+                      f"(autonomy={autonomy}).")
+                if not wrote:
+                    print("  NOTE: no gate line found in RESUME.md to record this.")
+                print("  A human did NOT review these artefacts. Recorded as")
+                print("  `auto-approved` in RESUME.md for later inspection.")
+                print(BAR)
+            else:
+                present = run_script("present_gate.py",
+                                     ["--feature", feature_root, "--gate", str(gate)])
+                print(BAR)
+                print(f"  Stage {stage.id} ({stage.label}) PASSED its checks.")
+                print(f"  This is HUMAN GATE {gate} ({cs.GATE_LABELS[gate]}). STOP.")
+                print(BAR)
+                print_check_summary(results)
+                print(f"  Receipt: {cs.relpath(receipt_path, feature_root)}")
+                print()
+                print(present.stdout.rstrip())
+                print()
+                print(AGENT_INSTRUCTION)
+                print("  Present the artefact summary above to the human and WAIT.")
+                print("  Do NOT advance. When the human explicitly says 'approved', run:")
+                print(f"    python3 quality-gate/approve_gate.py --feature {args.feature} --gate {gate}")
+                print("  then re-run:")
+                print(f"    python3 quality-gate/advance.py --feature {args.feature}")
+                print(BAR)
+                sys.exit(10)
+
         resume_path = os.path.join(feature_root, RESUME_FILE)
         resume_text = ""
         if os.path.isfile(resume_path):
