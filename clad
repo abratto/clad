@@ -15,12 +15,23 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-QG="$SCRIPT_DIR/quality-gate"
+# Use PWD for finding features/projects (so ./clad works from any
+# CLAD-derived project root), use SCRIPT_DIR for finding quality-gate/
+# scripts (which ship with clad itself).
+PROJECT_ROOT="${PWD}"
+# If the current directory has features/, use that. Otherwise use SCRIPT_DIR.
+if [ -d "$PROJECT_ROOT/features" ]; then
+    FEATURES_DIR="$PROJECT_ROOT/features"
+    QG="$PROJECT_ROOT/quality-gate"
+else
+    FEATURES_DIR="$SCRIPT_DIR/features"
+    QG="$SCRIPT_DIR/quality-gate"
+fi
 
 active_feature() {
     # Find the first UC-* feature with a RESUME.md that has active work.
     # Prefer features with a non-None current stage.
-    for d in "$SCRIPT_DIR"/features/UC-*/; do
+    for d in "$FEATURES_DIR"/UC-*/; do
         [ -d "$d" ] || continue
         local resume="$d/RESUME.md"
         [ -f "$resume" ] || continue
@@ -32,7 +43,7 @@ active_feature() {
         fi
     done
     # Fallback: first feature with a RESUME.md
-    for d in "$SCRIPT_DIR"/features/UC-*/; do
+    for d in "$FEATURES_DIR"/UC-*/; do
         [ -d "$d" ] || continue
         [ -f "$d/RESUME.md" ] || continue
         basename "$d"
@@ -73,7 +84,7 @@ cmd_next() {
     local feat
     feat=$(active_feature)
     [ -z "$feat" ] && { echo "No active feature found."; exit 1; }
-    local resume="$SCRIPT_DIR/features/$feat/RESUME.md"
+    local resume="$FEATURES_DIR/$feat/RESUME.md"
     echo "Feature: $feat"
     grep -E '(Current stage|Next stage|Next file|Gate [123]|Last completed)' "$resume" 2>/dev/null | sed 's/^/  /'
 }
@@ -82,7 +93,7 @@ cmd_stages() {
     local feat="${1:-$(active_feature)}"
     [ -z "$feat" ] && { echo "No active feature found."; exit 1; }
     # Handle both basename and features/XX path forms
-    local feat_path="$SCRIPT_DIR/features/$feat"
+    local feat_path="$FEATURES_DIR/$feat"
     [ -d "$feat_path" ] || feat_path="$feat"
     echo "Feature: $(basename "$feat_path")"
     echo ""
@@ -102,7 +113,7 @@ cmd_checklists() {
     local feat
     feat=$(active_feature)
     [ -z "$feat" ] && { echo "No active feature found."; exit 1; }
-    local resume="$SCRIPT_DIR/features/$feat/RESUME.md"
+    local resume="$FEATURES_DIR/$feat/RESUME.md"
     local current
     current=$(grep 'Current stage' "$resume" 2>/dev/null | head -1 | sed 's/.*`\(.*\)`.*/\1/')
     [ -z "$current" ] && { echo "Could not determine current stage."; exit 1; }
@@ -113,7 +124,7 @@ import sys; sys.path.insert(0, '$QG')
 import clad_stages as cs
 for s in cs.STAGES:
     if f'Stage {s.id} — {s.label}' == '$current':
-        path = s.context_path('$SCRIPT_DIR/features/$feat')
+        path = s.context_path('$FEATURES_DIR/$feat')
         import os
         if os.path.isfile(path):
             with open(path) as f:
