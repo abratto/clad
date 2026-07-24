@@ -52,13 +52,16 @@ def run_git_names(args):
     return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
 
-def changed_files(base, changed_files_file):
+def changed_files(base, changed_files_file, feature_root=None):
     if changed_files_file:
         with open(changed_files_file, encoding="utf-8") as handle:
             return sorted({line.strip() for line in handle if line.strip()})
-    names = set(run_git_names(["git", "diff", "--name-only", f"{base}...HEAD"]))
-    names.update(run_git_names(["git", "diff", "--name-only", "--cached"]))
-    names.update(run_git_names(["git", "diff", "--name-only"]))
+    base_args = ["git", "diff", "--name-only"]
+    if feature_root:
+        base_args += ["--", feature_root]
+    names = set(run_git_names(base_args + [f"{base}...HEAD"]))
+    names.update(run_git_names(base_args + ["--cached"]))
+    names.update(run_git_names(base_args))
     return sorted(names)
 
 
@@ -93,8 +96,14 @@ def select_change_file(feature_root, explicit_path):
 
 
 def field_value(text, label):
-    match = re.search(rf"^[-*]?\s*\*\*{re.escape(label)}:\*\*\s*`?([^`\n]+)`?\s*$", text, re.MULTILINE)
-    return match.group(1).strip() if match else ""
+    # Match **Label:** `value` or **Label:** value (with or without backticks)
+    match = re.search(
+        rf"^[-*]?\s*\*\*{re.escape(label)}:\*\*\s*"
+        r"`?([^`\n]+)`?"
+        r"\s*$", text, re.MULTILINE)
+    if match:
+        return match.group(1).strip()
+    return ""
 
 
 def matrix_rows(text):
@@ -186,7 +195,7 @@ def main():
     parser.add_argument("--changed-files-file", default="", help="Test hook: newline-delimited changed file list")
     args = parser.parse_args()
 
-    changed = changed_files(args.base, args.changed_files_file)
+    changed = changed_files(args.base, args.changed_files_file, args.feature)
     touched_scope = [path for path in changed if in_iterative_scope(path)]
     implementation_touched = any(in_implementation_scope(path) for path in touched_scope)
     if not touched_scope:
