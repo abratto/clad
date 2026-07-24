@@ -29,8 +29,12 @@ else
 fi
 
 active_feature() {
-    # Find the first UC-* feature with a RESUME.md that has active work.
-    # Prefer features with a non-None current stage.
+    # Highest priority: features with pending iterative changes (_changes/).
+    for d in "$FEATURES_DIR"/UC-*/; do
+        [ -d "$d" ] || continue
+        [ -d "$d/_changes" ] && [ "$(ls -A "$d/_changes" 2>/dev/null)" ] && { basename "$d"; return 0; }
+    done
+    # Next: features with an active (non-complete, non-TBD) current stage.
     for d in "$FEATURES_DIR"/UC-*/; do
         [ -d "$d" ] || continue
         local resume="$d/RESUME.md"
@@ -145,15 +149,15 @@ cmd_help() {
     cat << 'HELP'
 CLAD CLI — lightweight wrapper for quality-gate scripts.
 
-  ./clad advance [--stage <id>]  Run advance.py for the active feature
-  ./clad approve <1|2|3>        Approve a human gate
-  ./clad approve-iter <name>    Approve an iterative change
-  ./clad verify                  Run verify_artefacts.py (artefact gate)
-  ./clad next                    Show current stage and next steps
-  ./clad stages                  Show all stages and their completion status
-  ./clad checklists              Show task checklists for the current stage
-  ./clad feature                 Show the active feature name
-  ./clad help                    Show this help
+  ./clad advance [<feature>]      Run advance.py (auto-discovers if omitted)
+  ./clad approve <1|2|3>           Approve a human gate
+  ./clad approve-iter <name>       Approve an iterative change
+  ./clad verify                    Run verify_artefacts.py (artefact gate)
+  ./clad next                      Show current stage and next steps
+  ./clad stages [<feature>]        Show all stages and completion status
+  ./clad checklists                Show task checklists for the current stage
+  ./clad feature                   Show the active feature name
+  ./clad help                      Show this help
 
 All commands auto-discover the active feature from RESUME.md.
 No need to type feature paths.
