@@ -1,0 +1,72 @@
+# Build the CLAD app JAR, then run it as a container.
+# Usage:
+#   cd reference-impl/java-micronaut-jena
+#   mvn package -DskipTests
+#   docker compose up --build
+#
+# The app connects to Ollama and Fuseki by service name — no
+# hardcoded IPs, no port conflicts on the host.
+
+services:
+  # 1. The CLAD runtime — Micronaut + concepts + syncs + engine
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      # Triplestore — Fuseki over HTTP (persistent, production-grade)
+      ENGINE_DATASET_TYPE: fuseki-embedded
+      CLAD_FUSEKI_ENDPOINT: http://fuseki:3030/clad
+      # LLM — Ollama over HTTP (runs your model of choice)
+      CLAD_LLM_ENDPOINT: http://ollama:11434
+      CLAD_LLM_MODEL: llama3.2:3b
+      # Micronaut
+      MICRONAUT_ENVIRONMENTS: production
+    depends_on:
+      fuseki:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 2. Apache Jena Fuseki — persistent triplestore for concept state
+  fuseki:
+    image: apache/jena-fuseki:5.3.0
+    ports:
+      - "3030:3030"
+    environment:
+      FUSEKI_ADMIN_PASSWORD: "${FUSEKI_ADMIN_PASSWORD:-admin}"
+    volumes:
+      - fuseki_data:/fuseki
+      - ./fuseki/config.ttl:/fuseki/config.ttl
+    command: --config /fuseki/config.ttl
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3030/$/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 3. Ollama — local LLM runtime (CPU or GPU)
+  # Change the model in CLAD_LLM_MODEL env var above.
+  # First run: docker compose exec ollama ollama pull llama3.2:3b
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      OLLAMA_KEEP_ALIVE: 24h
+    # Uncomment for NVIDIA GPU:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    restart: unless-stopped
+
+volumes:
+  fuseki_data:
+  ollama_data:
