@@ -86,8 +86,7 @@ engine:
 ## History
 
 This engine is adapted from the WYSIWID engine of
-[`abratto/tastetag`](https://github.com/abratto/tastetag) — a private
-companion repository where the same author iterated on the runtime
+Tastetag — a private companion project where the same author iterated on the runtime
 shape against a richer set of concepts (Account, Alias, Product, Tag,
 Preference, …). The CLAD copy keeps the algorithmic core intact and
 strips the application surface down to a single `Web` controller plus
