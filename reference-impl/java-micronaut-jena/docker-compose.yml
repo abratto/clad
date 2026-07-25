@@ -30,21 +30,20 @@ services:
     restart: unless-stopped
 
   # 2. Apache Jena Fuseki — persistent triplestore for concept state
+  # The stain/jena-fuseki image uses the default /clad dataset on startup.
   fuseki:
-    image: apache/jena-fuseki:5.3.0
+    image: stain/jena-fuseki:latest
     ports:
       - "3030:3030"
     environment:
-      FUSEKI_ADMIN_PASSWORD: "${FUSEKI_ADMIN_PASSWORD:-admin}"
+      ADMIN_PASSWORD: "${FUSEKI_ADMIN_PASSWORD:-admin}"
     volumes:
       - fuseki_data:/fuseki
-      - ./fuseki/config.ttl:/fuseki/config.ttl
-    command: --config /fuseki/config.ttl
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3030/$/ping"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   # 3. Ollama — local LLM runtime (CPU or GPU)
   # Change the model in CLAD_LLM_MODEL env var above.
