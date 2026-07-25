@@ -29,10 +29,14 @@ else
 fi
 
 active_feature() {
-    # Highest priority: features with pending iterative changes (_changes/).
+    # Highest priority: features with uncommitted iterative changes
+    # (_changes/ dir exists AND has uncommitted modifications).
     for d in "$FEATURES_DIR"/UC-*/; do
         [ -d "$d" ] || continue
-        [ -d "$d/_changes" ] && [ "$(ls -A "$d/_changes" 2>/dev/null)" ] && { basename "$d"; return 0; }
+        if [ -d "$d/_changes" ] && [ -n "$(git -C "$PROJECT_ROOT" status --porcelain -- "$d/_changes" 2>/dev/null)" ]; then
+            basename "$d"
+            return 0
+        fi
     done
     # Next: features with an active (non-complete, non-TBD) current stage.
     for d in "$FEATURES_DIR"/UC-*/; do
