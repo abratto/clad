@@ -95,14 +95,13 @@ should consult Jarrar's papers directly.
 
 ## Source of the CLAD reference implementation
 
-Alan Potosnak. **abratto/tastetag** —
-[github.com/abratto/tastetag](https://github.com/abratto/tastetag).
+Alan Potosnak. **Tastetag** (private project, 2025–2026).
 
 This starter distils prose, examples, and the Java/Micronaut/Jena
-reference implementation that originated in `tastetag/methodology/`.
-The Alloy-style notation used in concept specs was first developed and
-battle-tested in `tastetag` before being formalised in this starter.
-The starter is re-licensed under Apache-2.0 with the author's
+reference implementation that originated in the Tastetag project. The
+Alloy-style notation used in concept specs was first developed and
+battle-tested there before being formalised in this starter. The
+starter is re-licensed under Apache-2.0 with the author's
 permission.
 
 ## How to cite this starter
