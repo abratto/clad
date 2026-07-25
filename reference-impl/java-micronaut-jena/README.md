@@ -208,6 +208,38 @@ mvn -DskipTests package
 java -jar target/clad-java-micronaut-jena-0.1.0-SNAPSHOT.jar
 ```
 
+### Docker Compose — full stack (app + Fuseki + Ollama)
+
+Deploy the entire CLAD stack as a single unit — no local Java, Maven,
+or model downloads needed on the host:
+
+```sh
+mvn package -DskipTests
+docker compose up --build
+```
+
+This brings up three services that talk to each other by Docker service name:
+
+| Service | Port | Purpose |
+|---|---|---|
+| `app` | 8080 | Micronaut + concepts + syncs + engine |
+| `fuseki` | 3030 | Apache Jena Fuseki TDB2 triplestore (persistent concept state) |
+| `ollama` | 11434 | Local LLM runtime (CPU or GPU) |
+
+One-time model pull (after first startup):
+
+```sh
+docker compose exec ollama ollama pull llama3.2:3b
+```
+
+Configure the app via environment variables in `docker-compose.yml`:
+`CLAD_LLM_MODEL` (model name), `CLAD_LLM_ENDPOINT` (Ollama URL),
+`CLAD_FUSEKI_ENDPOINT` (Fuseki SPARQL endpoint). Persistent volumes
+for Fuseki data and Ollama models survive container restarts.
+
+To stop: `docker compose down`. To rebuild after code changes:
+`docker compose up -d --build`.
+
 With the app running, the generated transport docs are available at:
 
 - `/swagger/clad-java-reference-api-0.1.0.yml`
