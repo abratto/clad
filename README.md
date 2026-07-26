@@ -13,9 +13,11 @@ machines with explicit operational principles — connected only by declarative
 blast radius of exactly one concept. The code stays legible to humans and LLMs
 alike.
 
-The paper didn't include a full reference implementation. CLAD is that
-implementation — plus a methodology for *building* WYSIWID systems with an
-AI agent under human review.
+The paper includes a reference Conduit implementation, demonstrating that
+the architecture works. What it doesn't include is a methodology for
+*building* such systems with an AI coding agent. CLAD is that methodology —
+a staged pipeline with human gates and deterministic enforcement that
+produces WYSIWID-compliant systems from a plain-language brief.
 
 ## How CLAD works
 
