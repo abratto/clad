@@ -1,18 +1,34 @@
 # CLAD — Contract-Led, Artefact-Driven Development
 
-> A starter repository for building software with AI coding agents under a
-> discipline that keeps every decision **legible, reviewable, and reversible**.
+> A methodology for building [WYSIWID-compliant](#whats-wysiwid) systems with
+> AI coding agents. One human steering, deterministic enforcement, a fraction
+> of the usual token spend.
 
-**TL;DR:** CLAD is a staged, contract-driven workflow that lets one human
-reviewer steer a fast AI coding agent — stage by stage, artefact by
-artefact — without losing control of the system being built.
+## What's WYSIWID?
+
+Meng & Jackson's WYSIWID paper (Onward! 2025) describes an architecture where
+every system is decomposed into fully decoupled **concepts** — small state
+machines with explicit operational principles — connected only by declarative
+**synchronizations**. No concept imports another. A change to one concept has a
+blast radius of exactly one concept. The code stays legible to humans and LLMs
+alike.
+
+The paper didn't include a full reference implementation. CLAD is that
+implementation — plus a methodology for *building* WYSIWID systems with an
+AI agent under human review.
 
 ## How CLAD works
 
-CLAD is a state machine of stages punctuated by human review gates. The
-human provides a brief and reviews artefacts at each gate; the agent reads
-a stage contract, produces only the declared outputs, and stops. A
-rejection sends work back to the earliest stage that owns the defect:
+CLAD bridges three ideas into a single discipline: WYSIWID gives the
+architecture. ICM gives the workspace scaffold (numbered stages, CONTEXT.md
+contracts, the filesystem as state machine). CLAD adds the human-in-the-loop
+flow — plain-language intent → chain of linked artefacts → executable spec →
+running system, with deterministic Python scripts gating every transition.
+
+The result is a state machine of stages punctuated by human review gates.
+The human provides a brief and reviews artefacts at each gate; the agent reads
+a stage contract, produces only the declared outputs, and stops. A rejection
+sends work back to the earliest stage that owns the defect:
 
 ```mermaid
 flowchart TD
