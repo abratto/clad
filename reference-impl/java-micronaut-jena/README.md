@@ -402,6 +402,49 @@ engine.dataset.tdb2.dir=./data/tdb2-store
 
 Backends are selected at startup; changing the property requires a restart.
 
+### Engine mode — reference vs. predicate
+
+CLAD ships two sync dispatch engines, configured via `clad.properties`:
+
+```properties
+engine.mode=reference   # sequential dispatch (default)
+engine.mode=predicate   # transactional predicate evaluation
+```
+
+**Reference engine** (`engine/reference/`) — the original dispatch loop.
+Each concept action commits independently. The SyncDispatcher polls for
+completed actions and fires matching syncs. Simple, proven, and used
+throughout the UC-00-login worked example and the Conduit project.
+
+**Predicate engine** (`engine/predicate/`) — implements the formal
+synchronization semantics from Meng & Jackson's WYSIWID paper. Key
+differences:
+
+| Behavior | Reference engine | Predicate engine |
+|---|---|---|
+| When syncs are evaluated | After concept commits (poll event) | Before concept commits (predicate check) |
+| Unmatched outcomes | Silently succeed (no sync fires) | Rejected — `SyncEvaluationException` thrown |
+| A→B composite writes | Independent commits (window of inconsistency) | Single Jena transaction via `beginBatch/flushBatch` |
+| Web/respond | Always succeeds | Always succeeds (exempt) |
+| Concept isolation | Enforced by ArchUnit (R1) | Enforced by ArchUnit (R1) — unchanged |
+
+The predicate engine's `PredicateConceptAgent` extends `ConceptAgent` and
+overrides `writeCompletion()`. Before writing anything, it asks the
+`PredicateSyncDispatcher` which syncs match the proposed outcome. If no
+sync matches (and the action isn't Web/respond), the completion is
+rejected before any state mutation. If syncs match, the completion and
+all sync invocations are batched into a single Jena transaction — a
+reader never sees Concept A updated without Concept B invoked.
+
+This aligns with the paper's model: *"An action a_A in Concept A and an
+action a_B in Concept B occur co-instantaneously."* The predicate engine
+evaluates the synchronization as a logical constraint over the combined
+action space, then commits the composite transition atomically.
+
+Concepts, syncs, SPARQL syntax, the stage pipeline, and quality-gate
+scripts are identical across both engines. Switching modes requires only
+the property change — no code or artefact changes needed.
+
 #### Performance summary (Apple M4 Pro, 64 GB RAM, macOS)
 
 | Backend | p50 (1 thr) | p50 (4 thr) | Max req/s | Errors | Persistence |
