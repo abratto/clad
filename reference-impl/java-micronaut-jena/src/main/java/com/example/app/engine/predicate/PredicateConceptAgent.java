@@ -33,9 +33,10 @@ import java.util.Map;
  * valid if at least one synchronization predicate is satisfied by its
  * outcome. No unmatched actions can exist in the system.
  *
- * <p>The composite write (completion + sync invocations) is sequential
- * rather than a single Jena transaction — see {@link TransactionManager}
- * for the tradeoff discussion.
+ * <p>The composite write (completion + sync invocations) is a single Jena
+ * transaction via {@link ActionLog#beginBatch}/{@link ActionLog#flushBatch}.
+ * A reader never sees A's completion without B's invocation — the entire
+ * composite transition commits or rolls back atomically.
  */
 public abstract class PredicateConceptAgent extends ConceptAgent {
 
@@ -85,12 +86,20 @@ public abstract class PredicateConceptAgent extends ConceptAgent {
                     + ". Add a sync rule to handle this outcome.");
         }
 
-        // Write the completion (commits independently)
-        writeCompletionSparql(invocation, output);
-
-        // Fire matching syncs sequentially (each commits independently)
-        for (SyncAgent sync : matchingSyncs) {
-            sync.execute();
+        // Atomic composite write: batch all SPARQL into one transaction
+        actionLog.beginBatch();
+        try {
+            writeCompletionSparql(invocation, output);
+            for (SyncAgent sync : matchingSyncs) {
+                sync.execute();
+            }
+            actionLog.flushBatch();
+        } catch (Exception e) {
+            actionLog.abortBatch();
+            throw new SyncEvaluationException(
+                    "Atomic composite write failed for " + invocation.conceptIri()
+                    + "/" + invocation.actionName() + "[" + outcome + "]: "
+                    + e.getMessage(), e);
         }
     }
 

@@ -12,17 +12,6 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for the predicate engine.
- *
- * <h3>Paper semantics verified</h3>
- * <ol>
- *   <li>A concept can only commit outcomes with matching sync predicates</li>
- *   <li>Unmatched outcomes throw SyncEvaluationException (pre-commit rejection)</li>
- *   <li>Web/respond bypasses predicate enforcement (terminal action)</li>
- *   <li>Dispatch evaluation returns correct syncs per trigger</li>
- * </ol>
- */
 @DisplayName("PredicateEngine")
 class PredicateEngineTest {
 
@@ -59,6 +48,21 @@ class PredicateEngineTest {
         }
         @Override protected String thenBindings() {
             return " ?_then_1 :concept <https://clad.dev/concept/test> ; :name \"record\" ; :input [ :status \"synced\" ] . ";
+        }
+    }
+
+    /** A sync that fails during execute() to test rollback. */
+    private static class FailingSync extends SyncAgent {
+        FailingSync(ActionLog log) { super(log); }
+        @Override public String syncName() { return "failingSync"; }
+        @Override public SyncTrigger trigger() {
+            return new SyncTrigger("https://clad.dev/concept/test", "doThing", "OK");
+        }
+        @Override protected String whereClause() {
+            return " ?_when_1 :concept <https://clad.dev/concept/test> ; :name \"doThing\" . ";
+        }
+        @Override protected String thenBindings() {
+            return " BIND(\"oops\" AS ?_bad) ";  // malformed SPARQL — will fail at flush
         }
     }
 
@@ -114,6 +118,34 @@ class PredicateEngineTest {
             assertDoesNotThrow(() -> concept.writeCompletion(inv, Map.of(
                     "outcome", ResourceFactory.createStringLiteral("200"),
                     "statusCode", ResourceFactory.createTypedLiteral(200))));
+        }
+
+        @Test
+        @DisplayName("atomic batch: failed sync rolls back completion")
+        void batchAbortRollsBack() {
+            ActionLog batchLog = new ActionLog();
+            SyncAgent failingSync = new FailingSync(batchLog);
+            PredicateSyncDispatcher failingDispatcher = new PredicateSyncDispatcher(
+                    batchLog, List.of(failingSync));
+
+            TestConcept concept = new TestConcept(batchLog, new CompletionBus(), failingDispatcher);
+            ActionRecord inv = new ActionRecord(
+                    "https://clad.dev/action/atomic-test",
+                    "https://clad.dev/flow/test-flow",
+                    "https://clad.dev/concept/test",
+                    "doThing",
+                    Map.of("input", ResourceFactory.createStringLiteral("test")));
+
+            assertThrows(SyncEvaluationException.class,
+                    () -> concept.writeCompletion(inv, Map.of(
+                            "outcome", ResourceFactory.createStringLiteral("OK"))));
+
+            boolean hasCompletion = batchLog.ask(
+                    "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n" +
+                    "ASK { GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
+                    "  <https://clad.dev/action/atomic-test> :outcome ?o }\n}");
+            assertFalse(hasCompletion,
+                    "Completion should be rolled back after abortBatch");
         }
     }
 
