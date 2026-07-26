@@ -145,6 +145,39 @@ call `flowManager.rootAction()`, call `syncDispatcher.awaitResponse()`,
 and translate the response to HTTP. Everything else belongs in concepts
 or syncs.
 
+### What a session looks like
+
+From the [WALKTHROUGH](methodology/WALKTHROUGH.md) — an actual session building login via UC-00-login:
+
+```
+Human:  "I want to add login. Username and password. On success they get
+         a session token. On failure, the error message must not reveal
+         whether the username exists. After several failed attempts the
+         account locks for a while."
+
+Agent:  I read one in-scope actor: EndUser. I read three in-scope goals:
+        Sign In, See Safe Failure Message, Understand Lockout.
+        
+        Before I write anything, four questions:
+        1. Is EndUser the only actor — no admin / operator?
+        2. Is lockout a goal or just a mechanism?
+        3. Is logout in scope?
+        4. Is the username opaque (no email semantics)?
+
+Human:  "1) yes; 2) goal — they need to understand why retries fail;
+         3) out of scope; 4) opaque."
+
+Agent:  [writes actors.md and goals.md to output/]
+        "Do you agree with this step? Any corrections before I continue?"
+```
+
+The agent then walks stage by stage through the numbered CONTEXT.md
+contracts — proposing, writing, and stopping at each of three human
+gates for review (Requirements, Architecture, Executable spec). Each
+gate produces files on disk you can diff, edit, and approve. The full
+turn-by-turn session is in
+[`methodology/WALKTHROUGH.md`](methodology/WALKTHROUGH.md).
+
 ## Quick start
 
 ```bash
