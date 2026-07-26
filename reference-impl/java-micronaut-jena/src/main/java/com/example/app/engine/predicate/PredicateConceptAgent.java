@@ -1,0 +1,124 @@
+package com.example.app.engine.predicate;
+
+import com.example.app.engine.ActionLog;
+import com.example.app.engine.ActionRecord;
+import com.example.app.engine.CompletionBus;
+import com.example.app.engine.ConceptAgent;
+import com.example.app.engine.RdfVocabulary;
+import com.example.app.engine.SyncAgent;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.riot.out.NodeFmtLib;
+import org.apache.jena.riot.system.PrefixMap;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Concept agent base class for the predicate engine.
+ *
+ * <h3>Key behavioral difference from the reference engine</h3>
+ *
+ * <p>In the reference engine, any outcome can be committed. The dispatcher
+ * simply won't fire any syncs for an unmatched outcome. The action quietly
+ * succeeds with no follow-through, leaving the flow chain hanging.
+ *
+ * <p>In the predicate engine, {@code writeCompletion} evaluates which syncs
+ * match the proposed outcome BEFORE writing anything. If no sync matches
+ * and the action is not Web/respond, the completion is rejected before any
+ * state is modified. The concept is informed that its outcome has no
+ * valid path through the system.
+ *
+ * <p>This implements the paper's predicate model: synchronizations are
+ * logical constraints over the combined action space. An action is only
+ * valid if at least one synchronization predicate is satisfied by its
+ * outcome. No unmatched actions can exist in the system.
+ *
+ * <p>The composite write (completion + sync invocations) is sequential
+ * rather than a single Jena transaction — see {@link TransactionManager}
+ * for the tradeoff discussion.
+ */
+public abstract class PredicateConceptAgent extends ConceptAgent {
+
+    private static final String WEB_CONCEPT_IRI = "https://clad.dev/concept/web";
+
+    protected final PredicateSyncDispatcher dispatcher;
+
+    protected PredicateConceptAgent(
+            ActionLog actionLog,
+            CompletionBus completionBus,
+            PredicateSyncDispatcher dispatcher) {
+        super(actionLog, completionBus);
+        this.dispatcher = dispatcher;
+    }
+
+    /**
+     * Writes a completion with predicate enforcement.
+     *
+     * <ol>
+     *   <li>Evaluates which syncs match this outcome.</li>
+     *   <li>If no sync matches and this is not a Web/respond action,
+     *       throws {@link SyncEvaluationException}.</li>
+     *   <li>If syncs match, writes the completion, then fires each
+     *       matching sync sequentially.</li>
+     * </ol>
+     */
+    @Override
+    protected void writeCompletion(ActionRecord invocation, Map<String, RDFNode> output) {
+        RDFNode outcomeNode = output.get("outcome");
+        if (outcomeNode == null) {
+            throw new SyncEvaluationException(
+                    "writeCompletion called without an 'outcome' field");
+        }
+        String outcome = outcomeNode.asLiteral().getString();
+
+        boolean isRespondAction = WEB_CONCEPT_IRI.equals(invocation.conceptIri())
+                && "respond".equals(invocation.actionName());
+
+        List<SyncAgent> matchingSyncs = dispatcher.evaluateSyncs(
+                invocation.conceptIri(), invocation.actionName(), outcome);
+
+        if (matchingSyncs.isEmpty() && !isRespondAction) {
+            throw new SyncEvaluationException(
+                    "No sync matches outcome '" + outcome
+                    + "' for " + invocation.conceptIri()
+                    + "/" + invocation.actionName()
+                    + ". Add a sync rule to handle this outcome.");
+        }
+
+        // Write the completion (commits independently)
+        writeCompletionSparql(invocation, output);
+
+        // Fire matching syncs sequentially (each commits independently)
+        for (SyncAgent sync : matchingSyncs) {
+            sync.execute();
+        }
+    }
+
+    private void writeCompletionSparql(ActionRecord invocation, Map<String, RDFNode> output) {
+        StringBuilder sparql = new StringBuilder();
+        sparql.append("PREFIX : <").append(RdfVocabulary.ACTION_SCHEMA_IRI).append(">\n");
+        sparql.append("INSERT DATA {\n");
+        sparql.append("  GRAPH <").append(actionGraphIRI()).append("> {\n");
+
+        RDFNode outcomeNode = output.get("outcome");
+        sparql.append("    <").append(invocation.actionIri()).append("> :outcome ")
+              .append(NodeFmtLib.str(outcomeNode.asNode(), (PrefixMap) null))
+              .append(" .\n");
+
+        for (Map.Entry<String, RDFNode> entry : output.entrySet()) {
+            if ("outcome".equals(entry.getKey())) continue;
+            sparql.append("    <").append(invocation.actionIri()).append("> :")
+                  .append(entry.getKey()).append(" ")
+                  .append(NodeFmtLib.str(entry.getValue().asNode(), (PrefixMap) null))
+                  .append(" .\n");
+        }
+
+        sparql.append("    << <").append(invocation.actionIri()).append("> :outcome ")
+              .append(NodeFmtLib.str(outcomeNode.asNode(), (PrefixMap) null))
+              .append(" >> :flow <").append(invocation.flowToken()).append("> .\n");
+        sparql.append("  }\n");
+        sparql.append("}\n");
+        actionLog.update(sparql.toString());
+        signalCompletion();
+    }
+}
