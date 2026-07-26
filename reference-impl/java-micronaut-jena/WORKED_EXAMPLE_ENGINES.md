@@ -140,3 +140,31 @@ public class OriginConcept extends PredicateConceptAgent {
 
 The `processInvocation()` body is identical. The difference is in the base
 class and what happens inside `writeCompletion()`.
+
+### Testing concepts with the predicate engine
+
+To test a predicate-engine concept in isolation (without registering all
+syncs that fire on its outcomes), use the test-mode constructor:
+
+```java
+class OriginConceptTest extends ConceptTestBase {
+    private OriginConcept concept;
+
+    @BeforeEach
+    void setUp() {
+        concept = new OriginConcept(log, bus);  // test-mode — no dispatcher
+    }
+
+    @Test
+    void shouldReturnOk() {
+        // writes [OK] — predicate evaluation skipped in test mode
+        concept.writeCompletion(inv, Map.of("outcome", ...));
+        assertEquals("OK", readOutcome());
+    }
+}
+```
+
+The 2-arg constructor bypasses predicate evaluation so isolated concept
+tests don't need syncs registered. Use the 3-arg constructor for
+integration tests that verify predicate behavior (see
+`PredicateEngineTest.java`).

@@ -48,9 +48,16 @@ here.
    from `04b_spec/output/` that are not exercised by the flow tests.
 2. Write the concept test file(s) only under `APP_TEST_SOURCE_ROOT`.
    Do not write or modify production implementation code in this stage.
-3. After asserting each outcome token, assert the primary completion
-  fields that `writeCompletion` writes and downstream syncs consume.
-  Outcome-only tests are incomplete.
+3. **If your concept extends `PredicateConceptAgent`:** use the test-mode
+   constructor (2-arg: `ActionLog`, `CompletionBus`) for isolated concept
+   tests. This bypasses predicate evaluation so the concept can commit
+   outcomes without registering syncs — the test verifies internal
+   concept logic, not sync orchestration. Sync orchestration testing
+   belongs in `04e`. See
+   `reference-impl/java-micronaut-jena/README.md` §"Using the predicate engine".
+4. After asserting each outcome token, assert the primary completion
+   fields that `writeCompletion` writes and downstream syncs consume.
+   Outcome-only tests are incomplete.
 4. Run the canonical command from `../../../../_config/build-and-test.md`
    and confirm the result is true red: test compilation succeeds and the
    tests fail for behavioral reasons.
