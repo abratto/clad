@@ -66,6 +66,39 @@ the source of domain truth.
 | Scheduler | `com.example.app.engine.SyncDispatcher` — the only loop in the system |
 | Hard rules R1–R5 | Enforced by `LegibleArchitectureRulesTest` (ArchUnit) |
 
+### Using the predicate engine (default)
+
+When you create a new CLAD project with the Java profile, concepts should
+extend `PredicateConceptAgent` instead of `ConceptAgent`. This gives you
+pre-commit sync evaluation, unmatched-outcome rejection, and atomic
+batch writes.
+
+```java
+// In your concept class — e.g. UserConcept.java
+import com.example.app.engine.predicate.PredicateConceptAgent;
+import com.example.app.engine.predicate.PredicateSyncDispatcher;
+
+public class UserConcept extends PredicateConceptAgent {
+
+    @Inject
+    public UserConcept(ActionLog log, CompletionBus bus,
+                       PredicateSyncDispatcher dispatcher) {
+        super(log, bus, dispatcher);
+    }
+    // ... rest of concept: conceptIRI, pollAll, processInvocation
+}
+```
+
+Syncs and the FlowManager are unchanged — they work identically under
+both engines. The only migration step is the base class and constructor.
+If you already have concepts extending `ConceptAgent`, change them to
+`PredicateConceptAgent` and add `PredicateSyncDispatcher` to their
+constructor. The `processInvocation()` method is unchanged.
+
+To use the reference engine instead (e.g. for learning or debugging
+the step-by-step dispatch loop), set `engine.mode=reference` in
+`clad.properties` and have concepts extend `ConceptAgent`.
+
 See [`../../methodology/architecture/ENGINE.md`](../../methodology/architecture/ENGINE.md)
 for engine internals (trigger index, dedup edge, flow archival).
 
