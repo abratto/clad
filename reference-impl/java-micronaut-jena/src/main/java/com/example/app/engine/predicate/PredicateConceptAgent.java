@@ -101,6 +101,12 @@ public abstract class PredicateConceptAgent extends ConceptAgent {
                     + "/" + invocation.actionName() + "[" + outcome + "]: "
                     + e.getMessage(), e);
         }
+
+        // Flow archival: when Web/respond completes, move the flow's triples
+        // from the active action graph to the archive to prevent unbounded growth.
+        if (isRespondAction && invocation.flowToken() != null) {
+            actionLog.archiveFlow(invocation.flowToken());
+        }
     }
 
     private void writeCompletionSparql(ActionRecord invocation, Map<String, RDFNode> output) {
