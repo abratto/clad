@@ -32,6 +32,10 @@ class PredicateEngineTest {
         TestConcept(ActionLog log, CompletionBus bus, PredicateSyncDispatcher d) {
             super(log, bus, d);
         }
+        // Test-mode constructor — bypasses predicates (null dispatcher)
+        TestConcept(ActionLog log, CompletionBus bus) {
+            super(log, bus);
+        }
         @Override protected String conceptIRI() { return "https://clad.dev/concept/test"; }
         @Override public void pollAll() {}
         @Override protected void processInvocation(ActionRecord inv) {}
@@ -173,6 +177,37 @@ class PredicateEngineTest {
             // references. The key behavioral test is that it doesn't throw.
             // Full archival verification requires checking the archive graph.
             assertDoesNotThrow(() -> log.archiveFlow("https://clad.dev/flow/other"));
+        }
+    }
+
+    @Nested
+    @DisplayName("Test mode (bypass predicates)")
+    class TestMode {
+
+        @Test
+        @DisplayName("isolated concept test — outcomes commit without syncs")
+        void isolatedTestBypassesPredicates() {
+            // Use the test-mode constructor — no dispatcher needed
+            TestConcept concept = new TestConcept(log, bus);
+            ActionRecord inv = new ActionRecord(
+                    "https://clad.dev/action/isolated-1",
+                    "https://clad.dev/flow/isolated-flow",
+                    "https://clad.dev/concept/test",
+                    "doThing",
+                    Map.of("input", ResourceFactory.createStringLiteral("test")));
+
+            // Should commit without throwing — no syncs registered in test mode
+            assertDoesNotThrow(() -> concept.writeCompletion(inv, Map.of(
+                    "outcome", ResourceFactory.createStringLiteral("ANY_OUTCOME"),
+                    "result", ResourceFactory.createStringLiteral("done"))));
+
+            // Verify the completion was actually written
+            boolean hasCompletion = log.ask(
+                    "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n" +
+                    "ASK { GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
+                    "  <https://clad.dev/action/isolated-1> :outcome ?o }\n}");
+            assertTrue(hasCompletion,
+                    "Completion should be committed in test mode");
         }
     }
 

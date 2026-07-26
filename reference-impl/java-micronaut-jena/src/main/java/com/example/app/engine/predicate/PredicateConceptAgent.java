@@ -41,15 +41,37 @@ import java.util.Map;
 public abstract class PredicateConceptAgent extends ConceptAgent {
 
     private static final String WEB_CONCEPT_IRI = "https://clad.dev/concept/web";
+    private static final PredicateSyncDispatcher NOOP = null;
 
     protected final PredicateSyncDispatcher dispatcher;
 
+    /**
+     * Production constructor — concept participates in full predicate evaluation.
+     * Every outcome must have a matching sync unless it's Web/respond.
+     */
     protected PredicateConceptAgent(
             ActionLog actionLog,
             CompletionBus completionBus,
             PredicateSyncDispatcher dispatcher) {
         super(actionLog, completionBus);
         this.dispatcher = dispatcher;
+    }
+
+    /**
+     * Test constructor — predicate evaluation is bypassed. Use this for
+     * isolated concept tests that verify internal logic without requiring
+     * syncs to be registered. The concept commits outcomes normally without
+     * checking whether syncs match.
+     *
+     * <p>Concept tests should NOT register syncs just to make the predicate
+     * engine happy — that couples the test to the sync configuration when
+     * the test only cares about the concept's internal behavior.
+     */
+    protected PredicateConceptAgent(
+            ActionLog actionLog,
+            CompletionBus completionBus) {
+        super(actionLog, completionBus);
+        this.dispatcher = null;
     }
 
     /**
@@ -74,6 +96,15 @@ public abstract class PredicateConceptAgent extends ConceptAgent {
 
         boolean isRespondAction = WEB_CONCEPT_IRI.equals(invocation.conceptIri())
                 && "respond".equals(invocation.actionName());
+
+        // Test mode: dispatcher is null — skip predicate evaluation.
+        // Used by isolated concept tests that verify internal logic without
+        // registering syncs. Outcomes commit normally without sync matching.
+        if (dispatcher == null) {
+            writeCompletionSparql(invocation, output);
+            signalCompletion();
+            return;
+        }
 
         List<SyncAgent> matchingSyncs = dispatcher.evaluateSyncs(
                 invocation.conceptIri(), invocation.actionName(), outcome);
