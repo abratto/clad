@@ -99,6 +99,9 @@ To use the reference engine instead (e.g. for learning or debugging
 the step-by-step dispatch loop), set `engine.mode=reference` in
 `clad.properties` and have concepts extend `ConceptAgent`.
 
+For a side-by-side walkthrough of the same 3-concept chain in both
+engines, see [`WORKED_EXAMPLE_ENGINES.md`](WORKED_EXAMPLE_ENGINES.md).
+
 See [`../../methodology/architecture/ENGINE.md`](../../methodology/architecture/ENGINE.md)
 for engine internals (trigger index, dedup edge, flow archival).
 
