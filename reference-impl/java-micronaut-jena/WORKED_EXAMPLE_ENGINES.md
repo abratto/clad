@@ -4,6 +4,10 @@ This file walks the same 3-concept chain (Origin → Middle → Terminal → Res
 through both engines, highlighting the behavioral difference that makes the
 predicate engine match the WYSIWID paper's formal semantics.
 
+**Context:** All concepts in these examples share one JVM and one Jena Dataset.
+WYSIWID concepts are modular code boundaries, not network boundaries — see the
+[modular monolith section in the README](README.md#architecture-a-modular-monolith).
+
 ## The scenario
 
 Three concepts and three syncs, forming a chain:

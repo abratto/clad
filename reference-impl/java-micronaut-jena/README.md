@@ -489,6 +489,62 @@ Concepts, syncs, SPARQL syntax, the stage pipeline, and quality-gate
 scripts are identical across both engines. Switching modes requires only
 the property change — no code or artefact changes needed.
 
+### Architecture: a modular monolith
+
+CLAD's WYSIWID architecture produces a **modular monolith** — not a
+distributed system. Concepts are code-level boundaries, not network
+boundaries. All concepts live in one JVM, all state lives in one Jena
+`Dataset` (in-memory or TDB2-backed), and synchronizations execute as
+SPARQL within the same transaction context.
+
+This is intentional and matches the paper: *"Concepts are modular
+software boundaries, not distributed system boundaries."* The guarantee
+of atomic composite writes (A's outcome + B's invocation in one
+transaction) requires a shared transaction coordinator. In CLAD, that
+coordinator is the Jena Dataset.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    SINGLE JVM PROCESS                       │
+│                                                             │
+│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐   │
+│  │ Concept: User │  │Concept:Session│  │Concept:Auth   │   │
+│  │ (isolated pkg)│  │ (isolated pkg)│  │ (isolated pkg)│   │
+│  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘   │
+│          │                  │                  │           │
+│          └──────► PredicateSyncDispatcher ◄────┘           │
+│                            │                                │
+└────────────────────────────│────────────────────────────────┘
+                             ▼
+               ┌─────────────────────────┐
+               │   Jena Dataset (TxnMem  │
+               │   or TDB2)              │
+               │                         │
+               │   BEGIN ... COMMIT      │
+               │   cross-graph atomic    │
+               └─────────────────────────┘
+```
+
+**What you get:** total code isolation (no cross-concept imports, enforced
+by ArchUnit), zero-cost transactional guarantees (concepts share a
+transaction engine), and predictable latency (no network hops between
+concepts).
+
+**What you trade off:** per-concept runtime isolation (all concepts share
+a process) and per-concept storage isolation (all concepts share a
+Dataset). If you need independent scaling per concept, you're looking at
+a different architecture than WYSIWID — and you'll face the same
+tradeoffs every distributed system faces:
+
+- **2PC/XA**: true predicate guarantees across databases, but high
+  latency, reduced availability.
+- **Saga/eventual consistency**: decoupled writes, but the predicate is
+  violated between steps — compensating actions required.
+
+The modular monolith is not a compromise — it's the architecture the
+paper describes. Future CLAD work on distributed concepts would be a
+new engine mode, not a replacement for this one.
+
 #### Performance summary (Apple M4 Pro, 64 GB RAM, macOS)
 
 | Backend | p50 (1 thr) | p50 (4 thr) | Max req/s | Errors | Persistence |
