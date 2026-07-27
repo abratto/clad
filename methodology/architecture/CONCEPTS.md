@@ -243,6 +243,80 @@ do things. Syncs connect things.
 ❌ Concept: ArticleCreationNotifier (this is just a sync)
 ```
 
+### 6. Independent lifetime
+
+A concept should be removable without breaking other concepts' internal
+invariants. If you can delete this entire capability from the product
+and the remaining concepts' state machines are still valid, it's a
+proper concept boundary.
+
+```
+✅ You can remove Upvote or Tagging from an article app without
+   affecting Article's ability to create, edit, or delete.
+❌ If removing "password reset" breaks Password's authentication
+   state machine, they should be one concept, not two.
+```
+
+### 7. Not any of these
+
+These constructs are NOT concepts and belong elsewhere in CLAD:
+
+| Construct | Why not a concept | Where it belongs |
+|---|---|---|
+| Cross-concept workflow | Coordinates multiple purposes | Sync (Stage 03) |
+| Database table / DTO | No behavioral purpose | Internal concept implementation |
+| API endpoint / route | Transport mechanism | Web concept + infrastructure |
+| UI component / widget | Visual layout | Frontend (outside CLAD scope) |
+| Pure calculation | No internal state | Helper utility in concept |
+| Data structure | Passed between actions, not owned | Type parameter or payload |
+
+## Decision flowchart for agents
+
+When the responsibility map (Stage 01a) asks "is this a concept?",
+walk each candidate through these four gates:
+
+```
+Candidate feature F
+         │
+    ┌────┴────┐
+    │ 1. Does F maintain its own state and expose actions to
+    │    modify that state?
+    └────┬────┘
+     No  │  Yes
+         ▼
+    Not a concept — helper function, payload type, or config.
+
+         │
+    ┌────┴────┐
+    │ 2. Can F's purpose be stated in one sentence without "and"?
+    └────┬────┘
+     No  │  Yes
+         ▼
+    Split F into two or more concepts (F₁, F₂...).
+
+         │
+    ┌────┴────┐
+    │ 3. Does F directly import or reference another concept
+    │    (beyond opaque type IDs)?
+    └────┬────┘
+    Yes  │  No
+         ▼
+    Refactor: remove direct imports, use generic IDs, move
+    interaction to a sync.
+
+         │
+    ┌────┴────┐
+    │ 4. If we deleted F tomorrow, would the remaining concepts
+    │    still function correctly?
+    └────┬────┘
+     No  │  Yes
+         ▼
+    F's state is entangled — it's not a clean concept boundary.
+    Merge it with the concept it depends on, or re-split.
+         │
+    ✅ Valid concept. Write it up in the responsibility map.
+```
+
 ## Authoring a concept (for agents)
 
 When stage `02_concepts/` runs, the agent should produce one
