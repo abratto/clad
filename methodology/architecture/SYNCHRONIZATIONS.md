@@ -129,6 +129,42 @@ In the sync's source file, patterns are documented in a "Where clause
 patterns" table (see the [`templates/sync.md`](../../templates/sync.md)).
 Stage 03a's dependency review scans this table for concept-state read rows.
 
+## How syncs fan out — the Frames model
+
+A sync doesn't fire once per `when` match. It fires once per **frame** —
+each distinct set of variable bindings that satisfies the `where` clause.
+This is the same model used by Eagon Meng's `sync-blank` reference
+implementation and the WYSIWID paper's predicate semantics.
+
+A frame is simply one row in the `where` clause's result set. If a
+`where` clause queries "all followers of this post" and finds three
+followers, the result set has three rows, which means three frames. The
+`then` clause emits one invocation per frame.
+
+```
+sync NotifyFollowersOnComment
+
+when {
+    Comment/create: [ post: ?post ] => [ CREATED ]
+}
+where {
+    // This query produces one row per follower → N frames
+    Follow: { ?f user: ?user . target: ?post }
+}
+then {
+    Notification/notify: [ to: ?user, message: "New comment" ]
+}
+```
+
+If the post has 3 followers, this sync fires 3 `Notification/notify`
+invocations — one per frame. The SPARQL result set IS the frame set.
+
+Two syncs that would be separate event handlers in a procedural model
+collapse into one declarative rule: the `where` clause handles the
+fan-out, and `then` handles each resulting frame. This is why syncs
+never contain loops or `for` statements — the iteration is implicit in
+the query result.
+
 ## Where clause expressiveness
 
 The paper's `where` clause is a **declarative query language** that
