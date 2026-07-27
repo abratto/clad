@@ -3,7 +3,8 @@ package com.example.app.concepts.session;
 import com.example.app.engine.ActionLog;
 import com.example.app.engine.ActionRecord;
 import com.example.app.engine.CompletionBus;
-import com.example.app.engine.ConceptAgent;
+import com.example.app.engine.predicate.PredicateConceptAgent;
+import com.example.app.engine.predicate.PredicateSyncDispatcher;
 import com.example.app.engine.RdfVocabulary;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -27,7 +28,7 @@ import java.util.UUID;
  * </ul>
  */
 @Singleton
-public final class SessionConcept extends ConceptAgent {
+public final class SessionConcept extends PredicateConceptAgent {
 
     public static final String IRI = "https://clad.dev/concept/session";
 
@@ -35,6 +36,12 @@ public final class SessionConcept extends ConceptAgent {
     private static final String NS = "https://clad.dev/concept/session#";
 
     @Inject
+    public SessionConcept(ActionLog actionLog, CompletionBus completionBus,
+                          PredicateSyncDispatcher dispatcher) {
+        super(actionLog, completionBus, dispatcher);
+    }
+
+    /** Test-only constructor. */
     public SessionConcept(ActionLog actionLog, CompletionBus completionBus) {
         super(actionLog, completionBus);
     }

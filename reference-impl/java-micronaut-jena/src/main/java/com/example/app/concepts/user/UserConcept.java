@@ -3,7 +3,8 @@ package com.example.app.concepts.user;
 import com.example.app.engine.ActionLog;
 import com.example.app.engine.ActionRecord;
 import com.example.app.engine.CompletionBus;
-import com.example.app.engine.ConceptAgent;
+import com.example.app.engine.predicate.PredicateConceptAgent;
+import com.example.app.engine.predicate.PredicateSyncDispatcher;
 import com.example.app.engine.RdfVocabulary;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -24,7 +25,7 @@ import java.util.UUID;
  * </ul>
  */
 @Singleton
-public final class UserConcept extends ConceptAgent {
+public final class UserConcept extends PredicateConceptAgent {
 
     /** IRI used in :concept triples. */
     public static final String IRI = "https://clad.dev/concept/user";
@@ -33,6 +34,12 @@ public final class UserConcept extends ConceptAgent {
     private static final String PROFILE_NS = "https://clad.dev/concept/user#";
 
     @Inject
+    public UserConcept(ActionLog actionLog, CompletionBus completionBus,
+                       PredicateSyncDispatcher dispatcher) {
+        super(actionLog, completionBus, dispatcher);
+    }
+
+    /** Test-only constructor. */
     public UserConcept(ActionLog actionLog, CompletionBus completionBus) {
         super(actionLog, completionBus);
     }
