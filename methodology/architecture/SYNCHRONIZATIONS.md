@@ -7,6 +7,23 @@ outcome, then run that action on concept B with these arguments.*
 Syncs are the **only** place where two concepts come into contact. All
 business-level wiring lives here.
 
+Formally, a sync is a function over a causal flow that maps completed
+actions into **frames** (sets of variable bindings). Three phases,
+all declarative:
+
+1. **`when`** — a multi-action join selecting which completed actions
+   in the flow match specified patterns.
+2. **`where`** — a purely read-only query and filter phase. Frames are
+   refined and expanded (fan-out) by querying concept state, but **no
+   state mutation occurs here** — this is enforced by SPARQL SELECT vs.
+   INSERT separation in the reference profile.
+3. **`then`** — action emission. Each surviving frame produces one or
+   more invocations. The SPARQL INSERT fires once per result row.
+
+This model ensures three guarantees: syncs never mutate state during
+inspection, execution is deterministic per frame set, and all matching
+is scoped to a single causal flow token.
+
 ## Shape
 
 ```
