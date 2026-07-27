@@ -40,7 +40,10 @@ responsibility cluster or extension branch that might justify a concept.
 Only keep a candidate as a real concept if it passes all of these
 tests: one capability in one verb phrase, specifiable without another
 concept's internals, not merely bootstrap transport work, and not a
-duplicate of an already-listed concept.
+duplicate of an already-listed concept. Also apply the five heuristics
+in `methodology/architecture/CONCEPTS.md` §"Is it a concept?" —
+one user-facing purpose, self-contained state, polymorphic, small
+enough for one context window, and not a sync.
 
 The reason for splitting this out is to give the human a clean review
 surface: *"these are the right concepts and they own the right

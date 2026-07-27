@@ -189,6 +189,60 @@ Section 4 with three intentional divergences:
 | Multiplicity annotations | Not present | Added as `-- mandatory / optional / ...` comments for Stage 03b data modeling |
 | Operational principle | Unqualified action names: `after set [...]` | Fully qualified: `after PasswordAuth/setPassword: [...]` — maintains traceability to the concept boundary |
 
+## Is it a concept? — heuristics for agents
+
+When deciding what belongs as its own concept (Stage 01a responsibility
+map), use these tests. If you answer "no" to any of them, the thing
+probably shouldn't be its own concept.
+
+### 1. One distinct user-facing purpose
+
+A concept does exactly one thing a user cares about. `Password` handles
+authentication. `Upvote` handles expressing interest. `Trash` handles
+soft-deletion. If you're tempted to add a second, unrelated action,
+split it:
+
+| ✅ Good concept | ❌ Too much |
+|---|---|
+| `Password` — authenticate, reset | `Account` — authenticate, set profile, manage billing, send invites |
+| `Article` — CRUD, slug management | `ArticleManager` — CRUD, SEO, analytics, versioning, social sharing |
+
+**Heuristic:** If you describe the concept in conversation and need the
+word "and," you might need two concepts. "It handles authentication" →
+one concept. "It handles authentication and profile management" → two.
+
+### 2. Self-contained state
+
+A concept owns all the state it needs to operate. It never reads another
+concept's state directly. If you need another concept's data, you either
+(a) accept it as an input parameter from the sync that called you, or
+(b) do a concept-state read in the sync's `where` clause.
+
+### 3. Polymorphic by default
+
+Concepts use opaque type parameters and identifiers. `Password` takes a
+`[UserId]` — it doesn't know or care what a `User` is. `Comment` takes a
+`[TargetId]` — it attaches to a post, an article, a profile, whatever.
+If your concept imports another concept's types, you're doing it wrong.
+
+### 4. Small enough for one context window
+
+A concept spec (plus the syncs that reference it) should fit in one LLM
+context window. If an agent needs to load other concepts to understand
+this one, the concept is too large or too entangled.
+
+### 5. Not a sync
+
+If the thing you're modeling is purely a coordination rule ("when X
+completes, then Y"), it's a sync (Stage 03), not a concept. Concepts
+do things. Syncs connect things.
+
+```
+✅ Concept: Article — creates, reads, updates, deletes articles
+✅ Sync: when Article/create[CREATED] → Notification/notify { to: ?user }
+❌ Concept: ArticleCreationNotifier (this is just a sync)
+```
+
 ## Authoring a concept (for agents)
 
 When stage `02_concepts/` runs, the agent should produce one
