@@ -33,15 +33,28 @@ public class CompletionBus {
 
     /** Signals that a concept completed an action (scheduling hint only). */
     public void signal(String conceptIri) {
-        triggeredConcepts.get().add(conceptIri);
+        triggeredConcepts.getAndUpdate(set -> {
+            set.add(conceptIri);
+            return set;
+        });
         semaphore.release();
     }
 
-    /** Blocks until a signal arrives or {@code maxWaitMs} elapses. */
+    /**
+     * Blocks until a signal arrives or {@code maxWaitMs} elapses.
+     * Guards against stale permits from signals whose concept IRIs were
+     * already drained — wakes up, drains permits, but only returns if
+     * the set actually has work.
+     */
     public void awaitSignal(long maxWaitMs) throws InterruptedException {
-        boolean signalReceived = semaphore.tryAcquire(maxWaitMs, TimeUnit.MILLISECONDS);
-        if (signalReceived) {
-            semaphore.drainPermits();
+        long deadline = System.currentTimeMillis() + maxWaitMs;
+        while (System.currentTimeMillis() < deadline) {
+            long remaining = deadline - System.currentTimeMillis();
+            if (remaining <= 0) break;
+            if (semaphore.tryAcquire(remaining, TimeUnit.MILLISECONDS)) {
+                semaphore.drainPermits();
+                if (!triggeredConcepts.get().isEmpty()) return;
+            }
         }
     }
 
