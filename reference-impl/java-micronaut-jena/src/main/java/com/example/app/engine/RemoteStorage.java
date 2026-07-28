@@ -68,7 +68,12 @@ public class RemoteStorage implements Storage {
 
     @Override
     public void archiveFlow(String flowToken) {
-        deleteFlow(flowToken);
+        // INSERT into archive graph, then DELETE from action graph.
+        // Matches LocalStorage.doArchive so all backends have identical
+        // archive semantics — completed flows survive in the archive.
+        updateBatch(List.of(
+            moveStandard(flowToken, true),
+            moveStar(flowToken, true)));
     }
 
     @Override public void beginBatch() { batched.set(new ArrayList<>()); }
@@ -87,18 +92,27 @@ public class RemoteStorage implements Storage {
 
     @Override public boolean isBatching() { return batched.get() != null; }
 
-    private void deleteFlow(String flowToken) {
+    private static String moveStandard(String ft, boolean archive) {
         String s = RdfVocabulary.ACTION_SCHEMA_IRI;
         String a = RdfVocabulary.ACTION_GRAPH_IRI;
-        String sparql = "PREFIX : <" + s + ">\n"
-            + "DELETE { GRAPH <" + a + "> { ?s ?p ?o } }\n"
-            + "WHERE { GRAPH <" + a + "> { ?a :flow <" + flowToken + "> ."
+        String arc = RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI;
+        String del = "DELETE { GRAPH <" + a + "> { ?s ?p ?o } }\n";
+        String ins = archive ? "INSERT { GRAPH <" + arc + "> { ?s ?p ?o } }\n" : "";
+        return "PREFIX : <" + s + ">\n" + del + ins
+            + "WHERE { GRAPH <" + a + "> { ?a :flow <" + ft + "> ."
             + " { ?a ?p ?o . BIND(?a AS ?s) }"
-            + " UNION { ?a :input ?s . ?s ?p ?o } } };\n"
-            + "DELETE { GRAPH <" + a + "> { << ?a :outcome ?o >> ?p ?v } }\n"
-            + "WHERE { GRAPH <" + a + "> { ?a :flow <" + flowToken + "> ."
-            + " << ?a :outcome ?o >> ?p ?v . } }";
-        link.update(UpdateFactory.create(sparql));
+            + " UNION { ?a :input ?s . ?s ?p ?o } } }\n";
+    }
+
+    private static String moveStar(String ft, boolean archive) {
+        String s = RdfVocabulary.ACTION_SCHEMA_IRI;
+        String a = RdfVocabulary.ACTION_GRAPH_IRI;
+        String arc = RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI;
+        String del = "DELETE { GRAPH <" + a + "> { << ?a :outcome ?outcome >> ?p ?o } }\n";
+        String ins = archive ? "INSERT { GRAPH <" + arc + "> { << ?a :outcome ?outcome >> ?p ?o } }\n" : "";
+        return "PREFIX : <" + s + ">\n" + del + ins
+            + "WHERE { GRAPH <" + a + "> { ?a :flow <" + ft + "> ."
+            + " << ?a :outcome ?outcome >> ?p ?o . } }\n";
     }
 
     RDFLink link() { return link; }

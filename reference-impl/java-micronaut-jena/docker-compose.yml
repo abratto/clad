@@ -18,7 +18,7 @@ services:
     environment:
       # Triplestore — Fuseki over HTTP (persistent, production-grade)
       ENGINE_DATASET_TYPE: fuseki-embedded
-      CLAD_FUSEKI_ENDPOINT: http://fuseki:3030/clad
+      CLAD_FUSEKI_ENDPOINT: http://fuseki:3030/clad/update
       # LLM — Ollama over HTTP (runs your model of choice)
       CLAD_LLM_ENDPOINT: http://ollama:11434
       CLAD_LLM_MODEL: llama3.2:3b
@@ -39,6 +39,13 @@ services:
       ADMIN_PASSWORD: "${FUSEKI_ADMIN_PASSWORD:-admin}"
     volumes:
       - fuseki_data:/fuseki
+      - ./fuseki/config.ttl:/fuseki/config.ttl
+    entrypoint:
+      - "/sbin/tini"
+      - "--"
+      - "/docker-fuseki.sh"
+      - "--config"
+      - "/fuseki/config.ttl"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3030/$/ping"]
       interval: 10s
