@@ -85,6 +85,8 @@ public class RemoteStorage implements Storage {
 
     @Override public void abortBatch() { batched.remove(); }
 
+    @Override public boolean isBatching() { return batched.get() != null; }
+
     private void deleteFlow(String flowToken) {
         String s = RdfVocabulary.ACTION_SCHEMA_IRI;
         String a = RdfVocabulary.ACTION_GRAPH_IRI;

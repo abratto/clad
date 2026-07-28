@@ -54,6 +54,8 @@ public class ActionLog {
 
     public void abortBatch() { storage.abortBatch(); }
 
+    public boolean isBatching() { return storage.isBatching(); }
+
     public void setArchiveEnabled(boolean enabled) {
         if (storage instanceof LocalStorage ls) ls.setArchiveEnabled(enabled);
     }

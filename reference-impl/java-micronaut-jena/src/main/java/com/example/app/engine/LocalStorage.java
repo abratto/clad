@@ -112,6 +112,8 @@ class LocalStorage implements Storage {
 
     @Override public void abortBatch() { batched.remove(); }
 
+    @Override public boolean isBatching() { return batched.get() != null; }
+
     private void doArchive(String ft) {
         updateBatch(List.of(moveStandard(ft, true), moveStar(ft, true)));
     }

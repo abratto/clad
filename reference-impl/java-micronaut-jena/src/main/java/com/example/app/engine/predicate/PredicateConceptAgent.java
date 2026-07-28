@@ -117,16 +117,19 @@ public abstract class PredicateConceptAgent extends ConceptAgent {
                     + ". Add a sync rule to handle this outcome.");
         }
 
-        // Atomic composite write: batch all SPARQL into one transaction
-        actionLog.beginBatch();
+        // Atomic composite write: batch all SPARQL into one transaction.
+        // If the dispatcher already started a batch (outer batch holds concept
+        // state mutations), merge into it instead of starting a new one.
+        boolean outerBatch = actionLog.isBatching();
+        if (!outerBatch) actionLog.beginBatch();
         try {
             writeCompletionSparql(invocation, output);
             for (SyncAgent sync : matchingSyncs) {
                 sync.execute();
             }
-            actionLog.flushBatch();
+            if (!outerBatch) actionLog.flushBatch();
         } catch (Exception e) {
-            actionLog.abortBatch();
+            if (!outerBatch) actionLog.abortBatch();
             throw new SyncEvaluationException(
                     "Atomic composite write failed for " + invocation.conceptIri()
                     + "/" + invocation.actionName() + "[" + outcome + "]: "

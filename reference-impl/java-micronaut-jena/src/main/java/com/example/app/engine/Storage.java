@@ -42,4 +42,7 @@ public interface Storage {
 
     /** Discards queued writes. */
     void abortBatch();
+
+    /** Returns true if a batch is currently active (writes are deferred). */
+    boolean isBatching();
 }
