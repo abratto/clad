@@ -171,6 +171,73 @@ Reserved variables owned by the engine:
 
 Do not redefine those names.
 
+### Worked execution: from a completion to a downstream invocation
+
+The names above are engine slots, not arbitrary query-local variable names.
+This example follows `PasswordAuth/check[OK] -> Session/grant` for user
+`ada-0001`.
+
+The sync contributes these fragments:
+
+```sparql
+# whereClause()
+?_when_1 :concept <https://clad.dev/concept/passwordauth> ;
+     :name    "check" ;
+     :userId  ?_userId .
+<< ?_when_1 :outcome "OK" >> :flow ?_flow .
+
+# thenBindings()
+?_then_1 :concept <https://clad.dev/concept/session> ;
+     :name    "grant" ;
+     :input   [ :userId ?_userId ] .
+```
+
+Suppose the action graph contains this completed action:
+
+```sparql
+<https://clad.dev/action/grants-trigger>
+  :concept <https://clad.dev/concept/passwordauth> ;
+  :name    "check" ;
+  :userId  "ada-0001" ;
+  :flow    <https://clad.dev/flow/grants-test-1> .
+
+<< <https://clad.dev/action/grants-trigger> :outcome "OK" >>
+  :flow <https://clad.dev/flow/grants-test-1> .
+```
+
+The `WHERE` clause produces this binding (and `BIND(IRI(...STRUUID()))`
+creates the final value):
+
+```text
+?_when_1 = <https://clad.dev/action/grants-trigger>
+?_flow    = <https://clad.dev/flow/grants-test-1>
+?_userId  = "ada-0001"
+?_then_1  = <https://clad.dev/action/{new UUID}>
+```
+
+After those bindings are substituted, the effective insertion is:
+
+```sparql
+<https://clad.dev/action/{new UUID}>
+  :flow    <https://clad.dev/flow/grants-test-1> ;
+  :concept <https://clad.dev/concept/session> ;
+  :name    "grant" ;
+  :input   [ :userId "ada-0001" ] .
+
+<https://clad.dev/action/grants-trigger>
+  :whenPasswordAuthCheckOkThenSessionGrantForLogin
+  <https://clad.dev/action/{new UUID}> .
+```
+
+The second triple is the sync's provenance and deduplication record: on a
+later evaluation, `FILTER NOT EXISTS { ?_when_1 :syncName [] }` prevents this
+sync from firing for the same completed action again.
+
+**English reading:** When password authentication succeeds for `ada-0001`,
+create a `Session/grant` action for that user in the same flow, and record that
+this synchronization caused it. The trigger completion is `?_when_1`; the new
+invocation is `?_then_1`.
+
 ### How the action graph is structured — plain triples vs. RDF-star
 
 The action graph uses **two layers of triples** on each completed action
