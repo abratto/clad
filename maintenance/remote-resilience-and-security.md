@@ -51,5 +51,5 @@ Review failure-path tests, deployment configuration, and canonical profile verif
 ## Notes
 
 - Do not include real credentials in repository files or test output.
-- Design gate is approved; activate this record only after the active archive-atomicity change closes.
+- Remains approved for activation after storage ownership closes with the direct remote Dataset stub removed.
 - Rollback restores the existing remote client configuration.

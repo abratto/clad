@@ -15,13 +15,11 @@ import java.util.*;
 public class RemoteStorage implements Storage {
 
     private final RDFLink link;
-    private final Dataset localDataset;
     private final ThreadLocal<List<String>> batched = new ThreadLocal<>();
     private volatile boolean archiveEnabled = true;
 
     public RemoteStorage(String endpoint) {
         this.link = RDFLinkHTTP.service(endpoint).build();
-        this.localDataset = DatasetFactory.createTxnMem();
     }
 
     public RemoteStorage(String endpoint, String username, String password) {
@@ -34,11 +32,13 @@ public class RemoteStorage implements Storage {
                 })
                 .build();
         this.link = RDFLinkHTTP.service(endpoint).httpClient(client).build();
-        this.localDataset = DatasetFactory.createTxnMem();
     }
 
     @Override
-    public Dataset dataset() { return localDataset; }
+    public Dataset dataset() {
+        throw new UnsupportedOperationException(
+                "remote storage does not expose a local Dataset");
+    }
 
     @Override
     public void update(String sparqlUpdate) {

@@ -26,6 +26,8 @@ class CladDatasetFactoryTest {
                 "CLAD_FUSEKI_ENDPOINT", "http://fuseki:3030/clad/update"));
 
         assertThrows(IllegalStateException.class, factory::dataset);
+        assertThrows(UnsupportedOperationException.class,
+            () -> factory.actionLog().dataset());
     }
 
     @Test

@@ -32,7 +32,7 @@
 
 | Invariant | Test level | Command or test | Status | Evidence |
 |---|---|---|---|---|
-| Remote backend cannot expose an unrelated writable local action log | unit | `CladDatasetFactoryTest.remoteBackendCannotExposeAnUnconnectedLocalDataset` | pass | Remote `Dataset` lookup now fails explicitly; `ActionLog` uses `RemoteStorage`. |
+| Remote backend cannot expose an unrelated writable local action log | unit | `CladDatasetFactoryTest.remoteBackendCannotExposeAnUnconnectedLocalDataset` | pass | Both factory and `RemoteStorage.dataset()` reject disconnected local Dataset access. |
 | Unknown backend type fails during bootstrap | unit | `CladDatasetFactoryTest.unsupportedBackendTypeFailsClosed` | pass | Unsupported `engine.dataset.type` throws `IllegalStateException`. |
 | Supported local and remote selections remain valid | unit | `CladDatasetFactoryTest` | pass | All five configuration tests passed. |
 | Login contract remains unchanged | flow-regression | canonical `test.command` | pass | Canonical artefact gate and Maven suite passed. |
@@ -50,5 +50,5 @@ Review configuration tests and canonical profile verification.
 ## Notes
 
 - Invalid configuration must fail during bootstrap; never silently fall back to `tmemory`.
-- Activated after the archive-atomicity evidence gate closed.
+- Reopened after review found `RemoteStorage.dataset()` still returned a writable local stub; the stub is now removed and the direct API fails closed.
 - Rollback restores the previous factory behavior.
