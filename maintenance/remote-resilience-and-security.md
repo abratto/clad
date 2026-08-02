@@ -2,11 +2,11 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `draft`
+- **Status:** `active`
 - **Affected profile(s):** `reference-impl/java-micronaut-jena`
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
-- **Evidence gate:** `pending`
+- **Evidence gate:** `approved`
 - **Change summary:** Define secure credentials, transport, and failure behavior for remote Fuseki storage.
 
 ## Contract impact
@@ -32,17 +32,17 @@
 
 | Invariant | Test level | Command or test | Status | Evidence |
 |---|---|---|---|---|
-| Rejected credentials fail clearly without local fallback | integration | authenticated embedded-Fuseki test | pending | pending |
-| Unavailable remote endpoint fails within configured timeout | integration | `RemoteStorage` failure-path test | pending | pending |
-| Write failures do not produce a false completion | integration | `RemoteStorage` failure-path test | pending | pending |
-| Retry behavior cannot duplicate completed actions | integration | failure/retry test or explicit no-retry assertion | pending | pending |
-| Login contract remains unchanged | flow-regression | canonical `test.command` | pending | pending |
+| Rejected credentials fail clearly without local fallback | integration | `RemoteStorageTest.rejectedCredentialsStopAfterOneChallengeRetry` | pass | Controlled `401` endpoint rejects credentials after one challenge retry. |
+| Unavailable remote endpoint fails within configured timeout | integration | `RemoteStorageTest.unavailableEndpointFailsWithoutRetryingTheWrite` | pass | Connection failure throws without writing; client connection timeout is five seconds. |
+| Write failures do not produce a false completion | integration | `RemoteStorageTest` | pass | Rejected and unavailable writes leave no record in the remote Fuseki fixture. |
+| Retry behavior cannot duplicate completed actions | integration | `RemoteStorageTest.rejectedCredentialsStopAfterOneChallengeRetry` | pass | Authenticator returns credentials once, bounding a rejected request to two attempts. |
+| Login contract remains unchanged | flow-regression | canonical `test.command` | pass | Compose interpolation, artefact gate, and Maven suite passed. |
 
 ## Gates
 
 ### Design gate
 
-Choose timeout values, TLS policy, service-account configuration, and either a bounded idempotent retry design or an explicit no-retry policy.
+Connection establishment times out after five seconds. Authentication is bounded to the initial challenge plus one credentialed retry; there is no retry after a completed remote update. Compose requires an explicit password. Internal Compose traffic uses private-network HTTP; externally hosted Fuseki must use HTTPS and a least-privilege service account.
 
 ### Evidence gate
 

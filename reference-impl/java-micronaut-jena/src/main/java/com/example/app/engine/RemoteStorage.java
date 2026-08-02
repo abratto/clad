@@ -10,23 +10,32 @@ import org.apache.jena.update.UpdateFactory;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.net.http.HttpClient;
+import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RemoteStorage implements Storage {
+
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
 
     private final RDFLink link;
     private final ThreadLocal<List<String>> batched = new ThreadLocal<>();
     private volatile boolean archiveEnabled = true;
 
     public RemoteStorage(String endpoint) {
-        this.link = RDFLinkHTTP.service(endpoint).build();
+        this.link = RDFLinkHTTP.service(endpoint)
+            .httpClient(HttpClient.newBuilder().connectTimeout(CONNECT_TIMEOUT).build())
+            .build();
     }
 
     public RemoteStorage(String endpoint, String username, String password) {
+        AtomicBoolean credentialsProvided = new AtomicBoolean();
         HttpClient client = HttpClient.newBuilder()
+            .connectTimeout(CONNECT_TIMEOUT)
                 .authenticator(new Authenticator() {
                     @Override
                     protected PasswordAuthentication getPasswordAuthentication() {
+                        if (!credentialsProvided.compareAndSet(false, true)) return null;
                         return new PasswordAuthentication(username, password.toCharArray());
                     }
                 })

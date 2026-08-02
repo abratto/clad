@@ -20,7 +20,7 @@ services:
       ENGINE_DATASET_TYPE: fuseki
       CLAD_FUSEKI_ENDPOINT: http://fuseki:3030/clad/update
       CLAD_FUSEKI_USERNAME: admin
-      CLAD_FUSEKI_PASSWORD: "${FUSEKI_ADMIN_PASSWORD:-admin}"
+      CLAD_FUSEKI_PASSWORD: "${FUSEKI_ADMIN_PASSWORD:?Set FUSEKI_ADMIN_PASSWORD}"
       # LLM — Ollama over HTTP (runs your model of choice)
       CLAD_LLM_ENDPOINT: http://ollama:11434
       CLAD_LLM_MODEL: llama3.2:3b
@@ -38,7 +38,7 @@ services:
     ports:
       - "3030:3030"
     environment:
-      ADMIN_PASSWORD: "${FUSEKI_ADMIN_PASSWORD:-admin}"
+      ADMIN_PASSWORD: "${FUSEKI_ADMIN_PASSWORD:?Set FUSEKI_ADMIN_PASSWORD}"
     volumes:
       - fuseki_data:/fuseki
       - ./fuseki/config.ttl:/fuseki/configuration/clad.ttl:ro

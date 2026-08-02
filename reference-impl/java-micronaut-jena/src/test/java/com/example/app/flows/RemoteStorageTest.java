@@ -2,6 +2,7 @@ package com.example.app.flows;
 
 import com.example.app.engine.ActionLog;
 import com.example.app.engine.RemoteStorage;
+import com.sun.net.httpserver.HttpServer;
 import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
@@ -10,6 +11,9 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.net.ServerSocket;
+import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -85,5 +89,43 @@ class RemoteStorageTest {
         remote.flushBatch();
         assertTrue(remote.ask("ASK { <http://example.org/b1> ?p \"one\" }"));
         assertTrue(remote.ask("ASK { <http://example.org/b2> ?p \"two\" }"));
+    }
+
+    @Test
+    void unavailableEndpointFailsWithoutRetryingTheWrite() throws Exception {
+        int unusedPort;
+        try (ServerSocket socket = new ServerSocket(0)) {
+            unusedPort = socket.getLocalPort();
+        }
+        RemoteStorage unavailable = new RemoteStorage("http://localhost:" + unusedPort + "/ds");
+
+        assertThrows(RuntimeException.class, () -> unavailable.update(
+                "INSERT DATA { <http://example.org/unavailable> <http://example.org/p> \"value\" }"));
+        assertFalse(remote.ask("ASK { <http://example.org/unavailable> ?p ?o }"));
+    }
+
+    @Test
+    void rejectedCredentialsStopAfterOneChallengeRetry() throws Exception {
+        AtomicInteger requests = new AtomicInteger();
+        HttpServer unauthorized = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+        unauthorized.createContext("/ds", exchange -> {
+            requests.incrementAndGet();
+            exchange.getResponseHeaders().add("WWW-Authenticate", "Basic realm=clad");
+            exchange.sendResponseHeaders(401, -1);
+            exchange.close();
+        });
+        unauthorized.start();
+        try {
+            RemoteStorage rejected = new RemoteStorage(
+                    "http://localhost:" + unauthorized.getAddress().getPort() + "/ds",
+                    "wrong-user",
+                    "wrong-password");
+
+            assertThrows(RuntimeException.class, () -> rejected.update(
+                    "INSERT DATA { <http://example.org/rejected> <http://example.org/p> \"value\" }"));
+            assertEquals(2, requests.get());
+        } finally {
+            unauthorized.stop(0);
+        }
     }
 }

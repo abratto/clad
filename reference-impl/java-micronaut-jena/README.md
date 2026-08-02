@@ -250,9 +250,20 @@ Deploy the entire CLAD stack as a single unit — no local Java, Maven,
 or model downloads needed on the host:
 
 ```sh
+export FUSEKI_ADMIN_PASSWORD="replace-with-a-strong-secret"
 mvn package -DskipTests
 docker compose up --build
 ```
+
+`FUSEKI_ADMIN_PASSWORD` is required; Compose deliberately has no insecure
+default. The profile sends the password to Fuseki through
+`CLAD_FUSEKI_PASSWORD` and bounds connection establishment to five seconds.
+On an authentication challenge, the client sends credentials once and stops
+after a second rejection; it never retries a completed SPARQL update.
+
+The Compose endpoint uses HTTP only on its private Docker network. Deployments
+that place Fuseki outside that network must use an HTTPS endpoint and a
+least-privilege service account instead of an administrator credential.
 
 This brings up three services that talk to each other by Docker service name:
 
