@@ -7,7 +7,10 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class StorageArchiveFlowTest {
@@ -39,6 +42,25 @@ class StorageArchiveFlowTest {
     @Test
     void remoteStorageAppliesArchivePolicyToEveryFlowTriple() {
         assertArchivePolicy(new RemoteStorage(fusekiEndpoint), "remote");
+    }
+
+    @Test
+    void remoteStorageRollsBackEveryOperationInAFailedUpdateRequest() {
+        Storage storage = new RemoteStorage(fusekiEndpoint);
+        String flowToken = "https://clad.dev/flow/atomic-rollback";
+        writeCompletedFlow(storage, flowToken);
+
+        assertThrows(RuntimeException.class, () -> storage.updateBatch(List.of(
+                "DELETE { GRAPH <%s> { <%s> ?p ?o } } WHERE { GRAPH <%s> { <%s> ?p ?o } }"
+                        .formatted(
+                                RdfVocabulary.ACTION_GRAPH_IRI,
+                                flowToken + "/action",
+                                RdfVocabulary.ACTION_GRAPH_IRI,
+                                flowToken + "/action"),
+                "LOAD <urn:clad:missing-resource>")));
+
+        assertTrue(hasStandardFlow(storage, RdfVocabulary.ACTION_GRAPH_IRI, flowToken));
+        assertTrue(hasOutcomeAnnotation(storage, RdfVocabulary.ACTION_GRAPH_IRI, flowToken));
     }
 
     private static void assertArchivePolicy(Storage storage, String backend) {
