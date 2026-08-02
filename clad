@@ -6,6 +6,7 @@
 #   ./clad advance       — run advance.py for the active feature
 #   ./clad approve 1     — approve gate 1 for the active feature
 #   ./clad approve-iter <name> — approve iterative change
+#   ./clad approve-maintenance <name> <design|evidence> — approve maintenance gate
 #   ./clad verify        — run verify_artefacts.py
 #   ./clad next          — show what stage comes next
 #   ./clad stages        — show all stages and their status
@@ -84,6 +85,16 @@ cmd_approve_iter() {
     python3 "$QG/approve_gate.py" --feature "features/$feat" --iterative "$name"
 }
 
+cmd_approve_maintenance() {
+    local name="${1:-}"
+    local gate="${2:-}"
+    if [ -z "$name" ] || [ -z "$gate" ]; then
+        echo "Usage: ./clad approve-maintenance <name> <design|evidence>"
+        exit 1
+    fi
+    python3 "$QG/approve_maintenance_change.py" --change "maintenance/$name.md" --gate "$gate"
+}
+
 cmd_verify() {
     python3 "$QG/verify_artefacts.py" "$@"
 }
@@ -156,6 +167,8 @@ CLAD CLI — lightweight wrapper for quality-gate scripts.
   ./clad advance [<feature>]      Run advance.py (auto-discovers if omitted)
   ./clad approve <1|2|3>           Approve a human gate
   ./clad approve-iter <name>       Approve an iterative change
+    ./clad approve-maintenance <name> <design|evidence>
+                                                                        Approve a maintenance change gate
   ./clad verify                    Run verify_artefacts.py (artefact gate)
   ./clad next                      Show current stage and next steps
   ./clad stages [<feature>]        Show all stages and completion status
@@ -173,6 +186,7 @@ case "${1:-help}" in
     advance)     shift; cmd_advance "$@";;
     approve)     shift; cmd_approve "$@";;
     approve-iter) shift; cmd_approve_iter "$@";;
+    approve-maintenance) shift; cmd_approve_maintenance "$@";;
     verify)      shift; cmd_verify "$@";;
     next)        cmd_next;;
     stages)      cmd_stages "${2:-}";;

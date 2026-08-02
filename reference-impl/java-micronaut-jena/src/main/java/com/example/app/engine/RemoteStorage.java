@@ -7,6 +7,9 @@ import org.apache.jena.rdflink.RDFLink;
 import org.apache.jena.rdflink.RDFLinkHTTP;
 import org.apache.jena.update.UpdateFactory;
 
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
+import java.net.http.HttpClient;
 import java.util.*;
 
 public class RemoteStorage implements Storage {
@@ -14,9 +17,23 @@ public class RemoteStorage implements Storage {
     private final RDFLink link;
     private final Dataset localDataset;
     private final ThreadLocal<List<String>> batched = new ThreadLocal<>();
+    private volatile boolean archiveEnabled = true;
 
     public RemoteStorage(String endpoint) {
         this.link = RDFLinkHTTP.service(endpoint).build();
+        this.localDataset = DatasetFactory.createTxnMem();
+    }
+
+    public RemoteStorage(String endpoint, String username, String password) {
+        HttpClient client = HttpClient.newBuilder()
+                .authenticator(new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(username, password.toCharArray());
+                    }
+                })
+                .build();
+        this.link = RDFLinkHTTP.service(endpoint).httpClient(client).build();
         this.localDataset = DatasetFactory.createTxnMem();
     }
 
@@ -68,13 +85,12 @@ public class RemoteStorage implements Storage {
 
     @Override
     public void archiveFlow(String flowToken) {
-        // INSERT into archive graph, then DELETE from action graph.
-        // Matches LocalStorage.doArchive so all backends have identical
-        // archive semantics — completed flows survive in the archive.
         updateBatch(List.of(
-            moveStandard(flowToken, true),
-            moveStar(flowToken, true)));
+            moveStandard(flowToken, archiveEnabled),
+            moveStar(flowToken, archiveEnabled)));
     }
+
+    @Override public void setArchiveEnabled(boolean enabled) { this.archiveEnabled = enabled; }
 
     @Override public void beginBatch() { batched.set(new ArrayList<>()); }
 

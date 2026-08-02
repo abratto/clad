@@ -63,6 +63,18 @@ def main():
     all_pass = True
     any_features = False
 
+    # Maintenance changes are governed independently of UC stage output.
+    code, out, err = run_script(
+        "verify_maintenance_change_readiness.py", ["--base", "HEAD"])
+    detail = (out + err).strip()
+    if code != 0:
+        all_pass = False
+        print("\n  [FAIL] maintenance_change_readiness")
+        for line in detail.splitlines()[:6]:
+            print(f"        {line}")
+    elif "no engine" not in detail:
+        print("\n  [PASS] maintenance_change_readiness")
+
     for name, root in discover_features():
         any_features = True
         stage = _current_stage(root)

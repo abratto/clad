@@ -11,6 +11,7 @@ import org.apache.jena.tdb2.TDB2Factory;
 import java.io.FileInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -34,9 +35,19 @@ public class CladDatasetFactory {
     private static final String DEFAULT_TYPE = "tmemory";
     private static final String DEFAULT_TDB2_DIR = "./clad-tdb2-store";
 
-    private final Properties props = readCladProperties();
-    private final String type = System.getProperty("engine.dataset.type",
-            props.getProperty("engine.dataset.type", DEFAULT_TYPE));
+    private final Properties props;
+    private final Map<String, String> environment;
+    private final String type;
+
+    public CladDatasetFactory() {
+        this(readCladProperties(), System.getenv());
+    }
+
+    CladDatasetFactory(Properties props, Map<String, String> environment) {
+        this.props = props;
+        this.environment = environment;
+        this.type = resolve("engine.dataset.type", "ENGINE_DATASET_TYPE", DEFAULT_TYPE);
+    }
 
     @Singleton
     public Dataset dataset() {
@@ -56,11 +67,17 @@ public class CladDatasetFactory {
     @Primary
     public ActionLog actionLog(Dataset dataset) {
         if ("fuseki".equalsIgnoreCase(type)) {
-            String endpoint = System.getProperty("engine.dataset.fuseki.endpoint",
-                    props.getProperty("engine.dataset.fuseki.endpoint", ""));
-            if (endpoint.isBlank()) throw new RuntimeException(
+            String endpoint = resolve("engine.dataset.fuseki.endpoint", "CLAD_FUSEKI_ENDPOINT", "");
+            if (endpoint.isBlank()) throw new IllegalStateException(
                     "engine.dataset.fuseki.endpoint required for fuseki backend");
-            return new ActionLog(new RemoteStorage(endpoint));
+            String username = resolve("engine.dataset.fuseki.username", "CLAD_FUSEKI_USERNAME", "");
+            String password = resolve("engine.dataset.fuseki.password", "CLAD_FUSEKI_PASSWORD", "");
+                if (username.isBlank() != password.isBlank()) throw new IllegalStateException(
+                    "engine.dataset.fuseki.username and engine.dataset.fuseki.password must both be set");
+            Storage storage = username.isBlank() && password.isBlank()
+                ? new RemoteStorage(endpoint)
+                : new RemoteStorage(endpoint, username, password);
+            return new ActionLog(storage);
         }
         return new ActionLog(dataset);
     }
@@ -87,11 +104,18 @@ public class CladDatasetFactory {
     }
 
     private String resolveDir() {
-        String dir = System.getProperty("engine.dataset.tdb2.dir",
-                props.getProperty("engine.dataset.tdb2.dir", DEFAULT_TDB2_DIR));
+        String dir = resolve("engine.dataset.tdb2.dir", "ENGINE_DATASET_TDB2_DIR", DEFAULT_TDB2_DIR);
         try { Files.createDirectories(Path.of(dir)); }
         catch (Exception e) { throw new RuntimeException("cannot create TDB2 dir: " + dir, e); }
         return dir;
+    }
+
+    private String resolve(String propertyName, String environmentName, String defaultValue) {
+        String systemValue = System.getProperty(propertyName);
+        if (systemValue != null) return systemValue;
+        String environmentValue = environment.get(environmentName);
+        if (environmentValue != null) return environmentValue;
+        return props.getProperty(propertyName, defaultValue);
     }
 
     private static Properties readCladProperties() {

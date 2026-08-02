@@ -150,6 +150,18 @@ not relax the *intent*.
       artefacts. A Java-only diff with no artefact update is a hard-rule
       (R17) violation even if the parity script passes (e.g. the spec
       file exists but its content no longer matches the code).
+13. **Platform maintenance governance.** When a diff touches engine/runtime
+    sources, profile configuration/resources, Docker/Compose files, or root
+    `clad.properties` without changing the feature contract:
+    - **Automated:** Run `quality-gate/verify_maintenance_change_readiness.py`.
+      It requires one active `maintenance/<change-name>.md` record with an
+      approved design gate before tests run.
+    - **Automated:** The pre-commit hook reruns it with `--require-evidence`.
+      It requires an approved evidence gate and at least one passing row in
+      the record's test matrix before commit.
+    - **Semantic (human):** Review contract impact, the invariant-driven test
+      matrix, and the rollback boundary. Re-enter the feature pipeline if the
+      work changes an artefact-chain truth.
 
 ## Java/Micronaut/Jena profile
 
@@ -194,6 +206,7 @@ consistency checks across the CLAD artefact chain:
 | `verify_port_spec_contract.py` | 04b, 04c | When `port-spec.md` exists, response shapes and `@contract` scenarios are present |
 | `verify_iterative_change_readiness.py` | 04+ | Iterative concept/sync spec or implementation changes have a structured `_changes/` classification and artefact-impact matrix |
 | `verify_iterative_change_coupling.py` | 04+ | Concept/sync implementation changes are committed with their matching Stage 02/03 artefacts |
+| `verify_maintenance_change_readiness.py` | Maintenance | Engine/profile/deployment changes have an active maintenance record and cleared design/evidence gates |
 | `verify_implementation_parity.py` | 04+ | Implementation concept/sync classes have corresponding stage artefact specs; sync names lower mechanically from Stage 03 rules |
 | `verify_sync_implementation_parity.py` | 04e | Stage 03 sync contracts have corresponding Java `SyncAgent` implementations |
 | `verify_feature_file_presence.py` | 04c | Pre-flight: `.feature` file exists in output + Cucumber discovery path |

@@ -67,6 +67,25 @@ graph (`https://clad.dev/actions`) into the archive graph
 This keeps the live graph small and gives `05_verify` a stable place to
 trace from.
 
+## Maintenance contract
+
+Engine and profile maintenance must preserve these properties unless the
+change re-enters the affected feature artefact chain:
+
+- every completed action retains exactly one causal flow token;
+- a sync's deduplication edge prevents duplicate downstream invocations;
+- a flow is wholly active, wholly archived, or wholly deleted, never split
+   between those states;
+- scheduling may change implementation strategy but not observable action
+   outcomes, causal order, or response contracts;
+- declared storage configuration selects that backend or fails clearly; it
+   must not silently fall back to a different backend.
+
+The governed procedure for changing this layer is the maintenance route in
+[`../core/ITERATIVE_CHANGES.md`](../core/ITERATIVE_CHANGES.md). Its test matrix
+must exercise the applicable invariant at unit, integration, flow-regression,
+or smoke level.
+
 ## Why this shape
 
 Two design constraints from Meng & Jackson's *Legible Software*

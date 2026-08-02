@@ -36,6 +36,8 @@ public class ActionLog {
 
     public Dataset dataset() { return storage.dataset(); }
 
+    Storage storage() { return storage; }
+
     public void update(String sparqlUpdate) { storage.update(sparqlUpdate); }
 
     public void updateBatch(List<String> sparqlUpdates) { storage.updateBatch(sparqlUpdates); }
@@ -57,6 +59,6 @@ public class ActionLog {
     public boolean isBatching() { return storage.isBatching(); }
 
     public void setArchiveEnabled(boolean enabled) {
-        if (storage instanceof LocalStorage ls) ls.setArchiveEnabled(enabled);
+        storage.setArchiveEnabled(enabled);
     }
 }

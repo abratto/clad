@@ -270,8 +270,11 @@ docker compose exec ollama ollama pull llama3.2:3b
 
 Configure the app via environment variables in `docker-compose.yml`:
 `CLAD_LLM_MODEL` (model name), `CLAD_LLM_ENDPOINT` (Ollama URL),
-`CLAD_FUSEKI_ENDPOINT` (Fuseki SPARQL endpoint). Persistent volumes
-for Fuseki data and Ollama models survive container restarts.
+`ENGINE_DATASET_TYPE=fuseki`, and `CLAD_FUSEKI_ENDPOINT` (Fuseki SPARQL
+endpoint). The Compose profile also supplies `CLAD_FUSEKI_USERNAME` and
+`CLAD_FUSEKI_PASSWORD`; set `FUSEKI_ADMIN_PASSWORD` before startup to override
+the development default. Persistent volumes for Fuseki data and Ollama models
+survive container restarts.
 
 To stop: `docker compose down`. To rebuild after code changes:
 `docker compose up -d --build`.
@@ -363,9 +366,11 @@ useful after a request has already produced `Web/respond`.
 
 ### Backend configuration
 
-The engine's Dataset backend is configured via `clad.properties` (or
-system property overrides). All backends share the same engine code —
-concepts, syncs, and the dispatch loop are unchanged.
+The engine's Dataset backend is configured via `clad.properties`, container
+environment variables, or JVM system properties. The precedence is JVM system
+property, environment variable, `clad.properties`, then the documented default.
+All backends share the same engine code — concepts, syncs, and the dispatch
+loop are unchanged.
 
 | Key | Default | Description |
 |---|---|---|
@@ -376,6 +381,11 @@ concepts, syncs, and the dispatch loop are unchanged.
 | `engine.archive.flows` | `true` | Archive completed flows for debugging; set `false` in production |
 | `engine.dispatch.timeout.seconds` | `5` | Max dispatch loop wall-clock time before returning 500 |
 | `clad.dispatch.timeout.seconds` | `5` | System-property override for dispatch timeout |
+
+Container environment names are `ENGINE_DATASET_TYPE`,
+`ENGINE_DATASET_TDB2_DIR`, `CLAD_FUSEKI_ENDPOINT`,
+`CLAD_FUSEKI_USERNAME`, and `CLAD_FUSEKI_PASSWORD`. A `fuseki` backend without
+an endpoint fails at startup rather than falling back to local memory.
 
 #### Available backends
 

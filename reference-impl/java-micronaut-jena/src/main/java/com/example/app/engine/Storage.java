@@ -34,6 +34,9 @@ public interface Storage {
     /** Archives or deletes all triples for a completed flow token. */
     void archiveFlow(String flowToken);
 
+    /** Selects archive (true) or delete (false) behavior for completed flows. */
+    void setArchiveEnabled(boolean enabled);
+
     /** Begins queuing writes on this thread; flushed atomically. */
     void beginBatch();
 

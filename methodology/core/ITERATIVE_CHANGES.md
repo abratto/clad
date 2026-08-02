@@ -137,3 +137,42 @@ Things agents tend to do on iterative changes that they should not:
 If you cannot decide between two categories, take the **larger** one.
 Doing one extra stage of review is cheaper than discovering, three
 stages downstream, that the change was structural after all.
+
+---
+
+## 7. Platform maintenance changes
+
+The feature pipeline governs the domain contract: actors, use cases,
+concepts, syncs, and their observable action chains. Engine, scheduler,
+storage, deployment, and profile-configuration changes may preserve that
+contract while changing how it is realised. They use the maintenance route,
+not a fabricated UC pipeline.
+
+### Route the change
+
+| Change | Route |
+|---|---|
+| Changes outcomes, response shape, concept boundaries, sync rules, or observable action order | Existing iterative route: re-enter the earliest owning feature stage |
+| Changes an engine/profile/deployment implementation while preserving those properties | Maintenance route |
+| Changes both | Split the work where possible; otherwise run the maintenance route and re-enter the earliest affected feature stage |
+
+### Maintenance route
+
+1. Copy `templates/maintenance-change.md` to `maintenance/<change-name>.md`.
+2. Record the runtime invariant, feature-contract impact, affected surfaces,
+  rollback boundary, and test matrix. Set its status to `active`.
+3. Present the **design gate** for human approval. Do not modify an
+  engine/profile/configuration/deployment implementation until the design
+  gate is approved with `quality-gate/approve_maintenance_change.py`.
+4. Write focused tests before implementation. Preserve existing flow tests as
+  the regression oracle for the feature contract.
+5. Implement the smallest change that satisfies the approved invariants.
+6. Run the profile gate, the completed test matrix, and applicable smoke
+  evidence. Present the **evidence gate** for human approval.
+7. Record the evidence approval, commit the record with the implementation,
+  then set the record status to `closed` in the next maintenance batch.
+
+`verify_maintenance_change_readiness.py` enforces the design gate before
+tests run and both gates at commit time. It covers engine sources,
+profile configuration/resources, Docker files, Compose files, and root
+`clad.properties`; profiles may extend its scope.

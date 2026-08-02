@@ -55,6 +55,7 @@ fi
 seq_guard="quality-gate/verify_stage_sequence.py"
 coupling="quality-gate/verify_iterative_change_coupling.py"
 readiness="quality-gate/verify_iterative_change_readiness.py"
+maintenance_readiness="quality-gate/verify_maintenance_change_readiness.py"
 
 # Staged, added/copied/modified/renamed files only.
 staged="$(git diff --cached --name-only --diff-filter=ACMR)"
@@ -106,6 +107,14 @@ if [ -f "$readiness" ] && [ -n "$features" ]; then
     done <<EOF
 $features
 EOF
+fi
+
+# Engine, profile configuration, and deployment maintenance use their own
+# record and two gates rather than inventing a feature artefact chain.
+if [ -f "$maintenance_readiness" ]; then
+    if ! "$PY" "$maintenance_readiness" --base HEAD --require-evidence; then
+        fail=1
+    fi
 fi
 
 if [ "$fail" -ne 0 ]; then

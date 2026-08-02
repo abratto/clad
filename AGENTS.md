@@ -471,6 +471,22 @@ re-entry stage, artefact-impact matrix, and re-derivation order.
 direction: it fails if a concept/sync implementation changes without its
 matching Stage 02/03 artefact changing in the same diff.
 
+### R20 — Engine and profile maintenance changes require maintenance governance
+
+Changes to engine/runtime sources, profile configuration/resources, Docker or
+Compose files, and root `clad.properties` that preserve the approved feature
+contract do not invent a new UC or re-run Stage 00. Before changing those
+surfaces, create `maintenance/<change-name>.md` from
+`templates/maintenance-change.md`, obtain the design-gate approval, and test
+against explicit runtime invariants. Obtain evidence-gate approval before
+commit. If the change alters an action outcome, response contract, concept
+boundary, sync rule, flow-token lineage, or observable action order, also
+re-enter the earliest affected feature stage under R17.
+
+`quality-gate/verify_maintenance_change_readiness.py` enforces this route:
+the normal artefact gate requires design approval; the pre-commit hook requires
+both design and evidence approval plus passing test evidence.
+
 ## 10. Pointers
 
 - Methodology reading order: [`methodology/README.md`](methodology/README.md)

@@ -23,7 +23,7 @@ class LocalStorage implements Storage {
 
     @Override public Dataset dataset() { return dataset; }
 
-    void setArchiveEnabled(boolean e) { this.archiveEnabled = e; }
+    @Override public void setArchiveEnabled(boolean enabled) { this.archiveEnabled = enabled; }
 
     @Override
     public void update(String sparqlUpdate) {

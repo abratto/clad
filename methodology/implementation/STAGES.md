@@ -253,6 +253,17 @@ Skill files under [`../../skills/`](../../skills/) provide on-demand stage guida
 for agent frameworks that support Agent Skills. Stage `02_concepts/`, for
 example, has a companion at [`../../skills/clad-concept-design/SKILL.md`](../../skills/clad-concept-design/SKILL.md).
 
+## Maintenance route
+
+Stages 00–05 govern a feature's domain contract. They are not a catch-all
+workflow for engine, scheduler, storage, profile configuration, or deployment
+maintenance that preserves that contract. Such work follows the maintenance
+route in [`../core/ITERATIVE_CHANGES.md`](../core/ITERATIVE_CHANGES.md): an
+active `maintenance/<change-name>.md` record, a human design gate before
+implementation, test-first execution, then a human evidence gate before
+commit. If the maintenance work changes a feature artefact's truth, re-enter
+the earliest affected feature stage as well.
+
 ### Stage-specific rules
 
 These rules apply to individual stages and do not appear in the
