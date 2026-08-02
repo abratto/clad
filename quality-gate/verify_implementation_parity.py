@@ -44,8 +44,13 @@ import sys
 IMPL_EXTENSIONS = {".java", ".kt", ".scala"}
 SYNC_DECL_RE = re.compile(r"^sync\s+(\w+)\s*$", re.MULTILINE)
 RULE_BLOCK_RE = re.compile(r"## Rule\s*(.*?)(?=^##\s+|\Z)", re.MULTILINE | re.DOTALL)
-WHEN_RE = re.compile(r"(\w+)/(\w+)\s*:\s*\[[^\]]*\]\s*=>\s*\[([^\]]*)\]", re.DOTALL)
+ARROW_WHEN_RE = re.compile(r"(\w+)/(\w+)\s*:\s*\[[^\]]*\]\s*=>\s*\[([^\]]*)\]", re.DOTALL)
+RULE_WHEN_RE = re.compile(r"^\s*when\s+(\w+)/(\w+)\s*\[([^\]]*)\]", re.MULTILINE)
 THEN_RE = re.compile(r"(\w+)/(\w+)\s*:")
+MATRIX_HEADING = "## Sync Contract Matrix"
+CONCEPT_AGENT_RE = re.compile(
+    r"\bclass\s+(\w+)\s+extends\s+(?:[\w.]+\.)?(?:Predicate)?ConceptAgent\b"
+)
 
 
 def collect_class_names(directory):
@@ -117,36 +122,86 @@ def first_completion_token(completion):
             value = value.strip()
             if value.startswith('"') or value.startswith("'"):
                 return pascal_token(value)
-            return pascal_token(part.split(":", 1)[0])
-        return pascal_token(part)
+            return pascal_token(part.split(":", 1)[0].split("(", 1)[0])
+        return pascal_token(part.split("(", 1)[0])
     return ""
 
 
-def expected_sync_names(path, text):
-    rule_match = RULE_BLOCK_RE.search(text)
-    if not rule_match:
-        return []
-    rule = rule_match.group(1)
-    when_match = WHEN_RE.search(rule)
-    then_match = THEN_RE.search(rule[when_match.end():] if when_match else rule)
-    if not when_match or not then_match:
+def split_table_row(line):
+    return [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
+
+
+def matrix_contracts(text):
+    lines = text.splitlines()
+    try:
+        start = lines.index(MATRIX_HEADING)
+    except ValueError:
+        return None
+
+    table = []
+    for line in lines[start + 1:]:
+        if line.startswith("|"):
+            table.append(split_table_row(line))
+        elif table and line.strip():
+            break
+    if len(table) < 3:
         return []
 
-    when_concept, when_action, completion = when_match.groups()
-    then_concept, then_action = then_match.groups()
-    base = (
-        "When"
-        + pascal_token(when_concept)
-        + pascal_token(when_action)
-        + first_completion_token(completion)
-        + "Then"
-        + pascal_token(then_concept)
-        + pascal_token(then_action)
-    )
+    columns = {re.sub(r"[^a-z]", "", name.lower()): index for index, name in enumerate(table[0])}
+    when_index = columns.get("whensignature")
+    then_index = columns.get("thensignature")
+    if when_index is None or then_index is None:
+        return []
+
+    contracts = []
+    for row in table[1:]:
+        if all(re.fullmatch(r":?-{3,}:?", cell.replace(" ", "")) for cell in row if cell):
+            continue
+        if len(row) <= max(when_index, then_index):
+            return []
+        when_match = ARROW_WHEN_RE.fullmatch(row[when_index].strip())
+        then_match = THEN_RE.search(row[then_index])
+        if not when_match or not then_match:
+            return []
+        contracts.append((*when_match.groups(), *then_match.groups()))
+    return contracts
+
+
+def rule_contract(text):
+    rule_match = RULE_BLOCK_RE.search(text)
+    if not rule_match:
+        return None
+    rule = rule_match.group(1)
+    when_match = RULE_WHEN_RE.search(rule) or ARROW_WHEN_RE.search(rule)
+    then_match = THEN_RE.search(rule[when_match.end():] if when_match else rule)
+    if not when_match or not then_match:
+        return None
+    return (*when_match.groups(), *then_match.groups())
+
+
+def expected_sync_names(path, text):
+    contracts = matrix_contracts(text)
+    if contracts is None:
+        contract = rule_contract(text)
+        contracts = [contract] if contract else []
+    if not contracts:
+        return []
+
     scope = feature_scope_from_path(path)
-    names = [base]
-    if scope:
-        names.append(base + "For" + scope)
+    names = []
+    for when_concept, when_action, completion, then_concept, then_action in contracts:
+        base = (
+            "When"
+            + pascal_token(when_concept)
+            + pascal_token(when_action)
+            + first_completion_token(completion)
+            + "Then"
+            + pascal_token(then_concept)
+            + pascal_token(then_action)
+        )
+        names.append(base)
+        if scope:
+            names.append(base + "For" + scope)
     return names
 
 
@@ -216,6 +271,24 @@ def strip_concept_suffix(class_name):
     return class_name
 
 
+def collect_concept_class_names(directory):
+    """Return actual concept-agent implementations, not every source file."""
+    results = []
+    if not os.path.isdir(directory):
+        return results
+    for root, _, files in os.walk(directory):
+        for filename in files:
+            stem, ext = os.path.splitext(filename)
+            if ext not in IMPL_EXTENSIONS:
+                continue
+            path = os.path.join(root, filename)
+            with open(path, encoding="utf-8") as handle:
+                source = handle.read()
+            if CONCEPT_AGENT_RE.search(source):
+                results.append((path, stem))
+    return results
+
+
 def check_concepts(concept_impl_dir, features_dir):
     """Check every concept implementation class has a *.concept.md spec.
     Returns list of (path, message) failure tuples."""
@@ -225,7 +298,7 @@ def check_concepts(concept_impl_dir, features_dir):
         return failures
 
     spec_stems = collect_spec_stems(features_dir, "02_concepts/output", ".concept.md")
-    for path, class_name in collect_class_names(concept_impl_dir):
+    for path, class_name in collect_concept_class_names(concept_impl_dir):
         stripped = strip_concept_suffix(class_name)
         if stripped.lower() not in spec_stems:
             failures.append(
@@ -288,7 +361,7 @@ def main():
     if args.sync_impl_dir and os.path.isdir(args.sync_impl_dir):
         total += len(collect_class_names(args.sync_impl_dir))
     if args.concept_impl_dir and os.path.isdir(args.concept_impl_dir):
-        total += len(collect_class_names(args.concept_impl_dir))
+        total += len(collect_concept_class_names(args.concept_impl_dir))
     print(f"OK: {total} implementation class(es) each have a spec artefact.")
     sys.exit(0)
 

@@ -63,8 +63,8 @@ def first_completion_token(completion):
             value = value.strip()
             if value.startswith(('"', "'")):
                 return value.strip('"\'')
-            return name.strip()
-        return part
+            return name.strip().split("(", 1)[0]
+        return part.split("(", 1)[0]
     return ""
 
 
@@ -81,14 +81,22 @@ def parse_concept_action(raw):
 
 
 def parse_when_signature(signature):
-    if "=>" not in signature:
+    if "=>" in signature:
+        left, right = signature.split("=>", 1)
+        concept_action = parse_concept_action(left)
+        if concept_action is None or "[" not in right or "]" not in right:
+            return None
+        completion = right.split("[", 1)[1].split("]", 1)[0]
+        return (*concept_action, first_completion_token(completion))
+
+    compact = re.fullmatch(r"\s*([^:]+):\s*\[([^\]]+)\]\s*", signature)
+    if compact is None:
         return None
-    left, right = signature.split("=>", 1)
-    concept_action = parse_concept_action(left)
-    if concept_action is None or "[" not in right or "]" not in right:
+    concept_action = parse_concept_action(compact.group(1))
+    completion = first_completion_token(compact.group(2))
+    if concept_action is None or not completion:
         return None
-    completion = right.split("[", 1)[1].split("]", 1)[0]
-    return (*concept_action, first_completion_token(completion))
+    return (*concept_action, completion)
 
 
 def parse_then_signature(signature):

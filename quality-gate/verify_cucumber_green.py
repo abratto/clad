@@ -143,20 +143,27 @@ def parse_surefire(surefire_dir):
         result["errors"] += e
         result["skipped"] += s
 
-        # Cucumber-specific: look for CucumberTestEngine class
-        if "CucumberTestEngine" in classname or "cucumber" in classname.lower():
+        # JUnit Platform reports scenarios as testcases beneath the Cucumber
+        # suite (commonly CucumberTest), not necessarily as Feature-named suites.
+        cucumber_suite = (
+            "CucumberTestEngine" in classname
+            or "cucumber" in classname.lower()
+            or "Feature:" in classname
+            or "[Scenario" in classname
+        )
+        if cucumber_suite:
             result["cucumber_tests_found"] = True
-        if "Feature:" in classname or "[Scenario" in classname:
-            result["feature_files"] = t
-            result["cucumber_tests_found"] = True
+            result["feature_files"] += 1
             for tc in root.findall("testcase"):
                 tc_name = tc.get("name", "")
                 failure = tc.find("failure")
+                error = tc.find("error")
                 skipped = tc.find("skipped")
-                if failure is not None:
+                if failure is not None or error is not None:
                     result["feature_scenarios_failed"] += 1
-                    msg = (failure.get("message", "") or
-                           (failure.text or "").strip())
+                    problem = failure if failure is not None else error
+                    msg = (problem.get("message", "") or
+                           (problem.text or "").strip())
                     if msg:
                         result["failure_details"].append(
                             f"  {tc_name}: {msg[:120]}")
@@ -216,11 +223,15 @@ def main():
         print(f"FAIL  test command exited with status {result.returncode}")
         passed = False
 
-    if not summary["cucumber_tests_found"]:
-        print(f"WARN  no Cucumber test results detected in surefire reports. "
-              f"Verify the Cucumber runner is configured and .feature files are "
-              f"in the discovery path.")
-        # Not a hard fail — maybe Cucumber runs but reports differently
+    scenarios_executed = (
+        summary["feature_scenarios_passed"]
+        + summary["feature_scenarios_failed"]
+        + summary["feature_scenarios_skipped"]
+    )
+    if not summary["cucumber_tests_found"] or scenarios_executed == 0:
+        print(f"FAIL  no Cucumber scenarios were executed. Verify the Cucumber "
+              f"runner is configured and .feature files are in the discovery path.")
+        passed = False
 
     if summary["feature_scenarios_failed"] > 0:
         print(f"FAIL  {summary['feature_scenarios_failed']} Cucumber "
