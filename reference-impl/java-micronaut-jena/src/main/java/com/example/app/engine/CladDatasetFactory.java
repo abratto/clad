@@ -15,8 +15,9 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * Provides the Jena {@link Dataset} bean, configuring the backend from
- * {@code clad.properties}.
+ * Provides action-log storage, configuring the backend from
+ * {@code clad.properties}. Local backends expose a Jena {@link Dataset}; the
+ * remote Fuseki backend exposes only an {@link ActionLog} backed by HTTP.
  *
  * <p>Supported backends:
  * <ul>
@@ -54,18 +55,20 @@ public class CladDatasetFactory {
         if ("tdb2".equalsIgnoreCase(type)) return connectTdb2();
         if ("tdb2mem".equalsIgnoreCase(type)) return TDB2Factory.createDataset();
         if ("fuseki-embedded".equalsIgnoreCase(type)) return fusekiEmbedded();
-        if ("fuseki".equalsIgnoreCase(type)) return DatasetFactory.createTxnMem();  // stub
-        return DatasetFactory.createTxnMem();
+        if ("tmemory".equalsIgnoreCase(type)) return DatasetFactory.createTxnMem();
+        if ("fuseki".equalsIgnoreCase(type)) throw new IllegalStateException(
+                "fuseki backend provides remote ActionLog storage, not a local Dataset");
+        throw new IllegalStateException("unsupported engine.dataset.type: " + type);
     }
 
     /**
      * Provides the {@link ActionLog} bean. When {@code fuseki} backend is
      * selected, wraps a remote SPARQL endpoint via {@link RemoteStorage}.
-     * Otherwise, the default {@code ActionLog(Dataset)} constructor is used.
+     * Otherwise, a locally configured Dataset is used.
      */
     @Singleton
     @Primary
-    public ActionLog actionLog(Dataset dataset) {
+    public ActionLog actionLog() {
         if ("fuseki".equalsIgnoreCase(type)) {
             String endpoint = resolve("engine.dataset.fuseki.endpoint", "CLAD_FUSEKI_ENDPOINT", "");
             if (endpoint.isBlank()) throw new IllegalStateException(
@@ -79,7 +82,7 @@ public class CladDatasetFactory {
                 : new RemoteStorage(endpoint, username, password);
             return new ActionLog(storage);
         }
-        return new ActionLog(dataset);
+        return new ActionLog(dataset());
     }
 
     private Dataset connectTdb2() {

@@ -2,11 +2,11 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `draft`
+- **Status:** `active`
 - **Affected profile(s):** `reference-impl/java-micronaut-jena`
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
-- **Evidence gate:** `pending`
+- **Evidence gate:** `approved`
 - **Change summary:** Eliminate silent local action-log storage when the remote Fuseki backend is selected and reject unsupported backend configuration.
 
 ## Contract impact
@@ -32,10 +32,10 @@
 
 | Invariant | Test level | Command or test | Status | Evidence |
 |---|---|---|---|---|
-| Remote backend cannot expose an unrelated writable local action log | unit | `CladDatasetFactory` ownership test | pending | pending |
-| Unknown backend type fails during bootstrap | unit | `CladDatasetFactory` configuration test | pending | pending |
-| Supported local and remote selections remain valid | unit | `CladDatasetFactory` configuration test | pending | pending |
-| Login contract remains unchanged | flow-regression | canonical `test.command` | pending | pending |
+| Remote backend cannot expose an unrelated writable local action log | unit | `CladDatasetFactoryTest.remoteBackendCannotExposeAnUnconnectedLocalDataset` | pass | Remote `Dataset` lookup now fails explicitly; `ActionLog` uses `RemoteStorage`. |
+| Unknown backend type fails during bootstrap | unit | `CladDatasetFactoryTest.unsupportedBackendTypeFailsClosed` | pass | Unsupported `engine.dataset.type` throws `IllegalStateException`. |
+| Supported local and remote selections remain valid | unit | `CladDatasetFactoryTest` | pass | All five configuration tests passed. |
+| Login contract remains unchanged | flow-regression | canonical `test.command` | pass | Canonical artefact gate and Maven suite passed. |
 
 ## Gates
 
@@ -50,5 +50,5 @@ Review configuration tests and canonical profile verification.
 ## Notes
 
 - Invalid configuration must fail during bootstrap; never silently fall back to `tmemory`.
-- Design gate is approved; activate this record only after the active archive-atomicity change closes.
+- Activated after the archive-atomicity evidence gate closed.
 - Rollback restores the previous factory behavior.

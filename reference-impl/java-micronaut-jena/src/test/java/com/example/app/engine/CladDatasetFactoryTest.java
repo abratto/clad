@@ -1,6 +1,5 @@
 package com.example.app.engine;
 
-import org.apache.jena.query.Dataset;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -17,18 +16,24 @@ class CladDatasetFactoryTest {
                 "ENGINE_DATASET_TYPE", "fuseki",
                 "CLAD_FUSEKI_ENDPOINT", "http://fuseki:3030/clad/update"));
 
-        Dataset dataset = factory.dataset();
+        assertInstanceOf(RemoteStorage.class, factory.actionLog().storage());
+    }
 
-        assertInstanceOf(RemoteStorage.class, factory.actionLog(dataset).storage());
+    @Test
+    void remoteBackendCannotExposeAnUnconnectedLocalDataset() {
+        CladDatasetFactory factory = new CladDatasetFactory(new Properties(), Map.of(
+                "ENGINE_DATASET_TYPE", "fuseki",
+                "CLAD_FUSEKI_ENDPOINT", "http://fuseki:3030/clad/update"));
+
+        assertThrows(IllegalStateException.class, factory::dataset);
     }
 
     @Test
     void remoteBackendWithoutEndpointFailsClosed() {
         CladDatasetFactory factory = new CladDatasetFactory(new Properties(), Map.of(
                 "ENGINE_DATASET_TYPE", "fuseki"));
-        Dataset dataset = factory.dataset();
 
-        assertThrows(IllegalStateException.class, () -> factory.actionLog(dataset));
+        assertThrows(IllegalStateException.class, factory::actionLog);
     }
 
     @Test
@@ -37,8 +42,15 @@ class CladDatasetFactoryTest {
                 "ENGINE_DATASET_TYPE", "fuseki",
                 "CLAD_FUSEKI_ENDPOINT", "http://fuseki:3030/clad/update",
                 "CLAD_FUSEKI_USERNAME", "admin"));
-        Dataset dataset = factory.dataset();
 
-        assertThrows(IllegalStateException.class, () -> factory.actionLog(dataset));
+            assertThrows(IllegalStateException.class, factory::actionLog);
+            }
+
+            @Test
+            void unsupportedBackendTypeFailsClosed() {
+            CladDatasetFactory factory = new CladDatasetFactory(new Properties(), Map.of(
+                "ENGINE_DATASET_TYPE", "not-a-backend"));
+
+            assertThrows(IllegalStateException.class, factory::dataset);
     }
 }
