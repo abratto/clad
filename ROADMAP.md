@@ -22,6 +22,7 @@
 > by moving it into the phases table and setting status to `doing`
 > (and demoting the previous `doing` row to `done`).
 
+- Production workload characterization — benchmark the predicate engine with a durable backend, realistic graph sizes and action chains, mixed read/write traffic, and sustained concurrency. Publish throughput, p50/p95/p99 latency, error rate, and the tested hardware/configuration; use the results to establish production workload expectations rather than a generic RPS claim.
 - Legacy polling-engine scheduler hardening — deferred. The transactional predicate engine is the preferred path because it performs better and matches the WYSIWID sync semantics; revisit bounded polling, claims, and lease recovery only for legacy-engine users.
 
 ## Resume point
@@ -31,4 +32,4 @@
 - **Last gate passed:** `UC-00-login` Stage 05 (worked example shipped)
 - **Next stage:** start `UC-01-<slug>` Stage 00 (actor/goal)
 - **Blockers:** none
-- **Last updated:** 2026-08-02 — deferred legacy polling-engine scheduler hardening. The transactional predicate engine is the preferred future execution path; its semantics align with WYSIWID syncs.
+- **Last updated:** 2026-08-02 — added production workload characterization to establish realistic capacity expectations for the transactional predicate engine; legacy polling-engine scheduler hardening remains deferred.

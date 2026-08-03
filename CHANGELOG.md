@@ -3,12 +3,21 @@
 All notable changes to this repository will be documented in this file.
 The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
-once it reaches 1.0.
+from the next published CLAD release onward. Each published CLAD version is
+identified by an immutable, annotated Git tag (`vMAJOR.MINOR.PATCH`). This
+governance does not prescribe release policy for downstream CLAD-based projects.
 
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
+
+### Release governance
+
+- **Annotated release tags**: Documented SemVer compatibility expectations and
+  made an annotated `vMAJOR.MINOR.PATCH` tag on a green `main` commit the
+  authoritative release boundary. Agents prepare release evidence but require
+  explicit human authorization to create or publish a release.
 
 ### Reference profile
 

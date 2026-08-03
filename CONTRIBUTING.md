@@ -105,6 +105,20 @@ maintainer control by enabling branch protection on `main`:
 The baseline ownership map is in [`.github/CODEOWNERS`](.github/CODEOWNERS).
 Update it as maintainership changes.
 
+## CLAD Releases
+
+This procedure governs releases of this CLAD repository, not downstream
+CLAD-based projects. CLAD releases use Semantic Versioning and an annotated
+Git tag as the release authority. A maintainer releases only a green `main`
+commit after finalizing the matching `CHANGELOG.md` section, then creates and pushes
+`vMAJOR.MINOR.PATCH` and publishes the GitHub Release from that tag. See
+[`methodology/implementation/DELIVERY.md`](methodology/implementation/DELIVERY.md)
+for the compatibility policy and release checklist.
+
+Contributors and agents may propose a version and draft release notes, but do
+not create, push, move, or delete release tags without explicit maintainer
+authorization. Downstream project maintainers define their own release policy.
+
 ## Style
 
 - Markdown: ATX headings, fenced code blocks with language tags, line wrap

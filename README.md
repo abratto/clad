@@ -261,8 +261,10 @@ methodology loop, agent guides, a worked example
 optional Java reference profile under
 [`reference-impl/java-micronaut-jena/`](reference-impl/java-micronaut-jena/).
 The methodology is profile-agnostic; the Java profile is the only runnable
-implementation today. Pre-1.0 releases may include breaking methodology
-changes.
+implementation today. Pre-1.0 CLAD releases may include breaking methodology
+changes. This repository uses [Semantic Versioning](https://semver.org/) and
+annotated Git tags; downstream CLAD-based projects define their own release
+policy. See [CHANGELOG.md](CHANGELOG.md) for CLAD upgrade notes.
 
 ### Built with CLAD
 

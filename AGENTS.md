@@ -144,6 +144,13 @@ read these files directly instead: `AGENTS.md` §1–3, `CONTEXT.md`,
     or the pre-commit hook as your only check. In implementation stages
     (04c–04e), `test.command` runs this gate automatically, so you do
     not need to invoke it separately.
+15. **CLAD release rule.** When publishing this repository's CLAD distribution,
+   a release is an annotated Git tag named `vMAJOR.MINOR.PATCH` on a green
+   `main` commit, with a matching version section in `CHANGELOG.md`. Agents may
+   prepare release notes and verify the candidate commit, but must not create
+   or push a release tag unless the human explicitly authorizes the version and
+   release. This rule does not govern releases of downstream CLAD-based
+   projects; their maintainers define their own release policy.
 
 ## 3. The CLAD contract loop
 

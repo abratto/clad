@@ -158,7 +158,34 @@ A reviewer reads the PR against these:
 A green CI is necessary, not sufficient. Approval is the human
 half of the gate.
 
-## 7. Anti-patterns
+## 7. CLAD distribution releases and versioning
+
+This section governs releases of the CLAD repository and its published
+distribution. CLAD releases use [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The public contract includes the methodology, agent instructions, templates,
+quality gates, and shipped reference profiles. Downstream CLAD-based projects
+define their own release, tag, changelog, and authorization policies.
+
+| Version change | Meaning before 1.0 | Examples |
+|---|---|---|
+| `MAJOR` | Reserved for the first stable contract and later incompatible contract changes | Renaming or removing a required stage or artefact |
+| `MINOR` | Additions or incompatible methodology changes | New enforcement rules, changed template/validator contracts, or new required workflow steps |
+| `PATCH` | Backward-compatible corrections | Documentation corrections, validator bug fixes, and reference-profile fixes that preserve contracts |
+
+Every CLAD distribution release must meet these conditions:
+
+1. The target commit is on `main` and CI is green.
+2. `CHANGELOG.md` has a final `## [MAJOR.MINOR.PATCH] - YYYY-MM-DD` section
+   with user-facing changes and upgrade notes for any contract change.
+3. The maintainer creates an **annotated** tag named `vMAJOR.MINOR.PATCH` on
+   that exact commit and pushes the tag.
+4. The matching GitHub Release uses the tag and changelog notes.
+
+Agents can draft release notes, identify the next CLAD version, and verify the
+candidate commit. Creating or pushing a CLAD tag, or publishing a CLAD GitHub
+Release, requires explicit human authorization for the chosen version.
+
+## 8. Anti-patterns
 
 - **Long-lived feature branches** that accumulate two or three
   features. Always split.
@@ -169,8 +196,11 @@ half of the gate.
   open an issue to remove it; do not route around it.
 - **"Just one tiny fix" follow-up commits to `main`.** They go
   through the same loop: branch → PR → CI → review → merge.
+- **Floating CLAD releases.** Do not describe a CLAD version in the changelog without
+   a matching annotated `vMAJOR.MINOR.PATCH` tag, and do not move or recreate a
+   published tag.
 
-## 8. Pointers
+## 9. Pointers
 
 - Local pre-commit gate: [`QUALITY_GATE.md`](QUALITY_GATE.md)
 - Hard rules CI enforces: [`RULES.md`](RULES.md)
