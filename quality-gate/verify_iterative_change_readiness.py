@@ -73,6 +73,17 @@ def in_implementation_scope(path):
     return IMPLEMENTATION_PATTERN.search(path) is not None
 
 
+def field_value(text, label):
+    # Match **Label:** `value` or **Label:** value (with or without backticks)
+    match = re.search(
+        rf"^[-*]?\s*\*\*{re.escape(label)}:\*\*\s*"
+        r"`?([^`\n]+)`?"
+        r"\s*$", text, re.MULTILINE)
+    if match:
+        return match.group(1).strip()
+    return ""
+
+
 def discover_change_files(feature_root):
     changes_dir = os.path.join(feature_root, "_changes")
     if not os.path.isdir(changes_dir):
@@ -84,26 +95,30 @@ def discover_change_files(feature_root):
     )
 
 
+def active_change_files(feature_root):
+    active = []
+    for path in discover_change_files(feature_root):
+        if not path.endswith(".md"):
+            continue
+        with open(path, encoding="utf-8") as handle:
+            if field_value(handle.read(), "Status").lower() == "active":
+                active.append(path)
+    return active
+
+
 def select_change_file(feature_root, explicit_path):
     if explicit_path:
         return explicit_path, []
-    candidates = discover_change_files(feature_root)
+    candidates = active_change_files(feature_root)
     if len(candidates) == 1:
         return candidates[0], []
     if not candidates:
-        return "", [(feature_root, "no iterative change artefact found; expected one under _changes/")]
-    return "", [(feature_root, "multiple _changes artefacts found; pass --change-file explicitly")]
-
-
-def field_value(text, label):
-    # Match **Label:** `value` or **Label:** value (with or without backticks)
-    match = re.search(
-        rf"^[-*]?\s*\*\*{re.escape(label)}:\*\*\s*"
-        r"`?([^`\n]+)`?"
-        r"\s*$", text, re.MULTILINE)
-    if match:
-        return match.group(1).strip()
-    return ""
+        return "", [(feature_root,
+                     "no active iterative change artefact found; expected exactly one "
+                     "`**Status:** active` record under _changes/")]
+    return "", [(feature_root,
+                 "multiple active iterative change artefacts found; mark historical "
+                 "records `closed` or `superseded`")]
 
 
 def matrix_rows(text):

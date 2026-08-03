@@ -93,6 +93,11 @@ drift from upstream.
 The matrix's *Re-derivation order* section is the agent's plan. List
 the stages in execution order; gate after each.
 
+When records are kept under a feature's `_changes/` directory, exactly one
+record for in-progress work must have `**Status:** active`. Mark historical
+records `closed` or `superseded`; quality gates select the active record and
+do not treat historical records as competing matrices.
+
 ---
 
 ## 4. Run the re-entry loop
