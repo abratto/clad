@@ -38,6 +38,76 @@ public class {name} extends SyncAgent {{
 
 class ImplementationParityFixtures(unittest.TestCase):
 
+    def test_compact_matrix_contracts_lower_to_matching_sync_classes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features = root / "features"
+            syncs = root / "syncs"
+            contracts = [
+                ("UC-01-widget-injector", "Whitelist", "add"),
+                ("UC-01-widget-injector", "Whitelist", "check"),
+                ("UC-02-intent-query", "LegalOntology", "queryService"),
+                ("UC-02-intent-query", "LegalOntology", "listServices"),
+            ]
+            compact_signatures = [
+                "Routed(domain)",
+                "Routed(clientId, origin)",
+                "Routed(clientId, text)",
+                "Routed(clientId, text)",
+            ]
+
+            for (feature, target, action), completion in zip(contracts, compact_signatures):
+                scope = "WidgetInjector" if "widget" in feature else "IntentQuery"
+                name = f"WhenWebHandleRoutedThen{target}{action[:1].upper()}{action[1:]}For{scope}"
+                write(
+                    features / feature / "stages/03_syncs/output" / f"{name}.sync.md",
+                    f"""sync {name}
+
+## Sync Contract Matrix
+
+| Source row | Target row | `when` signature | `then` signature |
+|---|---|---|---|
+| 1 | 2 | `Web/handle: [{completion}]` | `{target}/{action}: [ value: String ]` |
+""",
+                )
+                write(syncs / f"{name}.java", sync_class(name))
+
+            result = run(
+                IMPLEMENTATION_PARITY,
+                "--sync-impl-dir", syncs,
+                "--features-dir", features,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_malformed_compact_matrix_signature_still_fails(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features = root / "features"
+            syncs = root / "syncs"
+            name = "WhenWebHandleRoutedThenWhitelistAddForWidget"
+            write(
+                features / "UC-01-widget/stages/03_syncs/output" / f"{name}.sync.md",
+                f"""sync {name}
+
+## Sync Contract Matrix
+
+| Source row | Target row | `when` signature | `then` signature |
+|---|---|---|---|
+| 1 | 2 | `Web/handle [Routed(domain)]` | `Whitelist/add: [ domain: String ]` |
+""",
+            )
+            write(syncs / f"{name}.java", sync_class(name))
+
+            result = run(
+                IMPLEMENTATION_PARITY,
+                "--sync-impl-dir", syncs,
+                "--features-dir", features,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("could not derive mechanical", result.stdout)
+
     def test_matrix_and_rule_contracts_lower_and_spi_is_not_a_concept(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

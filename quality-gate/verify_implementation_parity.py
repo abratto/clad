@@ -45,6 +45,7 @@ IMPL_EXTENSIONS = {".java", ".kt", ".scala"}
 SYNC_DECL_RE = re.compile(r"^sync\s+(\w+)\s*$", re.MULTILINE)
 RULE_BLOCK_RE = re.compile(r"## Rule\s*(.*?)(?=^##\s+|\Z)", re.MULTILINE | re.DOTALL)
 ARROW_WHEN_RE = re.compile(r"(\w+)/(\w+)\s*:\s*\[[^\]]*\]\s*=>\s*\[([^\]]*)\]", re.DOTALL)
+COMPACT_WHEN_RE = re.compile(r"(\w+)/(\w+)\s*:\s*\[([^\]]*)\]", re.DOTALL)
 RULE_WHEN_RE = re.compile(r"^\s*when\s+(\w+)/(\w+)\s*\[([^\]]*)\]", re.MULTILINE)
 THEN_RE = re.compile(r"(\w+)/(\w+)\s*:")
 MATRIX_HEADING = "## Sync Contract Matrix"
@@ -159,7 +160,10 @@ def matrix_contracts(text):
             continue
         if len(row) <= max(when_index, then_index):
             return []
-        when_match = ARROW_WHEN_RE.fullmatch(row[when_index].strip())
+        when_match = (
+            ARROW_WHEN_RE.fullmatch(row[when_index].strip())
+            or COMPACT_WHEN_RE.fullmatch(row[when_index].strip())
+        )
         then_match = THEN_RE.search(row[then_index])
         if not when_match or not then_match:
             return []
