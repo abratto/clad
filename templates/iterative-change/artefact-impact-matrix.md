@@ -5,6 +5,7 @@
 # `<change-name>` — iterative change
 
 - **Change category:** `presentation` | `behavioural` | `structural`
+- **Status:** `active` | `closed`
 - **Earliest re-entry stage:** `01` | `01a` | `01b` | `02` | `03` | `03a` | `03b` | `04a` | `04b` | `04c` | `04d` | `04e`
 - **Why:** <one sentence describing what changed and why>
 

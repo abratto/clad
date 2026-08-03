@@ -245,6 +245,23 @@ files below are the single source of truth for per-stage instructions:
 | 04e-green | `stages/04_implement/04e_sync-tdd/04e_green-impl/CONTEXT.md` | `green-evidence.md` | Auto → 05 |
 | 05 | `stages/05_verify/CONTEXT.md` | `trace.md`, `findings.md`, `smoke.md`, `tracking.md` | Auto (close) |
 
+### Legacy Stage 04 evidence
+
+The split `04d-red`/`04d-green` and `04e-red`/`04e-green` stages are the
+required shape for all new work. A completed historical feature may retain its
+pre-split parent evidence (`04d_concept-tdd/output/concept-tdd.md` or
+`concept-test-derivation.md`; `04e_sync-tdd/output/sync-tdd.md` or
+`sync-test-derivation.md`) without fabricating child-stage placeholders. The
+sequence guard interprets those named files as migration evidence only when
+the corresponding split child outputs are absent.
+
+An explicitly marked historical green summary may cover only its immediately
+preceding red stage. New work and an iterative re-entry marked `Status:
+active` remain strict: each child output must be produced in canonical order.
+During an active Stage 04 re-entry, the artefact gate validates through the
+latest child output written after that change record, rather than a historical
+Stage 05 output.
+
 ### What each stage group demands of the model
 
 | Stage group | Stages | Required capability | Fence |

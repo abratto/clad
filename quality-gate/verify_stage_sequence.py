@@ -53,6 +53,106 @@ import clad_stages as cs
 # stricter checks (e.g. verify_gate_approval.py) may still require a literal
 # human `approved`.
 APPROVED_STATES = {"approved", "auto-approved"}
+LEGACY_PARENT_EVIDENCE = {
+    "04d": ("concept-tdd.md", "concept-test-derivation.md"),
+    "04e": ("sync-tdd.md", "sync-test-derivation.md"),
+}
+
+
+def _field_value(text: str, label: str) -> str:
+    match = re.search(
+        rf"^[-*]?\s*\*\*{re.escape(label)}:\*\*\s*`?([^`\n]+)`?\s*$",
+        text,
+        re.MULTILINE,
+    )
+    return match.group(1).strip().lower() if match else ""
+
+
+def active_reentry_change(feature_root: str) -> tuple[str, str] | None:
+    """Return the earliest stage and path from one active change record."""
+    changes_dir = os.path.join(feature_root, "_changes")
+    if not os.path.isdir(changes_dir):
+        return None
+    active = []
+    for name in os.listdir(changes_dir):
+        if not name.endswith(".md"):
+            continue
+        path = os.path.join(changes_dir, name)
+        with open(path, encoding="utf-8") as handle:
+            text = handle.read()
+        if _field_value(text, "Status") == "active":
+            stage_id = _field_value(text, "Earliest re-entry stage")
+            if stage_id == "04d":
+                stage_id = "04d-red"
+            elif stage_id == "04e":
+                stage_id = "04e-red"
+            if cs.stage_by_id(stage_id) is not None:
+                active.append((stage_id, path))
+    if len(active) == 1:
+        return active[0]
+    return None
+
+
+def active_reentry_stage(feature_root: str) -> str | None:
+    """Return the earliest stage from one explicitly active change record."""
+    change = active_reentry_change(feature_root)
+    return change[0] if change else None
+
+
+def _legacy_parent_present(feature_root: str, phase: str) -> bool:
+    output_dir = os.path.join(
+        feature_root, "stages", "04_implement", f"{phase}_{'concept-tdd' if phase == '04d' else 'sync-tdd'}", "output")
+    return any(os.path.isfile(os.path.join(output_dir, name))
+               for name in LEGACY_PARENT_EVIDENCE[phase])
+
+
+def _historical_green_summary(feature_root: str, stage_id: str) -> bool:
+    stage = cs.stage_by_id(stage_id)
+    if stage is None:
+        return False
+    marker = (
+        "CLAD historical-green-summary: includes "
+        f"{stage_id.removesuffix('-green')}-red evidence"
+    )
+    output_dir = stage.output_dir(feature_root)
+    for root, _dirs, files in os.walk(output_dir):
+        for name in files:
+            if name.startswith("."):
+                continue
+            path = os.path.join(root, name)
+            try:
+                with open(path, encoding="utf-8") as handle:
+                    if marker in handle.read():
+                        return True
+            except OSError:
+                continue
+    return False
+
+
+def stage_has_evidence(feature_root: str, stage_id: str) -> bool:
+    """Return whether a canonical stage has direct or migration-only evidence."""
+    stage = cs.stage_by_id(stage_id)
+    if stage is None:
+        return False
+    if cs.dir_is_populated(stage.output_dir(feature_root)):
+        return True
+    if active_reentry_stage(feature_root) is not None:
+        return False
+
+    phase = stage_id[:3]
+    if phase not in LEGACY_PARENT_EVIDENCE:
+        return False
+    red_id = f"{phase}-red"
+    green_id = f"{phase}-green"
+    red = cs.stage_by_id(red_id)
+    green = cs.stage_by_id(green_id)
+    child_outputs_empty = not (
+        cs.dir_is_populated(red.output_dir(feature_root))
+        or cs.dir_is_populated(green.output_dir(feature_root))
+    )
+    if child_outputs_empty and _legacy_parent_present(feature_root, phase):
+        return True
+    return stage_id == red_id and _historical_green_summary(feature_root, green_id)
 
 
 def gate_status(resume_text: str, gate_num: int) -> str | None:
@@ -141,7 +241,7 @@ def main() -> None:
     for i in range(target + 1):
         stage = cs.STAGES[i]
         out_dir = stage.output_dir(feature_root)
-        if not cs.dir_is_populated(out_dir):
+        if not stage_has_evidence(feature_root, stage.id):
             print(f"FAIL  Stage {stage.id} ({stage.label}) output is empty, "
                   f"but a later stage is populated — a stage was skipped.")
             print(f"       expected artefacts in: {cs.relpath(out_dir, feature_root)}")
@@ -168,6 +268,8 @@ def main() -> None:
         for i in range(target + 1):
             stage = cs.STAGES[i]
             out_dir = stage.output_dir(feature_root)
+            if not cs.dir_is_populated(out_dir):
+                continue
             receipt_path = os.path.join(out_dir, ".gate-receipt.json")
             if not os.path.isfile(receipt_path):
                 print(f"FAIL  Stage {stage.id} ({stage.label}) has no "
