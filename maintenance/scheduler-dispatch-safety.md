@@ -66,5 +66,5 @@ Review deterministic scheduler tests, concurrency evidence, and canonical profil
 ## Notes
 
 - Any change to observable action order, outcomes, or flow lineage requires feature-stage re-entry instead of this maintenance route.
-- Design gate is approved; activate this record only after the active archive-atomicity change closes.
+- Deferred in `ROADMAP.md`: the transactional predicate engine is the preferred execution path. Keep this record as a pending design for legacy polling-engine users; do not activate it without renewed design-gate approval.
 - Rollback restores the prior scheduler implementation.

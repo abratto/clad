@@ -22,7 +22,7 @@
 > by moving it into the phases table and setting status to `doing`
 > (and demoting the previous `doing` row to `done`).
 
-- _(none yet — add `UC-XX-<slug> — <one-line summary>` lines as ideas land)_
+- Legacy polling-engine scheduler hardening — deferred. The transactional predicate engine is the preferred path because it performs better and matches the WYSIWID sync semantics; revisit bounded polling, claims, and lease recovery only for legacy-engine users.
 
 ## Resume point
 
@@ -31,4 +31,4 @@
 - **Last gate passed:** `UC-00-login` Stage 05 (worked example shipped)
 - **Next stage:** start `UC-01-<slug>` Stage 00 (actor/goal)
 - **Blockers:** none
-- **Last updated:** 2026-07-03 — methodology maintenance: added canonical `When<Trigger>Then<Target>` sync naming and extended `verify_implementation_parity.py` to validate sync spec/header/class/runtime names mechanically. UC-00 sync specs and Java sync classes migrated to the rule-shaped names.
+- **Last updated:** 2026-08-02 — deferred legacy polling-engine scheduler hardening. The transactional predicate engine is the preferred future execution path; its semantics align with WYSIWID syncs.
