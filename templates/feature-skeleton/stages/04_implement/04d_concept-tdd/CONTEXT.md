@@ -60,12 +60,12 @@ tests. One concept, one test fixture, no other concepts in scope (R1).
 
 ## Process
 
-Run the child stages strictly in order, gating after each:
+The child stages are executable auto-advance stages. Run them strictly in order:
 
 1. [`04d_red-tests/`](04d_red-tests/CONTEXT.md) — derive executable
    concept tests, run them red, and record the handoff bundle.
 2. [`04d_green-impl/`](04d_green-impl/CONTEXT.md) — implement only
-   against the approved red tests until they are green.
+  against the completed red tests until they are green.
 
 
 ## Progress checklist
@@ -81,7 +81,7 @@ Run the child stages strictly in order, gating after each:
 
 ## Verify
 
-- `04d_red-tests/` was gated before `04d_green-impl/` started.
+- `04d_red-tests/` was complete before `04d_green-impl/` started.
 - Iterative-change readiness passes before concept implementation work starts.
 - `04d_red-tests/output/concept-test-derivation.md` exists.
 - All approved concept tests are green at the end of `04d_green-impl/`.
@@ -92,7 +92,7 @@ Run the child stages strictly in order, gating after each:
 
 ## Gate
 
-Auto-advances through Stage 05. Concept tests are mechanically derived
+Auto-advances through `04d-red`, `04d-green`, then `04e-red`. Concept tests are mechanically derived
 from the approved use case (04c) and SPECs (04b). The red→green handoff
 is automated — `verify_concept_test_derivation.py` is the gate between
 04d-red and 04d-green. No human approval is required at this boundary;

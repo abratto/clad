@@ -3,7 +3,8 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `<platform | mixed>`
-- **Status:** `<draft | active | closed>`
+- **Status:** `<draft | active | closed>` (`draft` until design approval,
+  `active` while implementing, `closed` after evidence approval)
 - **Affected profile(s):** `<reference-impl/<profile> | all profiles>`
 - **Feature-contract impact:** `<preserved | re-entered>`
 - **Design gate:** `<pending | approved>`
@@ -44,11 +45,13 @@ feature stage.
 ### Design gate
 
 The human reviews contract impact, non-goals, and the test matrix before a
-maintenance-scoped implementation or deployment file changes.
+maintenance-scoped implementation or deployment file changes. Approve with
+`./clad approve-maintenance <change-name> design`, then set Status to `active`.
 
 ### Evidence gate
 
 The human reviews the completed test matrix and runtime evidence before commit.
+After approval, set Status to `closed` and commit the record with the change.
 
 ## Notes
 

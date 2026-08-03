@@ -38,12 +38,12 @@ turns the outer flow tests green.
 
 ## Process
 
-Run the child stages strictly in order, gating after each:
+The child stages are executable auto-advance stages. Run them strictly in order:
 
 1. [`04e_red-tests/`](04e_red-tests/CONTEXT.md) — derive executable
    sync tests, run them red, and record the handoff bundle.
 2. [`04e_green-impl/`](04e_green-impl/CONTEXT.md) — implement only
-   against the approved red sync tests until they and the `04c` flow
+   against the completed red sync tests until they and the `04c` flow
    tests are green.
 
 ## Outputs
@@ -52,7 +52,7 @@ Run the child stages strictly in order, gating after each:
 
 ## Verify
 
-- `04e_red-tests/` was gated before `04e_green-impl/` started.
+- `04e_red-tests/` was complete before `04e_green-impl/` started.
 - Iterative-change readiness passes before sync implementation work starts.
 - `04e_red-tests/output/sync-test-derivation.md` exists.
 - All approved sync tests are green at the end of `04e_green-impl/`.
@@ -66,10 +66,10 @@ Run the child stages strictly in order, gating after each:
 
 Auto-advances through Stage 05.
 
-## Next stage
+## Advancing
 
 -> [`04e_red-tests/CONTEXT.md`](04e_red-tests/CONTEXT.md) — Sync test derivation (red)
 
 (Stage 04 router is satisfied when `04e_green-impl/` is green; advance directly to Stage 05.)
 
-To advance, the human says: **"Proceed to Stage 04e-red."**
+Run `./clad advance`; this container does not choose the next child stage.

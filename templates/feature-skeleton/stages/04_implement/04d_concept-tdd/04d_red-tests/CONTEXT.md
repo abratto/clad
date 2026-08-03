@@ -5,9 +5,9 @@
 Run the following **before** writing any artefacts for this stage:
 
 ```
-python3 ../../../../../../quality-gate/verify_stage_output.py \
+python3 ../../../../../../quality-gate/verify_stage_sequence.py \
   --feature ../../../../ \
-  --required-stages 02,04b,04c
+  --through 04c
 ```
 
 If this script exits with a non-zero status, stop immediately.
@@ -66,9 +66,9 @@ here.
    package/class/method names, red evidence command, expected red
    outcome, and the next implementation target.
 6. Record the derivation map and the handoff bundle. The automated
-    gate (`verify_concept_test_derivation.py`) will confirm the tests
-    cover all SPEC outcomes. No human approval is required at this
-    boundary — the design was settled at 04c (Gate 3).
+  gate (`verify_concept_test_derivation.py`) confirms the tests cover
+  all SPEC outcomes. No human approval is required at this boundary;
+  the design was settled at 04c (Gate 3).
 
 ## Outputs
 

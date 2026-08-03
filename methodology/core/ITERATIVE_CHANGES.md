@@ -160,17 +160,19 @@ not a fabricated UC pipeline.
 
 1. Copy `templates/maintenance-change.md` to `maintenance/<change-name>.md`.
 2. Record the runtime invariant, feature-contract impact, affected surfaces,
-  rollback boundary, and test matrix. Set its status to `active`.
+  rollback boundary, and test matrix. Leave its status as `draft` while the
+  design gate is pending.
 3. Present the **design gate** for human approval. Do not modify an
   engine/profile/configuration/deployment implementation until the design
-  gate is approved with `quality-gate/approve_maintenance_change.py`.
-4. Write focused tests before implementation. Preserve existing flow tests as
+  gate is approved with `./clad approve-maintenance <change-name> design`.
+4. After approval, set the record status to `active`. Write focused tests before
+  implementation. Preserve existing flow tests as
   the regression oracle for the feature contract.
 5. Implement the smallest change that satisfies the approved invariants.
 6. Run the profile gate, the completed test matrix, and applicable smoke
   evidence. Present the **evidence gate** for human approval.
-7. Record the evidence approval, commit the record with the implementation,
-  then set the record status to `closed` in the next maintenance batch.
+7. Record the evidence approval, set the record status to `closed`, and commit
+  the record with the implementation.
 
 `verify_maintenance_change_readiness.py` enforces the design gate before
 tests run and both gates at commit time. It covers engine sources,

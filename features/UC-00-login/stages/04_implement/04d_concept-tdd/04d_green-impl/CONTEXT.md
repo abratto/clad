@@ -56,7 +56,8 @@ upstream prose, but it may not redesign approved tests.
    replace the selected profile's storage layer with an in-memory
    substitute.
 7. Run the canonical command from `../../../../_config/build-and-test.md`
-   until concept tests are green, then stop for human approval.
+   until concept tests are green, then record the command and result in
+   `output/green-evidence.md`.
 
 ## Outputs
 
@@ -89,10 +90,8 @@ upstream prose, but it may not redesign approved tests.
 
 ## Gate
 
-Default human approval.
+Auto-advances to `04e-red` after green evidence is recorded.
 
-## Next stage
+## Advancing
 
--> [`../../04e_sync-tdd/CONTEXT.md`](../../04e_sync-tdd/CONTEXT.md) — Sync TDD router
-
-To advance, the human says: **"Proceed to Stage 04e."**
+Run `./clad advance`; it selects `04e-red` after this stage's checks pass.

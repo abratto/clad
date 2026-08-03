@@ -50,7 +50,8 @@ here.
    `output/concept-test-derivation.md`: approved test files, exact
    package/class/method names, red evidence command, expected red
    outcome, and the next implementation target.
-6. Stop and present the red tests for human approval.
+6. Record the derivation map and handoff bundle. No human approval is
+  required at this boundary; Gate 3 approved the executable specification.
 
 ## Outputs
 
@@ -83,11 +84,8 @@ here.
 
 ## Gate
 
-Default human approval. `04d-green` may not begin until this gate is
-explicitly passed.
+Auto-advances to `04d-green` after the derivation checks pass.
 
-## Next stage
+## Advancing
 
--> [`../04d_green-impl/CONTEXT.md`](../04d_green-impl/CONTEXT.md) — Implement approved concept tests only
-
-To advance, the human says: **"Proceed to Stage 04d-green."**
+Run `./clad advance`; it selects `04d-green` after this stage's checks pass.

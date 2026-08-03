@@ -42,12 +42,12 @@ tests.
 
 ## Process
 
-Run the child stages strictly in order, gating after each:
+The child stages are executable auto-advance stages. Run them strictly in order:
 
 1. [`04d_red-tests/`](04d_red-tests/CONTEXT.md) — derive executable
    concept tests, run them red, and record the handoff bundle.
 2. [`04d_green-impl/`](04d_green-impl/CONTEXT.md) — implement only
-   against the approved red tests until they are green.
+   against the completed red tests until they are green.
 
 ## Outputs
 
@@ -55,7 +55,7 @@ Run the child stages strictly in order, gating after each:
 
 ## Verify
 
-- `04d_red-tests/` was gated before `04d_green-impl/` started.
+- `04d_red-tests/` was complete before `04d_green-impl/` started.
 - Iterative-change readiness passes before concept implementation work starts.
 - `04d_red-tests/output/concept-test-derivation.md` exists.
 - All approved concept tests are green at the end of `04d_green-impl/`.
@@ -69,8 +69,8 @@ Run the child stages strictly in order, gating after each:
 Auto-advances (next human gate: Stage 04c already passed). The gate fires
 only after `04d_green-impl/` is green.
 
-## Next stage
+## Advancing
 
 -> [`04d_red-tests/CONTEXT.md`](04d_red-tests/CONTEXT.md) — Concept test derivation (red)
 
-To advance, the human says: **"Proceed to Stage 04d-red."**
+Run `./clad advance`; this container does not choose the next child stage.

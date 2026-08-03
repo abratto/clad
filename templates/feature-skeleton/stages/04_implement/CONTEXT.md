@@ -1,8 +1,8 @@
 # Stage 04 — Implement (router)
 
-This stage owns no artefacts of its own. It routes to five top-level
-sub-stages; `04d` and `04e` are themselves routers with structural
-red/green child stages.
+This directory owns no artefacts or transition. It is a reference
+container for five top-level sub-stages; `04d` and `04e` contain
+structural red/green child stages.
 
 ## Why this stage exists
 
@@ -41,7 +41,7 @@ sub-stage.
 
 ## Process
 
-Run the sub-stages **strictly in order**, gating after each. Before
+Run the executable sub-stages **strictly in order**. Before
 starting any sub-stage, verify its pre-condition is met. If it is not,
 stop and tell the human which earlier sub-stage must be completed first.
 
@@ -50,8 +50,8 @@ stop and tell the human which earlier sub-stage must be completed first.
 | 1 | [`04a_storage-mapping/`](04a_storage-mapping/CONTEXT.md) — optional profile mapping | `03b_data-model/output/` is non-empty |
 | 2 | [`04b_spec/`](04b_spec/CONTEXT.md) — per-concept SPEC slice | `04a_storage-mapping/output/` exists (or `_NOT_APPLICABLE.md` present) |
 | 3 | [`04c_flow-tests/`](04c_flow-tests/CONTEXT.md) — outer red (flow tests) | `04b_spec/output/` is non-empty |
-| 4 | [`04d_concept-tdd/`](04d_concept-tdd/CONTEXT.md) — router for `04d_red-tests/` then `04d_green-impl/` | `04c_flow-tests/output/` is non-empty |
-| 5 | [`04e_sync-tdd/`](04e_sync-tdd/CONTEXT.md) — router for `04e_red-tests/` then `04e_green-impl/` | All concept tests from `04d_green` are green |
+| 4 | [`04d_red-tests/`](04d_concept-tdd/04d_red-tests/CONTEXT.md) then [`04d_green-impl/`](04d_concept-tdd/04d_green-impl/CONTEXT.md) | `04c_flow-tests/output/` is non-empty and Gate 3 is approved |
+| 5 | [`04e_red-tests/`](04e_sync-tdd/04e_red-tests/CONTEXT.md) then [`04e_green-impl/`](04e_sync-tdd/04e_green-impl/CONTEXT.md) | All concept tests from `04d_green` are green |
 
 During `04c` through `04e`, if the selected profile exposes a runtime
 debug surface, use it as the default evidence source for explaining
@@ -79,13 +79,13 @@ doubt, use one-stage-per-turn.
 
 ## Verify
 
-- Every sub-stage has been gated.
+- Every executable sub-stage has recorded its required output evidence.
 - For iterative changes, `quality-gate/verify_iterative_change_readiness.py`
   passes before 04d/04e work starts, and
   `quality-gate/verify_iterative_change_coupling.py` passes before merge.
 - `04b` exists before any `04c`/`04d`/`04e` work.
-- `04d_red-tests/` is approved before `04d_green-impl/` starts.
-- `04e_red-tests/` is approved before `04e_green-impl/` starts.
+- `04d_red-tests/` is complete before `04d_green-impl/` starts.
+- `04e_red-tests/` is complete before `04e_green-impl/` starts.
 - No sub-stage is treated as complete from markdown outputs alone; each
   required code/test side effect exists for the selected profile.
 - The flow tests from `04c` are green at the end of `04e_green`.

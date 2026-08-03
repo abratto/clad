@@ -5,9 +5,9 @@
 Run the following **before** writing any sync test artefacts:
 
 ```
-python3 ../../../../../../quality-gate/verify_stage_output.py \
+python3 ../../../../../../quality-gate/verify_stage_sequence.py \
   --feature ../../../../ \
-  --required-stages 04d
+  --through 04d-green
 ```
 
 Additionally, concept tests must be green (`mvn test` passes).
@@ -58,7 +58,8 @@ no sync implementation belongs here.
    `output/sync-test-derivation.md`: approved test files, exact
    package/class/method names, red evidence command, expected red
    outcome, and the next implementation target.
-5. Stop and present the red sync tests for human approval.
+5. Record the derivation map and handoff bundle. No human approval is
+  required at this boundary; Gate 3 approved the executable specification.
 
 ## Outputs
 

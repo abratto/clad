@@ -65,8 +65,7 @@ intent scenarios.
 
 Default. After this gate the outer loop is red.
 
-## Next stage
+## Advancing
 
-→ [`../04d_concept-tdd/CONTEXT.md`](../04d_concept-tdd/CONTEXT.md)
-
-To advance, the human says: **"Proceed to Stage 04d."**
+Run `./clad advance`. After Gate 3 is approved, it directs the agent to
+`04d_red-tests/CONTEXT.md`; do not select the child stage manually.

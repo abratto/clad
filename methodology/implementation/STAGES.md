@@ -66,7 +66,7 @@ features/UC-XX-name/
    │   ├── CONTEXT.md
    │   └── output/              <Name>.data-model.md per concept
     ├── 04_implement/
-    │   ├── CONTEXT.md           Router → 04a..04e; no direct artefacts
+    │   ├── CONTEXT.md           Container reference for 04a..04e; no direct artefacts
    │   ├── 04a_storage-mapping/ Optional profile mapping
     │   │   ├── CONTEXT.md
     │   │   └── output/
@@ -76,20 +76,22 @@ features/UC-XX-name/
     │   ├── 04c_flow-tests/      Outside-loop red: HTTP → flow-token tree
     │   │   ├── CONTEXT.md
     │   │   └── output/
-   │   ├── 04d_concept-tdd/     Router: concept red/green split
+  │   ├── 04d_concept-tdd/     Container: concept red/green split
    │   │   ├── CONTEXT.md
    │   │   ├── 04d_red-tests/
    │   │   │   ├── CONTEXT.md
    │   │   │   └── output/      concept-test-derivation.md
-   │   │   └── 04d_green-impl/
-   │   │       └── CONTEXT.md
-   │   └── 04e_sync-tdd/        Router: sync red/green split
+  │   │   └── 04d_green-impl/
+  │   │       ├── CONTEXT.md
+  │   │       └── output/      green-evidence.md
+  │   └── 04e_sync-tdd/        Container: sync red/green split
    │       ├── CONTEXT.md
    │       ├── 04e_red-tests/
    │       │   ├── CONTEXT.md
    │       │   └── output/      sync-test-derivation.md
-   │       └── 04e_green-impl/
-   │           └── CONTEXT.md
+  │       └── 04e_green-impl/
+  │           ├── CONTEXT.md
+  │           └── output/      green-evidence.md
     └── 05_verify/
         ├── CONTEXT.md
         └── output/              trace.md, findings.md, smoke.md, tracking.md
@@ -237,8 +239,10 @@ files below are the single source of truth for per-stage instructions:
 | 04a | `stages/04_implement/04a_storage-mapping/CONTEXT.md` | `<Name>.storage.md` or `_NOT_APPLICABLE.md` | Auto → 04c |
 | 04b | `stages/04_implement/04b_spec/CONTEXT.md` | `<Name>.spec.md` per concept | Auto → 04c |
 | 04c | `stages/04_implement/04c_flow-tests/CONTEXT.md` | `.feature` files + step definitions | **Gate 3 (Executable)** |
-| 04d | `stages/04_implement/04d_concept-tdd/CONTEXT.md` | Router → `04d_red-tests/` then `04d_green-impl/` | Auto → 05 |
-| 04e | `stages/04_implement/04e_sync-tdd/CONTEXT.md` | Router → `04e_red-tests/` then `04e_green-impl/` | Auto → 05 |
+| 04d-red | `stages/04_implement/04d_concept-tdd/04d_red-tests/CONTEXT.md` | `concept-test-derivation.md` | Auto → 04d-green |
+| 04d-green | `stages/04_implement/04d_concept-tdd/04d_green-impl/CONTEXT.md` | `green-evidence.md` | Auto → 04e-red |
+| 04e-red | `stages/04_implement/04e_sync-tdd/04e_red-tests/CONTEXT.md` | `sync-test-derivation.md` | Auto → 04e-green |
+| 04e-green | `stages/04_implement/04e_sync-tdd/04e_green-impl/CONTEXT.md` | `green-evidence.md` | Auto → 05 |
 | 05 | `stages/05_verify/CONTEXT.md` | `trace.md`, `findings.md`, `smoke.md`, `tracking.md` | Auto (close) |
 
 ### What each stage group demands of the model
@@ -339,4 +343,4 @@ reviewing at the gate?" Read top to bottom for a single feature.
 | **1 (Requirements)** | 01 → 01a → 01b | Project brief (Stage 00) | usecase.md, responsibility-map.md, chain-table.md | Actors/goals correct? Scenarios cover all flows? Concept boundaries right? Action chains plausible? |
 | **2 (Architecture)** | 02 → 03 → 03a → 03b | Approved requirements | concept.md, sync.md, dep-cards, data-model.md | Concept state machines cover the chains? Sync coordination declarative? Concept-state reads intentional? Data model complete? |
 | **3 (Executable)** | 04a → 04b → 04c | Approved architecture | storage.md, spec.md, .feature files | Tests capture the right scenarios and inputs? |
-| **Auto (Delivery)** | 04d → 04e → 05 | (nothing — all upstream artefacts approved) | concept code, sync code, test code, trace.md, smoke.md, tracking.md | (none — script-checked: `mvn test` passes, quality-gate scripts pass) |
+| **Auto (Delivery)** | 04d-red → 04d-green → 04e-red → 04e-green → 05 | (nothing — all upstream artefacts approved) | concept code, sync code, test code, trace.md, smoke.md, tracking.md | (none — script-checked: `mvn test` passes, quality-gate scripts pass) |

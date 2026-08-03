@@ -5,9 +5,9 @@
 Run the following **before** writing any sync implementation code:
 
 ```
-python3 ../../../../../../quality-gate/verify_stage_output.py \
-  --feature ../../../../ \
-  --required-stages 04e
+python3 ../../../../../../quality-gate/verify_stage_sequence.py \
+   --feature ../../../../ \
+   --through 04e-red
 ```
 
 If this script exits with a non-zero status, stop immediately.
@@ -71,8 +71,8 @@ not redesign approved tests.
    class that sequences ordered domain calls or chooses the final
    scenario branch inline is a defect, not an acceptable shortcut.
  7. Run the canonical command from `../../../../_config/build-and-test.md`
-    until sync tests are green and the `04c` flow tests are green, then
-    stop for human approval.
+    until sync tests and the `04c` flow tests are green, then record the
+    command and result in `output/green-evidence.md`.
  8. On the Gherkin track: after sync tests and flow tests are green,
     enable the Cucumber runner (remove `@Disabled` from step-definition
     classes) and re-run. Confirm all Gherkin scenarios pass. Capture
@@ -80,6 +80,7 @@ not redesign approved tests.
 
 ## Outputs
 
+- `output/green-evidence.md` — executed green command, result, and implementation files changed
 - (Side effect:) `<SyncName>.java` and green `<SyncName>Test.java` files (or profile equivalents) per sync
 
 ## Verify

@@ -48,7 +48,8 @@ no sync implementation belongs here.
    `output/sync-test-derivation.md`: approved test files, exact
    package/class/method names, red evidence command, expected red
    outcome, and the next implementation target.
-5. Stop and present the red sync tests for human approval.
+5. Record the derivation map and handoff bundle. No human approval is
+  required at this boundary; Gate 3 approved the executable specification.
 
 ## Outputs
 
@@ -74,11 +75,8 @@ no sync implementation belongs here.
 
 ## Gate
 
-Default human approval. `04e-green` may not begin until this gate is
-explicitly passed.
+Auto-advances to `04e-green` after the derivation checks pass.
 
-## Next stage
+## Advancing
 
--> [`../04e_green-impl/CONTEXT.md`](../04e_green-impl/CONTEXT.md) — Implement approved sync tests only
-
-To advance, the human says: **"Proceed to Stage 04e-green."**
+Run `./clad advance`; it selects `04e-green` after this stage's checks pass.

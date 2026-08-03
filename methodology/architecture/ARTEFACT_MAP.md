@@ -72,16 +72,16 @@ see [`TRACEABILITY.md`](TRACEABILITY.md).
           │ (conceptual facts + constraints per concept)             │
           ▼                                                          │
    ┌──────────────────────────────────────────────────┐              │
-   │ 04_implement/  (router → 5 sub-stages)           │              │
+       │ 04_implement/  (container → executable stages)   │              │
    │                                                  │              │
    │  04a_storage-mapping/  data model → profile      │              │
    │                       storage mapping            │              │
    │  04b_spec/   concept spec → SPEC slice           │              │
    │  04c_flow-tests/   one outer-red flow test per   │              │
    │                    scenario  ────────────────────┼──┐           │
-       │  04d_concept-tdd/  router -> 04d_red-tests,      │  │           │
+       │  04d_concept-tdd/  container -> 04d_red-tests,   │  │           │
        │                    04d_green-impl                │  │           │
-       │  04e_sync-tdd/     router -> 04e_red-tests,      │  │           │
+       │  04e_sync-tdd/     container -> 04e_red-tests,   │  │           │
        │                    04e_green-impl; outer flow    │  │           │
        │                    tests go GREEN ───────────────┼──┘           │
    └──────┬───────────────────────────────────────────┘              │

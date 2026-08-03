@@ -63,22 +63,23 @@ invalid.
 
 ## Stage 04 order and gates are mandatory
 
-The order is `04b -> 04c -> 04d -> 04e` (with optional `04a` before
-them). `04b` is not optional when later stages consume SPECs.
+The executable order is `04b -> 04c -> 04d-red -> 04d-green -> 04e-red
+-> 04e-green` (with optional `04a` before them). `04b` is not optional
+when later stages consume SPECs.
 
 Do not collapse these gates:
 
 - **`04c` stops after flow test specs/stubs and waits for human
    approval (Gate 3).** This is the last design-stage human gate —
    the Gherkin `.feature` file IS the executable use case.
-- `04d` and `04e` auto-advance because their tests are mechanically
-   derived from already-approved artefacts (04c flow tests, 04b SPECs,
-   chain tables, sync specs). The quality-gate scripts serve as the
-   automated gate between red and green phases.
+- `04d-red`, `04d-green`, `04e-red`, and `04e-green` auto-advance because
+   their tests are mechanically derived from already-approved artefacts (04c
+   flow tests, 04b SPECs, chain tables, sync specs). The quality-gate scripts
+   serve as the automated gate between red and green phases.
 - The flow tests enabled at 04e-green must all pass before Stage 05.
 
-For multi-model workflows, treat `04d` and `04e` as structural handoff
-boundaries with their own child-stage folders:
+For multi-model workflows, `04d` and `04e` are container folders around
+the executable structural handoff child stages:
 
 - red phase: an architect/engineer model interprets upstream artefacts
    into executable tests

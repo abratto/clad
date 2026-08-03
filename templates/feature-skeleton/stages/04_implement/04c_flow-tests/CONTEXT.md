@@ -225,8 +225,7 @@ After `approve_gate.py` exits successfully, proceed through stages
 The `verify_file_manifest.py` and `verify_gherkin_derivation.py` scripts
 must pass before requesting the gate.
 
-## Next stage
+## Advancing
 
-→ [`../04d_concept-tdd/CONTEXT.md`](../04d_concept-tdd/CONTEXT.md) — Inner red→green per concept
-
-To advance, the human says: **"Proceed to Stage 04d."**
+Run `./clad advance`. After Gate 3 is approved, it directs the agent to
+`04d_red-tests/CONTEXT.md`; do not select the child stage manually.

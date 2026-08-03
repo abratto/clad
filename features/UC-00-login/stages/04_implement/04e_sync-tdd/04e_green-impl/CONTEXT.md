@@ -58,8 +58,8 @@ not redesign approved tests.
    class that sequences ordered domain calls or chooses the final
    scenario branch inline is a defect, not an acceptable shortcut.
 7. Run the canonical command from `../../../../_config/build-and-test.md`
-   until sync tests are green and the `04c` flow tests are green, then
-   stop for human approval.
+   until sync tests and the `04c` flow tests are green, then record the
+   command and result in `output/green-evidence.md`.
 
 ## Outputs
 
@@ -103,10 +103,8 @@ not redesign approved tests.
 
 ## Gate
 
-Default human approval. This is the gate before Stage 05.
+Auto-advances to Stage 05 after green evidence is recorded.
 
-## Next stage
+## Advancing
 
--> [`../../../05_verify/CONTEXT.md`](../../../05_verify/CONTEXT.md) — Verify + close
-
-To advance, the human says: **"Proceed to Stage 05."**
+Run `./clad advance`; it selects Stage 05 after this stage's checks pass.

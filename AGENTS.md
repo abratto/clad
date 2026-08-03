@@ -173,17 +173,18 @@ Mapped to the ICM stages of a feature folder:
 | 3 | `stages/03_syncs/` | One `*.sync.md` per coordination rule | Auto¹ → 03b |
 | 3a | `stages/03a_dependency-review/` | One `*-card.md` per concept + `pattern-d-summary.md` (cross-concept coupling surface) | Auto¹ → 03b |
 | 3b | `stages/03b_data-model/` | One `*.data-model.md` per concept (profile-neutral conceptual data model) | **Gate 2 (Architecture)** |
-| 4a | `stages/04a_storage-mapping/` | Storage mapping (profile-specific) | Auto¹ → 04c |
-| 4b | `stages/04b_spec/` | Spec. When `port-spec.md` exists, `spec.md` must include exact response shape examples (JSON path, field type, error envelope) for every HTTP endpoint, not only field presence. | Auto¹ → 04c |
-| 4c | `stages/04c_flow-tests/` | Flow tests (outer red) | **Gate 3 (Executable)** |
-| 4d | `stages/04d_concept-tdd/` | Concept TDD (inner red→green) | Auto → 05 |
-| 4e | `stages/04e_sync-tdd/` | Sync TDD (inner red→green) | Auto → 05 |
+| 4a | `stages/04_implement/04a_storage-mapping/` | Storage mapping (profile-specific) | Auto¹ → 04c |
+| 4b | `stages/04_implement/04b_spec/` | Spec. When `port-spec.md` exists, `spec.md` must include exact response shape examples (JSON path, field type, error envelope) for every HTTP endpoint, not only field presence. | Auto¹ → 04c |
+| 4c | `stages/04_implement/04c_flow-tests/` | Flow tests (outer red) | **Gate 3 (Executable)** |
+| 4d-red | `stages/04_implement/04d_concept-tdd/04d_red-tests/` | Concept test derivation (red) | Auto → 04d-green |
+| 4d-green | `stages/04_implement/04d_concept-tdd/04d_green-impl/` | Concept implementation (green) | Auto → 04e-red |
+| 4e-red | `stages/04_implement/04e_sync-tdd/04e_red-tests/` | Sync test derivation (red) | Auto → 04e-green |
+| 4e-green | `stages/04_implement/04e_sync-tdd/04e_green-impl/` | Sync implementation (green) | Auto → 05 |
 | 5 | `stages/05_verify/` | Trace from running behaviour back to `usecase.md`, plus closure (smoke + tracking) | Auto (close) |
 
 ¹ Auto-advance means the agent proceeds to the immediate next stage without a
-human gate. The name after `→` is the next human gate stage, not the immediate
-next stage. Consult each stage's `## Next stage` section for the actual
-successor.
+human gate. `advance.py` is the sole authority for the immediate successor;
+the name after `→` identifies the next human gate when one exists.
 
 Stages 04a–04e implement the **outside-in TDD double-loop**: `04c` is the outer red
 test (a flow), `04d` and `04e` are the inner red→green TDD on concepts

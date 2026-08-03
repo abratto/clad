@@ -5,9 +5,9 @@
 Run the following **before** writing any implementation code:
 
 ```
-python3 ../../../../../../quality-gate/verify_stage_output.py \
-  --feature ../../../../ \
-  --required-stages 04d
+python3 ../../../../../../quality-gate/verify_stage_sequence.py \
+   --feature ../../../../ \
+   --through 04d-red
 ```
 
 If this script exits with a non-zero status, stop immediately.
@@ -68,10 +68,12 @@ upstream prose, but it may not redesign approved tests.
    replace the selected profile's storage layer with an in-memory
    substitute.
 7. Run the canonical command from `../../../../_config/build-and-test.md`
-   until concept tests are green, then stop for human approval.
+   until concept tests are green, then record the command and result in
+   `output/green-evidence.md`.
 
 ## Outputs
 
+- `output/green-evidence.md` — executed green command, result, and implementation files changed
 - (Side effect:) `<Name>Concept.java` and green `<Name>ConceptTest.java` files (or profile equivalents) per concept
 
 ## Verify
@@ -101,11 +103,10 @@ upstream prose, but it may not redesign approved tests.
 
 ## Gate
 
-Auto-advances to 04e. The concept tests must be green
-(`mvn test`) before advancing.
+Auto-advances to 04e-red. The concept tests must be green before advancing.
 
 ## Next stage
 
--> [`../../04e_sync-tdd/CONTEXT.md`](../../04e_sync-tdd/CONTEXT.md) — Sync TDD router
+-> [`../../04e_sync-tdd/04e_red-tests/CONTEXT.md`](../../04e_sync-tdd/04e_red-tests/CONTEXT.md) — Sync test derivation (red)
 
-The agent proceeds to Stage 04e without a human gate.
+The agent proceeds without a human gate.

@@ -1,8 +1,8 @@
-# Stage 04 — Implement (router) — UC-00-login
+# Stage 04 — Implement (container) — UC-00-login
 
-This stage owns no artefacts of its own. It routes to five top-level
-sub-stages; `04d` and `04e` are themselves routers with structural
-red/green child stages.
+This directory owns no artefacts or transition. It is a reference
+container for five top-level sub-stages; `04d` and `04e` contain
+structural red/green child stages.
 
 ## Why this stage exists
 
@@ -35,13 +35,13 @@ code, sync code is what turns the outer flow test green.
 
 ## Process
 
-Run the sub-stages in order, gating after each:
+Run the executable sub-stages in order:
 
 1. [`04a_storage-mapping/`](04a_storage-mapping/CONTEXT.md) — not applicable (in-memory profile)
 2. [`04b_spec/`](04b_spec/CONTEXT.md) — per-concept SPEC slice
 3. [`04c_flow-tests/`](04c_flow-tests/CONTEXT.md) — outer red (flow tests)
-4. [`04d_concept-tdd/`](04d_concept-tdd/CONTEXT.md) — router for `04d_red-tests/` then `04d_green-impl/`
-5. [`04e_sync-tdd/`](04e_sync-tdd/CONTEXT.md) — router for `04e_red-tests/` then `04e_green-impl/`
+4. [`04d_red-tests/`](04d_concept-tdd/04d_red-tests/CONTEXT.md) then [`04d_green-impl/`](04d_concept-tdd/04d_green-impl/CONTEXT.md)
+5. [`04e_red-tests/`](04e_sync-tdd/04e_red-tests/CONTEXT.md) then [`04e_green-impl/`](04e_sync-tdd/04e_green-impl/CONTEXT.md)
 
 During `04c` through `04e`, use the Java profile's debug endpoints as
 the default runtime evidence surface for explaining live behaviour:
@@ -62,12 +62,12 @@ read/mutate concept state in the controller/route handler.
 
 ## Verify
 
-- Every sub-stage has been gated.
+- Every executable sub-stage has recorded its required output evidence.
 - For iterative changes, `quality-gate/verify_iterative_change_readiness.py`
 	passes before 04d/04e work starts, and
 	`quality-gate/verify_iterative_change_coupling.py` passes before merge.
-- `04d_red-tests/` is approved before `04d_green-impl/` starts.
-- `04e_red-tests/` is approved before `04e_green-impl/` starts.
+- `04d_red-tests/` is complete before `04d_green-impl/` starts.
+- `04e_red-tests/` is complete before `04e_green-impl/` starts.
 - The flow tests from `04c` are green at the end of `04e_green`.
 - Any runtime explanation of why a flow is red, green, stuck, or
 	archived cites one of the Java profile debug endpoints or another
@@ -79,12 +79,10 @@ read/mutate concept state in the controller/route handler.
 
 ## Gate
 
-Default — fires only after `04e_green-impl/` is green.
+This container has no gate. Gate 3 occurs at `04c`; all red/green child
+stages thereafter auto-advance through `./clad advance`.
 
-## Next stage
+## Advancing
 
--> [`04a_storage-mapping/CONTEXT.md`](04a_storage-mapping/CONTEXT.md) — Storage mapping
-
-For in-memory profiles, skip 04a and go straight to [`04b_spec/CONTEXT.md`](04b_spec/CONTEXT.md). Mark 04a with a `_NOT_APPLICABLE.md` note in its `output/`.
-
-The agent proceeds to the first applicable sub-stage without a human gate.
+`advance.py` selects the first applicable executable sub-stage. For an
+in-memory profile, Stage 04a records `_NOT_APPLICABLE.md` before Stage 04b.
