@@ -10,6 +10,21 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
 
+### Reference profile
+
+- **Transactional predicate engine preference**: Documented the predicate
+  engine as the default and recommended Java-profile execution mode; the
+  sequential polling engine remains available for learning and legacy users.
+- **Remote Fuseki hardening**: Remote storage now fails closed for invalid
+  backend configuration, uses a five-second connection timeout, bounds Basic
+  authentication to one challenge retry, keeps remote archival request-atomic,
+  and requires an explicit Compose administrator password.
+- **Quality-gate parser correctness**: Implementation-parity and
+  sync-implementation-parity checks now parse current Sync Contract Matrix
+  notation, while Cucumber verification counts JUnit Platform scenarios
+  correctly. Focused parser-regression fixtures cover the accepted and
+  malformed forms.
+
 ### Agent Skills
 
 - **Agent Skills standard adoption**: Added 16 portable `SKILL.md` files under

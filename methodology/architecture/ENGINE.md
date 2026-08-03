@@ -1,9 +1,11 @@
-# The CLAD reference engine
+# The CLAD legacy reference engine
 
-> Status: this document describes the engine that actually runs in
-> `reference-impl/java-micronaut-jena/`. Other profiles are free to reuse,
-> replace, or reimplement it, provided they honour the WYSIWID hard rules in
-> [`../implementation/RULES.md`](../implementation/RULES.md).
+> Status: this document describes the legacy sequential polling engine in
+> `reference-impl/java-micronaut-jena/`. The profile defaults to its
+> transactional predicate engine, which matches the WYSIWID synchronization
+> semantics and is recommended for new projects. Other profiles are free to
+> reuse, replace, or reimplement either engine, provided they honour the
+> WYSIWID hard rules in [`../implementation/RULES.md`](../implementation/RULES.md).
 
 ## What the engine does
 

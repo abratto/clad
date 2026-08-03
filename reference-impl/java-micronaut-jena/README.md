@@ -63,7 +63,7 @@ the source of domain truth.
 | `Web` (HTTP entry) | `com.example.app.infrastructure.WebController` — `@Controller("/login")` calling `FlowManager.rootAction` then `SyncDispatcher.awaitResponse` |
 | Flow token | A UUID IRI minted by `FlowManager.mintFlowToken()`; carried by every action node in the chain via the `:flow` predicate |
 | Action log | `com.example.app.engine.ActionLog` — wraps a Jena transactional `Dataset`. Concept state lives in named graphs `concept:<name>`; the active log lives in `https://clad.dev/actions`; archived flows in `https://clad.dev/actions/archive` |
-| Scheduler | `com.example.app.engine.SyncDispatcher` — the only loop in the system |
+| Scheduler | `com.example.app.engine.predicate.PredicateSyncDispatcher` in predicate mode (default); `SyncDispatcher` is retained for the legacy reference mode |
 | Hard rules R1–R5 | Enforced by `LegibleArchitectureRulesTest` (ArchUnit) |
 
 ### Using the predicate engine (default)
@@ -284,8 +284,8 @@ Configure the app via environment variables in `docker-compose.yml`:
 `ENGINE_DATASET_TYPE=fuseki`, and `CLAD_FUSEKI_ENDPOINT` (Fuseki SPARQL
 endpoint). The Compose profile also supplies `CLAD_FUSEKI_USERNAME` and
 `CLAD_FUSEKI_PASSWORD`; set `FUSEKI_ADMIN_PASSWORD` before startup to override
-the development default. Persistent volumes for Fuseki data and Ollama models
-survive container restarts.
+the required Compose credential. Persistent volumes for Fuseki data and Ollama
+models survive container restarts.
 
 To stop: `docker compose down`. To rebuild after code changes:
 `docker compose up -d --build`.
@@ -448,7 +448,8 @@ engine.dataset.type=tdb2
 engine.dataset.tdb2.dir=./data/tdb2-store
 
 # Standalone Fuseki (Docker — tested with stain/jena-fuseki)
-#   docker run -d --name fuseki -p 3030:3030 -e ADMIN_PASSWORD=admin stain/jena-fuseki
+#   docker run -d --name fuseki -p 3030:3030 \
+#     -e ADMIN_PASSWORD="$FUSEKI_ADMIN_PASSWORD" stain/jena-fuseki
 engine.dataset.type=fuseki
 engine.dataset.fuseki.endpoint=http://localhost:3030/ds
 
@@ -464,8 +465,8 @@ Backends are selected at startup; changing the property requires a restart.
 CLAD ships two sync dispatch engines, configured via `clad.properties`:
 
 ```properties
-engine.mode=reference   # sequential dispatch (default)
-engine.mode=predicate   # transactional predicate evaluation
+engine.mode=reference   # legacy sequential polling dispatch
+engine.mode=predicate   # transactional predicate evaluation (default)
 ```
 
 **Reference engine** (`engine/reference/`) — the original dispatch loop,
