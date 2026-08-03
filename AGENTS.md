@@ -174,7 +174,7 @@ Mapped to the ICM stages of a feature folder:
 | 3a | `stages/03a_dependency-review/` | One `*-card.md` per concept + `pattern-d-summary.md` (cross-concept coupling surface) | Auto¹ → 03b |
 | 3b | `stages/03b_data-model/` | One `*.data-model.md` per concept (profile-neutral conceptual data model) | **Gate 2 (Architecture)** |
 | 4a | `stages/04_implement/04a_storage-mapping/` | Storage mapping (profile-specific) | Auto¹ → 04c |
-| 4b | `stages/04_implement/04b_spec/` | Spec. When `port-spec.md` exists, `spec.md` must include exact response shape examples (JSON path, field type, error envelope) for every HTTP endpoint, not only field presence. | Auto¹ → 04c |
+| 4b | `stages/04_implement/04b_spec/` | Spec. When `port-spec.md` has inbound entries, `spec.md` must include exact response shape examples (path, field type, error envelope) for each inbound port. Outbound entries require declared adapter-boundary evidence. | Auto¹ → 04c |
 | 4c | `stages/04_implement/04c_flow-tests/` | Flow tests (outer red) | **Gate 3 (Executable)** |
 | 4d-red | `stages/04_implement/04d_concept-tdd/04d_red-tests/` | Concept test derivation (red) | Auto → 04d-green |
 | 4d-green | `stages/04_implement/04d_concept-tdd/04d_green-impl/` | Concept implementation (green) | Auto → 04e-red |
@@ -274,8 +274,9 @@ These are non-negotiable. Violating any of them is a defect.
 3. **Syncs are declarative, not imperative.** A sync says
    `when X completes -> then Y`. It does not contain branching business
    logic; that belongs in a concept's actions.
-4. **`Web` (or equivalent HTTP entry) is the sole bootstrap concept.**
-   No business concept owns an HTTP endpoint.
+4. **One primary bootstrap adapter owns each transport surface.**
+   `Web` is the HTTP convention; another transport may use an equivalent.
+   No business concept owns a transport endpoint or handler.
 5. **Every action emits a flow token.** A flow token is a small,
    addressable record (id, who, when, what) that lets `05_verify/` trace
    from a runtime effect back to the use case.

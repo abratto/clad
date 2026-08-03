@@ -151,8 +151,10 @@ control. CLAD is the missing piece:
   and planning intake
   ([methodology/overlays/PLANNING.md](../methodology/overlays/PLANNING.md))
   and decision logs
-  ([methodology/overlays/DECISIONS.md](../methodology/overlays/DECISIONS.md))
-  are bolt-ons; the core loop works without either.
+  ([methodology/overlays/DECISIONS.md](../methodology/overlays/DECISIONS.md)),
+  plus ports and adapters
+  ([methodology/overlays/PORTS_AND_ADAPTERS.md](../methodology/overlays/PORTS_AND_ADAPTERS.md)),
+  are bolt-ons; the core loop works without them.
 
 The proposed benefit is not "ship faster." It is **ship under review at
 LLM speed without losing the audit trail.** Every stage produces a file

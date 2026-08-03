@@ -96,7 +96,7 @@ running on every PR.
 
 ### Contract tests
 
-When `port-spec.md` exists, CI must include a contract test stage that:
+When `port-spec.md` has inbound entries, CI must include a contract test stage that:
 
 1. Starts the assembled application (same as the smoke test stage).
 2. Runs the external contract test suite (e.g. Hurl files, Postman
@@ -108,11 +108,13 @@ Contract tests run **after** unit and flow tests and **after** the smoke
 stage confirms the application starts. They are the outermost ring of
 the test pyramid.
 
-A contract test failure indicates an adapter problem (wrong
-serialization, missing field, wrong error envelope). A flow test failure
-indicates a behaviour problem (wrong outcome, wrong state transition).
-These failures have different owners and different fixes; keeping the
-tiers separate preserves that distinction.
+A contract test failure indicates an inbound adapter problem (wrong
+serialization, missing field, wrong error envelope). An outbound port entry
+requires adapter-boundary tests for request mapping, provider error mapping,
+and its declared delivery semantics. A flow test failure indicates a behaviour
+problem (wrong outcome, wrong state transition). These failures have different
+owners and different fixes; keeping the tiers separate preserves that
+distinction.
 
 ## 5. Branch protection (`main`)
 

@@ -101,8 +101,9 @@ not relax the *intent*.
      - **Automated:** Run `quality-gate/verify_spec_parity.py`
        to check every concept spec action has a matching SPEC entry.
      - **Automated:** Run `quality-gate/verify_port_spec_contract.py`
-       when `port-spec.md` exists to check Stage 04b response shapes and
-       Stage 04c `@contract` scenarios are present.
+       when `port-spec.md` exists to check complete directional entries, plus
+         Stage 04b response shapes and Stage 04c `@contract` scenarios for
+         inbound entries.
      - **Automated:** For the Gherkin track, run
        `quality-gate/verify_gherkin_derivation.py` to validate derivation.
      - **Automated:** Run `quality-gate/verify_concept_test_derivation.py`
@@ -203,7 +204,7 @@ consistency checks across the CLAD artefact chain:
 | `verify_sync_route_filters.py` | 03, 03a | Shared-trigger syncs carry route filters |
 | `verify_data_model.py` | 03b | CSDP structure, storage-leakage prevention |
 | `verify_spec_parity.py` | 04b | Action name parity between concept specs and SPECs |
-| `verify_port_spec_contract.py` | 04b, 04c | When `port-spec.md` exists, response shapes and `@contract` scenarios are present |
+| `verify_port_spec_contract.py` | 04b, 04c | When `port-spec.md` exists, directional entries are complete; inbound entries have response shapes and `@contract` scenarios |
 | `verify_iterative_change_readiness.py` | 04+ | Iterative concept/sync spec or implementation changes have a structured `_changes/` classification and artefact-impact matrix |
 | `verify_iterative_change_coupling.py` | 04+ | Concept/sync implementation changes are committed with their matching Stage 02/03 artefacts |
 | `verify_maintenance_change_readiness.py` | Maintenance | Engine/profile/deployment changes have an active maintenance record and cleared design/evidence gates |

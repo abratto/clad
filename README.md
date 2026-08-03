@@ -298,7 +298,7 @@ clad/
 │   ├── core/                        CLAD: contracts, artefacts, principles
 │   ├── architecture/                Legible/WYSIWID + ARTEFACT_MAP.md
 │   ├── implementation/              Hard rules, stages, quality gate
-│   ├── overlays/                    Optional: tracking, planning, decisions
+│   ├── overlays/                    Optional: tracking, planning, decisions, ports/adapters
 │   └── reference/                   Citations and sources
 │
 ├── templates/                       Per-artefact templates

@@ -32,10 +32,14 @@
 
 | # | When | Then | Inputs | Outcome | Why this step |
 |---|---|---|---|---|---|
-| 1 | `Web/request[<route>]` | `Web.handle` | `<route>`, `<request body>` | `Routed(<carried fields>)` | The HTTP entry point (R4) |
-| 2 | `Web.handle[Routed(<carried fields>)]` | `<Name>.<actionName>` | `<args>` | `<Outcome>` | <one-line justification> |
+| 1 | `<Bootstrap>/<entry signal>` | `<Bootstrap>.<entryAction>` | `<transport input>` | `Routed(<carried fields>)` | The transport entry point (R4) |
+| 2 | `<Bootstrap>.<entryAction>[Routed(<carried fields>)]` | `<Name>.<actionName>` | `<args>` | `<Outcome>` | <one-line justification> |
 | 3 | `<PreviousName>.<previousAction>[<Outcome>]` | `<Name>.<actionName>` | `<args>` | `<Outcome>` | … |
-| 4 | `<Name>.<actionName>[<Outcome>]` | `Web.respond[<status>]` | `<status>`, `<body>` | `Sent` | Closes the request |
+| 4 | `<Name>.<actionName>[<Outcome>]` | `<Bootstrap>.<exitAction>` | `<transport result>` | `Sent` | Closes the transport exchange |
+
+> For HTTP, substitute `Web/request`, `Web.handle`, and `Web.respond`. See
+> `methodology/architecture/WEB_CONCEPT.md` for the equivalent gRPC, stream,
+> and CLI bootstrap vocabulary.
 
 > Outcomes can be success tokens (`Ok`, `FOUND`, `GRANTED`), error tokens
 > (`error: "badPassword"`), or **`Refused`** for precondition failures.

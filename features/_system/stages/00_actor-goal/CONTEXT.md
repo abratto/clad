@@ -50,9 +50,9 @@ agreement. Do not create any UC folder during this stage.
 3. Asks whether an existing API contract, published spec, or external
   test suite constrains the system's adapter surface.
 4. If yes, obtains the contract source, records adapter compliance as a
-  system-level constraint in `goals.md`, and prepares `port-spec.md`
-  from the template. If no, records that the adapter format is a design
-  choice for Stage 04b and omits `port-spec.md`.
+  system-level constraint in `goals.md`, and prepares directional
+  `port-spec.md` entries from the template. If no, records that the adapter
+  format is a design choice for Stage 04b and omits `port-spec.md`.
 5. Iterates with the human until they signal agreement.
 6. **Only then** writes `actors.md`, `goals.md`, and optional
   `port-spec.md` per the templates.
@@ -74,8 +74,8 @@ before drafting.
 - Every actor in `actors.md` has at least one in-scope goal in `goals.md`.
 - Every in-scope goal cites a confirmed actor.
 - The out-of-scope section in `goals.md` is non-empty (forces explicit boundary).
-- If an external adapter contract exists, `port-spec.md` names its source,
-  fixed conventions, and contract test suite (if any).
+- If an external adapter contract exists, each `port-spec.md` entry names its
+  direction, owner, source, observable semantics, and test evidence.
 - If no external adapter contract exists, `goals.md` says the adapter
   format is a Stage 04b design choice and `port-spec.md` is absent.
 - **Forward-check:** count the in-scope goals. That many UC folders

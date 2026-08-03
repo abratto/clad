@@ -2,9 +2,11 @@
 """
 verify_port_spec_contract.py - Stage gate: port-spec consumers exist.
 
-When Stage 00 produces port-spec.md, Stage 04b and 04c must consume it:
-SPEC output carries response-shape assertions and Gherkin carries
-@contract scenarios. If no port-spec.md exists, this check skips.
+When Stage 00 produces port-spec.md, directional entries determine the
+required evidence. Inbound entries require Stage 04b response-shape assertions
+and Stage 04c Gherkin @contract scenarios. Outbound entries require named
+adapter-boundary evidence, but do not imply an HTTP/JSON response contract.
+If no port-spec.md exists, this check skips.
 
 Usage:
   python3 verify_port_spec_contract.py \
@@ -20,6 +22,15 @@ import sys
 
 
 PLACEHOLDER_RE = re.compile(r"<[^>]+>|<!--|-->")
+PORT_COLUMNS = (
+    "Name",
+    "Direction",
+    "Adapter type",
+    "Owner",
+    "Source contract",
+    "Observable semantics",
+    "Contract tests",
+)
 
 
 def read(path):
@@ -46,19 +57,93 @@ def meaningful(text):
     return bool(lines) and not PLACEHOLDER_RE.search("\n".join(lines))
 
 
+def table_cells(line):
+    return [cell.strip() for cell in line.strip().strip("|").split("|")]
+
+
+def is_table_separator(cells):
+    return bool(cells) and all(re.fullmatch(r":?-{3,}:?", cell) for cell in cells)
+
+
+def validate_port_header(lines):
+    if len(lines) < 2:
+        return ["port-spec.md 'Port entries' must contain a header and at least one entry"]
+    if table_cells(lines[0]) != list(PORT_COLUMNS):
+        return [
+            "port-spec.md 'Port entries' header must be: "
+            + " | ".join(PORT_COLUMNS)
+        ]
+    if not is_table_separator(table_cells(lines[1])):
+        return ["port-spec.md 'Port entries' table is missing its separator row"]
+    return []
+
+
+def parse_port_entry(index, line):
+    cells = table_cells(line)
+    if len(cells) != len(PORT_COLUMNS):
+        return None, [
+            f"port-spec.md Port entries row {index} has {len(cells)} columns; "
+            f"expected {len(PORT_COLUMNS)}"
+        ]
+
+    entry = dict(zip(PORT_COLUMNS, cells))
+    failures = [
+        f"port-spec.md Port entries row {index} is missing concrete '{column}'"
+        for column, value in entry.items()
+        if not meaningful(value)
+    ]
+    direction = entry["Direction"].strip().lower()
+    valid_direction = direction in {"inbound", "outbound"}
+    if not valid_direction:
+        failures.append(
+            f"port-spec.md Port entries row {index} has invalid Direction "
+            f"'{entry['Direction']}'; expected inbound or outbound"
+        )
+    return entry if valid_direction else None, failures
+
+
+def parse_port_entries(text):
+    body = section_body(text, "Port entries")
+    if not body:
+        return [], [], False
+
+    lines = [line for line in body.splitlines() if line.strip()]
+    header_failures = validate_port_header(lines)
+    if header_failures:
+        return header_failures, [], True
+
+    failures = []
+    entries = []
+    for index, line in enumerate(lines[2:], start=1):
+        if line.lstrip().startswith("|"):
+            entry, row_failures = parse_port_entry(index, line)
+            failures.extend(row_failures)
+            if entry:
+                entries.append(entry)
+
+    if not entries and not failures:
+        failures.append("port-spec.md 'Port entries' has no entries")
+    return failures, entries, True
+
+
 def verify_port_spec(path):
     failures = []
     text = read(path)
+    entry_failures, entries, directional = parse_port_entries(text)
+    if directional:
+        return entry_failures, entries
+
+    # Retain the prior one-inbound-port form for existing projects.
     for heading in ("Source", "Adapter type", "Fixed conventions", "Scope"):
         body = section_body(text, heading)
         if not meaningful(body):
             failures.append(
                 f"port-spec.md section '{heading}' is missing concrete content"
             )
-    return failures
+    return failures, [{"Direction": "inbound"}]
 
 
-def verify_specs(spec_dir, require_all_specs):
+def verify_specs(spec_dir, require_response_shapes, require_all_specs):
     failures = []
     if not os.path.isdir(spec_dir):
         return [f"SPEC directory not found: {spec_dir}"]
@@ -82,7 +167,7 @@ def verify_specs(spec_dir, require_all_specs):
                 f"{path}: missing concrete '## Response shapes' section"
             )
 
-    if not specs_with_shapes:
+    if require_response_shapes and not specs_with_shapes:
         failures.append(
             "no SPEC file contains a concrete '## Response shapes' section"
         )
@@ -134,10 +219,10 @@ def main():
         print(f"SKIP  no port-spec.md at {args.port_spec}")
         return 0
 
-    failures = []
-    failures.extend(verify_port_spec(args.port_spec))
-    failures.extend(verify_specs(args.spec_dir, args.require_all_specs))
-    if args.feature_dir:
+    failures, entries = verify_port_spec(args.port_spec)
+    has_inbound_port = any(entry["Direction"].strip().lower() == "inbound" for entry in entries)
+    failures.extend(verify_specs(args.spec_dir, has_inbound_port, args.require_all_specs))
+    if args.feature_dir and has_inbound_port:
         failures.extend(verify_features(args.feature_dir))
 
     if failures:
@@ -146,9 +231,13 @@ def main():
             print(f"  - {failure}")
         return 1
 
-    checked = "port spec + SPEC response shapes"
-    if args.feature_dir:
-        checked += " + @contract scenarios"
+    checked = "directional port spec"
+    if has_inbound_port:
+        checked += " + SPEC response shapes"
+        if args.feature_dir:
+            checked += " + @contract scenarios"
+    else:
+        checked += " + outbound adapter-boundary evidence"
     print(f"PASS  port-spec contract checks passed ({checked})")
     return 0
 

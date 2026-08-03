@@ -16,5 +16,6 @@ for outer-red flow tests — see `methodology/architecture/GHERKIN_INTEGRATION.m
 
 If `features/_system/stages/00_actor-goal/output/port-spec.md` exists,
 every Stage 04b and Stage 04c `CONTEXT.md` Inputs table must list it as
-a required Layer-4 input. Stage 04b uses it for exact response shapes;
-Stage 04c uses it for `@contract` scenarios.
+a required Layer-4 input. Inbound entries drive Stage 04b response shapes and
+Stage 04c `@contract` scenarios; outbound entries name their adapter-boundary
+evidence and owning concept or engine capability.

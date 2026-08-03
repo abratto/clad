@@ -36,16 +36,16 @@ Together they form the complete traceability chain.
 | 03b | `<Name>.data-model.md` | `<Name>.concept.md`, `<concept>-card.md`, `pattern-d-summary.md` | Conceptual data model — CSDP fact types and constraints per concept | `verify_data_model.py` checks all 7 CSDP steps present | Named-graph schema |
 | 04a | `<Name>.storage.md` | `<Name>.data-model.md` | Storage mapping — CSDP facts → profile-specific schema | Profile-specific | RDF named graph IRI per concept (Jena); SQL table per concept (relational) |
 | 04b | `<Name>.spec.md` | `<Name>.concept.md` | SPEC slice — action signatures, outcome enums, flow-token shape (stripped of prose) | `verify_spec_parity.py` checks action parity with concept specs; `verify_outcome_alignment.py` checks outcomes match chain tables | Compiled-against by 04d/04e tests |
-| 04b | `spec.md` §Response shapes | `port-spec.md` (when present) | Port-spec contract — exact JSON paths/types/error envelopes per HTTP endpoint | `verify_port_spec_contract.py` when `port-spec.md` exists | `@Contract` Cucumber scenarios in 04c |
+| 04b | `spec.md` §Response shapes | `port-spec.md` inbound entry (when present) | Inbound port contract — exact transport paths/types/error envelopes | `verify_port_spec_contract.py` when an inbound entry exists | `@Contract` Cucumber scenarios in 04c |
 | 04c | `<feature>.feature` | `usecase.md` (scenarios), `<scenario>-chain.md` | BDD outer-red test — one Gherkin scenario per use-case scenario, derived from chain table | `verify_gherkin_derivation.py` checks derivation rules G1–G5; `verify_step_definition_parity.py` catches empty stubs; `verify_cucumber_green.py` (at 04e) enforces all-green | Cucumber runner + `<Feature>StepDefinitions.java` |
 | 04d-red | `<Name>ConceptTest.java` + derivation map | `<Name>.spec.md`, `<Name>.concept.md` (operational principle) | Concept test derivation (red) | `verify_concept_test_derivation.py` checks every SPEC outcome has a test; `verify_concept_field_assertions.py` checks field assertions (R14/R16) | Handoff to 04d-green |
 | 04d-green | `<Name>Concept.java` + green evidence | `<Name>.concept.md`, `<Name>.spec.md`, `<Name>ConceptTest.java` | Concept implementation — state machine with `writeCompletion()` emitting flow tokens | Concept tests pass; `verify_action_log_isolation.py` checks infrastructure doesn't bypass the engine (R4) | Called by `SyncDispatcher` |
 | 04e-red | `<SyncName>Test.java` + derivation map | `<name>.sync.md`, `<concept>-card.md` | Sync test derivation (red) | Sync tests fail for behavioural reasons | Handoff to 04e-green |
 | 04e-green | `<SyncName>.java` + green evidence | `<name>.sync.md`, `<SyncName>Test.java` | Sync implementation — declarative SPARQL where/then clauses | `verify_implementation_parity.py` checks spec/code pairing; `verify_sync_implementation_parity.py` checks every Stage 03 sync has a Java class; `verify_sync_variable_names.py` checks reserved SPARQL variables (R10) | Registered with `SyncDispatcher` |
-| 04e | Infrastructure controller | `<scenario>-chain.md` (routes), `<name>.sync.md` (respond syncs) | Bootstrap concept adapter — translates HTTP → engine → HTTP (normalize input, `rootAction()`, `awaitResponse()`, translate output) | `verify_action_log_isolation.py` catches raw ActionLog access (R4); ArchUnit catches concept imports | `WebController.java`, `AuthController.java`, etc. |
+| 04e | Primary adapter | `<scenario>-chain.md` (transport entries), `<name>.sync.md` (respond syncs) | Bootstrap concept adapter — translates transport → engine → transport (normalize input, `rootAction()`, `awaitResponse()`, translate output) | `verify_action_log_isolation.py` catches raw ActionLog access (R4); ArchUnit catches concept imports | `WebController.java`, `AuthController.java`, or profile equivalent |
 | 05 | `trace.md` | All implementation, `<feature>.feature` | Flow-token back-trace — proves runtime action sequence matches chain table | Human review; `verify_cucumber_green.py` already proved all scenarios green | Runs against deployed artefact |
-| 05 | `smoke.md` | Running system | Deployable proof — real recorded HTTP calls + responses | Human review | `curl` or Hurl against running system |
-| — | `port-spec.md` (optional, Stage 00) | External API contract | Imposed response shapes the system must satisfy | `verify_port_spec_contract.py` checks 04b response shapes and 04c `@contract` scenarios | External oracle (Hurl, Postman, etc.) |
+| 05 | `smoke.md` | Running system | Deployable proof — recorded transport calls or adapter exchanges | Human review | `curl`, Hurl, provider sandbox, or profile equivalent |
+| — | `port-spec.md` (optional, Stage 00) | External port contract | Imposed inbound response shapes or outbound observable semantics | `verify_port_spec_contract.py` checks inbound 04b/04c evidence and complete directional entries | External oracle or adapter-boundary suite |
 
 ---
 
@@ -184,7 +184,7 @@ Pick the stage you're on, scan the row for that artefact, and confirm you have i
 
 | Script | Architecture rule | What it prevents |
 |---|---|---|
-| `verify_action_log_isolation.py` | R4 (Web is sole HTTP entry; infrastructure is transport-only) | Controllers bypassing the engine with raw SPARQL |
+| `verify_action_log_isolation.py` | R4 (bootstrap adapters are transport-only) | Controllers bypassing the engine with raw SPARQL |
 | `verify_sync_declarative.py` | R3 (syncs are declarative, not imperative) | if/switch/for in sync classes; `*Coordinator`/`*Orchestrator` classes |
 | `verify_sync_route_filters.py` | R11/R15 (shared-trigger syncs must filter by route) | Login sync firing for register flow |
 | `verify_sync_variable_names.py` | R10 (use engine's reserved SPARQL variable names) | Wrong flow token written by sync |

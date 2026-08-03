@@ -12,7 +12,7 @@ definition, off-discipline.
 | **Concept spec** | `features/UC-XX/stages/02_concepts/output/*.concept.md` | The state machine that becomes a concept implementation |
 | **Sync spec** | `features/UC-XX/stages/03_syncs/output/*.sync.md` | A coordination rule between concepts |
 | **Stage `CONTEXT.md`** | `features/UC-XX/stages/NN_*/CONTEXT.md` | What the agent does in that stage |
-| **API schema** | `reference-impl/.../api/*.yaml` (or equivalent) | The shape of an HTTP/RPC surface |
+| **Port contract** | `features/_system/stages/00_actor-goal/output/port-spec.md`, an API schema, or equivalent | The imposed shape and observable semantics of an inbound or outbound boundary |
 
 ## What is *not* a contract
 

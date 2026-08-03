@@ -93,9 +93,11 @@ python3 ../../../../../quality-gate/verify_port_spec_contract.py \
 - **Mechanical extraction only:** no SPEC file contains correction
   history, methodology interpretation, remediation notes, or
   implementation guidance not present in the concept spec.
-- **Port-spec response shapes:** when `port-spec.md` exists, SPEC output
-  includes exact response shape examples for each relevant HTTP endpoint:
-  JSON paths, field types, wrappers, and error envelope values.
+- **Inbound port response shapes:** when `port-spec.md` has inbound entries,
+  SPEC output includes exact response shape examples for each relevant inbound
+  port: transport paths, field types, wrappers, and error envelope values.
+  Outbound entries instead name their adapter-boundary evidence; they do not
+  require an HTTP response shape.
 
 ## Gate
 

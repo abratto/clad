@@ -71,11 +71,11 @@ Read `methodology/implementation/TDD.md` before writing anything.
    or failing tests if enabled; compilation errors are not
    acceptable.
 6. If `../../../../../features/_system/stages/00_actor-goal/output/port-spec.md`
-  exists, add at least one `@contract` scenario per HTTP endpoint. These
-  scenarios assert exact JSON paths, field types constrained by the
-  external contract, and the primary failure path's exact error envelope
-  shape. Keep these distinct from `@happy-path` and `@failure-path`
-  intent scenarios.
+  has inbound entries, add at least one `@contract` scenario per inbound port.
+  These scenarios assert the external transport's exact paths, field types,
+  and primary failure envelope. Keep them distinct from `@happy-path` and
+  `@failure-path` intent scenarios. Outbound entries are covered by their
+  named adapter-boundary tests, not synthetic HTTP scenarios.
 
 **Token chain rules (read `FLOW_TOKENS.md` in full before writing):**
 - Outcome values MUST be SCREAMING_SNAKE_CASE, copied from the SPEC slice.
@@ -146,13 +146,14 @@ python3 ../../../../../quality-gate/verify_port_spec_contract.py \
 
 - Every named scenario in `usecase.md` has a corresponding Gherkin
   `Scenario` (happy path) or `Scenario Outline` (failure branches).
-- When `port-spec.md` exists, every HTTP endpoint has at least one
-  `@contract` scenario.
-- Every `@contract` scenario asserts exact JSON paths and constrained
+- When `port-spec.md` has inbound entries, every inbound port has at least
+  one `@contract` scenario.
+- Every `@contract` scenario asserts exact transport paths and constrained
   field types; it does not use string-contains as a substitute for shape
   checks.
-- Every `@contract` scenario asserts the exact error envelope shape for
-  the primary failure path.
+- Every inbound `@contract` scenario asserts the primary failure envelope.
+- Every outbound port entry names adapter-boundary evidence that covers its
+  declared observable semantics.
 - Every Gherkin `Given` step traces back to a use-case precondition.
 - Every Gherkin `When` step traces back to a use-case main-flow step 1.
 - Every Gherkin `Then` step traces back to an expected outcome or
