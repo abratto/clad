@@ -60,3 +60,5 @@ if the corresponding pain shows up in your workflow.
 4. [`overlays/LOCAL_LLM.md`](overlays/LOCAL_LLM.md) — context-window
    discipline for local model runs (Cline Auto Compact + `RESUME.md`
    working-memory loop).
+5. [`overlays/PORTS_AND_ADAPTERS.md`](overlays/PORTS_AND_ADAPTERS.md) —
+   primary/secondary adapter boundaries, change routing, and test ownership.

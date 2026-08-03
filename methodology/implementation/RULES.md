@@ -46,12 +46,16 @@ If a sync wants to say `if x then A else B`, the discrimination must
 be lifted into a concept whose action returns one of two outcomes,
 matched by two separate syncs.
 
-## R4. `Web` (or equivalent) is the sole HTTP entry
+## R4. One primary bootstrap adapter owns each transport surface
 
-Exactly one concept owns the HTTP/RPC surface. By convention it is
-called `Web`. No other concept defines routes, controllers, or HTTP
-handlers. Inbound requests become `Web.handle(...)` calls, which fire
-syncs into business concepts.
+For each transport surface, exactly one primary bootstrap adapter owns the
+entry/exit actions. The HTTP/RPC convention is `Web`; other transports may use
+an equivalent such as `Grpc`, `Stream`, or `Cli`. No business concept defines
+routes, controllers, handlers, or transport consumers. Inbound signals become
+bootstrap actions, which fire syncs into business concepts. See
+[`../architecture/WEB_CONCEPT.md`](../architecture/WEB_CONCEPT.md) and the
+optional [`../overlays/PORTS_AND_ADAPTERS.md`](../overlays/PORTS_AND_ADAPTERS.md)
+for the transport-neutral boundary rules.
 
 ## R5. Every action emits a flow token
 

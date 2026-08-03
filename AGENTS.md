@@ -504,5 +504,6 @@ both design and evidence approval plus passing test evidence.
 - Optional planning/intake shortcuts: [`methodology/overlays/PLANNING.md`](methodology/overlays/PLANNING.md)
 - Optional decision log: [`methodology/overlays/DECISIONS.md`](methodology/overlays/DECISIONS.md)
 - Optional local-model context overlay: [`methodology/overlays/LOCAL_LLM.md`](methodology/overlays/LOCAL_LLM.md)
+- Optional ports-and-adapters overlay: [`methodology/overlays/PORTS_AND_ADAPTERS.md`](methodology/overlays/PORTS_AND_ADAPTERS.md)
 - Agent Skills reference: [`skills/`](skills/)
 - Citations: [`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md)

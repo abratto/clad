@@ -154,6 +154,8 @@ not a fabricated UC pipeline.
 |---|---|
 | Changes outcomes, response shape, concept boundaries, sync rules, or observable action order | Existing iterative route: re-enter the earliest owning feature stage |
 | Changes an engine/profile/deployment implementation while preserving those properties | Maintenance route |
+| Changes a primary or secondary adapter implementation while preserving its declared port contract and observable semantics | Maintenance route plus adapter-boundary tests |
+| Changes a port contract, timeout interpretation, retry/idempotency, ordering, delivery guarantee, or other observable adapter semantics | Existing iterative route: re-enter at the earliest owning concept or sync stage |
 | Changes both | Split the work where possible; otherwise run the maintenance route and re-enter the earliest affected feature stage |
 
 ### Maintenance route
@@ -178,3 +180,6 @@ not a fabricated UC pipeline.
 tests run and both gates at commit time. It covers engine sources,
 profile configuration/resources, Docker files, Compose files, and root
 `clad.properties`; profiles may extend its scope.
+
+For the boundary definitions and test ownership behind these rows, see the
+optional [`../overlays/PORTS_AND_ADAPTERS.md`](../overlays/PORTS_AND_ADAPTERS.md).
