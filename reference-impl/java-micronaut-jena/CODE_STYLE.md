@@ -46,6 +46,15 @@ explicitly instead of placing it ad hoc.
 - **R4 — `Web` is the sole HTTP entry.** Only classes inside
   `com.example.app.infrastructure` may carry Micronaut HTTP annotations
   (`@Controller`, `@Get`, `@Post`, …).
+- **R4 — adapters are transport-only.** Non-diagnostic classes in
+  `com.example.app.infrastructure` must not depend on concepts, syncs, or
+  Jena persistence APIs. A primary adapter may use only
+  `ActionRecord`, `FlowManager`, `SyncDispatcher`, and `ResponseAssembler`
+  from `engine`: it decodes transport syntax, starts one authored flow, awaits
+  its authored result, and encodes the transport response. It must not choose
+  a domain outcome or access the action log directly. `DebugController` is
+  diagnostic infrastructure and is deliberately outside this primary-adapter
+  dependency rule.
 - **R5 — every concept is a `ConceptAgent`.** Every `*Concept` class
   inside `com.example.app.concepts` must be assignable to
   `com.example.app.engine.ConceptAgent`. This guarantees every action

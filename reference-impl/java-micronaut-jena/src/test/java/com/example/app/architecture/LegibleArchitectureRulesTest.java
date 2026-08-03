@@ -40,6 +40,11 @@ class LegibleArchitectureRulesTest {
             "com.example.app.engine.SyncDispatcher",
             "com.example.app.engine.SyncMetadata",
             "com.example.app.engine.SyncTrigger");
+    private static final List<String> PRIMARY_ADAPTER_ENGINE_TYPES = List.of(
+            "com.example.app.engine.ActionRecord",
+            "com.example.app.engine.FlowManager",
+            "com.example.app.engine.ResponseAssembler",
+            "com.example.app.engine.SyncDispatcher");
 
     private static final JavaClasses CLASSES = new ClassFileImporter()
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
@@ -121,6 +126,54 @@ class LegibleArchitectureRulesTest {
                 .and().haveSimpleNameContaining("Web")
                 .should().dependOnClassesThat().resideInAPackage(CONCEPTS_ROOT + "..")
                 .as("Web/infrastructure entry classes must stay transport-only and not depend on business concepts directly")
+                .check(CLASSES);
+    }
+
+    /**
+     * R4 — non-diagnostic adapters are transport-only. They may enter a flow,
+     * await its authored response, and assemble a transport representation;
+     * they must not reach business packages or persistence directly.
+     */
+    @Test
+    void r4_adapters_do_not_depend_on_business_or_persistence_packages() {
+        noClasses()
+                .that().resideInAPackage("com.example.app.infrastructure..")
+                .and(new com.tngtech.archunit.base.DescribedPredicate<JavaClass>(
+                        "not a diagnostic adapter") {
+                    @Override
+                    public boolean test(JavaClass item) {
+                        return !item.getFullName().contains("DebugController");
+                    }
+                })
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        CONCEPTS_ROOT + "..",
+                        "com.example.app.syncs..",
+                        "org.apache.jena..")
+                .as("adapters must not depend on concepts, syncs, or persistence APIs")
+                .check(CLASSES);
+    }
+
+    /** R4 — primary adapters may use only the narrow flow-entry engine API. */
+    @Test
+    void r4_adapters_use_only_the_narrow_flow_engine_api() {
+        noClasses()
+                .that().resideInAPackage("com.example.app.infrastructure..")
+                .and(new com.tngtech.archunit.base.DescribedPredicate<JavaClass>(
+                        "not a diagnostic adapter") {
+                    @Override
+                    public boolean test(JavaClass item) {
+                        return !item.getFullName().contains("DebugController");
+                    }
+                })
+                .should().dependOnClassesThat(new com.tngtech.archunit.base.DescribedPredicate<JavaClass>(
+                        "be a non-boundary engine type") {
+                    @Override
+                    public boolean test(JavaClass dependency) {
+                        return dependency.getPackageName().equals("com.example.app.engine")
+                                && !PRIMARY_ADAPTER_ENGINE_TYPES.contains(dependency.getFullName());
+                    }
+                })
+                .as("adapters may use only ActionRecord, FlowManager, SyncDispatcher, and ResponseAssembler")
                 .check(CLASSES);
     }
 
