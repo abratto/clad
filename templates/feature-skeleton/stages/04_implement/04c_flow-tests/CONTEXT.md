@@ -69,8 +69,17 @@ Read `methodology/implementation/TDD.md` before writing anything.
    this stage, acceptable red evidence is either
    disabled/skipped tests (when stubs are intentionally `@Disabled`)
    or failing tests if enabled; compilation errors are not
-   acceptable.
-6. If `../../../../../features/_system/stages/00_actor-goal/output/port-spec.md`
+    acceptable.
+6. **If the feature exposes HTTP endpoints**, derive a profile-specific
+   HTTP-boundary integration test alongside the Gherkin flow tests
+   (e.g. `@MicronautTest` for the Java profile). This test verifies
+   HTTP response shapes + state round-tripping over the controller
+   surface. It is distinct from the Gherkin flow tests (which verify
+   the action token chain). Place it under `APP_TEST_SOURCE_ROOT` with
+   naming that does not collide with London School unit-test conventions.
+   Derivation timing: same stage as the Gherkin feature file (04c).
+   See Stage 05 Verify for the closure checklist expectation.
+7. If `../../../../../features/_system/stages/00_actor-goal/output/port-spec.md`
   has inbound entries, add at least one `@contract` scenario per inbound port.
   These scenarios assert the external transport's exact paths, field types,
   and primary failure envelope. Keep them distinct from `@happy-path` and
