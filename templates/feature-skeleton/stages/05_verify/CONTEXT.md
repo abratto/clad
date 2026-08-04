@@ -137,16 +137,12 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
 - `tracking.md` exists, even if only to record that no overlay is in
   use.
 - `trace.md` begins with a `Resume point:` line.
-- **HTTP-boundary integration test:** features exposing one or more
-  HTTP endpoints must carry a profile-specific integration test
-  (e.g. `@MicronautTest` for the Java profile, `@SpringBootTest`
-  for Spring, `TestClient` for FastAPI, `WebApplicationFactory`
-  for .NET). The integration test verifies HTTP response shapes +
-  state round-tripping and is distinct from the Gherkin flow tests
-  (which verify the action token chain). Derivation timing: alongside
-  the 04c flow tests. Naming: profile-specific, must not collide with
-  London School unit-test conventions. No new `verify_*` script —
-  this is a semantic checklist expectation checked by `mvn test`.
+- **Adapter-surface integration test:** features exposing any adapter
+  surface (HTTP, CLI, GraphQL, pub/sub) **must** carry a profile-specific
+  integration test that exercises that surface end-to-end (response shape
+  + state round-tripping). Derived alongside the 04c flow tests. Required,
+  not optional. Distinct from Gherkin flow tests (action token chain).
+  Checked by the profile's test command — no new `verify_*` script.
 - **Cross-stage check (back):** every flow token observed at runtime
   back-traces to a use-case scenario.
 
