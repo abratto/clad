@@ -142,7 +142,8 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
   integration test that exercises that surface end-to-end (response shape
   + state round-tripping). Derived alongside the 04c flow tests. Required,
   not optional. Distinct from Gherkin flow tests (action token chain).
-  Checked by the profile's test command — no new `verify_*` script.
+  A *failing* integration test blocks the build (`mvn test`); a *missing*
+  one is caught only by this human checklist — no script enforces existence.
 - **Cross-stage check (back):** every flow token observed at runtime
   back-traces to a use-case scenario.
 
