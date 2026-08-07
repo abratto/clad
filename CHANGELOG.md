@@ -12,6 +12,67 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
 
+### Added
+
+#### Deterministic enforcement
+- **Artefact gate in test loop**: `verify_artefacts.py` runs before `mvn test` via `clad.properties test.command`. Blocks test feedback when artefacts are broken — no test results without a passing gate. Wired into the self-audit (principle 14), test loop (R19), and pre-commit hook (R18).
+- **Anti-bypass hardening**: `--no-verify` banned (R18). Only `CLAD_HOOK_SKIP=1` under explicit human instruction. All documentation and hook output updated.
+- **Iterative change gates**: `verify_iterative_change_readiness.py` requires `_changes/` artefacts when stage outputs change. Wired into pre-commit hook and `verify_artefacts.py` test-loop gate. `advance.py` presents git diff review for iterative changes instead of full stage summaries. Receipt freshness check ensures `advance.py` was run for re-entered stages.
+- **ActionLog isolation**: `verify_action_log_isolation.py` catches controllers bypassing the engine with raw SPARQL. Catches concept graph literals leaking into infrastructure code. Wired to Stage 04e.
+- **Sync declarative enforcement**: `verify_sync_declarative.py` catches imperative branching, `*Coordinator`/`*Orchestrator` classes, and non-final fields in sync implementations. Wired to Stage 04e.
+- **Cucumber expression handling**: `verify_step_definition_parity.py` now handles `{string}`, `{int}`, `{float}` parameters, `And`/`But` keywords, and Java source escapes in annotation text. Wired to Stage 04c alongside `verify_step_definition_derivation.py`.
+
+#### Workflow tooling
+- **`./clad` CLI wrapper**: Auto-discovers active feature from `RESUME.md`. Subcommands: `advance`, `approve`, `approve-iter`, `verify`, `next`, `stages`, `checklists`, `feature`, `help`. Prefers features with uncommitted `_changes/` files.
+- **Task checklists**: `## Progress checklist` section added to all 12 stage `CONTEXT.md` templates. Accessible via `./clad checklists`.
+- **Stage renumbering**: `02a_responsibility-map` and `02b_chain-table` renumbered to `01a` and `01b` — they are requirements work alongside Stage 01, not sub-stages of 02 (concepts). 66 files updated.
+
+#### Engine
+- **Predicate engine**: `engine/predicate/` implements Meng & Jackson's formal synchronization semantics. Concepts extend `PredicateConceptAgent` — syncs are evaluated as predicates before the concept commits. Unmatched outcomes throw `SyncEvaluationException`. Composite writes are atomic via `beginBatch()`/`flushBatch()`. ~3× faster than reference engine. Default for new projects.
+- **Predicate engine startup check**: `PredicateEngineStartupCheck` validates all concepts extend `PredicateConceptAgent` when `engine.mode=predicate`. Fails at startup with migration instructions if any concept still extends `ConceptAgent`.
+- **CompletionBus race fix**: `signal()` now uses `getAndUpdate()` for atomic add. `awaitSignal()` guards against stale permits. Fixes intermittent dispatch timeouts under concurrency.
+- **RemoteStorage archive fix**: `archiveFlow()` now INSERTs into archive graph then DELETEs from action graph (matching `LocalStorage`), instead of permanently deleting flow triples.
+
+#### Deployment
+- **Docker Compose stack**: `docker-compose.yml` + `Dockerfile` deploy the full CLAD stack (app + Fuseki TDB2 + Ollama LLM) as `docker compose up`. Fuseki config with pre-created `/clad` dataset. Tested end-to-end with login API, Fuseki health check, and Ollama serving.
+
+#### Analysis
+- **Axiomatic analysis**: Three new Stage 03 checks — `verify_sync_cycle_graph.py` (A→B→A cross-concept cycles), `verify_sync_overlap.py` (deadlock risk from overlapping sync lock orders), `verify_concept_matrix.py` (FR×DP matrix with God Object, duplication, and entanglement detection). All accept `--advisory` for refactoring analysis on existing projects. Field-tested against Conduit (7 features, 40+ syncs) and legalmatcherpoc (13 features, 67 syncs).
+
+#### Documentation
+- **ARCHITECTURE MAP rewrite**: ARTEFACT_MAP.md rewritten with two-column approach. Three-phase formal sync semantics added to SYNCHRONIZATIONS.md.
+- **Concept definition heuristics**: `CONCEPTS.md` §"Is it a concept?" — 7 tests with a 4-gate decision flowchart for agents at Stage 01a.
+- **Frames model**: SYNCHRONIZATIONS.md now explains how syncs fan out — one invocation per SPARQL result row.
+- **TRACEABILITY.md**: Complete artefact-to-architecture-to-code mapping table plus enforcement script reference. Linked from AGENTS.md, methodology/README.md, ARTEFACT_MAP.md.
+- **Modular monolith section**: Documents WYSIWID as code-level (not network-level) boundaries, with tradeoff discussion for distributed systems.
+- **Docker Compose deployment** docs in reference-impl README.
+- **Predicate engine migration guide** in reference-impl README.
+- **Session transcript** from WALKTHROUGH.md added to README.
+- **Conduit project** linked from README as "Built with CLAD" example.
+- **README restructuring**: 60% reduction, clearer narrative arc.
+- **Guarantees section**: Four core CLAD guarantees in README.
+- **Skill fallback table**: AGENTS.md §4b — agents without Skill support get raw file paths.
+- **Tastetag references**: Private repo links removed from CITATIONS.md and ENGINE.md.
+
+### Changed
+- **Stage renumbering**: `02a`→`01a`, `02b`→`01b` (66 files).
+- **Sync patterns collapsed**: A/B/C/D → "internal flow data" vs. "concept-state read" (10 files).
+- **ArchUnit branching check widened**: Now scans all `infrastructure/**/*.java`, not just `*Web*`.
+- **Default engine**: `engine.mode=predicate` (was `reference`).
+
+### Fixed
+- PredicateConceptAgent overwrites outer batch from SyncDispatcher (`isBatching()` check).
+- CompletionBus race condition dropping dispatch signals.
+- RemoteStorage archive semantics (delete → archive).
+- Config parser: `_read_config` used `configparser` on INI-free `clad.properties`.
+- `cucumber_green` check moved from Stage 04c to 04e (deadlock — tests can't be green until implementation).
+- `verify_cucumber_green.py` cwd fixed to use repo root.
+- Principles 2 and 12 contradiction resolved — stage transitions delegated to `advance.py`.
+- `verify_iterative_change_readiness.py` scoped diff to feature (was global).
+- Field value parser now handles backtick-enclosed values.
+- `./clad` now uses `$PWD` for feature discovery (was `SCRIPT_DIR`).
+- Active feature prefers uncommitted `_changes/`, ignores committed artefacts from earlier work.
+
 ### Release governance
 
 - **Annotated release tags**: Documented SemVer compatibility expectations and
