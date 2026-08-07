@@ -284,6 +284,20 @@ _ACTION_LOG_ISOLATION = Check(
     requires=lambda r: [_concept_impl_dir(r)],
 )
 
+_SYNC_CYCLE_GRAPH = Check(
+    name="sync_cycle_graph",
+    script="verify_sync_cycle_graph.py",
+    build_args=lambda r: ["--sync-dir", SYNC_DIR(r)],
+    requires=lambda r: [SYNC_DIR(r)],
+)
+
+_SYNC_OVERLAP = Check(
+    name="sync_overlap",
+    script="verify_sync_overlap.py",
+    build_args=lambda r: ["--sync-dir", SYNC_DIR(r)],
+    requires=lambda r: [SYNC_DIR(r)],
+)
+
 _STEP_DEF_PARITY = Check(
     name="step_definition_parity",
     script="verify_step_definition_parity.py",
@@ -341,7 +355,8 @@ STAGES: List[Stage] = [
           checks=[_FILE_02A]),
     Stage("01b", "Chain table", "01b_chain-table", gate_after=1),
     Stage("02", "Concept specs", "02_concepts"),
-    Stage("03", "Syncs", "03_syncs", checks=[_SCENARIO_COVERAGE, _SYNC_MATRIX]),
+    Stage("03", "Syncs", "03_syncs", checks=[_SCENARIO_COVERAGE, _SYNC_MATRIX,
+          _SYNC_CYCLE_GRAPH, _SYNC_OVERLAP]),
     Stage("03a", "Dependency review", "03a_dependency-review",
           checks=[_SYNC_ROUTE_FILTERS]),
     Stage("03b", "Data model", "03b_data-model", gate_after=2, checks=[_DATA_MODEL]),
