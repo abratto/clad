@@ -42,9 +42,30 @@ def extract_concepts(text):
     return concepts
 
 
+def extract_concept_order(text):
+    """Extract concept acquisition order from sync text.
+    Returns ordered list of unique concepts as they appear in when→then."""
+    when_block = text.partition('when {')[2].partition('}')[0] if 'when {' in text else ''
+    then_block = text.partition('then {')[2].partition('}')[0] if 'then {' in text else ''
+    seen = set()
+    order = []
+    for m in _WHEN_CONCEPT_RE.finditer(when_block):
+        c = m.group(1)
+        if c not in seen:
+            seen.add(c)
+            order.append(c)
+    for m in _THEN_CONCEPT_RE.finditer(then_block):
+        c = m.group(1)
+        if c not in seen:
+            seen.add(c)
+            order.append(c)
+    return order
+
+
 def parse_syncs(sync_dir):
-    """Return dict of sync_name → set of concept names."""
+    """Return (concept_sets, concept_orders) dicts keyed by sync name."""
     syncs = {}
+    orders = {}
     for fname in sorted(os.listdir(sync_dir)):
         if not fname.endswith('.sync.md'):
             continue
@@ -55,7 +76,8 @@ def parse_syncs(sync_dir):
         concepts = extract_concepts(text)
         if concepts:
             syncs[name] = concepts
-    return syncs
+            orders[name] = extract_concept_order(text)
+    return syncs, orders
 
 
 def main():
@@ -69,12 +91,13 @@ def main():
         print(f"FAIL  sync directory not found: {args.sync_dir}")
         sys.exit(1)
 
-    syncs = parse_syncs(args.sync_dir)
+    syncs, orders = parse_syncs(args.sync_dir)
     if len(syncs) < 2:
         print("PASS  fewer than 2 syncs — nothing to overlap")
         sys.exit(0)
 
-    overlaps = []
+    blocking = []
+    advisory = []
     names = sorted(syncs.keys())
     for i in range(len(names)):
         for j in range(i + 1, len(names)):
@@ -83,22 +106,51 @@ def main():
             b = syncs[names[j]] - {'Web'}
             shared = a & b
             if len(shared) >= 2:
-                overlaps.append((names[i], names[j], shared))
+                # Check lock ordering: do the shared concepts appear in
+                # the same sequence in both syncs?
+                order_a = [c for c in orders[names[i]] if c in shared]
+                order_b = [c for c in orders[names[j]] if c in shared]
+                if order_a == order_b:
+                    advisory.append((names[i], names[j], shared,
+                                     orders[names[i]]))
+                else:
+                    blocking.append((names[i], names[j], shared,
+                                     orders[names[i]], orders[names[j]]))
 
-    if overlaps:
-        print(f"WARN  {len(overlaps)} sync pair(s) share 2+ concepts"
-              f" (potential deadlock risk):\n")
-        for s1, s2, shared in overlaps:
-            shared_str = ", ".join(sorted(shared))
-            print(f"  {s1}  ⇄  {s2}")
-            print(f"    shared concepts: {shared_str}")
-            print(f"    risk: concurrent execution may acquire locks in"
-                  f" different orders → deadlock")
-            print(f"    fix: ensure both syncs lock concepts in the same"
-                  f" order (e.g. {sorted(shared)[0]} before"
-                  f" {sorted(shared)[1]})")
-            print()
-        sys.exit(1)
+    if blocking or advisory:
+        if blocking:
+            print(f"FAIL  {len(blocking)} sync pair(s) with conflicting lock"
+                  f" orders (deadlock risk):\n")
+            for s1, s2, shared, o1, o2 in blocking:
+                shared_str = ", ".join(sorted(shared))
+                print(f"  {s1}  ⇄  {s2}")
+                print(f"    shared concepts: {shared_str}")
+                print(f"    lock order: {s1}: {o1}  vs  {s2}: {o2}")
+                print(f"    risk: concurrent execution may acquire locks in"
+                      f" different orders → deadlock")
+                print()
+
+        if advisory:
+            print(f"WARN  {len(advisory)} sync pair(s) share concepts but"
+                  f" lock in same order (safe, advisory):\n")
+            for s1, s2, shared, order in advisory:
+                shared_str = ", ".join(sorted(shared))
+                print(f"  {s1}  ⇄  {s2}")
+                print(f"    shared concepts: {shared_str}")
+                print(f"    lock order (same): {order}")
+                print(f"    safe: both syncs acquire locks in the same"
+                      f" sequence — no deadlock risk")
+                print()
+
+        if blocking:
+            print("  Sync pairs with conflicting lock orders must be fixed.")
+            print("  Ensure shared concepts are acquired in the same order"
+                  " across all syncs.")
+            sys.exit(1)
+        else:
+            print("  Ship-by: all overlapping syncs share the same lock order"
+                  " — deadlock prevented by design.")
+            sys.exit(0)
     else:
         print(f"PASS  no overlapping sync pairs across {len(syncs)} syncs")
         sys.exit(0)
