@@ -201,6 +201,9 @@ consistency checks across the CLAD artefact chain:
 | `verify_outcome_alignment.py` | 02 | Chain-table outcomes match SPEC enums |
 | `verify_action_chain.py` | 02–04b | Action names consistent across all artefacts |
 | `verify_sync_matrix.py` | 03 | Every sync has a complete Sync Contract Matrix |
+| `verify_sync_cycle_graph.py` | 03 | Detects design-time cross-concept sync cycles (A→B→A). Excludes Web (bootstrap) and self-references (A→A). Accepts `--advisory` flag for refactoring analysis on existing projects |
+| `verify_sync_overlap.py` | 03 | Detects sync pairs sharing 2+ concepts. Lock-order aware: conflicting order = deadlock risk (blocking), same order = safe (advisory). Accepts `--advisory` flag to downgrade all findings to warnings |
+| `verify_concept_matrix.py` | 03 | Builds FR×DP matrix from use-case scenarios × concepts. Flags God Objects (>75% scenario coverage), duplication (identical patterns), and entanglement (shared scenarios). Always advisory (exit 0) — patterns need human judgment |
 | `verify_sync_route_filters.py` | 03, 03a | Shared-trigger syncs carry route filters |
 | `verify_data_model.py` | 03b | CSDP structure, storage-leakage prevention |
 | `verify_spec_parity.py` | 04b | Action name parity between concept specs and SPECs |
@@ -223,6 +226,38 @@ report. Profile-agnostic scripts are invoked by `advance.py` via
 `clad_stages.py`; profile-specific scripts (including the Cucumber and
 step-definition checks) are invoked from the relevant stage's `## Verify`
 section.
+
+### Axiomatic analysis — running on existing projects
+
+The three Stage 03 analysis scripts (`verify_sync_cycle_graph.py`,
+`verify_sync_overlap.py`, `verify_concept_matrix.py`) can be run against
+an existing CLAD project without modifying it, using the `--advisory` flag:
+
+```bash
+# Cycle check — finds A→B→A loops in sync specifications
+python3 quality-gate/verify_sync_cycle_graph.py \
+  --sync-dir features/UC-XX-<slug>/stages/03_syncs/output --advisory
+
+# Overlap check — finds deadlock-prone sync pairs
+python3 quality-gate/verify_sync_overlap.py \
+  --sync-dir features/UC-XX-<slug>/stages/03_syncs/output --advisory
+
+# Matrix check — builds FR×DP matrix with anti-pattern detection
+python3 quality-gate/verify_concept_matrix.py \
+  --usecase features/UC-XX-<slug>/stages/01_usecase/output/usecase.md \
+  --chain-dir features/UC-XX-<slug>/stages/01b_chain-table/output \
+  --resp-map features/UC-XX-<slug>/stages/01a_responsibility-map/output/responsibility-map.md
+```
+
+All three exit 0 with `--advisory` — findings are printed as warnings but
+do not block. Without `--advisory`, the cycle and overlap checks block
+(exit 1); the matrix check is always advisory.
+
+These scripts were field-tested against the Conduit project (7 features,
+40+ syncs, 0 cross-concept imports, all tests green) and found real
+lock-order conflicts in UC-02 and UC-05, and a 5-concept cross-concept
+cycle in a legalmatcherpoc feature. All findings were previously
+undetected by the existing quality-gate scripts.
 
 ### Installing the local pre-commit hook (opt-in, strongly recommended)
 
