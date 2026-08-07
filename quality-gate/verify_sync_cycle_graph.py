@@ -109,6 +109,8 @@ def main():
         description="Detect design-time sync cycles (A→B→A)")
     parser.add_argument("--sync-dir", required=True,
                         help="Path to 03_syncs/output/")
+    parser.add_argument("--advisory", action="store_true",
+                        help="Report findings as warnings instead of blocking")
     args = parser.parse_args()
 
     if not os.path.isdir(args.sync_dir):
@@ -124,7 +126,8 @@ def main():
     cycles = find_cycles(graph)
 
     if cycles:
-        print(f"FAIL  {len(cycles)} design-time sync cycle(s) detected:\n")
+        label = "WARN " if args.advisory else "FAIL "
+        print(f"{label} {len(cycles)} design-time sync cycle(s) detected:\n")
         for i, cycle in enumerate(cycles):
             path_str = " → ".join(cycle)
             print(f"  Cycle {i + 1}: {path_str}")
@@ -133,7 +136,7 @@ def main():
         print("  creates an infinite loop that the dedup guard catches at runtime")
         print("  but that should be caught at design time. Split the concepts or")
         print("  add an intermediate concept to break the loop.")
-        sys.exit(1)
+        sys.exit(0 if args.advisory else 1)
     else:
         print(f"PASS  no sync cycles detected across {len(edges)} edges "
               f"in {len(graph)} concepts")

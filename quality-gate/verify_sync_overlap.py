@@ -85,6 +85,8 @@ def main():
         description="Detect overlapping sync operations (deadlock risk)")
     parser.add_argument("--sync-dir", required=True,
                         help="Path to 03_syncs/output/")
+    parser.add_argument("--advisory", action="store_true",
+                        help="Report findings as warnings instead of blocking")
     args = parser.parse_args()
 
     if not os.path.isdir(args.sync_dir):
@@ -146,7 +148,7 @@ def main():
             print("  Sync pairs with conflicting lock orders must be fixed.")
             print("  Ensure shared concepts are acquired in the same order"
                   " across all syncs.")
-            sys.exit(1)
+            sys.exit(0 if args.advisory else 1)
         else:
             print("  Ship-by: all overlapping syncs share the same lock order"
                   " — deadlock prevented by design.")
