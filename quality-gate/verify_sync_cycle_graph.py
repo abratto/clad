@@ -68,7 +68,7 @@ def build_graph(edges):
     ends of chains (entry and exit) and doesn't constitute a cycle."""
     graph = defaultdict(set)
     for _sync_name, src, tgt in edges:
-        if src == 'Web' or tgt == 'Web':
+        if src == 'Web' or tgt == 'Web' or src == tgt:
             continue
         graph[src].add(tgt)
     return graph
