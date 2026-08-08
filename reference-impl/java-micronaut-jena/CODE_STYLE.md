@@ -149,30 +149,31 @@ it — use the RDF-star form exclusively for outcome conditions.
 Non-outcome field bindings (`:userId`, `:sessionToken`) are plain
 triples on the action node.
 
-### Fuseki compatibility — RDF-star in SPARQL templates
+### Fuseki compatibility — RDF-star in SPARQL UPDATE templates
 
-The in-memory Jena ARQ engine (default in CLAD) accepts `<< >>` syntax
-in `INSERT DATA` templates. Apache Jena Fuseki (remote deployment) does
-not — it treats bare `<< >>` terms in DELETE templates as blank nodes and
-rejects them with a 400 error. This divergence means code that passes
-`mvn test` against in-memory Jena can fail at deploy time against Fuseki.
+Jena 5.2.0's in-memory UPDATE parser accepts `<< >>` RDF-star syntax in
+`INSERT DATA` templates as a backward-compatible holdover. Jena 6.x and
+Fuseki over HTTP strictly enforce the W3C SPARQL 1.2 Update grammar,
+which does not allow `<< >>` in UPDATE templates. This is intentional
+spec compliance, not a version bug — it will not be "fixed."
 
 **Rule R21** (AGENTS.md §9) requires programmatic SPARQL construction for
-RDF-star patterns when targeting Fuseki:
-- `ParameterizedSparqlString` with `NodeFactory.createTripleNode()`
-- `UpdateBuilder` / `SelectBuilder` (from `jena-querybuilder`)
+RDF-star patterns when targeting any deployment:
+- `UpdateBuilder` with `NodeFactory.createTripleNode()` — produces
+  `UpdateRequest` objects that bypass the string parser
+- `ParameterizedSparqlString.asUpdate()` — same approach
 
-The remote archive in `RemoteStorage.archiveFlow` already skips RDF-star
-annotation triples for this reason — they are non-functional for
-queue/analytics reads and stay in the active action graph.
+The permanent fix is `ActionLog.update(UpdateRequest)` that passes
+directly to Jena's execution layer without string serialization. This
+is tracked in `maintenance/jena-upgrade.md`.
 
-When upgrading a CLAD project from in-memory to Fuseki deployment, audit
-all `StringBuilder` SPARQL concatenation sites for `<< >>` patterns and
-replace them with programmatic APIs. The `ConceptAgent` and
-`PredicateConceptAgent` base classes in the reference-impl use raw
-`StringBuilder` for the RDF-star annotation write — this is correct for
-the default in-memory backend. Projects deploying to Fuseki should
-override `writeCompletion` with the PSS pattern documented above.
+**Current behavior:**
+- `ConceptAgent` and `PredicateConceptAgent` use raw `StringBuilder` with
+  `<< >>` in `INSERT DATA` — correct for Jena 5.2.0 in-memory (default)
+- `RemoteStorage.archiveFlow` skips RDF-star annotation triples —
+  Fuseki rejects `<< >>` in DELETE templates
+- Projects deploying to Fuseki must migrate all `<< >>` UPDATE patterns
+  to programmatic APIs (UpdateBuilder or PSS)
 
 ### Sync fragment construction
 

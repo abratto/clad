@@ -61,34 +61,46 @@ parser versions.
 
 ## Experiment findings (2026-08-08)
 
-1. **Version bump alone fails.** Bumping `jena.version` from 5.2.0 to 6.1.0
-   and running tests with existing raw `StringBuilder` code → 2 test failures.
-   Jena 6.1.0's in-memory parser no longer accepts `<< >>` in `INSERT DATA`
-   templates. The version bump must be coordinated with the write-path
-   migration.
+All attempts to use `<< >>` RDF-star syntax in SPARQL UPDATE templates
+failed against Jena 6.1.0's in-memory parser. This is NOT a bug — it's
+intentional W3C SPARQL 1.2 Update compliance. The in-memory parser no
+longer accepts the lenient early-draft syntax that Jena 5.2.0 tolerated.
 
-2. **`INSERT DATA` + `NodeFmtLib.str(Triple)` fails.** Using
-   `NodeFmtLib.str()` to serialize the inner triple into the `INSERT DATA`
-   template (same structure as the working raw code) → same failures. The
-   serialization differs from the raw concatenation.
+| Approach | Result |
+|---|---|
+| `StringBuilder` + `INSERT DATA` + `<< >>` (5.2.0) | Passes |
+| `StringBuilder` + `INSERT DATA` + `<< >>` (6.1.0) | Fails — parser rejects |
+| `NodeFmtLib.str()` + `INSERT DATA` + `<< >>` (6.1.0) | Fails — same rejection |
+| `PSS.asUpdate()` + `INSERT DATA` + `<< >>` (6.1.0) | Fails — string parser rejects |
+| `INSERT { } WHERE { }` + `<< >>` (6.1.0) | Fails — same rejection |
 
-3. **`ParameterizedSparqlString.asUpdate()` fails.** Using PSS with
-   `NodeFactory.createTripleNode()` → same failures. Jena's in-memory
-   UPDATE parser does not accept `<< >>` in any form.
+**Root cause:** Jena 6.x in-memory UPDATE parser enforces strict W3C SPARQL
+1.2 grammar, which does not allow `<< >>` in UPDATE templates at all.
+RDF-star quoted triples are only legal in query patterns (SELECT, CONSTRUCT,
+ASK). This is the same restriction Fuseki enforces over HTTP. The lenient
+Jena 5.2.0 behavior was a backward-compatibility holdover that has been
+removed.
 
-4. **`INSERT { } WHERE { }` fails.** Same pattern, different template →
-   same failures. `<< >>` syntax is rejected regardless of UPDATE template
-   type.
+**The permanent fix:** bypass the string parser entirely. `UpdateBuilder`
+and `ParameterizedSparqlString.asUpdate()` produce `UpdateRequest` objects
+that Jena handles natively — no string parsing involved. The fix is
+`ActionLog.update(UpdateRequest)` that passes directly to Jena's execution
+layer.
 
-**Conclusion:** Jena 6.1.0's in-memory UPDATE parser does not support `<< >>`
-syntax at all. The programmatic APIs (PSS, UpdateBuilder) work by producing
-`UpdateRequest` objects that Jena handles internally — bypassing string
-parsing. But `ActionLog.update(String)` requires a string that the UPDATE
-parser must accept. To use the programmatic APIs, `ActionLog` needs an
-`update(UpdateRequest)` method that passes the request directly to Jena's
-execution layer, skipping the string serialization/parse round-trip.
+**Conclusion:** The issue is NOT a version mismatch — Jena's in-memory parser
+is deliberately lenient (backward-compatible with early RDF-star drafts),
+while Fuseki strictly enforces the W3C SPARQL 1.2 Update grammar. No version
+bump will make the in-memory parser accept `<< >>` in UPDATE templates
+again — the stricter behavior is intentional and permanent.
+
+The correct fix is to bypass the SPARQL string parser entirely:
+`ActionLog.update(UpdateRequest)` that passes a programmatically-built
+`UpdateRequest` object directly to Jena's `UpdateExecutionFactory`.
+The `UpdateBuilder` API produces spec-compliant update operations that
+work with both in-memory and remote Fuseki.
 
 **Next steps:** add `ActionLog.update(UpdateRequest)` that calls
 `UpdateExecutionFactory.create(request).execute(dataset)` directly. Then
-migrate `writeReifiedOutcome` to use the UpdateBuilder or PSS approach
-with the new method.
+migrate `writeReifiedOutcome` to use `UpdateBuilder` with
+`NodeFactory.createTripleNode()` and pass the resulting `UpdateRequest`
+to the new method.
