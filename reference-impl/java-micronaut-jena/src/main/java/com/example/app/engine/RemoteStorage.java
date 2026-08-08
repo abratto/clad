@@ -6,6 +6,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdflink.RDFLink;
 import org.apache.jena.rdflink.RDFLinkHTTP;
 import org.apache.jena.update.UpdateFactory;
+import org.apache.jena.update.UpdateRequest;
 
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
@@ -54,6 +55,13 @@ public class RemoteStorage implements Storage {
         List<String> b = batched.get();
         if (b != null) { b.add(sparqlUpdate); return; }
         link.update(UpdateFactory.create(sparqlUpdate));
+    }
+
+    @Override
+    public void update(UpdateRequest request) {
+        List<String> b = batched.get();
+        if (b != null) { b.add(request.toString()); return; }
+        link.update(request);
     }
 
     @Override

@@ -87,6 +87,14 @@ that Jena handles natively — no string parsing involved. The fix is
 `ActionLog.update(UpdateRequest)` that passes directly to Jena's execution
 layer.
 
+**Status (2026-08-08):** `ActionLog.update(UpdateRequest)` is implemented
+in Storage, ActionLog, LocalStorage, and RemoteStorage. The write path
+migration to `UpdateBuilder` is blocked — Jena 6.1.0 removed the
+`jena-querybuilder` module (`UpdateBuilder`) and `NodeFactory.createTripleNode()`
+from the public API. These APIs may exist in a different module or have been
+renamed. Investigation needed: identify the Jena 6.x equivalent of
+`UpdateBuilder` and `createTripleNode` for programmatic RDF-star construction.
+
 **Conclusion:** The issue is NOT a version mismatch — Jena's in-memory parser
 is deliberately lenient (backward-compatible with early RDF-star drafts),
 while Fuseki strictly enforces the W3C SPARQL 1.2 Update grammar. No version

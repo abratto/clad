@@ -2,6 +2,7 @@ package com.example.app.engine;
 
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.update.UpdateRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,12 @@ public interface Storage {
     void update(String sparqlUpdate);
 
     void updateBatch(List<String> sparqlUpdates);
+
+    /** Executes a programmatic UpdateRequest directly on the dataset,
+     *  bypassing the SPARQL string parser. Required for RDF-star operations
+     *  that are legal in Jena'\''s internal representation but rejected by
+     *  the strict SPARQL 1.2 parser in UPDATE templates. */
+    void update(UpdateRequest request);
 
     Model construct(String sparqlConstruct);
 

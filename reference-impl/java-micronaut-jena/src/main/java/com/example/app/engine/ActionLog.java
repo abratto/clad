@@ -42,6 +42,8 @@ public class ActionLog {
 
     public void updateBatch(List<String> sparqlUpdates) { storage.updateBatch(sparqlUpdates); }
 
+    public void update(org.apache.jena.update.UpdateRequest request) { storage.update(request); }
+
     public Model construct(String sparqlConstruct) { return storage.construct(sparqlConstruct); }
 
     public boolean ask(String sparqlAsk) { return storage.ask(sparqlAsk); }

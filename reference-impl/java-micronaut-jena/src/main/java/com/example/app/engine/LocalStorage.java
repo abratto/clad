@@ -38,6 +38,18 @@ class LocalStorage implements Storage {
     }
 
     @Override
+    public void update(UpdateRequest request) {
+        List<String> b = batched.get();
+        if (b != null) { b.add(request.toString()); return; }
+        dataset.begin(ReadWrite.WRITE);
+        try {
+            UpdateExecutionFactory.create(request, dataset).execute();
+            dataset.commit();
+        } catch (Exception e) { dataset.abort(); throw e; }
+        finally { dataset.end(); }
+    }
+
+    @Override
     public void updateBatch(List<String> sparqlUpdates) {
         if (sparqlUpdates.isEmpty()) return;
         List<String> b = batched.get();
