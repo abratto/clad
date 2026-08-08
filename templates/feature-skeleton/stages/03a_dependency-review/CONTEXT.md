@@ -102,6 +102,41 @@ before Stage 04 turns it into code.
     --output output/concept-matrix.md
   ```
 
+### Reading the matrix
+
+The matrix maps scenarios (rows) to concepts (columns). An `X` means the
+concept appears in that scenario's chain table. The pattern tells you
+whether your concept boundaries are clean.
+
+**What good looks like — sparse, diagonal-ish:**
+
+```
+| Scenario | User | Triage | Matcher | Billing | Notify |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Register | X | X | — | — | — |
+| Triage   | X | X | — | — | — |
+| Match    | X | X | X | — | — |
+| Track    | X | X | X | — | — |
+| Bill     | X | — | — | X | X |
+| Notify   | X | — | — | — | X |
+```
+
+Triage and Matcher appear where they're needed. Billing and Notify
+each appear in 1–2 scenarios. No concept touches everything.
+
+**What needs attention:**
+
+| Pattern | What it looks like | Why it matters |
+|---|---|---|
+| **God Object** | A solid vertical column of X's — one concept in every row | That concept holds too much (state, actions, logic). Split it. |
+| **Duplication** | Two columns with identical X patterns | Two concepts are structurally the same — merge or differentiate. |
+| **Entanglement** | Two concepts both touch a scenario where only one should | The boundary is fuzzy. Clarify which concept owns that concern. |
+| **Orphan** | A concept with no X's in any scenario | It's listed in the responsibility map but never used. Remove or justify. |
+
+For small features (≤3 scenarios), concepts naturally overlap —
+this is expected. The matrix is most useful on features with
+4+ scenarios where anti-patterns become visible.
+
 ## Verify
 
 ### Automated checks

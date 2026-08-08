@@ -259,6 +259,21 @@ lock-order conflicts in UC-02 and UC-05, and a 5-concept cross-concept
 cycle in a legalmatcherpoc feature. All findings were previously
 undetected by the existing quality-gate scripts.
 
+#### Reading the concept coverage matrix
+
+The matrix maps scenarios (rows) to concepts (columns). An `X` means the
+concept appears in that scenario's chain table. Four patterns to scan for:
+
+| Pattern | What it looks like | Action |
+|---|---|---|
+| **God Object** | One concept column has X's across most rows | Too much state/actions in one concept — split it |
+| **Duplication** | Two columns have identical X patterns | Merge the concepts or differentiate their purposes |
+| **Entanglement** | Two concepts share a row where only one should | Clarify which concept owns that concern |
+| **Orphan** | A concept has no X's anywhere | Remove from the responsibility map or add to a chain |
+
+Small, cohesive features (≤3 scenarios) naturally overlap — the matrix
+is most useful on features with 4+ scenarios.
+
 ### Installing the local pre-commit hook (opt-in, strongly recommended)
 
 The scripts above run deterministically **when invoked**, but nothing
