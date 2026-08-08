@@ -70,16 +70,21 @@ public class CladDatasetFactory {
     @Primary
     public ActionLog actionLog() {
         if ("fuseki".equalsIgnoreCase(type)) {
-            String endpoint = resolve("engine.dataset.fuseki.endpoint", "CLAD_FUSEKI_ENDPOINT", "");
-            if (endpoint.isBlank()) throw new IllegalStateException(
-                    "engine.dataset.fuseki.endpoint required for fuseki backend");
+            String queryEndpoint = resolve("engine.dataset.fuseki.query",
+                    "CLAD_FUSEKI_QUERY",
+                    resolve("engine.dataset.fuseki.endpoint", "CLAD_FUSEKI_ENDPOINT", ""));
+            String updateEndpoint = resolve("engine.dataset.fuseki.update",
+                    "CLAD_FUSEKI_UPDATE",
+                    queryEndpoint);
+            if (queryEndpoint.isBlank()) throw new IllegalStateException(
+                    "engine.dataset.fuseki.endpoint or CLAD_FUSEKI_QUERY required for fuseki backend");
             String username = resolve("engine.dataset.fuseki.username", "CLAD_FUSEKI_USERNAME", "");
             String password = resolve("engine.dataset.fuseki.password", "CLAD_FUSEKI_PASSWORD", "");
                 if (username.isBlank() != password.isBlank()) throw new IllegalStateException(
                     "engine.dataset.fuseki.username and engine.dataset.fuseki.password must both be set");
             Storage storage = username.isBlank() && password.isBlank()
-                ? new RemoteStorage(endpoint)
-                : new RemoteStorage(endpoint, username, password);
+                ? new RemoteStorage(queryEndpoint, updateEndpoint)
+                : new RemoteStorage(queryEndpoint, updateEndpoint, username, password);
             return new ActionLog(storage);
         }
         return new ActionLog(dataset());

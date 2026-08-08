@@ -19,14 +19,16 @@ public class RemoteStorage implements Storage {
 
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
 
-    private final RDFLink link;
+    private final RDFLink queryLink;
+    private final RDFLink updateLink;
     private final ThreadLocal<List<String>> batched = new ThreadLocal<>();
     private volatile boolean archiveEnabled = true;
 
     public RemoteStorage(String endpoint) {
-        this.link = RDFLinkHTTP.service(endpoint)
+        this.queryLink = RDFLinkHTTP.service(endpoint)
             .httpClient(HttpClient.newBuilder().connectTimeout(CONNECT_TIMEOUT).build())
             .build();
+        this.updateLink = this.queryLink;
     }
 
     public RemoteStorage(String endpoint, String username, String password) {
@@ -41,7 +43,37 @@ public class RemoteStorage implements Storage {
                     }
                 })
                 .build();
-        this.link = RDFLinkHTTP.service(endpoint).httpClient(client).build();
+        this.queryLink = RDFLinkHTTP.service(endpoint).httpClient(client).build();
+        this.updateLink = this.queryLink;
+    }
+
+    /**
+     * Split query/update endpoints (for Fuseki where CONSTRUCT on /update 400s).
+     * Credentialed — credentials are sent to both endpoints.
+     */
+    public RemoteStorage(String queryEndpoint, String updateEndpoint,
+                         String username, String password) {
+        AtomicBoolean credentialsProvided = new AtomicBoolean();
+        HttpClient client = HttpClient.newBuilder()
+            .connectTimeout(CONNECT_TIMEOUT)
+                .authenticator(new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        if (!credentialsProvided.compareAndSet(false, true)) return null;
+                        return new PasswordAuthentication(username, password.toCharArray());
+                    }
+                })
+                .build();
+        this.queryLink = RDFLinkHTTP.service(queryEndpoint).httpClient(client).build();
+        this.updateLink = RDFLinkHTTP.service(updateEndpoint).httpClient(client).build();
+    }
+
+    /** Split endpoints without credentials. */
+    RemoteStorage(String queryEndpoint, String updateEndpoint) {
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(CONNECT_TIMEOUT).build();
+        this.queryLink = RDFLinkHTTP.service(queryEndpoint).httpClient(client).build();
+        this.updateLink = RDFLinkHTTP.service(updateEndpoint).httpClient(client).build();
     }
 
     @Override
@@ -54,14 +86,14 @@ public class RemoteStorage implements Storage {
     public void update(String sparqlUpdate) {
         List<String> b = batched.get();
         if (b != null) { b.add(sparqlUpdate); return; }
-        link.update(UpdateFactory.create(sparqlUpdate));
+        updateLink.update(UpdateFactory.create(sparqlUpdate));
     }
 
     @Override
     public void update(UpdateRequest request) {
         List<String> b = batched.get();
         if (b != null) { b.add(request.toString()); return; }
-        link.update(request);
+        updateLink.update(request);
     }
 
     @Override
@@ -71,23 +103,23 @@ public class RemoteStorage implements Storage {
         if (b != null) { b.addAll(sparqlUpdates); return; }
         StringBuilder sb = new StringBuilder();
         for (String u : sparqlUpdates) sb.append(u).append(" ;\n");
-        link.update(UpdateFactory.create(sb.toString()));
+        updateLink.update(UpdateFactory.create(sb.toString()));
     }
 
     @Override
     public Model construct(String sparqlConstruct) {
-        return ModelFactory.createModelForGraph(link.queryConstruct(sparqlConstruct));
+        return ModelFactory.createModelForGraph(queryLink.queryConstruct(sparqlConstruct));
     }
 
     @Override
     public boolean ask(String sparqlAsk) {
-        return link.queryAsk(sparqlAsk);
+        return queryLink.queryAsk(sparqlAsk);
     }
 
     @Override
     public List<Map<String, String>> select(String sparqlSelect) {
         List<Map<String, String>> rows = new ArrayList<>();
-        link.querySelect(sparqlSelect, binding -> {
+        queryLink.querySelect(sparqlSelect, binding -> {
             Map<String, String> row = new LinkedHashMap<>();
             binding.forEach((v, n) -> {
                 if (n == null) row.put(v.getVarName(), null);
@@ -121,7 +153,7 @@ public class RemoteStorage implements Storage {
         batched.remove();
         StringBuilder sb = new StringBuilder();
         for (String u : queued) sb.append(u).append(" ;\n");
-        link.update(UpdateFactory.create(sb.toString()));
+        updateLink.update(UpdateFactory.create(sb.toString()));
     }
 
     @Override public void abortBatch() { batched.remove(); }
@@ -151,5 +183,6 @@ public class RemoteStorage implements Storage {
             + " << ?a :outcome ?outcome >> ?p ?o . } }\n";
     }
 
-    RDFLink link() { return link; }
+    RDFLink queryLink() { return queryLink; }
+    RDFLink updateLink() { return updateLink; }
 }
