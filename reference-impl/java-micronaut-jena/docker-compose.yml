@@ -26,24 +26,28 @@ services:
       CLAD_LLM_MODEL: llama3.2:3b
       # Micronaut
       MICRONAUT_ENVIRONMENTS: production
+      # Split query/update endpoints — CONSTRUCT on update endpoint returns 400
+      CLAD_FUSEKI_QUERY: http://fuseki:3030/clad/query
+      CLAD_FUSEKI_UPDATE: http://fuseki:3030/clad/update
     depends_on:
       fuseki:
         condition: service_healthy
     restart: unless-stopped
 
-  # 2. Apache Jena Fuseki — persistent triplestore for concept state
-  # The stain/jena-fuseki image uses the default /clad dataset on startup.
+  # 2. Apache Jena Fuseki — persistent triplestore (Jena 6.0.0, multi-arch)
+  # conceptkernel/jena-fuseki supports arm64 (Apple Silicon) natively.
   fuseki:
-    image: stain/jena-fuseki:latest
+    image: conceptkernel/jena-fuseki:latest
     ports:
       - "3030:3030"
     environment:
       ADMIN_PASSWORD: "${FUSEKI_ADMIN_PASSWORD:?Set FUSEKI_ADMIN_PASSWORD}"
     volumes:
       - fuseki_data:/fuseki
-      - ./fuseki/config.ttl:/fuseki/configuration/clad.ttl:ro
+      - ./fuseki/config.ttl:/fuseki/run/configuration/clad.ttl:ro
+    user: "0:0"  # required for macOS host volume permissions
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3030/$/ping"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:3030/$/ping"]
       interval: 10s
       timeout: 5s
       retries: 10
