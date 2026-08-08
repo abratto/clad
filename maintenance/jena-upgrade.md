@@ -58,3 +58,37 @@ path in the base classes.
 Deferred from v0.1.1. The split-brain approach is correct and tested for
 the current Jena version. This upgrade removes the split by aligning the
 parser versions.
+
+## Experiment findings (2026-08-08)
+
+1. **Version bump alone fails.** Bumping `jena.version` from 5.2.0 to 6.1.0
+   and running tests with existing raw `StringBuilder` code → 2 test failures.
+   Jena 6.1.0's in-memory parser no longer accepts `<< >>` in `INSERT DATA`
+   templates. The version bump must be coordinated with the write-path
+   migration.
+
+2. **`INSERT DATA` + `NodeFmtLib.str(Triple)` fails.** Using
+   `NodeFmtLib.str()` to serialize the inner triple into the `INSERT DATA`
+   template (same structure as the working raw code) → same failures. The
+   serialization differs from the raw concatenation.
+
+3. **`ParameterizedSparqlString.asUpdate()` fails.** Using PSS with
+   `NodeFactory.createTripleNode()` → same failures. Jena's in-memory
+   UPDATE parser does not accept `<< >>` in any form.
+
+4. **`INSERT { } WHERE { }` fails.** Same pattern, different template →
+   same failures. `<< >>` syntax is rejected regardless of UPDATE template
+   type.
+
+**Conclusion:** Jena 6.1.0's in-memory UPDATE parser does not support `<< >>`
+syntax at all. The programmatic APIs (PSS, UpdateBuilder) work by producing
+`UpdateRequest` objects that Jena handles internally — bypassing string
+parsing. But `ActionLog.update(String)` requires a string that the UPDATE
+parser must accept. To use the programmatic APIs, `ActionLog` needs an
+`update(UpdateRequest)` method that passes the request directly to Jena's
+execution layer, skipping the string serialization/parse round-trip.
+
+**Next steps:** add `ActionLog.update(UpdateRequest)` that calls
+`UpdateExecutionFactory.create(request).execute(dataset)` directly. Then
+migrate `writeReifiedOutcome` to use the UpdateBuilder or PSS approach
+with the new method.
