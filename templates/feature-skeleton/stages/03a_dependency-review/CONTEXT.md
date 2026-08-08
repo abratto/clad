@@ -84,12 +84,23 @@ before Stage 04 turns it into code.
 - [ ] Section 1: inbound calls tabulated per concept
 - [ ] Section 2: concept-state reads listed (usually empty)
 - [ ] `pattern-d-summary.md` produced
+- [ ] Concept coverage matrix produced
 - [ ] Shared-trigger analysis complete
 - [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 - `output/<concept>-card.md` — one per concept named in 01a's map.
 - `output/pattern-d-summary.md` — single consolidated cross-flow view.
+- `output/concept-matrix.md` (optional, recommended) — FR×DP matrix
+  mapping scenarios to concepts. Surfaces God Objects, duplication, and
+  entanglement visually. Generated via:
+  ```
+  python3 ../../../../quality-gate/verify_concept_matrix.py \
+    --usecase ../01_usecase/output/usecase.md \
+    --chain-dir ../01b_chain-table/output \
+    --resp-map ../01a_responsibility-map/output/responsibility-map.md \
+    --output output/concept-matrix.md
+  ```
 
 ## Verify
 

@@ -156,6 +156,8 @@ def main():
                         help="Path to 01b_chain-table/output/")
     parser.add_argument("--resp-map", required=True,
                         help="Path to 01a_responsibility-map/output/responsibility-map.md")
+    parser.add_argument("--output", default=None,
+                        help="Write the matrix as a markdown file")
     args = parser.parse_args()
 
     for path, label in [(args.usecase, "usecase"),
@@ -173,6 +175,18 @@ def main():
         sys.exit(0)
 
     matrix, coverage = build_matrix(scenarios, concepts, args.chain_dir)
+
+    # Write matrix to file if requested (before stdout)
+    if args.output:
+        with open(args.output, "w") as fh:
+            fh.write(f"# Concept coverage matrix — {len(scenarios)} scenarios × {len(concepts)} concepts\n\n")
+            fh.write("| Scenario | " + " | ".join(concepts) + " |\n")
+            fh.write("|---|" + "|".join(":---:" for _ in concepts) + "|\n")
+            for scenario in scenarios:
+                cells = []
+                for c in concepts:
+                    cells.append("X" if matrix.get(scenario, {}).get(c) == 'X' else "—")
+                fh.write(f"| {scenario} | " + " | ".join(cells) + " |\n")
 
     # Print the matrix
     print(f"Design Matrix: {len(scenarios)} scenarios × {len(concepts)} concepts\n")
