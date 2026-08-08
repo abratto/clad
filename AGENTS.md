@@ -496,6 +496,19 @@ re-enter the earliest affected feature stage under R17.
 the normal artefact gate requires design approval; the pre-commit hook requires
 both design and evidence approval plus passing test evidence.
 
+### R21 — RDF-star/SPARQL-star patterns MUST use Jena programmatic APIs
+
+SPARQL queries containing RDF-star or SPARQL-star patterns (`<< >>` annotations,
+`{| |}` syntax, nested reification) must be built via Jena's programmatic APIs
+(`ParameterizedSparqlString` with `NodeFactory.createTripleNode()`,
+`UpdateBuilder`, `SelectBuilder`) rather than raw `StringBuilder` or string
+concatenation. Queries built with raw string concatenation are accepted by Jena's
+lenient in-memory parser but rejected by strict remote triplestores (Fuseki over
+HTTP), which enforce SPARQL 1.1 grammar rules and treat bare `<< >>` terms in
+DELETE templates as blank nodes. This causes silent pass-during-local-testing
+that surfaces only in remote-deployment profiles. The `ConceptAgent` base class's
+`writeReifiedOutcome()` method is the canonical example of correct construction.
+
 ## 10. Pointers
 
 - Methodology reading order: [`methodology/README.md`](methodology/README.md)

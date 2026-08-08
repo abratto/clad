@@ -94,9 +94,12 @@ public class RemoteStorage implements Storage {
 
     @Override
     public void archiveFlow(String flowToken) {
-        updateBatch(List.of(
-            moveStandard(flowToken, archiveEnabled),
-            moveStar(flowToken, archiveEnabled)));
+        // Archive only standard triples. RDF-star annotation triples
+        // (<< action :outcome X >> :flow tok) are NOT moved — Fuseki 6+
+        // rejects << >> in DELETE templates, treating them as blank nodes.
+        // These annotation triples are non-functional and stay in the
+        // active action graph.
+        updateBatch(List.of(moveStandard(flowToken, archiveEnabled)));
     }
 
     @Override public void setArchiveEnabled(boolean enabled) { this.archiveEnabled = enabled; }
