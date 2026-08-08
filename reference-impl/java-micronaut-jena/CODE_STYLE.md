@@ -149,6 +149,31 @@ it — use the RDF-star form exclusively for outcome conditions.
 Non-outcome field bindings (`:userId`, `:sessionToken`) are plain
 triples on the action node.
 
+### Fuseki compatibility — RDF-star in SPARQL templates
+
+The in-memory Jena ARQ engine (default in CLAD) accepts `<< >>` syntax
+in `INSERT DATA` templates. Apache Jena Fuseki (remote deployment) does
+not — it treats bare `<< >>` terms in DELETE templates as blank nodes and
+rejects them with a 400 error. This divergence means code that passes
+`mvn test` against in-memory Jena can fail at deploy time against Fuseki.
+
+**Rule R21** (AGENTS.md §9) requires programmatic SPARQL construction for
+RDF-star patterns when targeting Fuseki:
+- `ParameterizedSparqlString` with `NodeFactory.createTripleNode()`
+- `UpdateBuilder` / `SelectBuilder` (from `jena-querybuilder`)
+
+The remote archive in `RemoteStorage.archiveFlow` already skips RDF-star
+annotation triples for this reason — they are non-functional for
+queue/analytics reads and stay in the active action graph.
+
+When upgrading a CLAD project from in-memory to Fuseki deployment, audit
+all `StringBuilder` SPARQL concatenation sites for `<< >>` patterns and
+replace them with programmatic APIs. The `ConceptAgent` and
+`PredicateConceptAgent` base classes in the reference-impl use raw
+`StringBuilder` for the RDF-star annotation write — this is correct for
+the default in-memory backend. Projects deploying to Fuseki should
+override `writeCompletion` with the PSS pattern documented above.
+
 ### Sync fragment construction
 
 - **Must filter by route.** Every sync that writes a `Web/respond` (or
