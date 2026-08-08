@@ -91,9 +91,9 @@ before Stage 04 turns it into code.
 
 - `output/<concept>-card.md` — one per concept named in 01a's map.
 - `output/pattern-d-summary.md` — single consolidated cross-flow view.
-- `output/concept-matrix.md` (optional, recommended) — FR×DP matrix
-  mapping scenarios to concepts. Surfaces God Objects, duplication, and
-  entanglement visually. Generated via:
+- `output/concept-matrix.md` — FR×DP matrix mapping scenarios to
+  concepts. Surfaces God Objects, duplication, and entanglement visually.
+  Generated via:
   ```
   python3 ../../../../quality-gate/verify_concept_matrix.py \
     --usecase ../01_usecase/output/usecase.md \
