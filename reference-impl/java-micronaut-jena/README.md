@@ -221,7 +221,18 @@ under `META-INF/swagger/views/swagger-ui`.
 
 ## Running locally
 
-```sh
+CLAD supports three runtime modes. Pick based on what you're doing:
+
+| Mode | Command | Triplestore | When to use |
+|---|---|---|---|
+| **In-memory** (default) | `mvn mn:run` | Jena TxnMem — fast, zero-setup, data lost on restart | Development, debugging, quick iteration |
+| **Fuseki-embedded** | `mvn mn:run -Dengine.dataset.type=fuseki-embedded` | Jena TDB2 on disk + embedded Fuseki admin server | Local testing with persistent state |
+| **Docker Compose** | `docker compose up --build` | Containerized Fuseki (Jena 6, multi-arch) + Ollama LLM | Full-stack deployment, production-like environment |
+
+All three modes pass `mvn test`. Switch between them by changing
+`engine.dataset.type` in `clad.properties` or passing a system property.
+
+### In-memory (default)
 mvn mn:run
 # in another terminal:
 curl -X POST http://localhost:8080/login \
