@@ -462,7 +462,13 @@ engine.dataset.tdb2.dir=./data/tdb2-store
 #   docker run -d --name fuseki -p 3030:3030 \
 #     -e ADMIN_PASSWORD="$FUSEKI_ADMIN_PASSWORD" stain/jena-fuseki
 engine.dataset.type=fuseki
-engine.dataset.fuseki.endpoint=http://localhost:3030/ds
+engine.dataset.fuseki.endpoint=http://localhost:3030/clad
+
+# Split backend — in-memory action log + remote Fuseki business graphs
+# Prevents unbounded TDB2 growth from action log DELETEs (tombstone
+# accumulation). Action log is bounded by RAM, business graphs are durable.
+engine.dataset.type=fuseki-split
+engine.dataset.fuseki.endpoint=http://localhost:3030/clad
 
 # Embedded Fuseki (TDB2 + admin UI)
 engine.dataset.type=fuseki-embedded

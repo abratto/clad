@@ -69,25 +69,59 @@ public class CladDatasetFactory {
     @Singleton
     @Primary
     public ActionLog actionLog() {
+        if ("fuseki-split".equalsIgnoreCase(type)) {
+            return fusekiSplitStorage();
+        }
         if ("fuseki".equalsIgnoreCase(type)) {
-            String queryEndpoint = resolve("engine.dataset.fuseki.query",
-                    "CLAD_FUSEKI_QUERY",
-                    resolve("engine.dataset.fuseki.endpoint", "CLAD_FUSEKI_ENDPOINT", ""));
-            String updateEndpoint = resolve("engine.dataset.fuseki.update",
-                    "CLAD_FUSEKI_UPDATE",
-                    queryEndpoint);
-            if (queryEndpoint.isBlank()) throw new IllegalStateException(
-                    "engine.dataset.fuseki.endpoint or CLAD_FUSEKI_QUERY required for fuseki backend");
-            String username = resolve("engine.dataset.fuseki.username", "CLAD_FUSEKI_USERNAME", "");
-            String password = resolve("engine.dataset.fuseki.password", "CLAD_FUSEKI_PASSWORD", "");
-                if (username.isBlank() != password.isBlank()) throw new IllegalStateException(
-                    "engine.dataset.fuseki.username and engine.dataset.fuseki.password must both be set");
-            Storage storage = username.isBlank() && password.isBlank()
-                ? new RemoteStorage(queryEndpoint, updateEndpoint)
-                : new RemoteStorage(queryEndpoint, updateEndpoint, username, password);
-            return new ActionLog(storage);
+            return fusekiStorage();
         }
         return new ActionLog(dataset());
+    }
+
+    private ActionLog fusekiStorage() {
+        String queryEndpoint = resolve("engine.dataset.fuseki.query",
+                "CLAD_FUSEKI_QUERY",
+                resolve("engine.dataset.fuseki.endpoint", "CLAD_FUSEKI_ENDPOINT", ""));
+        String updateEndpoint = resolve("engine.dataset.fuseki.update",
+                "CLAD_FUSEKI_UPDATE",
+                queryEndpoint);
+        if (queryEndpoint.isBlank()) throw new IllegalStateException(
+                "engine.dataset.fuseki.endpoint or CLAD_FUSEKI_QUERY required for fuseki backend");
+        return buildRemoteActionLog(queryEndpoint, updateEndpoint);
+    }
+
+    private ActionLog fusekiSplitStorage() {
+        String queryEndpoint = resolve("engine.dataset.fuseki.query",
+                "CLAD_FUSEKI_QUERY",
+                resolve("engine.dataset.fuseki.endpoint", "CLAD_FUSEKI_ENDPOINT", ""));
+        String updateEndpoint = resolve("engine.dataset.fuseki.update",
+                "CLAD_FUSEKI_UPDATE",
+                queryEndpoint);
+        if (queryEndpoint.isBlank()) throw new IllegalStateException(
+                "engine.dataset.fuseki.endpoint or CLAD_FUSEKI_QUERY required");
+
+        // Action log → in-memory (bounded, fast, reclaimed on DELETE)
+        LocalStorage actionLogStorage = new LocalStorage(DatasetFactory.createTxnMem());
+        actionLogStorage.setArchiveEnabled(false);
+
+        // Business graphs → remote Fuseki (durable, bounded)
+        RemoteStorage businessStorage = buildRemote(queryEndpoint, updateEndpoint);
+
+        return new ActionLog(new SplitStorage(actionLogStorage, businessStorage));
+    }
+
+    private ActionLog buildRemoteActionLog(String queryEndpoint, String updateEndpoint) {
+        return new ActionLog(buildRemote(queryEndpoint, updateEndpoint));
+    }
+
+    private RemoteStorage buildRemote(String queryEndpoint, String updateEndpoint) {
+        String username = resolve("engine.dataset.fuseki.username", "CLAD_FUSEKI_USERNAME", "");
+        String password = resolve("engine.dataset.fuseki.password", "CLAD_FUSEKI_PASSWORD", "");
+        if (username.isBlank() != password.isBlank()) throw new IllegalStateException(
+                "engine.dataset.fuseki.username and engine.dataset.fuseki.password must both be set");
+        return username.isBlank() && password.isBlank()
+            ? new RemoteStorage(queryEndpoint, updateEndpoint)
+            : new RemoteStorage(queryEndpoint, updateEndpoint, username, password);
     }
 
     private Dataset connectTdb2() {
