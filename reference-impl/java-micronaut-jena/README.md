@@ -470,10 +470,47 @@ engine.dataset.fuseki.endpoint=http://localhost:3030/clad
 engine.dataset.type=fuseki-split
 engine.dataset.fuseki.endpoint=http://localhost:3030/clad
 
-# Embedded Fuseki (TDB2 + admin UI)
-engine.dataset.type=fuseki-embedded
-engine.dataset.tdb2.dir=./data/tdb2-store
+#### Production deployment — preventing unbounded TDB2 growth
+
+Without mitigation, the action log on TDB2 will fill a 1 GB volume in a
+single day of light use. TDB2 DELETEs create tombstones that never free
+physical space, and the archive graph copies deleted triples instead of
+removing them.
+
+**The correct production configuration** is `fuseki-split`: action log
+in-memory (bounded by RAM, reclaimed on DELETE), business graphs on
+durable Fuseki:
+
+```properties
+# clad.properties
+engine.dataset.type=fuseki-split
+engine.dataset.fuseki.endpoint=http://fuseki:3030/clad
+engine.archive.flows=false
 ```
+
+With `engine.archive.flows=false`, completed flow triples are deleted
+immediately from the in-memory action log. Memory is reclaimed on DELETE
+(no tombstone problem). Only business graphs live on Fuseki — bounded
+and small.
+
+For single-backend Fuseki (no split), `engine.archive.flows=false` at
+least prevents the archive graph from growing:
+
+```properties
+engine.dataset.type=fuseki
+engine.dataset.fuseki.endpoint=http://fuseki:3030/clad
+engine.archive.flows=false
+```
+
+With the split backend, enable action log archival to external logs
+(Splunk, Datadog, S3) for audit trails:
+
+```properties
+engine.archive.log.enabled=true
+```
+
+This writes each completed flow's triples as N-Quads-in-JSON log entries.
+Rehydrate with `jq -r '.rdf_payload' | riot --syntax=NQ`.
 
 Backends are selected at startup; changing the property requires a restart.
 
