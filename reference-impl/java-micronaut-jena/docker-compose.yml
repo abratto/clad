@@ -29,6 +29,9 @@ services:
       # Split query/update endpoints — CONSTRUCT on update endpoint returns 400
       CLAD_FUSEKI_QUERY: http://fuseki:3030/clad/query
       CLAD_FUSEKI_UPDATE: http://fuseki:3030/clad/update
+      # Disable flow archival in production — the action log grows without
+      # bound on long-lived deployments. Set to true for debug/inspection.
+      CLAD_ARCHIVE_FLOWS: "false"
     depends_on:
       fuseki:
         condition: service_healthy

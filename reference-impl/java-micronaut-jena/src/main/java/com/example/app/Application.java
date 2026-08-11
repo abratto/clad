@@ -44,6 +44,11 @@ public class Application {
         }
 
         private static String readProperty(String key, String defaultValue) {
+            String envKey = "CLAD_" + key.replace(".", "_").toUpperCase();
+            String envVal = System.getenv(envKey);
+            if (envVal != null) return envVal;
+            String sysVal = System.getProperty(key);
+            if (sysVal != null) return sysVal;
             try (FileInputStream in = new FileInputStream("clad.properties")) {
                 Properties props = new Properties();
                 props.load(in);
