@@ -4,7 +4,9 @@ import com.example.app.engine.ActionLog;
 import com.example.app.engine.RdfVocabulary;
 import com.example.app.engine.SyncAgent;
 import com.example.app.engine.SyncMetadata;
+import com.example.app.engine.FlowArchiveBuffer;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -13,6 +15,9 @@ import io.micronaut.http.annotation.Delete;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.exceptions.HttpStatusException;
 import jakarta.inject.Inject;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -42,12 +47,15 @@ public final class DebugController {
     private static final Pattern CONCEPT_NAME_PATTERN = Pattern.compile("[a-z][a-z0-9]*");
 
     private final ActionLog actionLog;
+    private final FlowArchiveBuffer archiveBuffer;
     private final List<SyncAgent> syncAgents;
 
     @Inject
-    public DebugController(ActionLog actionLog, List<SyncAgent> syncAgents) {
+    public DebugController(ActionLog actionLog, List<SyncAgent> syncAgents,
+                           @Nullable FlowArchiveBuffer archiveBuffer) {
         this.actionLog = actionLog;
         this.syncAgents = syncAgents;
+        this.archiveBuffer = archiveBuffer;
     }
 
     @Get(uri = "/flows", produces = MediaType.APPLICATION_JSON)
@@ -80,7 +88,18 @@ public final class DebugController {
         response.put("actionCount", actions.size());
         response.put("actions", actions);
         if (actions.isEmpty()) {
-            response.put("warning", "No actions found in active or archive graphs.");
+            // Check the archive buffer — flows deleted from the action log
+            // by fuseki-split may still be in the in-memory buffer.
+            if (archiveBuffer != null) {
+                Model buffered = archiveBuffer.get(flowToken);
+                if (buffered != null) {
+                    actions = actionListFromModel(buffered);
+                    response.put("source", "archive-buffer");
+                }
+            }
+        }
+        if (actions.isEmpty()) {
+            response.put("warning", "No actions found in active graph, archive graph, or archive buffer.");
         }
         return response;
     }
@@ -333,5 +352,33 @@ public final class DebugController {
             entry.put("metadata", metadata);
             return entry;
         }
+    }
+
+    private List<Map<String, Object>> actionListFromModel(Model model) {
+        List<Map<String, Object>> actions = new ArrayList<>();
+        model.listSubjects().forEachRemaining(subject -> {
+            Map<String, Object> action = new LinkedHashMap<>();
+            action.put("actionIri", subject.getURI());
+            model.listStatements(subject, (Property) null, (RDFNode) null).forEachRemaining(stmt -> {
+                String pred = stmt.getPredicate().getLocalName();
+                if ("input".equals(pred) && stmt.getObject().isResource()) {
+                    Map<String, String> input = new LinkedHashMap<>();
+                    model.listStatements(stmt.getObject().asResource(),
+                            (Property) null, (RDFNode) null).forEachRemaining(is -> {
+                        input.put(is.getPredicate().getLocalName(),
+                                is.getObject().isLiteral()
+                                        ? is.getObject().asLiteral().getString()
+                                        : is.getObject().toString());
+                    });
+                    action.put("input", input);
+                } else {
+                    action.put(pred, stmt.getObject().isLiteral()
+                            ? stmt.getObject().asLiteral().getString()
+                            : stmt.getObject().toString());
+                }
+            });
+            if (!action.isEmpty()) actions.add(action);
+        });
+        return actions;
     }
 }

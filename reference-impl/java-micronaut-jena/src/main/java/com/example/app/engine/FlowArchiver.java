@@ -22,10 +22,16 @@ public class FlowArchiver {
     private static final Logger LOG = LoggerFactory.getLogger(FlowArchiver.class);
 
     private final ActionLog actionLog;
+    private final FlowArchiveBuffer buffer;
     private volatile boolean enabled = true;
 
     public FlowArchiver(ActionLog actionLog) {
+        this(actionLog, null);
+    }
+
+    public FlowArchiver(ActionLog actionLog, FlowArchiveBuffer buffer) {
         this.actionLog = actionLog;
+        this.buffer = buffer;
     }
 
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
@@ -65,6 +71,9 @@ public class FlowArchiver {
                     + "\",\"level\":\"INFO\",\"flow_token\":\"" + flowToken
                     + "\",\"event_type\":\"flow_archived\",\"rdf_payload\":"
                     + toJsonString(nquads) + "}";
+
+            // Store in debug buffer before writing to log
+            if (buffer != null) buffer.store(flowToken, nquads.getBytes("UTF-8"));
 
             LOG.info("{}", logEntry);
         } catch (Exception e) {

@@ -113,11 +113,17 @@ public class CladDatasetFactory {
         // Wire FlowArchiver — reads triples from log, flushes to JSON logger
         if ("true".equals(resolve("engine.archive.log.enabled",
                 "CLAD_ARCHIVE_LOG_ENABLED", "false"))) {
-            FlowArchiver archiver = new FlowArchiver(log);
+            FlowArchiveBuffer buffer = archiveBuffer();
+            FlowArchiver archiver = new FlowArchiver(log, buffer);
             ((SplitStorage) log.storage()).setArchiver(archiver);
         }
 
         return log;
+    }
+
+    @Singleton
+    FlowArchiveBuffer archiveBuffer() {
+        return new FlowArchiveBuffer();
     }
 
     private ActionLog buildRemoteActionLog(String queryEndpoint, String updateEndpoint) {
