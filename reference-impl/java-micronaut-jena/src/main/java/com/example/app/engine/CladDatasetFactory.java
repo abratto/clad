@@ -123,7 +123,9 @@ public class CladDatasetFactory {
 
     @Singleton
     FlowArchiveBuffer archiveBuffer() {
-        return new FlowArchiveBuffer();
+        int maxSize = Integer.parseInt(resolve("engine.archive.buffer.size",
+                "CLAD_ARCHIVE_BUFFER_SIZE", "100"));
+        return new FlowArchiveBuffer(maxSize);
     }
 
     private ActionLog buildRemoteActionLog(String queryEndpoint, String updateEndpoint) {
