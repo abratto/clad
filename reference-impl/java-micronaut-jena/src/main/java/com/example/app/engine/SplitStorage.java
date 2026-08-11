@@ -31,10 +31,16 @@ public class SplitStorage implements Storage {
 
     private final Storage actionLogBackend;
     private final Storage businessBackend;
+    private FlowArchiver archiver;
 
     public SplitStorage(Storage actionLogBackend, Storage businessBackend) {
         this.actionLogBackend = actionLogBackend;
         this.businessBackend = businessBackend;
+        this.archiver = null;
+    }
+
+    public void setArchiver(FlowArchiver archiver) {
+        this.archiver = archiver;
     }
 
     private Storage forSparql(String sparql) {
@@ -92,6 +98,8 @@ public class SplitStorage implements Storage {
 
     @Override
     public void archiveFlow(String flowToken) {
+        // Flush to log before deleting from in-memory store
+        if (archiver != null) archiver.archiveFlow(flowToken);
         actionLogBackend.archiveFlow(flowToken);
     }
 

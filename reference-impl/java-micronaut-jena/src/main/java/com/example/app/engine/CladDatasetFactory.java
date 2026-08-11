@@ -107,7 +107,17 @@ public class CladDatasetFactory {
         // Business graphs → remote Fuseki (durable, bounded)
         RemoteStorage businessStorage = buildRemote(queryEndpoint, updateEndpoint);
 
-        return new ActionLog(new SplitStorage(actionLogStorage, businessStorage));
+        // Create ActionLog first, then wrap with archiver-enabled SplitStorage
+        ActionLog log = new ActionLog(new SplitStorage(actionLogStorage, businessStorage));
+
+        // Wire FlowArchiver — reads triples from log, flushes to JSON logger
+        if ("true".equals(resolve("engine.archive.log.enabled",
+                "CLAD_ARCHIVE_LOG_ENABLED", "false"))) {
+            FlowArchiver archiver = new FlowArchiver(log);
+            ((SplitStorage) log.storage()).setArchiver(archiver);
+        }
+
+        return log;
     }
 
     private ActionLog buildRemoteActionLog(String queryEndpoint, String updateEndpoint) {
