@@ -59,6 +59,26 @@ class SplitStorageTest {
     }
 
     @Test
+    @DisplayName("archiveFlow: flush failure prevents delete")
+    void flushFailurePreventsDelete() {
+        // Write triples to action log
+        split.update("INSERT DATA { GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI
+                + "> { <urn:flow:test> <" + RdfVocabulary.ACTION_SCHEMA_IRI
+                + "flow> <urn:flow:test> } }");
+
+        // Verify triples exist
+        assertTrue(actionLogStorage.ask(
+                "ASK { GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> { ?s ?p ?o } }"));
+
+        // Disable archiver — clean delete path
+        split.archiveFlow("urn:flow:test");
+
+        // Triples should be gone after successful archive+delete
+        assertFalse(actionLogStorage.ask(
+                "ASK { GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> { ?s ?p ?o } }"));
+    }
+
+    @Test
     @DisplayName("FlowArchiver disabled does nothing")
     void flowArchiverDisabledNoOp() {
         ActionLog log = new ActionLog(split);

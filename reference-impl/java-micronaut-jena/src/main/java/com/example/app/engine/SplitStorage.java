@@ -98,7 +98,9 @@ public class SplitStorage implements Storage {
 
     @Override
     public void archiveFlow(String flowToken) {
-        // Flush to log before deleting from in-memory store
+        // Flush to log BEFORE deleting — if the flush fails, the
+        // FlowArchiveException propagates and the delete is skipped.
+        // Triples remain in the in-memory action log for retry.
         if (archiver != null) archiver.archiveFlow(flowToken);
         actionLogBackend.archiveFlow(flowToken);
     }

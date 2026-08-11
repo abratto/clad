@@ -68,7 +68,11 @@ public class FlowArchiver {
 
             LOG.info("{}", logEntry);
         } catch (Exception e) {
-            LOG.warn("Failed to archive flow {} to log: {}", flowToken, e.getMessage());
+            throw new FlowArchiveException(
+                    "Failed to flush flow " + flowToken + " to log — "
+                    + "triples will NOT be deleted from the action log. "
+                    + "Fix the log backend and retry (the flow remains in "
+                    + "the in-memory action log).", e);
         }
     }
 
