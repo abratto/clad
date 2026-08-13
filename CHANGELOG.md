@@ -10,6 +10,14 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.1.7] — 2026-08-13
+
+### Changed
+
+#### Reference profile — Java/Micronaut/Jena
+
+- **Single transactional engine.** The reference (non-transactional) engine is removed; the transactional engine is now the only engine. `ConceptAgent` performs pre-commit sync evaluation and atomic composite writes. `SyncEvaluator` (renamed `PredicateSyncDispatcher`) is the sync-matching index. The `engine.mode` property and the `engine/predicate/` package are removed.
+
 ## [0.1.6] — 2026-08-13
 
 ### Changed
