@@ -17,13 +17,10 @@ class LocalStorage implements Storage {
 
     private final Dataset dataset;
     private final ThreadLocal<List<String>> batched = new ThreadLocal<>();
-    private volatile boolean archiveEnabled = true;
 
     LocalStorage(Dataset dataset) { this.dataset = dataset; }
 
     @Override public Dataset dataset() { return dataset; }
-
-    @Override public void setArchiveEnabled(boolean enabled) { this.archiveEnabled = enabled; }
 
     @Override
     public void update(String sparqlUpdate) {
@@ -103,7 +100,7 @@ class LocalStorage implements Storage {
 
     @Override
     public void archiveFlow(String flowToken) {
-        if (archiveEnabled) doArchive(flowToken); else doDelete(flowToken);
+        doDelete(flowToken);
     }
 
     @Override public void beginBatch() { batched.set(new ArrayList<>()); }
@@ -126,31 +123,24 @@ class LocalStorage implements Storage {
 
     @Override public boolean isBatching() { return batched.get() != null; }
 
-    private void doArchive(String ft) {
-        updateBatch(List.of(moveStandard(ft, true), moveStar(ft, true)));
-    }
     private void doDelete(String ft) {
-        updateBatch(List.of(moveStandard(ft, false), moveStar(ft, false)));
+        updateBatch(List.of(moveStandard(ft), moveStar(ft)));
     }
 
-    private static String moveStandard(String ft, boolean archive) {
+    private static String moveStandard(String ft) {
         String s = RdfVocabulary.ACTION_SCHEMA_IRI;
         String a = RdfVocabulary.ACTION_GRAPH_IRI;
-        String arc = RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI;
         String del = "DELETE { GRAPH <" + a + "> { ?s ?p ?o } }\n";
-        String ins = archive ? "INSERT { GRAPH <" + arc + "> { ?s ?p ?o } }\n" : "";
-        return "PREFIX : <" + s + ">\n" + del + ins
+        return "PREFIX : <" + s + ">\n" + del
             + "WHERE { GRAPH <" + a + "> { ?a :flow <" + ft + "> ."
             + " { ?a ?p ?o . BIND(?a AS ?s) }"
             + " UNION { ?a :input ?s . ?s ?p ?o } } }\n";
     }
-    private static String moveStar(String ft, boolean archive) {
+    private static String moveStar(String ft) {
         String s = RdfVocabulary.ACTION_SCHEMA_IRI;
         String a = RdfVocabulary.ACTION_GRAPH_IRI;
-        String arc = RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI;
         String del = "DELETE { GRAPH <" + a + "> { << ?a :outcome ?outcome >> ?p ?o } }\n";
-        String ins = archive ? "INSERT { GRAPH <" + arc + "> { << ?a :outcome ?outcome >> ?p ?o } }\n" : "";
-        return "PREFIX : <" + s + ">\n" + del + ins
+        return "PREFIX : <" + s + ">\n" + del
             + "WHERE { GRAPH <" + a + "> { ?a :flow <" + ft + "> ."
             + " << ?a :outcome ?outcome >> ?p ?o . } }\n";
     }

@@ -15,11 +15,17 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * Provides action-log storage, configuring the backend from
- * {@code clad.properties}. Local backends expose a Jena {@link Dataset}; the
- * remote Fuseki backend exposes only an {@link ActionLog} backed by HTTP.
+ * Provides action-log storage. The action log is always in-memory (transient
+ * execution state); the durable business graphs live on a backend selected by
+ * {@code engine.dataset.type}.
  *
- * <p>Supported backends:
+ * <p>The action log and business graphs are wired together through
+ * {@link SplitStorage}, which routes SPARQL by graph IRI — action graph
+ * reads/writes go to the in-memory backend, business graph reads/writes go
+ * to the configured backend. Completed flows are flushed to a
+ * {@link FlowArchiveSink} and deleted from the in-memory log.
+ *
+ * <p>Supported business backends:
  * <ul>
  *   <li>{@code tmemory} (default) — in-memory transactional Dataset,
  *       zero-setup, for development and testing.</li>
@@ -35,6 +41,7 @@ public class CladDatasetFactory {
 
     private static final String DEFAULT_TYPE = "tmemory";
     private static final String DEFAULT_TDB2_DIR = "./clad-tdb2-store";
+    private static final String DEFAULT_SINK = "logger";
 
     private final Properties props;
     private final Map<String, String> environment;
@@ -50,6 +57,10 @@ public class CladDatasetFactory {
         this.type = resolve("engine.dataset.type", "ENGINE_DATASET_TYPE", DEFAULT_TYPE);
     }
 
+    /**
+     * Provides the business-graph Dataset for local backends. Remote backends
+     * ({@code fuseki}) have no local Dataset and fail closed.
+     */
     @Singleton
     public Dataset dataset() {
         if ("tdb2".equalsIgnoreCase(type)) return connectTdb2();
@@ -57,68 +68,42 @@ public class CladDatasetFactory {
         if ("fuseki-embedded".equalsIgnoreCase(type)) return fusekiEmbedded();
         if ("tmemory".equalsIgnoreCase(type)) return DatasetFactory.createTxnMem();
         if ("fuseki".equalsIgnoreCase(type)) throw new IllegalStateException(
-                "fuseki backend provides remote ActionLog storage, not a local Dataset");
+                "fuseki backend provides remote business-graph storage, not a local Dataset");
         throw new IllegalStateException("unsupported engine.dataset.type: " + type);
     }
 
     /**
-     * Provides the {@link ActionLog} bean. When {@code fuseki} backend is
-     * selected, wraps a remote SPARQL endpoint via {@link RemoteStorage}.
-     * Otherwise, a locally configured Dataset is used.
+     * Provides the {@link ActionLog} bean. The action log is always in-memory;
+     * the business backend is selected by {@code engine.dataset.type}. The
+     * {@link FlowArchiver} is wired with the singleton {@link FlowArchiveSink}
+     * and {@link FlowArchiveBuffer} so completed flows are flushed before
+     * deletion and remain inspectable via the debug endpoint.
      */
     @Singleton
     @Primary
-    public ActionLog actionLog() {
-        if ("fuseki-split".equalsIgnoreCase(type)) {
-            return fusekiSplitStorage();
-        }
-        if ("fuseki".equalsIgnoreCase(type)) {
-            return fusekiStorage();
-        }
-        return new ActionLog(dataset());
-    }
+    public ActionLog actionLog(FlowArchiveSink sink, FlowArchiveBuffer buffer) {
+        Storage actionLogBackend = new LocalStorage(DatasetFactory.createTxnMem());
+        Storage businessBackend = businessBackend();
+        SplitStorage split = new SplitStorage(actionLogBackend, businessBackend);
 
-    private ActionLog fusekiStorage() {
-        String queryEndpoint = resolve("engine.dataset.fuseki.query",
-                "CLAD_FUSEKI_QUERY",
-                resolve("engine.dataset.fuseki.endpoint", "CLAD_FUSEKI_ENDPOINT", ""));
-        String updateEndpoint = resolve("engine.dataset.fuseki.update",
-                "CLAD_FUSEKI_UPDATE",
-                queryEndpoint);
-        if (queryEndpoint.isBlank()) throw new IllegalStateException(
-                "engine.dataset.fuseki.endpoint or CLAD_FUSEKI_QUERY required for fuseki backend");
-        return buildRemoteActionLog(queryEndpoint, updateEndpoint);
-    }
-
-    private ActionLog fusekiSplitStorage() {
-        String queryEndpoint = resolve("engine.dataset.fuseki.query",
-                "CLAD_FUSEKI_QUERY",
-                resolve("engine.dataset.fuseki.endpoint", "CLAD_FUSEKI_ENDPOINT", ""));
-        String updateEndpoint = resolve("engine.dataset.fuseki.update",
-                "CLAD_FUSEKI_UPDATE",
-                queryEndpoint);
-        if (queryEndpoint.isBlank()) throw new IllegalStateException(
-                "engine.dataset.fuseki.endpoint or CLAD_FUSEKI_QUERY required");
-
-        // Action log → in-memory (bounded, fast, reclaimed on DELETE)
-        LocalStorage actionLogStorage = new LocalStorage(DatasetFactory.createTxnMem());
-        actionLogStorage.setArchiveEnabled(false);
-
-        // Business graphs → remote Fuseki (durable, bounded)
-        RemoteStorage businessStorage = buildRemote(queryEndpoint, updateEndpoint);
-
-        // Create ActionLog first, then wrap with archiver-enabled SplitStorage
-        ActionLog log = new ActionLog(new SplitStorage(actionLogStorage, businessStorage));
-
-        // Wire FlowArchiver — reads triples from log, flushes to JSON logger
-        if ("true".equals(resolve("engine.archive.log.enabled",
-                "CLAD_ARCHIVE_LOG_ENABLED", "false"))) {
-            FlowArchiveBuffer buffer = archiveBuffer();
-            FlowArchiver archiver = new FlowArchiver(log, buffer);
-            ((SplitStorage) log.storage()).setArchiver(archiver);
-        }
-
+        ActionLog log = new ActionLog(split);
+        split.setArchiver(new FlowArchiver(log, sink, buffer));
         return log;
+    }
+
+    private Storage businessBackend() {
+        if ("fuseki".equalsIgnoreCase(type)) {
+            String queryEndpoint = resolve("engine.dataset.fuseki.query",
+                    "CLAD_FUSEKI_QUERY",
+                    resolve("engine.dataset.fuseki.endpoint", "CLAD_FUSEKI_ENDPOINT", ""));
+            String updateEndpoint = resolve("engine.dataset.fuseki.update",
+                    "CLAD_FUSEKI_UPDATE",
+                    queryEndpoint);
+            if (queryEndpoint.isBlank()) throw new IllegalStateException(
+                    "engine.dataset.fuseki.endpoint or CLAD_FUSEKI_QUERY required for fuseki backend");
+            return buildRemote(queryEndpoint, updateEndpoint);
+        }
+        return new LocalStorage(dataset());
     }
 
     @Singleton
@@ -128,8 +113,15 @@ public class CladDatasetFactory {
         return new FlowArchiveBuffer(maxSize);
     }
 
-    private ActionLog buildRemoteActionLog(String queryEndpoint, String updateEndpoint) {
-        return new ActionLog(buildRemote(queryEndpoint, updateEndpoint));
+    @Singleton
+    FlowArchiveSink archiveSink() {
+        String sink = resolve("engine.archive.sink", "CLAD_ARCHIVE_SINK", DEFAULT_SINK);
+        return switch (sink.toLowerCase()) {
+            case "logger" -> new LoggerSink();
+            case "devnull" -> new DevNullSink();
+            default -> throw new IllegalStateException(
+                    "unsupported engine.archive.sink: " + sink);
+        };
     }
 
     private RemoteStorage buildRemote(String queryEndpoint, String updateEndpoint) {

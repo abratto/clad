@@ -19,6 +19,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -85,11 +86,9 @@ public final class DebugController {
         List<Map<String, Object>> actions = flowActions(flowToken);
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("flowToken", flowToken);
-        response.put("actionCount", actions.size());
-        response.put("actions", actions);
         if (actions.isEmpty()) {
-            // Check the archive buffer — flows deleted from the action log
-            // by fuseki-split may still be in the in-memory buffer.
+            // Check the archive buffer — flows deleted from the in-memory
+            // action log may still be in the in-memory buffer.
             if (archiveBuffer != null) {
                 Model buffered = archiveBuffer.get(flowToken);
                 if (buffered != null) {
@@ -99,8 +98,10 @@ public final class DebugController {
             }
         }
         if (actions.isEmpty()) {
-            response.put("warning", "No actions found in active graph, archive graph, or archive buffer.");
+            response.put("warning", "No actions found in active graph or archive buffer.");
         }
+        response.put("actionCount", actions.size());
+        response.put("actions", actions);
         return response;
     }
 
@@ -164,11 +165,11 @@ public final class DebugController {
                 PREFIX +
                 "SELECT ?graph ?action ?concept ?name\n" +
                 "WHERE {\n" +
-                "  VALUES ?graph { <" + RdfVocabulary.ACTION_GRAPH_IRI + "> <" + RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI + "> }\n" +
                 "  GRAPH ?graph {\n" +
                 "    ?action :flow <" + token + "> ;\n" +
                 "            :concept ?concept ;\n" +
                 "            :name ?name .\n" +
+                "    FILTER (?graph = <" + RdfVocabulary.ACTION_GRAPH_IRI + ">)\n" +
                 "  }\n" +
                 "}\n" +
                 "ORDER BY ?graph ?action\n");

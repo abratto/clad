@@ -52,7 +52,6 @@ class DebugControllerTest {
     @BeforeEach
     void resetActionGraphs() {
         actionLog.update("DROP SILENT GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + ">");
-        actionLog.update("DROP SILENT GRAPH <" + RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI + ">");
     }
 
     @Test
@@ -90,8 +89,6 @@ class DebugControllerTest {
 
         List<Map<String, Object>> actions = asListOfMaps(flow.get("actions"));
         assertFalse(actions.isEmpty());
-        assertTrue(actions.stream().allMatch(action ->
-                RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI.equals(action.get("graph"))));
         assertTrue(actions.stream().anyMatch(action -> "respond".equals(action.get("name"))));
     }
 

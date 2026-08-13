@@ -22,7 +22,6 @@ public class RemoteStorage implements Storage {
     private final RDFLink queryLink;
     private final RDFLink updateLink;
     private final ThreadLocal<List<String>> batched = new ThreadLocal<>();
-    private volatile boolean archiveEnabled = true;
 
     public RemoteStorage(String endpoint) {
         this.queryLink = RDFLinkHTTP.service(endpoint)
@@ -134,15 +133,10 @@ public class RemoteStorage implements Storage {
 
     @Override
     public void archiveFlow(String flowToken) {
-        // Archive only standard triples. RDF-star annotation triples
-        // (<< action :outcome X >> :flow tok) are NOT moved — Fuseki 6+
-        // rejects << >> in DELETE templates, treating them as blank nodes.
-        // These annotation triples are non-functional and stay in the
-        // active action graph.
-        updateBatch(List.of(moveStandard(flowToken, archiveEnabled)));
+        // No-op — the action log is always in-memory in the current
+        // architecture. RemoteStorage only holds durable business graphs.
+        // Flow archival is handled by FlowArchiver.
     }
-
-    @Override public void setArchiveEnabled(boolean enabled) { this.archiveEnabled = enabled; }
 
     @Override public void beginBatch() { batched.set(new ArrayList<>()); }
 
@@ -159,29 +153,6 @@ public class RemoteStorage implements Storage {
     @Override public void abortBatch() { batched.remove(); }
 
     @Override public boolean isBatching() { return batched.get() != null; }
-
-    private static String moveStandard(String ft, boolean archive) {
-        String s = RdfVocabulary.ACTION_SCHEMA_IRI;
-        String a = RdfVocabulary.ACTION_GRAPH_IRI;
-        String arc = RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI;
-        String del = "DELETE { GRAPH <" + a + "> { ?s ?p ?o } }\n";
-        String ins = archive ? "INSERT { GRAPH <" + arc + "> { ?s ?p ?o } }\n" : "";
-        return "PREFIX : <" + s + ">\n" + del + ins
-            + "WHERE { GRAPH <" + a + "> { ?a :flow <" + ft + "> ."
-            + " { ?a ?p ?o . BIND(?a AS ?s) }"
-            + " UNION { ?a :input ?s . ?s ?p ?o } } }\n";
-    }
-
-    private static String moveStar(String ft, boolean archive) {
-        String s = RdfVocabulary.ACTION_SCHEMA_IRI;
-        String a = RdfVocabulary.ACTION_GRAPH_IRI;
-        String arc = RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI;
-        String del = "DELETE { GRAPH <" + a + "> { << ?a :outcome ?outcome >> ?p ?o } }\n";
-        String ins = archive ? "INSERT { GRAPH <" + arc + "> { << ?a :outcome ?outcome >> ?p ?o } }\n" : "";
-        return "PREFIX : <" + s + ">\n" + del + ins
-            + "WHERE { GRAPH <" + a + "> { ?a :flow <" + ft + "> ."
-            + " << ?a :outcome ?outcome >> ?p ?o . } }\n";
-    }
 
     RDFLink queryLink() { return queryLink; }
     RDFLink updateLink() { return updateLink; }

@@ -2,7 +2,6 @@ package com.example.app;
 
 import com.example.app.concepts.passwordauth.PasswordAuthConcept;
 import com.example.app.concepts.user.UserConcept;
-import com.example.app.engine.ActionLog;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.runtime.Micronaut;
 import io.micronaut.runtime.event.annotation.EventListener;
@@ -10,9 +9,6 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.io.FileInputStream;
-import java.util.Properties;
 
 /** Micronaut bootstrap. */
 @OpenAPIDefinition(
@@ -23,40 +19,6 @@ import java.util.Properties;
 public class Application {
     public static void main(String[] args) {
         Micronaut.run(Application.class, args);
-    }
-
-    /**
-     * Reads engine configuration from {@code clad.properties} at startup.
-     */
-    @Singleton
-    public static class EngineConfig {
-        private final ActionLog actionLog;
-
-        @Inject
-        public EngineConfig(ActionLog actionLog) {
-            this.actionLog = actionLog;
-        }
-
-        @EventListener
-        void onStartup(StartupEvent event) {
-            boolean archiveFlows = readProperty("engine.archive.flows", "true").equals("true");
-            actionLog.setArchiveEnabled(archiveFlows);
-        }
-
-        private static String readProperty(String key, String defaultValue) {
-            String envKey = "CLAD_" + key.replace(".", "_").toUpperCase();
-            String envVal = System.getenv(envKey);
-            if (envVal != null) return envVal;
-            String sysVal = System.getProperty(key);
-            if (sysVal != null) return sysVal;
-            try (FileInputStream in = new FileInputStream("clad.properties")) {
-                Properties props = new Properties();
-                props.load(in);
-                return props.getProperty(key, defaultValue);
-            } catch (Exception e) {
-                return defaultValue;
-            }
-        }
     }
 
     /**

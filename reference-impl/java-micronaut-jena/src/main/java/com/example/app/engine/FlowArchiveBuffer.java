@@ -13,8 +13,8 @@ import java.util.Map;
 
 /**
  * Small in-memory buffer of recently completed flow triples, keyed by
- * flow token. Used by the debug endpoint when {@code engine.archive.flows=false}
- * (completed flows are deleted from the action log, not archived).
+ * flow token. Used by the debug endpoint when completed flows are deleted
+ * from the in-memory action log after being flushed to the sink.
  *
  * <p>Bounded to {@code maxSize} entries (default 100). Oldest entry is
  * evicted when the buffer is full. Each entry stores the serialized

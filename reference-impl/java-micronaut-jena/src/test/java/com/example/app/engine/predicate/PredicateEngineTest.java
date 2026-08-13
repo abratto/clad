@@ -167,15 +167,15 @@ class PredicateEngineTest {
                     "outcome", ResourceFactory.createStringLiteral("200"),
                     "statusCode", ResourceFactory.createTypedLiteral(200)));
 
-            // After Web/respond, the flow should be archived
-            // (triples moved from action graph to archive graph)
+            // After Web/respond, the flow's triples are flushed to the sink
+            // and deleted from the in-memory action log.
             boolean stillActive = log.ask(
                     "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n" +
                     "ASK { GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
                     "  ?s :flow <https://clad.dev/flow/archive-flow> }\n}");
-            // Note: archival moves triples — the action graph may still have
-            // references. The key behavioral test is that it doesn't throw.
-            // Full archival verification requires checking the archive graph.
+            // The default ActionLog wraps a plain LocalStorage with no archiver,
+            // so archiveFlow just deletes. The key behavioral test is that the
+            // archival call itself does not throw.
             assertDoesNotThrow(() -> log.archiveFlow("https://clad.dev/flow/other"));
         }
     }

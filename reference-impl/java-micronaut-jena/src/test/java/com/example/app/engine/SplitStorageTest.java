@@ -52,7 +52,7 @@ class SplitStorageTest {
                 + "> { <urn:flow:arch> <" + RdfVocabulary.ACTION_SCHEMA_IRI
                 + "flow> <urn:flow:arch> } }");
 
-        FlowArchiver archiver = new FlowArchiver(log);
+        FlowArchiver archiver = new FlowArchiver(log, new DevNullSink(), new FlowArchiveBuffer());
         archiver.setEnabled(true);
 
         assertDoesNotThrow(() -> archiver.archiveFlow("urn:flow:arch"));
@@ -70,10 +70,10 @@ class SplitStorageTest {
         assertTrue(actionLogStorage.ask(
                 "ASK { GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> { ?s ?p ?o } }"));
 
-        // Disable archiver — clean delete path
+        // No archiver set — clean delete path
         split.archiveFlow("urn:flow:test");
 
-        // Triples should be gone after successful archive+delete
+        // Triples should be gone after successful delete
         assertFalse(actionLogStorage.ask(
                 "ASK { GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> { ?s ?p ?o } }"));
     }
@@ -82,7 +82,7 @@ class SplitStorageTest {
     @DisplayName("FlowArchiver disabled does nothing")
     void flowArchiverDisabledNoOp() {
         ActionLog log = new ActionLog(split);
-        FlowArchiver archiver = new FlowArchiver(log);
+        FlowArchiver archiver = new FlowArchiver(log, new DevNullSink(), new FlowArchiveBuffer());
         archiver.setEnabled(false);
         assertDoesNotThrow(() -> archiver.archiveFlow("urn:flow:anything"));
     }
