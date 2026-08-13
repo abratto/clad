@@ -168,7 +168,7 @@ directly to Jena's execution layer without string serialization. This
 is tracked in `maintenance/jena-upgrade.md`.
 
 **Current behavior:**
-- `ConceptAgent` and `PredicateConceptAgent` use raw `StringBuilder` with
+- `ConceptAgent` uses raw `StringBuilder` with
   `<< >>` in `INSERT DATA` — correct for Jena 5.2.0 in-memory (default)
 - `RemoteStorage.archiveFlow` skips RDF-star annotation triples —
   Fuseki rejects `<< >>` in DELETE templates

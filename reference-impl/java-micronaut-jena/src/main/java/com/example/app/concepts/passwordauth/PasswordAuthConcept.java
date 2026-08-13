@@ -3,8 +3,8 @@ package com.example.app.concepts.passwordauth;
 import com.example.app.engine.ActionLog;
 import com.example.app.engine.ActionRecord;
 import com.example.app.engine.CompletionBus;
-import com.example.app.engine.predicate.PredicateConceptAgent;
-import com.example.app.engine.predicate.PredicateSyncDispatcher;
+import com.example.app.engine.ConceptAgent;
+import com.example.app.engine.SyncEvaluator;
 import com.example.app.engine.RdfVocabulary;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -29,7 +29,7 @@ import java.util.Map;
  * </ul>
  */
 @Singleton
-public final class PasswordAuthConcept extends PredicateConceptAgent {
+public final class PasswordAuthConcept extends ConceptAgent {
 
     public static final String IRI = "https://clad.dev/concept/passwordauth";
 
@@ -45,8 +45,8 @@ public final class PasswordAuthConcept extends PredicateConceptAgent {
 
     @Inject
     public PasswordAuthConcept(ActionLog actionLog, CompletionBus completionBus,
-                               PredicateSyncDispatcher dispatcher) {
-        super(actionLog, completionBus, dispatcher);
+                               SyncEvaluator evaluator) {
+        super(actionLog, completionBus, evaluator);
     }
 
     /** Test-only constructor. */
