@@ -10,6 +10,20 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.1.6] — 2026-08-13
+
+### Changed
+
+#### Reference profile — Java/Micronaut/Jena
+
+- **Action log is always in-memory.** `SplitStorage` is now the default backend for every profile: the action log (transient, high-churn execution state) always lives in in-memory Jena (`TxnMem`); only durable business graphs use the backend selected by `engine.dataset.type`.
+- **Archive graph removed, replaced by a log sink.** The `engine.archive.flows` toggle and the `ACTION_ARCHIVE_GRAPH_IRI` graph are gone. Completed flows are now flushed to a pluggable `FlowArchiveSink` (`logger` default, `devnull` to discard) before deletion, controlled by `engine.archive.sink`. `S3Sink` is deferred pending an AWS SDK dependency decision.
+
+### Fixed
+
+- **Concurrency correctness under load.** Serialized the dispatch quiescence iteration with a fair lock, closing a read-then-write race in `findPendingInvocations` that produced duplicate `respond` actions and cross-flow field contamination under concurrency. `ConcurrencyTest` now passes at 1–32 threads with zero errors (previously 1103 errors at 8 threads).
+- **Debug endpoint rehydration.** `GET /api/dev/flow/{token}` now reports `actionCount`/`actions` after the archive-buffer fallback, and the archiver and debug endpoint share the same `FlowArchiveBuffer` singleton.
+
 ## [Unreleased]
 
 ### Added
