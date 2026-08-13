@@ -4,7 +4,9 @@
     { "pattern": "^https://arxiv.org/" },
     { "pattern": "^https://github.com/abratto/tastetag" },
     { "pattern": "^https://github.com/RinDig/Interpretable-Context-Methodology-ICM-" },
-    { "pattern": "^https://github.com/abratto/clad" }
+    { "pattern": "^https://github.com/abratto/clad" },
+    { "pattern": "^http://localhost" },
+    { "pattern": "^https://localhost" }
   ],
   "timeout": "20s",
   "retryOn429": true,
