@@ -63,44 +63,39 @@ the source of domain truth.
 | `Web` (HTTP entry) | `com.example.app.infrastructure.WebController` — `@Controller("/login")` calling `FlowManager.rootAction` then `SyncDispatcher.awaitResponse` |
 | Flow token | A UUID IRI minted by `FlowManager.mintFlowToken()`; carried by every action node in the chain via the `:flow` predicate |
 | Action log | `com.example.app.engine.ActionLog` — wraps a Jena transactional `Dataset`. Concept state lives in named graphs `concept:<name>`; the active log lives in `https://clad.dev/actions`; archived flows in `https://clad.dev/actions/archive` |
-| Scheduler | `com.example.app.engine.predicate.PredicateSyncDispatcher` in predicate mode (default); `SyncDispatcher` is retained for the legacy reference mode |
+| Scheduler | `com.example.app.engine.SyncDispatcher` — the single engine driver; concepts evaluate syncs via `com.example.app.engine.SyncEvaluator` |
 | Hard rules R1–R5 | Enforced by `LegibleArchitectureRulesTest` (ArchUnit) |
 
-### Using the predicate engine (default)
+### The engine
 
-When you create a new CLAD project with the Java profile, concepts should
-extend `PredicateConceptAgent` instead of `ConceptAgent`. This gives you
-pre-commit sync evaluation, unmatched-outcome rejection, and atomic
-batch writes.
+The Java profile has a single transactional engine. Concepts extend
+`ConceptAgent`, which evaluates synchronizations before committing: if no
+sync matches a proposed outcome (and the action is not `Web/respond`), the
+completion is rejected before any state mutation; when syncs match, the
+completion and all sync invocations commit in one Jena transaction.
 
 ```java
 // In your concept class — e.g. UserConcept.java
-import com.example.app.engine.predicate.PredicateConceptAgent;
-import com.example.app.engine.predicate.PredicateSyncDispatcher;
+import com.example.app.engine.ConceptAgent;
+import com.example.app.engine.SyncEvaluator;
 
-public class UserConcept extends PredicateConceptAgent {
+public class UserConcept extends ConceptAgent {
 
     @Inject
     public UserConcept(ActionLog log, CompletionBus bus,
-                       PredicateSyncDispatcher dispatcher) {
-        super(log, bus, dispatcher);
+                       SyncEvaluator evaluator) {
+        super(log, bus, evaluator);
     }
     // ... rest of concept: conceptIRI, pollAll, processInvocation
 }
 ```
 
-Syncs and the FlowManager are unchanged — they work identically under
-both engines. The only migration step is the base class and constructor.
-If you already have concepts extending `ConceptAgent`, change them to
-`PredicateConceptAgent` and add `PredicateSyncDispatcher` to their
-constructor. The `processInvocation()` method is unchanged.
+Concept tests that verify internal logic in isolation can use the
+test-mode constructor `(ActionLog, CompletionBus)` — sync evaluation is
+bypassed so outcomes commit without registered syncs.
 
-To use the reference engine instead (e.g. for learning or debugging
-the step-by-step dispatch loop), set `engine.mode=reference` in
-`clad.properties` and have concepts extend `ConceptAgent`.
-
-For a side-by-side walkthrough of the same 3-concept chain in both
-engines, see [`WORKED_EXAMPLE_ENGINES.md`](WORKED_EXAMPLE_ENGINES.md).
+For a walkthrough of the 3-concept chain, see
+[`WORKED_EXAMPLE_ENGINES.md`](WORKED_EXAMPLE_ENGINES.md).
 
 See [`../../methodology/architecture/ENGINE.md`](../../methodology/architecture/ENGINE.md)
 for engine internals (trigger index, dedup edge, flow archival).
@@ -113,7 +108,7 @@ A/B/C/D bindings, sink syncs, and the bootstrap handoff map into
 
 The canonical working example for that lowering is the UC-00 login sync
 pack under `src/main/java/com/example/app/syncs/`, together with
-`engine/SyncAgent.java`. Those classes now demonstrate the reference
+`engine/SyncAgent.java`. Those classes demonstrate the reference
 profile style directly: Java text blocks for SPARQL fragments,
 `.formatted()` for IRI constants, explicit outcome literals kept inline,
 and non-outcome string literals bound through
@@ -514,56 +509,27 @@ Rehydrate with `jq -r '.rdf_payload' | riot --syntax=NQ`.
 
 Backends are selected at startup; changing the property requires a restart.
 
-### Engine mode — reference vs. predicate
+### Engine
 
-CLAD ships two sync dispatch engines, configured via `clad.properties`:
+CLAD ships a single transactional sync dispatch engine. Concepts extend
+`ConceptAgent`, which evaluates synchronizations as predicates over the
+combined action space before committing:
 
-```properties
-engine.mode=reference   # legacy sequential polling dispatch
-engine.mode=predicate   # transactional predicate evaluation (default)
-```
+- **When syncs are evaluated** — before the concept commits (predicate check).
+- **Unmatched outcomes** — rejected with `SyncEvaluationException` (except `Web/respond`, which always succeeds).
+- **A→B composite writes** — single Jena transaction via `beginBatch`/`flushBatch`.
 
-**Reference engine** (`engine/reference/`) — the original dispatch loop,
-kept for educational clarity. Each concept action commits independently.
-The SyncDispatcher polls for completed actions and fires matching syncs.
-Used in the UC-00-login worked example and the Conduit project. 
-
-**Predicate engine** (`engine/predicate/`) — evolved from the reference
-engine to implement the formal synchronization semantics from Meng &
-Jackson's WYSIWID paper. ~3× faster due to batch-write transaction
-batching. This is the **default** and the recommended engine for all
-new CLAD projects.
-
-The reference engine remains in `engine/reference/` for educational
-clarity — it walks the architecture step by step (poll → fire → signal).
-Select it with `engine.mode=reference` if you want to trace the dispatch
-loop for learning purposes. Key
-differences:
-
-| Behavior | Reference engine | Predicate engine |
-|---|---|---|
-| When syncs are evaluated | After concept commits (poll event) | Before concept commits (predicate check) |
-| Unmatched outcomes | Silently succeed (no sync fires) | Rejected — `SyncEvaluationException` thrown |
-| A→B composite writes | Independent commits (window of inconsistency) | Single Jena transaction via `beginBatch/flushBatch` |
-| Web/respond | Always succeeds | Always succeeds (exempt) |
-| Concept isolation | Enforced by ArchUnit (R1) | Enforced by ArchUnit (R1) — unchanged |
-
-The predicate engine's `PredicateConceptAgent` extends `ConceptAgent` and
-overrides `writeCompletion()`. Before writing anything, it asks the
-`PredicateSyncDispatcher` which syncs match the proposed outcome. If no
-sync matches (and the action isn't Web/respond), the completion is
-rejected before any state mutation. If syncs match, the completion and
-all sync invocations are batched into a single Jena transaction — a
-reader never sees Concept A updated without Concept B invoked.
+`ConceptAgent.writeCompletion()` asks the `SyncEvaluator` which syncs
+match the proposed outcome. If no sync matches (and the action isn't
+`Web/respond`), the completion is rejected before any state mutation. If
+syncs match, the completion and all sync invocations are batched into a
+single Jena transaction — a reader never sees Concept A updated without
+Concept B invoked.
 
 This aligns with the paper's model: *"An action a_A in Concept A and an
-action a_B in Concept B occur co-instantaneously."* The predicate engine
-evaluates the synchronization as a logical constraint over the combined
-action space, then commits the composite transition atomically.
-
-Concepts, syncs, SPARQL syntax, the stage pipeline, and quality-gate
-scripts are identical across both engines. Switching modes requires only
-the property change — no code or artefact changes needed.
+action a_B in Concept B occur co-instantaneously."* The engine evaluates
+the synchronization as a logical constraint over the combined action
+space, then commits the composite transition atomically.
 
 ### Architecture: a modular monolith
 
@@ -588,7 +554,7 @@ coordinator is the Jena Dataset.
 │  │ (isolated pkg)│  │ (isolated pkg)│  │ (isolated pkg)│   │
 │  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘   │
 │          │                  │                  │           │
-│          └──────► PredicateSyncDispatcher ◄────┘           │
+│          └──────► SyncEvaluator ◄────────────────────────────┘           │
 │                            │                                │
 └────────────────────────────│────────────────────────────────┘
                              ▼

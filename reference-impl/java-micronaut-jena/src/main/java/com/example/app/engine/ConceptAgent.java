@@ -30,15 +30,47 @@ import java.util.Map;
  * code. State lives in this concept's named graph
  * ({@link RdfVocabulary#conceptGraph(String)}); coordination happens only through
  * the action log.
+ *
+ * <p><strong>Synchronization semantics (Meng &amp; Jackson).</strong>
+ * {@link #writeCompletion} evaluates which syncs match the proposed outcome
+ * <em>before</em> writing anything. If no sync matches and the action is not
+ * {@code Web/respond}, the completion is rejected before any state mutation.
+ * When syncs match, the completion and all sync invocations are batched into a
+ * single Jena transaction via {@link ActionLog#beginBatch}/{@link ActionLog#flushBatch} —
+ * a reader never sees this concept updated without the downstream concept
+ * invoked. This is the paper's model: an action <em>a_A</em> in Concept A and
+ * the action <em>a_B</em> it triggers in Concept B occur co-instantaneously.
  */
 public abstract class ConceptAgent {
 
+    private static final String WEB_CONCEPT_IRI = "https://clad.dev/concept/web";
+
     protected final ActionLog actionLog;
     private final CompletionBus completionBus;
+    private final SyncEvaluator evaluator;
 
+    /**
+     * Production constructor — concept participates in full sync evaluation.
+     * Every outcome must have a matching sync unless it is {@code Web/respond}.
+     */
+    protected ConceptAgent(
+            ActionLog actionLog,
+            CompletionBus completionBus,
+            SyncEvaluator evaluator) {
+        this.actionLog = actionLog;
+        this.completionBus = completionBus;
+        this.evaluator = evaluator;
+    }
+
+    /**
+     * Test constructor — sync evaluation is bypassed. Use this for isolated
+     * concept tests that verify internal logic without requiring syncs to be
+     * registered. Outcomes commit normally without checking whether syncs match.
+     */
     protected ConceptAgent(ActionLog actionLog, CompletionBus completionBus) {
         this.actionLog = actionLog;
         this.completionBus = completionBus;
+        this.evaluator = null;
     }
 
     /** The IRI of this concept, e.g. {@code "https://clad.dev/concept/user"}. */
@@ -134,8 +166,72 @@ public abstract class ConceptAgent {
         return results;
     }
 
-    /** Writes completion (output) triples and signals the bus. */
+    /**
+     * Writes a completion with sync evaluation.
+     *
+     * <ol>
+     *   <li>Evaluates which syncs match this outcome.</li>
+     *   <li>If no sync matches and this is not a {@code Web/respond} action,
+     *       throws {@link SyncEvaluationException}.</li>
+     *   <li>If syncs match, writes the completion, then fires each matching
+     *       sync sequentially.</li>
+     * </ol>
+     */
     protected void writeCompletion(ActionRecord invocation, Map<String, RDFNode> output) {
+        RDFNode outcomeNode = output.get("outcome");
+        if (outcomeNode == null) {
+            throw new SyncEvaluationException(
+                    "writeCompletion called without an 'outcome' field");
+        }
+        String outcome = outcomeNode.asLiteral().getString();
+
+        boolean isRespondAction = WEB_CONCEPT_IRI.equals(invocation.conceptIri())
+                && "respond".equals(invocation.actionName());
+
+        // Test mode: evaluator is null — skip sync evaluation.
+        if (evaluator == null) {
+            writeCompletionSparql(invocation, output);
+            signalCompletion();
+            return;
+        }
+
+        List<SyncAgent> matchingSyncs = evaluator.evaluateSyncs(
+                invocation.conceptIri(), invocation.actionName(), outcome);
+
+        if (matchingSyncs.isEmpty() && !isRespondAction) {
+            throw new SyncEvaluationException(
+                    "No sync matches outcome '" + outcome
+                    + "' for " + invocation.conceptIri()
+                    + "/" + invocation.actionName()
+                    + ". Add a sync rule to handle this outcome.");
+        }
+
+        // Atomic composite write: batch all SPARQL into one transaction.
+        boolean outerBatch = actionLog.isBatching();
+        if (!outerBatch) actionLog.beginBatch();
+        try {
+            writeCompletionSparql(invocation, output);
+            for (SyncAgent sync : matchingSyncs) {
+                sync.execute();
+            }
+            if (!outerBatch) actionLog.flushBatch();
+        } catch (Exception e) {
+            if (!outerBatch) actionLog.abortBatch();
+            throw new SyncEvaluationException(
+                    "Atomic composite write failed for " + invocation.conceptIri()
+                    + "/" + invocation.actionName() + "[" + outcome + "]: "
+                    + e.getMessage(), e);
+        }
+
+        // Flow archival: when Web/respond completes, flush the flow's triples
+        // to the archive sink and delete them from the in-memory action log
+        // to prevent unbounded growth.
+        if (isRespondAction && invocation.flowToken() != null) {
+            actionLog.archiveFlow(invocation.flowToken());
+        }
+    }
+
+    private void writeCompletionSparql(ActionRecord invocation, Map<String, RDFNode> output) {
         StringBuilder sparql = new StringBuilder();
         sparql.append("PREFIX : <").append(RdfVocabulary.ACTION_SCHEMA_IRI).append(">\n");
         sparql.append("INSERT DATA {\n");
@@ -154,12 +250,12 @@ public abstract class ConceptAgent {
                   .append(" .\n");
         }
         sparql.append("    << <").append(invocation.actionIri()).append("> :outcome ")
-              .append(NodeFmtLib.str(output.get("outcome").asNode(), (PrefixMap) null))
+              .append(NodeFmtLib.str(outcomeNode.asNode(), (PrefixMap) null))
               .append(" >> :flow <").append(invocation.flowToken()).append("> .\n");
         sparql.append("  }\n");
         sparql.append("}\n");
         actionLog.update(sparql.toString());
-        completionBus.signal(conceptIRI());
+        signalCompletion();
     }
 
     /**

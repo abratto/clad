@@ -14,13 +14,18 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Drives concept agents and sync agents on a polling loop until a
- * {@code Web/respond} completion for a given flow token is observed, then
- * delivers the HTTP response.
+ * The single engine driver. Drives concept agents and sync agents on a polling
+ * loop until a {@code Web/respond} completion for a given flow token is
+ * observed, then delivers the HTTP response.
  *
  * <p>This is the only scheduler in the system. There is no Java event bus —
  * all coordination happens through reading and writing RDF triples in the
  * Jena Dataset (WYSIWID Rule 4).
+ *
+ * <p>Concepts evaluate their synchronizations before commit via
+ * {@link SyncEvaluator}; this dispatcher additionally fires the bootstrap
+ * Web/request → first-concept sync by draining the completion bus (the Web
+ * concept has no agent of its own).
  *
  * <p>The engine only reads response status and fields from the action graph.
  * Response body serialization to JSON is handled by Micronaut's Jackson

@@ -1,6 +1,5 @@
-package com.example.app.engine.predicate;
+package com.example.app.engine;
 
-import com.example.app.engine.*;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,12 +11,12 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DisplayName("PredicateEngine")
-class PredicateEngineTest {
+@DisplayName("ConceptAgent")
+class ConceptAgentTest {
 
     private ActionLog log;
     private CompletionBus bus;
-    private PredicateSyncDispatcher dispatcher;
+    private SyncEvaluator evaluator;
 
     @BeforeEach
     void setUp() {
@@ -25,14 +24,14 @@ class PredicateEngineTest {
         bus = new CompletionBus();
 
         SyncAgent testSync = new TestSync(log);
-        dispatcher = new PredicateSyncDispatcher(log, List.of(testSync));
+        evaluator = new SyncEvaluator(List.of(testSync));
     }
 
-    private static class TestConcept extends PredicateConceptAgent {
-        TestConcept(ActionLog log, CompletionBus bus, PredicateSyncDispatcher d) {
-            super(log, bus, d);
+    private static class TestConcept extends ConceptAgent {
+        TestConcept(ActionLog log, CompletionBus bus, SyncEvaluator e) {
+            super(log, bus, e);
         }
-        // Test-mode constructor — bypasses predicates (null dispatcher)
+        // Test-mode constructor — bypasses predicates (null evaluator)
         TestConcept(ActionLog log, CompletionBus bus) {
             super(log, bus);
         }
@@ -71,13 +70,13 @@ class PredicateEngineTest {
     }
 
     @Nested
-    @DisplayName("Predicate enforcement")
-    class PredicateEnforcement {
+    @DisplayName("Sync evaluation")
+    class SyncEvaluation {
 
         @Test
         @DisplayName("matched outcome commits")
         void matchedOutcome() {
-            TestConcept concept = new TestConcept(log, bus, dispatcher);
+            TestConcept concept = new TestConcept(log, bus, evaluator);
             ActionRecord inv = new ActionRecord(
                     "https://clad.dev/action/test-1",
                     "https://clad.dev/flow/test-flow",
@@ -93,7 +92,7 @@ class PredicateEngineTest {
         @Test
         @DisplayName("unmatched outcome is rejected before state change")
         void unmatchedOutcome() {
-            TestConcept concept = new TestConcept(log, bus, dispatcher);
+            TestConcept concept = new TestConcept(log, bus, evaluator);
             ActionRecord inv = new ActionRecord(
                     "https://clad.dev/action/test-2",
                     "https://clad.dev/flow/test-flow",
@@ -109,9 +108,9 @@ class PredicateEngineTest {
         }
 
         @Test
-        @DisplayName("Web/respond bypasses predicate enforcement")
+        @DisplayName("Web/respond bypasses sync evaluation")
         void webRespondBypass() {
-            TestConcept concept = new TestConcept(log, bus, dispatcher);
+            TestConcept concept = new TestConcept(log, bus, evaluator);
             ActionRecord inv = new ActionRecord(
                     "https://clad.dev/action/web-resp",
                     "https://clad.dev/flow/test-flow",
@@ -129,10 +128,9 @@ class PredicateEngineTest {
         void batchAbortRollsBack() {
             ActionLog batchLog = new ActionLog();
             SyncAgent failingSync = new FailingSync(batchLog);
-            PredicateSyncDispatcher failingDispatcher = new PredicateSyncDispatcher(
-                    batchLog, List.of(failingSync));
+            SyncEvaluator failingEvaluator = new SyncEvaluator(List.of(failingSync));
 
-            TestConcept concept = new TestConcept(batchLog, new CompletionBus(), failingDispatcher);
+            TestConcept concept = new TestConcept(batchLog, new CompletionBus(), failingEvaluator);
             ActionRecord inv = new ActionRecord(
                     "https://clad.dev/action/atomic-test",
                     "https://clad.dev/flow/test-flow",
@@ -155,7 +153,7 @@ class PredicateEngineTest {
         @Test
         @DisplayName("Web/respond archives flow after commit")
         void webRespondArchivesFlow() {
-            TestConcept concept = new TestConcept(log, bus, dispatcher);
+            TestConcept concept = new TestConcept(log, bus, evaluator);
             ActionRecord inv = new ActionRecord(
                     "https://clad.dev/action/archive-test",
                     "https://clad.dev/flow/archive-flow",
@@ -181,13 +179,13 @@ class PredicateEngineTest {
     }
 
     @Nested
-    @DisplayName("Test mode (bypass predicates)")
+    @DisplayName("Test mode (bypass sync evaluation)")
     class TestMode {
 
         @Test
         @DisplayName("isolated concept test — outcomes commit without syncs")
-        void isolatedTestBypassesPredicates() {
-            // Use the test-mode constructor — no dispatcher needed
+        void isolatedTestBypassesSyncEvaluation() {
+            // Use the test-mode constructor — no evaluator needed
             TestConcept concept = new TestConcept(log, bus);
             ActionRecord inv = new ActionRecord(
                     "https://clad.dev/action/isolated-1",
@@ -218,7 +216,7 @@ class PredicateEngineTest {
         @Test
         @DisplayName("returns matching syncs")
         void returnsMatchingSyncs() {
-            List<SyncAgent> matched = dispatcher.evaluateSyncs(
+            List<SyncAgent> matched = evaluator.evaluateSyncs(
                     "https://clad.dev/concept/test", "doThing", "OK");
             assertEquals(1, matched.size());
             assertEquals("testSync", matched.get(0).syncName());
@@ -227,7 +225,7 @@ class PredicateEngineTest {
         @Test
         @DisplayName("returns empty for unmatched outcome")
         void returnsEmptyForUnmatched() {
-            List<SyncAgent> matched = dispatcher.evaluateSyncs(
+            List<SyncAgent> matched = evaluator.evaluateSyncs(
                     "https://clad.dev/concept/test", "doThing", "UNKNOWN");
             assertTrue(matched.isEmpty());
         }
@@ -235,7 +233,7 @@ class PredicateEngineTest {
         @Test
         @DisplayName("returns empty for unknown action")
         void returnsEmptyForUnknownAction() {
-            List<SyncAgent> matched = dispatcher.evaluateSyncs(
+            List<SyncAgent> matched = evaluator.evaluateSyncs(
                     "https://clad.dev/concept/test", "noSuchAction", "OK");
             assertTrue(matched.isEmpty());
         }
