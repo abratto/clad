@@ -11,23 +11,27 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class CladDatasetFactoryTest {
 
     @Test
-    void composeStyleEnvironmentSelectsRemoteFusekiStorage() {
+    void composeStyleEnvironmentSelectsRemoteFusekiBusinessBackend() {
         CladDatasetFactory factory = new CladDatasetFactory(new Properties(), Map.of(
                 "ENGINE_DATASET_TYPE", "fuseki",
                 "CLAD_FUSEKI_ENDPOINT", "http://fuseki:3030/clad/update"));
 
-        assertInstanceOf(RemoteStorage.class, factory.actionLog().storage());
+        ActionLog log = factory.actionLog(new DevNullSink(), new FlowArchiveBuffer());
+        assertInstanceOf(SplitStorage.class, log.storage());
+        assertInstanceOf(RemoteStorage.class,
+                ((SplitStorage) log.storage()).businessBackend());
     }
 
     @Test
-    void remoteBackendCannotExposeAnUnconnectedLocalDataset() {
+    void remoteBackendStillExposesInMemoryActionLogDataset() {
         CladDatasetFactory factory = new CladDatasetFactory(new Properties(), Map.of(
                 "ENGINE_DATASET_TYPE", "fuseki",
                 "CLAD_FUSEKI_ENDPOINT", "http://fuseki:3030/clad/update"));
 
-        assertThrows(IllegalStateException.class, factory::dataset);
-        assertThrows(UnsupportedOperationException.class,
-            () -> factory.actionLog().dataset());
+        // The action log is always in-memory — the Dataset is the TxnMem
+        // action log, not the remote Fuseki store.
+        assertInstanceOf(org.apache.jena.query.Dataset.class,
+                factory.actionLog(new DevNullSink(), new FlowArchiveBuffer()).dataset());
     }
 
     @Test
@@ -35,7 +39,8 @@ class CladDatasetFactoryTest {
         CladDatasetFactory factory = new CladDatasetFactory(new Properties(), Map.of(
                 "ENGINE_DATASET_TYPE", "fuseki"));
 
-        assertThrows(IllegalStateException.class, factory::actionLog);
+        assertThrows(IllegalStateException.class,
+                () -> factory.actionLog(new DevNullSink(), new FlowArchiveBuffer()));
     }
 
     @Test
@@ -45,14 +50,15 @@ class CladDatasetFactoryTest {
                 "CLAD_FUSEKI_ENDPOINT", "http://fuseki:3030/clad/update",
                 "CLAD_FUSEKI_USERNAME", "admin"));
 
-            assertThrows(IllegalStateException.class, factory::actionLog);
-            }
+        assertThrows(IllegalStateException.class,
+                () -> factory.actionLog(new DevNullSink(), new FlowArchiveBuffer()));
+    }
 
-            @Test
-            void unsupportedBackendTypeFailsClosed() {
-            CladDatasetFactory factory = new CladDatasetFactory(new Properties(), Map.of(
+    @Test
+    void unsupportedBackendTypeFailsClosed() {
+        CladDatasetFactory factory = new CladDatasetFactory(new Properties(), Map.of(
                 "ENGINE_DATASET_TYPE", "not-a-backend"));
 
-            assertThrows(IllegalStateException.class, factory::dataset);
+        assertThrows(IllegalStateException.class, factory::dataset);
     }
 }

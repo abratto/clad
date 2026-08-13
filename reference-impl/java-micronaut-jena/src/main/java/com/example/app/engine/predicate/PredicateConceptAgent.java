@@ -136,8 +136,9 @@ public abstract class PredicateConceptAgent extends ConceptAgent {
                     + e.getMessage(), e);
         }
 
-        // Flow archival: when Web/respond completes, move the flow's triples
-        // from the active action graph to the archive to prevent unbounded growth.
+        // Flow archival: when Web/respond completes, flush the flow's triples
+        // to the archive sink and delete them from the in-memory action log
+        // to prevent unbounded growth.
         if (isRespondAction && invocation.flowToken() != null) {
             actionLog.archiveFlow(invocation.flowToken());
         }

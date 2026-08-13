@@ -58,6 +58,19 @@ public class SyncDispatcher {
     private final Map<String, List<ConceptAgent>> pendingInvocationIndex;
     private final Set<String> pendingConcepts = ConcurrentHashMap.newKeySet();
 
+    /**
+     * Serializes the read-poll → write-complete → fire-sync cycle. The
+     * {@code findPendingInvocations} dedup guard ({@code FILTER NOT EXISTS
+     * outcome}) is checked at read time; without a lock, two concurrent
+     * ticks both see an action as pending before either commits its outcome
+     * and process it twice, producing duplicate {@code respond} actions and
+     * cross-flow field contamination. The whole quiescence iteration must be
+     * atomic — see the concurrency investigation on branch
+     * {@code maintenance/actionlog-in-memory}.
+     */
+    private final java.util.concurrent.locks.ReentrantLock tickLock =
+            new java.util.concurrent.locks.ReentrantLock(true);
+
     @Inject
     public SyncDispatcher(
             ActionLog actionLog,
@@ -152,11 +165,16 @@ public class SyncDispatcher {
         boolean workDone;
         do {
             workDone = false;
-            actionLog.beginBatch();
-            runConceptAgents();
-            actionLog.flushBatch();
-            if (runSyncAgents()) {
-                workDone = true;
+            tickLock.lock();
+            try {
+                actionLog.beginBatch();
+                runConceptAgents();
+                actionLog.flushBatch();
+                if (runSyncAgents()) {
+                    workDone = true;
+                }
+            } finally {
+                tickLock.unlock();
             }
         } while (workDone);
     }

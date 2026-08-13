@@ -35,13 +35,14 @@ class StorageArchiveFlowTest {
     }
 
     @Test
-    void localStorageAppliesArchivePolicyToEveryFlowTriple() {
-        assertArchivePolicy(new LocalStorage(DatasetFactory.createTxnMem()), "local");
-    }
+    void localStorageDeletesEveryFlowTriple() {
+        Storage storage = new LocalStorage(DatasetFactory.createTxnMem());
+        String flowToken = "https://clad.dev/flow/delete-local";
+        writeCompletedFlow(storage, flowToken);
+        storage.archiveFlow(flowToken);
 
-    @Test
-    void remoteStorageAppliesArchivePolicyToEveryFlowTriple() {
-        assertArchivePolicy(new RemoteStorage(fusekiEndpoint), "remote");
+        assertFalse(hasStandardFlow(storage, RdfVocabulary.ACTION_GRAPH_IRI, flowToken));
+        assertFalse(hasOutcomeAnnotation(storage, RdfVocabulary.ACTION_GRAPH_IRI, flowToken));
     }
 
     @Test
@@ -61,28 +62,6 @@ class StorageArchiveFlowTest {
 
         assertTrue(hasStandardFlow(storage, RdfVocabulary.ACTION_GRAPH_IRI, flowToken));
         assertTrue(hasOutcomeAnnotation(storage, RdfVocabulary.ACTION_GRAPH_IRI, flowToken));
-    }
-
-    private static void assertArchivePolicy(Storage storage, String backend) {
-        String archivedFlow = "https://clad.dev/flow/archive-" + backend;
-        writeCompletedFlow(storage, archivedFlow);
-        storage.setArchiveEnabled(true);
-        storage.archiveFlow(archivedFlow);
-
-        assertFalse(hasStandardFlow(storage, RdfVocabulary.ACTION_GRAPH_IRI, archivedFlow));
-        assertFalse(hasOutcomeAnnotation(storage, RdfVocabulary.ACTION_GRAPH_IRI, archivedFlow));
-        assertTrue(hasStandardFlow(storage, RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI, archivedFlow));
-        assertTrue(hasOutcomeAnnotation(storage, RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI, archivedFlow));
-
-        String deletedFlow = "https://clad.dev/flow/delete-" + backend;
-        writeCompletedFlow(storage, deletedFlow);
-        storage.setArchiveEnabled(false);
-        storage.archiveFlow(deletedFlow);
-
-        assertFalse(hasStandardFlow(storage, RdfVocabulary.ACTION_GRAPH_IRI, deletedFlow));
-        assertFalse(hasOutcomeAnnotation(storage, RdfVocabulary.ACTION_GRAPH_IRI, deletedFlow));
-        assertFalse(hasStandardFlow(storage, RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI, deletedFlow));
-        assertFalse(hasOutcomeAnnotation(storage, RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI, deletedFlow));
     }
 
     private static void writeCompletedFlow(Storage storage, String flowToken) {

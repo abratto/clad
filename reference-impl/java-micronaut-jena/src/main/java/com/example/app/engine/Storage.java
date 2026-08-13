@@ -38,11 +38,10 @@ public interface Storage {
      */
     Dataset dataset();
 
-    /** Archives or deletes all triples for a completed flow token. */
+    /** Deletes all triples for a completed flow token from the action log.
+     *  Archival is handled separately by {@link FlowArchiver} — storage
+     *  only removes the triples. */
     void archiveFlow(String flowToken);
-
-    /** Selects archive (true) or delete (false) behavior for completed flows. */
-    void setArchiveEnabled(boolean enabled);
 
     /** Begins queuing writes on this thread; flushed atomically. */
     void beginBatch();

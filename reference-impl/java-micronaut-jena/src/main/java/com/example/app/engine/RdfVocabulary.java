@@ -33,9 +33,6 @@ public final class RdfVocabulary {
     /** The named graph IRI for the global action log. */
     public static final String ACTION_GRAPH_IRI = "https://clad.dev/actions";
 
-    /** The named graph IRI for the completed-flow archive. */
-    public static final String ACTION_ARCHIVE_GRAPH_IRI = "https://clad.dev/actions/archive";
-
     /** Base IRI for fresh action nodes. */
     public static final String ACTION_NODE_PREFIX = "https://clad.dev/action/";
 

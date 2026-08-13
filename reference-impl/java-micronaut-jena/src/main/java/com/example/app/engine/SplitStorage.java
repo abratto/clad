@@ -27,7 +27,6 @@ public class SplitStorage implements Storage {
 
     /** Action log graphs — transient, in-memory. */
     private static final String ACTIONS_GRAPH = RdfVocabulary.ACTION_GRAPH_IRI;
-    private static final String ARCHIVE_GRAPH = RdfVocabulary.ACTION_ARCHIVE_GRAPH_IRI;
 
     private final Storage actionLogBackend;
     private final Storage businessBackend;
@@ -43,10 +42,13 @@ public class SplitStorage implements Storage {
         this.archiver = archiver;
     }
 
+    Storage businessBackend() {
+        return businessBackend;
+    }
+
     private Storage forSparql(String sparql) {
-        // Route: action/archive graphs → in-memory, everything else → durable
-        if (sparql.contains("<" + ACTIONS_GRAPH + ">")
-                || sparql.contains("<" + ARCHIVE_GRAPH + ">")) {
+        // Route: action graph → in-memory, everything else → durable
+        if (sparql.contains("<" + ACTIONS_GRAPH + ">")) {
             return actionLogBackend;
         }
         return businessBackend;
@@ -62,7 +64,7 @@ public class SplitStorage implements Storage {
         // If any update targets the action log, send all to action log backend.
         // The action log write is always separate from business writes.
         for (String u : sparqlUpdates) {
-            if (u.contains(ACTIONS_GRAPH) || u.contains(ARCHIVE_GRAPH)) {
+            if (u.contains(ACTIONS_GRAPH)) {
                 actionLogBackend.updateBatch(sparqlUpdates);
                 return;
             }
@@ -103,11 +105,6 @@ public class SplitStorage implements Storage {
         // Triples remain in the in-memory action log for retry.
         if (archiver != null) archiver.archiveFlow(flowToken);
         actionLogBackend.archiveFlow(flowToken);
-    }
-
-    @Override
-    public void setArchiveEnabled(boolean enabled) {
-        actionLogBackend.setArchiveEnabled(enabled);
     }
 
     @Override
