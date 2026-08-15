@@ -382,6 +382,22 @@ GATE_LABELS = {
     3: "Executable spec",
 }
 
+# Stages whose output a given human gate approves. A gate approval is bound to
+# the content hash of these stages: if any of them is re-derived after approval,
+# the approval is stale and the gate must be re-presented. Single source of
+# truth — present_gate.py and the gate checks derive from this, not from their
+# own copies.
+GATE_STAGES = {
+    1: ["01", "01a", "01b"],
+    2: ["02", "03", "03a", "03b"],
+    3: ["04a", "04b", "04c"],
+}
+
+
+def gate_stages(gate_num: int) -> List[str]:
+    """Return the canonical stage ids approved by a human gate."""
+    return list(GATE_STAGES.get(gate_num, []))
+
 
 # --------------------------------------------------------------------------
 # Lookup helpers

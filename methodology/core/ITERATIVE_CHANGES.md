@@ -117,6 +117,23 @@ The standard rejection protocol applies (see
 acknowledge what was rejected, ask one targeted clarifying question,
 re-run the same stage. Never silently advance.
 
+**Gate approval does not survive a content change.** A gate marked
+`approved` is bound to a content hash of the stages it approves
+(recorded by `approve_gate.py`). Re-deriving any of those stages — even
+as part of a legitimate re-entry — makes the approval stale. When you
+reach a gate whose block you changed, you MUST:
+
+1. Re-present the changed artefacts to the human
+   (`python3 quality-gate/present_gate.py --feature … --gate N`), and
+2. Re-run `python3 quality-gate/approve_gate.py --feature … --gate N`
+   **after** the human says "approved".
+
+Do NOT treat a prior `approved` token in `RESUME.md` as still valid for
+the re-derived content. The sequence guard (`verify_stage_sequence.py`)
+will block past a gate whose recorded hash no longer matches its
+artefacts, so skipping this step surfaces as a hard failure — but the
+point of the step is the human review, not the mechanical check.
+
 ---
 
 ## 5. Anti-patterns

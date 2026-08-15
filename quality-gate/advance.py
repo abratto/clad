@@ -44,7 +44,7 @@ import subprocess
 import sys
 
 import clad_stages as cs
-from verify_stage_sequence import compute_output_hash, gate_approved, gate_status
+from verify_stage_sequence import compute_output_hash, gate_approval_current, gate_status
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BAR = "=" * 64
@@ -468,7 +468,7 @@ def main() -> None:
         if os.path.isfile(resume_path):
             with open(resume_path) as fh:
                 resume_text = fh.read()
-        if not gate_approved(resume_text, gate):
+        if not gate_approval_current(feature_root, resume_text, gate):
             if autonomy in ("auto", "yolo"):
                 wrote = set_gate_status(feature_root, gate, "auto-approved")
                 print(BAR)
@@ -506,7 +506,7 @@ def main() -> None:
         if os.path.isfile(resume_path):
             with open(resume_path) as fh:
                 resume_text = fh.read()
-        if not gate_approved(resume_text, gate):
+        if not gate_approval_current(feature_root, resume_text, gate):
             if autonomy in ("auto", "yolo"):
                 wrote = set_gate_status(feature_root, gate, "auto-approved")
                 print(BAR)

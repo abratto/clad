@@ -168,6 +168,24 @@ def gate_approved(resume_text: str, gate_num: int) -> bool:
     return gate_status(resume_text, gate_num) in APPROVED_STATES
 
 
+def gate_approval_current(feature_root: str, resume_text: str, gate_num: int) -> bool:
+    """True if the gate is approved AND the approved content still matches.
+
+    Human `approved` gates are bound to a content hash: re-deriving the gate's
+    stages after approval invalidates the approval. `auto-approved` gates are
+    exempt (they are the documented "human never reviewed" escape hatch).
+    """
+    status = gate_status(resume_text, gate_num)
+    if status == "auto-approved":
+        return True
+    if status != "approved":
+        return False
+    recorded = gate_hash_recorded(resume_text, gate_num)
+    if recorded is None:
+        return False
+    return recorded == compute_gate_hash(feature_root, gate_num)
+
+
 def compute_output_hash(out_dir: str) -> str:
     """Stable hash over the non-hidden files in a stage output directory."""
     h = hashlib.sha256()
@@ -188,6 +206,41 @@ def compute_output_hash(out_dir: str) -> str:
             pass
         h.update(b"\0")
     return h.hexdigest()
+
+
+def compute_gate_hash(feature_root: str, gate_num: int) -> str:
+    """Stable hash over the outputs of every stage a gate approves.
+
+    A human gate approval is bound to this hash: re-deriving any stage in the
+    gate's block changes the hash and therefore invalidates the approval. This
+    is what makes "inherited" approvals from a previous development cycle
+    impossible — the content the human actually approved no longer exists.
+    """
+    h = hashlib.sha256()
+    for stage_id in cs.gate_stages(gate_num):
+        stage = cs.stage_by_id(stage_id)
+        if stage is None:
+            continue
+        out_dir = stage.output_dir(feature_root)
+        h.update(stage_id.encode("utf-8"))
+        h.update(b"\0")
+        h.update(compute_output_hash(out_dir).encode("utf-8"))
+        h.update(b"\0")
+    return h.hexdigest()
+
+
+def gate_hash_recorded(resume_text: str, gate_num: int) -> str | None:
+    """Return the content hash recorded for a gate, or None.
+
+    The hash is stored on its own line so it cannot collide with the status
+    regexes elsewhere (some of which match `.*` to end of line):
+        - **Gate 2 content hash:** `abc123…`
+    """
+    pattern = rf"^- \*\*Gate {gate_num} content hash:\*\*\s+`([0-9a-f]+)`"
+    m = re.search(pattern, resume_text, re.MULTILINE)
+    if m is None:
+        return None
+    return m.group(1)
 
 
 def furthest_populated_index(feature_root: str) -> int:
@@ -253,15 +306,40 @@ def main() -> None:
             stage = cs.STAGES[i]
             if stage.gate_after is None:
                 continue
-            status = gate_status(resume_text, stage.gate_after)
-            label = cs.GATE_LABELS[stage.gate_after]
+            gate = stage.gate_after
+            status = gate_status(resume_text, gate)
+            label = cs.GATE_LABELS[gate]
             if status not in APPROVED_STATES:
                 found = status or "missing"
-                print(f"FAIL  Gate {stage.gate_after} ({label}) after Stage "
+                print(f"FAIL  Gate {gate} ({label}) after Stage "
                       f"{stage.id} is '{found}', but work advanced past it. "
                       f"Human approval is required before Stage "
                       f"{cs.STAGES[i + 1].id}.")
                 ok = False
+                continue
+            # A *human*-approved gate is bound to the content the human actually
+            # reviewed. If the gate's artefacts changed since approval (re-entry,
+            # silent edit), the approval is stale and must be re-presented.
+            # auto-approved gates are exempt — they are the documented
+            # "human never reviewed" escape hatch.
+            if status != "approved":
+                continue
+            recorded = gate_hash_recorded(resume_text, gate)
+            if recorded is None:
+                print(f"FAIL  Gate {gate} ({label}) is 'approved' but has no "
+                      f"content hash recorded — it was approved by an older "
+                      f"workflow and is no longer bound to its artefacts. "
+                      f"Re-present Gate {gate} for re-approval "
+                      f"(approve_gate.py --gate {gate}).")
+                ok = False
+            else:
+                current = compute_gate_hash(feature_root, gate)
+                if recorded != current:
+                    print(f"FAIL  Gate {gate} ({label}) approval is stale — the "
+                          f"artefacts changed since they were approved "
+                          f"(recorded {recorded[:12]}… vs current {current[:12]}…). "
+                          f"Re-present Gate {gate} for re-approval.")
+                    ok = False
 
     # Invariant 3 — receipts current (optional).
     if args.require_receipts:
