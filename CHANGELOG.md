@@ -10,6 +10,14 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.1.8] — 2026-08-14
+
+### Changed
+
+#### Quality gate
+
+- **Gate approval is bound to artefact content.** `approve_gate.py` records a content hash over the gate's stage outputs beside each approval. `verify_stage_sequence.py` and `verify_gate_approval.py` treat a human-`approved` gate as stale when the hash is missing or no longer matches, forcing the gate to be re-presented. `auto-approved` gates remain exempt (documented escape hatch). Closes the "inherited approval" hole where an agent re-entering a feature could re-derive a gate's stages and advance without re-review. `--baseline` migrates pre-existing approvals.
+
 ## [0.1.7] — 2026-08-13
 
 ### Changed
