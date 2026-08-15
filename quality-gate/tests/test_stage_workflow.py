@@ -68,8 +68,28 @@ class StageWorkflowTests(unittest.TestCase):
                 output = Path(stage.output_dir(str(feature)))
                 output.mkdir(parents=True, exist_ok=True)
                 (output / "evidence.md").write_text(stage.id, encoding="utf-8")
-
                 self.assertEqual(advance.determine_stage(str(feature), None).id, stage.id)
+
+                # Bind each approved gate to the current content so the hash
+                # check passes (approve_gate.py --baseline records the hash
+                # without changing the already-`approved` status).
+                if stage.gate_after is not None:
+                    baseline = subprocess.run(
+                        [
+                            sys.executable,
+                            str(QUALITY_GATE / "approve_gate.py"),
+                            "--feature",
+                            str(feature),
+                            "--gate",
+                            str(stage.gate_after),
+                            "--baseline",
+                        ],
+                        cwd=REPO_ROOT,
+                        capture_output=True,
+                        text=True,
+                    )
+                    self.assertEqual(baseline.returncode, 0,
+                                     baseline.stdout + baseline.stderr)
 
                 result = subprocess.run(
                     [
@@ -191,3 +211,82 @@ class StageWorkflowTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class GateContentBindingTests(unittest.TestCase):
+    """A gate approval is bound to a content hash of its stages."""
+
+    def _approved_feature(self, feature):
+        resume = feature / "RESUME.md"
+        resume.write_text(
+            resume.read_text(encoding="utf-8").replace("`pending`", "`approved`"),
+            encoding="utf-8",
+        )
+        for stage in stages.STAGES:
+            output = Path(stage.output_dir(str(feature)))
+            output.mkdir(parents=True, exist_ok=True)
+            (output / "evidence.md").write_text(stage.id, encoding="utf-8")
+
+    def _gate_sequence(self, feature, through):
+        return subprocess.run(
+            [
+                sys.executable,
+                str(QUALITY_GATE / "verify_stage_sequence.py"),
+                "--feature",
+                str(feature),
+                "--through",
+                through,
+            ],
+            cwd=REPO_ROOT,
+            capture_output=True,
+            text=True,
+        )
+
+    def _baseline(self, feature, gate):
+        return subprocess.run(
+            [
+                sys.executable,
+                str(QUALITY_GATE / "approve_gate.py"),
+                "--feature", str(feature), "--gate", str(gate), "--baseline",
+            ],
+            cwd=REPO_ROOT, capture_output=True, text=True,
+        )
+
+    def test_approved_gate_without_hash_is_stale(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-01-gatehash"
+            shutil.copytree(REPO_ROOT / "templates/feature-skeleton", feature)
+            self._approved_feature(feature)
+
+            result = self._gate_sequence(feature, "02")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("has no content hash recorded", result.stdout)
+
+    def test_rederived_stage_invalidates_prior_approval(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-01-gatehash"
+            shutil.copytree(REPO_ROOT / "templates/feature-skeleton", feature)
+            self._approved_feature(feature)
+            for gate in (1, 2, 3):
+                self.assertEqual(self._baseline(feature, gate).returncode, 0)
+            # Baseline must now pass.
+            self.assertEqual(self._gate_sequence(feature, "05").returncode, 0)
+
+            # Re-derive a Gate 2 stage (02 concepts) — approval becomes stale.
+            concept_out = Path(stages.stage_by_id("02").output_dir(str(feature)))
+            (concept_out / "concept-changed.md").write_text("changed content")
+
+            result = self._gate_sequence(feature, "05")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("Gate 2", result.stdout)
+            self.assertIn("stale", result.stdout)
+
+    def test_baseline_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-01-gatehash"
+            shutil.copytree(REPO_ROOT / "templates/feature-skeleton", feature)
+            self._approved_feature(feature)
+            first = self._baseline(feature, 1)
+            second = self._baseline(feature, 1)
+            self.assertEqual(first.returncode, 0)
+            self.assertEqual(second.returncode, 0)
+            self.assertIn("already current", second.stdout)

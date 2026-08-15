@@ -30,12 +30,12 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import clad_stages as cs  # noqa: E402
+from verify_stage_sequence import compute_gate_hash, gate_hash_recorded  # noqa: E402
 
-GATE_LABELS = {
-    1: "Requirements",
-    2: "Architecture",
-    3: "Executable spec",
-}
+
+GATE_LABELS = cs.GATE_LABELS
 
 GATE_OUTPUT_DIRS = {
     1: os.path.join("stages", "01b_chain-table", "output"),
@@ -100,7 +100,24 @@ def main():
                 print(f"FAIL  Gate {gate_num} output directory is empty: {out_dir}")
                 all_passed = False
                 continue
-        print(f"PASS  Gate {gate_num} ({label}) — approved, output present")
+        # Content binding: a human approval is bound to the hash of the gate's
+        # stages. Missing hash = legacy approval (must be re-baselined); a
+        # mismatch = the artefacts changed since approval (must be re-presented).
+        recorded = gate_hash_recorded(content, gate_num)
+        if recorded is None:
+            print(f"FAIL  Gate {gate_num} ({label}) has no content hash — "
+                  f"approved by an older workflow. Re-approve with "
+                  f"approve_gate.py --gate {gate_num} (or --baseline).")
+            all_passed = False
+            continue
+        current = compute_gate_hash(feature_root, gate_num)
+        if recorded != current:
+            print(f"FAIL  Gate {gate_num} ({label}) approval is stale — the "
+                  f"artefacts changed since approval. Re-present the gate.")
+            all_passed = False
+            continue
+        print(f"PASS  Gate {gate_num} ({label}) — approved, output present, "
+              f"content hash matches")
 
     if all_passed:
         print(f"PASS  all {len(required_gates)} required gates approved")

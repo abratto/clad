@@ -21,6 +21,13 @@
   stage beyond a human gate can execute — an unapproved gate blocks
   the pipeline. The agent must NOT skip updating this section after
   each gate approval.
+
+  Approval is content-bound: approve_gate.py records a `content hash` line
+  beside each gate, hashing the gate's stage outputs. Re-deriving any of
+  those stages after approval makes the approval stale, and the sequence
+  guard will block and require the gate to be re-presented. The agent must
+  NOT delete or edit the content hash lines — re-approve with
+  approve_gate.py --gate N, which rewrites the hash.
 -->
 - **Gate 1 (Requirements):** `pending` | `approved` | `rejected` | `auto-approved`
 - **Gate 2 (Architecture):** `pending` | `approved` | `rejected` | `auto-approved`
