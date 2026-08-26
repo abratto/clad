@@ -13,10 +13,13 @@ purpose
 >
 > ⚠️ The subject is the *individual*, the concept owns the *set*. The thing
 > to the left of `->` must be an identifier type (`UserId`), never this
-> concept's own name (`User`). A bare field list with no `->`
-> (`userid, username, password`) models one object's instance variables, not a
-> capability over a set — and then your actions cannot say *which* individual
-> they act on. See `methodology/architecture/CONCEPTS.md` §"State over a set"
+> concept's own name (`User`). A bare field name with no type at all
+> (`userid`, `username`, `password`) models one object's instance variables,
+> not a capability over a set — and then your actions cannot say *which*
+> individual they act on. Typed fields in any form are fine: a relation
+> (`username: UserId -> String`), a collection (`leadLog: List<LeadRecord>`),
+> or a map (`attorneyStatus: Map<AttorneyId, Availability>`).
+> See `methodology/architecture/CONCEPTS.md` §"State over a set"
 > and Daniel Jackson's *Why concepts aren't objects*.
 >
 > ⚠️ Separate views, even under one noun. Username, password, email, and
