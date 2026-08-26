@@ -58,6 +58,23 @@ State is **private** to the concept. No other concept may read it directly
 (hard rule R1). The only legal cross-concept read is a concept-state read in the `where`
 clause in a sync spec.
 
+**The subject type is an identifier type, not the concept itself.** Every
+state field ranges over a *set* of individuals: `username: UserId -> String`
+says "for each user, a username." The thing to the left of the arrow is the
+individual's identity type (`UserId`), never the concept's own name (`User`).
+A state block that lists bare fields without `->` — `userid, username,
+password, email` — is the object-oriented trap: it models one object's
+instance variables, and then an action like `authenticate(username, password)`
+cannot answer "which user?". The concept owns the *set*; the subject is the
+*individual*. (`verify_concept_state_relational.py` enforces this at Stage 02.)
+
+**Separate views, even when they share a noun.** A `User` concept should not
+hold `username, password, email, displayname` together — those belong to
+different capabilities (naming, authentication, profiling) and different
+owners. Tease them apart: `username` to a naming concept, `password` to
+`PasswordAuth`, `email`/`displayname` to a profile concept. If two fields serve
+different purposes, they are two concepts' state, not one concept's.
+
 ### 3. Actions — case-split notation
 
 The verbs the concept exposes. Each action lists every possible output as
@@ -269,6 +286,24 @@ These constructs are NOT concepts and belong elsewhere in CLAD:
 | UI component / widget | Visual layout | Frontend (outside CLAD scope) |
 | Pure calculation | No internal state | Helper utility in concept |
 | Data structure | Passed between actions, not owned | Type parameter or payload |
+
+### 8. State over a set, not fields of an object
+
+A concept's state must be relations over a *set* of individuals, never a
+list of one individual's instance variables. The subject of every field is an
+identifier type (`UserId`), not the concept's own name (`User`).
+
+```
+✅ PasswordAuth state:  passwordHash: UserId -> PasswordHash
+❌ User state:          userid, username, password, email, displayname
+❌ Account state:       username: Account -> String
+```
+
+If the state block has no `->` arrows, or its subject type is the concept
+itself, you are modeling an object, not a capability — the actions can no
+longer answer "which individual?". This is the single most common
+object-oriented confusion (see Daniel Jackson, *Why concepts aren't objects*).
+`verify_concept_state_relational.py` fails the Stage 02 gate on both.
 
 ## Decision flowchart for agents
 

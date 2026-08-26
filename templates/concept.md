@@ -10,6 +10,19 @@ purpose
 > Use paper-style relational notation: `field: SubjectType -> FieldType  -- multiplicity`
 > Multiplicity annotations: `mandatory` | `optional` | `conditional mandatory: <condition>` | `zero or more`
 > For stateless concepts write: `*None.* <ConceptName> is stateless.`
+>
+> ⚠️ The subject is the *individual*, the concept owns the *set*. The thing
+> to the left of `->` must be an identifier type (`UserId`), never this
+> concept's own name (`User`). A bare field list with no `->`
+> (`userid, username, password`) models one object's instance variables, not a
+> capability over a set — and then your actions cannot say *which* individual
+> they act on. See `methodology/architecture/CONCEPTS.md` §"State over a set"
+> and Daniel Jackson's *Why concepts aren't objects*.
+>
+> ⚠️ Separate views, even under one noun. Username, password, email, and
+> display name are *different capabilities* (naming vs authentication vs
+> profiling). Do not pile them into one concept; split them. If you need the
+> word "and" to describe the state, you likely need two concepts.
 
 ```
 <fieldName>: <SubjectType> -> <FieldType>   -- mandatory

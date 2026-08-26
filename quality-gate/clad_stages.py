@@ -343,6 +343,13 @@ _FILE_02A = Check(
     requires=lambda r: [output_dir(r, "01a_responsibility-map")],
 )
 
+_CONCEPT_STATE_RELATIONAL = Check(
+    name="concept_state_relational",
+    script="verify_concept_state_relational.py",
+    build_args=lambda r: ["--concept-dir", CONCEPT_DIR(r)],
+    requires=lambda r: [CONCEPT_DIR(r)],
+)
+
 
 # --------------------------------------------------------------------------
 # The canonical per-UC stage order.
@@ -354,7 +361,7 @@ STAGES: List[Stage] = [
     Stage("01a", "Responsibility map", "01a_responsibility-map",
           checks=[_FILE_02A]),
     Stage("01b", "Chain table", "01b_chain-table", gate_after=1),
-    Stage("02", "Concept specs", "02_concepts"),
+    Stage("02", "Concept specs", "02_concepts", checks=[_CONCEPT_STATE_RELATIONAL]),
     Stage("03", "Syncs", "03_syncs", checks=[_SCENARIO_COVERAGE, _SYNC_MATRIX,
           _SYNC_CYCLE_GRAPH, _SYNC_OVERLAP]),
     Stage("03a", "Dependency review", "03a_dependency-review",

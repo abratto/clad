@@ -290,3 +290,56 @@ class GateContentBindingTests(unittest.TestCase):
             self.assertEqual(first.returncode, 0)
             self.assertEqual(second.returncode, 0)
             self.assertIn("already current", second.stdout)
+
+
+class ConceptStateRelationalTests(unittest.TestCase):
+    """Stage 02 gate: concept state must be relational, not object fields."""
+
+    def _run(self, concept_dir):
+        return subprocess.run(
+            [
+                sys.executable,
+                str(QUALITY_GATE / "verify_concept_state_relational.py"),
+                "--concept-dir", str(concept_dir),
+            ],
+            cwd=REPO_ROOT, capture_output=True, text=True,
+        )
+
+    def _write(self, concept_dir, name, state_body):
+        (concept_dir / name).write_text(
+            f"concept {name[:-len('.concept.md')]}\n"
+            f"purpose\n    test concept\n\n## State\n\n```\n{state_body}\n```\n",
+            encoding="utf-8",
+        )
+
+    def test_relational_state_passes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            d = Path(temporary)
+            self._write(d, "User.concept.md",
+                        "username: UserId -> String   -- mandatory\n")
+            r = self._run(d)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_bare_field_list_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            d = Path(temporary)
+            self._write(d, "User.concept.md", "userid\nusername\npassword\n")
+            r = self._run(d)
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("object-oriented trap", r.stdout)
+
+    def test_self_referential_subject_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            d = Path(temporary)
+            self._write(d, "Account.concept.md",
+                        "username: Account -> String\n")
+            r = self._run(d)
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("concept's own name", r.stdout)
+
+    def test_stateless_concept_is_exempt(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            d = Path(temporary)
+            self._write(d, "Clock.concept.md", "*None.* Clock is stateless.\n")
+            r = self._run(d)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
