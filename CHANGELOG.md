@@ -10,6 +10,14 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.1.10] — 2026-08-26
+
+### Fixed
+
+#### Quality gate
+
+- **Narrow the relational-state check.** `verify_concept_state_relational.py` now flags only *untyped* field names (`userid`, `username`, `password`) as the object-oriented trap, not every field lacking a `->` arrow. Typed collection/relation forms (`leadLog: List<LeadRecord>`, `attorneyStatus: Map<AttorneyId, Availability>`, `clientId: String -> { … }`) are legitimate relational state. Also skips (rather than fails) a feature whose concept dir has no `.concept.md` files (concept reuse via `_REUSES_*.md`).
+
 ## [0.1.9] — 2026-08-14
 
 ### Changed
