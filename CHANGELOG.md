@@ -10,6 +10,14 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.1.9] — 2026-08-14
+
+### Changed
+
+#### Quality gate
+
+- **Relational concept state enforced at Stage 02.** New `verify_concept_state_relational.py` check fails a concept spec whose state block lists bare instance variables (`userid, username, password`) instead of relations over a set of individuals (`username: UserId -> String`), or whose field subject type is the concept's own name. Implements Daniel Jackson's *Why concepts aren't objects* as a deterministic gate. `CONCEPTS.md` gains heuristic #8 and views-separation guidance; `templates/concept.md` updated to match.
+
 ## [0.1.8] — 2026-08-14
 
 ### Changed
