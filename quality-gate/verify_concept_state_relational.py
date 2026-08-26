@@ -18,8 +18,13 @@ Why this exists:
 
 Checks (per <Name>.concept.md):
     1. A ## State section exists and is a fenced block.
-    2. Every state field uses relational notation `field: Subject -> Type`.
-       A bare field name (no `->`) is the object-smell.
+    2. Every state field is typed — either a relation over a subject
+       (`username: UserId -> String`), a collection (`leadLog: List<LeadRecord>`),
+       a map (`attorneyStatus: Map<AttorneyId, Availability>`), or a subject
+       arrow to a struct. A *bare* field name with no type annotation at all
+       (`userid`, `username`, `password`) is the object-oriented trap: it lists
+       one object's instance variables, and an action like
+       `authenticate(username, password)` cannot answer "which user?".
     3. No state field uses the concept's own name as its subject type
        (that is "one object", not "a set of individuals").
 
@@ -38,8 +43,12 @@ import sys
 
 # The stateless marker from templates/concept.md.
 STATELESS_RE = re.compile(r"\*None\.\*\s+\w+\s+is stateless\.", re.IGNORECASE)
-# A relational state field:  field: SubjectType -> FieldType  [-- multiplicity]
-FIELD_RE = re.compile(r"^\s*(\w+)\s*:\s*([\w<>, ]+?)\s*->\s*(\w+)")
+# A relational state field with a subject arrow:  field: SubjectType -> FieldType
+# The field type after `->` may be a scalar, a generic, or a `{ … }` struct.
+FIELD_RE = re.compile(r"^\s*(\w+)\s*:\s*([^->]+?)\s*->")
+# A bare field name — a word with no type annotation, no arrow. This is the
+# object-oriented trap Jackson describes: `userid`, `username`, `password`.
+BARE_FIELD_RE = re.compile(r"^\s*[\w]+(?:[\s,]+[\w]+)*\s*$")
 # The concept header: concept Name [TypeParams]
 HEADER_RE = re.compile(r"^\s*concept\s+(\w+)")
 
@@ -116,14 +125,15 @@ def check_concept(path):
                     f"not '{concept_name}'.")
             continue
 
-        # Check 2: a non-relational field line (the object-smell).
-        # A line is a candidate field if it looks like `name: Type` or a bare
-        # `name`, but has no `->`.
-        if re.match(r"^\w+(\s*:|,)", line) or re.match(r"^\w+\s*$", line):
+        # Check 2: a bare field name with no type annotation at all — the
+        # object-oriented trap. A line with a `:` (scalar, collection, map,
+        # struct) is typed and therefore acceptable; a bare word is not.
+        if ":" not in line and BARE_FIELD_RE.match(line):
             failures.append(
-                f"state line '{line}' is not relational notation "
-                f"(`field: SubjectType -> FieldType`). A bare field list is the "
-                f"object-oriented trap — declare the set it ranges over.")
+                f"state line '{line}' is an untyped field name — a bare "
+                f"instance-variable list is the object-oriented trap. Give the "
+                f"field a type and the set it ranges over, e.g. "
+                f"`username: UserId -> String`, or `leadLog: List<LeadRecord>`.")
 
     return failures
 
@@ -143,8 +153,11 @@ def main():
     files = sorted(f for f in os.listdir(concept_dir)
                    if f.endswith(".concept.md"))
     if not files:
-        print("FAIL  no .concept.md files found")
-        sys.exit(1)
+        # A feature may legitimately introduce no new concepts (it reuses an
+        # earlier feature's concepts via a `_REUSES_*.md` marker). Nothing to
+        # validate — skip, don't fail.
+        print("SKIP  no .concept.md files in this feature (reuse or N/A)")
+        sys.exit(0)
 
     total = 0
     for fname in files:

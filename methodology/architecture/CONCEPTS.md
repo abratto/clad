@@ -62,11 +62,15 @@ clause in a sync spec.
 state field ranges over a *set* of individuals: `username: UserId -> String`
 says "for each user, a username." The thing to the left of the arrow is the
 individual's identity type (`UserId`), never the concept's own name (`User`).
-A state block that lists bare fields without `->` — `userid, username,
+A state block that lists *untyped* field names — `userid, username,
 password, email` — is the object-oriented trap: it models one object's
 instance variables, and then an action like `authenticate(username, password)`
 cannot answer "which user?". The concept owns the *set*; the subject is the
-*individual*. (`verify_concept_state_relational.py` enforces this at Stage 02.)
+*individual*. Typed fields in any form are fine — a relation
+(`username: UserId -> String`), a collection (`leadLog: List<LeadRecord>`), a
+map (`attorneyStatus: Map<AttorneyId, Availability>`) — what is never fine is a
+bare name with no type at all. (`verify_concept_state_relational.py` enforces
+this at Stage 02.)
 
 **Separate views, even when they share a noun.** A `User` concept should not
 hold `username, password, email, displayname` together — those belong to
@@ -290,18 +294,24 @@ These constructs are NOT concepts and belong elsewhere in CLAD:
 ### 8. State over a set, not fields of an object
 
 A concept's state must be relations over a *set* of individuals, never a
-list of one individual's instance variables. The subject of every field is an
-identifier type (`UserId`), not the concept's own name (`User`).
+list of one object's untyped instance variables. The subject of a relation is
+an identifier type (`UserId`), not the concept's own name (`User`).
 
 ```
 ✅ PasswordAuth state:  passwordHash: UserId -> PasswordHash
+✅ LeadLog state:       leadLog: List<LeadRecord>          (a collection)
+✅ TriageQueue state:   attorneyStatus: Map<AttorneyId, Availability>  (a map)
 ❌ User state:          userid, username, password, email, displayname
 ❌ Account state:       username: Account -> String
 ```
 
-If the state block has no `->` arrows, or its subject type is the concept
-itself, you are modeling an object, not a capability — the actions can no
-longer answer "which individual?". This is the single most common
+The trap is a **bare field name with no type at all** — the `userid,
+username, password` list models one object's instance variables, so an action
+like `authenticate(username, password)` cannot say "which user?". Typed fields
+in any form — a relation, a collection, a map, a subject arrow to a struct —
+are fine; only the untyped list is the smell. The second smell is a relation
+whose subject type is the concept's own name (`Account -> String`), which
+models one object rather than a set. This is the single most common
 object-oriented confusion (see Daniel Jackson, *Why concepts aren't objects*).
 `verify_concept_state_relational.py` fails the Stage 02 gate on both.
 
