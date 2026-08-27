@@ -2,7 +2,7 @@ package com.example.app.architecture;
 
 import com.example.app.ConceptTestBase;
 import com.example.app.concepts.user.UserConcept;
-import com.example.app.engine.RdfVocabulary;
+import dev.clad.engine.RdfVocabulary;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationConfig;
@@ -40,9 +40,9 @@ class CladRulesComplianceTest {
      */
     @Test
     void writeCompletionPreventsReprocessing() {
-        var log = new com.example.app.engine.ActionLog();
-        var bus = new com.example.app.engine.CompletionBus();
-        var flow = new com.example.app.engine.FlowManager(log, bus);
+        var log = new dev.clad.engine.ActionLog();
+        var bus = new dev.clad.engine.CompletionBus();
+        var flow = new dev.clad.engine.FlowManager(log, bus);
         var concept = new com.example.app.concepts.user.UserConcept(log, bus);
 
         concept.seedUser("r12-user", "r12-username");

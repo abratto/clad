@@ -1,10 +1,10 @@
 package com.example.app.infrastructure;
 
-import com.example.app.engine.ActionLog;
-import com.example.app.engine.ActionRecord;
-import com.example.app.engine.FlowManager;
-import com.example.app.engine.RdfVocabulary;
-import com.example.app.engine.SyncDispatcher;
+import dev.clad.engine.ActionLog;
+import dev.clad.engine.ActionRecord;
+import dev.clad.engine.FlowManager;
+import dev.clad.engine.RdfVocabulary;
+import dev.clad.engine.SyncDispatcher;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micronaut.http.HttpRequest;

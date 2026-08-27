@@ -1,10 +1,10 @@
 package com.example.app.infrastructure;
 
-import com.example.app.engine.ActionLog;
-import com.example.app.engine.RdfVocabulary;
-import com.example.app.engine.SyncAgent;
-import com.example.app.engine.SyncMetadata;
-import com.example.app.engine.FlowArchiveBuffer;
+import dev.clad.engine.ActionLog;
+import dev.clad.engine.RdfVocabulary;
+import dev.clad.engine.SyncAgent;
+import dev.clad.engine.SyncMetadata;
+import dev.clad.engine.FlowArchiveBuffer;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;

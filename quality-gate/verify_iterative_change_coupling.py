@@ -8,6 +8,10 @@ Why this exists:
   implementation side is touched. This script reads the diff and fails when a
   concept/sync implementation changes without its corresponding stage artefact.
 
+  Import/package-only changes (e.g. a package rename that rewrites `import`
+  lines without touching behaviour) are Presentation changes under R17 and do
+  not invalidate the Stage 02/03 artefacts, so they are skipped.
+
 Usage:
   python3 quality-gate/verify_iterative_change_coupling.py --base origin/main
 """
@@ -23,6 +27,9 @@ CONCEPT_IMPL_RE = re.compile(r"(^|/)concepts/([^/]+)/([^/]+)\.(java|kt|scala)$")
 SYNC_IMPL_RE = re.compile(r"(^|/)syncs/([^/]+)\.(java|kt|scala)$")
 CONCEPT_SPEC_RE = re.compile(r"^features/UC-[^/]+/stages/02_concepts/output/([^/]+)\.concept\.md$")
 SYNC_SPEC_RE = re.compile(r"^features/UC-[^/]+/stages/03_syncs/output/([^/]+)\.sync\.md$")
+
+# A diff line is a "presentation-only" line if it declares a package or import.
+IMPORT_PACKAGE_LINE = re.compile(r"^(import\s+|package\s+)")
 
 
 def run_git_names(args):
@@ -42,28 +49,66 @@ def changed_files(base, changed_files_file):
     return sorted(names)
 
 
+def diff_text_for(path, base):
+    """Combined unified diff (added/removed lines) for a path across the same
+    surfaces used by changed_files()."""
+    surfaces = [
+        ["git", "diff", "--unified=0", f"{base}...HEAD", "--", path],
+        ["git", "diff", "--unified=0", "--cached", "--", path],
+        ["git", "diff", "--unified=0", "--", path],
+    ]
+    parts = []
+    for surface in surfaces:
+        parts.extend(run_git_names(surface))
+    return "\n".join(parts)
+
+
+def is_import_or_package_only_diff(diff_text):
+    """True when a unified diff changes only import/package lines (a pure
+    package move or import re-write with no behavioural change)."""
+    changed = []
+    for line in diff_text.splitlines():
+        if line.startswith("+++") or line.startswith("---"):
+            continue
+        if line.startswith("+") or line.startswith("-"):
+            content = line[1:].strip()
+            if content:
+                changed.append(content)
+    if not changed:
+        return True
+    return all(IMPORT_PACKAGE_LINE.match(line) for line in changed)
+
+
+def is_import_or_package_only(path, base):
+    return is_import_or_package_only_diff(diff_text_for(path, base))
+
+
 def concept_name_from_class(class_name):
     if class_name.lower().endswith("concept"):
         return class_name[: -len("Concept")]
     return class_name
 
 
-def changed_concept_impls(paths):
+def changed_concept_impls(paths, import_only_filter=None):
     concepts = set()
     for path in paths:
         match = CONCEPT_IMPL_RE.search(path)
         if match:
+            if import_only_filter is not None and import_only_filter(path):
+                continue
             package_name = match.group(2)
             class_name = os.path.splitext(match.group(3))[0]
             concepts.add(concept_name_from_class(class_name) or package_name)
     return concepts
 
 
-def changed_sync_impls(paths):
+def changed_sync_impls(paths, import_only_filter=None):
     syncs = set()
     for path in paths:
         match = SYNC_IMPL_RE.search(path)
         if match:
+            if import_only_filter is not None and import_only_filter(path):
+                continue
             syncs.add(os.path.splitext(match.group(2))[0])
     return syncs
 
@@ -92,8 +137,16 @@ def main():
     args = parser.parse_args()
 
     changed = changed_files(args.base, args.changed_files_file)
-    concept_impls = changed_concept_impls(changed)
-    sync_impls = changed_sync_impls(changed)
+
+    # In git mode, ignore pure package/import renames: they are Presentation
+    # changes (R17) and do not invalidate the Stage 02/03 artefacts. The test
+    # hook (--changed-files-file) has no git diff to inspect, so it is exempt.
+    import_only_filter = None
+    if not args.changed_files_file:
+        import_only_filter = lambda path: is_import_or_package_only(path, args.base)
+
+    concept_impls = changed_concept_impls(changed, import_only_filter)
+    sync_impls = changed_sync_impls(changed, import_only_filter)
     concept_specs = changed_concept_specs(changed)
     sync_specs = changed_sync_specs(changed)
 

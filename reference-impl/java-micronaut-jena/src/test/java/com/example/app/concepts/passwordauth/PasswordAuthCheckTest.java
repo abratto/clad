@@ -1,7 +1,7 @@
 package com.example.app.concepts.passwordauth;
 
 import com.example.app.ConceptTestBase;
-import com.example.app.engine.RdfVocabulary;
+import dev.clad.engine.RdfVocabulary;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

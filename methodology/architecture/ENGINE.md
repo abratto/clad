@@ -25,7 +25,7 @@ into an executable system. Given a single HTTP request:
 
 There is **no Java event bus**. Every coordination decision is read from
 and written to RDF triples in the Jena dataset. The semaphore-based
-[`CompletionBus`](../../reference-impl/java-micronaut-jena/src/main/java/com/example/app/engine/CompletionBus.java)
+[`CompletionBus`](../../reference-impl/clad-engine/src/main/java/dev/clad/engine/CompletionBus.java)
 is a pure scheduling hint: it carries only "concept X completed
 something", never any per-action data. This invariant is what
 WYSIWID Rule 4 demands ("the running system *is* what is described";

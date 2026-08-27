@@ -8,19 +8,27 @@ imposes its own grain.
 
 ```
 com.example.app
-├── engine                  RDF vocab, ActionLog, FlowManager, ConceptAgent, SyncAgent, SyncDispatcher, CompletionBus
 ├── infrastructure          WebController (sole HTTP entry; R4)
-├── api                     DTOs for HTTP boundary
+├── api                     DTOs for HTTP boundary + ResponseAssembler
 ├── concepts.<name>         Exactly one *Concept class per package; extends ConceptAgent
-└── syncs                   Declarative when/then rules (one final class per sync, extends SyncAgent)
+├── syncs                   Declarative when/then rules (one final class per sync, extends SyncAgent)
+└── storage                 Profile storage: SplitStorage, RemoteStorage,
+                            CladDatasetFactory (implements dev.clad.engine.Storage)
+
+dev.clad.engine (shared clad-engine module)
+└── ActionLog, FlowManager, ConceptAgent, SyncAgent, SyncDispatcher,
+    CompletionBus, RdfVocabulary, Storage, LocalStorage, FlowArchiver, …
 ```
 
 Treat this package split as the **canonical Java profile contract** for
 artifact placement, not just an illustrative tree.
 
-- HTTP request/response DTOs belong in `api`.
+- HTTP request/response DTOs belong in `api` (plus `ResponseAssembler`,
+  the typed-DTO constructor for the transport boundary).
 - Transport adapters and controllers belong in `infrastructure`.
-- Runtime/dispatch/logging framework classes belong in `engine`.
+- Profile-specific storage backends belong in `storage`; they implement the
+  shared `dev.clad.engine.Storage` SPI. Runtime/dispatch/logging framework
+  classes belong in the shared `dev.clad.engine` module, not in this profile.
 - Each concept implementation belongs in exactly one
   `concepts.<name>` package.
 - Declarative sync classes belong in `syncs`.
@@ -57,7 +65,7 @@ explicitly instead of placing it ad hoc.
   dependency rule.
 - **R5 — every concept is a `ConceptAgent`.** Every `*Concept` class
   inside `com.example.app.concepts` must be assignable to
-  `com.example.app.engine.ConceptAgent`. This guarantees every action
+  `dev.clad.engine.ConceptAgent`. This guarantees every action
   the concept performs is recorded in the action log against an
   addressable flow token.
 

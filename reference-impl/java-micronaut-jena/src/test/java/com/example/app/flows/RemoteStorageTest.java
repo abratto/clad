@@ -1,7 +1,7 @@
 package com.example.app.flows;
 
-import com.example.app.engine.ActionLog;
-import com.example.app.engine.RemoteStorage;
+import dev.clad.engine.ActionLog;
+import com.example.app.storage.RemoteStorage;
 import com.sun.net.httpserver.HttpServer;
 import org.apache.jena.fuseki.main.FusekiServer;
 import org.apache.jena.query.Dataset;

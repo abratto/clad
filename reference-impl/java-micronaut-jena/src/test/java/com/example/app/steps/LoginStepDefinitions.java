@@ -1,8 +1,8 @@
 package com.example.app.steps;
 
 import com.example.app.api.LoginRequest;
-import com.example.app.engine.RdfVocabulary;
-import com.example.app.engine.SyncDispatcher;
+import dev.clad.engine.RdfVocabulary;
+import dev.clad.engine.SyncDispatcher;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;

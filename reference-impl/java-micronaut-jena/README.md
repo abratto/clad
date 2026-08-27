@@ -62,8 +62,8 @@ the source of domain truth.
 | Sync | A `final` class under `com.example.app.syncs` that `extends SyncAgent` and declares `whereClause()` + `thenBindings()` |
 | `Web` (HTTP entry) | `com.example.app.infrastructure.WebController` — `@Controller("/login")` calling `FlowManager.rootAction` then `SyncDispatcher.awaitResponse` |
 | Flow token | A UUID IRI minted by `FlowManager.mintFlowToken()`; carried by every action node in the chain via the `:flow` predicate |
-| Action log | `com.example.app.engine.ActionLog` — wraps a Jena transactional `Dataset`. Concept state lives in named graphs `concept:<name>`; the active log lives in `https://clad.dev/actions`; archived flows in `https://clad.dev/actions/archive` |
-| Scheduler | `com.example.app.engine.SyncDispatcher` — the single engine driver; concepts evaluate syncs via `com.example.app.engine.SyncEvaluator` |
+| Action log | `dev.clad.engine.ActionLog` — wraps a Jena transactional `Dataset`. Concept state lives in named graphs `concept:<name>`; the active log lives in `https://clad.dev/actions`; archived flows in `https://clad.dev/actions/archive` |
+| Scheduler | `dev.clad.engine.SyncDispatcher` — the single engine driver; concepts evaluate syncs via `dev.clad.engine.SyncEvaluator` |
 | Hard rules R1–R5 | Enforced by `LegibleArchitectureRulesTest` (ArchUnit) |
 
 ### The engine
@@ -76,8 +76,8 @@ completion and all sync invocations commit in one Jena transaction.
 
 ```java
 // In your concept class — e.g. UserConcept.java
-import com.example.app.engine.ConceptAgent;
-import com.example.app.engine.SyncEvaluator;
+import dev.clad.engine.ConceptAgent;
+import dev.clad.engine.SyncEvaluator;
 
 public class UserConcept extends ConceptAgent {
 

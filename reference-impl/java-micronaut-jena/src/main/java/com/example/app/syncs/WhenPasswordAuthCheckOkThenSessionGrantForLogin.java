@@ -2,10 +2,10 @@ package com.example.app.syncs;
 
 import com.example.app.concepts.passwordauth.PasswordAuthConcept;
 import com.example.app.concepts.session.SessionConcept;
-import com.example.app.engine.ActionLog;
-import com.example.app.engine.SyncAgent;
-import com.example.app.engine.SyncMetadata;
-import com.example.app.engine.SyncTrigger;
+import dev.clad.engine.ActionLog;
+import dev.clad.engine.SyncAgent;
+import dev.clad.engine.SyncMetadata;
+import dev.clad.engine.SyncTrigger;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 

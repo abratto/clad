@@ -30,25 +30,24 @@ class LegibleArchitectureRulesTest {
     private static final String IMPERATIVE_SYNC_WAIVER = "CLAD-ALLOW-IMPERATIVE-SYNC";
     private static final String COORDINATOR_WAIVER = "CLAD-ALLOW-COORDINATOR";
     private static final List<String> ENGINE_RUNTIME_TYPES = List.of(
-            "com.example.app.engine.ActionLog",
-            "com.example.app.engine.ActionRecord",
-            "com.example.app.engine.CompletionBus",
-            "com.example.app.engine.ConceptAgent",
-            "com.example.app.engine.FlowManager",
-            "com.example.app.engine.RdfVocabulary",
-            "com.example.app.engine.SyncAgent",
-            "com.example.app.engine.SyncDispatcher",
-            "com.example.app.engine.SyncMetadata",
-            "com.example.app.engine.SyncTrigger");
+            "dev.clad.engine.ActionLog",
+            "dev.clad.engine.ActionRecord",
+            "dev.clad.engine.CompletionBus",
+            "dev.clad.engine.ConceptAgent",
+            "dev.clad.engine.FlowManager",
+            "dev.clad.engine.RdfVocabulary",
+            "dev.clad.engine.SyncAgent",
+            "dev.clad.engine.SyncDispatcher",
+            "dev.clad.engine.SyncMetadata",
+            "dev.clad.engine.SyncTrigger");
     private static final List<String> PRIMARY_ADAPTER_ENGINE_TYPES = List.of(
-            "com.example.app.engine.ActionRecord",
-            "com.example.app.engine.FlowManager",
-            "com.example.app.engine.ResponseAssembler",
-            "com.example.app.engine.SyncDispatcher");
+            "dev.clad.engine.ActionRecord",
+            "dev.clad.engine.FlowManager",
+            "dev.clad.engine.SyncDispatcher");
 
     private static final JavaClasses CLASSES = new ClassFileImporter()
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-            .importPackages("com.example.app");
+            .importPackages("com.example.app", "dev.clad.engine");
 
     private static final String CONCEPTS_ROOT = "com.example.app.concepts";
 
@@ -169,11 +168,11 @@ class LegibleArchitectureRulesTest {
                         "be a non-boundary engine type") {
                     @Override
                     public boolean test(JavaClass dependency) {
-                        return dependency.getPackageName().equals("com.example.app.engine")
+                        return dependency.getPackageName().equals("dev.clad.engine")
                                 && !PRIMARY_ADAPTER_ENGINE_TYPES.contains(dependency.getFullName());
                     }
                 })
-                .as("adapters may use only ActionRecord, FlowManager, SyncDispatcher, and ResponseAssembler")
+                .as("adapters may use only ActionRecord, FlowManager, and SyncDispatcher from the engine")
                 .check(CLASSES);
     }
 
@@ -216,7 +215,7 @@ class LegibleArchitectureRulesTest {
 
     /**
      * R5 — every {@code *Concept} class under {@code com.example.app.concepts}
-     * must extend {@link com.example.app.engine.ConceptAgent}, ensuring it
+     * must extend {@link dev.clad.engine.ConceptAgent}, ensuring it
      * participates in the action-log polling loop. Every action it executes
      * therefore has an addressable flow token in the RDF store.
      */
@@ -225,7 +224,7 @@ class LegibleArchitectureRulesTest {
         classes()
                 .that().resideInAPackage(CONCEPTS_ROOT + "..")
                 .and().haveSimpleNameEndingWith("Concept")
-                .should().beAssignableTo(com.example.app.engine.ConceptAgent.class)
+                .should().beAssignableTo(dev.clad.engine.ConceptAgent.class)
                 .check(CLASSES);
     }
 
@@ -234,7 +233,7 @@ class LegibleArchitectureRulesTest {
     void java_profile_concept_classes_live_only_in_concept_packages() {
         classes()
                 .that().haveSimpleNameEndingWith("Concept")
-                .and().doNotHaveFullyQualifiedName("com.example.app.engine.ConceptAgent")
+                .and().doNotHaveFullyQualifiedName("dev.clad.engine.ConceptAgent")
                 .should().resideInAPackage(CONCEPTS_ROOT + ".(*)..")
                 .as("Java concept implementations must live under com.example.app.concepts.<name>")
                 .check(CLASSES);
@@ -294,7 +293,7 @@ class LegibleArchitectureRulesTest {
                 .and().areNotAnonymousClasses()
                 .and().areNotMemberClasses()
             .and().haveNameNotMatching(".*\\$.*")
-                .should().beAssignableTo(com.example.app.engine.SyncAgent.class)
+                .should().beAssignableTo(dev.clad.engine.SyncAgent.class)
                 .as("sync package classes must be declarative SyncAgent implementations, not ad hoc coordinators")
                 .allowEmptyShould(true)
                 .check(CLASSES);
@@ -314,8 +313,8 @@ class LegibleArchitectureRulesTest {
                 .or().haveFullyQualifiedName(ENGINE_RUNTIME_TYPES.get(7))
                 .or().haveFullyQualifiedName(ENGINE_RUNTIME_TYPES.get(8))
                 .or().haveFullyQualifiedName(ENGINE_RUNTIME_TYPES.get(9))
-                .should().resideInAPackage("com.example.app.engine..")
-                .as("Canonical runtime abstractions should live under com.example.app.engine")
+                .should().resideInAPackage("dev.clad.engine..")
+                .as("Canonical runtime abstractions should live under dev.clad.engine")
                 .check(CLASSES);
     }
 
@@ -323,8 +322,8 @@ class LegibleArchitectureRulesTest {
     @Test
     void java_profile_sync_classes_live_only_in_syncs_package() {
         classes()
-                .that().areAssignableTo(com.example.app.engine.SyncAgent.class)
-                .and().doNotHaveFullyQualifiedName("com.example.app.engine.SyncAgent")
+                .that().areAssignableTo(dev.clad.engine.SyncAgent.class)
+                .and().doNotHaveFullyQualifiedName("dev.clad.engine.SyncAgent")
                 .should().resideInAPackage("com.example.app.syncs..")
                 .as("Java SyncAgent implementations must live under com.example.app.syncs")
                 .allowEmptyShould(true)

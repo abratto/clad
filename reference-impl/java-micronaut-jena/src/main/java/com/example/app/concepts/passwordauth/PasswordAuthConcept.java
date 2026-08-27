@@ -1,11 +1,11 @@
 package com.example.app.concepts.passwordauth;
 
-import com.example.app.engine.ActionLog;
-import com.example.app.engine.ActionRecord;
-import com.example.app.engine.CompletionBus;
-import com.example.app.engine.ConceptAgent;
-import com.example.app.engine.SyncEvaluator;
-import com.example.app.engine.RdfVocabulary;
+import dev.clad.engine.ActionLog;
+import dev.clad.engine.ActionRecord;
+import dev.clad.engine.CompletionBus;
+import dev.clad.engine.ConceptAgent;
+import dev.clad.engine.SyncEvaluator;
+import dev.clad.engine.RdfVocabulary;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.jena.query.ParameterizedSparqlString;

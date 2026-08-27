@@ -1,8 +1,8 @@
 package com.example.app;
 
-import com.example.app.engine.ActionLog;
-import com.example.app.engine.CompletionBus;
-import com.example.app.engine.FlowManager;
+import dev.clad.engine.ActionLog;
+import dev.clad.engine.CompletionBus;
+import dev.clad.engine.FlowManager;
 import org.junit.jupiter.api.BeforeEach;
 
 /** Shared test fixtures for concept-level tests. */
