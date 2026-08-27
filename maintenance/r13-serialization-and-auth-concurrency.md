@@ -2,7 +2,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `active`
+- **Status:** `closed`
 - **Affected profile(s):** `reference-impl/java-micronaut-jena` (R13), `reference-impl/java-micronaut-postgres` (auth concurrency)
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
