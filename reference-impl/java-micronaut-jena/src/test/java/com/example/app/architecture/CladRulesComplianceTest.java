@@ -86,14 +86,12 @@ class CladRulesComplianceTest {
     void jacksonSerializesNullValues() {
         SerializationConfig config = objectMapper.getSerializationConfig();
         var inclusion = config.getDefaultPropertyInclusion().getValueInclusion();
-        // Micronaut defaults to NON_EMPTY. For full CLAD compliance
-        // (jsonpath "$.user.bio" == null assertions), set
-        // jackson.serialization-inclusion=always in application.yml.
-        assertTrue(
-                inclusion == JsonInclude.Include.ALWAYS
-                        || inclusion == JsonInclude.Include.NON_EMPTY,
-                "R13: Jackson must not omit null values (NON_NULL). "
-                + "Current: " + inclusion + ". For full compliance, configure "
-                + "jackson.serialization-inclusion=always in application.yml.");
+        // R13: Jackson MUST serialize null values (Include.ALWAYS) so that
+        // Conduit spec assertions like `jsonpath "$.user.bio" == null` hold.
+        // The ObjectMapperCustomizer enforces this at the HTTP boundary.
+        assertEquals(
+                JsonInclude.Include.ALWAYS, inclusion,
+                "R13: Jackson must serialize null values (Include.ALWAYS). "
+                + "Current: " + inclusion + ".");
     }
 }

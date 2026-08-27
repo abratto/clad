@@ -1,4 +1,4 @@
-package org.clad.conduit.infrastructure;
+package com.example.app.infrastructure;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;

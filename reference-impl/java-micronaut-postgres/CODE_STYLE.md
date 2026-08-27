@@ -40,6 +40,10 @@ dev.clad.engine (shared clad-engine module)
 - **Mandatory/optional** follow the Stage 03b model: `NOT NULL` for mandatory,
   nullable for optional, `DEFAULT` for defaults (see
   [`RELATIONAL_LOWERING.md`](RELATIONAL_LOWERING.md)).
+- **Read-modify-write state is atomic.** A concept that reads then writes a row
+  (e.g. `PasswordAuth.check` incrementing a failure counter) wraps the cycle in
+  `dsl.transactionResult(...)` with `SELECT … FOR UPDATE` so concurrent
+  invocations serialise on the row and cannot lose an update.
 
 ## Coordination is unchanged
 

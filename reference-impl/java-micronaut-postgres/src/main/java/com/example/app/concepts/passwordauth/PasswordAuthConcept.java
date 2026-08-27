@@ -9,6 +9,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -77,13 +78,13 @@ public final class PasswordAuthConcept extends ConceptAgent {
 
     /** Test/seed helper. */
     public void seedCredential(String userId, String password) {
-        upsert(userId, verify(password), 0, null);
+        upsert(dsl, userId, verify(password), 0, null);
     }
 
-    private void upsert(String userId, String verifier, int failedAttempts, Long lockedUntilMillis) {
+    private void upsert(DSLContext ctx, String userId, String verifier, int failedAttempts, Long lockedUntilMillis) {
         OffsetDateTime lockedUntil = lockedUntilMillis == null ? null
                 : OffsetDateTime.ofInstant(Instant.ofEpochMilli(lockedUntilMillis), ZoneOffset.UTC);
-        dsl.insertInto(PASSWORDAUTH_CREDENTIALS,
+        ctx.insertInto(PASSWORDAUTH_CREDENTIALS,
                         PASSWORDAUTH_CREDENTIALS.USER_ID, PASSWORDAUTH_CREDENTIALS.PASSWORD_HASH,
                         PASSWORDAUTH_CREDENTIALS.FAILED_ATTEMPTS, PASSWORDAUTH_CREDENTIALS.LOCKED_UNTIL)
                 .values(UUID.fromString(userId), verifier, failedAttempts, lockedUntil)
@@ -115,49 +116,47 @@ public final class PasswordAuthConcept extends ConceptAgent {
             writeError(invocation, "missing userId or password");
             return;
         }
-        String outcome;
-        AuthState state = lookupAuthState(userId);
-        long now = System.currentTimeMillis();
-        if (state == null) {
-            outcome = "NO_CREDENTIAL";
-        } else if (state.lockedUntilMillis() != null && state.lockedUntilMillis() > now) {
-            outcome = "LOCKED";
-        } else if (state.verifier().equals(verify(password))) {
-            upsert(userId, state.verifier(), 0, null);
-            outcome = "OK";
-        } else {
-            int failedAttempts = state.failedAttempts() + 1;
-            Long lockedUntilMillis = failedAttempts >= LOCKOUT_THRESHOLD
+        UUID id = UUID.fromString(userId);
+        // The read-modify-write is atomic: the row is locked FOR UPDATE until the
+        // transaction commits, so concurrent checks for the same user serialise
+        // and the failed-attempt counter cannot lose an increment.
+        String outcome = dsl.transactionResult(configuration -> {
+            DSLContext tx = DSL.using(configuration);
+            var record = tx.select(
+                            PASSWORDAUTH_CREDENTIALS.PASSWORD_HASH,
+                            PASSWORDAUTH_CREDENTIALS.FAILED_ATTEMPTS,
+                            PASSWORDAUTH_CREDENTIALS.LOCKED_UNTIL)
+                    .from(PASSWORDAUTH_CREDENTIALS)
+                    .where(PASSWORDAUTH_CREDENTIALS.USER_ID.eq(id))
+                    .forUpdate()
+                    .fetchOne();
+            long now = System.currentTimeMillis();
+            if (record == null) {
+                return "NO_CREDENTIAL";
+            }
+            String verifier = record.get(PASSWORDAUTH_CREDENTIALS.PASSWORD_HASH);
+            Integer rawAttempts = record.get(PASSWORDAUTH_CREDENTIALS.FAILED_ATTEMPTS);
+            int failedAttempts = rawAttempts == null ? 0 : rawAttempts;
+            OffsetDateTime lockedUntil = record.get(PASSWORDAUTH_CREDENTIALS.LOCKED_UNTIL);
+            long lockedUntilMillis = lockedUntil == null ? 0L : lockedUntil.toInstant().toEpochMilli();
+            if (lockedUntilMillis > now) {
+                return "LOCKED";
+            }
+            if (verifier.equals(verify(password))) {
+                upsert(tx, userId, verifier, 0, null);
+                return "OK";
+            }
+            int newAttempts = failedAttempts + 1;
+            Long newLockedUntil = newAttempts >= LOCKOUT_THRESHOLD
                     ? now + LOCKOUT_WINDOW_MILLIS
                     : null;
-            upsert(userId, state.verifier(), failedAttempts, lockedUntilMillis);
-            outcome = "BAD_PASSWORD";
-        }
+            upsert(tx, userId, verifier, newAttempts, newLockedUntil);
+            return "BAD_PASSWORD";
+        });
         writeCompletion(invocation, Map.of(
                 "outcome", ResourceFactory.createStringLiteral(outcome),
                 "userId", ResourceFactory.createStringLiteral(userId)));
     }
-
-    private AuthState lookupAuthState(String userId) {
-        var record = dsl.select(
-                        PASSWORDAUTH_CREDENTIALS.PASSWORD_HASH,
-                        PASSWORDAUTH_CREDENTIALS.FAILED_ATTEMPTS,
-                        PASSWORDAUTH_CREDENTIALS.LOCKED_UNTIL)
-                .from(PASSWORDAUTH_CREDENTIALS)
-                .where(PASSWORDAUTH_CREDENTIALS.USER_ID.eq(UUID.fromString(userId)))
-                .fetchOne();
-        if (record == null) {
-            return null;
-        }
-        Integer attempts = record.get(PASSWORDAUTH_CREDENTIALS.FAILED_ATTEMPTS);
-        OffsetDateTime lockedUntil = record.get(PASSWORDAUTH_CREDENTIALS.LOCKED_UNTIL);
-        return new AuthState(
-                record.get(PASSWORDAUTH_CREDENTIALS.PASSWORD_HASH),
-                attempts == null ? 0 : attempts,
-                lockedUntil == null ? null : lockedUntil.toInstant().toEpochMilli());
-    }
-
-    private record AuthState(String verifier, int failedAttempts, Long lockedUntilMillis) {}
 
     /** Trivial verifier — DO NOT USE IN PRODUCTION. */
     private static String verify(String password) {
