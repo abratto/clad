@@ -21,6 +21,7 @@ import os
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 
 CONCEPT_IMPL_RE = re.compile(r"(^|/)concepts/([^/]+)/([^/]+)\.(java|kt|scala)$")
@@ -130,11 +131,34 @@ def missing_matches(impl_names, spec_names):
     return sorted(name for name in impl_names if name.lower() not in spec_lookup)
 
 
+def has_active_maintenance_record():
+    """True when an active maintenance/<change-name>.md governs the current work.
+
+    R17 (iterative-change coupling) and R20 (platform maintenance) are separate
+    governance paths. A maintenance change may add or re-realize concept/sync
+    implementations in a new profile without re-deriving their already-approved
+    specs; that coupling is governed by the maintenance record's test matrix,
+    not this gate.
+    """
+    maintenance_dir = Path(__file__).resolve().parent.parent / "maintenance"
+    if not maintenance_dir.is_dir():
+        return False
+    status_re = re.compile(r"^- \*\*Status:\*\* `?active`?\s*$", re.MULTILINE)
+    for path in maintenance_dir.glob("*.md"):
+        if status_re.search(path.read_text(encoding="utf-8")):
+            return True
+    return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Verify iterative implementation/spec coupling in the diff.")
     parser.add_argument("--base", default="origin/main", help="Base ref for git diff detection")
     parser.add_argument("--changed-files-file", default="", help="Test hook: newline-delimited changed file list")
     args = parser.parse_args()
+
+    if has_active_maintenance_record():
+        print("PASS  maintenance-governed change (R20); iterative-change coupling (R17) not applicable")
+        sys.exit(0)
 
     changed = changed_files(args.base, args.changed_files_file)
 

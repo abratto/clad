@@ -16,11 +16,14 @@ The reactor is:
 - [`java-micronaut-jena/`](java-micronaut-jena/) — Java 21 + Micronaut
   for HTTP/runtime, Apache Jena for per-concept RDF graphs (the reference
   profile for RDF/SPARQL concept state).
+- [`java-micronaut-postgres/`](java-micronaut-postgres/) — Java 21 +
+  Micronaut for HTTP/runtime, JOOQ + Flyway + Postgres for concept state
+  (the reference profile for relational concept state). The action log is
+  still the shared in-memory `clad-engine`.
 
-Other profiles (a relational `java-micronaut-postgres/`, TypeScript/Deno,
-Kotlin/Ktor, Python/FastAPI, …) can be added as sibling modules without
-changing anything in `methodology/`. The methodology is
-profile-independent.
+Other profiles (TypeScript/Deno, Kotlin/Ktor, Python/FastAPI, …) can be
+added as sibling modules without changing anything in `methodology/`. The
+methodology is profile-independent.
 
 For repositories created from the CLAD template, treat this directory as
 an **upstream reference shelf**, not as the main product code root. If

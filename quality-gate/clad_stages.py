@@ -350,6 +350,13 @@ _CONCEPT_STATE_RELATIONAL = Check(
     requires=lambda r: [CONCEPT_DIR(r)],
 )
 
+_RELATIONAL_MAPPING = Check(
+    name="relational_mapping",
+    script="verify_relational_mapping.py",
+    build_args=lambda r: ["--storage-dir", output_dir(r, "04_implement/04a_storage-mapping")],
+    requires=lambda r: [output_dir(r, "04_implement/04a_storage-mapping")],
+)
+
 
 # --------------------------------------------------------------------------
 # The canonical per-UC stage order.
@@ -367,7 +374,8 @@ STAGES: List[Stage] = [
     Stage("03a", "Dependency review", "03a_dependency-review",
           checks=[_SYNC_ROUTE_FILTERS]),
     Stage("03b", "Data model", "03b_data-model", gate_after=2, checks=[_DATA_MODEL]),
-    Stage("04a", "Storage mapping", "04_implement/04a_storage-mapping"),
+    Stage("04a", "Storage mapping", "04_implement/04a_storage-mapping",
+          checks=[_RELATIONAL_MAPPING]),
     Stage("04b", "SPEC", "04_implement/04b_spec",
           checks=[_SPEC_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN]),
     Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3,

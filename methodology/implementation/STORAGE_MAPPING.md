@@ -65,8 +65,17 @@ model first.
 ### Relational profiles
 
 - Fact type → column or relation
-- Concept region → table or schema prefix owned by one concept
+- Concept region → a table set owned by one concept, in **one schema per
+  application** (not one schema per concept); each table's name carries its
+  owning concept as a prefix (`user_accounts`, `passwordauth_credentials`)
+- Cross-concept identifiers → opaque typed columns, **never** foreign keys
+  (R2: no cross-region reads)
 - Constraints → `UNIQUE`, `NOT NULL`, `CHECK`, lookup tables, etc.
+
+The deterministic mapping from the Stage 03b CSDP fact model to this schema is
+Halpin's Rmap (arity + uniqueness + mandatory roles). See the
+`java-micronaut-postgres` profile's `RELATIONAL_LOWERING.md` for the
+profile-specific rule set.
 
 ### Document profiles
 

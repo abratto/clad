@@ -1,0 +1,13 @@
+micronaut:
+  router:
+    static-resources:
+      public:
+        paths: classpath:public
+        mapping: /**
+
+datasources:
+  default:
+    url: jdbc:postgresql://localhost:5432/clad
+    username: clad
+    password: clad
+    driver-class-name: org.postgresql.Driver
