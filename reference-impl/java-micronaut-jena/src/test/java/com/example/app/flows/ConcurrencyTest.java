@@ -2,7 +2,7 @@ package com.example.app.flows;
 
 import com.example.app.api.LoginRequest;
 import com.example.app.concepts.passwordauth.PasswordAuthConcept;
-import com.example.app.concepts.user.UserConcept;
+import com.example.app.concepts.usernaming.UserNamingConcept;
 import dev.clad.engine.ActionLog;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -42,7 +42,7 @@ class ConcurrencyTest {
     HttpClient client;
 
     @Inject
-    UserConcept users;
+    UserNamingConcept users;
 
     @Inject
     PasswordAuthConcept passwords;

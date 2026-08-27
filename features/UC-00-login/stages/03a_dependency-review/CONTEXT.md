@@ -26,7 +26,7 @@ If a card needs an action that doesn't exist yet, you are mid-violation
 |---|---|---|
 | `../03_syncs/output/` | 4 | The UC-00 per-transition sync pack |
 | `../01b_chain-table/output/` | 4 | The four scenarios' action chains |
-| `../01a_responsibility-map/output/responsibility-map.md` | 4 | The four concepts: `User`, `PasswordAuth`, `Session`, `Web` |
+| `../01a_responsibility-map/output/responsibility-map.md` | 4 | The four concepts: `UserNaming`, `PasswordAuth`, `Session`, `Web` |
 | `../02_concepts/output/` | 4 | Action and field names |
 | `../../../../methodology/architecture/SYNC_PATTERNS.md` | 3 | Patterns A/B/C/D |
 | Skill: `clad-dependency-review` | 3 | Dependency review reference |
@@ -35,7 +35,7 @@ If a card needs an action that doesn't exist yet, you are mid-violation
 
 ## Process
 
-Produce one card per concept (`User`, `PasswordAuth`, `Session`,
+Produce one card per concept (`UserNaming`, `PasswordAuth`, `Session`,
 `Web`) and one consolidated `pattern-d-summary.md`. The inputs above
 are the only reads needed.
 
@@ -63,7 +63,7 @@ that earlier stage rather than fixing the mismatch inside 03a.
 
 ## Outputs
 
-- `output/User-card.md`
+- `output/UserNaming-card.md`
 - `output/PasswordAuth-card.md`
 - `output/Session-card.md`
 - `output/Web-card.md`
@@ -74,7 +74,7 @@ that earlier stage rather than fixing the mismatch inside 03a.
 ### Automated checks
 
 ```
-python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected "User-card.md,PasswordAuth-card.md,Session-card.md,Web-card.md,pattern-d-summary.md"
+python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected "UserNaming-card.md,PasswordAuth-card.md,Session-card.md,Web-card.md,pattern-d-summary.md"
 ```
 
 - **verify_file_manifest.py:** `output/` contains exactly the expected review files.

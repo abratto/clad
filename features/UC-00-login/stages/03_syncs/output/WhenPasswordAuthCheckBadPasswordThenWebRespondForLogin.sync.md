@@ -28,4 +28,4 @@ then {
 
 ## Notes
 
-- The response literal is intentionally identical to `WhenUserLookupByUsernameRefusedThenWebRespondForLogin` to preserve the no-enumeration property.
+- The response literal is intentionally identical to `WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin` to preserve the no-enumeration property.

@@ -20,9 +20,24 @@ purpose
 ```
 
 The `concept` keyword announces a spec in the WYSIWID language. The
-name is a **noun** in PascalCase, referring to a capability, not an
-entity. (`User` is fine because there is something called a user;
-`UserService` is not, because the service-ness is incidental.)
+name is a **noun phrase in PascalCase that names the capability, not the
+entity the capability acts over**. Prefer a purpose-oriented name — a
+gerund or noun phrase such as `Posting`, `Authentication`, `Upvoting`,
+`Profiling` — over an entity noun such as `Post`, `User`, `Comment`.
+
+The entity is a *different* type. A concept owns a **set of
+individuals** (entities with identity), and those individuals have their
+own type name, which appears in the `## State` section — never in the
+concept name. `PasswordAuthentication` (the capability) owns a set of
+`User` individuals. Naming the concept `User` conflates the two: it
+names the thing in the set, not the behaviour that chunks around a
+purpose — the trap Daniel Jackson describes in *Why concepts aren't
+objects* (he regrets his own `Post` rather than `Posting`).
+
+`UserService` is wrong for a different reason: the `Service` suffix is
+incidental machinery, not a purpose. `PasswordAuthentication` and
+`Posting` are good names; `User` and `UserService` are both
+entity-shaped.
 
 Type parameters in brackets make the concept polymorphic: `PasswordAuth
 [UserId]` says `PasswordAuth` can manage credentials for any kind of
@@ -58,10 +73,23 @@ State is **private** to the concept. No other concept may read it directly
 (hard rule R1). The only legal cross-concept read is a concept-state read in the `where`
 clause in a sync spec.
 
-**The subject type is an identifier type, not the concept itself.** Every
-state field ranges over a *set* of individuals: `username: UserId -> String`
-says "for each user, a username." The thing to the left of the arrow is the
-individual's identity type (`UserId`), never the concept's own name (`User`).
+**Three distinct type names, three distinct roles.** A concept spec names
+three things, and they must not blur together:
+
+1. **The concept** — a capability, named for its purpose
+   (`PasswordAuthentication`), not for the entity (`User`).
+2. **The individual** — the entity the concept's set ranges over (`User`).
+3. **The identifier** — the identity of an individual (`UserId`).
+
+The subject type is the individual's **identifier type**, not the concept
+itself. Every state field ranges over a *set* of individuals:
+`username: UserId -> String` says "for each user, a username." The thing to
+the left of the arrow is the identity type (`UserId`), never the concept's own
+name. When the concept is named after the entity (`concept User`), the entity
+can no longer appear as the subject without modelling one object rather than a
+set — rename the concept to its purpose (`UserNaming`) and `User` becomes a
+free, correctly-scoped individual type.
+
 A state block that lists *untyped* field names — `userid, username,
 password, email` — is the object-oriented trap: it models one object's
 instance variables, and then an action like `authenticate(username, password)`

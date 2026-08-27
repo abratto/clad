@@ -1,4 +1,4 @@
-package com.example.app.concepts.user;
+package com.example.app.concepts.usernaming;
 
 import dev.clad.engine.ActionLog;
 import dev.clad.engine.ActionRecord;
@@ -13,12 +13,12 @@ import org.jooq.DSLContext;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.example.app.db.tables.UserAccounts.USER_ACCOUNTS;
+import static com.example.app.db.tables.Usernames.USERNAMES;
 
 /**
  * The User concept: who exists in the system.
  *
- * <p>State lives in the {@code user_accounts} table (concept-owned). Two actions:
+ * <p>State lives in the {@code usernames} table (concept-owned). Two actions:
  * <ul>
  *   <li>{@code register} — adds a (userId, username) record.</li>
  *   <li>{@code lookupByUsername} — emits {@code outcome=FOUND|UNKNOWN}.</li>
@@ -28,22 +28,22 @@ import static com.example.app.db.tables.UserAccounts.USER_ACCOUNTS;
  * state is relational (JOOQ over Postgres).
  */
 @Singleton
-public final class UserConcept extends ConceptAgent {
+public final class UserNamingConcept extends ConceptAgent {
 
     /** IRI used in :concept triples. */
-    public static final String IRI = "https://clad.dev/concept/user";
+    public static final String IRI = "https://clad.dev/concept/usernaming";
 
     private final DSLContext dsl;
 
     @Inject
-    public UserConcept(ActionLog actionLog, CompletionBus completionBus,
+    public UserNamingConcept(ActionLog actionLog, CompletionBus completionBus,
                        SyncEvaluator evaluator, DSLContext dsl) {
         super(actionLog, completionBus, evaluator);
         this.dsl = dsl;
     }
 
     /** Test-only constructor — sync evaluation bypassed for isolated tests. */
-    public UserConcept(ActionLog actionLog, CompletionBus completionBus, DSLContext dsl) {
+    public UserNamingConcept(ActionLog actionLog, CompletionBus completionBus, DSLContext dsl) {
         super(actionLog, completionBus);
         this.dsl = dsl;
     }
@@ -70,7 +70,7 @@ public final class UserConcept extends ConceptAgent {
 
     /** Test/seed helper to pre-populate the user table. */
     public void seedUser(String userId, String username) {
-        dsl.insertInto(USER_ACCOUNTS, USER_ACCOUNTS.USER_ID, USER_ACCOUNTS.USERNAME)
+        dsl.insertInto(USERNAMES, USERNAMES.USER_ID, USERNAMES.USERNAME)
                 .values(UUID.fromString(userId), username)
                 .onConflictDoNothing()
                 .execute();
@@ -106,14 +106,14 @@ public final class UserConcept extends ConceptAgent {
     }
 
     private boolean existsByUsername(String username) {
-        return dsl.fetchExists(dsl.selectOne().from(USER_ACCOUNTS)
-                .where(USER_ACCOUNTS.USERNAME.eq(username)));
+        return dsl.fetchExists(dsl.selectOne().from(USERNAMES)
+                .where(USERNAMES.USERNAME.eq(username)));
     }
 
     private String findUserIdByUsername(String username) {
-        UUID userId = dsl.select(USER_ACCOUNTS.USER_ID).from(USER_ACCOUNTS)
-                .where(USER_ACCOUNTS.USERNAME.eq(username))
-                .fetchOne(USER_ACCOUNTS.USER_ID);
+        UUID userId = dsl.select(USERNAMES.USER_ID).from(USERNAMES)
+                .where(USERNAMES.USERNAME.eq(username))
+                .fetchOne(USERNAMES.USER_ID);
         return userId == null ? null : userId.toString();
     }
 }

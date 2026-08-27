@@ -39,8 +39,7 @@ def main():
         print(f"FAIL  directory not found: {out_dir}")
         sys.exit(1)
 
-    actual = {f for f in os.listdir(out_dir)
-              if f != ".gitkeep" and f != ".gitkeep.md"}
+    actual = {f for f in os.listdir(out_dir) if not f.startswith(".")}
 
     missing = expected - actual
     extra = actual - expected

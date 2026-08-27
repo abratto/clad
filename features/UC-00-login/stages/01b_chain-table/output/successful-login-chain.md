@@ -10,8 +10,8 @@ for a registered user whose account is not locked.
 | # | When | Then | Inputs | Outcome | Why this step |
 |---|---|---|---|---|---|
 | 1 | `Web/request[POST /login]` | `Web.handle` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
-| 2 | `Web.handle[Routed]` | `User.lookupByUsername` | `username` | `Found(userId)` | Need the opaque `userId` before any auth check |
-| 3 | `User.lookupByUsername[Found(userId)]` | `PasswordAuth.check` | `userId`, `password` | `Ok` | Verify the credential |
+| 2 | `Web.handle[Routed]` | `UserNaming.lookupByUsername` | `username` | `Found(userId)` | Need the opaque `userId` before any auth check |
+| 3 | `UserNaming.lookupByUsername[Found(userId)]` | `PasswordAuth.check` | `userId`, `password` | `Ok` | Verify the credential |
 | 4 | `PasswordAuth.check[Ok]` | `Session.grant` | `userId` | `Granted(sessionId)` | Open a fresh session for the verified user |
 | 5 | `Session.grant[Granted(sessionId)]` | `Web.respond[200]` | `200`, `{ sessionToken: sessionId }` | `Sent` | Closes the request with the new token |
 
@@ -20,8 +20,8 @@ for a registered user whose account is not locked.
 ```mermaid
 stateDiagram-v2
     [*] --> Web_handle : POST /login {username, password}
-    Web_handle --> User_lookupByUsername : [Routed]
-    User_lookupByUsername --> PasswordAuth_check : [Found]
+    Web_handle --> UserNaming_lookupByUsername : [Routed]
+    UserNaming_lookupByUsername --> PasswordAuth_check : [Found]
     PasswordAuth_check --> Session_grant : [Ok]
     Session_grant --> Web_respond200 : [Granted]
     Web_respond200 --> [*]

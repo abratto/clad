@@ -92,8 +92,8 @@
 
 - The model matches the approved `Session` state section.
 - No Pattern D exposure exists for `Session` in UC-00.
-- No cross-concept schema relationship to `User` is introduced.
+- No cross-concept schema relationship to `UserNaming` is introduced.
 
 ## Modeling Notes
 
-- `UserId` remains an opaque value; this stage does not model a cross-concept foreign-key relationship to `User`.
+- `UserId` remains an opaque value; this stage does not model a cross-concept foreign-key relationship to `UserNaming`.

@@ -35,9 +35,9 @@ Halpin's Rmap, specialized for CLAD — see [`RELATIONAL_LOWERING.md`](RELATIONA
 
 Key rules:
 
-- **One schema per application** (`public`); each table's name is prefixed by
-  its owning concept (`user_accounts`, `passwordauth_credentials`,
-  `session_tokens`).
+- **One schema per application** (`public`); each table is named for the
+  **relation** it holds, never the entity (`usernames`,
+  `passwordauth_credentials`, `session_tokens`).
 - **No foreign key crosses a concept boundary.** Cross-concept identifiers are
   opaque typed columns. This is hard rule R2 at the DDL level.
 - Mandatory → `NOT NULL`, optional → nullable, defaults → `DEFAULT`,
@@ -77,5 +77,5 @@ configured in `src/main/resources/application.yml`.
 
 The shared `DebugController` exposes `/api/dev/{flows,syncs,flow/{token},stuck,actions}`
 (dev-only, opt-in). The RDF-only `/concept/{name}/triples` endpoint is not
-present here — inspect concept state with `psql` (`SELECT * FROM user_accounts;`)
+present here — inspect concept state with `psql` (`SELECT * FROM usernames;`)
 instead.

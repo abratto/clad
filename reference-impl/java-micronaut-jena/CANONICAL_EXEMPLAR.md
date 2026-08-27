@@ -34,12 +34,12 @@ flow implemented by:
 - `engine/ConceptAgent.java` — per-concept polling/action boundary
 - `engine/SyncAgent.java` — declarative `whereClause()` /
   `thenBindings()` sync shape plus shared SPARQL parameterization hook
-- `concepts/user/UserConcept.java`
+- `concepts/user/UserNamingConcept.java`
 - `concepts/passwordauth/PasswordAuthConcept.java`
 - `concepts/session/SessionConcept.java`
-- `syncs/WhenWebHandleRoutedThenUserLookupByUsernameForLogin.java`
-- `syncs/WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin.java`
-- `syncs/WhenUserLookupByUsernameRefusedThenWebRespondForLogin.java`
+- `syncs/WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin.java`
+- `syncs/WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin.java`
+- `syncs/WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin.java`
 - `syncs/WhenPasswordAuthCheckOkThenSessionGrantForLogin.java`
 - `syncs/WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.java`
 - `syncs/WhenPasswordAuthCheckLockedThenWebRespondForLogin.java`
@@ -66,7 +66,7 @@ flow implemented by:
 ## What not to copy from this exemplar
 
 - package names or source roots as if they were mandatory defaults
-- specific domain names like `User`, `PasswordAuth`, `Session`, or
+- specific domain names like `UserNaming`, `PasswordAuth`, `Session`, or
   `login`
 - any implementation detail not justified by the current feature's own
   approved upstream artefacts

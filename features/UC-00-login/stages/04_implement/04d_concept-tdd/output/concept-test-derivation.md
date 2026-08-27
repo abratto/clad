@@ -7,8 +7,8 @@ For each public action × outcome, exactly one test row.
 |---|---|---|---|---|
 | User | `register` | `REGISTERED` | `register_returns_REGISTERED_for_fresh_username` | stub |
 | User | `register` | `USERNAME_TAKEN` | `register_returns_USERNAME_TAKEN_when_username_exists` | stub |
-| User | `lookupByUsername` | `FOUND` | `lookupByUsername_returns_FOUND_for_registered_username` | green — `UserLookupByUsernameTest` |
-| User | `lookupByUsername` | `NOT_FOUND` | `lookupByUsername_returns_NOT_FOUND_for_unregistered_username` | green — `UserLookupByUsernameTest` |
+| User | `lookupByUsername` | `FOUND` | `lookupByUsername_returns_FOUND_for_registered_username` | green — `UserNamingLookupByUsernameTest` |
+| User | `lookupByUsername` | `NOT_FOUND` | `lookupByUsername_returns_NOT_FOUND_for_unregistered_username` | green — `UserNamingLookupByUsernameTest` |
 | PasswordAuth | `setCredential` | `STORED` | `setCredential_stores_verifier` | stub |
 | PasswordAuth | `check` | `OK` | `check_returns_OK_for_matching_password` | green — `PasswordAuthCheckTest` |
 | PasswordAuth | `check` | `BAD_PASSWORD` | `check_returns_BAD_PASSWORD_for_mismatched_password` | green — `PasswordAuthCheckTest` |
@@ -20,7 +20,7 @@ For each public action × outcome, exactly one test row.
 ## Status
 
 The Java reference profile now has dedicated concept tests for
-`User.lookupByUsername` and `PasswordAuth.check`; `Session.grant` is
+`UserNaming.lookupByUsername` and `PasswordAuth.check`; `Session.grant` is
 covered through sync and flow tests. `register`, `setCredential`, and
 `Session.lookup` remain outside the UC-00 login flow and need dedicated
 unit tests when a feature depends on them. The current verification

@@ -77,7 +77,7 @@ class RemoteStorageContainerTest {
                 new LocalStorage(DatasetFactory.createTxnMem()),
                 remote());
 
-        String businessGraph = RdfVocabulary.conceptGraph("user");
+        String businessGraph = RdfVocabulary.conceptGraph("usernaming");
         split.update("INSERT DATA { GRAPH <" + businessGraph
                 + "> { <http://example.org/u1> <http://example.org/uname> \"ada\" } }");
 

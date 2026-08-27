@@ -1,7 +1,7 @@
 package com.example.app.architecture;
 
 import com.example.app.ConceptTestBase;
-import com.example.app.concepts.user.UserConcept;
+import com.example.app.concepts.usernaming.UserNamingConcept;
 import dev.clad.engine.RdfVocabulary;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,7 +43,7 @@ class CladRulesComplianceTest {
         var log = new dev.clad.engine.ActionLog();
         var bus = new dev.clad.engine.CompletionBus();
         var flow = new dev.clad.engine.FlowManager(log, bus);
-        var concept = new com.example.app.concepts.user.UserConcept(log, bus);
+        var concept = new com.example.app.concepts.usernaming.UserNamingConcept(log, bus);
 
         concept.seedUser("r12-user", "r12-username");
         String actionIri = RdfVocabulary.ACTION_NODE_PREFIX + "r12-test";
@@ -53,7 +53,7 @@ class CladRulesComplianceTest {
             "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n" +
             "INSERT DATA {\n" +
             "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
-            "    <" + actionIri + "> :concept <" + UserConcept.IRI + "> ;\n" +
+            "    <" + actionIri + "> :concept <" + UserNamingConcept.IRI + "> ;\n" +
             "                     :name    \"lookupByUsername\" ;\n" +
             "                     :input   _:inp ;\n" +
             "                     :flow    <" + flow.mintFlowToken() + "> .\n" +
@@ -69,7 +69,7 @@ class CladRulesComplianceTest {
             "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n" +
             "SELECT (COUNT(?a) AS ?c) WHERE {\n" +
             "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
-            "    ?a :concept <" + UserConcept.IRI + "> ;\n" +
+            "    ?a :concept <" + UserNamingConcept.IRI + "> ;\n" +
             "       :name \"lookupByUsername\" .\n" +
             "    FILTER NOT EXISTS { ?a :outcome ?_any }\n" +
             "  }\n" +

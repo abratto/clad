@@ -1,4 +1,4 @@
-package com.example.app.concepts.user;
+package com.example.app.concepts.usernaming;
 
 import com.example.app.ConceptTestBase;
 import dev.clad.engine.RdfVocabulary;
@@ -11,10 +11,10 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@DisplayName("UserLookupByUsername")
-class UserLookupByUsernameTest extends ConceptTestBase {
+@DisplayName("UserNamingLookupByUsername")
+class UserNamingLookupByUsernameTest extends ConceptTestBase {
 
-    private UserConcept concept;
+    private UserNamingConcept concept;
     private int actionCounter = 0;
     private String lastActionIri;
 
@@ -25,7 +25,7 @@ class UserLookupByUsernameTest extends ConceptTestBase {
     }
 
     private void initConcept() {
-        concept = new UserConcept(log, bus);
+        concept = new UserNamingConcept(log, bus);
     }
 
     private void writePendingInvocation(String username) {
@@ -34,7 +34,7 @@ class UserLookupByUsernameTest extends ConceptTestBase {
             "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n" +
             "INSERT DATA {\n" +
             "  GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> {\n" +
-            "    <" + actionIri + "> :concept <" + UserConcept.IRI + "> ;\n" +
+            "    <" + actionIri + "> :concept <" + UserNamingConcept.IRI + "> ;\n" +
             "                     :name    \"lookupByUsername\" ;\n" +
             "                     :input   _:inp ;\n" +
             "                     :flow    <" + flow.mintFlowToken() + "> .\n" +

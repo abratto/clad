@@ -1,15 +1,15 @@
-sync WhenUserLookupByUsernameRefusedThenWebRespondForLogin
+sync WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin
 
 ## Sync Contract Matrix
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `2` | `3a` | `User/lookupByUsername: [...] => [ refused ]` | `Web/respond: [ status: 401 ; body: { message: "username or password didn't match" } ]` | `401`, `"username or password didn't match"` |
+| `2` | `3a` | `UserNaming/lookupByUsername: [...] => [ refused ]` | `Web/respond: [ status: 401 ; body: { message: "username or password didn't match" } ]` | `401`, `"username or password didn't match"` |
 
 ## Rule
 
 when {
-    User/lookupByUsername: [ username: ?u ] => [ refused ]
+    UserNaming/lookupByUsername: [ username: ?u ] => [ refused ]
 }
 then {
     Web/respond: [ status: 401 ; body: { message: "username or password didn't match" } ]

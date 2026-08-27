@@ -13,6 +13,10 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -67,11 +71,13 @@ class LegibleArchitectureRulesTest {
                 .check(CLASSES);
     }
 
-    /** R2 (relational) — a concept may only touch its own JOOQ tables (prefix = concept name). */
+    /** R2 (relational) — a JOOQ table is owned by exactly one concept. No two
+     * concepts may reference the same generated table (one region per concept). */
     @Test
     void r2_no_cross_concept_table_access() throws IOException {
         Path conceptsRoot = Path.of("src/main/java/com/example/app/concepts");
         Pattern tableRef = Pattern.compile(Pattern.quote(DB_TABLES) + "\\.([A-Z][A-Za-z0-9]*)");
+        Map<String, Set<String>> owners = new TreeMap<>();
         try (var dirs = Files.list(conceptsRoot)) {
             for (Path conceptDir : dirs.filter(Files::isDirectory).toList()) {
                 String conceptName = conceptDir.getFileName().toString();
@@ -80,18 +86,18 @@ class LegibleArchitectureRulesTest {
                         String text = Files.readString(javaFile);
                         Matcher matcher = tableRef.matcher(text);
                         while (matcher.find()) {
-                            String tableClass = matcher.group(1);
-                            String prefix = snakeCase(tableClass).split("_")[0];
-                            if (!prefix.equals(conceptName)) {
-                                throw new AssertionError(
-                                        javaFile + " references table '" + tableClass
-                                                + "' owned by concept '" + prefix
-                                                + "' — concept '" + conceptName
-                                                + "' may only access its own tables (R2).");
-                            }
+                            owners.computeIfAbsent(matcher.group(1),
+                                    k -> new TreeSet<>()).add(conceptName);
                         }
                     }
                 }
+            }
+        }
+        for (var entry : owners.entrySet()) {
+            if (entry.getValue().size() > 1) {
+                throw new AssertionError(
+                        "table '" + entry.getKey() + "' is referenced by multiple concepts "
+                                + entry.getValue() + " — each concept owns its own table (R2).");
             }
         }
     }
@@ -134,9 +140,5 @@ class LegibleArchitectureRulesTest {
         String tail = pkg.substring(root.length() + 1);
         int dot = tail.indexOf('.');
         return dot < 0 ? tail : tail.substring(0, dot);
-    }
-
-    private static String snakeCase(String camel) {
-        return camel.replaceAll("([a-z0-9])([A-Z])", "$1_$2").toLowerCase();
     }
 }

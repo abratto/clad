@@ -1,10 +1,10 @@
-sync WhenWebHandleRoutedThenUserLookupByUsernameForLogin
+sync WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin
 
 ## Sync Contract Matrix
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `1` | `2` | `Web/handle: [...] => [ routed ]` | `User/lookupByUsername: [ username: ?u ]` | `<none>` |
+| `1` | `2` | `Web/handle: [...] => [ routed ]` | `UserNaming/lookupByUsername: [ username: ?u ]` | `<none>` |
 
 ## Rule
 
@@ -12,7 +12,7 @@ when {
     Web/handle: [ method: "POST /login" ; username: ?u ; password: ?p ] => [ routed ]
 }
 then {
-    User/lookupByUsername: [ username: ?u ]
+    UserNaming/lookupByUsername: [ username: ?u ]
 }
 
 ## Where clause patterns (for Stage 03a audit)

@@ -211,7 +211,7 @@ public class LoginStepDefinitions {
      * Asserts the response body contains a specific string literal.
      *
      * Response body literals derived from 03_syncs/output/:
-     *   WhenUserLookupByUsernameRefusedThenWebRespondForLogin.sync.md:    body={ message: "username or password didn't match" }
+     *   WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin.sync.md:    body={ message: "username or password didn't match" }
      *   WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md:  body={ message: "username or password didn't match" }
      *   WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md:         body={ message: "Too many attempts. Try again in 15 minutes." }
      *   WhenSessionGrantGrantedThenWebRespondForLogin.sync.md:   body={ sessionToken: sessionId }

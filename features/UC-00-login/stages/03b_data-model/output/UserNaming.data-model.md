@@ -1,4 +1,4 @@
-# User — conceptual data model
+# UserNaming — conceptual data model
 
 ## Step 1 — Familiar examples and elementary facts
 
@@ -87,8 +87,8 @@
 
 ### Final checks
 
-- The model matches the approved `User` state section exactly.
-- No Pattern D exposure exists for `User` in UC-00.
+- The model matches the approved `UserNaming` state section exactly.
+- No Pattern D exposure exists for `UserNaming` in UC-00.
 - No cross-concept coupling is introduced.
 
 ## Modeling Notes

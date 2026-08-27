@@ -61,9 +61,9 @@ class DebugControllerTest {
         List<Map<String, Object>> login = asListOfMaps(flows.get("Login"));
         assertEquals(
                 List.of(
-                    "whenWebHandleRoutedThenUserLookupByUsernameForLogin",
-                    "whenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin",
-                    "whenUserLookupByUsernameRefusedThenWebRespondForLogin",
+                    "whenWebHandleRoutedThenUserNamingLookupByUsernameForLogin",
+                    "whenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin",
+                    "whenUserNamingLookupByUsernameRefusedThenWebRespondForLogin",
                     "whenPasswordAuthCheckBadPasswordThenWebRespondForLogin",
                     "whenPasswordAuthCheckLockedThenWebRespondForLogin",
                     "whenPasswordAuthCheckOkThenSessionGrantForLogin",
@@ -124,7 +124,7 @@ class DebugControllerTest {
         Map<String, Object> archivedFlow = getMap("/api/dev/flow/" + encodePath(root.flowToken()));
         assertTrue(((Number) archivedFlow.get("actionCount")).intValue() >= 5);
 
-        Map<String, Object> conceptTriples = getMap("/api/dev/concept/user/triples");
+        Map<String, Object> conceptTriples = getMap("/api/dev/concept/usernaming/triples");
         assertTrue(((Number) conceptTriples.get("tripleCount")).intValue() > 0);
     }
 

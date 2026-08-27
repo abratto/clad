@@ -51,5 +51,5 @@ then  PasswordAuth/check:         [ userId: u ; password: p ] => [ error: "locke
   HTTP. Its only currency is `UserId`.
 - The lockout threshold (5) and duration (15 min) are implementation
   parameters, not part of the contract surface.
-- `unknown-user` is resolved upstream by `User.lookupByUsername`; UC-00
+- `unknown-user` is resolved upstream by `UserNaming.lookupByUsername`; UC-00
   therefore does not need an `unknownPrincipal` outcome here.

@@ -87,6 +87,13 @@ artefact "lives" in CLAD, this is the full map:
 
 ## What does **not** translate
 
+- **A concept is not an entity class.** The `Class → Concept` row above is
+  structural (both are the *chunking unit*), not semantic. A concept chunks
+  behaviour around a **purpose** and owns a **set of individuals**; the entity
+  (`User`, `Post`, `Comment`) is a separate type named in the concept's `## State`
+  section, never in the concept name. Naming a concept after an entity
+  (`concept User`) is the object-oriented trap Daniel Jackson describes in
+  *Why concepts aren't objects* — see `CONCEPTS.md` §1.
 - **Inheritance.** WYSIWID has no inheritance between concepts. The
   closest equivalent is multiple concepts implementing the same
   *kind* of action (`User.register`, `Account.register`) — but they

@@ -1,4 +1,4 @@
-package com.example.app.concepts.user;
+package com.example.app.concepts.usernaming;
 
 import com.example.app.PostgresConceptTestBase;
 import org.junit.jupiter.api.DisplayName;
@@ -10,13 +10,13 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@DisplayName("UserLookupByUsername (Postgres)")
-class UserLookupByUsernameTest extends PostgresConceptTestBase {
+@DisplayName("UserNamingLookupByUsername (Postgres)")
+class UserNamingLookupByUsernameTest extends PostgresConceptTestBase {
 
-    private UserConcept concept;
+    private UserNamingConcept concept;
 
     private void initConcept() {
-        concept = new UserConcept(log, bus, dsl);
+        concept = new UserNamingConcept(log, bus, dsl);
     }
 
     @Nested
@@ -28,7 +28,7 @@ class UserLookupByUsernameTest extends PostgresConceptTestBase {
         void shouldReturnUserIdWhenUserExists() {
             initConcept();
             concept.seedUser("11111111-1111-1111-1111-111111111111", "alice");
-            writePendingInvocation(UserConcept.IRI, "lookupByUsername", Map.of("username", "alice"));
+            writePendingInvocation(UserNamingConcept.IRI, "lookupByUsername", Map.of("username", "alice"));
 
             concept.pollAll();
 
@@ -48,7 +48,7 @@ class UserLookupByUsernameTest extends PostgresConceptTestBase {
         @DisplayName("shouldRefuseWhenUserUnknown")
         void shouldRefuseWhenUserUnknown() {
             initConcept();
-            writePendingInvocation(UserConcept.IRI, "lookupByUsername", Map.of("username", "nobody"));
+            writePendingInvocation(UserNamingConcept.IRI, "lookupByUsername", Map.of("username", "nobody"));
 
             concept.pollAll();
 

@@ -29,7 +29,7 @@ before the account is locked.
   - The account is not in a `Locked` state.
 - **Main flow:**
   1. The User submits `POST /login` with `{ username, password }`.
-  2. `Web` invokes `User.lookupByUsername(username)`, which returns
+  2. `Web` invokes `UserNaming.lookupByUsername(username)`, which returns
      `Found(userId)`.
   3. `Web` invokes `PasswordAuth.check(userId, password)`, which
      returns `Ok`.
@@ -46,7 +46,7 @@ before the account is locked.
     `sessionId`, owned by `userId`.
   - `PasswordAuth`'s failed-attempt counter for `userId` is reset
     (or, if not yet implemented, unchanged from zero).
-  - `User`'s named region is unchanged.
+  - `UserNaming`'s named region is unchanged.
 - **Postconditions — Failure:**
   - Not applicable — this scenario is the success branch. Failures
     are covered by the *wrong-password*, *unknown-user*, and
@@ -72,7 +72,7 @@ sequenceDiagram
   - The account is not yet at the lockout threshold.
 - **Main flow:**
   1. The User submits `POST /login` with `{ username, password }`.
-  2. `Web` invokes `User.lookupByUsername(username)`, which returns
+  2. `Web` invokes `UserNaming.lookupByUsername(username)`, which returns
      `Found(userId)`.
   3. `Web` invokes `PasswordAuth.check(userId, password)`, which
      returns `BadPassword`.
@@ -87,7 +87,7 @@ sequenceDiagram
   - `Session`'s named region is unchanged.
   - `PasswordAuth`'s failed-attempt counter for `userId` is
     incremented by 1.
-  - `User`'s named region is unchanged.
+  - `UserNaming`'s named region is unchanged.
 
 ### Scenario: unknown-user
 
@@ -95,7 +95,7 @@ sequenceDiagram
   - No registered `User` with that username exists.
 - **Main flow:**
   1. The User submits `POST /login` with `{ username, password }`.
-  2. `Web` invokes `User.lookupByUsername(username)`, which returns
+  2. `Web` invokes `UserNaming.lookupByUsername(username)`, which returns
      `NotFound`.
   3. `Web` responds `401` with the same opaque error message used by
      *wrong-password* (no enumeration leak).
@@ -119,7 +119,7 @@ sequenceDiagram
     threshold within the lockout window.
 - **Main flow:**
   1. The User submits `POST /login` with `{ username, password }`.
-  2. `Web` invokes `User.lookupByUsername(username)`, which returns
+  2. `Web` invokes `UserNaming.lookupByUsername(username)`, which returns
      `Found(userId)`.
     3. `Web` invokes `PasswordAuth.check(userId, password)`, which
       returns `Locked`.
@@ -135,7 +135,7 @@ sequenceDiagram
   - `Session`'s named region is unchanged.
   - `PasswordAuth`'s `lockedUntil[userId]` remains in force for the
     lockout window.
-  - `User`'s named region is unchanged.
+  - `UserNaming`'s named region is unchanged.
 
 ## Out of scope
 
@@ -148,10 +148,10 @@ sequenceDiagram
 
 ## Relationship to other use cases
 
-- **UC-XX — Registration** *(future)* — produces the `User` and
+- **UC-XX — Registration** *(future)* — produces the `UserNaming` and
   `PasswordAuth` rows that this use case authenticates against.
 - **UC-XX — Logout** *(future)* — closes a `Session` row produced by
   the *successful-login* scenario.
 - **UC-XX — Password reset** *(future)* — would be the first use
-  case to need a Pattern D read of `User.email`, expanding `User`'s
+  case to need a Pattern D read of `UserNaming.email`, expanding `UserNaming`'s
   exposed state.

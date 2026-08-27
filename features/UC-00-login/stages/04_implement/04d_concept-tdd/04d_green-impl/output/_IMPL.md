@@ -3,7 +3,7 @@
 
 Implementation classes exist under `reference-impl/java-micronaut-jena/src/main/java/com/example/app/concepts/`:
 
-- `user/UserConcept.java` — `register()`, `lookupByUsername()`
+- `user/UserNamingConcept.java` — `register()`, `lookupByUsername()`
 - `passwordauth/PasswordAuthConcept.java` — `setCredential()`, `check()`
 - `session/SessionConcept.java` — `grant()`, `lookup()`
 

@@ -28,7 +28,7 @@ class SessionGrantTest extends PostgresConceptTestBase {
             concept.pollAll();
 
             assertEquals("GRANTED", readOutcome());
-            assertNotNull(readField("sessionToken"));
+            assertNotNull(readField("sessionId"));
             assertEquals(USER_ID, readField("userId"));
         }
     }

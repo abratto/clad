@@ -71,7 +71,7 @@ protected String whereClause() {
              :name    "lookupByUsername" ;
              :userId  ?_userId .
     << ?_when_1 :outcome "FOUND" >> :flow ?_flow .
-    """.formatted(UserConcept.IRI);
+    """.formatted(UserNamingConcept.IRI);
 }
 ```
 
@@ -344,7 +344,7 @@ Produces:
 ```sparql
 INSERT DATA {
   GRAPH <https://clad.dev/actions> {
-    <action-iri> :concept <https://clad.dev/concept/user> ;
+    <action-iri> :concept <https://clad.dev/concept/usernaming> ;
                  :name    "lookupByUsername" ;
                  :outcome "FOUND" ;
                  :userId  "ada-0001" .
@@ -668,7 +668,7 @@ Bootstrap-shaped example:
 Stage 03 meaning:
 
 ```text
-where: B: userId = result_of(User.lookupByUsername).userId
+where: B: userId = result_of(UserNaming.lookupByUsername).userId
 ```
 
 Java/Jena lowering:
@@ -682,7 +682,7 @@ Example:
 
 ```java
 """
-?_lookup :concept <...User...> ;
+?_lookup :concept <...UserNaming...> ;
          :name    "lookupByUsername" ;
          :flow    ?_flow ;
          :outcome "FOUND" ;
@@ -808,7 +808,7 @@ Example:
 | Concept | Owned capability |
 |---|---|
 | `Web` | transport entry/exit |
-| `User` | look up a principal by username |
+| `UserNaming` | look up a principal by username |
 | `PasswordAuth` | check a presented credential |
 | `Session` | grant a session token |
 
@@ -816,8 +816,8 @@ Example:
 
 ```text
 1 | Web/request[POST /login] | Web.handle | ... | Routed(username, password)
-2 | Web.handle[Routed(username, password)] | User.lookupByUsername | username | Found(userId), NotFound
-3 | User.lookupByUsername[Found(userId)] | PasswordAuth.check | userId, password | Ok(userId), BadPassword, Locked
+2 | Web.handle[Routed(username, password)] | UserNaming.lookupByUsername | username | Found(userId), NotFound
+3 | UserNaming.lookupByUsername[Found(userId)] | PasswordAuth.check | userId, password | Ok(userId), BadPassword, Locked
 4 | PasswordAuth.check[Ok(userId)] | Session.grant | userId | Granted(sessionToken)
 5 | Session.grant[Granted(sessionToken)] | Web.respond[200] | status: 200, body: { sessionToken } | Sent
 ```
@@ -825,10 +825,10 @@ Example:
 ### Stage 03 syncs
 
 ```text
-WhenWebHandleRoutedThenUserLookupByUsernameForLogin:
+WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin:
   when:  Web.handle[Routed(username, password)]
   where: A: username = when.username
-  then:  User.lookupByUsername(username)
+  then:  UserNaming.lookupByUsername(username)
 
 WhenPasswordAuthCheckOkThenSessionGrantForLogin:
   when:  PasswordAuth.check[Ok(userId)]

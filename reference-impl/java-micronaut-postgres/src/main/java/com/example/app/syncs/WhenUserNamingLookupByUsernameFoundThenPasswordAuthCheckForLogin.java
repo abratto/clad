@@ -1,7 +1,7 @@
 package com.example.app.syncs;
 
 import com.example.app.concepts.passwordauth.PasswordAuthConcept;
-import com.example.app.concepts.user.UserConcept;
+import com.example.app.concepts.usernaming.UserNamingConcept;
 import dev.clad.engine.ActionLog;
 import dev.clad.engine.FlowManager;
 import dev.clad.engine.SyncAgent;
@@ -11,9 +11,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Sync: WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin
+ * Sync: WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin
  *
- * <p>When: {@code User/lookupByUsername[outcome=FOUND]} (in a login flow)
+ * <p>When: {@code UserNaming/lookupByUsername[outcome=FOUND]} (in a login flow)
  * <p>Then: {@code PasswordAuth/check { userId, password }}
  *
  * <p>Joins the User lookup output (for {@code userId}) with the original Web
@@ -22,26 +22,26 @@ import jakarta.inject.Singleton;
 @SyncMetadata(
         flow = "Login",
         step = 2,
-        triggeredBy = "User/lookupByUsername[FOUND]",
+        triggeredBy = "UserNaming/lookupByUsername[FOUND]",
         fires = "PasswordAuth/check",
         where = "same flow as the login request")
 @Singleton
-public final class WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin extends SyncAgent {
+public final class WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
     private static final String LOGIN_ROUTE = "login";
 
     @Inject
-    public WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin(ActionLog actionLog) {
+    public WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin(ActionLog actionLog) {
         super(actionLog);
     }
 
     @Override
-    public String syncName() { return "whenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin"; }
+    public String syncName() { return "whenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin"; }
 
     @Override
     public SyncTrigger trigger() {
-        return new SyncTrigger(UserConcept.IRI, "lookupByUsername", null);
+        return new SyncTrigger(UserNamingConcept.IRI, "lookupByUsername", null);
     }
 
     @Override
@@ -57,7 +57,7 @@ public final class WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin ex
                       :input   ?_web_inp .
             ?_web_inp :route    ?_route ;
                       :password ?_password .
-            """.formatted(UserConcept.IRI, WEB_IRI);
+            """.formatted(UserNamingConcept.IRI, WEB_IRI);
     }
 
     @Override

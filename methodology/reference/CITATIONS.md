@@ -62,6 +62,22 @@ category in a given project.
 This notation was first applied in full in `abratto/tastetag` before
 being formalised here.
 
+## Why concepts aren't objects
+
+Daniel Jackson. **Why concepts aren't objects.** *The Essence of Software*
+(blog), December 2025.
+
+- URL: [essenceofsoftware.com/posts/concepts-and-oop](https://essenceofsoftware.com/posts/concepts-and-oop/)
+
+This essay is the source for CLAD's concept-naming guidance. A concept is
+chunked around a **purpose** — a capability named by a gerund or noun phrase
+(`Posting`, `PasswordAuthentication`, `Upvoting`) — not around an **entity**
+(`Post`, `User`, `Comment`). The entity is a separate *individual* type that
+appears in the concept's `## State` section as the set the concept ranges
+over. It also supplies the "separating views" argument (naming vs
+authentication vs profiling) and the object-oriented "bad smells" that
+`verify_concept_state_relational.py` turns into a deterministic Stage 02 gate.
+
 ## Interpretable Context Methodology (ICM)
 
 Jake Van Clief. **Interpretable Context Methodology (ICM).** 2026.

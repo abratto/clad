@@ -1,5 +1,15 @@
 <!-- Template for Stage 02 (02_concepts). Purpose: see methodology/architecture/CONCEPTS.md. -->
 
+<!-- ⚠️ NAME THE CAPABILITY, NOT THE ENTITY.
+     The concept name is a purpose-oriented noun phrase — a gerund or noun
+     phrase such as `Posting`, `Authentication`, `Upvoting`, `Profiling` —
+     never the entity noun the set ranges over (`Post`, `User`, `Comment`).
+     The entity is a *separate* type named in the `## State` section, not in
+     the concept name. `PasswordAuthentication` (capability) owns a set of
+     `User` individuals; a concept named `User` names the thing in the set,
+     not the behaviour that chunks around a purpose. See Daniel Jackson,
+     *Why concepts aren't objects* (regret: `Post` vs `Posting`). -->
+
 concept <ConceptName> [<TypeParams>]
 purpose
     <one-line capability statement>

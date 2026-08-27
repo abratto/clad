@@ -8,7 +8,7 @@ Every `where` clause across the UC-00 sync pack uses either:
 - A trigger pattern variable (Pattern A — data already bound by the
   `when` clause),
 - Pattern B (a flow-sibling output — e.g. `?user` from
-  `User/lookupByUsername` consumed by `WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin`, or
+  `UserNaming/lookupByUsername` consumed by `WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin`, or
   `?sid` from `Session/grant` consumed by `WhenSessionGrantGrantedThenWebRespondForLogin` in
   the same flow), or
 - Pattern C (a literal constant — e.g. `status: 200` / `401`).

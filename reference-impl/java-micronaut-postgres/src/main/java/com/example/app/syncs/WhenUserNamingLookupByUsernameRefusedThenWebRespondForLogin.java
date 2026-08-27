@@ -1,6 +1,6 @@
 package com.example.app.syncs;
 
-import com.example.app.concepts.user.UserConcept;
+import com.example.app.concepts.usernaming.UserNamingConcept;
 import dev.clad.engine.ActionLog;
 import dev.clad.engine.FlowManager;
 import dev.clad.engine.SyncAgent;
@@ -10,9 +10,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Sync: WhenUserLookupByUsernameRefusedThenWebRespondForLogin
+ * Sync: WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin
  *
- * <p>When: {@code User/lookupByUsername[refused]}
+ * <p>When: {@code UserNaming/lookupByUsername[refused]}
  * <p>Then: {@code Web/respond { statusCode: 401, message }}
  *
  * <p>Matches the {@code :outcome "refused"} RDF-star annotation. Same message
@@ -22,26 +22,26 @@ import jakarta.inject.Singleton;
 @SyncMetadata(
         flow = "Login",
         step = 2,
-        triggeredBy = "User/lookupByUsername[refused]",
+        triggeredBy = "UserNaming/lookupByUsername[refused]",
         fires = "Web/respond[401]",
         where = "unknown-user path")
 @Singleton
-public final class WhenUserLookupByUsernameRefusedThenWebRespondForLogin extends SyncAgent {
+public final class WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
     private static final String LOGIN_ROUTE = "login";
 
     @Inject
-    public WhenUserLookupByUsernameRefusedThenWebRespondForLogin(ActionLog actionLog) {
+    public WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin(ActionLog actionLog) {
         super(actionLog);
     }
 
     @Override
-    public String syncName() {         return "whenUserLookupByUsernameRefusedThenWebRespondForLogin"; }
+    public String syncName() {         return "whenUserNamingLookupByUsernameRefusedThenWebRespondForLogin"; }
 
     @Override
     public SyncTrigger trigger() {
-        return new SyncTrigger(UserConcept.IRI, "lookupByUsername", null);
+        return new SyncTrigger(UserNamingConcept.IRI, "lookupByUsername", null);
     }
 
     @Override
@@ -55,7 +55,7 @@ public final class WhenUserLookupByUsernameRefusedThenWebRespondForLogin extends
                       :flow    ?_flow ;
                       :input   ?_web_inp .
             ?_web_inp :route ?_route .
-            """.formatted(UserConcept.IRI, WEB_IRI);
+            """.formatted(UserNamingConcept.IRI, WEB_IRI);
     }
 
     @Override

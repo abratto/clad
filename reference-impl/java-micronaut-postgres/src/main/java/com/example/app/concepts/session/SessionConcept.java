@@ -22,8 +22,8 @@ import static com.example.app.db.tables.SessionTokens.SESSION_TOKENS;
  * <p>Actions:
  * <ul>
  *   <li>{@code grant} — input: {@code userId}; output:
- *       {@code outcome=GRANTED, sessionToken=<uuid>}.</li>
- *   <li>{@code lookup} — input: {@code sessionToken}; output:
+ *       {@code outcome=GRANTED, sessionId=<uuid>}.</li>
+ *   <li>{@code lookup} — input: {@code sessionId}; output:
  *       {@code outcome=ACTIVE|UNKNOWN, userId=...}.</li>
  * </ul>
  */
@@ -73,34 +73,34 @@ public final class SessionConcept extends ConceptAgent {
             writeError(invocation, "missing userId");
             return;
         }
-        String sessionToken = UUID.randomUUID().toString();
+        String sessionId = UUID.randomUUID().toString();
         dsl.insertInto(SESSION_TOKENS, SESSION_TOKENS.SESSION_TOKEN, SESSION_TOKENS.USER_ID)
-                .values(UUID.fromString(sessionToken), UUID.fromString(userId))
+                .values(UUID.fromString(sessionId), UUID.fromString(userId))
                 .execute();
 
         writeCompletion(invocation, Map.of(
                 "outcome", ResourceFactory.createStringLiteral("GRANTED"),
-                "sessionToken", ResourceFactory.createStringLiteral(sessionToken),
+                "sessionId", ResourceFactory.createStringLiteral(sessionId),
                 "userId", ResourceFactory.createStringLiteral(userId)));
     }
 
     private void doLookup(ActionRecord invocation) {
-        String sessionToken = invocation.binding("sessionToken");
-        if (sessionToken == null) {
-            writeError(invocation, "missing sessionToken");
+        String sessionId = invocation.binding("sessionId");
+        if (sessionId == null) {
+            writeError(invocation, "missing sessionId");
             return;
         }
         UUID userId = dsl.select(SESSION_TOKENS.USER_ID).from(SESSION_TOKENS)
-                .where(SESSION_TOKENS.SESSION_TOKEN.eq(UUID.fromString(sessionToken)))
+                .where(SESSION_TOKENS.SESSION_TOKEN.eq(UUID.fromString(sessionId)))
                 .fetchOne(SESSION_TOKENS.USER_ID);
         if (userId == null) {
             writeCompletion(invocation, Map.of(
                     "outcome", ResourceFactory.createStringLiteral("UNKNOWN"),
-                    "sessionToken", ResourceFactory.createStringLiteral(sessionToken)));
+                    "sessionId", ResourceFactory.createStringLiteral(sessionId)));
         } else {
             writeCompletion(invocation, Map.of(
                     "outcome", ResourceFactory.createStringLiteral("ACTIVE"),
-                    "sessionToken", ResourceFactory.createStringLiteral(sessionToken),
+                    "sessionId", ResourceFactory.createStringLiteral(sessionId),
                     "userId", ResourceFactory.createStringLiteral(userId.toString())));
         }
     }

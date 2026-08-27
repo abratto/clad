@@ -75,14 +75,14 @@ completion is rejected before any state mutation; when syncs match, the
 completion and all sync invocations commit in one Jena transaction.
 
 ```java
-// In your concept class — e.g. UserConcept.java
+// In your concept class — e.g. UserNamingConcept.java
 import dev.clad.engine.ConceptAgent;
 import dev.clad.engine.SyncEvaluator;
 
-public class UserConcept extends ConceptAgent {
+public class UserNamingConcept extends ConceptAgent {
 
     @Inject
-    public UserConcept(ActionLog log, CompletionBus bus,
+    public UserNamingConcept(ActionLog log, CompletionBus bus,
                        SyncEvaluator evaluator) {
         super(log, bus, evaluator);
     }
@@ -373,7 +373,7 @@ curl -i -X POST http://localhost:8080/login \
 
 curl http://localhost:8080/api/dev/flows
 curl http://localhost:8080/api/dev/stuck
-curl http://localhost:8080/api/dev/concept/user/triples
+curl http://localhost:8080/api/dev/concept/usernaming/triples
 # after a /login call, inspect one archived flow token:
 curl http://localhost:8080/api/dev/flow/https%3A%2F%2Fclad.dev%2Fflow%2F<uuid>
 ```
@@ -550,7 +550,7 @@ coordinator is the Jena Dataset.
 │                    SINGLE JVM PROCESS                       │
 │                                                             │
 │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐   │
-│  │ Concept: User │  │Concept:Session│  │Concept:Auth   │   │
+│  │  UserNaming   │  │   Session     │  │ PasswordAuth  │   │
 │  │ (isolated pkg)│  │ (isolated pkg)│  │ (isolated pkg)│   │
 │  └───────┬───────┘  └───────┬───────┘  └───────┬───────┘   │
 │          │                  │                  │           │
@@ -605,7 +605,7 @@ class implementing that interface plus a factory branch.
 ## Status
 
 The engine is **fully wired** and the UC-00-login flow runs end-to-end
-across all five backends. The three concepts (`User`, `PasswordAuth`,
+across all five backends. The three concepts (`UserNaming`, `PasswordAuth`,
 `Session`) and seven rule-shaped syncs produce the predicted token chains
 exercised by the Gherkin flow tests. The injectable Dataset architecture
 (`Storage` interface, `CladDatasetFactory`) supports swapping backends

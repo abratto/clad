@@ -98,7 +98,7 @@
 
 - The model matches the approved `PasswordAuth` state section.
 - No Pattern D exposure exists for `PasswordAuth` in UC-00.
-- No cross-concept schema relationship to `User` is introduced.
+- No cross-concept schema relationship to `UserNaming` is introduced.
 
 ## Modeling Notes
 

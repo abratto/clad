@@ -18,7 +18,7 @@ evidence from the Micronaut/Jena reference-impl (Java 21) via
 - **Trigger:** `POST /login { username: "ada", password: "lovelace" }`
 - **Expected chain (from 01b):**
   1. `Web/handle[POST /login]` => `Routed`
-  2. `User/lookupByUsername(username)` => `FOUND`
+  2. `UserNaming/lookupByUsername(username)` => `FOUND`
   3. `PasswordAuth/check(userId, password)` => `OK`
   4. `Session/grant(userId)` => `GRANTED`
   5. `Web/respond[200, { sessionToken }]`
@@ -31,7 +31,7 @@ evidence from the Micronaut/Jena reference-impl (Java 21) via
 - **Trigger:** `POST /login { username: "ada", password: "wrong" }`
 - **Expected chain:**
   1. `Web/handle[POST /login]` => `Routed`
-  2. `User/lookupByUsername(username)` => `FOUND`
+  2. `UserNaming/lookupByUsername(username)` => `FOUND`
   3. `PasswordAuth/check(userId, password)` => `BAD_PASSWORD`
   4. `Web/respond[401, { message: "username or password didn't match" }]`
 - **Flow test:** `login.feature` Scenario `wrong-password` — PASSES (Cucumber)
@@ -43,7 +43,7 @@ evidence from the Micronaut/Jena reference-impl (Java 21) via
 - **Trigger:** `POST /login { username: "nobody", password: "test" }`
 - **Expected chain:**
   1. `Web/handle[POST /login]` => `Routed`
-  2. `User/lookupByUsername(username)` => `NOT_FOUND`
+  2. `UserNaming/lookupByUsername(username)` => `NOT_FOUND`
   3. `Web/respond[401, { message: "username or password didn't match" }]`
 - **Flow test:** `login.feature` Scenario `unknown-user` — PASSES (Cucumber)
 - **Manual smoke:** Returns 401 with error message
@@ -54,7 +54,7 @@ evidence from the Micronaut/Jena reference-impl (Java 21) via
 - **Trigger:** `POST /login { username: "ada", password: "wrong" }` (x 5 failures)
 - **Expected chain:**
   1. `Web/handle[POST /login]` => `Routed`
-  2. `User/lookupByUsername(username)` => `FOUND`
+  2. `UserNaming/lookupByUsername(username)` => `FOUND`
   3. `PasswordAuth/check(userId, password)` => `LOCKED`
   4. `Web/respond[401, { message: "account locked — too many attempts" }]`
 - **Flow test:** `login.feature` Scenario `lockout` — PASSES (Cucumber)

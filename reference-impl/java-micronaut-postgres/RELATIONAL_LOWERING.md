@@ -37,12 +37,12 @@ Session:     token -> UserId                        (via grant)
 ```
 
 ```sql
-CREATE TABLE "user_accounts" (
+CREATE TABLE "usernames" (
     "user_id"   uuid PRIMARY KEY,
     "username"  varchar(255) NOT NULL UNIQUE
 );
 CREATE TABLE "passwordauth_credentials" (
-    "user_id"         uuid PRIMARY KEY,     -- opaque; NO FK to user_accounts
+    "user_id"         uuid PRIMARY KEY,     -- opaque; NO FK to usernames
     "password_hash"   text NOT NULL,
     "failed_attempts" int  NOT NULL DEFAULT 0,
     "locked_until"    timestamptz NULL
@@ -57,12 +57,17 @@ CREATE TABLE "session_tokens" (
 crosses a concept boundary — that is R2 ("one storage region per concept, no
 cross-region reads") expressed at the DDL level.
 
-## Schema-per-application + concept-prefix ownership
+## Schema-per-application + relation-named tables
 
-One application schema (default `public`); every table's name carries its owning
-concept as a prefix (`user_accounts`, `passwordauth_credentials`,
-`session_tokens`). The prefix is the concept's lowercase name, so the owner of a
-table is always legible and mechanically checkable.
+One application schema (default `public`); each concept owns its own table.
+The table is named for the **relation** it holds (`usernames`,
+`passwordauth_credentials`, `session_tokens`) — never for the entity
+(`user_accounts`), which invites the "one big entity table" conflation Jackson
+warns against. The individual identity (`user_id`) is the key; ownership is
+enforced structurally:
+
+- **No two concepts reference the same table** (`LegibleArchitectureRulesTest.r2_no_cross_concept_table_access`).
+- **No FK crosses a concept boundary** (`verify_relational_mapping.py`).
 
 ## Constraint realization
 

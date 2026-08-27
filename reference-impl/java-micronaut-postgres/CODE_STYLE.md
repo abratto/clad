@@ -21,19 +21,19 @@ dev.clad.engine (shared clad-engine module)
 ## Concept-state conventions (JOOQ + Flyway)
 
 - **State lives in Flyway migrations** under
-  `src/main/resources/db/migration/V{n}__<concept>__<table>.sql`. Quote
-  identifiers lowercase (`"user_accounts"`) — the JOOQ `DDLDatabase` preserves
+  `src/main/resources/db/migration/V{n}__<table>.sql`. Quote
+  identifiers lowercase (`"usernames"`) — the JOOQ `DDLDatabase` preserves
   quoted case, so quoted lowercase keeps Flyway (Postgres) and JOOQ codegen in
   agreement.
-- **One schema per application** (`public`). Every table name is prefixed with
-  its owning concept: `user_accounts`, `passwordauth_credentials`,
+- **One schema per application** (`public`). Each table is named for the
+  relation it holds, never the entity: `usernames`, `passwordauth_credentials`,
   `session_tokens`.
 - **No FK crosses a concept boundary.** A column holding another concept's id is
   an opaque typed value (`user_id uuid`), never `REFERENCES`. Enforced by
   `verify_relational_mapping.py` (Stage 04a gate) and
   `LegibleArchitectureRulesTest.r2_no_cross_concept_table_access`.
 - **Concepts access state only through their own JOOQ tables** (R2). A
-  `UserConcept` uses `USER_ACCOUNTS`; it must never reference
+  `UserNamingConcept` uses `USERNAMES`; it must never reference
   `PASSWORDAUTH_CREDENTIALS` or `SESSION_TOKENS`.
 - **Identifiers are typed** (`uuid`). Concepts convert to/from `String` at the
   action boundary (`invocation.binding(...)` is a String literal).

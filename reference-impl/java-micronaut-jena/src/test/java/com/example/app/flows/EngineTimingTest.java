@@ -2,7 +2,7 @@ package com.example.app.flows;
 
 import com.example.app.api.LoginRequest;
 import com.example.app.concepts.passwordauth.PasswordAuthConcept;
-import com.example.app.concepts.user.UserConcept;
+import com.example.app.concepts.usernaming.UserNamingConcept;
 import dev.clad.engine.RdfVocabulary;
 import dev.clad.engine.SyncDispatcher;
 import io.micronaut.http.HttpRequest;
@@ -39,7 +39,7 @@ class EngineTimingTest {
     HttpClient client;
 
     @Inject
-    UserConcept users;
+    UserNamingConcept users;
 
     @Inject
     PasswordAuthConcept passwords;

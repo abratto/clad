@@ -1,4 +1,4 @@
-concept User [UserId]
+concept UserNaming [UserId]
 purpose
     to associate usernames with opaque user identifiers
 
@@ -19,7 +19,7 @@ register [ username: String ] => [ userId: UserId ]
         State.username'[userId] = username
         userId is freshly minted
     }
-    flow token: { action: "User.register", username, userId, outcome: "REGISTERED" }
+    flow token: { action: "UserNaming.register", username, userId, outcome: "REGISTERED" }
 
 lookupByUsername [ username: String ] => [ userId: UserId ]
     precondition {
@@ -29,14 +29,14 @@ lookupByUsername [ username: String ] => [ userId: UserId ]
         State.username[userId] == username
     }
     no state change
-    flow token: { action: "User.lookupByUsername", username, userId, outcome: "FOUND" }
+    flow token: { action: "UserNaming.lookupByUsername", username, userId, outcome: "FOUND" }
 ```
 
 ## Operational principle
 
 ```
-after  User/register:         [ username: "alice" ] => [ userId: u ]
-then  User/lookupByUsername:  [ username: "alice" ] => [ userId: u ]
+after  UserNaming/register:         [ username: "alice" ] => [ userId: u ]
+then  UserNaming/lookupByUsername:  [ username: "alice" ] => [ userId: u ]
 ```
 
 ## Notes

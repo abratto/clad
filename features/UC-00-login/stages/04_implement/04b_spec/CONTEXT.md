@@ -39,7 +39,7 @@ error envelope values required by the external contract.
 
 ## Outputs
 
-- `output/User.spec.md`
+- `output/UserNaming.spec.md`
 - `output/PasswordAuth.spec.md`
 - `output/Session.spec.md`
 

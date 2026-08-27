@@ -1,4 +1,4 @@
-package com.example.app.concepts.user;
+package com.example.app.concepts.usernaming;
 
 import dev.clad.engine.ActionLog;
 import dev.clad.engine.ActionRecord;
@@ -25,22 +25,22 @@ import java.util.UUID;
  * </ul>
  */
 @Singleton
-public final class UserConcept extends ConceptAgent {
+public final class UserNamingConcept extends ConceptAgent {
 
     /** IRI used in :concept triples. */
-    public static final String IRI = "https://clad.dev/concept/user";
+    public static final String IRI = "https://clad.dev/concept/usernaming";
 
-    private static final String GRAPH = RdfVocabulary.conceptGraph("user");
-    private static final String PROFILE_NS = "https://clad.dev/concept/user#";
+    private static final String GRAPH = RdfVocabulary.conceptGraph("usernaming");
+    private static final String PROFILE_NS = "https://clad.dev/concept/usernaming#";
 
     @Inject
-    public UserConcept(ActionLog actionLog, CompletionBus completionBus,
+    public UserNamingConcept(ActionLog actionLog, CompletionBus completionBus,
                        SyncEvaluator evaluator) {
         super(actionLog, completionBus, evaluator);
     }
 
     /** Test-only constructor. */
-    public UserConcept(ActionLog actionLog, CompletionBus completionBus) {
+    public UserNamingConcept(ActionLog actionLog, CompletionBus completionBus) {
         super(actionLog, completionBus);
     }
 

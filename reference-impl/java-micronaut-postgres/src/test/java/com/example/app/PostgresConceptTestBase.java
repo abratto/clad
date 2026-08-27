@@ -18,7 +18,7 @@ import java.util.Map;
 
 import static com.example.app.db.tables.PasswordauthCredentials.PASSWORDAUTH_CREDENTIALS;
 import static com.example.app.db.tables.SessionTokens.SESSION_TOKENS;
-import static com.example.app.db.tables.UserAccounts.USER_ACCOUNTS;
+import static com.example.app.db.tables.Usernames.USERNAMES;
 
 /** Shared fixtures for isolated concept tests backed by a Testcontainers Postgres. */
 public abstract class PostgresConceptTestBase {
@@ -49,7 +49,7 @@ public abstract class PostgresConceptTestBase {
     void cleanTablesAndEngine() {
         dsl.deleteFrom(SESSION_TOKENS).execute();
         dsl.deleteFrom(PASSWORDAUTH_CREDENTIALS).execute();
-        dsl.deleteFrom(USER_ACCOUNTS).execute();
+        dsl.deleteFrom(USERNAMES).execute();
         log = new ActionLog();
         bus = new CompletionBus();
         flow = new FlowManager(log, bus);

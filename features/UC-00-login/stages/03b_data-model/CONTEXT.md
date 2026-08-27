@@ -9,7 +9,7 @@ concept's own `state` section.
 
 **Feeds:**
 
-- `User.data-model.md`, `PasswordAuth.data-model.md`, `Session.data-model.md` → 04a storage mapping when a persistent profile exists
+- `UserNaming.data-model.md`, `PasswordAuth.data-model.md`, `Session.data-model.md` → 04a storage mapping when a persistent profile exists
 
 ## Inputs
 
@@ -25,14 +25,14 @@ concept's own `state` section.
 ## Process
 
 Produce one profile-neutral conceptual data-model file per business
-concept: `User`, `PasswordAuth`, and `Session`. Follow the seven CSDP
+concept: `UserNaming`, `PasswordAuth`, and `Session`. Follow the seven CSDP
 steps explicitly, not a compressed summary. Use the approved state
 sections exactly; do not introduce profile-specific field types or
 runtime-only helper structures.
 
 ## Outputs
 
-- `output/User.data-model.md`
+- `output/UserNaming.data-model.md`
 - `output/PasswordAuth.data-model.md`
 - `output/Session.data-model.md`
 
@@ -44,7 +44,7 @@ runtime-only helper structures.
 python3 ../../../../quality-gate/verify_data_model.py \
   --data-dir output --concept-dir ../02_concepts/output
 python3 ../../../../quality-gate/verify_file_manifest.py \
-  --dir output --expected "User.data-model.md,PasswordAuth.data-model.md,Session.data-model.md"
+  --dir output --expected "UserNaming.data-model.md,PasswordAuth.data-model.md,Session.data-model.md"
 ```
 
 - **verify_data_model.py:** validates CSDP steps, constraints, no

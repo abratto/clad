@@ -4,7 +4,7 @@
 
 | Action | Flow (sync) | Data received | Pattern | Source |
 |---|---|---|---|---|
-| `check` | `WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin` (`successful-login`, `wrong-password`, `lockout`) | `userId`, `password` | A + B | `?p` from `Web/handle` trigger (A); `?user` from `User/lookupByUsername` completion (B) |
+| `check` | `WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin` (`successful-login`, `wrong-password`, `lockout`) | `userId`, `password` | A + B | `?p` from `Web/handle` trigger (A); `?user` from `UserNaming/lookupByUsername` completion (B) |
 
 > `PasswordAuth/check`'s lockout branch is expressed by the
 > `Locked` outcome plus `WhenPasswordAuthCheckLockedThenWebRespondForLogin`, not by a separate `lock`
@@ -23,7 +23,7 @@ None — no other concept's sync reads `PasswordAuth`'s named region.
 ## Cross-checks
 
 - `check` is declared in `../../02_concepts/output/PasswordAuth.concept.md`.
-- The sync `WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin` exists under `../../03_syncs/output/`.
+- The sync `WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin` exists under `../../03_syncs/output/`.
 
 ---
 

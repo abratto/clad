@@ -22,8 +22,8 @@ import java.util.UUID;
  * <p>Actions:
  * <ul>
  *   <li>{@code grant} — input: {@code userId}; output:
- *       {@code outcome=GRANTED, sessionToken=<uuid>}.</li>
- *   <li>{@code lookup} — input: {@code sessionToken}; output:
+ *       {@code outcome=GRANTED, sessionId=<uuid>}.</li>
+ *   <li>{@code lookup} — input: {@code sessionId}; output:
  *       {@code outcome=ACTIVE|UNKNOWN, userId=...}.</li>
  * </ul>
  */
@@ -72,41 +72,41 @@ public final class SessionConcept extends ConceptAgent {
             writeError(invocation, "missing userId");
             return;
         }
-        String sessionToken = UUID.randomUUID().toString();
+        String sessionId = UUID.randomUUID().toString();
         var pss = new ParameterizedSparqlString();
         pss.setNsPrefix("s", NS);
         pss.setCommandText("INSERT DATA { GRAPH ?g { ?session s:userId ?userId } }");
         pss.setIri("g", GRAPH);
-        pss.setIri("session", NS + "session/" + sessionToken);
+        pss.setIri("session", NS + "session/" + sessionId);
         pss.setLiteral("userId", userId);
         actionLog.update(pss.toString());
 
         writeCompletion(invocation, Map.of(
                 "outcome", ResourceFactory.createStringLiteral("GRANTED"),
-                "sessionToken", ResourceFactory.createStringLiteral(sessionToken),
+                "sessionId", ResourceFactory.createStringLiteral(sessionId),
                 "userId", ResourceFactory.createStringLiteral(userId)));
     }
 
     private void doLookup(ActionRecord invocation) {
-        String sessionToken = invocation.binding("sessionToken");
-        if (sessionToken == null) {
-            writeError(invocation, "missing sessionToken");
+        String sessionId = invocation.binding("sessionId");
+        if (sessionId == null) {
+            writeError(invocation, "missing sessionId");
             return;
         }
         var pss = new ParameterizedSparqlString();
         pss.setNsPrefix("s", NS);
         pss.setCommandText("SELECT ?userId WHERE { GRAPH ?g { ?session s:userId ?userId } } LIMIT 1");
         pss.setIri("g", GRAPH);
-        pss.setIri("session", NS + "session/" + sessionToken);
+        pss.setIri("session", NS + "session/" + sessionId);
         List<Map<String, String>> rows = actionLog.select(pss.toString());
         if (rows.isEmpty()) {
             writeCompletion(invocation, Map.of(
                     "outcome", ResourceFactory.createStringLiteral("UNKNOWN"),
-                    "sessionToken", ResourceFactory.createStringLiteral(sessionToken)));
+                    "sessionId", ResourceFactory.createStringLiteral(sessionId)));
         } else {
             writeCompletion(invocation, Map.of(
                     "outcome", ResourceFactory.createStringLiteral("ACTIVE"),
-                    "sessionToken", ResourceFactory.createStringLiteral(sessionToken),
+                    "sessionId", ResourceFactory.createStringLiteral(sessionId),
                     "userId", ResourceFactory.createStringLiteral(rows.get(0).get("userId"))));
         }
     }

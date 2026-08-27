@@ -58,7 +58,7 @@ fails, return to Stage 01b and complete gate approval.
 
 ## Outputs
 
-- `output/User.concept.md`
+- `output/UserNaming.concept.md`
 - `output/PasswordAuth.concept.md`
 - `output/Session.concept.md`
 
@@ -76,7 +76,7 @@ python3 ../../../../quality-gate/verify_action_chain.py \
   --spec-dir ../04_implement/04b_spec/output
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output \
-  --expected "User.concept.md,PasswordAuth.concept.md,Session.concept.md"
+  --expected "UserNaming.concept.md,PasswordAuth.concept.md,Session.concept.md"
 ```
 
 - **verify_action_chain.py:** every action used in chain tables flows consistently.
@@ -88,7 +88,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 - Every action used in any `01b_chain-table/output/*-chain.md` is
   declared with the same outcome enum in the corresponding concept.
 - No concept names another concept's state, actions, or types.
-- **Cross-stage check (back):** the UC-00 actor (`User`) appears in
+- **Cross-stage check (back):** the UC-00 actor (`UserNaming`) appears in
   at least one concept's operational principle.
 
 ## Gate

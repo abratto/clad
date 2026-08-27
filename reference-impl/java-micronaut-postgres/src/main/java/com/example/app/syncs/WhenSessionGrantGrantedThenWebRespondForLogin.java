@@ -44,7 +44,7 @@ public final class WhenSessionGrantGrantedThenWebRespondForLogin extends SyncAge
         return """
             ?_when_1 :concept <%s> ;
                      :name    "grant" ;
-                     :sessionToken ?_sessionToken .
+                     :sessionId ?_sessionId .
             << ?_when_1 :outcome "GRANTED" >> :flow ?_flow .
             ?_web_req :concept <%s> ;
                       :name    "request" ;
@@ -59,7 +59,7 @@ public final class WhenSessionGrantGrantedThenWebRespondForLogin extends SyncAge
         return """
             ?_then_1 :concept <%s> ;
                      :name    "respond" ;
-                     :input   [ :statusCode 200 ; :sessionToken ?_sessionToken ] .
+                     :input   [ :statusCode 200 ; :sessionToken ?_sessionId ] .
             """.formatted(WEB_IRI);
     }
 

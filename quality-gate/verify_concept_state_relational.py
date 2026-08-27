@@ -121,8 +121,10 @@ def check_concept(path):
                 failures.append(
                     f"state field '{line}' uses the concept's own name as its "
                     f"subject type — this models one object, not a set of "
-                    f"individuals. Use an identifier type (e.g. {concept_name}Id), "
-                    f"not '{concept_name}'.")
+                    f"individuals. Either the concept is named after the entity "
+                    f"(rename it to its purpose, e.g. a gerund like `Posting`), "
+                    f"or the subject should be an identifier type "
+                    f"(e.g. {concept_name}Id), not '{concept_name}'.")
             continue
 
         # Check 2: a bare field name with no type annotation at all — the

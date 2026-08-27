@@ -1,6 +1,6 @@
 package com.example.app.syncs;
 
-import com.example.app.concepts.user.UserConcept;
+import com.example.app.concepts.usernaming.UserNamingConcept;
 import dev.clad.engine.ActionLog;
 import dev.clad.engine.FlowManager;
 import dev.clad.engine.SyncAgent;
@@ -10,36 +10,36 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 /**
- * Sync: WhenWebHandleRoutedThenUserLookupByUsernameForLogin
+ * Sync: WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin
  *
  * <p>When: {@code Web/request[route=login]}
- * <p>Then: {@code User/lookupByUsername { username }}
+ * <p>Then: {@code UserNaming/lookupByUsername { username }}
  *
  * <p>Bridges the bootstrap concept to the User concept. The {@code username}
  * binding is read straight from the request input.
  *
- * <p>Note: {@code UserConcept.IRI} is referenced as a constant only — no
+ * <p>Note: {@code UserNamingConcept.IRI} is referenced as a constant only — no
  * cross-concept Java import of state or behaviour is performed (R1).
  */
 @SyncMetadata(
         flow = "Login",
         step = 1,
         triggeredBy = "Web/request[route=login]",
-        fires = "User/lookupByUsername",
+        fires = "UserNaming/lookupByUsername",
         where = "route=login")
 @Singleton
-public final class WhenWebHandleRoutedThenUserLookupByUsernameForLogin extends SyncAgent {
+public final class WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin extends SyncAgent {
 
     private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
     private static final String LOGIN_ROUTE = "login";
 
     @Inject
-    public WhenWebHandleRoutedThenUserLookupByUsernameForLogin(ActionLog actionLog) {
+    public WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin(ActionLog actionLog) {
         super(actionLog);
     }
 
     @Override
-    public String syncName() { return "whenWebHandleRoutedThenUserLookupByUsernameForLogin"; }
+    public String syncName() { return "whenWebHandleRoutedThenUserNamingLookupByUsernameForLogin"; }
 
     @Override
     public SyncTrigger trigger() { return new SyncTrigger(WEB_IRI, "request", null); }
@@ -62,7 +62,7 @@ public final class WhenWebHandleRoutedThenUserLookupByUsernameForLogin extends S
             ?_then_1 :concept <%s> ;
                      :name    "lookupByUsername" ;
                      :input   [ :username ?_username ] .
-            """.formatted(UserConcept.IRI);
+            """.formatted(UserNamingConcept.IRI);
     }
 
     @Override

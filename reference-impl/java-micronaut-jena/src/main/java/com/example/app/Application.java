@@ -1,7 +1,7 @@
 package com.example.app;
 
 import com.example.app.concepts.passwordauth.PasswordAuthConcept;
-import com.example.app.concepts.user.UserConcept;
+import com.example.app.concepts.usernaming.UserNamingConcept;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.runtime.Micronaut;
 import io.micronaut.runtime.event.annotation.EventListener;
@@ -28,11 +28,11 @@ public class Application {
      */
     @Singleton
     public static class DemoSeed {
-        private final UserConcept users;
+        private final UserNamingConcept users;
         private final PasswordAuthConcept passwords;
 
         @Inject
-        public DemoSeed(UserConcept users, PasswordAuthConcept passwords) {
+        public DemoSeed(UserNamingConcept users, PasswordAuthConcept passwords) {
             this.users = users;
             this.passwords = passwords;
         }

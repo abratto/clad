@@ -57,7 +57,7 @@ The `where` clause is a **declarative query language** supporting:
 | Construct | Purpose | Example |
 |---|---|---|
 | `bind ( uuid() as ?x )` | Identifier minting | `bind ( uuid() as ?user )` |
-| `Concept: { ... }` | State query (Pattern D) | `User: { ?user email: ?email }` |
+| `Concept: { ... }` | State query (Pattern D) | `UserNaming: { ?user email: ?email }` |
 | `OPTIONAL { ... }` | Conditional read | `OPTIONAL { Tag: { ?a tag: ?t } }` |
 | `BIND ( ?x AS ?_eachthen )` | GROUP BY aggregation | `BIND ( ?article AS ?_eachthen )` |
 
@@ -83,9 +83,9 @@ canonical sync files and introduces no new logic.
 
 ## Outputs
 
-- `output/WhenWebHandleRoutedThenUserLookupByUsernameForLogin.sync.md`
-- `output/WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin.sync.md`
-- `output/WhenUserLookupByUsernameRefusedThenWebRespondForLogin.sync.md`
+- `output/WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin.sync.md`
+- `output/WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin.sync.md`
+- `output/WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin.sync.md`
 - `output/WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md`
 - `output/WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md`
 - `output/WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md`
@@ -102,7 +102,7 @@ python3 ../../../../quality-gate/verify_scenario_coverage.py \
   --usecase ../01_usecase/output/usecase.md \
   --chain-dir ../01b_chain-table/output \
   --sync-dir output
-python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected "WhenWebHandleRoutedThenUserLookupByUsernameForLogin.sync.md,WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin.sync.md,WhenUserLookupByUsernameRefusedThenWebRespondForLogin.sync.md,WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md,WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md,WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md,WhenSessionGrantGrantedThenWebRespondForLogin.sync.md"
+python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected "WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin.sync.md,WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin.sync.md,WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin.sync.md,WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md,WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md,WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md,WhenSessionGrantGrantedThenWebRespondForLogin.sync.md"
 ```
 
 - **verify_sync_matrix.py:** every sync has a valid Sync Contract Matrix.

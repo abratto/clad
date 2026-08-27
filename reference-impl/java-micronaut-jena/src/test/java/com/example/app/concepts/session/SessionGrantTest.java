@@ -78,8 +78,8 @@ class SessionGrantTest extends ConceptTestBase {
             concept.pollAll();
 
             assertEquals("GRANTED", readOutcome());
-            assertNotNull(readField("sessionToken"), "sessionToken must not be null");
-            assertFalse(readField("sessionToken").isEmpty(), "sessionToken must not be empty");
+            assertNotNull(readField("sessionId"), "sessionId must not be null");
+            assertFalse(readField("sessionId").isEmpty(), "sessionId must not be empty");
             assertNotNull(readField("userId"));
             assertEquals("user-0001", readField("userId"));
         }

@@ -8,28 +8,28 @@
 
 - **Sync specs:** `03_syncs/output/` — 7 sync files
 - **Outer flow:** `04c_flow-tests/output/login.feature` — 4 Gherkin scenarios
-- **SPECs:** `User.spec.md`, `PasswordAuth.spec.md`, `Session.spec.md`
+- **SPECs:** `UserNaming.spec.md`, `PasswordAuth.spec.md`, `Session.spec.md`
 
 ## Sync coverage matrix
 
 | Sync | Chain table | Flow scenario | Tested by |
 |---|---|---|---|
-| `WhenWebHandleRoutedThenUserLookupByUsernameForLogin` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `CucumberTest` |
-| `WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin` | Row 2→3 | successful-login, wrong-pw, lockout | `CucumberTest` |
+| `WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `CucumberTest` |
+| `WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin` | Row 2→3 | successful-login, wrong-pw, lockout | `CucumberTest` |
 | `WhenPasswordAuthCheckOkThenSessionGrantForLogin` | Row 3→4 | successful-login | `CucumberTest` |
 | `WhenSessionGrantGrantedThenWebRespondForLogin` | Row 4→5 | successful-login | `CucumberTest` |
 | `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin` | Row 3a | wrong-password | `CucumberTest` |
 | `WhenPasswordAuthCheckLockedThenWebRespondForLogin` | Row 3b | lockout | `CucumberTest` |
-| `WhenUserLookupByUsernameNotFoundThenWebRespondForLogin` | Row 2a | unknown-user | `CucumberTest` |
+| `WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin` | Row 2a | unknown-user | `CucumberTest` |
 
 ## Gherkin scenario coverage
 
 | Scenario | Syncs exercised |
 |---|---|
-| `successful-login` | WhenWebHandleRoutedThenUserLookupByUsernameForLogin, WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckOkThenSessionGrantForLogin, WhenSessionGrantGrantedThenWebRespondForLogin |
-| `wrong-password` | WhenWebHandleRoutedThenUserLookupByUsernameForLogin, WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin |
-| `lockout` | WhenWebHandleRoutedThenUserLookupByUsernameForLogin, WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckLockedThenWebRespondForLogin |
-| `unknown-user` | WhenWebHandleRoutedThenUserLookupByUsernameForLogin, WhenUserLookupByUsernameNotFoundThenWebRespondForLogin |
+| `successful-login` | WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckOkThenSessionGrantForLogin, WhenSessionGrantGrantedThenWebRespondForLogin |
+| `wrong-password` | WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin |
+| `lockout` | WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckLockedThenWebRespondForLogin |
+| `unknown-user` | WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin |
 
 All 4 Cucumber scenarios pass (0 failures).
 
@@ -59,9 +59,9 @@ exist under `com.example.app.syncs` with matching spec artefacts.
 
 - **Approved red tests:** None — existing tests are flow-level and pass green
 - **Sync package:** `com.example.app.syncs`
-- **Sync classes:** `WhenWebHandleRoutedThenUserLookupByUsernameForLogin`, `WhenUserLookupByUsernameFoundThenPasswordAuthCheckForLogin`,
+- **Sync classes:** `WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin`, `WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin`,
   `WhenPasswordAuthCheckOkThenSessionGrantForLogin`, `WhenSessionGrantGrantedThenWebRespondForLogin`, `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin`,
-  `WhenPasswordAuthCheckLockedThenWebRespondForLogin`, `WhenUserLookupByUsernameNotFoundThenWebRespondForLogin`
+  `WhenPasswordAuthCheckLockedThenWebRespondForLogin`, `WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin`
 - **Test command:** `mvn -f reference-impl/java-micronaut-jena/pom.xml test`
 - **Expected red outcome:** N/A — existing tests are green
 - **Next implementation target:** Stage 05 verification

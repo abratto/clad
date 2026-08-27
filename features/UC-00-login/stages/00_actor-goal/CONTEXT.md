@@ -48,7 +48,7 @@ MFA, SSO, logout).
 
 - Every actor has at least one in-scope goal.
 - The out-of-scope section is non-empty.
-- **Cross-stage check (forward):** the actor `EndUser` appears verbatim in `01_usecase/output/usecase.md` §Actors (as `User`, the in-feature label).
+- **Cross-stage check (forward):** the actor `EndUser` appears verbatim in `01_usecase/output/usecase.md` §Actors (as `UserNaming`, the in-feature label).
 
 ## Gate
 
