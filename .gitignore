@@ -12,6 +12,7 @@ mvnw.cmd
 
 # Local scratch / out-of-tree references
 references/
+scratch/
 
 # Local agent config (per-developer, not committed)
 # Copy .cline-clad-config.example to .cline-clad-config and fill in your values.

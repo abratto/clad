@@ -130,7 +130,7 @@ a `then` clause's arguments are bound:
 
 | Pattern | Source | What it looks like |
 |---|---|---|
-| **A** (flow-token join) | A `?variable` declared in the `when` clause's input or output | `?pass` bound from `Web/handle: [ password: ?pass ]` |
+| **A** (flow-token join) | A `?variable` declared in the `when` clause's input or output | `?pass` bound from `Web/request: [ password: ?pass ]` |
 | **B** (flow-sibling join) | A `?variable` carried by an earlier action's completion in the same flow | `?user` from `User/lookupByUsername: [...] => [ userId: ?user ]` |
 | **C** (sync constant) | A literal value baked into the sync rule itself | `status: 200` in a `Web/respond` call |
 | **D** (concept-state join) | A `Concept: { ... }` block inside the `where` clause that reads concept state | `User: { ?user email: ?email }` |
@@ -271,15 +271,15 @@ logic into a concept.
 ## Relationship to the Meng & Jackson paper
 
 CLAD's sync language is aligned with the paper's Section 5 syntax with
-two intentional divergences:
+one intentional divergence:
 
 | Area | Paper | CLAD |
 |---|---|---|
-| Web action name | `Web/request` | `Web/handle` — CLAD's bootstrap concept calls its entry action `handle`, not `request` (see [`WEB_CONCEPT.md`](WEB_CONCEPT.md)) |
 | Outcome matching | `Concept/action: [ input ] => []` (empty brackets for no-output outcomes) | `Concept/action: [ input ] => [ outcomeName ]` (inlines the outcome name in the arrow's right side) |
 
 Otherwise, the `when { }` / `where { }` / `then { }` block structure,
-`Concept/action:` namespace qualifiers, `?variable` bindings, `bind()`
+`Concept/action:` namespace qualifiers (including the `Web/request`
+bootstrap entry action), `?variable` bindings, `bind()`
 and `OPTIONAL` constructs, and `?_eachthen` aggregation all follow the
 paper's design.
 

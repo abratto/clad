@@ -181,15 +181,17 @@ runtime artefacts in the chosen profile:
 
 | Spec artefact | Java reference profile counterpart | Enforced by |
 |---|---|---|
-| `<Name>.concept.md` `state` | `<Name>Concept` class fields + (optional) `<Name>.data-model.md` + `<Name>.storage.md` | ArchUnit: no field of a concept class is referenced from another concept package. |
-| `<Name>.concept.md` actions | public methods on `<Name>Concept`, each emitting a flow token | ArchUnit + R1 + R5. |
-| `<name>.sync.md` `when … then` | `<SyncName>` class registered with the sync engine | R3 — no imperative branching inside a sync class. |
-| `<scenario>-chain.md` | `<Scenario>FlowTest` (an HTTP-level test) | The chain's row sequence equals the test's expected token sequence. |
+| `<Name>.concept.md` `state` | `<Name>Concept` relations held in its own `Region` (+ `<Name>.data-model.md` + `<Name>.storage.md`) | R1/R2: a concept reads only its own region; no concept package is referenced from another. |
+| `<Name>.concept.md` actions | `Concept.execute(action, input)` returning an `outcome` + fields | ArchUnit + R1 + R5. |
+| `<name>.sync.md` `when … then` | `SyncRule` (a declarative `when`/`where`/`then` rule) registered with the `SyncEngine` | R3 — no imperative branching inside a sync rule. |
+| `<scenario>-chain.md` | `<Scenario>FlowTraceTest` (asserts the runtime flow-token chain matches the chain table) | The chain's row sequence equals the observed action sequence. |
 | `usecase.md` Postconditions—Success | flow test assertions on response + state | The flow test fails if a Postcondition is unmet. |
 | `usecase.md` Postconditions—Failure (*"no state is modified"*) | flow test assertion that no concept's state changed across the request | What mechanises no-enumeration on negative paths. |
 
-See [`reference-impl/java-micronaut-jena/README.md`](../../reference-impl/java-micronaut-jena/README.md)
-for the actual mappings, and [`MENTAL_MODEL.md`](MENTAL_MODEL.md) for
+See [`reference-impl/java-legible/README.md`](../../reference-impl/java-legible/README.md)
+for the canonical (fire-after-commit) mappings and
+[`reference-impl/java-micronaut-jena/README.md`](../../reference-impl/java-micronaut-jena/README.md)
+for the legacy profile, and [`MENTAL_MODEL.md`](MENTAL_MODEL.md) for
 the OO ↔ WYSIWID intuition.
 
 ---

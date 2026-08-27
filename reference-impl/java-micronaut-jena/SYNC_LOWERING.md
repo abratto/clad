@@ -825,7 +825,7 @@ Example:
 ### Stage 03 syncs
 
 ```text
-WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin:
+WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin:
   when:  Web.handle[Routed(username, password)]
   where: A: username = when.username
   then:  UserNaming.lookupByUsername(username)

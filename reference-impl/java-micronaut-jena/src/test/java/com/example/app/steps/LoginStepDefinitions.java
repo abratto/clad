@@ -1,6 +1,9 @@
 package com.example.app.steps;
 
 import com.example.app.api.LoginRequest;
+import com.example.app.concepts.passwordauth.PasswordAuthConcept;
+import com.example.app.concepts.usernaming.UserNamingConcept;
+import dev.clad.engine.ActionLog;
 import dev.clad.engine.RdfVocabulary;
 import dev.clad.engine.SyncDispatcher;
 import io.cucumber.java.en.Given;
@@ -15,6 +18,7 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.runtime.server.EmbeddedServer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -45,6 +49,9 @@ public class LoginStepDefinitions {
 
     private static EmbeddedServer server;
     private static HttpClient client;
+    private static UserNamingConcept users;
+    private static PasswordAuthConcept passwords;
+    private static ActionLog actionLog;
 
     private HttpResponse<String> response;
     private HttpClientResponseException failure;
@@ -57,7 +64,16 @@ public class LoginStepDefinitions {
         if (server == null || !server.isRunning()) {
             server = ApplicationContext.run(EmbeddedServer.class);
             client = server.getApplicationContext().createBean(HttpClient.class, server.getURI());
+            users = server.getApplicationContext().getBean(UserNamingConcept.class);
+            passwords = server.getApplicationContext().getBean(PasswordAuthConcept.class);
+            actionLog = server.getApplicationContext().getBean(ActionLog.class);
         }
+    }
+
+    /** Seed the demo principal so a scenario is self-contained (not reliant on DemoSeed). */
+    private void seedAda() {
+        users.seedUser("ada-0001", "ada");
+        passwords.seedCredential("ada-0001", "correct-horse-battery-staple");
     }
 
     // -----------------------------------------------------------------------
@@ -90,12 +106,13 @@ public class LoginStepDefinitions {
      */
     @Given("a registered user exists")
     public void a_registered_user_exists() {
-        // DemoSeed registers the user at startup. No additional setup needed.
+        ensureServerRunning();
+        users.seedUser("ada-0001", "ada");
     }
 
     @Given("the user has a password credential")
     public void the_user_has_a_password_credential() {
-        // DemoSeed registers the credential at startup.
+        passwords.seedCredential("ada-0001", "correct-horse-battery-staple");
     }
 
     /**
@@ -104,7 +121,8 @@ public class LoginStepDefinitions {
      */
     @Given("the account is not locked")
     public void the_account_is_not_locked() {
-        // Fresh scenario — server was just started, no failed attempts yet.
+        // Resetting the credential clears failed attempts and the lock.
+        passwords.seedCredential("ada-0001", "correct-horse-battery-staple");
     }
 
     /**
@@ -113,17 +131,19 @@ public class LoginStepDefinitions {
      */
     @Given("the account is below the lockout threshold")
     public void the_account_is_below_lockout_threshold() {
-        // Fresh server start — no failed attempts yet.
+        // Resetting the credential clears the failed-attempt counter.
+        passwords.seedCredential("ada-0001", "correct-horse-battery-staple");
     }
 
     /**
      * Derived from usecase.md Pre-conditions (unknown-user):
      * "No registered User with that username exists."
-     * DemoSeed only registers "ada". Any other username is unknown.
+     * Only "ada" is seeded; any other username stays unknown.
      */
     @Given("no registered user exists with that username")
     public void no_registered_user_exists() {
-        // No setup needed — unknown usernames return NotFound by default.
+        ensureServerRunning();
+        assertNotNull(users, "UserNaming concept must be available for the lookup");
     }
 
     /**
@@ -154,7 +174,7 @@ public class LoginStepDefinitions {
     // -----------------------------------------------------------------------
     // When — derives from usecase.md Main flow step 1
     // Chain-table row 1 (all scenarios):
-    //   Web/request[POST /login] → Web.handle → [Routed]
+    //   Web/request[POST /login] → Web.request → [Routed]
     // -----------------------------------------------------------------------
 
     /**
@@ -162,7 +182,7 @@ public class LoginStepDefinitions {
      * "The User submits POST /login with { username, password }."
      *
      * Matching chain-table row 1 (all scenarios):
-     *   Web/request[POST /login] → Web.handle → Routed
+     *   Web/request[POST /login] → Web.request → Routed
      *
      * @param username from the Gherkin text (e.g. "ada", "nobody")
      * @param password from the Gherkin text
@@ -249,18 +269,25 @@ public class LoginStepDefinitions {
      * "No state is modified in any concept."
      *
      * Chain-table (01b_chain-table/output/unknown-user-chain.md):
-     *   row 2: User.lookupByUsername[NotFound] → row 3: Web.respond[401]
+     *   row 2: UserNaming.lookupByUsername[Refused] → row 3: Web.respond[401]
      * PasswordAuth.check is never reached, so no counter is incremented.
      * This step validates that only User.lookupByUsername (read-only) and
      * Web.respond (write to transport, not to concept state) were invoked.
      */
     @Then("no state is modified in any concept")
     public void no_state_is_modified_in_any_concept() {
-        // Capture concept state snapshots before/after and diff.
-        // For the reference profile, the absence of a PasswordAuth.check
-        // flow token is the runtime evidence.
-        // TODO: implement state-diff when the profile's debug surface exposes
-        // /api/dev/concept/{name}/triples for pre/post comparison.
+        // The unknown-user flow is read-only: Web/request -> UserNaming.lookupByUsername[refused]
+        // -> Web.respond[401]. No concept state is written. Verify this flow recorded
+        // no PasswordAuth.check action (a check would mutate the failed-attempt counter).
+        HttpResponse<?> r = response != null ? response : (failure != null ? failure.getResponse() : null);
+        assertNotNull(r, "response must exist");
+        String flowToken = r.getHeaders().get(SyncDispatcher.FLOW_TOKEN_HEADER);
+        assertNotNull(flowToken, "flow-token header must be present");
+        String sparql = "PREFIX : <" + RdfVocabulary.ACTION_SCHEMA_IRI + ">\n"
+                + "ASK { GRAPH <" + RdfVocabulary.ACTION_GRAPH_IRI + "> { "
+                + "?a :concept <https://clad.dev/concept/passwordauth> ; :name \"check\" ; :flow <" + flowToken + "> . } }";
+        assertFalse(actionLog.ask(sparql),
+                "the unknown-user flow must not invoke PasswordAuth.check");
     }
 
     // -----------------------------------------------------------------------

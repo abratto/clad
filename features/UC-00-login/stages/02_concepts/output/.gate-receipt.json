@@ -1,0 +1,19 @@
+{
+  "stage": "02",
+  "stage_label": "Concept specs",
+  "feature": "UC-00-login",
+  "checked_at": "2026-08-27T22:53:12.354159+00:00",
+  "git_sha": "a563e69",
+  "autonomy": "gated",
+  "output_hash": "a0599dfcf92f4ecbd58f2dffc9420e4fe9ed2c5c57417dd31ddf17554914dbd4",
+  "sequence_guard": "PASS  sequence intact through Stage 02 (Concept specs)",
+  "checks": [
+    {
+      "name": "concept_state_relational",
+      "script": "verify_concept_state_relational.py",
+      "status": "pass",
+      "exit": 0
+    }
+  ],
+  "result": "pass"
+}

@@ -61,7 +61,7 @@ class DebugControllerTest {
         List<Map<String, Object>> login = asListOfMaps(flows.get("Login"));
         assertEquals(
                 List.of(
-                    "whenWebHandleRoutedThenUserNamingLookupByUsernameForLogin",
+                    "whenWebRequestRoutedThenUserNamingLookupByUsernameForLogin",
                     "whenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin",
                     "whenUserNamingLookupByUsernameRefusedThenWebRespondForLogin",
                     "whenPasswordAuthCheckBadPasswordThenWebRespondForLogin",

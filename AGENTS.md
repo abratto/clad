@@ -298,9 +298,9 @@ Additional hard rules:
 - **R15 — Every sync that fires on a shared trigger MUST declare its route scope.**
    A sync whose trigger action can be produced by more than one flow
    (e.g. `User/getProfile[FOUND]`) must either carry an explicit route
-   filter via `parameterizeSparql`, or carry a documented justification
-   for why it is intentionally route-agnostic. This property must be
-       verified at Stage 03a.
+   filter (a `where`-clause `Guard` binding the request route), or carry
+   a documented justification for why it is intentionally route-agnostic.
+   This property must be verified at Stage 03a.
 - **R18 — The quality gate is mandatory at commit time.** `git commit --no-verify`
    is forbidden in a CLAD workspace. The pre-commit hook runs deterministic
    checks (stage sequence, iterative-change coupling). If it blocks a commit,
@@ -319,7 +319,8 @@ process/discipline rules (R6–R9) are defined in
 [`methodology/implementation/RULES.md`](methodology/implementation/RULES.md)
 and are equally binding. R14 and R15 above are additional hard rules for
 the testing and dependency-review stages. Hard-learned implementation
-rules in §9 (R10–R13 and R16–R17) are equally binding. Stage CONTEXT.md
+rules in §9 are equally binding (R10 and R21 were retired with the
+fire-after-commit engine). Stage CONTEXT.md
 Inputs tables reference the full rule set as needed.
 
 If a rule appears to be in conflict with a request, **stop and ask** —
@@ -388,36 +389,30 @@ use cases. They supplement §5 and are equally binding.
 
 ### R10 — Sync SPARQL variables MUST use the engine's reserved names
 
-`SyncAgent.assembleSparql()` binds three variables in the outer `WHERE` /
-`INSERT` shape: `?_when_1` (trigger action node), `?_flow` (flow token),
-`?_then_1` (new invocation). Subclass `whereClause()` and `thenBindings()`
-MUST use exactly these three names. Never introduce synonyms
-(`?_w`, `?_f`, `?article`). Using a different flow variable causes
-`?_then_1 :flow ?_flow` to write the wrong flow token; using a different
-trigger variable causes the dedup guard to mark the wrong node. See
-`reference-impl/java-micronaut-jena/CODE_STYLE.md` § "Reserved variable
-names".
+> **Retired** with the fire-after-commit engine. The RDF/SPARQL engine's
+> reserved variables (`?_when_1`, `?_flow`, `?_then_1`) no longer exist:
+> syncs are declarative `SyncRule` `when/where/then` rules with explicit
+> named-argument bindings, and the flow token is an explicit record field.
+> No equivalent hazard remains.
 
 ### R11 — Every sync that fires on a shared business-concept action MUST filter by route
 
 `Session/grant[GRANTED]` fires for login, sign-in, AND register flows.
-If a respond sync does not include `?_root :route ?_route` with a
-`bindLiteral` in `parameterizeSparql`, it will fire for all three flows,
-producing wrong HTTP status codes (e.g., login returning 200 instead of
-register's 201). Syncs that trigger on `Web/request` already have the
-route — others MUST add it. See
-`reference-impl/java-micronaut-jena/CODE_STYLE.md` § "Must filter by
-route".
+If a respond sync does not declare its route scope (a `where`-clause
+`Guard` binding the request route from the `Web/request` input), it will
+fire for all three flows, producing wrong HTTP status codes (e.g., login
+returning 200 instead of register's 201). Syncs that trigger on
+`Web/request` already carry the route in their trigger input — others
+MUST add a route `Guard`.
 
-### R12 — Concept writeCompletion MUST write a plain `:outcome` triple
+### R12 — A concept action MUST write a named `outcome` field
 
-`ConceptAgent.findPendingInvocations()` uses
-`FILTER NOT EXISTS { ?_action :outcome ?_any_outcome }` to skip
-already-processed actions. Without a plain `:outcome` triple, the filter
-never matches the RDF-star annotation, and completed actions are
-re-processed (causing e.g. duplicate user registrations, runaway sync
-firing). The RDF-star `<< action :outcome VALUE >>` annotation is
-separate and used by syncs for outcome matching. Both forms are required.
+The engine's dispatch loop skips an action that already has a completion
+record; a completion is identified by the presence of an `outcome` field
+in the returned map. Without it, an action would be re-processed on the
+next drain (causing e.g. duplicate registrations, runaway sync firing).
+The completion record carries the `outcome` plus the action's named
+fields; syncs match on `outcome` in their `when` clause.
 
 ### R13 — Jackson must serialize null values (`Include.ALWAYS`)
 
@@ -430,14 +425,14 @@ for the canonical setting.
 
 ### R16 — Stage 04d tests must assert completion field values
 
-`writeCompletion` writes named fields that downstream syncs consume. If
-a field-mapping bug exists (wrong variable name, PSS substitution
-collision, missing SPARQL binding), an outcome-only test will pass while
-all downstream consumers receive null or empty values. The minimum for
-any concept unit test:
+A concept action's completion map carries named fields that downstream
+syncs consume. If a field-mapping bug exists (wrong key name, missing
+binding, value collision), an outcome-only test will pass while all
+downstream consumers receive null or empty values. The minimum for any
+concept unit test:
 
 - Assert the `outcome` value.
-- Assert the primary fields the concept's `writeCompletion` writes.
+- Assert the primary fields the concept's action returns.
 - Assert that no primary field is null or empty string when the inputs
    are valid.
 
@@ -471,7 +466,7 @@ implementation class exists with no corresponding spec artefact, or if a
 sync spec/class/runtime name does not lower mechanically from the Stage 03
 sync rule. `quality-gate/verify_sync_implementation_parity.py` mechanises
 the artefact-to-implementation direction for syncs: it fails if any Stage
-03 sync contract has no corresponding Stage 04e `SyncAgent` implementation.
+03 sync contract has no corresponding Stage 04e `SyncRule` implementation.
 `quality-gate/verify_iterative_change_readiness.py` mechanises the intake
 direction: when the diff touches concept/sync specs or implementation, it
 fails unless an `_changes/` artefact records the change category, earliest
@@ -498,16 +493,11 @@ both design and evidence approval plus passing test evidence.
 
 ### R21 — RDF-star/SPARQL-star patterns MUST use Jena programmatic APIs
 
-SPARQL queries containing RDF-star or SPARQL-star patterns (`<< >>` annotations,
-`{| |}` syntax, nested reification) must be built via Jena's programmatic APIs
-(`ParameterizedSparqlString` with `NodeFactory.createTripleNode()`,
-`UpdateBuilder`, `SelectBuilder`) rather than raw `StringBuilder` or string
-concatenation. Queries built with raw string concatenation are accepted by Jena's
-lenient in-memory parser but rejected by strict remote triplestores (Fuseki over
-HTTP), which enforce SPARQL 1.1 grammar rules and treat bare `<< >>` terms in
-DELETE templates as blank nodes. This causes silent pass-during-local-testing
-that surfaces only in remote-deployment profiles. The `ConceptAgent` base class's
-`writeReifiedOutcome()` method is the canonical example of correct construction.
+> **Retired** with the fire-after-commit engine. RDF-star/SPARQL-star is
+> gone entirely: facts are relation-shaped (`FactStore`/`Region`), the
+> action log is a structured append-only record store, and there is no
+> SPARQL to construct. The strict-vs-lenient parser hazard this rule
+> guarded against no longer exists.
 
 ## 10. Pointers
 

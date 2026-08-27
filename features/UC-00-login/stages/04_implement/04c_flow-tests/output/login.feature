@@ -28,7 +28,7 @@ Feature: Login
 
   # Derived from usecase.md ### Scenario: successful-login
   # Expected token chain (from 02b_chain-table/output/successful-login-chain.md):
-  #   Web/request[POST /login] → Web.handle → UserNaming.lookupByUsername[Found]
+  #   Web/request[POST /login] → Web.request → UserNaming.lookupByUsername[Found]
   #   → PasswordAuth.check[OK] → Session.grant[Granted] → Web.respond[200]
   @successful-login @happy-path
   Scenario: Successful login
@@ -42,7 +42,7 @@ Feature: Login
 
   # Derived from usecase.md ### Scenario: wrong-password
   # Expected token chain (from 02b_chain-table/output/wrong-password-chain.md):
-  #   Web/request[POST /login] → Web.handle → UserNaming.lookupByUsername[Found]
+  #   Web/request[POST /login] → Web.request → UserNaming.lookupByUsername[Found]
   #   → PasswordAuth.check[BadPassword] → Web.respond[401]
   # Response literal from 03_syncs/output/WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md:
   #   body={ message: "username or password didn't match" }
@@ -56,9 +56,9 @@ Feature: Login
 
   # Derived from usecase.md ### Scenario: unknown-user
   # Expected token chain (from 02b_chain-table/output/unknown-user-chain.md):
-  #   Web/request[POST /login] → Web.handle → UserNaming.lookupByUsername[NotFound]
+  #   Web/request[POST /login] → Web.request → UserNaming.lookupByUsername[Refused]
   #   → Web.respond[401]
-  # Response literal from 03_syncs/output/WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin.sync.md:
+  # Response literal from 03_syncs/output/WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin.sync.md:
   #   body={ message: "username or password didn't match" }
   # Postconditions — Failure: "No state is modified in any concept."
   @unknown-user @failure-path @no-state-change
@@ -71,7 +71,7 @@ Feature: Login
 
   # Derived from usecase.md ### Scenario: lockout
   # Expected token chain (from 02b_chain-table/output/lockout-chain.md):
-  #   Web/request[POST /login] → Web.handle → UserNaming.lookupByUsername[Found]
+  #   Web/request[POST /login] → Web.request → UserNaming.lookupByUsername[Found]
   #   → PasswordAuth.check[Locked] → Web.respond[401]
   # Response literal from 03_syncs/output/WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md:
   #   body={ message: "Too many attempts. Try again in 15 minutes." }

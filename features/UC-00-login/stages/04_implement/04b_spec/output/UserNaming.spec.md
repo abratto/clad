@@ -6,11 +6,11 @@
 ### `register(username) -> RegisterOutcome`
 
 - **Inputs:** `username: String`
-- **Outcomes (enum):** `REGISTERED`, `USERNAME_TAKEN`
+- **Outcomes (enum):** `REGISTERED`, `REFUSED`
 - **Flow token:** `UserNaming.register { username, userId?, outcome }`
 
 ### `lookupByUsername(username) -> Optional<UserId>`
 
 - **Inputs:** `username: String`
-- **Outcomes (enum):** `FOUND`, `NOT_FOUND`
+- **Outcomes (enum):** `FOUND`, `REFUSED`
 - **Flow token:** `UserNaming.lookupByUsername { username, userId?, outcome }`

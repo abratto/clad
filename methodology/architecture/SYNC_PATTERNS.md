@@ -29,7 +29,7 @@ sync itself. All of these ride the shared flow token and do not read
 another concept's persistence:
 
 ```
-when:  Web/handle: [ method: "login" ; email: ?email ] => [ routed ]
+when:  Web/request: [ method: "login" ; email: ?email ] => [ routed ]
 then:  PasswordAuth/check: [ password: ?password ]  ← from trigger input
 
 when:  User/lookupByUsername: [ username: ?u ] => [ userId: ?id ]
@@ -53,7 +53,7 @@ visible in the sync spec:
 sync PasswordResetNotification
 
 when {
-    Web/handle: [ method: "password_reset" ; identifier: ?username ]
+    Web/request: [ method: "password_reset" ; identifier: ?username ]
       => [ routed ]
 }
 where {

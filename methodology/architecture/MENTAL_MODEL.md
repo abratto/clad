@@ -23,12 +23,12 @@ two things that play the same structural role.
 | Method call between objects | Sync: `then: OtherConcept.action(...)` | One `*.sync.md` per coordination link |
 | `someOther.getFoo()` (field access on another object) | **concept-state read** — sync `where:` reads another concept's named region | `where:` clause in sync; row in 03a dependency review |
 | Return value used by caller | internal flow data — flow-sibling output joined by flow-token id | `where:` clause; row in chain table |
-| Method parameter | internal flow data — read from the original `Web.handle` body | `where:` clause; row in chain table |
+| Method parameter | internal flow data — read from the original `Web.request` body | `where:` clause; row in chain table |
 | Hard-coded literal in a caller | internal flow data — sync constant | `where:` clause |
 | Sequence diagram | Chain table (Stage 01b) — table form is canonical, Mermaid is derived | `<scenario>-chain.md` |
 | CRC card | Per-concept dependency review card (Stage 03a) | `<concept>-card.md` |
 | `interface` / public API | Concept's `actions:` section + outcome enums | Concept spec; `<Name>.spec.md` |
-| Dependency injection of a service | A sync that wires `Web.handle → SomeService.action` | `*.sync.md` |
+| Dependency injection of a service | A sync that wires `Web.request → SomeService.action` | `*.sync.md` |
 | Observer / event bus | The action log (every action emits a flow-token completion event; syncs subscribe via `when:`) | Built into the runtime; not user code |
 | Polymorphism | Multiple syncs matching the same `when:` pattern (each fires independently) | `*.sync.md` files; commutativity required (see SYNCHRONIZATIONS.md) |
 

@@ -230,11 +230,10 @@ See `../reference/CITATIONS.md` for full attributions.
 ## Relationship to the Meng & Jackson paper
 
 CLAD's concept specification language is aligned with the paper's
-Section 4 with three intentional divergences:
+Section 4 with two intentional divergences:
 
 | Area | Paper | CLAD |
 |---|---|---|
-| Web actions | `Web/request` | `Web/handle` — more precise about the responsibility ("handle" an HTTP request, not just "request") |
 | Multiplicity annotations | Not present | Added as `-- mandatory / optional / ...` comments for Stage 03b data modeling |
 | Operational principle | Unqualified action names: `after set [...]` | Fully qualified: `after PasswordAuth/setPassword: [...]` — maintains traceability to the concept boundary |
 

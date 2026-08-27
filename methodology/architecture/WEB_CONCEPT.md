@@ -11,19 +11,17 @@ CLAD. Other transports use the same pattern under a different name:
 
 | Transport | Bootstrap concept | Entry action | Exit action |
 |---|---|---|---|
-| HTTP / REST | `Web` | `handle(request)` | `respond(status, body)` |
+| HTTP / REST | `Web` | `request(path, params)` | `respond(status, body)` |
 | gRPC | `Grpc` | `receive(call)` | `reply(status, message)` |
 | Kafka / event stream | `Stream` | `consume(event)` | `publish(topic, payload)` |
 | CLI | `Cli` | `invoke(args)` | `print(exitCode, output)` |
 
 Note on naming: the WYSIWID paper (Meng & Jackson, Onward! 2025)
-calls the Web entry action `request`. CLAD uses `handle` instead,
-because "handling" a request is more precise about what the bootstrap
-concept does — it receives an HTTP request, normalises it, and routes
-it into the action chain. The symmetry of `handle(request)` /
-`respond(status, body)` also mirrors the request/response cycle more
-naturally than `request(...)` / `respond(...)`. This is a controlled
-divergence (see [`SYNCHRONIZATIONS.md`](SYNCHRONIZATIONS.md)).
+calls the Web entry action `request`, and CLAD follows it. The
+bootstrap concept receives an HTTP request, normalises it into a flow
+token, and syncs route it into the action chain. The pair
+`request(...)` / `respond(status, body)` mirrors the request/response
+cycle directly.
 
 The pattern is identical in all cases. Only the transport vocabulary
 changes. Hard rule R4 applies to every bootstrap concept: **no
@@ -38,7 +36,7 @@ different transport.
 ## What a bootstrap concept does
 
 1. **Translate the transport signal into a single action.** The entry
-   action (e.g. `Web.handle(request)`) receives the inbound signal and
+   action (e.g. `Web.request(...)`) receives the inbound signal and
    emits a flow token. That is its entire upstream job.
 2. **Translate a result back into a transport response.** The exit
    action (e.g. `Web.respond(status, body)`) takes a result authored
@@ -146,7 +144,7 @@ between the last business concept action and the final `Web/respond`.
 When implementing a bootstrap concept, the allowed shape is narrow:
 
 1. normalize the inbound transport payload into the root action input
-2. call the flow root (`Web.handle(...)` or profile equivalent)
+2. call the flow root (`Web.request(...)` or profile equivalent)
 3. await the authored result
 4. translate the authored result into the outbound transport response
 
@@ -186,8 +184,8 @@ sequenceDiagram
     participant Web
     participant <BusinessConcept>
     Client->>Web: HTTP request
-    Web->>Web: handle(request) — emits flow token
-    Web-->>Web: (sync fires on Web.handle)
+    Web->>Web: request(...) — emits flow token
+    Web-->>Web: (sync fires on Web.request)
     Web->>+<BusinessConcept>: action(...)
     <BusinessConcept>-->>-Web: outcome
     Web-->>Web: (sync fires on outcome)

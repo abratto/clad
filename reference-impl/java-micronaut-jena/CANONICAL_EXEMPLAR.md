@@ -37,7 +37,7 @@ flow implemented by:
 - `concepts/user/UserNamingConcept.java`
 - `concepts/passwordauth/PasswordAuthConcept.java`
 - `concepts/session/SessionConcept.java`
-- `syncs/WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin.java`
+- `syncs/WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin.java`
 - `syncs/WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin.java`
 - `syncs/WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin.java`
 - `syncs/WhenPasswordAuthCheckOkThenSessionGrantForLogin.java`

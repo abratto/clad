@@ -9,8 +9,8 @@ password that does not match. Account is below the lockout threshold.
 
 | # | When | Then | Inputs | Outcome | Why this step |
 |---|---|---|---|---|---|
-| 1 | `Web/request[POST /login]` | `Web.handle` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
-| 2 | `Web.handle[Routed]` | `UserNaming.lookupByUsername` | `username` | `Found(userId)` | The username does exist |
+| 1 | `Web/request[POST /login]` | `Web.request` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
+| 2 | `Web.request[Routed]` | `UserNaming.lookupByUsername` | `username` | `Found(userId)` | The username does exist |
 | 3 | `UserNaming.lookupByUsername[Found(userId)]` | `PasswordAuth.check` | `userId`, `password` | `BadPassword` | Credential mismatch; counter increments inside `PasswordAuth` |
 | 4 | `PasswordAuth.check[BadPassword]` | `Web.respond[401]` | `401`, `{ message: "username or password didn't match" }` | `Sent` | Same opaque message as `unknown-user` (no enumeration leak) |
 
@@ -18,8 +18,8 @@ password that does not match. Account is below the lockout threshold.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Web_handle : POST /login {username, password}
-    Web_handle --> UserNaming_lookupByUsername : [Routed]
+    [*] --> Web_request : POST /login {username, password}
+    Web_request --> UserNaming_lookupByUsername : [Routed]
     UserNaming_lookupByUsername --> PasswordAuth_check : [Found]
     PasswordAuth_check --> Web_respond401 : [BadPassword]
     Web_respond401 --> [*]

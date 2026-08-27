@@ -9,8 +9,8 @@ reached the lockout threshold for that user.
 
 | # | When | Then | Inputs | Outcome | Why this step |
 |---|---|---|---|---|---|
-| 1 | `Web/request[POST /login]` | `Web.handle` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
-| 2 | `Web.handle[Routed]` | `UserNaming.lookupByUsername` | `username` | `Found(userId)` | The username exists |
+| 1 | `Web/request[POST /login]` | `Web.request` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
+| 2 | `Web.request[Routed]` | `UserNaming.lookupByUsername` | `username` | `Found(userId)` | The username exists |
 | 3 | `UserNaming.lookupByUsername[Found(userId)]` | `PasswordAuth.check` | `userId`, `password` | `Locked` | Counter is at threshold; verifier short-circuits regardless of password |
 | 4 | `PasswordAuth.check[Locked]` | `Web.respond[401]` | `401`, `{ message: "Too many attempts. Try again in 15 minutes." }` | `Sent` | Distinct message — the lockout state is observable to the user |
 
@@ -18,8 +18,8 @@ reached the lockout threshold for that user.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Web_handle : POST /login {username, password}
-    Web_handle --> UserNaming_lookupByUsername : [Routed]
+    [*] --> Web_request : POST /login {username, password}
+    Web_request --> UserNaming_lookupByUsername : [Routed]
     UserNaming_lookupByUsername --> PasswordAuth_check : [Found]
     PasswordAuth_check --> Web_respond401 : [Locked]
     Web_respond401 --> [*]

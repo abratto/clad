@@ -2,11 +2,11 @@
   "stage": "01a",
   "stage_label": "Responsibility map",
   "feature": "UC-00-login",
-  "checked_at": "2026-08-27T05:18:16.121523+00:00",
-  "git_sha": "2adcb8a",
+  "checked_at": "2026-08-27T22:17:38.610907+00:00",
+  "git_sha": "a563e69",
   "autonomy": "gated",
   "output_hash": "1815ca7420a816eb3b0ffffe894ee0dc9ed41e7f37cd83ed40fca762bfb492d4",
-  "sequence_guard": "iterative diff review",
+  "sequence_guard": "PASS  sequence intact through Stage 01a (Responsibility map)",
   "checks": [
     {
       "name": "file_manifest",

@@ -1,0 +1,12 @@
+{
+  "stage": "05",
+  "stage_label": "Verify",
+  "feature": "UC-00-login",
+  "checked_at": "2026-08-27T23:26:22.475686+00:00",
+  "git_sha": "a563e69",
+  "autonomy": "gated",
+  "output_hash": "6f0ab354b17d8373be52ff04c725feafb00ae551a71aa4fddda7252f163ca3d2",
+  "sequence_guard": "PASS  sequence intact through Stage 05 (Verify)",
+  "checks": [],
+  "result": "pass"
+}

@@ -86,6 +86,27 @@ def find_surefire_reports(feature_root):
             c2 = d / sub / "target" / "surefire-reports"
             if c2.is_dir():
                 return str(c2)
+        # Multi-module reference-impl layout: reference-impl/<module>/target/surefire-reports
+        ref = d / "reference-impl"
+        if ref.is_dir():
+            for module_dir in sorted(ref.iterdir()):
+                c3 = module_dir / "target" / "surefire-reports"
+                if not c3.is_dir():
+                    continue
+                # Prefer the module that actually ran Cucumber scenarios.
+                try:
+                    has_cucumber = any(
+                        f.startswith("TEST-") and "cucumber" in f.lower()
+                        for f in os.listdir(c3))
+                except OSError:
+                    has_cucumber = False
+                if has_cucumber:
+                    return str(c3)
+            # Fall back to the first module with any surefire reports.
+            for module_dir in sorted(ref.iterdir()):
+                c3 = module_dir / "target" / "surefire-reports"
+                if c3.is_dir():
+                    return str(c3)
         parent = d.parent
         if parent == d:
             return None

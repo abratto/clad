@@ -194,7 +194,7 @@ concept (e.g. `LoginAttemptHistory`).
 
 **Agent action:** one file per scenario, each with a numbered table
 of `<Concept>.<action> -> <outcome>` rows + (optional) Mermaid
-diagram. First row is always `Web.handle`; last row is always
+diagram. First row is always `Web.request`; last row is always
 `Web.respond` (R4). The *Why this step* column justifies each row.
 
 **Outputs written:**

@@ -138,7 +138,7 @@ These rules are documented in the template at
 | Chain-table column | Step-definition element |
 |---|---|
 | `#` (row number) | Method ordering — chain-table row 1 is the first method called |
-| `When` (e.g. `Web.handle[Routed]`) | Method trigger condition — determines when this method is invoked |
+| `When` (e.g. `Web.request[Routed]`) | Method trigger condition — determines when this method is invoked |
 | `Then` (e.g. `User.lookupByUsername`) | The concept action the method invokes |
 | `Inputs` (e.g. `username`) | Method parameters |
 | `Outcome` (e.g. `Found(userId)`) | Expected outcome — documented in Javadoc, asserted in the step |
@@ -148,8 +148,8 @@ These rules are documented in the template at
 
 | Chain-table row | Maps to Cucumber annotation | Purpose |
 |---|---|---|
-| Row 1: `Web/request → Web.handle` | `@When` | The HTTP trigger. One `@When` per scenario with `{string}` parameters for request data. |
-| Middle rows: `Web.handle → Concept.action` | Not directly annotated (called by syncs) | The sync engine invokes these. Documented in the `@When` method Javadoc as the expected token chain. |
+| Row 1: `Web/request → Web.request` | `@When` | The HTTP trigger. One `@When` per scenario with `{string}` parameters for request data. |
+| Middle rows: `Web.request → Concept.action` | Not directly annotated (called by syncs) | The sync engine invokes these. Documented in the `@When` method Javadoc as the expected token chain. |
 | Last row: `Concept.action → Web.respond` | `@Then` | The response assertion. Status code and body content from the sync spec. |
 
 ### Rule S3 — Token chain assertion
@@ -160,7 +160,7 @@ Each token's `action` and `outcome` fields must match a chain-table
 row's `Then` action name and `Outcome` value (SCREAMING_SNAKE_CASE).
 
 ```
-Chain-table row 2: Web.handle[Routed] → User.lookupByUsername → Found(userId)
+Chain-table row 2: Web.request[Routed] → User.lookupByUsername → Found(userId)
 Chain-table row 3: User.lookupByUsername[Found] → PasswordAuth.check → Ok
 Chain-table row 4: PasswordAuth.check[Ok] → Session.grant → Granted(sessionId)
 

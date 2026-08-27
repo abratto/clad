@@ -3,7 +3,7 @@
 
 Implementation classes exist under `reference-impl/java-micronaut-jena/src/main/java/com/example/app/syncs/`:
 
-- `WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin.java`
+- `WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin.java`
 - `WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin.java`
 - `WhenPasswordAuthCheckOkThenSessionGrantForLogin.java`
 - `WhenSessionGrantGrantedThenWebRespondForLogin.java`

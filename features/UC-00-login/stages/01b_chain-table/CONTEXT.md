@@ -77,7 +77,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected
   - Every error outcome from the four scenarios appears in the consolidated branching table.
   - Concept outcome enums match across all per-scenario files (e.g., PasswordAuth.check: [Ok, BadPassword, Locked] appears in all files that use it).
   - `Inputs` expose downstream action arguments only; no `Where`/join provenance appears in Stage 01b.
-- The first row of each scenario chain is `Web/request[...] -> Web.handle`; the last is `... -> Web.respond[...]`.
+- The first row of each scenario chain is `Web/request[...] -> Web.request`; the last is `... -> Web.respond[...]`.
 - Every action used appears in the responsibility map.
 - Mermaid `stateDiagram-v2` diagrams render at [mermaid.live](https://mermaid.live) with no errors.
 

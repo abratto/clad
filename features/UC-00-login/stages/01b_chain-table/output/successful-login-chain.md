@@ -9,8 +9,8 @@ for a registered user whose account is not locked.
 
 | # | When | Then | Inputs | Outcome | Why this step |
 |---|---|---|---|---|---|
-| 1 | `Web/request[POST /login]` | `Web.handle` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
-| 2 | `Web.handle[Routed]` | `UserNaming.lookupByUsername` | `username` | `Found(userId)` | Need the opaque `userId` before any auth check |
+| 1 | `Web/request[POST /login]` | `Web.request` | `POST /login`, `{ username, password }` | `Routed` | Sole HTTP entry (R4) |
+| 2 | `Web.request[Routed]` | `UserNaming.lookupByUsername` | `username` | `Found(userId)` | Need the opaque `userId` before any auth check |
 | 3 | `UserNaming.lookupByUsername[Found(userId)]` | `PasswordAuth.check` | `userId`, `password` | `Ok` | Verify the credential |
 | 4 | `PasswordAuth.check[Ok]` | `Session.grant` | `userId` | `Granted(sessionId)` | Open a fresh session for the verified user |
 | 5 | `Session.grant[Granted(sessionId)]` | `Web.respond[200]` | `200`, `{ sessionToken: sessionId }` | `Sent` | Closes the request with the new token |
@@ -19,8 +19,8 @@ for a registered user whose account is not locked.
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Web_handle : POST /login {username, password}
-    Web_handle --> UserNaming_lookupByUsername : [Routed]
+    [*] --> Web_request : POST /login {username, password}
+    Web_request --> UserNaming_lookupByUsername : [Routed]
     UserNaming_lookupByUsername --> PasswordAuth_check : [Found]
     PasswordAuth_check --> Session_grant : [Ok]
     Session_grant --> Web_respond200 : [Granted]
@@ -34,7 +34,7 @@ stateDiagram-v2
   scenario `successful-login` lists all four under *Coverage check*.
 - All five action calls use action names declared in the
   responsibility map.
-- The first row is `Web/request[...] -> Web.handle`; the last row is `... -> Web.respond[...]` (R4).
+- The first row is `Web/request[...] -> Web.request`; the last row is `... -> Web.respond[...]` (R4).
 
 ## Notes
 

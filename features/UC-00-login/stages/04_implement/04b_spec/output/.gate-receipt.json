@@ -1,0 +1,31 @@
+{
+  "stage": "04b",
+  "stage_label": "SPEC",
+  "feature": "UC-00-login",
+  "checked_at": "2026-08-27T22:53:13.020057+00:00",
+  "git_sha": "a563e69",
+  "autonomy": "gated",
+  "output_hash": "820af533f259afcd782ce993bf6535c55fe519c6d2536f57fba7cf09d6f71a72",
+  "sequence_guard": "PASS  sequence intact through Stage 04b (SPEC)",
+  "checks": [
+    {
+      "name": "spec_parity",
+      "script": "verify_spec_parity.py",
+      "status": "pass",
+      "exit": 0
+    },
+    {
+      "name": "outcome_alignment",
+      "script": "verify_outcome_alignment.py",
+      "status": "pass",
+      "exit": 0
+    },
+    {
+      "name": "action_chain",
+      "script": "verify_action_chain.py",
+      "status": "pass",
+      "exit": 0
+    }
+  ],
+  "result": "pass"
+}

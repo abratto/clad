@@ -1,0 +1,19 @@
+{
+  "stage": "04a",
+  "stage_label": "Storage mapping",
+  "feature": "UC-00-login",
+  "checked_at": "2026-08-27T22:53:12.860260+00:00",
+  "git_sha": "a563e69",
+  "autonomy": "gated",
+  "output_hash": "6f14388335e39028ef0c951d153b883f2b8633c7f628703591932c05e3d3eea0",
+  "sequence_guard": "PASS  sequence intact through Stage 04a (Storage mapping)",
+  "checks": [
+    {
+      "name": "relational_mapping",
+      "script": "verify_relational_mapping.py",
+      "status": "pass",
+      "exit": 0
+    }
+  ],
+  "result": "pass"
+}

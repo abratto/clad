@@ -4,7 +4,7 @@
 
 | Action | Flow (sync) | Data received | Pattern | Source |
 |---|---|---|---|---|
-| `check` | `WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin` (`successful-login`, `wrong-password`, `lockout`) | `userId`, `password` | A + B | `?p` from `Web/handle` trigger (A); `?user` from `UserNaming/lookupByUsername` completion (B) |
+| `check` | `WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin` (`successful-login`, `wrong-password`, `lockout`) | `userId`, `password` | A + B | `?p` from `Web/request` trigger (A); `?user` from `UserNaming/lookupByUsername` completion (B) |
 
 > `PasswordAuth/check`'s lockout branch is expressed by the
 > `Locked` outcome plus `WhenPasswordAuthCheckLockedThenWebRespondForLogin`, not by a separate `lock`

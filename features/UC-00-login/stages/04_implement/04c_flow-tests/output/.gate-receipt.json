@@ -1,0 +1,25 @@
+{
+  "stage": "04c",
+  "stage_label": "Flow tests",
+  "feature": "UC-00-login",
+  "checked_at": "2026-08-27T23:07:34.998988+00:00",
+  "git_sha": "a563e69",
+  "autonomy": "gated",
+  "output_hash": "4c72e7605ef46c477aefd333c05e1c22a830fe6e0b676f2c13bebdc2b3e73a76",
+  "sequence_guard": "PASS  sequence intact through Stage 04c (Flow tests)",
+  "checks": [
+    {
+      "name": "step_definition_parity",
+      "script": "verify_step_definition_parity.py",
+      "status": "pass",
+      "exit": 0
+    },
+    {
+      "name": "step_definition_derivation",
+      "script": "verify_step_definition_derivation.py",
+      "status": "pass",
+      "exit": 0
+    }
+  ],
+  "result": "pass"
+}

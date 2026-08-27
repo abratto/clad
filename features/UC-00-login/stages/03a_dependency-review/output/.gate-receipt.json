@@ -1,0 +1,19 @@
+{
+  "stage": "03a",
+  "stage_label": "Dependency review",
+  "feature": "UC-00-login",
+  "checked_at": "2026-08-27T22:53:12.626251+00:00",
+  "git_sha": "a563e69",
+  "autonomy": "gated",
+  "output_hash": "405b34000451c8b74b3d2b523782f1be7e8ec2947610e94bbecbbb7b7fba65ad",
+  "sequence_guard": "PASS  sequence intact through Stage 03a (Dependency review)",
+  "checks": [
+    {
+      "name": "sync_route_filters",
+      "script": "verify_sync_route_filters.py",
+      "status": "pass",
+      "exit": 0
+    }
+  ],
+  "result": "pass"
+}

@@ -83,7 +83,7 @@ canonical sync files and introduces no new logic.
 
 ## Outputs
 
-- `output/WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin.sync.md`
+- `output/WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin.sync.md`
 - `output/WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin.sync.md`
 - `output/WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin.sync.md`
 - `output/WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md`
@@ -102,7 +102,7 @@ python3 ../../../../quality-gate/verify_scenario_coverage.py \
   --usecase ../01_usecase/output/usecase.md \
   --chain-dir ../01b_chain-table/output \
   --sync-dir output
-python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected "WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin.sync.md,WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin.sync.md,WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin.sync.md,WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md,WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md,WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md,WhenSessionGrantGrantedThenWebRespondForLogin.sync.md"
+python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected "WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin.sync.md,WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin.sync.md,WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin.sync.md,WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md,WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md,WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md,WhenSessionGrantGrantedThenWebRespondForLogin.sync.md"
 ```
 
 - **verify_sync_matrix.py:** every sync has a valid Sync Contract Matrix.

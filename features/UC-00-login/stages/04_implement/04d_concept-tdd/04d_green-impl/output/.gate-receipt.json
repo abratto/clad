@@ -1,0 +1,19 @@
+{
+  "stage": "04d-green",
+  "stage_label": "Concept TDD green",
+  "feature": "UC-00-login",
+  "checked_at": "2026-08-27T23:07:52.712234+00:00",
+  "git_sha": "a563e69",
+  "autonomy": "gated",
+  "output_hash": "c8c69f0634aa59e7cb54d1a7be6b12a35dbbcd02aa5775681bee38c1ba67255b",
+  "sequence_guard": "PASS  sequence intact through Stage 04d-green (Concept TDD green)",
+  "checks": [
+    {
+      "name": "concept_field_assertions",
+      "script": "verify_concept_field_assertions.py",
+      "status": "pass",
+      "exit": 0
+    }
+  ],
+  "result": "pass"
+}

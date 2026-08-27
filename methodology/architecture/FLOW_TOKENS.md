@@ -11,7 +11,7 @@ authorised it.
 | Field | Type | Meaning |
 |---|---|---|
 | `id` | string | Unique within the run (e.g. UUID) |
-| `parent` | string \| null | The flow token that *caused* this one (e.g. the `Web.handle` that triggered the chain), or `null` for roots |
+| `parent` | string \| null | The flow token that *caused* this one (e.g. the `Web.request` that triggered the chain), or `null` for roots |
 | `action` | string | `<ConceptName>.<actionName>` |
 | `actor` | string \| null | Who initiated the chain (typically a `userId`); flows down from the root |
 | `at` | timestamp | When the action completed |
@@ -74,7 +74,7 @@ Logs are best-effort and often free-form. Flow tokens are:
 
 The result is that a question like *"what use case authorised this side
 effect?"* has a deterministic answer: walk parent links until you hit a
-root token, look at its `action` (`Web.handle <route>`), and ask which
+root token, look at its `action` (`Web.request <route>`), and ask which
 use-case scenario routed there.
 
 ## Where they live
@@ -94,7 +94,7 @@ choice; it is not the only one.
 The verifier reads the use case (`stages/01_usecase/output/usecase.md`),
 extracts the named scenarios, and for each scenario:
 
-1. Finds the root flow token (the `Web.handle` matching the scenario's
+1. Finds the root flow token (the `Web.request` matching the scenario's
    trigger).
 2. Walks the tree of children.
 3. Checks that the chain matches the syncs declared in

@@ -14,7 +14,7 @@
 
 | Sync | Chain table | Flow scenario | Tested by |
 |---|---|---|---|
-| `WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `CucumberTest` |
+| `WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `CucumberTest` |
 | `WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin` | Row 2→3 | successful-login, wrong-pw, lockout | `CucumberTest` |
 | `WhenPasswordAuthCheckOkThenSessionGrantForLogin` | Row 3→4 | successful-login | `CucumberTest` |
 | `WhenSessionGrantGrantedThenWebRespondForLogin` | Row 4→5 | successful-login | `CucumberTest` |
@@ -26,10 +26,10 @@
 
 | Scenario | Syncs exercised |
 |---|---|
-| `successful-login` | WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckOkThenSessionGrantForLogin, WhenSessionGrantGrantedThenWebRespondForLogin |
-| `wrong-password` | WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin |
-| `lockout` | WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckLockedThenWebRespondForLogin |
-| `unknown-user` | WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin |
+| `successful-login` | WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckOkThenSessionGrantForLogin, WhenSessionGrantGrantedThenWebRespondForLogin |
+| `wrong-password` | WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin |
+| `lockout` | WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckLockedThenWebRespondForLogin |
+| `unknown-user` | WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin |
 
 All 4 Cucumber scenarios pass (0 failures).
 
@@ -59,7 +59,7 @@ exist under `com.example.app.syncs` with matching spec artefacts.
 
 - **Approved red tests:** None — existing tests are flow-level and pass green
 - **Sync package:** `com.example.app.syncs`
-- **Sync classes:** `WhenWebHandleRoutedThenUserNamingLookupByUsernameForLogin`, `WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin`,
+- **Sync classes:** `WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin`, `WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin`,
   `WhenPasswordAuthCheckOkThenSessionGrantForLogin`, `WhenSessionGrantGrantedThenWebRespondForLogin`, `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin`,
   `WhenPasswordAuthCheckLockedThenWebRespondForLogin`, `WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin`
 - **Test command:** `mvn -f reference-impl/java-micronaut-jena/pom.xml test`

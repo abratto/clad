@@ -1,0 +1,12 @@
+{
+  "stage": "01b",
+  "stage_label": "Chain table",
+  "feature": "UC-00-login",
+  "checked_at": "2026-08-27T22:53:06.585947+00:00",
+  "git_sha": "a563e69",
+  "autonomy": "gated",
+  "output_hash": "594e6835389419a25448802dca610115085350f990ca5270dbdf1945a942849c",
+  "sequence_guard": "PASS  sequence intact through Stage 01b (Chain table)",
+  "checks": [],
+  "result": "pass"
+}

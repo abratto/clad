@@ -20,7 +20,7 @@ then {
 | Binding | Pattern | Source |
 |---|---|---|
 | `?user` | B | Flow-sibling output — `UserNaming/lookupByUsername` completion |
-| `?p` | A | Trigger token — `Web/handle` input (shared flow) |
+| `?p` | A | Trigger token — `Web/request` input (shared flow) |
 
 ## Cites
 
