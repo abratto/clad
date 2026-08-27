@@ -7,7 +7,7 @@
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change category:** `presentation`
 - **Earliest re-entry stage:** `01a`
-- **Status:** `active`
+- **Status:** `closed`
 - **Change summary:** Rename the `User` concept to `UserNaming` (purpose-oriented
   name per `CONCEPTS.md` §1); outcomes, state, action order, and the concept set
   are unchanged — only the concept qualifier (`User/…` → `UserNaming/…`) and its

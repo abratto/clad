@@ -2,7 +2,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `mixed`
-- **Status:** `active`
+- **Status:** `closed`
 - **Affected profile(s):** `reference-impl/java-micronaut-jena`, `reference-impl/java-micronaut-postgres`, and the `features/UC-00-login` worked example
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
