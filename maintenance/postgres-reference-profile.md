@@ -2,7 +2,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `active`
+- **Status:** `closed`
 - **Affected profile(s):** `reference-impl/java-micronaut-postgres` (new); methodology docs (`STORAGE_MAPPING.md`, `clad.properties`, `templates/`)
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
