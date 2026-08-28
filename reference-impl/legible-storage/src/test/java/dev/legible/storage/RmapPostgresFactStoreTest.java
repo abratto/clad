@@ -8,6 +8,7 @@ import org.postgresql.ds.PGSimpleDataSource;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Map;
@@ -108,6 +109,49 @@ class RmapPostgresFactStoreTest {
         assertEquals(401, app.login("alice", "secret").get("status"));
         assertEquals("Too many attempts. Try again in 15 minutes.",
                 app.login("alice", "secret").get("message"));
+    }
+
+    @Test
+    void persistedConceptStateIsCorrect() throws Exception {
+        app.seedUser("alice", "secret");
+        Map<String, Object> ok = app.login("alice", "secret");
+        assertEquals(200, ok.get("status"));
+        String sessionToken = (String) ok.get("sessionToken");
+
+        // UserNaming stored the username -> opaque userId.
+        String userId = queryOne("SELECT user_id FROM user_naming WHERE username = 'alice'");
+        assertNotNull(userId, "UserNaming must persist the opaque userId");
+
+        // PasswordAuth stored a credential for that same userId.
+        String hash = queryOne("SELECT password_hash FROM password_auth WHERE user_id = ?", userId);
+        assertNotNull(hash, "PasswordAuth must persist the credential");
+        assertTrue(hash.startsWith("sha256:"));
+
+        // Session stored the granted session keyed to the userId; the token
+        // round-trips back to the user it belongs to.
+        String sessionUserId = queryOne("SELECT user_id FROM session WHERE session_id = ?", sessionToken);
+        assertEquals(userId, sessionUserId, "the session must be related to the correct user");
+
+        // Drive lockout: the counter and lock are persisted as typed values.
+        for (int i = 0; i < 5; i++) {
+            app.login("alice", "wrong");
+        }
+        assertEquals("5", queryOne("SELECT failed_attempts FROM password_auth WHERE user_id = ?", userId),
+                "failed_attempts must be persisted as the typed integer 5");
+        assertNotNull(queryOne("SELECT locked_until FROM password_auth WHERE user_id = ?", userId),
+                "locked_until must be persisted as a timestamp");
+    }
+
+    private String queryOne(String sql, String... params) throws Exception {
+        try (Connection c = dataSource.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            for (int i = 0; i < params.length; i++) {
+                ps.setString(i + 1, params[i]);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getString(1) : null;
+            }
+        }
     }
 
     private static boolean columnExists(Statement st, String table, String column) throws Exception {
