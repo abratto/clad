@@ -10,6 +10,71 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.2.0] — 2026-08-28
+
+### Added
+
+#### Engine — fire-after-commit
+
+- **`legible-engine`** — a zero-dependency engine (`dev.legible.engine`) that
+  realises the Meng & Jackson synchronization semantics directly. Concepts hold
+  state as relations behind a `FactStore`/`Region` SPI; actions are map→map;
+  syncs are declarative `when`/`where`/`then` rules (`SyncRule`) evaluated by a
+  `WhereEvaluator` (fan-out, Pattern D reads, `OPTIONAL`, `bind(uuid)`,
+  `?_eachthen` grouping, route `Guard`s). Coordination happens **after** an
+  action is committed to a per-flow action log — there are no transactions and
+  no rollback; a failing downstream action completes with a named `error`
+  outcome. The action log carries `parentActionId`/`causedBySync` provenance
+  edges.
+- **`java-legible`** — the canonical in-memory profile: UC-00-login plus
+  example features (social, tagging, token) exercising the full sync model, and
+  a flow-token back-trace (`FlowTraceTest`) that asserts the runtime chain
+  matches the chain table.
+
+#### Engine — storage
+
+- **`legible-storage`** — `JenaFactStore` (one named graph per concept) and
+  `PostgresFactStore` (a generic `fact` relation) prove the engine is
+  storage-agnostic: the same `Concept`/`SyncRule` code runs on in-memory, Jena,
+  and Postgres with identical outcomes.
+- **`RmapPostgresFactStore`** — relation realization: Halpin's Rmap derives one
+  typed table per concept (individual identifier as primary key, one
+  `TEXT`/`INTEGER`/`TIMESTAMP` column per fact type, `DEFAULT` for resettable
+  facts, `UNIQUE` from the model). String↔typed values round-trip through the
+  SPI; mandatory roles are schema metadata (not `NOT NULL`) because the
+  per-fact SPI cannot satisfy row-level mandatory atomicity.
+
+### Changed
+
+- **UC-00-login re-lowered** — the bootstrap entry action is reconciled to the
+  paper's `Web/request` (collapsing the old "bootstrap handoff exception"), the
+  `refused` outcome is reconciled across chain tables and SPECs, and the
+  concepts/syncs are re-implemented as `Concept`/`SyncRule`.
+- **Flow tokens** now materialise as a per-flow `ActionLog` of
+  invocation/completion records with explicit provenance (was a bare UUID IRI
+  in an RDF graph).
+- **Methodology and rules** — `ENGINE.md` rewritten; `TRACEABILITY.md`,
+  `ARTEFACT_MAP.md`, `SYNCHRONIZATIONS.md`, `CONCEPTS.md`, `WEB_CONCEPT.md`,
+  `FLOW_TOKENS.md`, `SYNC_PATTERNS.md`, `STORAGE_MAPPING.md` updated. `AGENTS.md`
+  retires R10 (reserved SPARQL variables) and R21 (RDF-star programmatic APIs),
+  and rewords R11/R12/R16 to the declarative engine. Concept-naming and
+  relational-state guidance carried into the engine's `Concept`/`Region`
+  javadoc.
+- **Parity scripts** now understand the `SyncRule`/`Concept` shape (and remain
+  backward-compatible with the legacy `SyncAgent`/`ConceptAgent`);
+  `verify_sync_declarative.py` skips concept classes.
+
+### Why
+
+The previous engine encoded the "sync-as-transaction" reading of *The Essence
+of Software* (an atomic composite write with rollback). Jackson's forum reply
+and Meng's papers (`arXiv:2508.14511`, `arXiv:2606.11051`) show the DSL "gets
+rid of the need for transactions". The fire-after-commit engine follows that
+model: the action is the atomic unit, failures are named outcomes, and the log
+is the source of truth. Benefits: no 2PC/saga machinery, storage-agnostic
+(`FactStore` SPI), ~100× lower latency / ~50× throughput, per-flow log sharding
+plus per-concept serialisation, and richer provenance for Stage 05.
+
 ## [0.1.10] — 2026-08-26
 
 ### Fixed
