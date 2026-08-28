@@ -50,8 +50,15 @@ RULE_WHEN_RE = re.compile(r"^\s*when\s+(\w+)/(\w+)\s*\[([^\]]*)\]", re.MULTILINE
 THEN_RE = re.compile(r"(\w+)/(\w+)\s*:")
 MATRIX_HEADING = "## Sync Contract Matrix"
 CONCEPT_AGENT_RE = re.compile(
-    r"\bclass\s+(\w+)\s+extends\s+(?:[\w.]+\.)?(?:Predicate)?ConceptAgent\b"
+    r"\bclass\s+(\w+)\s+(?:extends\s+(?:[\w.]+\.)?(?:Predicate)?ConceptAgent|implements\s+(?:[\w.]+\.)?Concept)\b"
 )
+
+# Bootstrap concepts (transport boundary) have no per-feature *.concept.md —
+# their anatomy is documented in methodology/architecture/WEB_CONCEPT.md.
+BOOTSTRAP_CONCEPTS = {"Web", "Grpc", "Stream", "Cli"}
+
+# New-shape sync declarations: SyncRule.of("Name", "concept", "action", ...).
+SYNC_RULE_OF_RE = re.compile(r'SyncRule\.of\(\s*"(\w+)"')
 
 
 def collect_class_names(directory):
@@ -235,8 +242,30 @@ def collect_sync_specs(features_dir):
     return specs, failures
 
 
+def collect_sync_names(directory):
+    """Return a list of (path, sync_name, is_legacy_class) for each sync
+    implementation found recursively under directory — either a legacy
+    `class X extends SyncAgent` or a new-shape `SyncRule.of("X", ...)`."""
+    results = []
+    if not os.path.isdir(directory):
+        return results
+    for root, _, files in os.walk(directory):
+        for filename in files:
+            stem, ext = os.path.splitext(filename)
+            if ext not in IMPL_EXTENSIONS:
+                continue
+            path = os.path.join(root, filename)
+            with open(path, encoding="utf-8") as handle:
+                text = handle.read()
+            for m in re.finditer(r"\bclass\s+(\w+)\s+extends\s+SyncAgent\b", text):
+                results.append((path, m.group(1), True))
+            for m in SYNC_RULE_OF_RE.finditer(text):
+                results.append((path, m.group(1), False))
+    return results
+
+
 def check_syncs(sync_impl_dir, features_dir):
-    """Check every sync implementation class has a *.sync.md spec.
+    """Check every sync implementation has a *.sync.md spec.
     Returns list of (path, message) failure tuples."""
     failures = []
     if not os.path.isdir(sync_impl_dir):
@@ -245,26 +274,27 @@ def check_syncs(sync_impl_dir, features_dir):
 
     sync_specs, spec_failures = collect_sync_specs(features_dir)
     failures.extend(spec_failures)
-    for path, class_name in collect_class_names(sync_impl_dir):
-        sync_spec = sync_specs.get(class_name.lower())
+    for path, sync_name, is_legacy_class in collect_sync_names(sync_impl_dir):
+        sync_spec = sync_specs.get(sync_name.lower())
         if not sync_spec:
             failures.append(
-                (path, f"No *.sync.md found for class '{class_name}' "
+                (path, f"No *.sync.md found for sync '{sync_name}' "
                        f"(searched recursively under {features_dir})")
             )
             continue
-        if class_name not in sync_spec["expected"]:
+        if sync_name not in sync_spec["expected"]:
             failures.append(
-                (path, f"sync class '{class_name}' does not match mechanical name from "
+                (path, f"sync '{sync_name}' does not match mechanical name from "
                        f"{sync_spec['path']} (expected one of: {', '.join(sync_spec['expected'])})")
             )
-        expected_runtime = lower_camel(class_name)
-        with open(path, encoding="utf-8") as handle:
-            text = handle.read()
-        if f'return "{expected_runtime}"' not in text:
-            failures.append(
-                (path, f"syncName() must return lower camel case '{expected_runtime}'")
-            )
+        if is_legacy_class:
+            expected_runtime = lower_camel(sync_name)
+            with open(path, encoding="utf-8") as handle:
+                source = handle.read()
+            if f'return "{expected_runtime}"' not in source:
+                failures.append(
+                    (path, f"syncName() must return lower camel case '{expected_runtime}'")
+                )
     return failures
 
 
@@ -304,6 +334,8 @@ def check_concepts(concept_impl_dir, features_dir):
     spec_stems = collect_spec_stems(features_dir, "02_concepts/output", ".concept.md")
     for path, class_name in collect_concept_class_names(concept_impl_dir):
         stripped = strip_concept_suffix(class_name)
+        if stripped in BOOTSTRAP_CONCEPTS:
+            continue
         if stripped.lower() not in spec_stems:
             failures.append(
                 (path, f"No *.concept.md found for class '{class_name}' "
@@ -363,7 +395,7 @@ def main():
 
     total = 0
     if args.sync_impl_dir and os.path.isdir(args.sync_impl_dir):
-        total += len(collect_class_names(args.sync_impl_dir))
+        total += len(collect_sync_names(args.sync_impl_dir))
     if args.concept_impl_dir and os.path.isdir(args.concept_impl_dir):
         total += len(collect_concept_class_names(args.concept_impl_dir))
     print(f"OK: {total} implementation class(es) each have a spec artefact.")

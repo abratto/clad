@@ -31,8 +31,10 @@ public final class LoginApp {
     }
 
     public static LoginApp create() {
-        FactStore facts = new InMemoryFactStore();
+        return create(new InMemoryFactStore());
+    }
 
+    public static LoginApp create(FactStore facts) {
         Region userRegion = facts.region("UserNaming");
         Region pwRegion = facts.region("PasswordAuth");
         Region sessionRegion = facts.region("Session");

@@ -165,6 +165,17 @@ def extract_method_bodies(source):
     return bodies
 
 
+def _is_sync_file(path):
+    """True if the Java source declares syncs — either a legacy
+    `class X extends SyncAgent` or a new-shape `SyncRule.of(...)`."""
+    try:
+        with open(path, encoding="utf-8") as handle:
+            text = handle.read()
+    except (OSError, UnicodeDecodeError):
+        return False
+    return "extends SyncAgent" in text or "SyncRule.of(" in text
+
+
 def check_file(filepath):
     """Check a single Java source file for declarative violations.
     Returns a list of (line_number, message) defect tuples."""
@@ -298,7 +309,7 @@ def main():
     all_defects = []
     java_files = sorted(
         p for p in Path(sync_dir).rglob("*.java")
-        if p.is_file()
+        if p.is_file() and _is_sync_file(p)
     )
 
     if not java_files:

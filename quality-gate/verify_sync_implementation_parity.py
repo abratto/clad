@@ -48,6 +48,11 @@ SYNC_TRIGGER_RE = re.compile(
 )
 OUTCOME_LITERAL_RE = re.compile(r":outcome\s+\"([^\"]+)\"")
 
+# New-shape sync declarations: SyncRule.of(name, concept, action, outcome, ...).
+SYNC_RULE_TRIGGER_RE = re.compile(
+    r'SyncRule\.of\(\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"([^"]*)"'
+)
+
 
 def normalize_token(raw):
     return re.sub(r"[^a-z0-9]", "", raw.strip().lower())
@@ -269,11 +274,11 @@ def concept_from_trigger_expression(expression):
     return ""
 
 
-def parse_java_sync(path):
-    with open(path, encoding="utf-8") as handle:
-        text = handle.read()
+def parse_java_sync(path, text):
     class_match = CLASS_RE.search(text)
-    class_name = class_match.group(1) if class_match else os.path.splitext(os.path.basename(path))[0]
+    if class_match is None:
+        return None
+    class_name = class_match.group(1)
 
     trigger = None
     metadata_trigger = METADATA_TRIGGER_RE.search(text)
@@ -315,7 +320,24 @@ def collect_java_syncs(sync_impl_dir):
             if ext not in IMPL_EXTENSIONS:
                 continue
             path = os.path.join(root, filename)
-            classes[stem] = parse_java_sync(path)
+            with open(path, encoding="utf-8") as handle:
+                text = handle.read()
+            # Legacy shape: class X extends SyncAgent (one class per sync).
+            legacy = parse_java_sync(path, text)
+            if legacy is not None:
+                classes[stem] = legacy
+            # New shape: SyncRule.of("Name", "concept", "action", "outcome", ...)
+            # (one file may declare many syncs).
+            for m in SYNC_RULE_TRIGGER_RE.finditer(text):
+                name, concept, action, outcome = m.groups()
+                classes[name] = {
+                    "path": path,
+                    "class_name": name,
+                    "extends_sync_agent": True,
+                    "singleton": True,
+                    "trigger": (concept, action, outcome or None),
+                    "fires": None,
+                }
     return classes, []
 
 
