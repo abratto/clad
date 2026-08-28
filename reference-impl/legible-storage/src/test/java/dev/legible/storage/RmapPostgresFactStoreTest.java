@@ -50,7 +50,7 @@ class RmapPostgresFactStoreTest {
     private void resetTables() {
         try (Connection c = dataSource.getConnection();
              Statement st = c.createStatement()) {
-            for (String table : new String[]{"session", "passwordauth", "usernaming"}) {
+            for (String table : new String[]{"session", "password_auth", "user_naming"}) {
                 st.execute("DROP TABLE IF EXISTS " + table + " CASCADE");
             }
         } catch (Exception e) {
@@ -88,11 +88,11 @@ class RmapPostgresFactStoreTest {
         // and UNIQUE from the fact model — not a generic fact table.
         try (Connection c = dataSource.getConnection();
              Statement st = c.createStatement()) {
-            assertEquals("TEXT", columnType(st, "usernaming", "username"));
-            assertEquals("INTEGER", columnType(st, "passwordauth", "failed_attempts"));
-            assertTrue(columnType(st, "passwordauth", "locked_until").startsWith("TIMESTAMP"));
+            assertEquals("TEXT", columnType(st, "user_naming", "username"));
+            assertEquals("INTEGER", columnType(st, "password_auth", "failed_attempts"));
+            assertTrue(columnType(st, "password_auth", "locked_until").startsWith("TIMESTAMP"));
             assertTrue(columnType(st, "session", "opened_at").startsWith("TIMESTAMP"));
-            assertEquals("0", columnDefault(st, "passwordauth", "failed_attempts"));
+            assertEquals("0", columnDefault(st, "password_auth", "failed_attempts"));
         }
     }
 

@@ -9,9 +9,11 @@ storage SPI, proving the engine is storage-agnostic.
   realization**: Halpin's Rmap derives one typed table per concept, with the
   individual identifier as primary key, one typed column per fact type
   (`TEXT`/`INTEGER`/`TIMESTAMP`), `DEFAULT` for resettable facts, and `UNIQUE`
-  constraints from the fact model. `LoginSchemas` holds the UC-00-login
-  schemas derived from the Stage 03b data models. String values round-trip
-  through the SPI (integers as decimal strings, timestamps as epoch-millisecond
+  constraints from the fact model. The schema is **derived** by `RmapDeriver`
+  from the Stage 02 concept specs' `## State` notation — `RmapDeriverTest`
+  re-reads the actual `*.concept.md` files and asserts the derivation matches,
+  so the schema cannot drift from the spec. String values round-trip through
+  the SPI (integers as decimal strings, timestamps as epoch-millisecond
   strings). Mandatory roles are recorded as schema metadata but not emitted as
   `NOT NULL` — the engine's SPI writes facts one at a time, so a concept with
   several mandatory facts cannot satisfy a row-level `NOT NULL` atomically.
