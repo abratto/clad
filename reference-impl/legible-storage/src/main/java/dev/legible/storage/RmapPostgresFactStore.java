@@ -8,9 +8,9 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -22,14 +22,15 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * A {@link FactStore} backed by PostgreSQL tables derived via Halpin's
  * **Rmap**: one typed table per concept, one column per fact type, the
- * individual identifier as primary key, and {@code UNIQUE} constraints where
- * the fact model declares them.
+ * individual identifier as primary key, {@code NOT NULL} for mandatory roles,
+ * and {@code UNIQUE} constraints where the fact model declares them.
  *
  * <p>The generic {@code Region} SPI ({@code predicate(subject) = value}) is
- * realised over the typed columns through a predicate→column mapping, so the
- * engine remains storage-agnostic while the schema stays deterministic and
- * correct. {@link PostgresFactStore} remains the lighter "fact realization"
- * alternative (a single generic {@code fact} relation).
+ * realised over the typed columns through a predicate→column mapping, with
+ * string↔typed value coercion driven by each column's Rmap-derived SQL type:
+ * {@code INTEGER} values round-trip as decimal strings, {@code TIMESTAMP}
+ * values round-trip as epoch-millisecond strings. The engine therefore stays
+ * storage-agnostic while the relational schema is fully typed and correct.
  */
 public final class RmapPostgresFactStore implements FactStore {
 
@@ -87,7 +88,10 @@ public final class RmapPostgresFactStore implements FactStore {
                 ps.setString(1, subject);
                 Set<String> out = new LinkedHashSet<>();
                 try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next() && rs.getString(1) != null) out.add(rs.getString(1));
+                    if (rs.next()) {
+                        String value = readColumn(rs, col);
+                        if (value != null) out.add(value);
+                    }
                 }
                 return out;
             } catch (SQLException e) {
@@ -109,7 +113,7 @@ public final class RmapPostgresFactStore implements FactStore {
             try (Connection c = ds.getConnection();
                  PreparedStatement ps = c.prepareStatement(sql)) {
                 ps.setString(1, subject);
-                ps.setString(2, value);
+                setParam(ps, 2, col, value);
                 ps.executeUpdate();
             } catch (SQLException e) {
                 throw new PostgresFactStore.UncheckedSQLException(e);
@@ -125,8 +129,11 @@ public final class RmapPostgresFactStore implements FactStore {
         public void clear(String subject, String predicate) {
             RelationSchema.Column col = schema.columnFor(predicate);
             if (col == null) return;
-            String sql = "UPDATE " + schema.table() + " SET " + col.column()
-                    + " = NULL WHERE " + schema.idColumn() + " = ?";
+            // Clearing a fact resets it to its default if one is declared
+            // (absent == default), otherwise it becomes absent (NULL).
+            String sql = "UPDATE " + schema.table() + " SET " + col.column() + " = "
+                    + (col.defaultValue() != null ? col.defaultValue() : "NULL")
+                    + " WHERE " + schema.idColumn() + " = ?";
             try (Connection c = ds.getConnection();
                  PreparedStatement ps = c.prepareStatement(sql)) {
                 ps.setString(1, subject);
@@ -144,7 +151,7 @@ public final class RmapPostgresFactStore implements FactStore {
                     + " WHERE " + col.column() + " = ?";
             try (Connection c = ds.getConnection();
                  PreparedStatement ps = c.prepareStatement(sql)) {
-                ps.setString(1, value);
+                setParam(ps, 1, col, value);
                 Set<String> out = new LinkedHashSet<>();
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) out.add(rs.getString(1));
@@ -162,11 +169,10 @@ public final class RmapPostgresFactStore implements FactStore {
                  PreparedStatement ps = c.prepareStatement(sql);
                  ResultSet rs = ps.executeQuery()) {
                 List<Fact> out = new ArrayList<>();
-                ResultSetMetaData meta = rs.getMetaData();
                 while (rs.next()) {
                     String subject = rs.getString(schema.idColumn());
                     for (RelationSchema.Column col : schema.columns()) {
-                        String value = rs.getString(col.column());
+                        String value = readColumn(rs, col);
                         if (value != null) {
                             out.add(new Fact(subject, col.predicate(), value));
                         }
@@ -177,5 +183,30 @@ public final class RmapPostgresFactStore implements FactStore {
                 throw new PostgresFactStore.UncheckedSQLException(e);
             }
         }
+    }
+
+    /** Bind a string value using the column's Rmap-derived SQL type. */
+    private static void setParam(PreparedStatement ps, int index,
+                                 RelationSchema.Column col, String value) throws SQLException {
+        switch (col.sqlType()) {
+            case "INTEGER" -> ps.setInt(index, Integer.parseInt(value));
+            case "TIMESTAMP" -> ps.setTimestamp(index, new Timestamp(Long.parseLong(value)));
+            default -> ps.setString(index, value);
+        }
+    }
+
+    /** Read a typed column back to the SPI's string form. */
+    private static String readColumn(ResultSet rs, RelationSchema.Column col) throws SQLException {
+        return switch (col.sqlType()) {
+            case "INTEGER" -> {
+                int v = rs.getInt(col.column());
+                yield rs.wasNull() ? null : String.valueOf(v);
+            }
+            case "TIMESTAMP" -> {
+                Timestamp ts = rs.getTimestamp(col.column());
+                yield ts == null ? null : String.valueOf(ts.getTime());
+            }
+            default -> rs.getString(col.column());
+        };
     }
 }

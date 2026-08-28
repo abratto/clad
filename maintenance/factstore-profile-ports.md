@@ -2,7 +2,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `mixed`
-- **Status:** `closed`
+- **Status:** `active`
 - **Affected profile(s):** `reference-impl/java-micronaut-jena`, `reference-impl/java-micronaut-postgres`, `reference-impl/java-legible` (test wiring)
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
@@ -73,4 +73,7 @@ Approve with `./clad approve-maintenance factstore-profile-ports evidence` after
   keyed, constrained relational schema (relation realization via Halpin's Rmap)
   behind the same `FactStore` SPI, alongside the generic `PostgresFactStore`
   (fact realization). `LoginSchemas` derives the UC-00-login tables from the
-  Stage 03b data models.
+  Stage 03b data models. Full typing: `TEXT`/`INTEGER`/`TIMESTAMP` columns with
+  string↔typed coercion in the store, `DEFAULT` for resettable facts, `UNIQUE`
+  from the model; mandatory roles are schema metadata (not `NOT NULL`) because
+  the per-fact SPI cannot satisfy row-level mandatory atomicity.

@@ -82,15 +82,32 @@ class RmapPostgresFactStoreTest {
     }
 
     @Test
-    void schemaIsRmapDerived() throws Exception {
-        // The schema is typed, per-concept tables with fact-type columns and
-        // the individual identifier as primary key — not a generic fact table.
+    void schemaIsRmapDerivedWithFullTyping() throws Exception {
+        // The schema is typed, per-concept tables with fact-type columns, the
+        // individual identifier as primary key, DEFAULT for resettable facts,
+        // and UNIQUE from the fact model — not a generic fact table.
         try (Connection c = dataSource.getConnection();
              Statement st = c.createStatement()) {
-            assertTrue(columnExists(st, "usernaming", "username"), "usernaming.username column");
-            assertTrue(columnExists(st, "passwordauth", "failed_attempts"), "passwordauth.failed_attempts column");
-            assertTrue(columnExists(st, "session", "opened_at"), "session.opened_at column");
+            assertEquals("TEXT", columnType(st, "usernaming", "username"));
+            assertEquals("INTEGER", columnType(st, "passwordauth", "failed_attempts"));
+            assertTrue(columnType(st, "passwordauth", "locked_until").startsWith("TIMESTAMP"));
+            assertTrue(columnType(st, "session", "opened_at").startsWith("TIMESTAMP"));
+            assertEquals("0", columnDefault(st, "passwordauth", "failed_attempts"));
         }
+    }
+
+    @Test
+    void typedValuesRoundTripThroughTheSpi() {
+        // The lockout flow exercises INTEGER (failed_attempts) and TIMESTAMP
+        // (locked_until) coercion: 5 wrong passwords increment the counter and
+        // set a lock, then a correct password is rejected as LOCKED.
+        app.seedUser("alice", "secret");
+        for (int i = 0; i < 5; i++) {
+            app.login("alice", "wrong");
+        }
+        assertEquals(401, app.login("alice", "secret").get("status"));
+        assertEquals("Too many attempts. Try again in 15 minutes.",
+                app.login("alice", "secret").get("message"));
     }
 
     private static boolean columnExists(Statement st, String table, String column) throws Exception {
@@ -98,6 +115,25 @@ class RmapPostgresFactStoreTest {
                 + "WHERE table_name = '" + table + "' AND column_name = '" + column + "'";
         try (ResultSet rs = st.executeQuery(sql)) {
             return rs.next();
+        }
+    }
+
+    private static String columnType(Statement st, String table, String column) throws Exception {
+        String sql = "SELECT data_type FROM information_schema.columns "
+                + "WHERE table_name = '" + table + "' AND column_name = '" + column + "'";
+        try (ResultSet rs = st.executeQuery(sql)) {
+            assertTrue(rs.next(), "missing column " + table + "." + column);
+            return rs.getString(1).toUpperCase();
+        }
+    }
+
+    private static String columnDefault(Statement st, String table, String column) throws Exception {
+        String sql = "SELECT column_default FROM information_schema.columns "
+                + "WHERE table_name = '" + table + "' AND column_name = '" + column + "'";
+        try (ResultSet rs = st.executeQuery(sql)) {
+            assertTrue(rs.next(), "missing column " + table + "." + column);
+            String d = rs.getString(1);
+            return d == null ? null : d.replaceAll("\\D", "");
         }
     }
 }

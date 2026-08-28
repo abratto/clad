@@ -101,8 +101,12 @@ produce Rmap's typed, keyed, constrained tables. Rmap remains the procedure for
 a normalized relational schema; both are valid Stage 04a outcomes behind the
 same `FactStore`/`Region` boundary. `legible-storage/RmapPostgresFactStore`
 demonstrates the Rmap path: the schema is a `RelationSchema` per concept (typed
-columns, primary key, `UNIQUE` constraints), and the generic `Region` SPI maps
-each fact-type predicate to its column.
+columns — `TEXT`/`INTEGER`/`TIMESTAMP` — primary key, `DEFAULT`, `UNIQUE`
+constraints), and the generic `Region` SPI maps each fact-type predicate to its
+column with string↔typed value coercion. Mandatory roles are recorded in the
+schema metadata but not emitted as `NOT NULL`: the SPI writes facts one at a
+time, so a concept with several mandatory facts cannot satisfy a row-level
+`NOT NULL` atomically.
 
 ### Document profiles
 
