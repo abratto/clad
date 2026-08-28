@@ -10,117 +10,6 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
-## [0.2.0] — 2026-08-28
-
-### Added
-
-#### Engine — fire-after-commit
-
-- **`legible-engine`** — a zero-dependency engine (`dev.legible.engine`) that
-  realises the Meng & Jackson synchronization semantics directly. Concepts hold
-  state as relations behind a `FactStore`/`Region` SPI; actions are map→map;
-  syncs are declarative `when`/`where`/`then` rules (`SyncRule`) evaluated by a
-  `WhereEvaluator` (fan-out, Pattern D reads, `OPTIONAL`, `bind(uuid)`,
-  `?_eachthen` grouping, route `Guard`s). Coordination happens **after** an
-  action is committed to a per-flow action log — there are no transactions and
-  no rollback; a failing downstream action completes with a named `error`
-  outcome. The action log carries `parentActionId`/`causedBySync` provenance
-  edges.
-- **`java-legible`** — the canonical in-memory profile: UC-00-login plus
-  example features (social, tagging, token) exercising the full sync model, and
-  a flow-token back-trace (`FlowTraceTest`) that asserts the runtime chain
-  matches the chain table.
-
-#### Engine — storage
-
-- **`legible-storage`** — `JenaFactStore` (one named graph per concept) and
-  `PostgresFactStore` (a generic `fact` relation) prove the engine is
-  storage-agnostic: the same `Concept`/`SyncRule` code runs on in-memory, Jena,
-  and Postgres with identical outcomes.
-- **`RmapPostgresFactStore`** — relation realization: Halpin's Rmap derives one
-  typed table per concept (individual identifier as primary key, one
-  `TEXT`/`INTEGER`/`TIMESTAMP` column per fact type, `DEFAULT` for resettable
-  facts, `UNIQUE` from the model). String↔typed values round-trip through the
-  SPI; mandatory roles are schema metadata (not `NOT NULL`) because the
-  per-fact SPI cannot satisfy row-level mandatory atomicity.
-
-### Changed
-
-- **UC-00-login re-lowered** — the bootstrap entry action is reconciled to the
-  paper's `Web/request` (collapsing the old "bootstrap handoff exception"), the
-  `refused` outcome is reconciled across chain tables and SPECs, and the
-  concepts/syncs are re-implemented as `Concept`/`SyncRule`.
-- **Flow tokens** now materialise as a per-flow `ActionLog` of
-  invocation/completion records with explicit provenance (was a bare UUID IRI
-  in an RDF graph).
-- **Methodology and rules** — `ENGINE.md` rewritten; `TRACEABILITY.md`,
-  `ARTEFACT_MAP.md`, `SYNCHRONIZATIONS.md`, `CONCEPTS.md`, `WEB_CONCEPT.md`,
-  `FLOW_TOKENS.md`, `SYNC_PATTERNS.md`, `STORAGE_MAPPING.md` updated. `AGENTS.md`
-  retires R10 (reserved SPARQL variables) and R21 (RDF-star programmatic APIs),
-  and rewords R11/R12/R16 to the declarative engine. Concept-naming and
-  relational-state guidance carried into the engine's `Concept`/`Region`
-  javadoc.
-- **Parity scripts** now understand the `SyncRule`/`Concept` shape (and remain
-  backward-compatible with the legacy `SyncAgent`/`ConceptAgent`);
-  `verify_sync_declarative.py` skips concept classes.
-
-### Why
-
-The previous engine encoded the "sync-as-transaction" reading of *The Essence
-of Software* (an atomic composite write with rollback). Jackson's forum reply
-and Meng's papers (`arXiv:2508.14511`, `arXiv:2606.11051`) show the DSL "gets
-rid of the need for transactions". The fire-after-commit engine follows that
-model: the action is the atomic unit, failures are named outcomes, and the log
-is the source of truth. Benefits: no 2PC/saga machinery, storage-agnostic
-(`FactStore` SPI), ~100× lower latency / ~50× throughput, per-flow log sharding
-plus per-concept serialisation, and richer provenance for Stage 05.
-
-## [0.1.10] — 2026-08-26
-
-### Fixed
-
-#### Quality gate
-
-- **Narrow the relational-state check.** `verify_concept_state_relational.py` now flags only *untyped* field names (`userid`, `username`, `password`) as the object-oriented trap, not every field lacking a `->` arrow. Typed collection/relation forms (`leadLog: List<LeadRecord>`, `attorneyStatus: Map<AttorneyId, Availability>`, `clientId: String -> { … }`) are legitimate relational state. Also skips (rather than fails) a feature whose concept dir has no `.concept.md` files (concept reuse via `_REUSES_*.md`).
-
-## [0.1.9] — 2026-08-14
-
-### Changed
-
-#### Quality gate
-
-- **Relational concept state enforced at Stage 02.** New `verify_concept_state_relational.py` check fails a concept spec whose state block lists bare instance variables (`userid, username, password`) instead of relations over a set of individuals (`username: UserId -> String`), or whose field subject type is the concept's own name. Implements Daniel Jackson's *Why concepts aren't objects* as a deterministic gate. `CONCEPTS.md` gains heuristic #8 and views-separation guidance; `templates/concept.md` updated to match.
-
-## [0.1.8] — 2026-08-14
-
-### Changed
-
-#### Quality gate
-
-- **Gate approval is bound to artefact content.** `approve_gate.py` records a content hash over the gate's stage outputs beside each approval. `verify_stage_sequence.py` and `verify_gate_approval.py` treat a human-`approved` gate as stale when the hash is missing or no longer matches, forcing the gate to be re-presented. `auto-approved` gates remain exempt (documented escape hatch). Closes the "inherited approval" hole where an agent re-entering a feature could re-derive a gate's stages and advance without re-review. `--baseline` migrates pre-existing approvals.
-
-## [0.1.7] — 2026-08-13
-
-### Changed
-
-#### Reference profile — Java/Micronaut/Jena
-
-- **Single transactional engine.** The reference (non-transactional) engine is removed; the transactional engine is now the only engine. `ConceptAgent` performs pre-commit sync evaluation and atomic composite writes. `SyncEvaluator` (renamed `PredicateSyncDispatcher`) is the sync-matching index. The `engine.mode` property and the `engine/predicate/` package are removed.
-
-## [0.1.6] — 2026-08-13
-
-### Changed
-
-#### Reference profile — Java/Micronaut/Jena
-
-- **Action log is always in-memory.** `SplitStorage` is now the default backend for every profile: the action log (transient, high-churn execution state) always lives in in-memory Jena (`TxnMem`); only durable business graphs use the backend selected by `engine.dataset.type`.
-- **Archive graph removed, replaced by a log sink.** The `engine.archive.flows` toggle and the `ACTION_ARCHIVE_GRAPH_IRI` graph are gone. Completed flows are now flushed to a pluggable `FlowArchiveSink` (`logger` default, `devnull` to discard) before deletion, controlled by `engine.archive.sink`. `S3Sink` is deferred pending an AWS SDK dependency decision.
-
-### Fixed
-
-- **Concurrency correctness under load.** Serialized the dispatch quiescence iteration with a fair lock, closing a read-then-write race in `findPendingInvocations` that produced duplicate `respond` actions and cross-flow field contamination under concurrency. `ConcurrencyTest` now passes at 1–32 threads with zero errors (previously 1103 errors at 8 threads).
-- **Debug endpoint rehydration.** `GET /api/dev/flow/{token}` now reports `actionCount`/`actions` after the archive-buffer fallback, and the archiver and debug endpoint share the same `FlowArchiveBuffer` singleton.
-
 ## [Unreleased]
 
 ### Added
@@ -139,8 +28,6 @@ plus per-concept serialisation, and richer provenance for Stage 05.
 - **Stage renumbering**: `02a_responsibility-map` and `02b_chain-table` renumbered to `01a` and `01b` — they are requirements work alongside Stage 01, not sub-stages of 02 (concepts). 66 files updated.
 
 #### Engine
-- **Predicate engine**: `engine/predicate/` implements Meng & Jackson's formal synchronization semantics. Concepts extend `PredicateConceptAgent` — syncs are evaluated as predicates before the concept commits. Unmatched outcomes throw `SyncEvaluationException`. Composite writes are atomic via `beginBatch()`/`flushBatch()`. ~3× faster than reference engine. Default for new projects.
-- **Predicate engine startup check**: `PredicateEngineStartupCheck` validates all concepts extend `PredicateConceptAgent` when `engine.mode=predicate`. Fails at startup with migration instructions if any concept still extends `ConceptAgent`.
 - **CompletionBus race fix**: `signal()` now uses `getAndUpdate()` for atomic add. `awaitSignal()` guards against stale permits. Fixes intermittent dispatch timeouts under concurrency.
 - **RemoteStorage archive fix**: `archiveFlow()` now INSERTs into archive graph then DELETEs from action graph (matching `LocalStorage`), instead of permanently deleting flow triples.
 
@@ -157,7 +44,6 @@ plus per-concept serialisation, and richer provenance for Stage 05.
 - **TRACEABILITY.md**: Complete artefact-to-architecture-to-code mapping table plus enforcement script reference. Linked from AGENTS.md, methodology/README.md, ARTEFACT_MAP.md.
 - **Modular monolith section**: Documents WYSIWID as code-level (not network-level) boundaries, with tradeoff discussion for distributed systems.
 - **Docker Compose deployment** docs in reference-impl README.
-- **Predicate engine migration guide** in reference-impl README.
 - **Session transcript** from WALKTHROUGH.md added to README.
 - **Conduit project** linked from README as "Built with CLAD" example.
 - **README restructuring**: 60% reduction, clearer narrative arc.
@@ -169,10 +55,8 @@ plus per-concept serialisation, and richer provenance for Stage 05.
 - **Stage renumbering**: `02a`→`01a`, `02b`→`01b` (66 files).
 - **Sync patterns collapsed**: A/B/C/D → "internal flow data" vs. "concept-state read" (10 files).
 - **ArchUnit branching check widened**: Now scans all `infrastructure/**/*.java`, not just `*Web*`.
-- **Default engine**: `engine.mode=predicate` (was `reference`).
 
 ### Fixed
-- PredicateConceptAgent overwrites outer batch from SyncDispatcher (`isBatching()` check).
 - CompletionBus race condition dropping dispatch signals.
 - RemoteStorage archive semantics (delete → archive).
 - Config parser: `_read_config` used `configparser` on INI-free `clad.properties`.
@@ -193,9 +77,6 @@ plus per-concept serialisation, and richer provenance for Stage 05.
 
 ### Reference profile
 
-- **Transactional predicate engine preference**: Documented the predicate
-  engine as the default and recommended Java-profile execution mode; the
-  sequential polling engine remains available for learning and legacy users.
 - **Remote Fuseki hardening**: Remote storage now fails closed for invalid
   backend configuration, uses a five-second connection timeout, bounds Basic
   authentication to one challenge retry, keeps remote archival request-atomic,
@@ -490,8 +371,6 @@ plus per-concept serialisation, and richer provenance for Stage 05.
   `parameterizeSparql(String)` instead of `buildSparql()`. SYNC_LOWERING.md
   updated with star pattern examples.
 
-## [0.2.0] — 2026-05-12
-
 ### Methodology
 
 - **RESUME rule** (rule 9 in `AGENTS.md`): Mandatory state artefact
@@ -598,6 +477,116 @@ driven by second-pass walkthroughs on Stage 02–05 and Roo Code tooling
 integration. The RESUME artefact and TDD discipline are now mandatory
 (hard rules). Syncs are now stricter (declarative-only, must emit tokens).
 Ready for Round-12+ feature work.
+## [0.2.0] — 2026-08-28
+
+### Added
+
+#### Engine — fire-after-commit
+
+- **`legible-engine`** — a zero-dependency engine (`dev.legible.engine`) that
+  realises the Meng & Jackson synchronization semantics directly. Concepts hold
+  state as relations behind a `FactStore`/`Region` SPI; actions are map→map;
+  syncs are declarative `when`/`where`/`then` rules (`SyncRule`) evaluated by a
+  `WhereEvaluator` (fan-out, Pattern D reads, `OPTIONAL`, `bind(uuid)`,
+  `?_eachthen` grouping, route `Guard`s). Coordination happens **after** an
+  action is committed to a per-flow action log — there are no transactions and
+  no rollback; a failing downstream action completes with a named `error`
+  outcome. The action log carries `parentActionId`/`causedBySync` provenance
+  edges.
+- **`java-legible`** — the canonical in-memory profile: UC-00-login plus
+  example features (social, tagging, token) exercising the full sync model, and
+  a flow-token back-trace (`FlowTraceTest`) that asserts the runtime chain
+  matches the chain table.
+
+#### Engine — storage
+
+- **`legible-storage`** — `JenaFactStore` (one named graph per concept) and
+  `PostgresFactStore` (a generic `fact` relation) prove the engine is
+  storage-agnostic: the same `Concept`/`SyncRule` code runs on in-memory, Jena,
+  and Postgres with identical outcomes.
+- **`RmapPostgresFactStore`** — relation realization: Halpin's Rmap derives one
+  typed table per concept (individual identifier as primary key, one
+  `TEXT`/`INTEGER`/`TIMESTAMP` column per fact type, `DEFAULT` for resettable
+  facts, `UNIQUE` from the model). String↔typed values round-trip through the
+  SPI; mandatory roles are schema metadata (not `NOT NULL`) because the
+  per-fact SPI cannot satisfy row-level mandatory atomicity.
+
+### Changed
+
+- **UC-00-login re-lowered** — the bootstrap entry action is reconciled to the
+  paper's `Web/request` (collapsing the old "bootstrap handoff exception"), the
+  `refused` outcome is reconciled across chain tables and SPECs, and the
+  concepts/syncs are re-implemented as `Concept`/`SyncRule`.
+- **Flow tokens** now materialise as a per-flow `ActionLog` of
+  invocation/completion records with explicit provenance (was a bare UUID IRI
+  in an RDF graph).
+- **Methodology and rules** — `ENGINE.md` rewritten; `TRACEABILITY.md`,
+  `ARTEFACT_MAP.md`, `SYNCHRONIZATIONS.md`, `CONCEPTS.md`, `WEB_CONCEPT.md`,
+  `FLOW_TOKENS.md`, `SYNC_PATTERNS.md`, `STORAGE_MAPPING.md` updated. `AGENTS.md`
+  retires R10 (reserved SPARQL variables) and R21 (RDF-star programmatic APIs),
+  and rewords R11/R12/R16 to the declarative engine. Concept-naming and
+  relational-state guidance carried into the engine's `Concept`/`Region`
+  javadoc.
+- **Parity scripts** now understand the `SyncRule`/`Concept` shape (and remain
+  backward-compatible with the legacy `SyncAgent`/`ConceptAgent`);
+  `verify_sync_declarative.py` skips concept classes.
+
+### Why
+
+The previous engine encoded the "sync-as-transaction" reading of *The Essence
+of Software* (an atomic composite write with rollback). Jackson's forum reply
+and Meng's papers (`arXiv:2508.14511`, `arXiv:2606.11051`) show the DSL "gets
+rid of the need for transactions". The fire-after-commit engine follows that
+model: the action is the atomic unit, failures are named outcomes, and the log
+is the source of truth. Benefits: no 2PC/saga machinery, storage-agnostic
+(`FactStore` SPI), ~100× lower latency / ~50× throughput, per-flow log sharding
+plus per-concept serialisation, and richer provenance for Stage 05.
+
+## [0.1.10] — 2026-08-26
+
+### Fixed
+
+#### Quality gate
+
+- **Narrow the relational-state check.** `verify_concept_state_relational.py` now flags only *untyped* field names (`userid`, `username`, `password`) as the object-oriented trap, not every field lacking a `->` arrow. Typed collection/relation forms (`leadLog: List<LeadRecord>`, `attorneyStatus: Map<AttorneyId, Availability>`, `clientId: String -> { … }`) are legitimate relational state. Also skips (rather than fails) a feature whose concept dir has no `.concept.md` files (concept reuse via `_REUSES_*.md`).
+
+## [0.1.9] — 2026-08-14
+
+### Changed
+
+#### Quality gate
+
+- **Relational concept state enforced at Stage 02.** New `verify_concept_state_relational.py` check fails a concept spec whose state block lists bare instance variables (`userid, username, password`) instead of relations over a set of individuals (`username: UserId -> String`), or whose field subject type is the concept's own name. Implements Daniel Jackson's *Why concepts aren't objects* as a deterministic gate. `CONCEPTS.md` gains heuristic #8 and views-separation guidance; `templates/concept.md` updated to match.
+
+## [0.1.8] — 2026-08-14
+
+### Changed
+
+#### Quality gate
+
+- **Gate approval is bound to artefact content.** `approve_gate.py` records a content hash over the gate's stage outputs beside each approval. `verify_stage_sequence.py` and `verify_gate_approval.py` treat a human-`approved` gate as stale when the hash is missing or no longer matches, forcing the gate to be re-presented. `auto-approved` gates remain exempt (documented escape hatch). Closes the "inherited approval" hole where an agent re-entering a feature could re-derive a gate's stages and advance without re-review. `--baseline` migrates pre-existing approvals.
+
+## [0.1.7] — 2026-08-13
+
+### Changed
+
+#### Reference profile — Java/Micronaut/Jena
+
+- **Single transactional engine.** The reference (non-transactional) engine is removed; the transactional engine is now the only engine. `ConceptAgent` performs pre-commit sync evaluation and atomic composite writes. `SyncEvaluator` (renamed `PredicateSyncDispatcher`) is the sync-matching index. The `engine.mode` property and the `engine/predicate/` package are removed.
+
+## [0.1.6] — 2026-08-13
+
+### Changed
+
+#### Reference profile — Java/Micronaut/Jena
+
+- **Action log is always in-memory.** `SplitStorage` is now the default backend for every profile: the action log (transient, high-churn execution state) always lives in in-memory Jena (`TxnMem`); only durable business graphs use the backend selected by `engine.dataset.type`.
+- **Archive graph removed, replaced by a log sink.** The `engine.archive.flows` toggle and the `ACTION_ARCHIVE_GRAPH_IRI` graph are gone. Completed flows are now flushed to a pluggable `FlowArchiveSink` (`logger` default, `devnull` to discard) before deletion, controlled by `engine.archive.sink`. `S3Sink` is deferred pending an AWS SDK dependency decision.
+
+### Fixed
+
+- **Concurrency correctness under load.** Serialized the dispatch quiescence iteration with a fair lock, closing a read-then-write race in `findPendingInvocations` that produced duplicate `respond` actions and cross-flow field contamination under concurrency. `ConcurrencyTest` now passes at 1–32 threads with zero errors (previously 1103 errors at 8 threads).
+- **Debug endpoint rehydration.** `GET /api/dev/flow/{token}` now reports `actionCount`/`actions` after the archive-buffer fallback, and the archiver and debug endpoint share the same `FlowArchiveBuffer` singleton.
 
 ## [0.1.0] — 2026-05-07
 
