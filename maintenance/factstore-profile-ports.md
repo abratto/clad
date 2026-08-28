@@ -2,7 +2,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `mixed`
-- **Status:** `closed`
+- **Status:** `active`
 - **Affected profile(s):** `reference-impl/java-micronaut-jena`, `reference-impl/java-micronaut-postgres`, `reference-impl/java-legible` (test wiring)
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
@@ -64,3 +64,8 @@ Approve with `./clad approve-maintenance factstore-profile-ports evidence` after
 - The parity-script re-targeting lives in `quality-gate/` (not maintenance scope) but is
   bundled here because it is the mechanical counterpart of the new code shape.
 - `PostgresFactStore` tests require Docker (Testcontainers).
+- **Documentation follow-up:** the concept-naming refinement (name the capability,
+  not the entity) and the relational-state principle (state over a set, not fields
+  of an object) were carried into the engine's `Concept`/`Region` javadoc and
+  `STORAGE_MAPPING.md`, so implementation and persistence generation reflect the
+  same guidance the spec template (`templates/concept.md`) already enforced.

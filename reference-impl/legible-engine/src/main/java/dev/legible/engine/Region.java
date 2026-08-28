@@ -9,9 +9,11 @@ import java.util.Set;
  * clause reads another concept's region through {@link FactStore#region(String)}
  * — the only legal cross-concept read, made visible by name.
  *
- * <p>Facts are relation-shaped: {@code predicate(subject) = value}. The store is
- * storage-agnostic; an in-memory, SQL, or triplestore implementation all expose
- * this same interface.
+ * <p>Facts are relation-shaped: {@code predicate(subject) = value}. This is the
+ * relational view — state over a set of opaque individuals, never mutable fields
+ * of an object (Daniel Jackson, <em>Why concepts aren't objects</em>). The store
+ * is storage-agnostic; an in-memory, SQL, or triplestore implementation all
+ * expose this same interface.
  */
 public interface Region {
 

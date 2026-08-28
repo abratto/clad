@@ -31,6 +31,21 @@ format. See [`../../templates/storage-rdf-example.md`](../../templates/storage-r
 for one concrete RDF / named-graph example based on the Java/Jena
 reference profile.
 
+## The engine-level boundary: `FactStore` / `Region`
+
+The fire-after-commit engine (`reference-impl/legible-engine/`) does not
+dictate a storage technology. It reads and writes **facts** —
+relation-shaped `predicate(subject) = value` over opaque identifiers —
+through the `FactStore`/`Region` SPI, with one `Region` per concept (R2).
+Concept state is a *set of facts over individuals*, never mutable fields
+of an object (Daniel Jackson, *Why concepts aren't objects*).
+
+The canonical in-memory profile (`reference-impl/java-legible/`)
+implements the SPI directly; `reference-impl/legible-storage/` provides
+the Jena (one named graph per concept) and Postgres (one `fact` relation
+per application) backends. Stage 04a's job is to document which backend
+realises each approved fact type — the SPI itself is fixed by the engine.
+
 ## Profile guidance
 
 ### RDF / named-graph profiles
