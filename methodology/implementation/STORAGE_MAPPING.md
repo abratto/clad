@@ -98,8 +98,11 @@ in a single generic relation (`fact(concept, subject, predicate, value)`), as
 RDF profile's "fact realization in triples": simpler, fully generic, and
 sufficient when the profile only needs the engine's SPI — but it does **not**
 produce Rmap's typed, keyed, constrained tables. Rmap remains the procedure for
-a normalized relational schema; the two are both valid Stage 04a outcomes behind
-the same `FactStore`/`Region` boundary.
+a normalized relational schema; both are valid Stage 04a outcomes behind the
+same `FactStore`/`Region` boundary. `legible-storage/RmapPostgresFactStore`
+demonstrates the Rmap path: the schema is a `RelationSchema` per concept (typed
+columns, primary key, `UNIQUE` constraints), and the generic `Region` SPI maps
+each fact-type predicate to its column.
 
 ### Document profiles
 
