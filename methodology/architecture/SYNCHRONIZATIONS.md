@@ -15,10 +15,10 @@ all declarative:
    in the flow match specified patterns.
 2. **`where`** — a purely read-only query and filter phase. Frames are
    refined and expanded (fan-out) by querying concept state, but **no
-   state mutation occurs here** — this is enforced by SPARQL SELECT vs.
-   INSERT separation in the reference profile.
+   state mutation occurs here** — the `where` clause is a declarative
+   binding phase, not imperative code (R3).
 3. **`then`** — action emission. Each surviving frame produces one or
-   more invocations. The SPARQL INSERT fires once per result row.
+   more invocations (one per frame).
 
 This model ensures three guarantees: syncs never mutate state during
 inspection, execution is deterministic per frame set, and all matching
@@ -118,7 +118,8 @@ then {
 - **Hide orchestration in an imperative coordinator class.** A class
   that sequences ordered domain calls with `if` / `then` branching is
   not a sync in CLAD terms, even if it sits in a `sync` package. In the
-  Java profile, executable syncs are `SyncAgent` subclasses; a
+  Java profiles, executable syncs are declarative `SyncRule`s (legacy:
+  `SyncAgent` subclasses); a
   `*Coordinator` or `*Orchestrator` class is a design smell that should
   fail review unless it is a thin transport/runtime adapter with an
   explicit waiver.
@@ -174,7 +175,7 @@ then {
 ```
 
 If the post has 3 followers, this sync fires 3 `Notification/notify`
-invocations — one per frame. The SPARQL result set IS the frame set.
+invocations — one per frame. The frame set IS the fan-out.
 
 Two syncs that would be separate event handlers in a procedural model
 collapse into one declarative rule: the `where` clause handles the
@@ -207,7 +208,7 @@ Profile: { ?profile bio: ?bio ; image: ?image }
 
 Reads fields from named concept regions. This is a concept-state read — every such
 read is recorded in the Stage 03a dependency review. The syntax mirrors
-SPARQL property patterns: a subject variable, a semicolon-separated list
+relation patterns: a subject variable, a semicolon-separated list
 of property bindings, and a dot (`.`) to terminate.
 
 ### Conditional reads
@@ -228,7 +229,7 @@ BIND ( ?article AS ?_eachthen )
 
 Groups bindings by the given key, so the `then` clause fires once per
 unique key value rather than once per binding row. This is the
-declarative equivalent of SPARQL's `GROUP BY`. Without `?_eachthen`, a
+declarative equivalent of `GROUP BY`. Without `?_eachthen`, a
 sync whose `where` produces multiple bindings (e.g. one per tag) would
 fire the `then` clause once for each binding, which would produce a
 response per tag instead of one response per article.

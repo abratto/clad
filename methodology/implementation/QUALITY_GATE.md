@@ -111,10 +111,10 @@ not relax the *intent*.
      - **Automated:** For Java concept tests, run
        `quality-gate/verify_concept_field_assertions.py` to confirm tests
        assert required completion field values, not only outcome tokens.
-     - **Automated:** At the end of Stage 04e-green, run
-       `quality-gate/verify_sync_implementation_parity.py` to confirm every
-       approved Stage 03 sync contract has a matching Java `SyncAgent`
-       implementation class.
+      - **Automated:** At the end of Stage 04e-green, run
+        `quality-gate/verify_sync_implementation_parity.py` to confirm every
+        approved Stage 03 sync contract has a matching implementation
+        (a declarative `SyncRule`, or a legacy `SyncAgent` class).
      - The automated checks replace the previous semantic (human) checks.
        04d and 04e auto-advance; the scripts are the gate.
 12. **Implementation parity checks (R17 enforcement).**
@@ -142,7 +142,8 @@ not relax the *intent*.
       with `--sync-impl-dir` pointing at the changed sync package and either
       `--sync-dir` for the active feature or `--features-dir features/` for a
       whole-tree gate. The check fails if any Stage 03 sync contract lacks a
-      matching `@Singleton` `SyncAgent` implementation. Profiles whose runtime
+      matching implementation (a declarative `SyncRule`, or a legacy
+      `@Singleton` `SyncAgent`). Profiles whose runtime
       vocabulary mirrors Stage 03 exactly may add `--strict-trigger` to also
       require trigger/fires metadata to match the contract's `when`/`then`
       signatures.
@@ -160,14 +161,16 @@ not relax the *intent*.
     - **Automated:** The pre-commit hook reruns it with `--require-evidence`.
       It requires an approved evidence gate and at least one passing row in
       the record's test matrix before commit.
-    - **Semantic (human):** Review contract impact, the invariant-driven test
-      matrix, and the rollback boundary. Re-enter the feature pipeline if the
+    - **Semantic (human):** Review contract impact and the invariant-driven test
+      matrix. Re-enter the feature pipeline if the
       work changes an artefact-chain truth.
 
-## Java/Micronaut/Jena profile
+## Reference profiles
 
-The reference profile under `reference-impl/java-micronaut-jena/`
-maps the principles above to:
+The canonical profile is `reference-impl/java-legible/` (fire-after-commit
+engine, in-memory `FactStore`); `reference-impl/legible-storage/` adds the
+Jena and Postgres backends. The legacy `reference-impl/java-micronaut-jena/`
+profile maps the principles above to:
 
 | Principle | Command |
 |---|---|
@@ -325,17 +328,18 @@ commit cannot land until the pipeline is intact."
 
 `LegibleArchitectureRulesTest` codifies R1–R5 for the Java profile:
 
-- **R1:** No class under `com.example.app.concepts.<X>` may import a
-  class under `com.example.app.concepts.<Y>` for any other concept `Y`.
-- **R2 (heuristic):** One `*Concept` class per concept package.
-- **R3:** Sync classes are `SyncAgent` subclasses with only final
+- **R1:** No class under a concept package may import a class under
+  another concept package.
+- **R2 (heuristic):** One concept class per concept (one `Region` per concept).
+- **R3:** Syncs are declarative — `SyncRule`s (or legacy `SyncAgent`
+  subclasses) with only final
   fields. No imperative branching in sync source. No
   `*Coordinator`/`*Orchestrator` classes without explicit waiver.
-- **R4:** Only `infrastructure.WebController` has HTTP annotations.
-  Web boundary does not depend on business concepts directly. No
+- **R4:** Only the bootstrap adapter has HTTP annotations.
+  The Web boundary does not depend on business concepts directly. No
   imperative branching in Web boundary code without a transport waiver.
-- **R5 (heuristic):** Every `*Concept` class extends `ConceptAgent`,
-  ensuring participation in the action-log polling loop.
+- **R5 (heuristic):** Every concept class implements `Concept`,
+  ensuring participation in the dispatch loop.
 
 If you add new rules (e.g. R2 enforcement when an RDF profile is
 wired), extend that test class. The test class is the codified form

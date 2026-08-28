@@ -33,8 +33,9 @@ When concepts persist state and the storage technology supports it
 each concept owns exactly one region and reads only from that region.
 Cross-region reads are a violation.
 
-This rule is *enforceable* in the Java/Jena profile via per-concept
-graph URIs.
+This rule is *enforceable* structurally in the canonical profile: each
+concept receives its own `Region` from the `FactStore` (one region per
+concept name) and can never touch another concept's region.
 
 ## R3. Syncs are declarative, not imperative
 
@@ -146,9 +147,9 @@ route-agnostic justification is a defect.
 
 ## R16. Stage 04d tests assert completion field values
 
-`writeCompletion` writes named fields that downstream syncs consume. If
-a field-mapping bug exists (wrong variable name, PSS substitution
-collision, missing SPARQL binding), an outcome-only test will pass while
+A concept action's completion map carries named fields that downstream
+syncs consume. If a field-mapping bug exists (wrong key name, missing
+binding, value collision), an outcome-only test will pass while
 all downstream consumers receive null or empty values.
 
 Stage 04d red tests must therefore include field-value assertions for

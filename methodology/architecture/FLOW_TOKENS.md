@@ -85,9 +85,12 @@ queryable retrieval by `id` and `parent`). The choice of store is an
 implementation detail; the *contract* — that every action emits one and
 that they form a parent-linked tree — is what matters.
 
-The Java/Micronaut/Jena reference profile under `reference-impl/` will
-land flow tokens in an RDF graph queryable by SPARQL. That is one valid
-choice; it is not the only one.
+The canonical fire-after-commit engine
+(`reference-impl/legible-engine/`) materialises the token as an append-only
+per-flow `ActionLog` of `Invocation`/`Completion` records, with the
+`parent` link carried explicitly (`parentActionId`) and each action's
+authorising sync recorded (`causedBySync`). `05_verify/` reads it directly
+via the `DebugApi` surface — no graph reconstruction.
 
 ## In stage `05_verify/`
 

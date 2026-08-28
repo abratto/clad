@@ -121,8 +121,11 @@ source differs.
 
 ## Profile note
 
-The Java/Micronaut/Jena reference profile implements concept-state reads
-against a concept's named graph by IRI. Internal flow data is joined
-through the shared flow token in the action log. Other profiles
-(relational, document, in-memory) implement the same distinction against
-their respective storage layers.
+The canonical fire-after-commit profile implements concept-state reads
+through the `FactStore`/`Region` SPI: internal flow data is joined through
+the shared flow id in the action log, and a concept-state read is a named
+`StateRead` against another concept's `Region`. The legacy Jena profile
+implements the same distinction against named graphs by IRI; the relational
+profile against per-concept tables. Every backend honours the same rule:
+internal flow data needs no review; a concept-state read is flagged in
+Stage 03a.
