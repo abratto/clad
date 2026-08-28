@@ -92,6 +92,15 @@ Halpin's Rmap (arity + uniqueness + mandatory roles). See the
 `java-micronaut-postgres` profile's `RELATIONAL_LOWERING.md` for the
 profile-specific rule set.
 
+Relational profiles may instead choose **fact realization** — persisting facts
+in a single generic relation (`fact(concept, subject, predicate, value)`), as
+`legible-storage/PostgresFactStore` does. This is the relational analog of the
+RDF profile's "fact realization in triples": simpler, fully generic, and
+sufficient when the profile only needs the engine's SPI — but it does **not**
+produce Rmap's typed, keyed, constrained tables. Rmap remains the procedure for
+a normalized relational schema; the two are both valid Stage 04a outcomes behind
+the same `FactStore`/`Region` boundary.
+
 ### Document profiles
 
 - Fact type → document field
