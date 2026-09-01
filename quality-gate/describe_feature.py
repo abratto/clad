@@ -71,6 +71,44 @@ def syncs(feature_root: str) -> List[Dict]:
     return out
 
 
+def chain_actions(feature_root: str) -> Dict[str, List[str]]:
+    """Scenario slug -> the ordered `Concept.action` token chain (the Then column
+    of each canonical per-scenario chain table). Terminal `Web.respond[NNN]` rows
+    are included as `Web.respond` (suffix stripped) so a runtime can reconstruct
+    the full step-definition token sequence."""
+    chain_dir = cs.CHAIN_DIR(feature_root)
+    out: Dict[str, List[str]] = {}
+    if not os.path.isdir(chain_dir):
+        return out
+    for fname in sorted(os.listdir(chain_dir)):
+        if not fname.endswith("-chain.md") or fname.endswith("-all-scenarios-chain.md"):
+            continue
+        scenario = fname.replace("-chain.md", "")
+        rows = ap.parse_chain_table(os.path.join(chain_dir, fname))
+        out[scenario] = [f"{r.then_concept}.{r.then_action}" for r in rows]
+    return out
+
+
+def action_outcomes(feature_root: str) -> Dict[str, List[str]]:
+    """`Concept.action` -> the distinct outcome tokens (base names) it emits across
+    all canonical chain tables. Deduplicated, first-seen order preserved."""
+    chain_dir = cs.CHAIN_DIR(feature_root)
+    out: Dict[str, List[str]] = {}
+    if not os.path.isdir(chain_dir):
+        return out
+    for fname in sorted(os.listdir(chain_dir)):
+        if not fname.endswith("-chain.md") or fname.endswith("-all-scenarios-chain.md"):
+            continue
+        for r in ap.parse_chain_table(os.path.join(chain_dir, fname)):
+            key = f"{r.then_concept}.{r.then_action}"
+            if not r.outcome_base:
+                continue
+            vals = out.setdefault(key, [])
+            if r.outcome_base not in vals:
+                vals.append(r.outcome_base)
+    return out
+
+
 def expected_outputs(feature_root: str) -> Dict[str, List[str]]:
     """Map stage id -> the artefact filenames that stage is expected to produce."""
     out: Dict[str, List[str]] = {}
@@ -109,6 +147,8 @@ def main() -> None:
         "concepts": concepts(feature_root),
         "scenarios": scenarios(feature_root),
         "syncs": syncs(feature_root),
+        "chainActions": chain_actions(feature_root),
+        "actionOutcomes": action_outcomes(feature_root),
         "expectedOutputs": expected_outputs(feature_root),
     }
     print(json.dumps(descriptor, indent=2))
