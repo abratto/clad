@@ -45,12 +45,6 @@ public final class SyncRule {
         return new SyncRule(name, triggerConcept, triggerAction, triggerOutcome, where, then, groupBy);
     }
 
-    public boolean matches(String concept, String action, String outcome) {
-        return triggerConcept.equals(concept)
-                && triggerAction.equals(action)
-                && (triggerOutcome == null || triggerOutcome.equals(outcome));
-    }
-
     // Convenience constructors for the most common data sources, so sync
     // declarations read close to the spec's `when`/`where`/`then` syntax.
 

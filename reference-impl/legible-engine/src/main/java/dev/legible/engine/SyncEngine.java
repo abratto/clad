@@ -1,7 +1,9 @@
 package dev.legible.engine;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,15 @@ public final class SyncEngine {
     private final FactStore facts;
     private final Map<String, Concept> concepts;
     private final List<SyncRule> rules;
+    /**
+     * Trigger index: {@code concept/action/outcome} -> the ordered rules that
+     * match that trigger. A rule with {@code triggerOutcome == null} is filed
+     * under bare {@code concept/action} and returned for every outcome. Replaces
+     * the linear {@code for (rule : rules)} scan in the drain loop — same order
+     * and exactly-once semantics, but O(matching rules) not O(all rules) per
+     * completion.
+     */
+    private final Map<String, List<SyncRule>> triggerIndex;
     private final FlowArchiver archiver;
     private final Map<String, ActionLog> inFlight = new ConcurrentHashMap<>();
     private final Map<String, Object> conceptLocks = new ConcurrentHashMap<>();
@@ -50,7 +61,50 @@ public final class SyncEngine {
             this.concepts.put(c.name(), c);
         }
         this.rules = List.copyOf(rules);
+        this.triggerIndex = buildTriggerIndex(this.rules);
         this.archiver = archiver;
+    }
+
+    /** Build the {@code concept/action/outcome} -> rules index (order-preserving). */
+    private static Map<String, List<SyncRule>> buildTriggerIndex(List<SyncRule> rules) {
+        Map<String, List<SyncRule>> index = new HashMap<>();
+        for (SyncRule rule : rules) {
+            if (rule.triggerOutcome == null) {
+                // Outcome-agnostic trigger: filed under bare `concept/action`.
+                index.computeIfAbsent(rule.triggerConcept + "/" + rule.triggerAction,
+                        k -> new ArrayList<>()).add(rule);
+            } else {
+                index.computeIfAbsent(key(rule.triggerConcept, rule.triggerAction,
+                        rule.triggerOutcome), k -> new ArrayList<>()).add(rule);
+            }
+        }
+        return index;
+    }
+
+    private static String key(String concept, String action, String outcome) {
+        return concept + "/" + action + "/" + outcome;
+    }
+
+    /**
+     * Rules whose trigger matches {@code (concept, action, outcome)}: the exact
+     * outcome bucket plus any-any-outcome rules for that {@code concept/action},
+     * in declaration order.
+     */
+    private List<SyncRule> matchingRules(String concept, String action, String outcome) {
+        List<SyncRule> exact = triggerIndex.get(key(concept, action, outcome));
+        List<SyncRule> any = triggerIndex.get(concept + "/" + action);
+        if (exact == null && any == null) {
+            return List.of();
+        }
+        List<SyncRule> result = new ArrayList<>((exact == null ? 0 : exact.size())
+                + (any == null ? 0 : any.size()));
+        if (exact != null) {
+            result.addAll(exact);
+        }
+        if (any != null) {
+            result.addAll(any);
+        }
+        return result;
     }
 
     public FactStore facts() {
@@ -149,8 +203,10 @@ public final class SyncEngine {
                 inv.action(), outcome, fields, System.currentTimeMillis()));
 
         Completion comp = flowLog.completion(inv.actionId()).orElseThrow();
-        for (SyncRule rule : rules) {
-            if (!rule.matches(inv.concept(), inv.action(), outcome)) continue;
+        // Look up only the rules whose trigger (concept/action/outcome) matches
+        // this completion, via the index built at construction — not a scan of
+        // every rule. null-outcome rules are included by the index for any outcome.
+        for (SyncRule rule : matchingRules(inv.concept(), inv.action(), outcome)) {
             if (flowLog.hasEmission(inv.actionId(), rule.name)) continue; // exactly-once dedup
             for (Map<String, Object> frame : evaluator.evaluate(rule, inv, comp)) {
                 for (ThenInvocation then : rule.then) {
