@@ -8,7 +8,7 @@
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
 - **Evidence gate:** `approved`
-- **Change summary:** Add deterministic generators for the mechanically-derivable CLAD stages (03 syncs, 03a dependency cards, 04b SPECs) plus a shared artefact-parser layer, so a weak local model can run those stages via scripts instead of LLM authoring.
+- **Change summary:** Add deterministic generators for the mechanically-derivable CLAD stages (03 syncs, 03a dependency cards, 03b data models, 04b SPECs, 04c Gherkin scaffolds) plus a shared artefact-parser layer, so a weak local model can run those stages via scripts instead of LLM authoring.
 
 ## Why
 
@@ -67,7 +67,9 @@ single grammar source for both checks and generators, so the two cannot drift.
 |---|---|---|---|
 | `generate_syncs.py` | 03 | one `*.sync.md` per chain transition (matrix, compressed-rule name, `when`/`then` skeleton, A/B/C bindings) | Pattern D reads, `then` args, `where` sources |
 | `generate_sync_cards.py` | 03a | one `*-card.md` per concept + `pattern-d-summary.md` | `<args>`/`<source>`/`<field>`/`<id>`/`<scenario>` fills |
+| `generate_data_model.py` | 03b | one `<Name>.data-model.md` per concept — 7-step CSDP skeleton; Object/Fact types + uniqueness/mandatory auto-derived from `-- mandatory`/`-- optional`/`-- unique` state annotations | Steps 1 (examples/facts), 3 (combination/derivations), 6 (value/subtype), 7 (final checks) |
 | `generate_spec.py` | 04b | one `<Name>.spec.md` per business concept (Web excluded) | input types, flow-token shape |
+| `generate_feature_files.py` | 04c | the `.feature` scaffold — Feature header, one Scenario stub per use-case scenario, terminal status + token-chain comment derived from chain tables | `Given`/`When`/body-shape prose, `I want`/`So that` wording, Scenario Outline `Examples:` |
 
 Each is manual-first: the stage CONTEXT instructs "run the generator, then
 resolve only the TODO markers." Generators are never auto-run by `advance.py`
@@ -81,7 +83,9 @@ resolve only the TODO markers." Generators are never auto-run by `advance.py`
 | Generated syncs pass the Stage 03 checks | unit/property | `test_generated_syncs_pass_sync_checks` (runs `verify_sync_matrix`/`verify_sync_cycle_graph`/`verify_sync_overlap` on generator output) | pass | all exit 0 |
 | SPEC generator excludes bootstrap + covers concepts | unit | `test_generate_spec_excludes_bootstrap_and_covers_concepts` | pass | PasswordAuth/Session/UserNaming |
 | Card generator covers participating concepts incl. Web | unit | `test_generate_cards_cover_participating_concepts` | pass | 4 cards + pattern-d-summary |
-| Refactored verify scripts unchanged | unit | full `quality-gate/tests` suite (42 tests) | pass | 42/42 |
+| Data-model generator passes CSDP structure check | unit/property | `test_generate_data_model_passes_csdp_structure_check` (runs `verify_data_model.py` on generator output) | pass | 3 models, structure-check exit 0 |
+| Feature generator derives scenarios + status codes | unit | `test_generate_feature_files_derives_scenarios_and_status` | pass | 4 scenarios, 200/401 statuses |
+| Refactored verify scripts unchanged | unit | full `quality-gate/tests` suite (44 tests) | pass | 44/44 |
 | Artefact pipeline gate intact | gate | `python3 quality-gate/verify_artefacts.py` | pass | exit 0 |
 
 ## Gates
@@ -100,9 +104,10 @@ set Status to `closed`.
 
 ## Notes
 
-- **Deferred (explicitly out of scope this pass):** `generate_data_model.py`
-  (03b CSDP lowering), `generate_feature_skeletons.py` (04c Gherkin), and the
-  `advance.py` auto-run wiring. Documented as future work.
+- **Deferred (explicitly out of scope this pass):** `advance.py` auto-run wiring
+  (generators stay manual-first, invoked per the stage CONTEXT.md), and the
+  step-definition `.java` skeleton generator for 04c (profile-specific,
+  `@Disabled`; left to the agent from `templates/step-definitions.java`).
 - **Pattern D remains a design judgment.** The generator auto-labels A/B/C but
   never invents a D read — consistent with the earlier decision that D is the
   only *semantic* classification a human/LLM should touch.

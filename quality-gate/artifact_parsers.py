@@ -263,6 +263,55 @@ def parse_concept_actions(concept_dir: str) -> Set[str]:
 
 
 # --------------------------------------------------------------------------
+# State-relation parsing (concept `## State` section)
+# --------------------------------------------------------------------------
+
+@dataclass
+class StateRelation:
+    """One relational state fact `field: SubjectType -> FieldType -- multiplicity`.
+
+    `multiplicity` is the raw `--` annotation (e.g. `mandatory`, `optional`,
+    `mandatory, unique`, `zero or more`); `unique` is True when the annotation
+    contains `unique`."""
+    field: str
+    subject_type: str
+    value_type: str
+    multiplicity: str
+    unique: bool
+
+
+def parse_state_relations(state_lines: List[str]) -> List[StateRelation]:
+    """Parse `## State` code-block lines into StateRelation facts.
+
+    Matches `field: SubjectType -> FieldType -- mandatory`, `-- optional`,
+    `-- zero or more`, and compound annotations (`-- mandatory, unique`).
+    Lines that do not match (e.g. prose, blank) are skipped.
+    """
+    relations: List[StateRelation] = []
+    for line in state_lines:
+        m = re.match(
+            r"^(\w+)\s*:\s*([\w<>,\[\] ]+?)\s*->\s*([\w<>,\[\] ]+?)(?:\s+--\s+(.*))?$",
+            line)
+        if not m:
+            # Also accept a bare map/collection form: `field: Map<K,V>` (no arrow).
+            m2 = re.match(r"^(\w+)\s*:\s*([\w<>,\[\] ]+)$", line)
+            if m2:
+                relations.append(StateRelation(
+                    field=m2.group(1), subject_type="", value_type=m2.group(2).strip(),
+                    multiplicity="", unique=False))
+            continue
+        field = m.group(1)
+        subject = m.group(2).strip()
+        value = m.group(3).strip()
+        annotation = (m.group(4) or "").strip()
+        unique = "unique" in annotation.lower()
+        relations.append(StateRelation(
+            field=field, subject_type=subject, value_type=value,
+            multiplicity=annotation, unique=unique))
+    return relations
+
+
+# --------------------------------------------------------------------------
 # Sync specs (Stage 03)
 # --------------------------------------------------------------------------
 

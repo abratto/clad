@@ -46,6 +46,22 @@ Read `methodology/implementation/TDD.md` before writing anything.
 
 ## Process
 
+**Deterministic generation first.** The `.feature` scaffold is mechanical
+(Feature header ← use case; one Scenario per `### Scenario:`; status codes +
+token-chain comments ← chain tables). First run:
+
+```
+python3 ../../../../../quality-gate/generate_feature_files.py --feature ../../../ --write
+```
+
+`generate_feature_files.py` emits the `Feature:` header (from usecase.md H1 and
+actor) and one Scenario stub per use-case scenario, with the derived token-chain
+comment and the terminal response status asserted from the chain table. It
+leaves `<TODO>` markers for the natural-language step text (`Given`/`When`/
+body-shape) and the condensed `I want`/`So that` wording — those are prose
+judgement. Resolve ONLY those markers; do not rename scenarios or change the
+derived status codes/token chains.
+
 1. **Derive** a Gherkin `.feature` file from `../../01_usecase/output/usecase.md`
    using the derivation rules in `../../../../../templates/feature.feature`:
    one `Feature` per use case, one `Scenario` (or `Scenario Outline`) per

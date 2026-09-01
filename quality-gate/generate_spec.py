@@ -52,7 +52,10 @@ def render_spec(concept: ap.ConceptSpec, outcomes: Dict[Tuple[str, str], Set[str
     lines.append("")
     for action in concept.actions:
         o = outcomes.get((concept.name, action.name), set())
-        enum = ", ".join(f"`{x.upper()}`" for x in sorted(o)) or "`<TODO>`"
+        # Normalize PascalCase chain-table outcomes to SCREAMING_SNAKE_CASE so the
+        # SPEC enum matches what verify_outcome_alignment.py expects (BAD_PASSWORD,
+        # not BADPASSWORD). Reuses the same normalizer the check uses.
+        enum = ", ".join(f"`{ap.normalize_outcome(x)}`" for x in sorted(o)) or "`<TODO>`"
         lines.append(f"### `{action.name}(...) -> <TODO>`")
         lines.append("")
         lines.append("- **Inputs:** `<TODO> — transcribe from concept spec`")

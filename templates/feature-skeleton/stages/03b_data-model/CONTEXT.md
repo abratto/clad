@@ -29,6 +29,23 @@ property IRI, migration, or schema library, you are too far downstream.
 
 ## Process
 
+**Deterministic generation first.** The CSDP is judgement-laden, so the
+generator emits the full seven-step skeleton and auto-fills only the parts that
+are mechanical from the concept `## State` annotations. First run:
+
+```
+python3 ../../../../quality-gate/generate_data_model.py --feature ../../ --write
+```
+
+`generate_data_model.py` emits one `<Name>.data-model.md` per business concept
+with Object types, Fact types, and (where the state line carries a
+`-- mandatory` / `-- optional` / `-- unique` annotation) uniqueness + mandatory
+roles derived automatically. It leaves `<TODO: judgment>` markers on steps that
+are genuine modelling decisions (familiar examples/elementary facts, combination
+checks, value/subtype constraints, final checks). Resolve those markers;
+the derived Object/Fact/constraint rows must stay as the generator produced them
+unless you can point to an error in the upstream state section.
+
 For each approved concept spec, derive a profile-neutral conceptual data
 model by following the seven CSDP steps in `DATA_MODEL_NOTES.md`.
 The output must make those steps inspectable in text form: familiar
