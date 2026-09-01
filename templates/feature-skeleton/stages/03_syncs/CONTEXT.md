@@ -35,6 +35,7 @@ the sync just says *"when outcome X fires → then call Y."*
 **Deterministic generation first.** This stage is a mechanical lowering of
 01b chain tables + 02 concepts. Do NOT author syncs from scratch. First run:
 
+Generated via:
 ```
 python3 ../../../../quality-gate/generate_syncs.py --feature ../../ --write
 ```

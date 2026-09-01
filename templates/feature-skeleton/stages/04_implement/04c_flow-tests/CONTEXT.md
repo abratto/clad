@@ -50,6 +50,7 @@ Read `methodology/implementation/TDD.md` before writing anything.
 (Feature header ← use case; one Scenario per `### Scenario:`; status codes +
 token-chain comments ← chain tables). First run:
 
+Generated via:
 ```
 python3 ../../../../../quality-gate/generate_feature_files.py --feature ../../../ --write
 ```

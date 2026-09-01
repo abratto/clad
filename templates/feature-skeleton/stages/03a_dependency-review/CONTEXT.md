@@ -38,6 +38,7 @@ If a card needs an action that doesn't exist yet, you are mid-violation
 **Deterministic generation first.** This is a token-locked audit of the
 approved sync pack — not new design. First run:
 
+Generated via:
 ```
 python3 ../../../../quality-gate/generate_sync_cards.py --feature ../../ --write
 ```

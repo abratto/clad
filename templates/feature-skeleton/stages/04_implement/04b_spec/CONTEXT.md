@@ -31,6 +31,7 @@ upstream (Stage 02), not here.
 **Deterministic generation first.** The SPEC is mechanical extraction from
 the concept specs + chain tables. First run:
 
+Generated via:
 ```
 python3 ../../../../../quality-gate/generate_spec.py --feature ../../../ --write
 ```

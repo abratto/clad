@@ -33,6 +33,7 @@ property IRI, migration, or schema library, you are too far downstream.
 generator emits the full seven-step skeleton and auto-fills only the parts that
 are mechanical from the concept `## State` annotations. First run:
 
+Generated via:
 ```
 python3 ../../../../quality-gate/generate_data_model.py --feature ../../ --write
 ```
