@@ -31,6 +31,20 @@ Exit codes:
   0   — advanced to the next stage (or the feature is complete)
   1   — the stage has defects; do not advance
   10  — the stage passed but a human gate approval is required; do not advance
+  30  — the stage passed but a fresh-session handoff is required
+        (workflow.session-per-stage=true); do NOT continue in this session
+
+Two independent, human-only workflow dimensions drive the gate and session
+behaviour (see methodology/implementation/STAGES.md §"Workflow control"):
+
+  workflow.autonomous        true|false   whether the 3 human gates auto-approve
+  workflow.session-per-stage true|false   whether to stop + hand off after each stage
+
+CLAD cannot clear the model's context window itself — that is the harness's
+job. It can only stop and print a deterministic re-orientation prompt; under
+session-per-stage=true, that prompt is HANDOVER.md's block with the feature
+slug (and successor stage) substituted. Setting these keys is a human-only act:
+the agent must never raise either.
 """
 
 from __future__ import annotations
@@ -52,21 +66,30 @@ AGENT_INSTRUCTION = "  >>> Agent instruction:"
 RESUME_FILE = "RESUME.md"
 CHANGES_DIR = "_changes"
 
-AUTONOMY_LEVELS = ("gated", "auto", "yolo")
+def _resolve_bool(cli_value: str | None, env_key: str, prop_key: str,
+                  feature_root: str, default: bool = False) -> bool:
+    """Resolve a human-only boolean workflow dimension.
 
-
-def resolve_autonomy(feature_root: str, cli_value: str | None) -> str:
-    """Precedence: --autonomy flag > CLAD_AUTONOMY env > clad.properties >
-    default 'gated'. The agent must not set this itself; it comes from the
-    human via config or an explicit in-conversation instruction."""
-    value = (cli_value
-             or os.environ.get("CLAD_AUTONOMY")
-             or cs.get_property(feature_root, "workflow.autonomy")
-             or "gated").strip().lower()
-    if value not in AUTONOMY_LEVELS:
-        print(f"WARN  unknown workflow.autonomy '{value}', falling back to 'gated'")
-        value = "gated"
-    return value
+    Precedence: CLI flag > env var > clad.properties > default. The agent must
+    not set either dimension itself — values come from the human via config or
+    an explicit in-conversation instruction. Unknown values fall back to the
+    default with a warning.
+    """
+    raw = cli_value
+    if raw is None:
+        raw = os.environ.get(env_key)
+    if raw is None:
+        raw = cs.get_property(feature_root, prop_key)
+    if raw is None:
+        return default
+    value = raw.strip().lower()
+    if value in ("true", "1", "yes", "on"):
+        return True
+    if value in ("false", "0", "no", "off"):
+        return False
+    print(f"WARN  unknown {prop_key} '{raw}', falling back to "
+          f"{str(default).lower()}")
+    return default
 
 
 def set_gate_status(feature_root: str, gate: int, status: str) -> bool:
@@ -204,7 +227,8 @@ def run_checks(feature_root: str, stage: cs.Stage) -> list[dict]:
 
 
 def write_receipt(feature_root: str, stage: cs.Stage, results: list[dict],
-                  result: str, seq_detail: str, autonomy: str = "gated") -> str:
+                  result: str, seq_detail: str, autonomous: bool = False,
+                  session_per_stage: bool = False) -> str:
     out_dir = stage.output_dir(feature_root)
     receipt = {
         "stage": stage.id,
@@ -212,7 +236,8 @@ def write_receipt(feature_root: str, stage: cs.Stage, results: list[dict],
         "feature": os.path.basename(feature_root.rstrip("/")),
         "checked_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "git_sha": git_sha(feature_root),
-        "autonomy": autonomy,
+        "workflow_autonomous": autonomous,
+        "workflow_session_per_stage": session_per_stage,
         "output_hash": compute_output_hash(out_dir),
         "sequence_guard": seq_detail,
         "checks": [
@@ -283,6 +308,45 @@ def print_failures(results: list[dict]) -> None:
             print(f"    {line}")
 
 
+def emit_handoff(feature_root: str, stage: cs.Stage, nxt: cs.Stage | None) -> int:
+    """Stop the session and print a deterministic fresh-session handoff.
+
+    Returns the exit code (30). CLAD cannot clear the model's context window —
+    the harness does that. This is the stop-and-hand-off contract: it prints
+    HANDOVER.md's re-orientation prompt with the feature slug (and, when known,
+    the successor stage) already substituted, never authored prose by the model.
+    """
+    slug = os.path.basename(feature_root.rstrip("/"))
+    handover = os.path.join(HERE, "..", "methodology", "implementation",
+                            "HANDOVER.md")
+    if os.path.isfile(handover):
+        with open(handover) as fh:
+            handover_text = fh.read()
+    else:
+        handover_text = ""
+
+    print(BAR)
+    print(f"  SESSION HANDOFF — Stage {stage.id} ({stage.label}) complete.")
+    print(f"  Feature: {slug}")
+    if nxt is not None:
+        print(f"  Next stage: {nxt.id} — {nxt.label}")
+    print()
+    print("  workflow.session-per-stage=true: do NOT continue in this session.")
+    print("  Ask the operator to START A NEW SESSION, then paste the prompt")
+    print("  block below to orient the fresh model. It reads prior stage")
+    print("  outputs and RESUME.md back from disk — no conversation carry-over.")
+    print()
+
+    if handover_text:
+        prompt = handover_text.replace("{{UC-XX-slug}}", slug)
+        for line in prompt.splitlines():
+            print(f"  {line}")
+    else:
+        print(f"  (HANDOVER.md not found; open it manually for feature {slug}.)")
+    print(BAR)
+    return 30
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Gate-driven advance for a CLAD feature")
@@ -290,9 +354,13 @@ def main() -> None:
                         help="Feature root path (e.g. features/UC-XX-<slug>)")
     parser.add_argument("--stage", default=None,
                         help="Stage id that just completed (default: infer)")
-    parser.add_argument("--autonomy", default=None, choices=AUTONOMY_LEVELS,
-                        help="Override workflow.autonomy for this run only "
-                             "(gated | auto | yolo). Normally set in "
+    parser.add_argument("--autonomous", default=None,
+                        help="Override workflow.autonomous for this run only "
+                             "(true | false). Normally set in clad.properties "
+                             "by the human, not here.")
+    parser.add_argument("--session-per-stage", default=None,
+                        help="Override workflow.session-per-stage for this run "
+                             "only (true | false). Normally set in "
                              "clad.properties by the human, not here.")
     args = parser.parse_args()
 
@@ -303,16 +371,26 @@ def main() -> None:
 
     stage = determine_stage(feature_root, args.stage)
     feature_name = os.path.basename(feature_root.rstrip("/"))
-    autonomy = resolve_autonomy(feature_root, args.autonomy)
+    autonomous = _resolve_bool(args.autonomous, "CLAD_AUTONOMOUS",
+                               "workflow.autonomous", feature_root)
+    session_per_stage = _resolve_bool(args.session_per_stage,
+                                      "CLAD_SESSION_PER_STAGE",
+                                      "workflow.session-per-stage",
+                                      feature_root)
 
-    if autonomy != "gated":
+    if autonomous:
         print(BAR)
-        print(f"  !!! AUTONOMY = {autonomy.upper()} — reduced human oversight !!!")
-        if autonomy == "auto":
-            print("  Human gates will be AUTO-APPROVED. Checks still block.")
-        else:
-            print("  Human gates AUTO-APPROVED and check failures are WARNINGS.")
-            print("  Only a fully skipped stage (artefact-chain gap) still stops.")
+        print("  !!! AUTONOMOUS = true — reduced human oversight !!!")
+        print("  Human gates will be AUTO-APPROVED. Checks still block.")
+        if session_per_stage:
+            print("  Human review at CLAD's gates are bypassed with this "
+                  "configuration.")
+        print(BAR)
+    if session_per_stage:
+        print(BAR)
+        print("  SESSION-PER-STAGE = true — a fresh session is required")
+        print("  after every stage. advance.py will stop and emit a handoff")
+        print("  prompt instead of continuing in this session.")
         print(BAR)
 
     # --- 0. Iterative change detection ---------------------------------------
@@ -356,7 +434,7 @@ def main() -> None:
             # Run stage checks
             results = run_checks(feature_root, stage)
             failed = [r for r in results if r["status"] == "fail"]
-            if failed and autonomy != "yolo":
+            if failed:
                 print(BAR)
                 print(f"  ADVANCE BLOCKED — checks failed for {change_name}")
                 print(BAR)
@@ -366,7 +444,8 @@ def main() -> None:
 
             diff_output = git_diff_changed(feature_root, latest_change)
             receipt_path = write_receipt(feature_root, stage, results, "pass",
-                                         "iterative diff review", autonomy)
+                                         "iterative diff review", autonomous,
+                                         session_per_stage)
 
             print(BAR)
             print(f"  ITERATIVE CHANGE — {change_name}")
@@ -421,19 +500,20 @@ def main() -> None:
         print("  A stage was skipped or an upstream human gate is not approved.")
         print("  Return to the earliest failing stage above and complete it in")
         print("  order. Do NOT advance. Re-run this command afterwards.")
-        print("  (This is a structural integrity stop and is enforced even under")
-        print("  autonomy=yolo — an entire stage's artefacts are missing.)")
+        print("  (This is a structural integrity stop and is enforced under every")
+        print("  workflow configuration — a skipped stage hard-blocks.)")
         print(BAR)
-        write_receipt(feature_root, stage, [], "fail", seq_out.strip(), autonomy)
+        write_receipt(feature_root, stage, [], "fail", seq_out.strip(),
+                      autonomous, session_per_stage)
         sys.exit(1)
 
     # --- 2. Stage checks ----------------------------------------------------
     results = run_checks(feature_root, stage)
     failed = [r for r in results if r["status"] == "fail"]
 
-    if failed and autonomy != "yolo":
+    if failed:
         write_receipt(feature_root, stage, results, "fail", seq_out.strip(),
-                      autonomy)
+                      autonomous, session_per_stage)
         print(BAR)
         print(f"  ADVANCE BLOCKED — Stage {stage.id} ({stage.label}) has defects")
         print(f"  Feature: {feature_name}")
@@ -449,16 +529,8 @@ def main() -> None:
         sys.exit(1)
 
     result_label = "pass"
-    if failed:  # autonomy == "yolo": downgrade to a non-blocking warning
-        result_label = "pass-with-warnings"
     receipt_path = write_receipt(feature_root, stage, results, result_label,
-                                 seq_out.strip(), autonomy)
-    if failed:
-        print(BAR)
-        print(f"  WARN (yolo) — Stage {stage.id} ({stage.label}) has "
-              f"{len(failed)} failing check(s), advancing anyway:")
-        print_failures(results)
-        print(BAR)
+                                 seq_out.strip(), autonomous, session_per_stage)
 
     # --- 3. Human gate boundary --------------------------------------------
     if stage.gate_after is not None:
@@ -469,12 +541,12 @@ def main() -> None:
             with open(resume_path) as fh:
                 resume_text = fh.read()
         if not gate_approval_current(feature_root, resume_text, gate):
-            if autonomy in ("auto", "yolo"):
+            if autonomous:
                 wrote = set_gate_status(feature_root, gate, "auto-approved")
                 print(BAR)
                 print(f"  Stage {stage.id} PASSED. HUMAN GATE {gate} "
                       f"({cs.GATE_LABELS[gate]}) AUTO-APPROVED "
-                      f"(autonomy={autonomy}).")
+                      f"(workflow.autonomous=true).")
                 if not wrote:
                     print("  NOTE: no gate line found in RESUME.md to record this.")
                 print("  A human did NOT review these artefacts. Recorded as")
@@ -500,43 +572,11 @@ def main() -> None:
                 print(f"    python3 quality-gate/advance.py --feature {args.feature}")
                 print(BAR)
                 sys.exit(10)
-
-        resume_path = os.path.join(feature_root, RESUME_FILE)
-        resume_text = ""
-        if os.path.isfile(resume_path):
-            with open(resume_path) as fh:
-                resume_text = fh.read()
-        if not gate_approval_current(feature_root, resume_text, gate):
-            if autonomy in ("auto", "yolo"):
-                wrote = set_gate_status(feature_root, gate, "auto-approved")
-                print(BAR)
-                print(f"  Stage {stage.id} PASSED. HUMAN GATE {gate} "
-                      f"({cs.GATE_LABELS[gate]}) AUTO-APPROVED (autonomy={autonomy}).")
-                if not wrote:
-                    print("  NOTE: no gate line found in RESUME.md to record this.")
-                print("  A human did NOT review these artefacts. Recorded as")
-                print("  `auto-approved` in RESUME.md for later inspection.")
-                print(BAR)
-            else:
-                present = run_script("present_gate.py",
-                                     ["--feature", feature_root, "--gate", str(gate)])
-                print(BAR)
-                print(f"  Stage {stage.id} ({stage.label}) PASSED its checks.")
-                print(f"  This is HUMAN GATE {gate} ({cs.GATE_LABELS[gate]}). STOP.")
-                print(BAR)
-                print_check_summary(results)
-                print(f"  Receipt: {cs.relpath(receipt_path, feature_root)}")
-                print()
-                print(present.stdout.rstrip())
-                print()
-                print(AGENT_INSTRUCTION)
-                print("  Present the artefact summary above to the human and WAIT.")
-                print("  Do NOT advance. When the human explicitly says 'approved', run:")
-                print(f"    python3 quality-gate/approve_gate.py --feature {args.feature} --gate {gate}")
-                print("  then re-run:")
-                print(f"    python3 quality-gate/advance.py --feature {args.feature}")
-                print(BAR)
-                sys.exit(10)
+        else:
+            print(BAR)
+            print(f"  GATE {gate} ({cs.GATE_LABELS[gate]}) is already approved — "
+                  f"continuing past it.")
+            print(BAR)
 
     # --- 4. Advance ---------------------------------------------------------
     nxt = cs.next_stage(stage.id)
@@ -554,6 +594,9 @@ def main() -> None:
         print("  Run Stage 05 closure checks and prepare the gate commit.")
         print(BAR)
         sys.exit(0)
+
+    if session_per_stage:
+        sys.exit(emit_handoff(feature_root, stage, nxt))
 
     print(f"  NEXT STAGE: {nxt.id} — {nxt.label}")
     print("  Open this contract and execute it:")

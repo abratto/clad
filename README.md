@@ -249,8 +249,9 @@ test.command=python3 quality-gate/verify_artefacts.py && mvn test
 # Describe your persistence technology.
 storage.layer=Jena TDB2 named graph (Java/Micronaut profile)
 
-# How advance.py handles human gates (gated | auto | yolo).
-workflow.autonomy=gated
+# How advance.py handles human gates and session boundaries.
+workflow.autonomous=false
+workflow.session-per-stage=false
 ```
 
 ## Status

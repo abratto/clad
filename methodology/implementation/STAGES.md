@@ -165,34 +165,59 @@ shipped enabled in this template.
 Stage 00 (system scope) is exempt: it is the collaborative intake stage
 and runs before the per-UC advance loop exists.
 
-### Autonomy override (opt-in, human-only)
+### Workflow control (two independent dimensions, opt-in, human-only)
 
-Some operators want the agent to run the pipeline with less stopping.
-`advance.py` reads a `workflow.autonomy` setting (from `clad.properties`,
-the `CLAD_AUTONOMY` env var, or a `--autonomy` flag) with three levels:
+`advance.py` exposes two independent, human-only knobs. They are orthogonal:
+one controls *who approves the gates*, the other controls *how large the
+context window is between stages*.
 
-| Level | Human gates | Failing stage checks | Skipped-stage gap |
-|---|---|---|---|
-| `gated` (default) | Stop for approval (exit `10`) | Block (exit `1`) | Block (exit `1`) |
-| `auto` | Auto-approved, recorded as `auto-approved` | Block (exit `1`) | Block (exit `1`) |
-| `yolo` | Auto-approved, recorded as `auto-approved` | Downgraded to warnings; advance with receipt result `pass-with-warnings` | Block (exit `1`) |
+| Key | Values | What it controls |
+|---|---|---|
+| `workflow.autonomous` | `true` / `false` (default `false`) | Whether the 3 human gates stop for approval or are auto-approved. |
+| `workflow.session-per-stage` | `true` / `false` (default `false`) | Whether `advance.py` stops and emits a fresh-session handoff after every stage. |
 
-Two invariants hold at every level:
+The four combinations and their resulting behaviour:
+
+| `autonomous` | `session-per-stage` | Resulting CLAD behaviour |
+|---|---|---|
+| `false` | `false` | One continuous session; stop at each of the 3 gates for human approval (the classic mode). |
+| `false` | `true` | One fresh session per stage; at each gate the human still approves first, then `advance.py` emits the handoff (exit `30`) instead of continuing. |
+| `true` | `false` | One continuous session; gates are auto-approved and recorded `auto-approved`. Note: the operator is warned that human review at the gates is bypassed. |
+| `true` | `true` | One fresh session per stage *and* no gate-stops; `advance.py` emits a handoff after every stage. Gates are still ledgered `auto-approved`. |
+
+Two invariants hold at every combination:
 
 1. **A fully skipped stage always hard-stops.** If an upstream stage's
-   `output/` is empty while a later stage is populated, the sequence
-   guard fails even under `yolo`. An entire missing stage is a
+   `output/` is empty while a later stage is populated, the sequence guard
+   fails regardless of either setting. An entire missing stage is a
    structural-integrity floor, not a quality preference.
 2. **Auto-approved gates are auditable.** They are written as
-   `auto-approved` (never `approved`) in `RESUME.md` and the receipt, so
-   a reviewer can always tell which gates a human never actually saw.
-   `verify_gate_approval.py` (the stricter CI-side check) still requires
-   a literal `approved`, so a CI profile can reject auto-approved gates.
+   `auto-approved` (never `approved`) in `RESUME.md` and the receipt, so a
+   reviewer can always tell which gates a human never actually saw.
+   `verify_gate_approval.py` (the stricter CI-side check) still requires a
+   literal `approved`, so a CI profile can reject auto-approved gates.
 
-The agent must **never** raise the autonomy level itself. It is set by
-the human in `clad.properties` or by an explicit in-conversation
-instruction. When autonomy is anything other than `gated`, `advance.py`
-prints a prominent banner and the agent states so plainly to the human.
+The agent must **never** raise either setting itself. They are set by the
+human in `clad.properties` or by an explicit in-conversation instruction.
+When `workflow.autonomous=true`, `advance.py` prints a prominent banner
+and the agent states so plainly to the human.
+
+### Session handoff — CLAD cannot clear the context window
+
+`workflow.session-per-stage=true` does not clear the model's context
+window. That is the harness's job (new conversation, new shell, etc.).
+What CLAD *can* do is stop and hand off: after a stage passes,
+`advance.py` exits with a dedicated code (`30`) and prints a deterministic
+re-orientation prompt — the [`HANDOVER.md`](HANDOVER.md) copy/paste block
+with the feature slug (and successor stage) already substituted. The
+operator starts a fresh session and pastes that block; the new model reads
+prior stage `output/` and `RESUME.md` back from disk, so no conversation
+carry-over is needed.
+
+The handoff text is **generated, not authored**: `advance.py` substitutes
+the slug into the fixed `HANDOVER.md` block rather than asking the model
+to write a "here is where we are" summary. This keeps the handoff from
+becoming another LLM-judgement surface.
 
 ## The stage contract
 

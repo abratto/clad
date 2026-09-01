@@ -63,7 +63,10 @@ makes the workflow self-enforcing. The agent reads the contract for
 the stage it is standing in; it cannot drift into the next stage
 without opening a different folder. ICM was added to CLAD for that
 single reason: it converts process discipline from a thing you
-remind the agent about into a thing the file system enforces.
+remind the agent about into a thing the file system enforces. (The
+enforcement is the file system *plus* the deterministic quality-gate
+scripts *plus* a small state ledger — see "How CLAD diverges from ICM"
+below.)
 
 Over ~33 calendar days Tastetag's Block 1 shipped 15 concepts, 300+
 syncs, 7 domain ontologies, and ~1,100 passing tests with **zero
@@ -161,3 +164,64 @@ LLM speed without losing the audit trail.** Every stage produces a file
 you can diff, every action emits a flow token you can trace, every
 hard rule is checked by CI. The methodology amplifies one careful
 human's judgment rather than replacing it.
+
+## How CLAD diverges from ICM
+
+CLAD adopts ICM's workspace *shape* — the five-layer context hierarchy,
+numbered-stage feature folders, and the `CONTEXT.md` `Inputs / Process /
+Outputs` stage contract. It departs from ICM in three load-bearing ways,
+each a deliberate trade rather than an accident.
+
+### 1. Session model
+
+ICM's context-scoping economics (its "2,000–8,000 focused tokens vs.
+40,000 monolithic" argument) assume each stage runs in a fresh context
+window whose only input is the prior stage's on-disk artefacts. CLAD's
+default is the opposite: stages 01–05 run through one continuous session,
+where the conversation history — not a cold start — carries continuity.
+The `output/` folders constrain which *files* a stage may read, but they
+do not by default constrain the *token window*.
+
+A fresh-session boundary exists in CLAD, but until recently it was an
+undocumented off-ramp (the `HANDOVER.md` recovery prompt), not a named
+mode. CLAD now makes it first-class via `workflow.session-per-stage`
+(see [`implementation/STAGES.md`](implementation/STAGES.md)): an explicit
+human-only switch that makes `advance.py` stop after every stage and emit
+a deterministic re-orientation prompt, so an operator *can* run CLAD the
+ICM way — one session per stage, context cleared between stages — if that
+is what they want. What CLAD cannot do is clear the window itself; that
+remains the harness's job.
+
+### 2. Deterministic orchestration
+
+ICM's central claim is "the filesystem is the orchestrator": stage order
+is folder numbering, and "change stage order" means "rename folders."
+CLAD keeps the numbered folders but additionally owns stage order, gate
+placement, and the stage→check map in `quality-gate/clad_stages.py`, and
+runs a state ledger (`RESUME.md`, `.gate-receipt.json`, `approved` vs
+`auto-approved`) that the filesystem alone never carried.
+
+This deliberately trades ICM's "anyone with a text editor can change the
+workflow" property for deterministic gate enforcement and skipped-stage
+detection. Renaming a folder no longer reorders the pipeline. CLAD made
+that trade because the thing ICM optimises away — drift, skipped stages,
+unaudited transitions — is exactly what CLAD's LLM operator needs pinned
+down.
+
+### 3. Two-dimensional workflow control
+
+ICM's answer to "less stopping" is "the human decides between stages."
+CLAD replaces that with two explicit, independent knobs
+(`workflow.autonomous` and `workflow.session-per-stage`), each human-only,
+with a hard structural-integrity floor (a skipped stage always blocks)
+that no combination relaxes. Where ICM leaves the human/agent boundary
+implicit in the folder you happen to be editing, CLAD makes it a named,
+auditable configuration surface.
+
+None of this contradicts ICM; it specialises it. ICM defines the
+filesystem-as-orchestrator pattern in the general, framework-free case.
+CLAD is that pattern pointed at a specific, harder target — LLM-driven
+software delivery where the review gap is the threat — and it answers the
+parts ICM leaves to future work (cross-stage verification, source-level
+edit lifting, deterministic re-entry) with concrete machinery rather than
+a promise.

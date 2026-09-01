@@ -3,6 +3,14 @@
 Use this file when you want a fresh model session to pick up one
 feature mid-flight without manual stage narration.
 
+This file is the **mechanical handoff payload** for the
+`workflow.session-per-stage=true` mode in
+[`STAGES.md`](STAGES.md). Under that mode, `advance.py` (exit `30`)
+substitutes `{{UC-XX-slug}}` and prints the copy/paste block below so the
+operator can start a fresh session whose only inputs are the on-disk
+artefacts. It doubles as a manual recovery prompt for any session that
+needs to re-orient from disk.
+
 ## Human input (only one placeholder)
 
 - Replace `{{UC-XX-slug}}` with the feature folder name

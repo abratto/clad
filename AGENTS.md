@@ -116,21 +116,28 @@ read these files directly instead: `AGENTS.md` §1–3, `CONTEXT.md`,
     collaborative intake stage and precedes the per-UC advance loop.
     See [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)
     §"Gate-driven advance".
-13. **Autonomy rule (never self-select).** `advance.py` supports an
-    opt-in autonomy override (`workflow.autonomy` in `clad.properties`,
-    or the `--autonomy` flag / `CLAD_AUTONOMY` env). Its three levels are
-    `gated` (default — every human gate stops for approval), `auto`
-    (human gates are auto-approved but failing checks still block), and
-    `yolo` (human gates auto-approved **and** failing checks are
-    downgraded to warnings). You must **never** enable `auto` or `yolo`
-    yourself, and never pass `--autonomy` to raise the level. This is a
-    human-only decision, set by the operator in `clad.properties` or
-    given as an explicit in-conversation instruction. Even under `yolo`,
-    a fully skipped stage (an empty artefact-chain gap) remains a hard
-    stop. Auto-approved gates are recorded as `auto-approved` (not
-    `approved`) in `RESUME.md` and the receipt, so an auditor can tell a
-    human never reviewed them. If autonomy is anything other than
-    `gated`, say so plainly to the human at the start of the run.
+13. **Workflow-control rule (never self-select).** `advance.py` supports two
+    independent, opt-in workflow dimensions, each human-only, set in
+    `clad.properties` (or via env/flag: `CLAD_AUTONOMOUS`/`--autonomous`
+    and `CLAD_SESSION_PER_STAGE`/`--session-per-stage`):
+
+    - `workflow.autonomous` — `true` auto-approves the 3 human gates
+      (recorded `auto-approved`); failing checks still block. Default
+      `false` (stop at every gate).
+    - `workflow.session-per-stage` — `true` makes `advance.py` stop after
+      every stage (exit `30`) and print a deterministic fresh-session
+      handoff prompt (HANDOVER.md block, slug substituted). Default
+      `false` (one continuous session).
+
+    You must **never** enable either yourself, and never pass the flags to
+    turn one on. This is a human-only decision. Under every combination a
+    fully skipped stage (an empty artefact-chain gap) remains a hard stop.
+    Auto-approved gates are recorded as `auto-approved` (not `approved`) in
+    `RESUME.md` and the receipt, so an auditor can tell a human never
+    reviewed them. If either dimension is non-default, say so plainly to
+    the human at the start of the run. Note that CLAD cannot clear the
+    context window itself — `session-per-stage=true` hands off to the
+    operator, who starts the fresh session.
 14. **Self-audit rule.** At the end of every stage — including pure design
     stages 01–03b where no test framework runs — self-audit with:
     ```
@@ -231,7 +238,8 @@ Current keys:
 | `test.command` | Shell command | The single command to run the artefact pipeline gate then all tests for this profile. Never run the test framework directly — tests that pass without the gate may hide stale artefacts. |
 | `storage.layer` | Free text | Describes the persistence technology in use |
 | `stages.usecase.require-sequence-diagram` | `true` or `false` | Whether Mermaid sequence diagrams are required in Stage 01. Default `true`. Set to `false` if the LLM struggles with diagram generation. |
-| `workflow.autonomy` | `gated`, `auto`, or `yolo` | How `advance.py` handles human gates and check failures. `gated` (default) stops at every gate; `auto` auto-approves gates but checks still block; `yolo` auto-approves gates and downgrades check failures to warnings. A skipped-stage gap always hard-stops. Human-only setting — agents must never raise it. |
+| `workflow.autonomous` | `true` or `false` | Whether `advance.py` auto-approves the 3 human gates. `false` (default) stops at every gate; `true` records gates as `auto-approved`. Checks still block on failure in both cases. A skipped-stage gap always hard-stops. Human-only setting — agents must never raise it. |
+| `workflow.session-per-stage` | `true` or `false` | Whether `advance.py` stops after every stage (exit `30`) and prints a deterministic fresh-session handoff prompt instead of continuing. `false` (default) is one continuous session. Human-only setting — agents must never raise it. |
 
 Profile-specific keys (`sync.impl.dir`, `concept.impl.dir`, `test.source.root`,
 `engine.*`, `jackson.serialization-inclusion`) are documented inline in
