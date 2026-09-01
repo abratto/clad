@@ -295,6 +295,32 @@ Stage 05 output.
 | **Structural modelling** | 02–03b | Cross-concept consistency, chain-table derivation, sync authoring, dependency analysis | No implementation code or test files |
 | **Implementation** | 04a–05 | Test-first discipline, spec-to-code fidelity, storage-layer compliance | Red phase: tests only. Green phase: implementation only |
 
+### Deterministic generation vs model authoring
+
+A stage's output is either **derivable** (a mechanical function of prior
+artefacts + rules) or **authored** (requires judgment/prose). CLAD ships
+deterministic generators for the derivable stages, so a weak local model is
+only asked to write what cannot be scripted:
+
+| Stage | Deterministic generator | What the model still authors |
+|---|---|---|
+| 03 (syncs) | `quality-gate/generate_syncs.py` | Pattern D concept-state reads, `then` argument values, `where` sources |
+| 03a (dependency cards) | `quality-gate/generate_sync_cards.py` | filling the `<args>`/`<source>`/`<field>`/`<id>` placeholders verbatim |
+| 04b (SPECs) | `quality-gate/generate_spec.py` | input types + flow-token shape transcription |
+
+For these stages the stage `CONTEXT.md` instructs: *run the generator first,
+then resolve only the TODO markers — do not re-author the derived skeleton.* A
+generator's output satisfies its sibling `verify_*` check by construction.
+
+Stages that remain model-authored (no generator exists, by design):
+- 00 (collaborative intake), 01 (use-case prose), **01a (concept
+  decomposition — the irreducibly-judgment task)**, 02 (concept design),
+  and the judgment inside the red phases and 05.
+
+Generators are **manual-first**: the agent invokes them per the stage contract;
+`advance.py` does not auto-run them. This keeps the deterministic step a
+deliberate, reviewable action rather than a hidden one.
+
 Skill files under [`../../skills/`](../../skills/) provide on-demand stage guidance
 for agent frameworks that support Agent Skills. Stage `02_concepts/`, for
 example, has a companion at [`../../skills/clad-concept-design/SKILL.md`](../../skills/clad-concept-design/SKILL.md).

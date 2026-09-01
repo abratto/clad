@@ -23,106 +23,29 @@ import os
 import re
 import sys
 
+from artifact_parsers import parse_chain_table, parse_spec_outcomes
+
 
 def parse_chain_outcomes(chain_dir):
     """
     Parse all chain-table files. Return list of (concept, action, outcome_base).
     outcome_base is the outcome string with parenthesised payload removed.
+
+    Terminal respond rows (whose Then carries a bracket suffix like
+    `Web.respond[200]`) are skipped — they are `then` sinks, not sync
+    triggers, matching the historical verify_outcome_alignment.py behaviour.
     """
     rows = []
     if not os.path.isdir(chain_dir):
         return rows
-
     for fname in sorted(os.listdir(chain_dir)):
-        if not fname.endswith("-chain.md"):
+        if not fname.endswith("-chain.md") or fname.endswith("-all-scenarios-chain.md"):
             continue
-        path = os.path.join(chain_dir, fname)
-        with open(path) as f:
-            content = f.read()
-
-        # Find the markdown table. Look for separator line (|---|---|)
-        lines = content.split("\n")
-        in_table = False
-        for line in lines:
-            # Detect table separator row
-            if re.match(r"^\|[-:\s]+\|[-:\s]+", line):
-                in_table = True
+        for r in parse_chain_table(os.path.join(chain_dir, fname)):
+            if r.then_suffix is not None:
                 continue
-            if not in_table:
-                continue
-            # Stop at first blank line or non-table line after table starts
-            if line.strip() == "" or not line.startswith("|"):
-                in_table = False
-                continue
-            # Skip header row
-            if "#" in line.split("|")[1] if len(line.split("|")) > 1 else False:
-                continue
-
-            # Parse data row: # | When | Then | Inputs | Outcome | Why
-            cols = [c.strip() for c in line.split("|")]
-            if len(cols) < 6:
-                continue
-            then_col = cols[3]  # Then column
-            outcome_col = cols[5]  # Outcome column
-
-            # Extract Concept.action from Then column: `User.lookupByUsername`
-            m = re.match(r"`([A-Za-z]+)\.([A-Za-z]+)`", then_col)
-            if not m:
-                continue
-            concept = m.group(1)
-            action = m.group(2)
-
-            # Extract base outcomes from outcome column:
-            # `Found(userId)` → Found, `Ok` → Ok, `Sent` → Sent
-            # `AVAILABLE`, `UNAVAILABLE` → AVAILABLE, UNAVAILABLE
-            outcomes = re.findall(r"`([^`]+)`", outcome_col)
-            for outcome_raw in outcomes:
-                outcome_base = re.sub(r"\(.*?\)", "", outcome_raw).strip()
-                rows.append((concept, action, outcome_base))
-
+            rows.append((r.then_concept, r.then_action, r.outcome_base))
     return rows
-
-
-def parse_spec_outcomes(spec_dir):
-    """
-    Parse all SPEC files. Return dict:
-      { (concept, action): set_of_outcomes }
-    where outcomes are SCREAMING_SNAKE_CASE.
-    """
-    specs = {}
-    if not os.path.isdir(spec_dir):
-        return specs
-
-    for fname in sorted(os.listdir(spec_dir)):
-        if not fname.endswith(".spec.md"):
-            continue
-        concept = fname.replace(".spec.md", "")
-        path = os.path.join(spec_dir, fname)
-        with open(path) as f:
-            content = f.read()
-
-        # Find each action section: ### `actionName(...)`
-        # Then find the Outcomes line under it.
-        action = None
-        for line in content.split("\n"):
-            m_action = re.match(r"^###\s+`(\w+)\(", line)
-            if m_action:
-                action = m_action.group(1)
-                specs.setdefault((concept, action), set())
-                continue
-            if action is None:
-                continue
-            # Match: - **Outcomes (enum):** `OK`, `BAD_PASSWORD`, `LOCKED`
-            # Match: - **Outcomes:** `STORED` (always)
-            m_out = re.match(r"^- \*\*Outcomes.*?:\*\*\s+(.+)$", line.strip())
-            if m_out:
-                outcomes_str = m_out.group(1)
-                # Extract backtick-quoted values: `OK`, `BAD_PASSWORD`, `LOCKED`
-                outcomes = re.findall(r"`([^`]+)`", outcomes_str)
-                specs[(concept, action)] = set(outcomes)
-                action = None  # Reset until next action section
-
-    return specs
 
 
 def normalize(name):

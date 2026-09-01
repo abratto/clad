@@ -26,67 +26,12 @@ import os
 import re
 import sys
 
-
-def parse_goals(path):
-    """Return set of in-scope goal phrases from the goals.md In scope table."""
-    goals = set()
-    with open(path) as f:
-        lines = f.readlines()
-    in_table = False
-    for line in lines:
-        # Detect table header row (| Actor | Goal | ...)
-        if line.strip().startswith("| Actor | Goal |"):
-            in_table = True
-            continue
-        if in_table:
-            # Stop at the first blank line or ## heading after the table
-            if line.strip() == "" or line.startswith("##"):
-                in_table = False
-                continue
-            # Skip separator rows (|----|----|...)
-            if re.match(r"^\|[\s\-:]+\|", line):
-                continue
-            # Parse data row: | Actor | Goal | ...
-            parts = [p.strip() for p in line.split("|")]
-            if len(parts) >= 3:
-                goals.add(parts[2])  # Goal column
-    return goals
-
-
-def parse_scenario_names(usecase_path):
-    """Return set of scenario names from ### Scenario: headings."""
-    names = set()
-    with open(usecase_path) as f:
-        for line in f:
-            m = re.match(r"^### Scenario:\s+(.+)$", line.strip())
-            if m:
-                names.add(m.group(1).strip())
-    return names
-
-
-def slugify(name):
-    """Convert a scenario name to the slug used in chain-table filenames."""
-    s = name.lower().strip()
-    s = re.sub(r"[^a-z0-9]+", "-", s)
-    s = s.strip("-")
-    return s
-
-
-def parse_sync_cited_scenarios(sync_dir):
-    """Return set of scenario names cited across all sync files."""
-    cited = set()
-    if not os.path.isdir(sync_dir):
-        return cited
-    for fname in os.listdir(sync_dir):
-        if not fname.endswith(".sync.md"):
-            continue
-        path = os.path.join(sync_dir, fname)
-        with open(path) as f:
-            for line in f:
-                m = re.search(r"—\s+scenario\s+[\"`']([^\"`']+)[\"`']", line)
-                if m:
-                    cited.add(m.group(1))
-    return cited
+from artifact_parsers import (
+    parse_goals,
+    parse_scenario_names,
+    parse_sync_cited_scenarios,
+    slugify,
+)
 
 
 def main():

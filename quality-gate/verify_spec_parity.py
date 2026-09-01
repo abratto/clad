@@ -23,55 +23,42 @@ import os
 import re
 import sys
 
+from artifact_parsers import parse_concept
+
 
 def parse_concept_actions(path):
     """
-    Parse a concept spec file. Return set of action names.
+    Parse a concept spec file. Return (concept, set of action names).
     Actions are identified as top-level definitions: `actionName [ args ]`
     """
-    actions = set()
-    concept = os.path.basename(path).replace(".concept.md", "")
-    with open(path) as f:
-        for line in f:
-            m_action = re.match(r"^([a-z]\w+)\s+\[", line.strip())
-            if m_action:
-                actions.add(m_action.group(1))
-    return concept, actions
+    concept_spec = parse_concept(path)
+    return concept_spec.name, {a.name for a in concept_spec.actions}
 
 
 def parse_spec_actions_and_outcomes(path):
     """
-    Parse a SPEC file. Return dict:
-      { action_name: set_of_outcome_strings }
+    Parse a SPEC file. Return (concept, { action_name: set_of_outcome_strings }).
     Outcomes are extracted from `**Outcomes` lines.
     """
-    result = {}
     concept = os.path.basename(path).replace(".spec.md", "")
+    result = {}
     with open(path) as f:
         content = f.read()
 
-    lines = content.split("\n")
     current_action = None
-
-    for line in lines:
-        # Detect action section: ### `actionName(...)`
+    for line in content.split("\n"):
         m_action = re.match(r"^###\s+`(\w+)\(", line.strip())
         if m_action:
             current_action = m_action.group(1)
             result.setdefault(current_action, set())
             continue
-
         if current_action is None:
             continue
-
-        # Match: - **Outcomes (enum):** `OK`, `BAD_PASSWORD`, `LOCKED`
-        # Match: - **Outcomes:** `STORED` (always)
         m_out = re.match(r"^- \*\*Outcomes.*?:\*\*\s+(.+)$", line.strip())
         if m_out:
-            outcomes_str = m_out.group(1)
-            outcomes = re.findall(r"`([^`]+)`", outcomes_str)
+            outcomes = re.findall(r"`([^`]+)`", m_out.group(1))
             result[current_action] = set(outcomes)
-            current_action = None  # Reset until next action section
+            current_action = None
 
     return concept, result
 

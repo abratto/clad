@@ -35,6 +35,21 @@ If a card needs an action that doesn't exist yet, you are mid-violation
 
 ## Process
 
+**Deterministic generation first.** This is a token-locked audit of the
+approved sync pack — not new design. First run:
+
+```
+python3 ../../../../quality-gate/generate_sync_cards.py --feature ../../ --write
+```
+
+`generate_sync_cards.py` emits one `*-card.md` per concept (Section 1 inbound
+`then` calls, Section 2 Pattern D reads) plus `pattern-d-summary.md`, copying
+sync names, concepts, and actions exactly from `03_syncs/output/`. It leaves
+`<args>`/`<source>`/`<field>`/`<id>`/`<scenario>` placeholders for the agent to
+fill from the approved sync text. Fill ONLY those placeholders verbatim; do not
+add or remove rows unless a defect is found — and if one is, reopen Stage 03 or
+earlier rather than editing the card.
+
 For each concept that appears in any chain table or sync:
 
 1. Open

@@ -26,157 +26,16 @@ Usage:
 """
 
 import argparse
-import os
-import re
 import sys
 
-
-def parse_resp_map_actions(path):
-    """Return set of Concept/action from the responsibility map's Owned actions column."""
-    actions = set()
-    with open(path) as f:
-        in_table = False
-        for line in f:
-            if line.strip().startswith("| Concept | Owned state"):
-                in_table = True
-                continue
-            if in_table:
-                if re.match(r"^\|[\s\-:]+\|", line):
-                    continue
-                if not line.startswith("|"):
-                    in_table = False
-                    continue
-                parts = [p.strip() for p in line.split("|")]
-                if len(parts) >= 4:
-                    concept = parts[1].strip("`")
-                    owned_actions = parts[3]
-                    for a in re.findall(r"`([^`]+)`", owned_actions):
-                        actions.add(f"{concept}/{a}")
-    return actions
-
-
-def parse_chain_table_actions(chain_dir):
-    """Return set of Concept/action from chain-table Then columns (column 3).
-    
-    Chain tables use dot notation (Concept.action). This function normalises
-    to slash notation (Concept/action) for internal cross-referencing.
-    """
-    actions = set()
-    if not os.path.isdir(chain_dir):
-        return actions
-    for fname in os.listdir(chain_dir):
-        if not fname.endswith("-chain.md"):
-            continue
-        with open(os.path.join(chain_dir, fname)) as f:
-            for line in f:
-                parts = [p.strip() for p in line.split("|")]
-                if len(parts) < 5:
-                    continue
-                # Skip header and separator rows
-                if not parts[1].isdigit():
-                    continue
-                # Column index 3 (0-indexed) is the Then column
-                then_col = parts[3]
-                m = re.search(r"`([A-Za-z]+)\.([A-Za-z]+)", then_col)
-                if m:
-                    actions.add(f"{m.group(1)}/{m.group(2)}")
-    return actions
-
-
-def parse_concept_actions(concept_dir):
-    """Return set of Concept/action from concept spec files."""
-    actions = set()
-    if not os.path.isdir(concept_dir):
-        return actions
-    for fname in os.listdir(concept_dir):
-        if not fname.endswith(".concept.md"):
-            continue
-        concept = fname.replace(".concept.md", "")
-        with open(os.path.join(concept_dir, fname)) as f:
-            for line in f:
-                m = re.match(r"^([a-z]\w+)\s+\[", line.strip())
-                if m:
-                    actions.add(f"{concept}/{m.group(1)}")
-    return actions
-
-
-def parse_sync_actions(sync_dir):
-    """Return set of Concept/action from sync spec `then` clauses and sync Java files.
-    
-    Sync `.sync.md` files use paper block syntax:
-        then {
-            Concept/action: [ args ]
-        }
-    
-    Java `@SyncMetadata` files use "Concept/action" directly.
-    Both are normalised to Concept/action format.
-    """
-    actions = set()
-    if not os.path.isdir(sync_dir):
-        return actions
-
-    for fname in os.listdir(sync_dir):
-        filepath = os.path.join(sync_dir, fname)
-
-        if fname.endswith(".sync.md"):
-            with open(filepath) as f:
-                in_then = False
-                for line in f:
-                    line_s = line.strip()
-                    if line_s == "then {":
-                        in_then = True
-                        continue
-                    if in_then:
-                        if line_s == "}":
-                            in_then = False
-                            continue
-                        m = re.search(r"([A-Za-z]+)/([A-Za-z]+):", line)
-                        if m:
-                            actions.add(f"{m.group(1)}/{m.group(2)}")
-
-        elif fname.endswith(".java"):
-            with open(filepath) as f:
-                for line in f:
-                    m = re.search(r'fires\s*=\s*"([A-Za-z]+)/([A-Za-z]+)', line)
-                    if m:
-                        actions.add(f"{m.group(1)}/{m.group(2)}")
-
-    return actions
-
-
-def parse_dep_card_actions(dep_dir):
-    """Return set of Concept/action from dependency review cards."""
-    actions = set()
-    if not os.path.isdir(dep_dir):
-        return actions
-    for fname in os.listdir(dep_dir):
-        if not fname.endswith("-card.md"):
-            continue
-        concept = fname.replace("-card.md", "")
-        with open(os.path.join(dep_dir, fname)) as f:
-            for line in f:
-                # Card rows: | `<action>` | `<Sync>` | ...
-                m = re.match(r"^\|\s*`(\w+)`\s*\|", line)
-                if m:
-                    actions.add(f"{concept}/{m.group(1)}")
-    return actions
-
-
-def parse_spec_actions(spec_dir):
-    """Return set of Concept/action from SPEC files."""
-    actions = set()
-    if not os.path.isdir(spec_dir):
-        return actions
-    for fname in os.listdir(spec_dir):
-        if not fname.endswith(".spec.md"):
-            continue
-        concept = fname.replace(".spec.md", "")
-        with open(os.path.join(spec_dir, fname)) as f:
-            for line in f:
-                m = re.match(r"^###\s+`(\w+)\(", line.strip())
-                if m:
-                    actions.add(f"{concept}/{m.group(1)}")
-    return actions
+from artifact_parsers import (
+    parse_resp_map_actions,
+    parse_chain_table_actions,
+    parse_concept_actions,
+    parse_sync_actions,
+    parse_dep_card_actions,
+    parse_spec_actions,
+)
 
 
 def main():

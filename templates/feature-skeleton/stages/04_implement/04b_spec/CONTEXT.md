@@ -28,6 +28,19 @@ upstream (Stage 02), not here.
 
 ## Process
 
+**Deterministic generation first.** The SPEC is mechanical extraction from
+the concept specs + chain tables. First run:
+
+```
+python3 ../../../../../quality-gate/generate_spec.py --feature ../../../ --write
+```
+
+`generate_spec.py` emits one `<Name>.spec.md` per business concept with the
+action list and outcome enums collected from the canonical chain tables. It
+leaves `<TODO>` markers for input types and flow-token shape; transcribe those
+from `../../02_concepts/output/<Name>.concept.md`. Do not add actions, outcomes,
+or fields the concept spec and chain tables did not declare.
+
 Derive the SPEC contract slice **mechanically** from each concept
 spec: action signatures, outcome enums, flow-token shape. No prose
 principle, no edge-case discussion — those stay in the concept spec.

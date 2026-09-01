@@ -32,6 +32,23 @@ the sync just says *"when outcome X fires → then call Y."*
 
 ## Process
 
+**Deterministic generation first.** This stage is a mechanical lowering of
+01b chain tables + 02 concepts. Do NOT author syncs from scratch. First run:
+
+```
+python3 ../../../../quality-gate/generate_syncs.py --feature ../../ --write
+```
+
+`generate_syncs.py` emits one `*.sync.md` per chain-table transition with the
+Sync Contract Matrix, the compressed-rule name, and the `when`/`then` skeleton,
+auto-labelling A/B/C bindings. It leaves `<!-- TODO ... -->` markers for the
+things that are genuinely not derivable: `then` argument values, `where`
+sources, and any Pattern D concept-state read. Resolve ONLY those markers
+(never re-author the name, matrix, or trigger/target — they are derived and
+must match the generator's output exactly). If a Pattern D read appears
+warranted, author it deliberately and add its `D:` label + source; do not
+invent a cross-concept read the chain table did not authorise.
+
 Count the transitions in every approved chain table in
 `01b_chain-table/output/` for this feature. Each transition (row N →
 row N+1) becomes exactly one sync file. Do not collapse multiple

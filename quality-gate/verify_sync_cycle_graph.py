@@ -25,40 +25,18 @@ Usage:
 
 import argparse
 import os
-import re
 import sys
 from collections import defaultdict
 
-
-_SYNC_NAME_RE = re.compile(r'^sync\s+(\w+)', re.MULTILINE)
-_WHEN_CONCEPT_RE = re.compile(r'(\w+)/\w+\s*:', re.MULTILINE)
-_THEN_CONCEPT_RE = re.compile(r'(\w+)/\w+\s*:', re.MULTILINE)
+from artifact_parsers import parse_syncs
 
 
-def parse_syncs(sync_dir):
+def parse_syncs_edges(sync_dir):
     """Parse all .sync.md files and return list of (sync_name, from_concept, to_concept) edges."""
     edges = []
-    for fname in sorted(os.listdir(sync_dir)):
-        if not fname.endswith('.sync.md'):
-            continue
-        path = os.path.join(sync_dir, fname)
-        with open(path) as fh:
-            text = fh.read()
-
-        sync_name = fname.replace('.sync.md', '')
-
-        # Find concept names in the when/then clauses
-        # Partition on "when {" and "then {" blocks
-        when_block = text.partition('when {')[2].partition('}')[0] if 'when {' in text else ''
-        then_block = text.partition('then {')[2].partition('}')[0] if 'then {' in text else ''
-
-        from_concepts = _WHEN_CONCEPT_RE.findall(when_block)
-        to_concepts = _THEN_CONCEPT_RE.findall(then_block)
-
-        for fc in from_concepts:
-            for tc in to_concepts:
-                edges.append((sync_name, fc, tc))
-
+    for s in parse_syncs(sync_dir):
+        for concept, _action in s.then_targets:
+            edges.append((s.name, s.trigger_concept, concept))
     return edges
 
 
@@ -117,7 +95,7 @@ def main():
         print(f"FAIL  sync directory not found: {args.sync_dir}")
         sys.exit(1)
 
-    edges = parse_syncs(args.sync_dir)
+    edges = parse_syncs_edges(args.sync_dir)
     if not edges:
         print("PASS  no syncs found — nothing to check")
         sys.exit(0)
