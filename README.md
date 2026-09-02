@@ -96,6 +96,28 @@ The key insight: **CLAD controls feedback, not the agent.** An agent that
 skips a stage doesn't get test results. An agent that never runs tests
 can't write working code. An agent that can't commit can't deliver.
 
+### Deterministic artefact generators
+
+Where a stage's output is a *mechanical function* of earlier artefacts, CLAD
+ships a Python generator so the model never has to author it. Stage
+`CONTEXT.md` contracts mark the command with `Generated via:`:
+
+| Stage | Generator | Emits |
+|---|---|---|
+| 03 syncs | `generate_syncs.py` | one `*.sync.md` per chain-table transition |
+| 03a | `generate_sync_cards.py` | per-concept dependency cards + `pattern-d-summary.md` |
+| 03b | `generate_data_model.py` | CSDP data models (types + constraints auto-derived from `--` annotations) |
+| 04b | `generate_spec.py` | per-concept SPECs |
+| 04c | `generate_feature_files.py` | Gherkin scaffold |
+
+The generator produces the derived skeleton verbatim (names, matrices,
+signatures) and leaves `<TODO>` markers only where genuine design judgment is
+required — e.g. Pattern D concept-state reads. Its output passes the same
+stage's `verify_*` check by construction. Genuinely judgement-laden stages
+(00 intake, 01 use case, 01a concept decomposition, 02 concept design) stay
+model-authored. `quality-gate/describe_feature.py` emits a JSON descriptor of a
+feature for downstream runtimes, keeping the parsing grammar in one place.
+
 ## What CLAD guarantees
 
 1. **Requirements → code.** Every in-scope goal becomes a use-case
@@ -125,26 +147,25 @@ Concepts do business work. Syncs coordinate. Infrastructure is transport-only.
 ```mermaid
 sequenceDiagram
     participant Client
-    participant Controller as Infrastructure<br/>WebController
-    participant Engine as Engine<br/>FlowManager + SyncDispatcher
-    participant Concepts as Concepts<br/>User, Article, Session...
-    participant Syncs as Syncs<br/>when X → then Y
+    participant Controller as Infrastructure<br/>transport-only
+    participant Engine as SyncEngine<br/>fire-after-commit
+    participant Concepts as Concepts<br/>UserNaming, PasswordAuth, Session
+    participant Syncs as Syncs<br/>SyncRule: when X → then Y
 
     Client->>Controller: POST /api/login
-    Note over Controller: 1. Normalize input (HTTP → engine format)
-    Controller->>Engine: rootAction("request", { route, body })
-    Note over Engine: 2. Dispatch to first sync → concept action → sync → ...
-    Engine->>Concepts: lookupByUsername("alice")
-    Concepts-->>Engine: [FOUND] { userId, ... }
-    Engine->>Syncs: when User/lookupByUsername[FOUND]
-    Syncs->>Concepts: check(userId, password)
-    Concepts-->>Engine: [OK]
-    Engine->>Syncs: when PasswordAuth/check[OK]
-    Syncs->>Concepts: grant(userId)
-    Concepts-->>Engine: [GRANTED] { sessionToken }
-    Engine->>Syncs: when Session/grant[GRANTED]
-    Syncs->>Controller: respond { statusCode: 200, sessionToken }
-    Note over Engine: 3. Flow completes — dispatch loop returns response
+    Note over Controller: 1. Normalize input (transport → engine format)
+    Controller->>Engine: engine.run("Web", "request", { route, username, password })
+    Note over Engine: 2. Execute Web/request, commit, then fire matching syncs to quiescence
+    Engine->>Concepts: UserNaming.lookupByUsername(username)
+    Concepts-->>Engine: { outcome: FOUND, userId }
+    Engine->>Engine: when UserNaming/lookupByUsername[FOUND] → PasswordAuth.check
+    Engine->>Concepts: PasswordAuth.check(userId, password)
+    Concepts-->>Engine: { outcome: OK, userId }
+    Engine->>Engine: when PasswordAuth/check[OK] → Session.grant
+    Engine->>Concepts: Session.grant(userId)
+    Concepts-->>Engine: { outcome: GRANTED, sessionId }
+    Engine->>Engine: when Session/grant[GRANTED] → Web.respond
+    Note over Engine: 3. Flow completes at quiescence — run() returns the Web/respond fields
     Controller-->>Client: 200 { sessionToken: "..." }
 ```
 
@@ -152,16 +173,16 @@ sequenceDiagram
 
 | Violation | Example |
 |---|---|
-| Controller calls `actionLog.select()` | Bypasses the engine, no flow token created |
-| Controller calls `actionLog.update()` | Writes concept state directly, untraceable |
-| Controller references concept graph URIs | `GRAPH <concept:article>` in infrastructure code |
+| Controller logs in or reads/writes concept state directly | Bypasses the engine; no flow token, untraceable |
+| Controller references concept graph URIs or regions | `GRAPH <concept:article>` in infrastructure code |
 | Controller contains business branching | `if (outcome.equals("OK"))` in a controller method |
-| Controller calls engine methods beyond the two allowed | Only `rootAction()` and `awaitResponse()` are permitted |
 
 There are only four things a controller is allowed to do: normalize input,
-call `flowManager.rootAction()`, call `syncDispatcher.awaitResponse()`,
-and translate the response to HTTP. Everything else belongs in concepts
-or syncs.
+call `engine.run("Web", "request", …)`, read the returned `Web/respond`
+fields, and translate them to the transport response. Everything else
+belongs in concepts or syncs. On the canonical profile these rules are
+asserted by `FlowTraceTest`-style tests plus the isolation checks; on the
+legacy profile the equivalent is the `FlowManager`/`awaitResponse` pair.
 
 ### What a session looks like
 
@@ -247,7 +268,7 @@ project-wide defaults:
 test.command=python3 quality-gate/verify_artefacts.py && mvn test
 
 # Describe your persistence technology.
-storage.layer=Jena TDB2 named graph (Java/Micronaut profile)
+storage.layer=In-memory FactStore relations (canonical fire-after-commit profile)
 
 # How advance.py handles human gates and session boundaries.
 workflow.autonomous=false
@@ -258,14 +279,18 @@ workflow.session-per-stage=false
 
 CLAD is **public, pre-1.0, and still evolving.** It ships a complete
 methodology loop, agent guides, a worked example
-([`features/UC-00-login/`](features/UC-00-login/README.md)), and an
-optional Java reference profile under
-[`reference-impl/java-micronaut-jena/`](reference-impl/java-micronaut-jena/).
-The methodology is profile-agnostic; the Java profile is the only runnable
-implementation today. Pre-1.0 CLAD releases may include breaking methodology
-changes. This repository uses [Semantic Versioning](https://semver.org/) and
-annotated Git tags; downstream CLAD-based projects define their own release
-policy. See [CHANGELOG.md](CHANGELOG.md) for CLAD upgrade notes.
+([`features/UC-00-login/`](features/UC-00-login/README.md)), and two Java
+reference profiles under
+[`reference-impl/`](reference-impl/README.md): the canonical
+[`java-legible/`](reference-impl/java-legible/) profile on the
+zero-dependency fire-after-commit engine (`dev.legible.engine`), and a
+legacy [`java-micronaut-jena/`](reference-impl/java-micronaut-jena/)
+profile kept until re-lowered. The methodology is profile-agnostic;
+`java-legible` is the recommended implementation today. Pre-1.0 CLAD
+releases may include breaking methodology changes. This repository uses
+[Semantic Versioning](https://semver.org/) and annotated Git tags;
+downstream CLAD-based projects define their own release policy. See
+[CHANGELOG.md](CHANGELOG.md) for CLAD upgrade notes.
 
 ### Built with CLAD
 
@@ -314,7 +339,10 @@ clad/
 │   └── UC-00-login/                 Worked example (stages 00–05)
 │
 └── reference-impl/
-    └── java-micronaut-jena/         Optional Java reference profile
+    ├── legible-engine/             Canonical engine (dev.legible.engine, zero-dependency)
+    ├── java-legible/               Canonical profile — recommended
+    ├── legible-storage/            FactStore backends (Jena / Postgres)
+    └── java-micronaut-jena/        Legacy RDF/SPARQL profile
 ```
 
 ## License

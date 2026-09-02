@@ -17,7 +17,7 @@ given task.
 | Ask "Let's work on a new feature" | Open [`methodology/overlays/PLANNING.md`](methodology/overlays/PLANNING.md), detect project state, and follow conditional routing: Stage 00 first if no actor/goals yet; otherwise optional sequencing via `plan-board.md` or direct goal selection. |
 | Maintain engine, profile, storage, scheduler, or deployment code | Open [`methodology/core/ITERATIVE_CHANGES.md`](methodology/core/ITERATIVE_CHANGES.md) §"Platform maintenance changes", create a `maintenance/<change-name>.md` record, and clear its design gate before implementation. |
 | Author a new concept / sync / use case / actors / goals / spec | [`templates/`](templates/) |
-| See the optional Java reference impl | [`reference-impl/java-micronaut-jena/README.md`](reference-impl/java-micronaut-jena/README.md) |
+| See the optional Java reference impl | [`reference-impl/README.md`](reference-impl/README.md) — canonical: `java-legible` on the fire-after-commit engine; `java-micronaut-jena` is legacy |
 | Track work across features (optional) | [`methodology/overlays/TRACKING.md`](methodology/overlays/TRACKING.md) |
 
 ## The five-layer hierarchy in this workspace
