@@ -40,9 +40,8 @@ not redesign approved tests.
 | Skill: `clad-sync-tdd` | 3 | Sync TDD reference (see skills/ directory) |
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
-| `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (only when this profile is selected) | 3 | Profile conventions |
-| `../../../../../../reference-impl/java-micronaut-jena/SYNC_LOWERING.md` (only when this profile is selected) | 3 | Deterministic Stage 03 -> SPARQL lowering contract |
-| `../../../../../../reference-impl/java-micronaut-jena/CANONICAL_EXEMPLAR.md` (only when this profile is selected) | 3 | Profile realization pattern, not source of truth |
+| `../../../../../../reference-impl/java-legible/README.md` and `../../../../../../reference-impl/legible-engine/README.md` (default profile) | 3 | Profile conventions for the canonical fire-after-commit profile |
+| `../../../../../../reference-impl/java-micronaut-jena/{README.md,CODE_STYLE.md,SYNC_LOWERING.md,CANONICAL_EXEMPLAR.md}` (legacy profile only) | 3 | Legacy RDF/SPARQL profile realization. Do NOT follow when targeting java-legible |
 
 ## Process
 

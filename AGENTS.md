@@ -283,9 +283,10 @@ These are non-negotiable. Violating any of them is a defect.
 1. **No concept imports another concept.** In code: no Java import across
    concept packages. In specs: no `*.concept.md` mentions another concept's
    state by name. Cross-concept coordination is only legal inside syncs.
-2. **One named persistence region per concept.** When concepts persist state (e.g. via
-   RDF/Jena under the Java profile), each concept owns its graph; no
-   concept reads another's graph directly.
+2. **One named persistence region per concept.** When concepts persist state, each
+   concept owns its region (FactStore/Region in the canonical legible-engine
+   profile; one named graph per concept under the legacy Jena profile); no
+   concept reads another's region directly.
 3. **Syncs are declarative, not imperative.** A sync says
    `when X completes -> then Y`. It does not contain branching business
    logic; that belongs in a concept's actions.
@@ -453,7 +454,9 @@ file that falls under:
 - `features/UC-*/stages/03_syncs/output/` (sync specs)
 - any profile's implementation source for concepts or syncs
   (e.g. `app/backend/src/.../{concepts,syncs}/`,
-   `reference-impl/java-micronaut-jena/src/.../concepts/` or `.../syncs/`)
+   `reference-impl/java-legible/src/main/java/dev/legible/example/.../`
+   (canonical profile), or `reference-impl/java-micronaut-jena/src/.../{concepts,syncs}/`
+   (legacy profile))
 
 the agent MUST:
 

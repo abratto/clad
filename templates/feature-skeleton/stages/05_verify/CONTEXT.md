@@ -44,7 +44,8 @@ that the deployable thing actually runs (Part 2, smoke). Without it,
 | (Cucumber HTML/JSON report, Gherkin track only) | 4 | Supplementary scenario-pass evidence |
 | Skill: `clad-verification` | 3 | Verification reference (see skills/ directory) |
 | `../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics |
-| `../../../../reference-impl/java-micronaut-jena/README.md` | 3 | Example runtime debug surface for the Java profile |
+| `../../../../reference-impl/java-legible/README.md` (default profile) | 3 | Runtime evidence surface for the canonical fire-after-commit profile (`DebugApi`, archived flow records) |
+| `../../../../reference-impl/java-micronaut-jena/README.md` (legacy profile only) | 3 | Legacy `/api/dev/*` HTTP debug endpoints |
 | `../../../../methodology/overlays/TRACKING.md` | 3 | Optional — only if the TRACKING overlay is in use |
 
 ## Process

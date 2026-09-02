@@ -39,9 +39,8 @@ upstream prose, but it may not redesign approved tests.
 | Skill: `clad-concept-tdd` | 3 | Concept TDD reference (see skills/ directory) |
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5, R8, R9, R14, R16 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
-| `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (only when this profile is selected) | 3 | Profile conventions |
-| `../../../../../../reference-impl/java-micronaut-jena/CANONICAL_EXEMPLAR.md` (only when this profile is selected) | 3 | Profile realization pattern, not source of truth |
-| `../../../../../../reference-impl/java-micronaut-jena/SYNC_LOWERING.md` (only when this profile is selected) | 3 | Concept SPARQL patterns: SELECT, UPDATE, writeCompletion, test fixtures |
+| `../../../../../../reference-impl/java-legible/README.md` and `../../../../../../reference-impl/legible-engine/README.md` (default profile) | 3 | Profile conventions for the canonical fire-after-commit profile |
+| `../../../../../../reference-impl/java-micronaut-jena/README.md`, `CODE_STYLE.md`, `CANONICAL_EXEMPLAR.md`, `SYNC_LOWERING.md` (legacy profile only) | 3 | Legacy RDF/SPARQL profile: ConceptAgent/SyncAgent lowering patterns. Do NOT follow when targeting java-legible |
 
 ## Process
 
@@ -55,14 +54,17 @@ upstream prose, but it may not redesign approved tests.
    earliest invalid upstream stage.
 4. Derive behavior from the approved upstream artefacts first: the
    Stage 02 concept spec, the `04b` SPEC slice, the `04a` storage
-   mapping when applicable, and the approved red tests. If the selected
-   profile is Java/Jena/Micronaut, use `CANONICAL_EXEMPLAR.md` only as a
-   realization pattern for class/package/code shape. It must not
-   override the feature's own approved artefacts.
-5. If the selected profile is Java/Jena/Micronaut, place concept code in
-   the canonical concept package bucket: one `*Concept` class under
-   `<APP_PACKAGE_ROOT>.concepts.<name>`, with its tests mirrored under
-   the corresponding test package. Do not place concept agents in
+   mapping when applicable, and the approved red tests. For the default
+   profile (`java-legible`), a concept is a `Concept` implementation whose
+   state lives in its own `Region` and whose actions are map→map (see
+   `legible-engine/README.md`); the exemplar (`dev/legible/example/login`)
+   is a realization pattern only and must not override the feature's
+   approved artefacts. The `java-micronaut-jena` profile is legacy: consult
+   its docs only when that profile was explicitly selected in Stage 04a.
+5. Place concept code in the canonical concept package bucket (for the
+   default profile: one `*Concept` class implementing `Concept` under
+   `<APP_PACKAGE_ROOT>.concepts.<name>`, with tests mirrored under the
+   corresponding test package). Do not place concept classes in
    `engine`, `syncs`, `infrastructure`, or ad hoc sibling packages.
 6. Use the storage mapping from `04a_storage-mapping/output/` when applicable. Do not
    replace the selected profile's storage layer with an in-memory
@@ -97,9 +99,8 @@ upstream prose, but it may not redesign approved tests.
 - Implementation package/source path matches
   `../../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,
   `APP_SOURCE_ROOT`, `APP_TEST_SOURCE_ROOT`).
-- For the Java/Jena/Micronaut profile, concept classes are under
-   `<APP_PACKAGE_ROOT>.concepts.<name>` and not in `engine`,
-   `infrastructure`, `api`, `syncs`, or ad hoc sibling packages.
+- Concept classes are under `<APP_PACKAGE_ROOT>.concepts.<name>` and not
+   in `engine`, `infrastructure`, `api`, `syncs`, or ad hoc sibling packages.
 
 ## Gate
 

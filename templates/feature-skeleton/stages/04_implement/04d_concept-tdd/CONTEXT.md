@@ -56,7 +56,8 @@ tests. One concept, one test fixture, no other concepts in scope (R1).
 | `../../../_config/build-and-test.md` | 3 | Canonical build/test command inherited by child stages |
 | `../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings inherited by child stages |
 | `../../../../../methodology/implementation/TDD.md` | 3 | London School structural handoff rules |
-| `../../../../../../reference-impl/java-micronaut-jena/SYNC_LOWERING.md` (only when this profile is selected) | 3 | Concept SPARQL patterns (SELECT, UPDATE, writeCompletion, test fixtures) |
+| `../../../../../../reference-impl/legible-engine/README.md` (default profile) | 3 | Canonical engine contract (`Concept`, `SyncRule`, `Region`) |
+| `../../../../../../reference-impl/java-micronaut-jena/SYNC_LOWERING.md` (legacy profile only) | 3 | Legacy SPARQL lowering (SELECT, UPDATE, writeCompletion). Do NOT follow when targeting java-legible |
 
 ## Process
 

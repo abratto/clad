@@ -39,7 +39,8 @@ here.
 | `../../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5, R14, R16 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School derivation rules |
-| `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (only when this profile is selected) | 3 | Profile conventions |
+| `../../../../../../reference-impl/java-legible/README.md` and `../../../../../../reference-impl/legible-engine/README.md` (default profile) | 3 | Profile conventions for the canonical fire-after-commit profile |
+| `../../../../../../reference-impl/java-micronaut-jena/README.md` (legacy profile only) | 3 | Legacy RDF/SPARQL profile conventions. Do NOT follow when targeting java-legible |
 
 ## Process
 
@@ -48,13 +49,14 @@ here.
    from `04b_spec/output/` that are not exercised by the flow tests.
 2. Write the concept test file(s) only under `APP_TEST_SOURCE_ROOT`.
    Do not write or modify production implementation code in this stage.
-3. **If your concept extends `PredicateConceptAgent`:** use the test-mode
-   constructor (2-arg: `ActionLog`, `CompletionBus`) for isolated concept
-   tests. This bypasses predicate evaluation so the concept can commit
-   outcomes without registering syncs — the test verifies internal
-   concept logic, not sync orchestration. Sync orchestration testing
-   belongs in `04e`. See
-   `reference-impl/java-micronaut-jena/README.md` §"Using the predicate engine".
+3. **Test isolation (default profile, `java-legible`):** concept tests
+   instantiate the concept against an in-memory `FactStore` region and call
+   `execute(action, input)` directly. They assert the returned map's
+   `outcome` plus its named completion fields — sync orchestration belongs
+   in `04e`, never here. See `reference-impl/java-legible/README.md` and the
+   exemplar tests under `dev/legible/example/login`. On the legacy
+   `java-micronaut-jena` profile, use the test-mode `PredicateConceptAgent`
+   constructor instead (see that README §"Using the predicate engine").
 4. After asserting each outcome token, assert the primary completion
    fields that `writeCompletion` writes and downstream syncs consume.
    Outcome-only tests are incomplete.

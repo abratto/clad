@@ -15,7 +15,7 @@ reference implementation when they are not correct for this project.
 ## Optional
 
 - **REFERENCE_PROFILE:** `TBD`  
-  Example: `reference-impl/java-micronaut-jena`
+  Example: `reference-impl/java-legible`
 
 ## Rules
 

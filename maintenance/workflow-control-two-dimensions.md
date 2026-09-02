@@ -3,7 +3,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `active`
+- **Status:** `closed`
 - **Affected profile(s):** `all profiles`
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
