@@ -12,6 +12,8 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-09-01
+
 ### Added
 
 #### Deterministic enforcement
@@ -643,5 +645,7 @@ starter. The broader reference implementation lives at
 [`abratto/tastetag`](https://github.com/abratto/tastetag) (private)
 and will be ported into `reference-impl/` over subsequent releases.
 
-[Unreleased]: https://github.com/abratto/clad/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/abratto/clad/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/abratto/clad/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/abratto/clad/compare/v0.1.10...v0.2.0
 [0.1.0]: https://github.com/abratto/clad/releases/tag/v0.1.0
