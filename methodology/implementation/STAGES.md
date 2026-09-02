@@ -219,6 +219,30 @@ the slug into the fixed `HANDOVER.md` block rather than asking the model
 to write a "here is where we are" summary. This keeps the handoff from
 becoming another LLM-judgement surface.
 
+### Delegating the successor stage to a sub-agent
+
+On harnesses that support sub-agents, the fresh-session handoff doubles as a
+sub-agent mission: a sub-agent starts with its own context window, which is
+exactly the reset `session-per-stage` is trying to achieve, without the human
+manually starting a new conversation.
+
+To delegate the next stage, spawn a sub-agent with the HANDOVER block as its
+prompt (the slug is already substituted by `advance.py`), rather than pasting
+it into a new top-level session. The sub-agent re-orients from disk exactly as
+a fresh session would; its task ends at the same place — after writing the
+stage's `output/`, it reports back and the parent runs `advance.py` again.
+
+Two boundaries that keep this safe:
+
+- **The gate decision stays with the human.** A sub-agent produces the stage's
+  artefacts and returns; it never runs `approve_gate.py` on its own. Approval
+  and `advance.py` remain the parent/human's actions.
+- **One stage per sub-agent.** The HANDOVER block is scoped to a single stage's
+  re-orientation; do not hand a sub-agent a whole gate block or the full
+  pipeline. If a parent delegates more than one stage its context grows and the
+  isolation is lost — the same reason `session-per-stage` exists in the first
+  place.
+
 ## The stage contract
 
 Each stage's `CONTEXT.md` follows the standard shape in

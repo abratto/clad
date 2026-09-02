@@ -11,6 +11,13 @@ operator can start a fresh session whose only inputs are the on-disk
 artefacts. It doubles as a manual recovery prompt for any session that
 needs to re-orient from disk.
 
+On harnesses that support sub-agents, the same block is a ready-made
+sub-agent mission: spawn a sub-agent with this block (slug already
+substituted) to give it a clean context window for exactly one stage,
+then have it report back and re-run `advance.py` from the parent. The
+gate decision and `advance.py` remain the parent/human's actions — the
+sub-agent only produces the stage's `output/`.
+
 ## Human input (only one placeholder)
 
 - Replace `{{UC-XX-slug}}` with the feature folder name
