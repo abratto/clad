@@ -10,7 +10,34 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
-## [Unreleased]
+## [0.3.1] — 2026-09-02
+
+### Changed
+
+- **Canonical profile pointers**: Stage 04d/04e/05 CONTEXT templates,
+  `clad.properties` (`test.source.root`), and `AGENTS.md` (R2, R17) now steer
+  agents to the canonical `java-legible` / fire-after-commit engine;
+  `java-micronaut-jena` docs are marked "legacy profile only" and the
+  `engine.dataset.*` keys are labelled legacy-only (`legible-engine` reads none
+  of them). No contract or runtime behaviour change
+  (`maintenance/canonical-profile-pointers.md`).
+
+### Documentation
+
+- **README runtime surface**: the runtime sequence diagram and the
+  controller-allowed-actions list now describe the canonical
+  `SyncEngine.run` / fire-after-commit flow instead of the legacy
+  `FlowManager`/`awaitResponse` pair; the Requirements/config examples,
+  Status section, and repo layout distinguish canonical vs legacy profiles.
+- **README gains a "Deterministic artefact generators"** section documenting
+  the `generate_*.py` family, the `Generated via:` marker, and
+  `describe_feature.py`.
+- **Workspace router** (`CONTEXT.md`) points the reference-impl row at
+  `reference-impl/README.md` with the canonical/legacy distinction stated.
+- **Sub-agent handoff guidance** (`1047120`): STAGES.md gained
+  "Delegating the successor stage to a sub-agent"; HANDOVER.md notes the
+  handoff block doubles as a sub-agent mission (gate decisions stay with the
+  parent/human; one stage per sub-agent).
 
 ## [0.3.0] — 2026-09-01
 
@@ -645,7 +672,8 @@ starter. The broader reference implementation lives at
 [`abratto/tastetag`](https://github.com/abratto/tastetag) (private)
 and will be ported into `reference-impl/` over subsequent releases.
 
-[Unreleased]: https://github.com/abratto/clad/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/abratto/clad/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/abratto/clad/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/abratto/clad/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/abratto/clad/compare/v0.1.10...v0.2.0
 [0.1.0]: https://github.com/abratto/clad/releases/tag/v0.1.0
