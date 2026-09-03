@@ -10,6 +10,29 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.3.2] — 2026-09-03
+
+### Added
+
+#### Benchmarks
+- **`reference-impl/legible-bench`** — a new reactor module shipping four
+  hand-rolled, advisory benchmarks for the fire-after-commit engine:
+  sequential (`Bench`), unique-user concurrency sweep (`ConcurrencyBench`,
+  mirroring the Jena profile's methodology), fan-out vs follower count
+  (`FanOutBench`, social profile), and per-concept serialization ceiling
+  (`SerializationBench`). Excluded from `test.command`/CI by design.
+- **Measured engine evidence** recorded in
+  `maintenance/engine-benchmark.md`: sequential ~190k ops/s (~5.3 µs/request)
+  with zero in-flight leaks; concurrency peaks ~18k req/s at 4 threads then
+  degrades under per-request-seeding contention; same-user ceiling rises to
+  ~54k req/s at 64 threads; fan-out cost scales roughly linearly with follower
+  count (~767 req/s at N=1000). The per-concept serialization contract is now
+  a measured, documented limit rather than an assumption.
+- **`java-legible` README Performance section** — scratch-prototype hedge
+  replaced with the measured table, exact reproduction commands, and a
+  hardware-relative caveat. Cross-profile comparison and persistence-storage
+  legs remain deferred follow-ups recorded in the maintenance record.
+
 ## [0.3.1] — 2026-09-02
 
 ### Changed
@@ -672,7 +695,8 @@ starter. The broader reference implementation lives at
 [`abratto/tastetag`](https://github.com/abratto/tastetag) (private)
 and will be ported into `reference-impl/` over subsequent releases.
 
-[Unreleased]: https://github.com/abratto/clad/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/abratto/clad/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/abratto/clad/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/abratto/clad/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/abratto/clad/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/abratto/clad/compare/v0.1.10...v0.2.0
