@@ -17,6 +17,7 @@
     <module>clad-engine</module>
     <module>legible-engine</module>
     <module>java-legible</module>
+    <module>legible-bench</module>
     <module>legible-storage</module>
     <module>java-micronaut-jena</module>
     <module>java-micronaut-postgres</module>
