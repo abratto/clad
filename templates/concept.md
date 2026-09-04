@@ -1,14 +1,13 @@
-<!-- Template for Stage 02 (02_concepts). Purpose: see methodology/architecture/CONCEPTS.md. -->
+<!-- Template for Stage 02 (02_concepts). Purpose & authoring rules: methodology/architecture/CONCEPTS.md and the stage 02 CONTEXT "Process" section. This file is the output shape only.
 
-<!-- ⚠️ NAME THE CAPABILITY, NOT THE ENTITY.
-     The concept name is a purpose-oriented noun phrase — a gerund or noun
-     phrase such as `Posting`, `Authentication`, `Upvoting`, `Profiling` —
-     never the entity noun the set ranges over (`Post`, `User`, `Comment`).
-     The entity is a *separate* type named in the `## State` section, not in
-     the concept name. `PasswordAuthentication` (capability) owns a set of
-     `User` individuals; a concept named `User` names the thing in the set,
-     not the behaviour that chunks around a purpose. See Daniel Jackson,
-     *Why concepts aren't objects* (regret: `Post` vs `Posting`). -->
+Naming: name the capability (gerund/noun phrase — `Authentication`,
+`Posting`), never the entity noun the set ranges over (`User`, `Post`).
+State: subject is the *individual* (an identifier type, `UserId`), the
+concept owns the *set*. See CONCEPTS.md §"State over a set, not fields of an object".
+
+Actions: OUTCOME ALIGNMENT — every outcome name must match the approved
+01b chain-table Outcome column verbatim. Never invent an outcome here;
+if one is missing, reopen Stage 01b. -->
 
 concept <ConceptName> [<TypeParams>]
 purpose
@@ -17,25 +16,10 @@ purpose
 ## State
 
 > The data this concept owns. No other concept may read or write it.
-> Use paper-style relational notation: `field: SubjectType -> FieldType  -- multiplicity`
-> Multiplicity annotations: `mandatory` | `optional` | `conditional mandatory: <condition>` | `zero or more`
-> For stateless concepts write: `*None.* <ConceptName> is stateless.`
->
-> ⚠️ The subject is the *individual*, the concept owns the *set*. The thing
-> to the left of `->` must be an identifier type (`UserId`), never this
-> concept's own name (`User`). A bare field name with no type at all
-> (`userid`, `username`, `password`) models one object's instance variables,
-> not a capability over a set — and then your actions cannot say *which*
-> individual they act on. Typed fields in any form are fine: a relation
-> (`username: UserId -> String`), a collection (`leadLog: List<LeadRecord>`),
-> or a map (`attorneyStatus: Map<AttorneyId, Availability>`).
-> See `methodology/architecture/CONCEPTS.md` §"State over a set"
-> and Daniel Jackson's *Why concepts aren't objects*.
->
-> ⚠️ Separate views, even under one noun. Username, password, email, and
-> display name are *different capabilities* (naming vs authentication vs
-> profiling). Do not pile them into one concept; split them. If you need the
-> word "and" to describe the state, you likely need two concepts.
+> Paper-style relational notation: `field: SubjectType -> FieldType  -- multiplicity`
+> Multiplicity: `mandatory` | `optional` | `conditional mandatory: <condition>` | `zero or more`.
+> Stateless concept: `*None.* <ConceptName> is stateless.`
+> Separate views under one noun are separate capabilities — split them.
 
 ```
 <fieldName>: <SubjectType> -> <FieldType>   -- mandatory
@@ -44,43 +28,18 @@ purpose
 
 ## Actions
 
-<!-- ⚠️ OUTCOME ALIGNMENT CONTRACT
-     Every output name in every action signature below MUST exactly match
-     the outcome names used in the approved chain table(s) for this concept
-     in `01b_chain-table/output/`. Outcome names are the contract between
-     stages — a name that differs from the chain table by even one character
-     will produce an invalid sync at Stage 03.
-
-     Before naming any output:
-       1. Open every `01b_chain-table/output/*.chain-table.md` that involves
-          this concept.
-       2. Copy the exact outcome strings from the Outcome column.
-       3. Use those strings verbatim here — no synonyms, no renamings.
-
-     If you need an outcome the chain table did not name, STOP. Return to
-     Stage 01b and amend the chain table first. Do not invent outcomes here.
-
-     Similarly: do not add state fields or action inputs that have no basis
-     in the chain table or responsibility map. If a field is not in the chain
-     table, raise it as an open question in the Notes section.
--->
+<!-- OUTCOME ALIGNMENT: every output name below must match the approved
+01b chain table Outcome column verbatim. If you need an outcome the chain
+table did not name, reopen Stage 01b — do not invent outcomes here. -->
 
 > The verbs this concept exposes. Each action is a local function call
-> from a sync or from `Web`.
+> from a sync or from `Web`. Two formats:
 >
-> Two formats are available:
->
-> **A. Precondition/postcondition (preferred for actions whose failures are pure state-guard violations):**
->   - Precondition failure → refusal (`:outcome "refused"`). No state change.
->     Syncs match on `[ refused ]`.
->   - Postcondition describes the state transition for happy path.
->   - Use this when the action either succeeds fully or is meaningless to
->     attempt (e.g. "look up a user that doesn't exist").
->
-> **B. Case-split outcomes (for actions whose failures are state-mutating):**
->   - Each outcome is a named completion (`[ ok ]`, `[ error: "badPassword" ]`).
->   - Use this when a failure pathway still mutates state (e.g. incrementing
->     a failed-attempts counter).
+> **A. Precondition/postcondition** (failures are pure state-guard
+> violations): precondition failure → refusal (`:outcome "refused"`), no
+> state change; postcondition describes the happy-path transition.
+> **B. Case-split outcomes** (failures still mutate state): each outcome
+> is a named completion (`[ ok ]`, `[ error: "badPassword" ]`).
 
 Format A — precondition/postcondition:
 

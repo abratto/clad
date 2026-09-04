@@ -35,6 +35,9 @@ read these files directly instead: `AGENTS.md` §1–3, `CONTEXT.md`,
    stop and refresh the feature-local contract before continuing that
    stage. Do not keep executing a stale copied contract once the drift is
    visible.
+   The per-stage file manifest lives in
+   [`methodology/implementation/CONTEXT_MANIFEST.md`](methodology/implementation/CONTEXT_MANIFEST.md)
+   — use it to confirm you are loading the right files, nothing more.
 2. **Write to `output/` and stop at the gate.** Every stage ends with a
     review gate. After you write the stage's outputs, summarise what you
     produced and **wait** for the human to inspect/edit before moving on.
@@ -97,58 +100,31 @@ read these files directly instead: `AGENTS.md` §1–3, `CONTEXT.md`,
     what stage comes next, and you do **not** open the next stage's
     `CONTEXT.md` on your own initiative. After you finish a per-UC stage
     (01–05) and its `output/` is written, end your turn by running:
-
     ```
     ./clad advance
     ```
-    (Or the long form: `python3 quality-gate/advance.py --feature features/UC-XX-<slug>`.)
-    The CLI wrapper auto-discovers the active feature from <code>RESUME.md</code>.
-
-    Treat that script's stdout as your next instruction. It runs the
-    stage's `Verify` checks and the sequence/entry guard, writes a
-    receipt, and then either (a) prints the next stage's `CONTEXT.md`
-    path and a ready prompt, (b) stops you at a human gate with the
-    artefact summary and the approval command, or (c) prints the
-    specific defects and a correction prompt for the current stage. If
-    it blocks (exit 1) or stops at a gate (exit 10), you must not
-    advance. Only after `advance.py` prints a NEXT STAGE block may you
-    open that stage. Stage 00 (system scope) is exempt — it is the
-    collaborative intake stage and precedes the per-UC advance loop.
-    See [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)
-    §"Gate-driven advance".
-13. **Workflow-control rule (never self-select).** `advance.py` supports two
-    independent, opt-in workflow dimensions, each human-only, set in
-    `clad.properties` (or via env/flag: `CLAD_AUTONOMOUS`/`--autonomous`
-    and `CLAD_SESSION_PER_STAGE`/`--session-per-stage`):
-
-    - `workflow.autonomous` — `true` auto-approves the 3 human gates
-      (recorded `auto-approved`); failing checks still block. Default
-      `false` (stop at every gate).
-    - `workflow.session-per-stage` — `true` makes `advance.py` stop after
-      every stage (exit `30`) and print a deterministic fresh-session
-      handoff prompt (HANDOVER.md block, slug substituted). Default
-      `false` (one continuous session).
-
-    You must **never** enable either yourself, and never pass the flags to
-    turn one on. This is a human-only decision. Under every combination a
-    fully skipped stage (an empty artefact-chain gap) remains a hard stop.
-    Auto-approved gates are recorded as `auto-approved` (not `approved`) in
-    `RESUME.md` and the receipt, so an auditor can tell a human never
-    reviewed them. If either dimension is non-default, say so plainly to
-    the human at the start of the run. Note that CLAD cannot clear the
-    context window itself — `session-per-stage=true` hands off to the
-    operator, who starts the fresh session.
+    (Long form: `python3 quality-gate/advance.py --feature features/UC-XX-<slug>`.)
+    Treat that script's stdout as your next instruction — it runs the
+    stage's `Verify` checks and the sequence/entry guard, then prints the
+    next stage, stops at a human gate, or names defects. Only after it
+    prints a NEXT STAGE block may you open that stage. Full mechanics:
+    [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)
+    §"Gate-driven advance". Stage 00 (system scope) is exempt.
+13. **Workflow-control rule (never self-select).** `advance.py` supports
+    two human-only, opt-in settings — `workflow.autonomous` (auto-approve
+    the 3 gates, recorded `auto-approved`) and `workflow.session-per-stage`
+    (stop + handoff after every stage). You must **never** enable either
+    yourself or pass the flags to turn one on. This is a human-only
+    decision, set in `clad.properties`. Full mechanics:
+    [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)
+    §"Workflow control".
 14. **Self-audit rule.** At the end of every stage — including pure design
     stages 01–03b where no test framework runs — self-audit with:
     ```
     python3 quality-gate/verify_artefacts.py
     ```
     This runs the same artefact pipeline gate that `test.command` runs.
-    If it fails, the stage is not complete — fix the defect before
-    running `advance.py` or presenting work for human review. The gate
-    catches skipped stages, unapproved gates, missing files, and
-    cross-stage consistency violations. Do not rely on the human gate
-    or the pre-commit hook as your only check. In implementation stages
+    If it fails, the stage is not complete. In implementation stages
     (04c–04e), `test.command` runs this gate automatically, so you do
     not need to invoke it separately.
 15. **CLAD release rule.** When publishing this repository's CLAD distribution,
@@ -169,45 +145,25 @@ Every meaningful change moves through this loop. Skipping a step is a bug.
       +-------------------- back-trace from flow tokens ------------+
 ```
 
-Mapped to the ICM stages of a feature folder:
+The full stage-to-folder map, gate placement, and auto-advance graph
+live in [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)
+§"Folder layout" and §"Stage-by-stage" — those tables are the canonical
+reference and are not repeated here. The three essentials to remember:
 
-> **Scope note:** Stage 00 runs **once per system brief** at
-> `features/_system/stages/00_actor-goal/`. Stages 01–05 run **once per
-> in-scope goal**, each in its own `features/UC-XX-<slug>/` folder.
-> UC folders are created *after* Stage 00's gate is passed — one folder
-> per confirmed in-scope goal from `goals.md`.
-
-| Stage | Folder | Produces | Gate |
-|---|---|---|---|
-| 0 | `features/_system/stages/00_actor-goal/` *(system scope — run once per brief)* | `actors.md`, `goals.md`, *(optional)* `port-spec.md` when an externally imposed adapter contract exists (collaborative — see [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)) | `00 — system-level` |
-| 1 | `stages/01_usecase/` | `usecase.md` (operational principle, actors, scenarios) | Auto¹ → 01b |
-| 1a | `stages/01a_responsibility-map/` | `responsibility-map.md` (one row per concept: state, actions) | Auto¹ → 01b |
-| 1b | `stages/01b_chain-table/` | `<scenario>-chain.md` per use-case scenario (action choreography) | **Gate 1 (Requirements)** |
-| 2 | `stages/02_concepts/` | One `*.concept.md` per concept (full anatomy) | Auto¹ → 03b |
-| 3 | `stages/03_syncs/` | One `*.sync.md` per coordination rule | Auto¹ → 03b |
-| 3a | `stages/03a_dependency-review/` | One `*-card.md` per concept + `pattern-d-summary.md` (cross-concept coupling surface) | Auto¹ → 03b |
-| 3b | `stages/03b_data-model/` | One `*.data-model.md` per concept (profile-neutral conceptual data model) | **Gate 2 (Architecture)** |
-| 4a | `stages/04_implement/04a_storage-mapping/` | Storage mapping (profile-specific) | Auto¹ → 04c |
-| 4b | `stages/04_implement/04b_spec/` | Spec. When `port-spec.md` has inbound entries, `spec.md` must include exact response shape examples (path, field type, error envelope) for each inbound port. Outbound entries require declared adapter-boundary evidence. | Auto¹ → 04c |
-| 4c | `stages/04_implement/04c_flow-tests/` | Flow tests (outer red) | **Gate 3 (Executable)** |
-| 4d-red | `stages/04_implement/04d_concept-tdd/04d_red-tests/` | Concept test derivation (red) | Auto → 04d-green |
-| 4d-green | `stages/04_implement/04d_concept-tdd/04d_green-impl/` | Concept implementation (green) | Auto → 04e-red |
-| 4e-red | `stages/04_implement/04e_sync-tdd/04e_red-tests/` | Sync test derivation (red) | Auto → 04e-green |
-| 4e-green | `stages/04_implement/04e_sync-tdd/04e_green-impl/` | Sync implementation (green) | Auto → 05 |
-| 5 | `stages/05_verify/` | Trace from running behaviour back to `usecase.md`, plus closure (smoke + tracking) | Auto (close) |
-
-¹ Auto-advance means the agent proceeds to the immediate next stage without a
-human gate. `advance.py` is the sole authority for the immediate successor;
-the name after `→` identifies the next human gate when one exists.
-
-Stages 04a–04e implement the **outside-in TDD double-loop**: `04c` is the outer red
-test (a flow), `04d` and `04e` are the inner red→green TDD on concepts
-and syncs. Stage 03b owns conceptual data modeling; Stage 04a owns only
-profile-specific storage mapping and is optional for in-memory profiles.
+- **System scope:** Stage 00 runs once per brief at
+  `features/_system/stages/00_actor-goal/`, producing `actors.md`,
+  `goals.md`, and optional `port-spec.md`.
+- **Per-UC scope:** Stages 01–05 run once per in-scope goal, each in
+  `features/UC-XX-<slug>/`. One folder per confirmed in-scope goal.
+- **Gates:** Gate 1 (Requirements) at 01b, Gate 2 (Architecture) at 03b,
+  Gate 3 (Executable) at 04c. Stages between gates auto-advance.
+  Stages 04a–04e implement the outside-in TDD double-loop: `04c` is the
+  outer red test (a flow); `04d`/`04e` are the inner red→green TDD on
+  concepts and syncs.
 
 Stage 00 has special semantics: the agent **proposes**, **asks ≤5
-clarifying questions**, iterates with the human, and only writes
-`actors.md` / `goals.md` once the human signals agreement.
+clarifying questions**, iterates, and only writes `actors.md` /
+`goals.md` once the human signals agreement.
 
 ## 4. The five-layer context hierarchy (ICM)
 
@@ -224,48 +180,31 @@ When you start work, identify which layer each file belongs to:
 Load Layers 0–2 always. Load Layer 3 only as the stage `Inputs` table
 specifies. Layer 4 is what you produce or consume between stages.
 
-## 4a. Project-wide configuration (`clad.properties`)
+### 4a. Project-wide configuration (`clad.properties`)
 
 The file `clad.properties` at the repo root holds global defaults for
-settings that affect how stages are run. It is framework-agnostic —
-any agent (Cline, Copilot, Cursor, Roo, Codex, …) reads it at workspace
-load.
-
-Current keys:
-
-| Key | Values | Purpose |
-|---|---|---|
-| `test.command` | Shell command | The single command to run the artefact pipeline gate then all tests for this profile. Never run the test framework directly — tests that pass without the gate may hide stale artefacts. |
-| `storage.layer` | Free text | Describes the persistence technology in use |
-| `stages.usecase.require-sequence-diagram` | `true` or `false` | Whether Mermaid sequence diagrams are required in Stage 01. Default `true`. Set to `false` if the LLM struggles with diagram generation. |
-| `workflow.autonomous` | `true` or `false` | Whether `advance.py` auto-approves the 3 human gates. `false` (default) stops at every gate; `true` records gates as `auto-approved`. Checks still block on failure in both cases. A skipped-stage gap always hard-stops. Human-only setting — agents must never raise it. |
-| `workflow.session-per-stage` | `true` or `false` | Whether `advance.py` stops after every stage (exit `30`) and prints a deterministic fresh-session handoff prompt instead of continuing. `false` (default) is one continuous session. Human-only setting — agents must never raise it. |
-
-Profile-specific keys (`sync.impl.dir`, `concept.impl.dir`, `test.source.root`,
-`engine.*`, `jackson.serialization-inclusion`) are documented inline in
-`clad.properties`. They control implementation-package scanning and serialization
-behaviour and are read by quality-gate scripts when present.
-
-**Resolution order** (lower number wins):
+settings that affect how stages are run. It is framework-agnostic and
+self-documenting: each key's meaning, values, and profile-specific
+notes are written inline in that file. Read `clad.properties` rather
+than guessing a key. Resolution order (lower wins):
 
 1. `features/UC-XX/_config/<key>.md` — per-feature override
 2. `clad.properties` (repo root) — project-wide default
-3. Stage-level `CONTEXT.md` — stage-specific override (when explicitly
-   documented)
+3. Stage-level `CONTEXT.md` — stage-specific override (when documented)
 
-Outer flow tests at Stage 04c use Cucumber/BDD (Gherkin `.feature` files
-+ step definitions) — see `methodology/architecture/GHERKIN_INTEGRATION.md`.
+Two human-only workflow keys (`workflow.autonomous`,
+`workflow.session-per-stage`) are described inline there and in
+`STAGES.md` §"Workflow control". `test.command` there is the sole valid
+test invocation (R19). The canonical `storage.layer` is
+"In-memory FactStore relations (fire-after-commit engine)".
 
-## 4b. Agent Skills (with fallback)
+### 4b. Agent Skills (with fallback)
 
 CLAD ships portable, on-demand expertise packages as [Agent Skills](https://agentskills.io)
-under the `skills/` directory. Each skill is a folder containing a
-`SKILL.md` file with YAML frontmatter and Markdown instructions.
+under the `skills/` directory (each a folder with a `SKILL.md`).
 
 **If your agent cannot load skills** (reports "skill not found" or only
-lists built-in skills), read the corresponding raw files instead using
-the table below. The content is identical — skills are just a shorter
-path to the same information.
+lists built-in skills), read the corresponding raw files instead:
 
 | Skill | Fallback files (read in order) |
 |---|---|
@@ -273,67 +212,37 @@ path to the same information.
 | `clad-quality-gate` (between stages) | `methodology/implementation/QUALITY_GATE.md`, then the current stage's `CONTEXT.md` §Verify |
 | Any stage skill (01–05) | The stage's `CONTEXT.md` and the files its `Inputs` table lists — load those directly, skip the skill |
 
-Agents that do support Skills discover them automatically; agents that do
-not use the fallback. The stage contracts are identical either way.
+The stage contract is authoritative and identical either way: a skill
+adds on-demand guidance but never overrides the stage `CONTEXT.md`
+`Inputs`/`Outputs`/`Verify`. Some skills are the required stage
+guidance (`clad-sync-design`, `clad-concept-design`, `clad-concept-tdd`,
+`clad-sync-tdd`); others are thin aggregators; each `SKILL.md` states
+its own role in its header.
 
-## 5. Hard rules
+## 5. Hard rules — index
 
-These are non-negotiable. Violating any of them is a defect.
+The full, binding text of every hard rule lives in
+[`methodology/implementation/RULES.md`](methodology/implementation/RULES.md).
+That file is authoritative; this section is an index only.
 
-1. **No concept imports another concept.** In code: no Java import across
-   concept packages. In specs: no `*.concept.md` mentions another concept's
-   state by name. Cross-concept coordination is only legal inside syncs.
-2. **One named persistence region per concept.** When concepts persist state, each
-   concept owns its region (FactStore/Region in the canonical legible-engine
-   profile; one named graph per concept under the legacy Jena profile); no
-   concept reads another's region directly.
-3. **Syncs are declarative, not imperative.** A sync says
-   `when X completes -> then Y`. It does not contain branching business
-   logic; that belongs in a concept's actions.
-4. **One primary bootstrap adapter owns each transport surface.**
-   `Web` is the HTTP convention; another transport may use an equivalent.
-   No business concept owns a transport endpoint or handler.
-5. **Every action emits a flow token.** A flow token is a small,
-   addressable record (id, who, when, what) that lets `05_verify/` trace
-   from a runtime effect back to the use case.
+- **R1–R5 (WYSIWID architectural):** no concept imports another; one
+  named persistence region per concept; syncs are declarative
+  (`when … then …`) not imperative; one primary bootstrap adapter per
+  transport surface; every action emits a flow token.
+- **R6–R9 (process/discipline):** stage outputs written only by the
+  owning stage; every running effect traces to a use case; outer-loop
+  tests before implementation; every SPEC outcome maps to a distinct
+  branch.
+- **R10, R21 (retired):** kept as IDs only, with retirement notes.
+- **R11–R20 (hard-learned implementation):** shared-trigger route
+  scoping (R11); `outcome` field required (R12); Jackson
+  `Include.ALWAYS` (R13); field-value test assertions (R14); Stage 03a
+  route-scope verification (R15); Stage 04d completion-field assertions
+  (R16); iterative-change re-entry (R17); mandatory quality gate at
+  commit (R18); `test.command` only (R19); maintenance governance (R20).
 
-Additional hard rules:
-
-- **R14 — Concept unit tests MUST assert field values, not only outcome tokens.**
-   A test that only checks `outcome == "FOUND"` is insufficient. Every
-   concept unit test must assert at least the primary output fields of
-   `writeCompletion` (e.g. `slug`, `title`, `userId`) to catch silent
-   field-mapping bugs.
-- **R15 — Every sync that fires on a shared trigger MUST declare its route scope.**
-   A sync whose trigger action can be produced by more than one flow
-   (e.g. `User/getProfile[FOUND]`) must either carry an explicit route
-   filter (a `where`-clause `Guard` binding the request route), or carry
-   a documented justification for why it is intentionally route-agnostic.
-   This property must be verified at Stage 03a.
-- **R18 — The quality gate is mandatory at commit time.** `git commit --no-verify`
-   is forbidden in a CLAD workspace. The pre-commit hook runs deterministic
-   checks (stage sequence, iterative-change coupling). If it blocks a commit,
-   the defect is real — a stage was skipped or code is decoupled from its spec.
-   The only acceptable bypass is `CLAD_HOOK_SKIP=1`, and only under explicit
-   human instruction.
-- **R19 — `test.command` is the sole valid test invocation.** The command
-   in `clad.properties` runs the artefact pipeline gate (`verify_artefacts.py`)
-   before any profile tests. Running the test framework directly (e.g.
-   `mvn test` by itself) skips artefact verification and produces invalid
-   feedback — tests may pass while stage artefacts are stale. Always use the
-   full command from `clad.properties`.
-
-Rules R1–R5 above are the WYSIWID architectural rules. Four additional
-process/discipline rules (R6–R9) are defined in
-[`methodology/implementation/RULES.md`](methodology/implementation/RULES.md)
-and are equally binding. R14 and R15 above are additional hard rules for
-the testing and dependency-review stages. Hard-learned implementation
-rules in §9 are equally binding (R10 and R21 were retired with the
-fire-after-commit engine). Stage CONTEXT.md
-Inputs tables reference the full rule set as needed.
-
-If a rule appears to be in conflict with a request, **stop and ask** —
-do not silently relax it.
+Quality-gate scripts enforce R1–R5, R14–R20 mechanically — do not relax
+any of them. If a rule appears to conflict with a request, **stop and ask**.
 
 ## 6. Rejection protocol
 
@@ -354,167 +263,44 @@ three steps. Do not freelance.
    **not** drop back to an earlier stage unless the human explicitly
    said to. Stop at the gate again.
 
-This protocol is what keeps rework predictable. Without it, agents
-fall back on general LLM instinct — re-explaining, over-apologising,
-sometimes producing a different artefact entirely — which makes the
-human's next decision harder, not easier.
-
 When rejection occurs at any of the three per-feature gates, the defect
 may belong to any stage within that gate's block. The agent re-runs the
 earliest stage that owns the defect, not the entire gate block.
 
 ## 7. Capability profiles
 
-CLAD is model-agnostic. The table below describes the **reasoning
-capability** each stage group requires. Map these to whatever models
-or agents you have available — the names and providers are your
-operator concern, not CLAD's.
-
-| Stage group | Stages | Required capability | Fence |
-|---|---|---|---|---|
-| **Requirements analysis** | 00–01b | Collaborative clarification, structured prose, use-case writing. Depth of reasoning matters less than fluency and willingness to iterate with the human. | No implementation code or test files |
-| **Structural modelling** | 02–03b | Cross-concept consistency, chain-table derivation, sync authoring, dependency analysis. This is the hardest reasoning load in CLAD — use your strongest model here. | No implementation code or test files |
-| **Implementation** | 04a–05 | Test-first discipline, spec-to-code fidelity, storage-layer compliance. Needs strong code generation and the ability to follow multi-step TDD sequences without drifting. | Red phase: tests only, no implementation. Green phase: implementation only, do not rewrite approved tests |
-
-> **Operator note:** if you run CLAD with a local setup (e.g. Continue +
-> Roo in VS Code), create a local config file (outside this repo) that
-> maps these capability profiles to your specific models. Do not commit
-> model names or plugin configuration into CLAD itself — that is
-> operator-level configuration, not methodology.
+CLAD is model-agnostic. The **reasoning capability** each stage group
+requires is tabulated in
+[`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)
+§"What each stage group demands of the model". In short: Requirements
+analysis (00–01b) needs fluency and iteration, not deep reasoning;
+Structural modelling (02–03b) is the hardest load — use your strongest
+model; Implementation (04a–05) needs strong code generation and
+test-first discipline. Map these to your own models in a local config
+file outside the repo — do not commit model/plugin configuration into
+CLAD.
 
 ## 8. When you are stuck
 
 - If the stage `CONTEXT.md` is ambiguous, edit the `CONTEXT.md` first
   (with the human's approval) and *then* run the stage.
 - If you produced output that you cannot trace back to a concept or sync,
-  you are mid-violation of rule 1. Stop and surface the problem.
+  you are mid-violation of R1. Stop and surface the problem.
 - If the human has edited a previous stage's output, **re-read it**.
   Treat the edit as authoritative.
 
-## 9. Critical Context — hard-learned implementation rules
+## 9. Pointer index
 
-These rules come from defects discovered while implementing 13 Conduit
-use cases. They supplement §5 and are equally binding.
-
-### R10 — Sync SPARQL variables MUST use the engine's reserved names
-
-> **Retired** with the fire-after-commit engine. The RDF/SPARQL engine's
-> reserved variables (`?_when_1`, `?_flow`, `?_then_1`) no longer exist:
-> syncs are declarative `SyncRule` `when/where/then` rules with explicit
-> named-argument bindings, and the flow token is an explicit record field.
-> No equivalent hazard remains.
-
-### R11 — Every sync that fires on a shared business-concept action MUST filter by route
-
-`Session/grant[GRANTED]` fires for login, sign-in, AND register flows.
-If a respond sync does not declare its route scope (a `where`-clause
-`Guard` binding the request route from the `Web/request` input), it will
-fire for all three flows, producing wrong HTTP status codes (e.g., login
-returning 200 instead of register's 201). Syncs that trigger on
-`Web/request` already carry the route in their trigger input — others
-MUST add a route `Guard`.
-
-### R12 — A concept action MUST write a named `outcome` field
-
-The engine's dispatch loop skips an action that already has a completion
-record; a completion is identified by the presence of an `outcome` field
-in the returned map. Without it, an action would be re-processed on the
-next drain (causing e.g. duplicate registrations, runaway sync firing).
-The completion record carries the `outcome` plus the action's named
-fields; syncs match on `outcome` in their `when` clause.
-
-### R13 — Jackson must serialize null values (`Include.ALWAYS`)
-
-CLAD syncs author field-value maps where missing fields imply null.
-Jackson's default `NON_NULL` omits these fields, making Conduit spec
-assertions like `jsonpath "$.user.bio" == null` fail with `none` not
-`null`. Configure `jackson.serialization-inclusion: always` in
-`application.yml` or equivalent for your profile. See `clad.properties`
-for the canonical setting.
-
-### R16 — Stage 04d tests must assert completion field values
-
-A concept action's completion map carries named fields that downstream
-syncs consume. If a field-mapping bug exists (wrong key name, missing
-binding, value collision), an outcome-only test will pass while all
-downstream consumers receive null or empty values. The minimum for any
-concept unit test:
-
-- Assert the `outcome` value.
-- Assert the primary fields the concept's action returns.
-- Assert that no primary field is null or empty string when the inputs
-   are valid.
-
-### R17 — Every change to a sync or concept MUST re-enter the CLAD stage pipeline
-
-`methodology/core/ITERATIVE_CHANGES.md` is binding. Before modifying any
-file that falls under:
-
-- `features/UC-*/stages/02_concepts/output/` (concept specs)
-- `features/UC-*/stages/03_syncs/output/` (sync specs)
-- any profile's implementation source for concepts or syncs
-  (e.g. `app/backend/src/.../{concepts,syncs}/`,
-   `reference-impl/java-legible/src/main/java/dev/legible/example/.../`
-   (canonical profile), or `reference-impl/java-micronaut-jena/src/.../{concepts,syncs}/`
-   (legacy profile))
-
-the agent MUST:
-
-1. Open `methodology/core/ITERATIVE_CHANGES.md` and classify the change
-   (Presentation / Behavioural / Structural).
-2. Identify the earliest stage whose `output/` is no longer accurate and
-   re-enter there.
-3. Update all affected stage artefacts (sync specs, concept specs, chain
-   tables) in the **same commit** as the implementation change.
-
-A Java sync class with no corresponding `*.sync.md`, or a Java concept
-class whose outcomes no longer match the approved `*.concept.md`, is a
-defect of the same severity as a cross-concept import (R1).
-
-`quality-gate/verify_implementation_parity.py` mechanises the
-implementation-to-artefact direction of this rule: it fails if an
-implementation class exists with no corresponding spec artefact, or if a
-sync spec/class/runtime name does not lower mechanically from the Stage 03
-sync rule. `quality-gate/verify_sync_implementation_parity.py` mechanises
-the artefact-to-implementation direction for syncs: it fails if any Stage
-03 sync contract has no corresponding Stage 04e `SyncRule` implementation.
-`quality-gate/verify_iterative_change_readiness.py` mechanises the intake
-direction: when the diff touches concept/sync specs or implementation, it
-fails unless an `_changes/` artefact records the change category, earliest
-re-entry stage, artefact-impact matrix, and re-derivation order.
-`quality-gate/verify_iterative_change_coupling.py` mechanises the same-batch
-direction: it fails if a concept/sync implementation changes without its
-matching Stage 02/03 artefact changing in the same diff.
-
-### R20 — Engine and profile maintenance changes require maintenance governance
-
-Changes to engine/runtime sources, profile configuration/resources, Docker or
-Compose files, and root `clad.properties` that preserve the approved feature
-contract do not invent a new UC or re-run Stage 00. Before changing those
-surfaces, create `maintenance/<change-name>.md` from
-`templates/maintenance-change.md`, obtain the design-gate approval, and test
-against explicit runtime invariants. Obtain evidence-gate approval before
-commit. If the change alters an action outcome, response contract, concept
-boundary, sync rule, flow-token lineage, or observable action order, also
-re-enter the earliest affected feature stage under R17.
-
-`quality-gate/verify_maintenance_change_readiness.py` enforces this route:
-the normal artefact gate requires design approval; the pre-commit hook requires
-both design and evidence approval plus passing test evidence.
-
-### R21 — RDF-star/SPARQL-star patterns MUST use Jena programmatic APIs
-
-> **Retired** with the fire-after-commit engine. RDF-star/SPARQL-star is
-> gone entirely: facts are relation-shaped (`FactStore`/`Region`), the
-> action log is a structured append-only record store, and there is no
-> SPARQL to construct. The strict-vs-lenient parser hazard this rule
-> guarded against no longer exists.
-
-## 10. Pointers
+The hard-learned implementation rules R10–R21 (once inline here) now
+live in [`methodology/implementation/RULES.md`](methodology/implementation/RULES.md).
+Full pointers:
 
 - Methodology reading order: [`methodology/README.md`](methodology/README.md)
+- Stage map + gates: [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)
+- Per-stage file manifest: [`methodology/implementation/CONTEXT_MANIFEST.md`](methodology/implementation/CONTEXT_MANIFEST.md)
+- Hard rules: [`methodology/implementation/RULES.md`](methodology/implementation/RULES.md)
 - Artefact dependency graph: [`methodology/architecture/ARTEFACT_MAP.md`](methodology/architecture/ARTEFACT_MAP.md)
-- Artefact-to-architecture-to-code traceability: [`methodology/architecture/TRACEABILITY.md`](methodology/architecture/TRACEABILITY.md)
+- Artefact-to-code traceability: [`methodology/architecture/TRACEABILITY.md`](methodology/architecture/TRACEABILITY.md)
 - Worked example: [`features/UC-00-login/README.md`](features/UC-00-login/README.md)
 - New-feature bootstrap: [`templates/feature-skeleton/`](templates/feature-skeleton/) (copy this, do **not** copy `features/UC-00-login/`)
 - Stage contract template: [`templates/stage-CONTEXT.md`](templates/stage-CONTEXT.md)
@@ -522,10 +308,6 @@ both design and evidence approval plus passing test evidence.
 - Pre-commit quality gate: [`methodology/implementation/QUALITY_GATE.md`](methodology/implementation/QUALITY_GATE.md)
 - Trunk-based delivery + CI gate: [`methodology/implementation/DELIVERY.md`](methodology/implementation/DELIVERY.md)
 - Handover protocol: [`methodology/implementation/HANDOVER.md`](methodology/implementation/HANDOVER.md)
-- Optional workflow overlay: [`methodology/overlays/TRACKING.md`](methodology/overlays/TRACKING.md)
-- Optional planning/intake shortcuts: [`methodology/overlays/PLANNING.md`](methodology/overlays/PLANNING.md)
-- Optional decision log: [`methodology/overlays/DECISIONS.md`](methodology/overlays/DECISIONS.md)
-- Optional local-model context overlay: [`methodology/overlays/LOCAL_LLM.md`](methodology/overlays/LOCAL_LLM.md)
-- Optional ports-and-adapters overlay: [`methodology/overlays/PORTS_AND_ADAPTERS.md`](methodology/overlays/PORTS_AND_ADAPTERS.md)
+- Optional overlays: [`TRACKING.md`](methodology/overlays/TRACKING.md), [`PLANNING.md`](methodology/overlays/PLANNING.md), [`DECISIONS.md`](methodology/overlays/DECISIONS.md), [`LOCAL_LLM.md`](methodology/overlays/LOCAL_LLM.md), [`PORTS_AND_ADAPTERS.md`](methodology/overlays/PORTS_AND_ADAPTERS.md)
 - Agent Skills reference: [`skills/`](skills/)
 - Citations: [`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md)

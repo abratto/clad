@@ -5,20 +5,17 @@ description: Identify actors and goals during CLAD Stage 00 (system-level actor/
 
 # CLAD System Scoping (Stage 00)
 
+> **Role:** required stage guidance for Stage 00. The stage `CONTEXT.md` `Inputs` table is authoritative for *which files to load*; load those exactly. This skill adds working process only and must not cause you to reload documents the contract already named.
+
 ## What this skill covers
 
 Stage 00 runs once per system brief and is collaborative: the agent
 proposes, asks clarifying questions, and writes `actors.md` and
 `goals.md` only when the human signals agreement.
 
-## Quick reference
+## Files
 
-Load these files:
-
-1. `features/_system/stages/00_actor-goal/CONTEXT.md` — the stage
-   contract that governs this work
-2. `templates/actors.md` — output shape for actors
-3. `templates/goals.md` — output shape for goals
+Stage 00 `CONTEXT.md` (the contract) and `templates/actors.md`/`goals.md` are the loading set. Nothing further is required.
 
 ## Process
 

@@ -30,8 +30,8 @@ upstream prose, but it may not redesign approved tests.
 | `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5, R8, R9, R14, R16 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
-| `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` | 3 | Java profile conventions |
-| `../../../../../../reference-impl/java-micronaut-jena/CANONICAL_EXEMPLAR.md` | 3 | Java realization pattern, not source of truth |
+| `../../../../../../reference-impl/java-legible/README.md` and `../../../../../../reference-impl/legible-engine/README.md` (default profile) | 3 | Profile conventions for the canonical fire-after-commit profile |
+| `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` (legacy profile only) | 3 | Legacy RDF/SPARQL profile conventions. Do NOT follow when targeting java-legible |
 
 ## Process
 
@@ -45,9 +45,12 @@ upstream prose, but it may not redesign approved tests.
    earliest invalid upstream stage.
 4. Derive behavior from the approved upstream artefacts first: the
    Stage 02 concept spec, the `04b` SPEC slice, the `04a` storage
-   mapping when applicable, and the approved red tests. Use the Java
-   canonical exemplar only as a realization pattern for code shape.
-5. Place concept code in the canonical Java concept package bucket: one
+   mapping when applicable, and the approved red tests. On the canonical
+   `java-legible` profile, concepts implement the `dev.legible.engine`
+   `Concept` shape (`execute(action, input)` over an in-memory `FactStore`
+   region); use any profile exemplar only as a realization pattern for
+   code shape.
+5. Place concept code in the canonical concept package bucket: one
    `*Concept` class under `<APP_PACKAGE_ROOT>.concepts.<name>`, with its
    tests mirrored under the corresponding test package. Do not place
    concept agents in `engine`, `syncs`, `infrastructure`, or ad hoc
@@ -73,8 +76,8 @@ upstream prose, but it may not redesign approved tests.
   not only outcome tokens.
 - Every required concept test and implementation file exists in the
   selected profile's source tree.
-- Behavior is traceable first to the approved upstream artefacts; the
-   Java exemplar was used only as a realization pattern.
+- Behavior is traceable first to the approved upstream artefacts; any
+   profile exemplar was used only as a realization pattern.
 - Green implementation treated the approved red tests as the immediate
   contract and did not reinterpret earlier artefacts against them.
 - No cross-concept imports.

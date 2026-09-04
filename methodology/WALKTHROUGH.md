@@ -145,7 +145,7 @@ to other use cases* (Registration, Logout, Password reset).
 **Gate question (canonical).**
 
 > **Why this matters downstream:** the canonical action names
-> (`User.lookupByUsername`, `PasswordAuth.check`, `Session.grant`)
+> (`UserNaming.lookupByUsername`, `PasswordAuth.check`, `Session.grant`)
 > first appear in this file. Stage 01b will lock them in; Stage 03
 > must not invent different names. Every Stage 04c flow test will
 > assert one scenario from this file.
@@ -164,7 +164,7 @@ to other use cases* (Registration, Logout, Password reset).
 - [`methodology/implementation/RULES.md`](implementation/RULES.md) — R1.
 - [`templates/responsibility-map.md`](../templates/responsibility-map.md).
 
-**Agent action:** identify four concepts — `User`, `PasswordAuth`,
+**Agent action:** identify four concepts — `UserNaming`, `PasswordAuth`,
 `Session`, `Web` — each with a *one-line* state and a comma-separated
 action list, **no signatures, no outcomes**. Add a *Coverage check*
 section pairing each scenario to the concepts it touches. Add an *Out
@@ -230,20 +230,20 @@ diagram. First row is always `Web.request`; last row is always
 responsibility map. Each concept's `state`, `actions` (signatures +
 outcomes — must match the chain tables), `flow_token` shape, and
 operational principle. **R1 enforced**: the `Session` spec does not
-mention `User`'s state; it works with opaque `UserId`.
+mention `UserNaming`'s state; it works with opaque `UserId`.
 
 `Web` does **not** get a `.concept.md` — see
 [`methodology/architecture/WEB_CONCEPT.md`](architecture/WEB_CONCEPT.md).
 
 **Outputs written:**
 
-- [`User.concept.md`](../features/UC-00-login/stages/02_concepts/output/User.concept.md)
+- [`UserNaming.concept.md`](../features/UC-00-login/stages/02_concepts/output/UserNaming.concept.md)
 - [`PasswordAuth.concept.md`](../features/UC-00-login/stages/02_concepts/output/PasswordAuth.concept.md)
 - [`Session.concept.md`](../features/UC-00-login/stages/02_concepts/output/Session.concept.md)
 
 **Gate question (canonical).**
 
-> **Agent stance:** if you find yourself writing `import com…User`
+> **Agent stance:** if you find yourself writing `import com…UserNaming`
 > inside `Session.concept.md`, stop — that coupling belongs in a sync
 > (Stage 03), not in a concept spec.
 
@@ -307,7 +307,7 @@ now resolved (per PR #6 — the chain tables won).
 
 **Outputs written:**
 
-- [`User-card.md`](../features/UC-00-login/stages/03a_dependency-review/output/User-card.md)
+- [`UserNaming-card.md`](../features/UC-00-login/stages/03a_dependency-review/output/UserNaming-card.md)
 - [`PasswordAuth-card.md`](../features/UC-00-login/stages/03a_dependency-review/output/PasswordAuth-card.md)
 - [`Session-card.md`](../features/UC-00-login/stages/03a_dependency-review/output/Session-card.md)
 - [`Web-card.md`](../features/UC-00-login/stages/03a_dependency-review/output/Web-card.md)

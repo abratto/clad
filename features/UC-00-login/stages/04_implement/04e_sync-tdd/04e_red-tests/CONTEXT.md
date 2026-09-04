@@ -32,7 +32,8 @@ no sync implementation belongs here.
 | `../../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
-| `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` | 3 | Java profile conventions |
+| `../../../../../../reference-impl/java-legible/README.md` and `../../../../../../reference-impl/legible-engine/README.md` (default profile) | 3 | Profile conventions for the canonical fire-after-commit profile |
+| `../../../../../../reference-impl/java-micronaut-jena/{README.md,CODE_STYLE.md,SYNC_LOWERING.md}` (legacy profile only) | 3 | Legacy RDF/SPARQL lowering contract. Do NOT follow when targeting java-legible |
 
 ## Process
 

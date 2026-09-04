@@ -5,34 +5,17 @@ description: Write outer-red flow tests during CLAD Stage 04c. Use when producin
 
 # CLAD Flow Testing (Stage 04c)
 
+> **Role:** required stage guidance for Stage 04c. The stage `CONTEXT.md` `Inputs` table is authoritative for *which files to load*; load those exactly. This skill adds working process only and must not cause you to reload documents the contract already named.
+
 ## What this skill covers
 
 Writing the outer-red flow tests — Gherkin `.feature` files and
 step-definition skeletons for each use-case scenario. This is Gate 3
 (Executable specification) — the last human gate before implementation.
 
-## Quick reference
+## Files
 
-Load these files:
-
-1. `methodology/implementation/TDD.md` — London School outside-in
-   double-loop discipline
-2. `methodology/architecture/GHERKIN_INTEGRATION.md` — derivation rules
-   G1-G5 (Gherkin), S1-S3 (step definitions), E1 (evidence)
-3. `templates/feature.feature` — Gherkin `.feature` template with
-   embedded derivation rules
-4. `templates/step-definitions.java` — Cucumber step-definition skeleton
-5. `templates/flow.md` — flow test spec template
-6. `methodology/architecture/FLOW_TOKENS.md` — token structure
-7. `features/UC-XX-<slug>/stages/01_usecase/output/usecase.md` —
-   source scenarios
-8. `features/UC-XX-<slug>/stages/01b_chain-table/output/` —
-   approved chain tables
-9. `features/UC-XX-<slug>/stages/04b_spec/output/` —
-   SPEC slices to compile against
-10. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
-11. `features/_system/stages/00_actor-goal/output/port-spec.md` — only
-   when it exists; external adapter contract for `@contract` scenarios
+Stage 04c `Inputs` names `TDD.md`, the `.feature`/step-def/flow templates, `FLOW_TOKENS.md`, and the 01/01b/04b outputs. The extra `methodology/architecture/GHERKIN_INTEGRATION.md` derivation rules (G1–G5, S1–S3, E1) is the only reference worth having open alongside `Inputs`.
 
 ## Process
 

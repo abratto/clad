@@ -5,24 +5,17 @@ description: Derive chain tables during CLAD Stage 01b. Use when translating use
 
 # CLAD Chain Table Derivation (Stage 01b)
 
+> **Role:** required stage guidance for Stage 01b. The stage `CONTEXT.md` `Inputs` table is authoritative for *which files to load*; load those exactly. This skill adds working process only and must not cause you to reload documents the contract already named.
+
 ## What this skill covers
 
 Producing one `<scenario>-chain.md` per use-case scenario. Each chain
 table is a numbered `When → Then` action choreography with Inputs,
 Outcome, and Why columns, plus a derived Mermaid FSM diagram.
 
-## Quick reference
+## Files
 
-Load these files:
-
-1. `methodology/architecture/SYNCHRONIZATIONS.md` — how chains feed syncs
-2. `templates/chain-table.md` — output shape, derivation rules, FSM
-   diagram mechanics
-3. `features/UC-XX-<slug>/stages/01_usecase/output/usecase.md` —
-   source scenarios
-4. `features/UC-XX-<slug>/stages/01a_responsibility-map/output/responsibility-map.md` —
-   the concept set
-5. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
+Stage 01b `Inputs` names `SYNCHRONIZATIONS.md`, `templates/chain-table.md`, and the 01/01a outputs. Nothing further is required.
 
 ## Process
 

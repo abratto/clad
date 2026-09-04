@@ -25,14 +25,14 @@ fact, fix Stage 03b first instead of inventing it here.
 | `../../03b_data-model/output/` | 4 | Approved conceptual data models |
 | `../../../../../methodology/implementation/STORAGE_MAPPING.md` | 3 | Storage mapping procedure |
 | `../../../../../templates/storage.md` | 3 | Default storage-mapping output shape |
-| `../../../../../reference-impl/java-micronaut-jena/README.md` | 3 | Profile storage status |
+| `clad.properties` (`storage.layer`) and the selected profile's README (default `reference-impl/java-legible/`; `java-micronaut-jena/` legacy only) | 3 | Profile storage status |
 
 ## Process
 
-The Java profile is currently **in-memory only**. No persistent-store
-mapping is needed, even though Stage 03b still models the concepts
-conceptually. Document the decision in `output/_NOT_APPLICABLE.md` and
-move on.
+The canonical profile (`java-legible`, in-memory `FactStore`) is
+**in-memory only** — no persistent-store mapping is needed, even though
+Stage 03b still models the concepts conceptually. Document the decision
+in `output/_NOT_APPLICABLE.md` and move on.
 
 ## Outputs
 

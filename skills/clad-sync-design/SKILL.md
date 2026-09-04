@@ -5,27 +5,23 @@ description: Design declarative synchronization rules during CLAD Stage 03. Use 
 
 # CLAD Sync Design (Stage 03)
 
+> **Role:** required stage guidance for Stage 03. The stage `CONTEXT.md`
+> `Inputs` table is authoritative for *which files to load*; load those
+> exactly. This skill adds the working process only — it must not cause
+> you to reload documents the contract already named.
+
 ## What this skill covers
 
 Producing one `<name>.sync.md` per coordination rule. Each sync is a
 declarative `when → where → then` rule that wires two concept actions.
 Syncs are the only place where two concepts come into contact.
 
-## Quick reference
+## Files
 
-Load these files in order:
-
-1. `methodology/architecture/SYNCHRONIZATIONS.md` — sync shape, must-not-do,
-   composition rules
-2. `methodology/architecture/SYNC_PATTERNS.md` — the four legal data-flow
-   patterns (A, B, C, D)
-3. `methodology/architecture/FLOW_TOKENS.md` — token structure and payload rules
-4. `templates/sync.md` — output shape with embedded authoring rules
-5. `features/UC-XX-<slug>/stages/01b_chain-table/output/` —
-   approved chain tables (source of every `when`/`then` edge)
-6. `features/UC-XX-<slug>/stages/02_concepts/output/` —
-   approved concept specs (action signatures)
-7. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
+The stage `CONTEXT.md` `Inputs` names the loading order: `01b` chain
+tables, `02` concept specs, `SYNCHRONIZATIONS.md`, `SYNC_PATTERNS.md`,
+`templates/sync.md`. The one additional reference worth having open is
+`methodology/architecture/FLOW_TOKENS.md` (token structure/payload rules).
 
 ## Process
 

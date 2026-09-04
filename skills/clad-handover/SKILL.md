@@ -5,6 +5,10 @@ description: Hand off or resume a feature mid-flight during a CLAD session. Use 
 
 # CLAD Handover
 
+> **Role:** session-start aggregator. Orient a fresh session from
+> `AGENTS.md`, `CONTEXT.md`, `HANDOVER.md` and the feature `RESUME.md` —
+> it is not tied to a single stage.
+
 ## What this skill covers
 
 Self-orienting protocol for any fresh model session to pick up a feature
@@ -13,13 +17,9 @@ reads prior artefacts, and waits for human confirmation before proceeding.
 
 ## Quick reference
 
-Load these files:
-
-1. `methodology/implementation/HANDOVER.md` — complete handover prompt
-   template with `{{UC-XX-slug}}` placeholder
-2. `AGENTS.md` — operating principles and contract loop
-3. `methodology/implementation/STAGES.md` — stage map
-4. `methodology/implementation/DELIVERY.md` — trunk-based workflow
+The critical orientation files are `methodology/implementation/HANDOVER.md`
+(full handover-prompt template), `AGENTS.md` §1–2, and the feature's
+`RESUME.md`. The rest of the load order is deterministic from folder state.
 
 ## Process
 

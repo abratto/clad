@@ -30,8 +30,7 @@ code, sync code is what turns the outer flow test green.
 | `../../../../templates/artefact-impact-matrix.md` | 3 | Required `_changes/` worksheet for iterative changes |
 | `../../../../methodology/implementation/STAGES.md` | 3 | Stage 04 routing contract |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rules |
-| `../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` | 3 | Java profile conventions |
-| `../../../../reference-impl/java-micronaut-jena/README.md` | 3 | Java runtime debug surface |
+| `../../../../reference-impl/README.md` | 3 | Reference-profile map (canonical: `java-legible`; `java-micronaut-jena` is legacy) |
 
 ## Process
 
@@ -43,12 +42,12 @@ Run the executable sub-stages in order:
 4. [`04d_red-tests/`](04d_concept-tdd/04d_red-tests/CONTEXT.md) then [`04d_green-impl/`](04d_concept-tdd/04d_green-impl/CONTEXT.md)
 5. [`04e_red-tests/`](04e_sync-tdd/04e_red-tests/CONTEXT.md) then [`04e_green-impl/`](04e_sync-tdd/04e_green-impl/CONTEXT.md)
 
-During `04c` through `04e`, use the Java profile's debug endpoints as
-the default runtime evidence surface for explaining live behaviour:
-`/api/dev/flows` for registered sync order, `/api/dev/flow/{token}` for
-one archived flow, `/api/dev/stuck` for active actions missing
-`:output`, and `/api/dev/concept/{name}/triples` for concept-state
-inspection. Do not treat predicted token chains alone as runtime proof.
+During `04c` through `04e`, use the selected profile's runtime evidence
+surface for explaining live behaviour. On the canonical `java-legible`
+profile this is the fire-after-commit engine's debug surface (`/api/dev/…`,
+documented in `reference-impl/java-legible/README.md`); on the legacy
+`java-micronaut-jena` profile it is the RDF debug controller. Do not treat
+predicted token chains alone as runtime proof.
 
 For the `Web` bootstrap boundary, keep the controller transport-only:
 normalize input, invoke the flow root, await the authored response, and
@@ -70,7 +69,7 @@ read/mutate concept state in the controller/route handler.
 - `04e_red-tests/` is complete before `04e_green-impl/` starts.
 - The flow tests from `04c` are green at the end of `04e_green`.
 - Any runtime explanation of why a flow is red, green, stuck, or
-	archived cites one of the Java profile debug endpoints or another
+	archived cites the selected profile's debug surface or another
 	executed runtime inspection command.
 - Any `Web` implementation remains transport-only: no direct
   business-concept dependency, no domain branching, and no concept-state

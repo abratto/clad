@@ -165,7 +165,9 @@ Fuseki over HTTP strictly enforce the W3C SPARQL 1.2 Update grammar,
 which does not allow `<< >>` in UPDATE templates. This is intentional
 spec compliance, not a version bug — it will not be "fixed."
 
-**Rule R21** (AGENTS.md §9) requires programmatic SPARQL construction for
+**Rule R21** (`methodology/implementation/RULES.md` — R21; retired for the
+canonical fire-after-commit engine, still binding for this legacy
+RDF/SPARQL profile) requires programmatic SPARQL construction for
 RDF-star patterns when targeting any deployment:
 - `UpdateBuilder` with `NodeFactory.createTripleNode()` — produces
   `UpdateRequest` objects that bypass the string parser

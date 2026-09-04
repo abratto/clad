@@ -5,24 +5,22 @@ description: Design a business concept specification during CLAD Stage 02. Use w
 
 # CLAD Concept Design (Stage 02)
 
+> **Role:** required stage guidance for Stage 02. The stage `CONTEXT.md`
+> `Inputs` table is authoritative for *which files to load*; load those
+> exactly. This skill adds the working process only.
+
 ## What this skill covers
 
 Producing one `<Name>.concept.md` per business concept. Each spec defines
 the concept's private state, public actions with case-split outcomes, and
 an operational principle trace.
 
-## Quick reference
+## Files
 
-Load these files in order:
-
-1. `methodology/architecture/LEGIBLE.md` — WYSIWID pattern constraints
-2. `methodology/architecture/CONCEPTS.md` — concept anatomy (state, actions,
-   operational principle)
-3. `methodology/architecture/MENTAL_MODEL.md` — OO ↔ WYSIWID translation
-4. `templates/concept.md` — output shape to follow
-5. `features/UC-XX-<slug>/stages/01b_chain-table/output/` —
-   approved chain tables (outcomes must match exactly)
-6. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
+The stage `CONTEXT.md` `Inputs` names the loading set: `01b` chain tables,
+`CONCEPTS.md`, `templates/concept.md`. The one additional reference worth
+having open is `methodology/architecture/LEGIBLE.md` (WYSIWID constraints)
+and `MENTAL_MODEL.md` (OO ↔ WYSIWID translation).
 
 ## Process
 

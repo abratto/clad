@@ -31,8 +31,8 @@ not redesign approved tests.
 | `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
-| `../../../../../../reference-impl/java-micronaut-jena/README.md` and `../../../../../../reference-impl/java-micronaut-jena/CODE_STYLE.md` | 3 | Java profile conventions |
-| `../../../../../../reference-impl/java-micronaut-jena/CANONICAL_EXEMPLAR.md` | 3 | Java realization pattern, not source of truth |
+| `../../../../../../reference-impl/java-legible/README.md` and `../../../../../../reference-impl/legible-engine/README.md` (default profile) | 3 | Profile conventions for the canonical fire-after-commit profile |
+| `../../../../../../reference-impl/java-micronaut-jena/{README.md,CODE_STYLE.md,SYNC_LOWERING.md,CANONICAL_EXEMPLAR.md}` (legacy profile only) | 3 | Legacy RDF/SPARQL profile realization. Do NOT follow when targeting java-legible |
 
 ## Process
 
@@ -45,9 +45,12 @@ not redesign approved tests.
    stop and send the work back to `04e-red` or Stage 03.
 4. Derive behavior from the approved upstream artefacts first: the
    Stage 03 sync specs, the `04b` SPEC slices, the `04c` expected
-   authored action chain, and the approved red sync tests. Use the Java
-   canonical exemplar only as a realization pattern for class, package,
-   SPARQL, and test shape.
+   authored action chain, and the approved red sync tests. On the
+   canonical `java-legible` profile, each approved sync is a declarative
+   `SyncRule` in `LoginSyncs`; on the legacy `java-micronaut-jena`
+   profile, use `SYNC_LOWERING.md` as the deterministic lowering contract
+   and `CANONICAL_EXEMPLAR.md` only as a realization pattern for class,
+   package, and test shape.
 5. Place sync code in the canonical Java sync package bucket: each
    approved sync becomes one class under `<APP_PACKAGE_ROOT>.syncs`,
    with tests mirrored under the corresponding sync test package. Do
@@ -79,9 +82,10 @@ not redesign approved tests.
    sync class has a corresponding Stage 03 spec and mechanically follows
    the `When<Trigger>Then<Target>[For<Scope>]` naming grammar.
 - Run `quality-gate/verify_sync_implementation_parity.py` with
-  `--sync-dir ../../../03_syncs/output/` and the Java sync source directory.
-  It must confirm every approved Stage 03 sync contract has a corresponding
-   `@Singleton` `SyncAgent` class.
+  `--sync-dir ../../../03_syncs/output/` and the selected profile's sync
+  source directory. It must confirm every approved Stage 03 sync contract
+  has a corresponding implementation (a declarative `SyncRule` on
+  `java-legible`, or a legacy `@Singleton` `SyncAgent` class).
 - Behavior is traceable first to the approved upstream artefacts; the
    Java exemplar was used only as a realization pattern.
 - Every generated sync test/implementation pair corresponds to exactly

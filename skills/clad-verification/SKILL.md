@@ -5,23 +5,17 @@ description: Verify and trace running behaviour during CLAD Stage 05. Use when b
 
 # CLAD Verification (Stage 05)
 
+> **Role:** required stage guidance for Stage 05. The stage `CONTEXT.md` `Inputs` table is authoritative for *which files to load*; load those exactly. This skill adds working process only and must not cause you to reload documents the contract already named.
+
 ## What this skill covers
 
 Closing a feature: back-tracing runtime flow tokens to use-case scenarios,
 smoke testing the deployable artefact, and recording findings. Every
 scenario gets a status: covered, partial, or missing.
 
-## Quick reference
+## Files
 
-Load these files:
-
-1. `methodology/architecture/FLOW_TOKENS.md` — token structure for trace
-2. `features/UC-XX-<slug>/stages/01_usecase/output/usecase.md` —
-   use case scenarios to trace against
-3. `features/UC-XX-<slug>/stages/01b_chain-table/output/` —
-   approved chain tables for expected action sequences
-4. The running system (for live token inspection)
-5. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
+Stage 05 `Inputs` names `FLOW_TOKENS.md`, the 01 use case, and the runtime evidence. The extra `01b_chain-table/output/` (expected action sequences) supports the back-trace.
 
 ## Process
 

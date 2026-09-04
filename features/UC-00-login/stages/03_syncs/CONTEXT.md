@@ -52,14 +52,13 @@ grammar from `SYNCHRONIZATIONS.md`:
 `When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>]`.
 All `?variable`s are scoped across the entire sync.
 
-The `where` clause is a **declarative query language** supporting:
-
-| Construct | Purpose | Example |
-|---|---|---|
-| `bind ( uuid() as ?x )` | Identifier minting | `bind ( uuid() as ?user )` |
-| `Concept: { ... }` | State query (Pattern D) | `UserNaming: { ?user email: ?email }` |
-| `OPTIONAL { ... }` | Conditional read | `OPTIONAL { Tag: { ?a tag: ?t } }` |
-| `BIND ( ?x AS ?_eachthen )` | GROUP BY aggregation | `BIND ( ?article AS ?_eachthen )` |
+The `where` clause is a **declarative query language** — identifier
+minting (`bind ( uuid() as ?x )`), concept-state reads (`Concept: { … }`,
+the Pattern D construct), `OPTIONAL { … }` conditional reads, and
+`BIND ( ?x AS ?_eachthen )` aggregation. The full construct catalogue and
+examples are in
+[`../../../../methodology/architecture/SYNCHRONIZATIONS.md`](../../../../methodology/architecture/SYNCHRONIZATIONS.md)
+§"Where clause expressiveness"; do not re-derive them here.
 
 What `where` still must NOT do:
 - **Branch on business conditions** — `if ?role = "admin"` belongs in a concept's outcomes

@@ -10,6 +10,46 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.3.3] — 2026-09-04
+
+### Changed
+
+- **Context architecture cleanup** — reduced irrelevant prompt context for
+  generic agents without changing workflow semantics, stage order, gate
+  behavior, hard rules, artefact names, or quality-gate behavior:
+  - `AGENTS.md` deduplicated (~531 → ~313 lines) by cross-referencing
+    `STAGES.md`/`RULES.md` instead of duplicating stage tables, gate
+    mechanics, and hard-rule prose.
+  - `methodology/implementation/RULES.md` is now the authoritative home for
+    the full hard-rule text (R1–R21), absorbing the implementation-history
+    detail formerly inline in `AGENTS.md` §5/§9 while preserving rule IDs
+    and retirement notes for R10/R21.
+  - New `methodology/implementation/CONTEXT_MANIFEST.md` — a machine-readable,
+    per-stage manifest (required / conditional / excluded files, outputs,
+    verify commands, gate, profile) derived from each stage `CONTEXT.md`.
+  - `templates/sync.md` and `templates/concept.md` separated output structure
+    from extended instructional prose; authoring rules now point to the
+    owning stage `CONTEXT.md` and architecture docs.
+  - Each `skill` gained a `Role:` header (required guidance / aggregator) and
+    defers to the stage `Inputs` table instead of re-listing files, preventing
+    recursive re-load of contract documents.
+  - Legacy `java-micronaut-jena` profile references made conditional across
+    `features/UC-00-login/stages/`, `_config/`, and the `feature-skeleton`
+    templates; canonical profile is `java-legible` (fire-after-commit /
+    in-memory `FactStore`).
+- **Fixed stale cross-references** in `methodology/WALKTHROUGH.md` after the
+  `User` → `UserNaming` rename (two broken links and six stale concept-name
+  mentions).
+
+### Added
+
+- **`quality-gate/verify_links.py`** — validates relative-file markdown links
+  across the stable doc surface (`AGENTS.md`, `CONTEXT.md`, `methodology/`,
+  `templates/`, `skills/`), ignoring fenced code blocks and historical
+  records. Wired into `verify_artefacts.py` as a feature-independent
+  `doc_links` check so the prescribed `test.command` gate catches this drift
+  class automatically.
+
 ## [0.3.2] — 2026-09-03
 
 ### Added

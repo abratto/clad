@@ -95,6 +95,19 @@ def main():
     elif "no engine" not in detail:
         print("\n  [PASS] maintenance_change_readiness")
 
+    # Documentation cross-reference integrity (feature-independent).
+    code, out, err = run_script("verify_links.py", [])
+    detail = (out + err).strip()
+    ok = code == 0
+    mark = "PASS" if ok else "FAIL"
+    print(f"\n  [{mark}] doc_links")
+    if not ok:
+        all_pass = False
+        for line in detail.splitlines()[:8]:
+            print(f"        {line}")
+    elif detail.strip():
+        print(f"        {detail.splitlines()[0]}")
+
     for name, root in discover_features():
         any_features = True
         stage = _current_stage(root)

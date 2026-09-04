@@ -23,7 +23,7 @@ that the deployable thing actually runs (Part 2, smoke). Without it,
 | (a flow-token log from a representative test run) | 4 | Runtime evidence |
 | `../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics |
 | Skill: `clad-verification` | 3 | Verification reference |
-| `../../../../reference-impl/java-micronaut-jena/README.md` | 3 | Java runtime debug surface |
+| `../../../../reference-impl/java-legible/README.md` (default profile; `java-micronaut-jena/README.md` legacy only) | 3 | Runtime debug surface for the selected profile |
 
 ## Pre-condition (agent must verify before starting)
 
@@ -32,7 +32,7 @@ python3 ../../../../quality-gate/verify_gate_approval.py --feature ../../ --requ
 ```
 
 Gate 3 (Executable specification) must be approved and the full test
-suite must pass (`mvn test -f app/backend/pom.xml`) before Stage 05
+suite must pass (the `test.command` from `clad.properties`) before Stage 05
 begins. If either fails, return to the owning stage.
 
 ## Process
@@ -49,17 +49,16 @@ Also check that transport entry and transport exit were reached through
 the authorised action/sync chain rather than being short-circuited
 inside the controller / route handler.
 
-In this Java profile, the default runtime evidence surface is the debug
-controller documented in the reference-impl README. Prefer
-`/api/dev/flows` to confirm the registered sync plan,
-`/api/dev/flow/{token}` to inspect one archived flow token,
-`/api/dev/stuck` to rule out missing `:output`, and
-`/api/dev/concept/{name}/triples` when concept state must be checked
-alongside the trace.
+In this profile, the default runtime evidence surface is the selected
+profile's debug surface (canonical `java-legible` fire-after-commit
+engine's `/api/dev/…`; legacy `java-micronaut-jena` RDF debug controller)
+documented in the reference-impl README. Prefer the registered-sync /
+archived-flow / stuck / concept-state inspection endpoints as the primary
+runtime evidence, rather than predicted chains.
 
 ### Part 2 — Close
 
-1. Boot the Java profile, hit `POST /login` for each scenario,
+1. Boot the selected profile, hit `POST /login` for each scenario,
    capture in `output/smoke.md`.
 2. Update tracking (or note "not applicable") in `output/tracking.md`.
 3. Add a `Resume point:` line at the top of the trace file.
@@ -74,9 +73,9 @@ alongside the trace.
 ## Verify
 
 - Every scenario has a trace entry.
-- The trace is backed by captured runtime evidence from the Java debug
-  endpoints or another executed runtime inspection command, not only by
-  predicted test chains.
+- The trace is backed by captured runtime evidence from the selected
+  profile's debug surface or another executed runtime inspection command,
+  not only by predicted test chains.
 - The captured runtime evidence shows that transport entry and exit were
   reached through the authorised action/sync chain, not by imperative
   controller branching.
@@ -91,7 +90,7 @@ alongside the trace.
 - Every Gherkin scenario name (`login.feature` →
   `features/UC-00-login/stages/04_implement/04c_flow-tests/output/`)
   matches a `trace.md` heading/cross-reference.
-- The Cucumber report (from `mvn test`) shows 0 failed scenarios for
+- The Cucumber report (from `test.command`) shows 0 failed scenarios for
   the scenarios smoked during verification.
 - Gherkin scenarios provide no additional coverage beyond what the use
   case defines.

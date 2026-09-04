@@ -5,22 +5,17 @@ description: Write a use case specification during CLAD Stage 01. Use when produ
 
 # CLAD Use Case Authoring (Stage 01)
 
+> **Role:** required stage guidance for Stage 01. The stage `CONTEXT.md` `Inputs` table is authoritative for *which files to load*; load those exactly. This skill adds working process only and must not cause you to reload documents the contract already named.
+
 ## What this skill covers
 
 Producing a use case specification that defines one feature's actors,
 trigger, preconditions, postconditions, and named scenarios. This is
 the entry point for every per-goal feature folder.
 
-## Quick reference
+## Files
 
-Load these files in order:
-
-1. `methodology/core/CLAD.md` — CLAD principles and contract loop
-2. `templates/usecase.md` — output shape (3 completeness levels: Brief,
-   Casual, Fully Dressed)
-3. `features/_system/stages/00_actor-goal/output/goals.md` — this
-   feature's approved goal
-4. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
+Stage 01 `Inputs` names `methodology/core/CLAD.md`, `templates/usecase.md`, and the 00 goals. Nothing further is required.
 
 ## Process
 

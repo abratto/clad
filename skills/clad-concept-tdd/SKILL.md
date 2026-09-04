@@ -5,37 +5,26 @@ description: Execute concept-level TDD during CLAD Stage 04d. Use when deriving 
 
 # CLAD Concept TDD (Stage 04d)
 
+> **Role:** required stage guidance for Stage 04d. The stage `CONTEXT.md`
+> `Inputs` table is authoritative for *which files to load*; load those
+> exactly. A profile's conventions are **conditional** — follow the
+> canonical `java-legible` (fire-after-commit) profile unless
+> `clad.properties` selects a legacy (e.g. `java-micronaut-jena`) profile.
+
 ## What this skill covers
 
 The inner (concept) loop of London School TDD: `04d-red` derives
 executable concept unit tests from approved outer artefacts, and
 `04d-green` implements only against those approved tests until green.
 
-## Quick reference
+## Files
 
-Load these files:
-
-1. `methodology/implementation/TDD.md` — London School handoff semantics,
-   derivation rules, collaborator isolation
-2. `methodology/implementation/RULES.md` — hard rules R1, R5, R8, R9,
-   R14, R16
-3. `templates/test-intent-derivation-map.md` — coverage template format
-4. `features/UC-XX-<slug>/stages/02_concepts/output/` —
-   concept specs
-5. `features/UC-XX-<slug>/stages/04b_spec/output/` —
-   SPEC slices
-6. `features/UC-XX-<slug>/stages/04c_flow-tests/output/` —
-   approved flow tests (drives derivation)
-7. `features/UC-XX-<slug>/_config/build-and-test.md` —
-   canonical test command
-8. `features/UC-XX-<slug>/_config/package-and-layout.md` —
-   canonical package/source-root settings
-9. `reference-impl/java-micronaut-jena/README.md`,
-   `reference-impl/java-micronaut-jena/CODE_STYLE.md`,
-   `reference-impl/java-micronaut-jena/SYNC_LOWERING.md`, and
-   `reference-impl/java-micronaut-jena/CANONICAL_EXEMPLAR.md` — profile
-   conventions (only when this profile is selected)
-10. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
+The stage `CONTEXT.md` `Inputs` names the loading set: `02` concept specs,
+`04b` SPECs, `04c` flow tests, `_config/build-and-test.md`,
+`_config/package-and-layout.md`, `TDD.md`, `RULES.md`,
+`templates/test-intent-derivation-map.md`. Profile reference docs
+(`reference-impl/<profile>/`) are loaded only when that profile is
+selected.
 
 ## Process
 

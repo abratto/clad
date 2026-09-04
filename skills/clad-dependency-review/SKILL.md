@@ -5,26 +5,17 @@ description: Perform a per-concept dependency review during CLAD Stage 03a. Use 
 
 # CLAD Dependency Review (Stage 03a)
 
+> **Role:** required stage guidance for Stage 03a. The stage `CONTEXT.md` `Inputs` table is authoritative for *which files to load*; load those exactly. This skill adds working process only and must not cause you to reload documents the contract already named.
+
 ## What this skill covers
 
 Producing one `<concept>-card.md` per concept and a `pattern-d-summary.md`.
 This is the last cross-concept sanity check before code — making every
 inbound call and every concept-state read visible per concept.
 
-## Quick reference
+## Files
 
-Load these files:
-
-1. `methodology/architecture/SYNC_PATTERNS.md` — sync data-flow patterns
-   and the rule that concept-state reads are the only legal cross-concept
-   data access
-2. `methodology/architecture/ARTEFACT_MAP.md` — producer→consumer
-   dependency graph
-3. `templates/dependency-review-card.md` — per-concept card template
-4. `templates/pattern-d-summary.md` — cross-flow concept-state read summary
-5. `features/UC-XX-<slug>/stages/03_syncs/output/` — every `then`
-   invocation and `where` clause
-6. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
+Stage 03a `Inputs` names `SYNC_PATTERNS.md`, the card/summary templates, and the 01a/02/03 outputs. The extra `methodology/architecture/ARTEFACT_MAP.md` producer→consumer graph is optional background.
 
 ## Process
 

@@ -5,6 +5,8 @@ description: Map conceptual data models to a specific storage profile during CLA
 
 # CLAD Storage Mapping (Stage 04a)
 
+> **Role:** required stage guidance for Stage 04a. The stage `CONTEXT.md` `Inputs` table is authoritative for *which files to load*; load those exactly. This skill adds working process only and must not cause you to reload documents the contract already named.
+
 ## What this skill covers
 
 Producing profile-specific storage mappings from the Stage 03b conceptual
@@ -12,18 +14,9 @@ data models. For profiles that use a persistent store, produce one
 `<Name>.storage.md` per concept. For in-memory profiles, produce a
 `_NOT_APPLICABLE.md` note and skip.
 
-## Quick reference
+## Files
 
-Load these files:
-
-1. `methodology/implementation/STORAGE_MAPPING.md` — storage mapping
-   contract and rules
-2. `templates/storage.md` — output shape (for persistent profiles)
-3. `templates/storage-rdf-example.md` — RDF profile example
-4. `features/UC-XX-<slug>/stages/03b_data-model/output/` —
-   approved conceptual data models
-5. `clad.properties` — `storage.layer` key
-6. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
+Stage 04a `Inputs` names `STORAGE_MAPPING.md`, `templates/storage.md`, `clad.properties` (`storage.layer`), and the 03b outputs. The extra `templates/storage-rdf-example.md` is an RDF-profile example only.
 
 ## Process
 

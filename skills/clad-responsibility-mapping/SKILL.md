@@ -5,19 +5,16 @@ description: Derive a responsibility map during CLAD Stage 01a. Use when listing
 
 # CLAD Responsibility Mapping (Stage 01a)
 
+> **Role:** required stage guidance for Stage 01a. The stage `CONTEXT.md` `Inputs` table is authoritative for *which files to load*; load those exactly. This skill adds working process only and must not cause you to reload documents the contract already named.
+
 ## What this skill covers
 
 Producing a responsibility map — one row per concept — listing state, actions,
 and a coverage check. This defines the concept set for all downstream stages.
 
-## Quick reference
+## Files
 
-Load these files:
-
-1. `templates/responsibility-map.md` — output shape
-2. `features/UC-XX-<slug>/stages/01_usecase/output/usecase.md` —
-   the approved use case this map derives from
-3. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
+Stage 01a `Inputs` names `templates/responsibility-map.md` and the 01 use case. Nothing further is required.
 
 ## Process
 

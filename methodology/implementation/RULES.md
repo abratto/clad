@@ -5,6 +5,12 @@ stage outputs is a defect. An agent that suspects a request would
 require violating one of these must **stop and surface the conflict**
 rather than relax the rule.
 
+> **This file is the authoritative text.** `AGENTS.md` §"Hard rules"
+> carries only a compact index and defers here. R1–R9 are the nine
+> original rules; R10–R21 are hard-learned additions. R10 and R21 are
+> retired — their IDs are kept only so an audit that greps for them
+> finds the retirement note, not a live obligation.
+
 ## R1. No concept imports or references another concept
 
 In code (under `reference-impl/`):
@@ -121,6 +127,42 @@ outcomes that were defined separately for a reason.
 - [ ] Numeric status codes match the approved chain-table row exactly — no type coercion
 - [ ] No two constructor signatures or methods with the same erasure (Java compile error)
 
+## R10. *(retired)* Sync SPARQL variables MUST use the engine's reserved names
+
+> **Retired** with the fire-after-commit engine. The RDF/SPARQL engine's
+> reserved variables (`?_when_1`, `?_flow`, `?_then_1`) no longer exist:
+> syncs are declarative `SyncRule` `when/where/then` rules with explicit
+> named-argument bindings, and the flow token is an explicit record field.
+> No equivalent hazard remains.
+
+## R11. Every sync that fires on a shared business-concept action MUST filter by route
+
+A shared business-concept action (e.g. `Session/grant[GRANTED]`) fires
+for login, sign-in, AND register flows. If a respond sync does not
+declare its route scope (a `where`-clause `Guard` binding the request
+route from the `Web/request` input), it fires for all three flows,
+producing wrong HTTP status codes (e.g. login returning 200 instead of
+register's 201). Syncs that trigger on `Web/request` already carry the
+route in their trigger input — others MUST add a route `Guard`.
+
+## R12. A concept action MUST write a named `outcome` field
+
+The engine's dispatch loop skips an action that already has a completion
+record; a completion is identified by the presence of an `outcome` field
+in the returned map. Without it, an action is re-processed on the next
+drain (duplicate registrations, runaway sync firing). The completion
+record carries the `outcome` plus the action's named fields; syncs match
+on `outcome` in their `when` clause.
+
+## R13. Jackson must serialize null values (`Include.ALWAYS`)
+
+CLAD syncs author field-value maps where missing fields imply null.
+Jackson's default `NON_NULL` omits these fields, making Conduit spec
+assertions like `jsonpath "$.user.bio" == null` fail with `none` not
+`null`. Configure `jackson.serialization-inclusion: always` in
+`application.yml` or equivalent for your profile. See `clad.properties`
+for the canonical setting.
+
 ## R14. Concept unit tests assert field values, not only outcome tokens
 
 Every concept unit test must assert the action outcome and the primary
@@ -154,6 +196,76 @@ all downstream consumers receive null or empty values.
 
 Stage 04d red tests must therefore include field-value assertions for
 every primary completion field that downstream syncs read.
+
+## R17. Every change to a sync or concept MUST re-enter the CLAD stage pipeline
+
+`methodology/core/ITERATIVE_CHANGES.md` is binding. Before modifying any
+file under:
+
+- `features/UC-*/stages/02_concepts/output/` (concept specs)
+- `features/UC-*/stages/03_syncs/output/` (sync specs)
+- any profile's implementation source for concepts or syncs
+  (e.g. `reference-impl/java-legible/src/main/java/dev/legible/example/.../`
+  (canonical profile), or `reference-impl/java-micronaut-jena/src/.../{concepts,syncs}/`
+  (legacy profile))
+
+the agent MUST:
+
+1. Open `methodology/core/ITERATIVE_CHANGES.md` and classify the change
+   (Presentation / Behavioural / Structural).
+2. Identify the earliest stage whose `output/` is no longer accurate and
+   re-enter there.
+3. Update all affected stage artefacts (sync specs, concept specs, chain
+   tables) in the **same commit** as the implementation change.
+
+A Java sync class with no corresponding `*.sync.md`, or a Java concept
+class whose outcomes no longer match the approved `*.concept.md`, is a
+defect of the same severity as a cross-concept import (R1).
+
+Mechanised by `quality-gate/verify_implementation_parity.py`
+(implementation→artefact), `verify_sync_implementation_parity.py`
+(artefact→implementation), `verify_iterative_change_readiness.py`
+(intake), and `verify_iterative_change_coupling.py` (same-batch).
+
+## R18. The quality gate is mandatory at commit time
+
+`git commit --no-verify` is forbidden in a CLAD workspace. The
+pre-commit hook runs deterministic checks (stage sequence,
+iterative-change coupling). If it blocks a commit, the defect is real —
+a stage was skipped or code is decoupled from its spec. The only
+acceptable bypass is `CLAD_HOOK_SKIP=1`, and only under explicit human
+instruction.
+
+## R19. `test.command` is the sole valid test invocation
+
+The command in `clad.properties` runs the artefact pipeline gate
+(`verify_artefacts.py`) before any profile tests. Running the test
+framework directly (e.g. `mvn test` by itself) skips artefact
+verification and produces invalid feedback — tests may pass while stage
+artefacts are stale. Always use the full command from `clad.properties`.
+
+## R20. Engine and profile maintenance changes require maintenance governance
+
+Changes to engine/runtime sources, profile configuration/resources,
+Docker or Compose files, and root `clad.properties` that preserve the
+approved feature contract do not invent a new UC or re-run Stage 00.
+Before changing those surfaces, create `maintenance/<change-name>.md`
+from `templates/maintenance-change.md`, obtain the design-gate approval,
+and test against explicit runtime invariants. Obtain evidence-gate
+approval before commit. If the change alters an action outcome, response
+contract, concept boundary, sync rule, flow-token lineage, or observable
+action order, also re-enter the earliest affected feature stage under
+R17.
+
+Mechanised by `quality-gate/verify_maintenance_change_readiness.py`.
+
+## R21. *(retired)* RDF-star/SPARQL-star patterns MUST use Jena programmatic APIs
+
+> **Retired** with the fire-after-commit engine. RDF-star/SPARQL-star is
+> gone entirely: facts are relation-shaped (`FactStore`/`Region`), the
+> action log is a structured append-only record store, and there is no
+> SPARQL to construct. The strict-vs-lenient parser hazard this rule
+> guarded against no longer exists.
 
 ---
 

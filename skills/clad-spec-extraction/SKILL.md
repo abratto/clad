@@ -5,6 +5,8 @@ description: Extract per-concept SPEC slices during CLAD Stage 04b. Use when mec
 
 # CLAD SPEC Extraction (Stage 04b)
 
+> **Role:** required stage guidance for Stage 04b. The stage `CONTEXT.md` `Inputs` table is authoritative for *which files to load*; load those exactly. This skill adds working process only and must not cause you to reload documents the contract already named.
+
 ## What this skill covers
 
 Mechanically extracting SPEC slices — one `<Name>.spec.md` per concept —
@@ -12,21 +14,9 @@ from approved Stage 02 concept specs. SPECs declare action signatures,
 outcome enums, and flow-token shapes in a form that Stage 04c flow tests
 and Stage 04d concept TDD compile against.
 
-## Quick reference
+## Files
 
-Load these files:
-
-1. `methodology/architecture/WEB_CONCEPT.md` — bootstrap concept constraints
-2. `methodology/architecture/ENGINE.md` — runtime engine shape for flow
-   tokens
-3. `templates/spec.md` — SPEC slice output shape
-4. `features/UC-XX-<slug>/stages/02_concepts/output/` —
-   approved concept specs (source)
-5. `features/UC-XX-<slug>/stages/01b_chain-table/output/` —
-   approved chain tables (outcome names)
-6. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
-7. `features/_system/stages/00_actor-goal/output/port-spec.md` — only
-   when it exists; external adapter response-shape contract
+Stage 04b `Inputs` names `templates/spec.md` and the 02/01b outputs. The extra `WEB_CONCEPT.md` and `ENGINE.md` (bootstrap/runtime shape) are optional background for flow-token shape.
 
 ## Process
 

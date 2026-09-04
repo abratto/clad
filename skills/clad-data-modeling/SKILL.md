@@ -5,24 +5,17 @@ description: Produce conceptual data models during CLAD Stage 03b. Use when appl
 
 # CLAD Data Modeling (Stage 03b)
 
+> **Role:** required stage guidance for Stage 03b. The stage `CONTEXT.md` `Inputs` table is authoritative for *which files to load*; load those exactly. This skill adds working process only and must not cause you to reload documents the contract already named.
+
 ## What this skill covers
 
 Producing one `<Name>.data-model.md` per concept using the CSDP
 (Conceptual Schema Design Procedure) 7-step method. These are
 profile-neutral — they describe what data exists, not how it's stored.
 
-## Quick reference
+## Files
 
-Load these files:
-
-1. `methodology/architecture/DATA_MODEL_NOTES.md` — CSDP 7-step
-   procedure and data-model anatomy
-2. `templates/data-model.md` — output shape
-3. `features/UC-XX-<slug>/stages/02_concepts/output/` —
-   concept state definitions
-4. `features/UC-XX-<slug>/stages/03a_dependency-review/output/` —
-   Pattern D reads drive data-model coverage
-5. The current stage `CONTEXT.md` for exact Inputs/Outputs/Process
+Stage 03b `Inputs` names `DATA_MODEL_NOTES.md`, `templates/data-model.md`, and the 02/03a outputs. Nothing further is required.
 
 ## Process
 

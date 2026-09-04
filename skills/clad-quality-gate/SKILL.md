@@ -5,6 +5,10 @@ description: Run CLAD quality-gate verification scripts between stages. Use when
 
 # CLAD Quality Gate
 
+> **Role:** aggregator for the self-audit scripts between stages. The
+> stage `CONTEXT.md` `## Verify` section is authoritative for the exact
+> commands; this skill is the script reference.
+
 ## What this skill covers
 
 Self-audit discipline: running the verification scripts between stages
@@ -15,11 +19,9 @@ derivation.
 
 ## Quick reference
 
-Load these files:
-
-1. `methodology/implementation/QUALITY_GATE.md` — pre-commit quality
-   gate rationale and checklist
-2. The stage `CONTEXT.md` for the specific `Verify` commands to run
+Run the stage `CONTEXT.md` `## Verify` list; for the one-shot single-pass
+check, `methodology/implementation/QUALITY_GATE.md` documents the scripts
+below.
 
 ## Scripts
 
