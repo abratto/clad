@@ -9,7 +9,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `active`
+- **Status:** `closed`
 - **Affected profile(s):** `reference-impl/java-plain` (new), `reference-impl/java-micronaut-postgres` (re-lowered), `reference-impl/java-legible` (unchanged), `reference-impl/legible-storage` (already on the new engine)
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
