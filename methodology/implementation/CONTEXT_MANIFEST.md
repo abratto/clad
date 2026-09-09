@@ -17,6 +17,14 @@
 > - **Verify** — the pass/fail self-audit command(s) before the gate.
 > - **Gate** — human gate (`G0`/`G1`/`G2`/`G3`) or auto-advance.
 > - **Profile** — profile assumption for that stage.
+>
+> Profile path assumption, all implementation stages: the effective
+> `test.source.root` / `sync.impl.dir` / `concept.impl.dir` resolve via
+> the documented order — feature `_config/<key>.md` override first, then
+> root `clad.properties` — and `quality-gate/verify_profile_paths.py`
+> blocks the gate if those paths resolve outside the feature's declared
+> `_config/package-and-layout.md` roots. "Legacy profile only" always
+> means `java-micronaut-jena`; the default is `java-legible`.
 
 ## Stage 00 — actor/goal (system scope)
 
@@ -148,7 +156,7 @@
 | Outputs | `<feature-name>.feature`; step-definition skeleton; Cucumber runner |
 | Verify | `verify_feature_file_presence.py`; `verify_file_manifest.py`; `verify_gherkin_derivation.py`; `verify_step_definition_parity.py`; `verify_step_definition_derivation.py`; `verify_port_spec_contract.py` |
 | Gate | **G3 (Executable)** |
-| Profile | profile-specific test setup, chosen profile's build-and-test |
+| Profile | profile-specific test setup, chosen profile's build-and-test; impl/test paths bind per feature `_config/<key>.md` override, checked by `verify_profile_paths` |
 
 ## Stage 04d-red — concept test derivation
 
@@ -160,7 +168,7 @@
 | Outputs | `concept-test-derivation.md` + test files |
 | Verify | `verify_file_manifest.py`; `verify_concept_test_derivation.py`; `verify_concept_field_assertions.py`; `verify_test_naming.py` |
 | Gate | auto → 04d-green |
-| Profile | default `java-legible`; legacy Jena conditional |
+| Profile | default `java-legible`; legacy Jena conditional; impl/test paths bind per feature `_config/<key>.md` override, checked by `verify_profile_paths` |
 
 ## Stage 04d-green — concept implementation
 
@@ -172,7 +180,7 @@
 | Outputs | `<Name>Concept.java` + green tests (side effects) |
 | Verify | green tests; field-value assertions; iterative-change coupling |
 | Gate | auto → 04e-red |
-| Profile | default `java-legible`; legacy Jena conditional |
+| Profile | default `java-legible`; legacy Jena conditional; impl/test paths bind per feature `_config/<key>.md` override, checked by `verify_profile_paths` |
 
 ## Stage 04e-red — sync test derivation
 
@@ -184,7 +192,7 @@
 | Outputs | `sync-test-derivation.md` + test files |
 | Verify | `verify_file_manifest.py`; `verify_test_naming.py` |
 | Gate | auto → 04e-green |
-| Profile | default `java-legible`; legacy Jena conditional |
+| Profile | default `java-legible`; legacy Jena conditional; impl/test paths bind per feature `_config/<key>.md` override, checked by `verify_profile_paths` |
 
 ## Stage 04e-green — sync implementation
 
@@ -196,7 +204,7 @@
 | Outputs | `green-evidence.md`; `<SyncName>.java` + green tests |
 | Verify | `verify_cucumber_green.py`; `verify_implementation_parity.py`; `verify_sync_implementation_parity.py` |
 | Gate | auto → 05 |
-| Profile | default `java-legible`; legacy Jena conditional |
+| Profile | default `java-legible`; legacy Jena conditional; impl/test paths bind per feature `_config/<key>.md` override, checked by `verify_profile_paths` |
 
 ## Stage 05 — verify + close
 

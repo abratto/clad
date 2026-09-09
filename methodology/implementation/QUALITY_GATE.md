@@ -200,6 +200,7 @@ consistency checks across the CLAD artefact chain:
 |---|---|---|
 | `verify_stage_sequence.py` | Any | No stage was skipped (contiguous prefix), and each cleared human gate is recorded as approved in `RESUME.md` |
 | `verify_file_manifest.py` | Any | `output/` contains exactly the expected files |
+| `verify_profile_paths.py` | 04c–04e | Profile-path integrity: configured `test.source.root`/impl dirs resolve inside the feature's declared `package-and-layout.md` roots (blocks); warns on seed `reference-impl/` pointers when the layout declares elsewhere |
 | `verify_scenario_coverage.py` | 01, 01b, 03 | Goal → scenario → chain → sync coverage |
 | `verify_outcome_alignment.py` | 02 | Chain-table outcomes match SPEC enums |
 | `verify_action_chain.py` | 02–04b | Action names consistent across all artefacts |

@@ -22,6 +22,7 @@ input by some checks.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional
 
@@ -214,6 +215,16 @@ def _features_dir(feature_root: str) -> str:
 def _test_command(feature_root: str) -> str:
     return _prop(feature_root, "test.command")
 
+def _package_layout(feature_root: str) -> str:
+    return os.path.join(feature_root, "_config", "package-and-layout.md")
+
+_FEATURE_IMPL_PATHS = Check(
+    name="profile_paths",
+    script="verify_profile_paths.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [_package_layout(r)],
+)
+
 _SYNC_ROUTE_FILTERS = Check(
     name="sync_route_filters",
     script="verify_sync_route_filters.py",
@@ -379,12 +390,13 @@ STAGES: List[Stage] = [
     Stage("04b", "SPEC", "04_implement/04b_spec",
           checks=[_SPEC_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN]),
     Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3,
-          checks=[_STEP_DEF_PARITY, _STEP_DEF_DERIVATION]),
+          checks=[_FEATURE_IMPL_PATHS, _STEP_DEF_PARITY, _STEP_DEF_DERIVATION]),
         Stage("04d-red", "Concept TDD red", "04_implement/04d_concept-tdd/04d_red-tests",
-            checks=[_FIELD_ASSERTIONS]),
+            checks=[_FEATURE_IMPL_PATHS, _FIELD_ASSERTIONS]),
         Stage("04d-green", "Concept TDD green", "04_implement/04d_concept-tdd/04d_green-impl",
-            checks=[_FIELD_ASSERTIONS]),
-        Stage("04e-red", "Sync TDD red", "04_implement/04e_sync-tdd/04e_red-tests"),
+            checks=[_FEATURE_IMPL_PATHS, _FIELD_ASSERTIONS]),
+        Stage("04e-red", "Sync TDD red", "04_implement/04e_sync-tdd/04e_red-tests",
+            checks=[_FEATURE_IMPL_PATHS]),
         Stage("04e-green", "Sync TDD green", "04_implement/04e_sync-tdd/04e_green-impl",
             checks=[_IMPL_PARITY, _SYNC_IMPL_PARITY, _SYNC_DECLARATIVE,
                 _ACTION_LOG_ISOLATION, _CUCUMBER_GREEN]),
@@ -470,25 +482,66 @@ def _repo_root(feature_root: str) -> str:
     return os.path.dirname(os.path.dirname(feature_root))
 
 
+_PROPERTY_KEY_MD = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*\.[A-Za-z0-9_.-]+$")
+
+
+def _config_value_from_file(path: str) -> str:
+    """Value body of a feature-local `<key>.md` override file.
+
+    The value is the first non-comment, non-blank line, trimmed. A comment is
+    an HTML comment (`<!-- ... -->`) or a line starting with `#`. An empty
+    (or comment-only) file yields '' — meaning "override not set".
+    """
+    try:
+        with open(path) as fh:
+            for line in fh:
+                stripped = line.strip()
+                if not stripped or stripped.startswith("#"):
+                    continue
+                if stripped.startswith("<!--") or stripped.endswith("-->"):
+                    continue
+                return stripped
+    except OSError:
+        pass
+    return ""
+
+
 def _read_config(feature_root: str) -> Dict[str, str]:
-    """Read clad.properties as a flat dict of key -> value.
-    Handles the INI-free key=value format (no section headers required)."""
-    path = os.path.join(_repo_root(feature_root), "clad.properties")
+    """Read effective configuration as a flat dict of key -> value.
+
+    Sources, in the documented resolution order (AGENTS.md §4a, lower
+    number wins):
+
+    1. Feature-local override — `<feature_root>/_config/<key>.md`, one file
+       per key, whose body is the value. Only files whose stem looks like a
+       dotted property key (`test.source.root.md`, not `README.md`) are
+       considered, so feature-reference docs never become phantom keys.
+    2. Repo-root `clad.properties` (INI-free key=value format).
+    """
+    root_path = os.path.join(_repo_root(feature_root), "clad.properties")
     result: Dict[str, str] = {}
-    if not os.path.exists(path):
-        return result
-    with open(path) as fh:
-        for line in fh:
-            line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
+    if os.path.exists(root_path):
+        with open(root_path) as fh:
+            for line in fh:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, _, v = line.partition("=")
+                key = k.strip()
+                # Strip inline comments from values (e.g. 'value  # comment')
+                value = v.strip()
+                if "  #" in value:
+                    value = value.split("  #")[0].rstrip()
+                result[key] = value
+    config_dir = os.path.join(feature_root, "_config")
+    if os.path.isdir(config_dir):
+        for name in sorted(os.listdir(config_dir)):
+            if not name.endswith(".md") or not _PROPERTY_KEY_MD.match(
+                    name[:-len(".md")]):
                 continue
-            k, _, v = line.partition("=")
-            key = k.strip()
-            # Strip inline comments from values (e.g. 'value  # comment')
-            value = v.strip()
-            if "  #" in value:
-                value = value.split("  #")[0].rstrip()
-            result[key] = value
+            value = _config_value_from_file(os.path.join(config_dir, name))
+            if value:
+                result[name[:-len(".md")]] = value
     return result
 
 

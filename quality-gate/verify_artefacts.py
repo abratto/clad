@@ -132,6 +132,22 @@ def main():
             for line in detail.splitlines()[:6]:
                 print(f"          {line}")
 
+        # --- 1b. Profile-path integrity (skips silently when the feature
+        # declares no _config/package-and-layout.md) ---
+        code, out, err = run_script(
+            "verify_profile_paths.py",
+            ["--feature", root],
+        )
+        detail = (out + err).strip()
+        ok = code == 0
+        if not ok or "WARN" in detail:
+            mark = "PASS" if ok else "FAIL"
+            print(f"    [{mark}] profile paths")
+            if not ok:
+                all_pass = False
+            for line in detail.splitlines()[:6]:
+                print(f"          {line}")
+
         # --- 2. Per-stage checks ---
         checks = [c for c in stage.checks if not c.skip_in_artefact_gate]
 

@@ -10,6 +10,58 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.3.4] — 2026-09-04
+
+### Changed
+
+- **Profile-path integrity (derived-repo fix).** The profile-aware
+  quality-gate checks (`sync.impl.dir` / `concept.impl.dir` /
+  `test.source.root` consumers) no longer silently audit the wrong tree
+  in derived repos that kept the seed's `reference-impl/` defaults:
+  - **Feature-local overrides are now script-enforced** in
+    `quality-gate/clad_stages.py` `_read_config()`:
+    `features/UC-XX-<slug>/_config/<key>.md` (one file per key, body is
+    the value) overrides the repo-root `clad.properties` default, per the
+    documented AGENTS.md §4a resolution order. Only dotted property-key
+    file names qualify (`test.source.root.md`, not `README.md`) so
+    feature-reference docs never become phantom keys; empty/comment-only
+    key files leave the root default in force. A derived repo can
+    therefore re-bind its implementation/test paths per feature **without
+    editing root `clad.properties`** (an R20 maintenance-routed surface).
+  - **New `quality-gate/verify_profile_paths.py`** — blocks (exit 1) when a
+    configured path resolves outside the feature's declared
+    `_config/package-and-layout.md` roots; warns (advisory, exit 0) when a
+    configured path points into the seed's `reference-impl/` example while
+    the feature layout declares its own; passes quietly for seed-style
+    agreement; skips when no layout is declared. Registered as the
+    `profile_paths` stage check on 04c/04d-red/04d-green/04e-red in
+    `quality-gate/clad_stages.py` (per-stage self-audit and gate receipts)
+    and run cross-cutting per feature in `verify_artefacts.py`.
+- **Docs**: `AGENTS.md` §4a documents the script-enforced override and the
+  block/warn semantics; `methodology/implementation/QUALITY_GATE.md` gains
+  the script row; `methodology/implementation/CONTEXT_MANIFEST.md` notes
+  the binding on the five implementation-stage profile rows.
+
+### Added
+
+- **`quality-gate/tests/test_profile_paths.py`** — 7 regression tests
+  covering override-wins, empty-override fallback, no-phantom-keys,
+  blocking mismatch (with the escape-hatch message), override resolving
+  the mismatch, seed-style agreement, and skip-without-layout. Quality-gate
+  suite is now 52 tests.
+
+### Rationale
+
+A derived repo copied from a CLAD seed keeps root `clad.properties`
+pointing at the seed's `reference-impl/` example; those paths exist, so
+step-definition/impl parity checks bound to them ran against the seed's
+glue instead of the derived app tree — a silent wrong-tree mis-audit that
+blocked Gate 3 (e.g. `foodsaver` UC-01 Stage 04c). The sanctioned fix used
+to require a two-gate maintenance record for a one-line root-property
+edit; the feature-local override plus the blocking integrity check now
+make that route unnecessary in the common case, with the seed-style setup
+remaining valid (no warnings).
+
 ## [0.3.3] — 2026-09-04
 
 ### Changed
