@@ -1,72 +1,30 @@
 package com.example.app.syncs;
 
-import com.example.app.concepts.passwordauth.PasswordAuthConcept;
-import dev.clad.engine.ActionLog;
-import dev.clad.engine.FlowManager;
-import dev.clad.engine.SyncAgent;
-import dev.clad.engine.SyncMetadata;
-import dev.clad.engine.SyncTrigger;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import dev.legible.engine.Clause;
+import dev.legible.engine.Source;
+import dev.legible.engine.SyncRule;
+import java.util.List;
+import java.util.Map;
+import static dev.legible.engine.SyncRule.invoke;
+import static dev.legible.engine.SyncRule.lit;
+import static dev.legible.engine.SyncRule.ref;
 
 /**
- * Sync: WhenPasswordAuthCheckLockedThenWebRespondForLogin
+ * Row 3b[LOCKED]-to-4c: respond 401 with the visible lockout message.
  *
- * <p>When: {@code PasswordAuth/check[outcome=LOCKED]}
- * <p>Then: {@code Web/respond { statusCode: 401, message }}
+ * <p>The declarative SyncRule realization of the Stage 03 WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md.
+ * Trigger and target tokens are copied verbatim from the approved chain
+ * table (literal lock). No imperative branching, no state, no I/O (R3).
  */
-@SyncMetadata(
-        flow = "Login",
-        step = 3,
-        triggeredBy = "PasswordAuth/check[LOCKED]",
-        fires = "Web/respond[401]",
-        where = "locked account path")
-@Singleton
-public final class WhenPasswordAuthCheckLockedThenWebRespondForLogin extends SyncAgent {
+public final class WhenPasswordAuthCheckLockedThenWebRespondForLogin {
 
-    private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
-    private static final String LOGIN_ROUTE = "login";
-    private static final String LOCKED_MESSAGE = "Too many attempts. Try again in 15 minutes.";
-
-    @Inject
-    public WhenPasswordAuthCheckLockedThenWebRespondForLogin(ActionLog actionLog) {
-        super(actionLog);
-    }
-
-    @Override
-    public String syncName() { return "whenPasswordAuthCheckLockedThenWebRespondForLogin"; }
-
-    @Override
-    public SyncTrigger trigger() {
-        return new SyncTrigger(PasswordAuthConcept.IRI, "check", null);
-    }
-
-    @Override
-    protected String whereClause() {
-        return """
-            ?_when_1 :concept <%s> ;
-                     :name    "check" .
-            << ?_when_1 :outcome "LOCKED" >> :flow ?_flow .
-            ?_web_req :concept <%s> ;
-                      :name    "request" ;
-                      :flow    ?_flow ;
-                      :input   ?_web_inp .
-            ?_web_inp :route ?_route .
-            """.formatted(PasswordAuthConcept.IRI, WEB_IRI);
-    }
-
-    @Override
-    protected String thenBindings() {
-        return """
-            ?_then_1 :concept <%s> ;
-                     :name    "respond" ;
-                     :input   [ :statusCode 401 ; :message ?_message ] .
-            """.formatted(WEB_IRI);
-    }
-
-    @Override
-    protected String parameterizeSparql(String sparql) {
-        sparql = bindLiteral(sparql, "_route", LOGIN_ROUTE);
-        return bindLiteral(sparql, "_message", LOCKED_MESSAGE);
+    public SyncRule rule() {
+        return SyncRule.of(
+                "WhenPasswordAuthCheckLockedThenWebRespondForLogin",
+                "PasswordAuth", "check", "LOCKED",
+                List.of(),
+                List.of(invoke("Web", "respond", Map.of(
+                        "status", lit(401),
+                        "message", lit("Too many attempts. Try again in 15 minutes.")))));
     }
 }

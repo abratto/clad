@@ -1,0 +1,38 @@
+# fly.toml — Fly.io deployment for the re-lowered reference profile.
+#
+# Deploy:
+#   cd reference-impl/java-micronaut-postgres
+#   fly launch --no-deploy          # creates the app + a fly Postgres and
+#                                   # wires DATABASE_URL automatically
+#   fly deploy
+#
+# Concept state is Postgres (R-map-derived tables); Flyway owns base DDL.
+# Region/Machine sizing follows the Fly.io defaults; override with
+# `fly scale memory`.
+
+app = "clad-reference-login"
+primary_region = "ams"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  MICRONAUT_ENVIRONMENTS = "production"
+
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [[services.tcp_checks]]
+    interval = "10s"
+    timeout = "2s"
+    grace_period = "5s"

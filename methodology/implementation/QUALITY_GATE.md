@@ -168,8 +168,14 @@ not relax the *intent*.
 ## Reference profiles
 
 The canonical profile is `reference-impl/java-legible/` (fire-after-commit
-engine, in-memory `FactStore`); `reference-impl/legible-storage/` adds the
-Jena and Postgres backends. The legacy `reference-impl/java-micronaut-jena/`
+engine, in-memory `FactStore`). The plain-Java quick-start is
+`reference-impl/java-plain/` (same engine, login only, zero framework,
+gate: `mvn -pl java-plain -am test`). The durable deployable profile is
+`reference-impl/java-micronaut-postgres/` re-lowered onto the fire-after-commit
+engine (Micronaut transport, `RmapPostgresFactStore`; gate:
+`mvn -pl legible-storage,java-micronaut-postgres -am test`);
+`reference-impl/legible-storage/` carries the Jena/Postgres FactStore
+conformance suites. The legacy `reference-impl/java-micronaut-jena/`
 profile maps the principles above to:
 
 | Principle | Command |

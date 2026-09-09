@@ -1,161 +1,103 @@
 package com.example.app.concepts.passwordauth;
 
-import dev.clad.engine.ActionLog;
-import dev.clad.engine.ActionRecord;
-import dev.clad.engine.CompletionBus;
-import dev.clad.engine.ConceptAgent;
-import dev.clad.engine.SyncEvaluator;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.jooq.DSLContext;
-import org.jooq.impl.DSL;
+import dev.legible.engine.Concept;
+import dev.legible.engine.Region;
 
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.Map;
-import java.util.UUID;
-
-import static com.example.app.db.tables.PasswordauthCredentials.PASSWORDAUTH_CREDENTIALS;
+import java.util.Set;
 
 /**
- * The PasswordAuth concept: stores a password verifier per userId and checks
- * supplied passwords. State lives in the {@code passwordauth_credentials} table.
- *
- * <p>Verifier is a plain hash placeholder for the reference profile — replace
- * with a real KDF (Argon2/bcrypt) in production profiles.
- *
- * <p>Actions:
- * <ul>
- *   <li>{@code setCredential} — input: {@code userId, password}.</li>
- *   <li>{@code check} — input: {@code userId, password}; output: {@code outcome}
- *       in {@code OK | BAD_PASSWORD | NO_CREDENTIAL | LOCKED}.</li>
- * </ul>
+ * Verifies a principal by {@code userId + password}. State is the relations
+ * {@code passwordHash}, {@code failedAttempts}, {@code lockedUntil} over
+ * {@code UserId}, held in this concept's own region.
  */
-@Singleton
-public final class PasswordAuthConcept extends ConceptAgent {
-
-    public static final String IRI = "https://clad.dev/concept/passwordauth";
+public final class PasswordAuthConcept implements Concept {
 
     private static final int LOCKOUT_THRESHOLD = 5;
     private static final long LOCKOUT_WINDOW_MILLIS = 15L * 60L * 1000L;
 
-    private final DSLContext dsl;
+    private final Region region;
 
-    @Inject
-    public PasswordAuthConcept(ActionLog actionLog, CompletionBus completionBus,
-                               SyncEvaluator evaluator, DSLContext dsl) {
-        super(actionLog, completionBus, evaluator);
-        this.dsl = dsl;
-    }
-
-    /** Test-only constructor — sync evaluation bypassed for isolated tests. */
-    public PasswordAuthConcept(ActionLog actionLog, CompletionBus completionBus, DSLContext dsl) {
-        super(actionLog, completionBus);
-        this.dsl = dsl;
+    public PasswordAuthConcept(Region region) {
+        this.region = region;
     }
 
     @Override
-    protected String conceptIRI() {
-        return IRI;
+    public String name() {
+        return "PasswordAuth";
     }
 
     @Override
-    public void pollAll() {
-        pollAndProcess("setCredential");
-        pollAndProcess("check");
-    }
-
-    @Override
-    protected void processInvocation(ActionRecord invocation) {
-        switch (invocation.actionName()) {
-            case "setCredential" -> doSet(invocation);
-            case "check" -> doCheck(invocation);
-            default -> writeError(invocation, "unknown action: " + invocation.actionName());
-        }
+    public Map<String, Object> execute(String action, Map<String, Object> input) {
+        return switch (action) {
+            case "setCredential" -> setCredential(input);
+            case "check" -> check(input);
+            default -> Map.of("outcome", "error", "message", "unknown action: " + action);
+        };
     }
 
     /** Test/seed helper. */
     public void seedCredential(String userId, String password) {
-        upsert(dsl, userId, verify(password), 0, null);
+        region.clear(userId, "passwordHash");
+        region.clear(userId, "failedAttempts");
+        region.clear(userId, "lockedUntil");
+        region.write(userId, "passwordHash", verify(password));
     }
 
-    private void upsert(DSLContext ctx, String userId, String verifier, int failedAttempts, Long lockedUntilMillis) {
-        OffsetDateTime lockedUntil = lockedUntilMillis == null ? null
-                : OffsetDateTime.ofInstant(Instant.ofEpochMilli(lockedUntilMillis), ZoneOffset.UTC);
-        ctx.insertInto(PASSWORDAUTH_CREDENTIALS,
-                        PASSWORDAUTH_CREDENTIALS.USER_ID, PASSWORDAUTH_CREDENTIALS.PASSWORD_HASH,
-                        PASSWORDAUTH_CREDENTIALS.FAILED_ATTEMPTS, PASSWORDAUTH_CREDENTIALS.LOCKED_UNTIL)
-                .values(UUID.fromString(userId), verifier, failedAttempts, lockedUntil)
-                .onConflict(PASSWORDAUTH_CREDENTIALS.USER_ID)
-                .doUpdate()
-                .set(PASSWORDAUTH_CREDENTIALS.PASSWORD_HASH, verifier)
-                .set(PASSWORDAUTH_CREDENTIALS.FAILED_ATTEMPTS, failedAttempts)
-                .set(PASSWORDAUTH_CREDENTIALS.LOCKED_UNTIL, lockedUntil)
-                .execute();
-    }
-
-    private void doSet(ActionRecord invocation) {
-        String userId = invocation.binding("userId");
-        String password = invocation.binding("password");
+    private Map<String, Object> setCredential(Map<String, Object> input) {
+        String userId = (String) input.get("userId");
+        String password = (String) input.get("password");
         if (userId == null || password == null) {
-            writeError(invocation, "missing userId or password");
-            return;
+            return Map.of("outcome", "error", "message", "missing userId or password");
         }
         seedCredential(userId, password);
-        writeCompletion(invocation, Map.of(
-                "outcome", ResourceFactory.createStringLiteral("SET"),
-                "userId", ResourceFactory.createStringLiteral(userId)));
+        return Map.of("outcome", "SET", "userId", userId);
     }
 
-    private void doCheck(ActionRecord invocation) {
-        String userId = invocation.binding("userId");
-        String password = invocation.binding("password");
+    private Map<String, Object> check(Map<String, Object> input) {
+        String userId = (String) input.get("userId");
+        String password = (String) input.get("password");
         if (userId == null || password == null) {
-            writeError(invocation, "missing userId or password");
-            return;
+            return Map.of("outcome", "error", "message", "missing userId or password");
         }
-        UUID id = UUID.fromString(userId);
-        // The read-modify-write is atomic: the row is locked FOR UPDATE until the
-        // transaction commits, so concurrent checks for the same user serialise
-        // and the failed-attempt counter cannot lose an increment.
-        String outcome = dsl.transactionResult(configuration -> {
-            DSLContext tx = DSL.using(configuration);
-            var record = tx.select(
-                            PASSWORDAUTH_CREDENTIALS.PASSWORD_HASH,
-                            PASSWORDAUTH_CREDENTIALS.FAILED_ATTEMPTS,
-                            PASSWORDAUTH_CREDENTIALS.LOCKED_UNTIL)
-                    .from(PASSWORDAUTH_CREDENTIALS)
-                    .where(PASSWORDAUTH_CREDENTIALS.USER_ID.eq(id))
-                    .forUpdate()
-                    .fetchOne();
-            long now = System.currentTimeMillis();
-            if (record == null) {
-                return "NO_CREDENTIAL";
-            }
-            String verifier = record.get(PASSWORDAUTH_CREDENTIALS.PASSWORD_HASH);
-            Integer rawAttempts = record.get(PASSWORDAUTH_CREDENTIALS.FAILED_ATTEMPTS);
-            int failedAttempts = rawAttempts == null ? 0 : rawAttempts;
-            OffsetDateTime lockedUntil = record.get(PASSWORDAUTH_CREDENTIALS.LOCKED_UNTIL);
-            long lockedUntilMillis = lockedUntil == null ? 0L : lockedUntil.toInstant().toEpochMilli();
-            if (lockedUntilMillis > now) {
-                return "LOCKED";
-            }
-            if (verifier.equals(verify(password))) {
-                upsert(tx, userId, verifier, 0, null);
-                return "OK";
-            }
-            int newAttempts = failedAttempts + 1;
-            Long newLockedUntil = newAttempts >= LOCKOUT_THRESHOLD
-                    ? now + LOCKOUT_WINDOW_MILLIS
-                    : null;
-            upsert(tx, userId, verifier, newAttempts, newLockedUntil);
-            return "BAD_PASSWORD";
-        });
-        writeCompletion(invocation, Map.of(
-                "outcome", ResourceFactory.createStringLiteral(outcome),
-                "userId", ResourceFactory.createStringLiteral(userId)));
+        Set<String> verifiers = region.read(userId, "passwordHash");
+        if (verifiers.isEmpty()) {
+            return Map.of("outcome", "NO_CREDENTIAL", "userId", userId);
+        }
+        String verifier = verifiers.iterator().next();
+        long now = System.currentTimeMillis();
+
+        Set<String> locked = region.read(userId, "lockedUntil");
+        if (!locked.isEmpty() && Long.parseLong(locked.iterator().next()) > now) {
+            return Map.of("outcome", "LOCKED", "userId", userId);
+        }
+        if (verifier.equals(verify(password))) {
+            clearAttempts(userId);
+            return Map.of("outcome", "OK", "userId", userId);
+        }
+        int failed = currentFailed(userId) + 1;
+        Long lockedUntil = failed >= LOCKOUT_THRESHOLD ? now + LOCKOUT_WINDOW_MILLIS : null;
+        recordFailure(userId, failed, lockedUntil);
+        return Map.of("outcome", "BAD_PASSWORD", "userId", userId);
+    }
+
+    private void clearAttempts(String userId) {
+        region.clear(userId, "failedAttempts");
+        region.clear(userId, "lockedUntil");
+    }
+
+    private int currentFailed(String userId) {
+        Set<String> f = region.read(userId, "failedAttempts");
+        return f.isEmpty() ? 0 : Integer.parseInt(f.iterator().next());
+    }
+
+    private void recordFailure(String userId, int failed, Long lockedUntil) {
+        region.clear(userId, "failedAttempts");
+        region.write(userId, "failedAttempts", String.valueOf(failed));
+        region.clear(userId, "lockedUntil");
+        if (lockedUntil != null) {
+            region.write(userId, "lockedUntil", String.valueOf(lockedUntil));
+        }
     }
 
     /** Trivial verifier — DO NOT USE IN PRODUCTION. */

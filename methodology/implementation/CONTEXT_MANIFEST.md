@@ -24,7 +24,10 @@
 > root `clad.properties` — and `quality-gate/verify_profile_paths.py`
 > blocks the gate if those paths resolve outside the feature's declared
 > `_config/package-and-layout.md` roots. "Legacy profile only" always
-> means `java-micronaut-jena`; the default is `java-legible`.
+> means `java-micronaut-jena`; the default is `java-legible`. The plain
+> quick-start is `java-plain`; the durable HTTP/Postgres deployable stack
+> (Micronaut adapters, R-map-derived tables, Docker/Fly.io) is
+> `java-micronaut-postgres`.
 
 ## Stage 00 — actor/goal (system scope)
 
@@ -132,7 +135,7 @@
 | Outputs | `<Name>.storage.md` per concept **or** `_NOT_APPLICABLE.md` (in-memory profile) |
 | Verify | `verify_file_manifest.py` |
 | Gate | auto → 04c |
-| Profile | default = in-memory `FactStore` (`java-legible`); legacy Jena/Postgres conditional |
+| Profile | default = in-memory `FactStore` (`java-legible`); durable R-map Postgres via `java-micronaut-postgres`; legacy Jena conditional |
 
 ## Stage 04b — SPEC
 

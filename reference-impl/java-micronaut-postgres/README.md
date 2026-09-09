@@ -1,81 +1,73 @@
 # reference-impl/java-micronaut-postgres/
 
-A reference profile that maps the CLAD methodology onto Java + Micronaut with
-**relational concept state** in Postgres, while keeping the shared in-memory
-action log for coordination.
+The **Ports & Adapters + Postgres** reference profile on the
+fire-after-commit engine: Micronaut for the HTTP transport adapter,
+Postgres for durable concept state (schemas *derived* from the Stage 03b
+data models), companion guidance for running the same stack in Docker
+Compose and on Fly.io.
 
 | Layer | Technology |
 |---|---|
 | Language | Java 21 |
 | DI / HTTP runtime | Micronaut Platform 4.10.x |
-| Coordination engine | `clad-engine` (shared, in-memory Jena action log) |
-| Concept state | Postgres via JOOQ + Flyway (schema-per-application) |
-| Tests | JUnit 5, Testcontainers (Postgres) |
-| Architecture rules | ArchUnit 1.x |
+| Coordination engine | `legible-engine` (fire-after-commit; in-memory action log) |
+| Concept state | Postgres via `legible-storage`'s `RmapPostgresFactStore` (R-map, per-concept typed tables) |
+| Base DDL | Flyway (`V1__login_rmap.sql` mirrors the R-map derivation); jOOQ codegen introspects it |
+| Tests | JUnit 5, Testcontainers (Postgres), ArchUnit 1.x |
+| Deploy | `Dockerfile` + `docker-compose.yml`; `fly.toml` for Fly.io |
 
-The action log is **always in-memory RDF** — only concept state differs per
-profile. Here, concept state is relational. See the sibling
-[`java-micronaut-jena/`](../java-micronaut-jena/) profile for the RDF/SPARQL
-realization of the same three concepts.
-
-## Mapping methodology → this profile
+## Package mapping (this profile's realization)
 
 | Methodology concept | Java realization |
 |---|---|
-| Concept | A package under `com.example.app.concepts.<name>` with one `*Concept` class extending `dev.clad.engine.ConceptAgent`, persisting state via JOOQ |
-| Sync | A `final` class under `com.example.app.syncs` extending `dev.clad.engine.SyncAgent` (identical to the Jena profile) |
-| Concept state | Flyway migrations under `src/main/resources/db/migration/`; JOOQ codegen into `com.example.app.db` |
-| Action log | `dev.clad.engine.ActionLog` (in-memory), wired by `com.example.app.storage.JooqFactory` |
-| Flow token | `dev.clad.engine.FlowManager` (unchanged) |
+| Concept | one `*Concept implements dev.legible.engine.Concept` under `com.example.app.concepts.<name>`, state in the concept's own `Region` (R2) |
+| Sync | one final `*Rule` carrier per `*.sync.md` under `com.example.app.syncs`, emitting a declarative `SyncRule` (R3); assembled by `LoginSyncRules.all()` |
+| Web bootstrap (R4) | `WebController` and `LoginGateway` — normalize input, `engine.run("Web", "request", …)`, translate the authored `Web/respond` fields |
+| Concept state | R-map-derived typed tables (Stage 03b) via `dev.legible.storage.LoginSchemas`; Flyway owns base DDL (`V1__login_rmap.sql`) |
+| Flow token | the engine's action log + `causedBySync` lineage (unchanged across FactStore backends) |
 
-## The relational lowering
+The action log is **in-memory** in every fire-after-commit profile — only
+concept state differs. The same `Concept`/`SyncRule` code the
+[`java-legible`](../java-legible/) profile runs against
+`InMemoryFactStore`, [`java-plain`](../java-plain/) boots method-only, and
+this profile runs against `RmapPostgresFactStore`, proven by
+`legible-storage`'s `StorageContractTest`.
 
-Stage 03b conceptual data models map to the schema deterministically via
-Halpin's Rmap, specialized for CLAD — see [`RELATIONAL_LOWERING.md`](RELATIONAL_LOWERING.md).
+## Run it
 
-Key rules:
-
-- **One schema per application** (`public`); each table is named for the
-  **relation** it holds, never the entity (`usernames`,
-  `passwordauth_credentials`, `session_tokens`).
-- **No foreign key crosses a concept boundary.** Cross-concept identifiers are
-  opaque typed columns. This is hard rule R2 at the DDL level.
-- Mandatory → `NOT NULL`, optional → nullable, defaults → `DEFAULT`,
-  uniqueness → `UNIQUE`.
-
-## Build & test
-
-```sh
-# from the repo root
-mvn test -f reference-impl/pom.xml -pl java-micronaut-postgres -am
+```bash
+mvn -pl java-micronaut-postgres -am test     # Testcontainers-backed tests
+mvn -f ../../pom.xml -pl java-micronaut-postgres -am exec:java -Dexec.mainClass=com.example.app.Application
+# then: curl -X POST localhost:8080/login -d '{"username":"ada","password":"correct-horse-battery-staple"}' -H 'Content-Type: application/json'
 ```
 
-The JOOQ codegen runs offline (`DDLDatabase` parses the Flyway SQL — no live DB
-needed at build). The concept/flow tests spin up a real Postgres via
-Testcontainers (`postgres:16-alpine`), so Docker must be available to run them.
+The demo seed registers `ada` / `correct-horse-battery-staple`
+(`Application.DemoSeed`).
 
-## Running locally
+## Container + deploy
 
-```sh
-docker run -d --name clad-pg -p 5432:5432 -e POSTGRES_DB=clad -e POSTGRES_USER=clad -e POSTGRES_PASSWORD=clad postgres:16-alpine
-mvn -f reference-impl/pom.xml -pl java-micronaut-postgres -am mn:run
+```bash
+docker compose up --build    # app + Postgres; smoke: POST /login per scenario
+fly launch --no-deploy       # fly.io: creates app + Postgres, wires DATABASE_URL
+fly deploy
 ```
 
-Then:
+`docker compose` is the test/local verification surface (manual smoke, not
+part of the gate); `fly.toml` ships the Fly.io config — attach `fly
+postgres` in launch and `DATABASE_URL`/`PGUSER`/`PGPASSWORD` are wired
+through `application.yml`.
 
-```sh
-curl -X POST http://localhost:8080/login \
-     -H 'Content-Type: application/json' \
-     -d '{"username":"ada","password":"correct-horse-battery-staple"}'
-# => {"sessionToken":"<uuid>"}
-```
+## Debug surface
 
-Flyway runs at startup; the `DemoSeed` registers `ada`. The datasource is
-configured in `src/main/resources/application.yml`.
+`/api/dev/flows`, `/api/dev/flow/{flowId}`, `/api/dev/stuck`,
+`/api/dev/concept/{name}/facts`, and `/api/dev/syncs` expose the engine's
+runtime evidence (DebugApi): committed-but-unfinished actions, per-concept
+region contents, and the registered sync rules. Disabled in `prod`.
 
-## Debug introspection
+## Not included (deliberate surface reduction)
 
-The shared `DebugController` exposes `/api/dev/{flows,syncs,flow/{token},stuck,actions}`
-(dev-only, opt-in). The RDF-only `/concept/{name}/triples` endpoint is not
-present here — inspect concept state with `psql` (`SELECT * FROM usernames;`)
-instead.
+The legacy version of this module also carried `AuthController` and
+`GraphQLController` demo transports over the legacy transactional engine.
+They were removed in the re-lowering (see
+`maintenance/reference-profiles-fire-after-commit.md`); the login HTTP
+surface plus the debug surface is the reference contract.

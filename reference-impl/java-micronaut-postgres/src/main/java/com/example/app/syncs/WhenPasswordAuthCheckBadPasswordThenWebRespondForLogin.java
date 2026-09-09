@@ -1,76 +1,30 @@
 package com.example.app.syncs;
 
-import com.example.app.concepts.passwordauth.PasswordAuthConcept;
-import dev.clad.engine.ActionLog;
-import dev.clad.engine.FlowManager;
-import dev.clad.engine.SyncAgent;
-import dev.clad.engine.SyncMetadata;
-import dev.clad.engine.SyncTrigger;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import dev.legible.engine.Clause;
+import dev.legible.engine.Source;
+import dev.legible.engine.SyncRule;
+import java.util.List;
+import java.util.Map;
+import static dev.legible.engine.SyncRule.invoke;
+import static dev.legible.engine.SyncRule.lit;
+import static dev.legible.engine.SyncRule.ref;
 
 /**
- * Sync: WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin
+ * Row 3b[BAD_PASSWORD]-to-4b: respond 401 opaque.
  *
- * <p>When: {@code PasswordAuth/check[outcome=BAD_PASSWORD]}
- * <p>Then: {@code Web/respond { statusCode: 401, message }}
- *
- * <p>The message is intentionally identical to the unknown-user response so
- * the API does not leak account enumeration.
+ * <p>The declarative SyncRule realization of the Stage 03 WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md.
+ * Trigger and target tokens are copied verbatim from the approved chain
+ * table (literal lock). No imperative branching, no state, no I/O (R3).
  */
-@SyncMetadata(
-        flow = "Login",
-        step = 3,
-        triggeredBy = "PasswordAuth/check[BAD_PASSWORD|NO_CREDENTIAL]",
-        fires = "Web/respond[401]",
-        where = "credential failure path")
-@Singleton
-public final class WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin extends SyncAgent {
+public final class WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin {
 
-    private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
-    private static final String LOGIN_ROUTE = "login";
-    static final String LOGIN_FAILURE_MESSAGE = "username or password didn't match";
-
-    @Inject
-    public WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin(ActionLog actionLog) {
-        super(actionLog);
-    }
-
-    @Override
-    public String syncName() { return "whenPasswordAuthCheckBadPasswordThenWebRespondForLogin"; }
-
-    @Override
-    public SyncTrigger trigger() {
-        return new SyncTrigger(PasswordAuthConcept.IRI, "check", null);
-    }
-
-    @Override
-    protected String whereClause() {
-        return """
-            ?_when_1 :concept <%s> ;
-                     :name    "check" .
-            << ?_when_1 :outcome ?_outcome >> :flow ?_flow .
-            FILTER (?_outcome IN ("BAD_PASSWORD", "NO_CREDENTIAL"))
-            ?_web_req :concept <%s> ;
-                      :name    "request" ;
-                      :flow    ?_flow ;
-                      :input   ?_web_inp .
-            ?_web_inp :route ?_route .
-            """.formatted(PasswordAuthConcept.IRI, WEB_IRI);
-    }
-
-    @Override
-    protected String thenBindings() {
-        return """
-            ?_then_1 :concept <%s> ;
-                     :name    "respond" ;
-                     :input   [ :statusCode 401 ; :message ?_message ] .
-            """.formatted(WEB_IRI);
-    }
-
-    @Override
-    protected String parameterizeSparql(String sparql) {
-        sparql = bindLiteral(sparql, "_route", LOGIN_ROUTE);
-        return bindLiteral(sparql, "_message", LOGIN_FAILURE_MESSAGE);
+    public SyncRule rule() {
+        return SyncRule.of(
+                "WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin",
+                "PasswordAuth", "check", "BAD_PASSWORD",
+                List.of(),
+                List.of(invoke("Web", "respond", Map.of(
+                        "status", lit(401),
+                        "message", lit("username or password didn't match")))));
     }
 }

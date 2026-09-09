@@ -5,37 +5,21 @@ import jakarta.inject.Singleton;
 import java.util.Map;
 
 /**
- * Constructs typed response objects from the fields emitted by a completed
- * flow. Synchronizations declare the response shape in their sync spec as
- * {@code Web.respond(status, body={...})}. The engine stores those fields
- * in the action graph as RDF triples. This assembler reads them and returns
- * a typed DTO that Jackson serializes at the HTTP boundary.
- *
- * <p>Each flow type has its own assembly method. The assembler sits at the
- * transport boundary, not in the engine core. Transport adapters (REST,
- * GraphQL) call this to convert raw engine output into typed responses.
+ * Translates the authored {@code Web/respond} fields into typed DTOs at the
+ * transport boundary. The response shape was declared by the syncs; this
+ * class only maps the field names. No domain decisions are made here.
  */
 @Singleton
 public class ResponseAssembler {
 
-    /**
-     * Returns the response body for the given flow, typed when possible.
-     *
-     * @param flowName the CLAD flow name (e.g. {@code "login"})
-     * @param fields   the field-value map from the completed {@code Web/respond} action
-     * @return a typed DTO if a mapper exists, otherwise the raw fields map
-     */
-    public Object assemble(String flowName, Map<String, String> fields) {
-        return switch (flowName) {
-            case "login" -> new LoginSuccessResponse(fields.get("sessionToken"));
-            default -> fields;
-        };
+    /** Typed success DTO from the Web/respond fields (200). */
+    public LoginSuccessResponse success(Map<String, Object> fields) {
+        return new LoginSuccessResponse(String.valueOf(fields.get("sessionToken")));
     }
 
-    /** Build a typed error DTO from field map. */
-    public LoginFailureResponse toError(Map<String, String> fields) {
-        String msg = fields.get("message");
-        return new LoginFailureResponse(
-                msg != null ? msg : "An error occurred");
+    /** Typed failure DTO from the Web/respond fields (401). */
+    public LoginFailureResponse failure(Map<String, Object> fields) {
+        Object msg = fields.get("message");
+        return new LoginFailureResponse(msg != null ? String.valueOf(msg) : "An error occurred");
     }
 }

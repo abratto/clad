@@ -1,59 +1,28 @@
 package com.example.app.syncs;
 
-import com.example.app.concepts.passwordauth.PasswordAuthConcept;
-import com.example.app.concepts.session.SessionConcept;
-import dev.clad.engine.ActionLog;
-import dev.clad.engine.SyncAgent;
-import dev.clad.engine.SyncMetadata;
-import dev.clad.engine.SyncTrigger;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import dev.legible.engine.Clause;
+import dev.legible.engine.Source;
+import dev.legible.engine.SyncRule;
+import java.util.List;
+import java.util.Map;
+import static dev.legible.engine.SyncRule.invoke;
+import static dev.legible.engine.SyncRule.lit;
+import static dev.legible.engine.SyncRule.ref;
 
 /**
- * Sync: WhenPasswordAuthCheckOkThenSessionGrantForLogin
+ * Row 3b[OK]-to-4a: when PasswordAuth.check[OK] then Session.grant(userId).
  *
- * <p>Spec: {@code features/UC-00-login/stages/03_syncs/output/WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md}
- *
- * <p>When: {@code PasswordAuth/check[outcome=OK]}
- * <p>Then: {@code Session/grant { userId }}
+ * <p>The declarative SyncRule realization of the Stage 03 WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md.
+ * Trigger and target tokens are copied verbatim from the approved chain
+ * table (literal lock). No imperative branching, no state, no I/O (R3).
  */
-@SyncMetadata(
-        flow = "Login",
-        step = 3,
-        triggeredBy = "PasswordAuth/check[OK]",
-        fires = "Session/grant")
-@Singleton
-public final class WhenPasswordAuthCheckOkThenSessionGrantForLogin extends SyncAgent {
+public final class WhenPasswordAuthCheckOkThenSessionGrantForLogin {
 
-    @Inject
-    public WhenPasswordAuthCheckOkThenSessionGrantForLogin(ActionLog actionLog) {
-        super(actionLog);
-    }
-
-    @Override
-    public String syncName() { return "whenPasswordAuthCheckOkThenSessionGrantForLogin"; }
-
-    @Override
-    public SyncTrigger trigger() {
-        return new SyncTrigger(PasswordAuthConcept.IRI, "check", null);
-    }
-
-    @Override
-    protected String whereClause() {
-        return """
-            ?_when_1 :concept <%s> ;
-                     :name    "check" ;
-                     :userId  ?_userId .
-            << ?_when_1 :outcome "OK" >> :flow ?_flow .
-            """.formatted(PasswordAuthConcept.IRI);
-    }
-
-    @Override
-    protected String thenBindings() {
-        return """
-            ?_then_1 :concept <%s> ;
-                     :name    "grant" ;
-                     :input   [ :userId ?_userId ] .
-            """.formatted(SessionConcept.IRI);
+    public SyncRule rule() {
+        return SyncRule.of(
+                "WhenPasswordAuthCheckOkThenSessionGrantForLogin",
+                "PasswordAuth", "check", "OK",
+                List.of(new Clause.Bind("?user", new Source.TriggerField("userId"))),
+                List.of(invoke("Session", "grant", Map.of("userId", ref("?user")))));
     }
 }

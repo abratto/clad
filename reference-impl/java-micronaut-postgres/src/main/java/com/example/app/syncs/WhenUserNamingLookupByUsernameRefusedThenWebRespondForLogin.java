@@ -1,75 +1,30 @@
 package com.example.app.syncs;
 
-import com.example.app.concepts.usernaming.UserNamingConcept;
-import dev.clad.engine.ActionLog;
-import dev.clad.engine.FlowManager;
-import dev.clad.engine.SyncAgent;
-import dev.clad.engine.SyncMetadata;
-import dev.clad.engine.SyncTrigger;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import dev.legible.engine.Clause;
+import dev.legible.engine.Source;
+import dev.legible.engine.SyncRule;
+import java.util.List;
+import java.util.Map;
+import static dev.legible.engine.SyncRule.invoke;
+import static dev.legible.engine.SyncRule.lit;
+import static dev.legible.engine.SyncRule.ref;
 
 /**
- * Sync: WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin
+ * Row 2[refused]-to-3a: when UserNaming.lookupByUsername[refused] then Web.respond(401, opaque message).
  *
- * <p>When: {@code UserNaming/lookupByUsername[refused]}
- * <p>Then: {@code Web/respond { statusCode: 401, message }}
- *
- * <p>Matches the {@code :outcome "refused"} RDF-star annotation. Same message
- * as {@link WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin} — no
- * enumeration leak.
+ * <p>The declarative SyncRule realization of the Stage 03 WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin.sync.md.
+ * Trigger and target tokens are copied verbatim from the approved chain
+ * table (literal lock). No imperative branching, no state, no I/O (R3).
  */
-@SyncMetadata(
-        flow = "Login",
-        step = 2,
-        triggeredBy = "UserNaming/lookupByUsername[refused]",
-        fires = "Web/respond[401]",
-        where = "unknown-user path")
-@Singleton
-public final class WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin extends SyncAgent {
+public final class WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin {
 
-    private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
-    private static final String LOGIN_ROUTE = "login";
-
-    @Inject
-    public WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin(ActionLog actionLog) {
-        super(actionLog);
-    }
-
-    @Override
-    public String syncName() {         return "whenUserNamingLookupByUsernameRefusedThenWebRespondForLogin"; }
-
-    @Override
-    public SyncTrigger trigger() {
-        return new SyncTrigger(UserNamingConcept.IRI, "lookupByUsername", null);
-    }
-
-    @Override
-    protected String whereClause() {
-        return """
-            ?_when_1 :concept <%s> ;
-                     :name    "lookupByUsername" .
-            << ?_when_1 :outcome "refused" >> :flow ?_flow .
-            ?_web_req :concept <%s> ;
-                      :name    "request" ;
-                      :flow    ?_flow ;
-                      :input   ?_web_inp .
-            ?_web_inp :route ?_route .
-            """.formatted(UserNamingConcept.IRI, WEB_IRI);
-    }
-
-    @Override
-    protected String thenBindings() {
-        return """
-            ?_then_1 :concept <%s> ;
-                     :name    "respond" ;
-                     :input   [ :statusCode 401 ; :message ?_message ] .
-            """.formatted(WEB_IRI);
-    }
-
-    @Override
-    protected String parameterizeSparql(String sparql) {
-        sparql = bindLiteral(sparql, "_route", LOGIN_ROUTE);
-        return bindLiteral(sparql, "_message", WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.LOGIN_FAILURE_MESSAGE);
+    public SyncRule rule() {
+        return SyncRule.of(
+                "WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin",
+                "UserNaming", "lookupByUsername", "refused",
+                List.of(),
+                List.of(invoke("Web", "respond", Map.of(
+                        "status", lit(401),
+                        "message", lit("username or password didn't match")))));
     }
 }

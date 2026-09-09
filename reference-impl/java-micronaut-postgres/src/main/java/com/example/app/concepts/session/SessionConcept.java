@@ -1,107 +1,59 @@
 package com.example.app.concepts.session;
 
-import dev.clad.engine.ActionLog;
-import dev.clad.engine.ActionRecord;
-import dev.clad.engine.CompletionBus;
-import dev.clad.engine.ConceptAgent;
-import dev.clad.engine.SyncEvaluator;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.jooq.DSLContext;
+import dev.legible.engine.Concept;
+import dev.legible.engine.Region;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
-import static com.example.app.db.tables.SessionTokens.SESSION_TOKENS;
-
 /**
- * The Session concept: mints opaque session tokens for authenticated users.
- * State lives in the {@code session_tokens} table.
- *
- * <p>Actions:
- * <ul>
- *   <li>{@code grant} — input: {@code userId}; output:
- *       {@code outcome=GRANTED, sessionId=<uuid>}.</li>
- *   <li>{@code lookup} — input: {@code sessionId}; output:
- *       {@code outcome=ACTIVE|UNKNOWN, userId=...}.</li>
- * </ul>
+ * Manages bearer-token sessions for a principal. State is the relations
+ * {@code userId}, {@code openedAt} over {@code SessionId}.
  */
-@Singleton
-public final class SessionConcept extends ConceptAgent {
+public final class SessionConcept implements Concept {
 
-    public static final String IRI = "https://clad.dev/concept/session";
+    private final Region region;
 
-    private final DSLContext dsl;
-
-    @Inject
-    public SessionConcept(ActionLog actionLog, CompletionBus completionBus,
-                          SyncEvaluator evaluator, DSLContext dsl) {
-        super(actionLog, completionBus, evaluator);
-        this.dsl = dsl;
-    }
-
-    /** Test-only constructor — sync evaluation bypassed for isolated tests. */
-    public SessionConcept(ActionLog actionLog, CompletionBus completionBus, DSLContext dsl) {
-        super(actionLog, completionBus);
-        this.dsl = dsl;
+    public SessionConcept(Region region) {
+        this.region = region;
     }
 
     @Override
-    protected String conceptIRI() {
-        return IRI;
+    public String name() {
+        return "Session";
     }
 
     @Override
-    public void pollAll() {
-        pollAndProcess("grant");
-        pollAndProcess("lookup");
+    public Map<String, Object> execute(String action, Map<String, Object> input) {
+        return switch (action) {
+            case "grant" -> grant(input);
+            case "lookup" -> lookup(input);
+            default -> Map.of("outcome", "error", "message", "unknown action: " + action);
+        };
     }
 
-    @Override
-    protected void processInvocation(ActionRecord invocation) {
-        switch (invocation.actionName()) {
-            case "grant" -> doGrant(invocation);
-            case "lookup" -> doLookup(invocation);
-            default -> writeError(invocation, "unknown action: " + invocation.actionName());
-        }
-    }
-
-    private void doGrant(ActionRecord invocation) {
-        String userId = invocation.binding("userId");
+    private Map<String, Object> grant(Map<String, Object> input) {
+        String userId = (String) input.get("userId");
         if (userId == null) {
-            writeError(invocation, "missing userId");
-            return;
+            return Map.of("outcome", "error", "message", "missing userId");
         }
         String sessionId = UUID.randomUUID().toString();
-        dsl.insertInto(SESSION_TOKENS, SESSION_TOKENS.SESSION_TOKEN, SESSION_TOKENS.USER_ID)
-                .values(UUID.fromString(sessionId), UUID.fromString(userId))
-                .execute();
-
-        writeCompletion(invocation, Map.of(
-                "outcome", ResourceFactory.createStringLiteral("GRANTED"),
-                "sessionId", ResourceFactory.createStringLiteral(sessionId),
-                "userId", ResourceFactory.createStringLiteral(userId)));
+        region.write(sessionId, "userId", userId);
+        region.write(sessionId, "openedAt", String.valueOf(System.currentTimeMillis()));
+        return Map.of("outcome", "GRANTED", "sessionId", sessionId, "userId", userId);
     }
 
-    private void doLookup(ActionRecord invocation) {
-        String sessionId = invocation.binding("sessionId");
+    private Map<String, Object> lookup(Map<String, Object> input) {
+        String sessionId = (String) input.get("sessionId");
         if (sessionId == null) {
-            writeError(invocation, "missing sessionId");
-            return;
+            return Map.of("outcome", "error", "message", "missing sessionId");
         }
-        UUID userId = dsl.select(SESSION_TOKENS.USER_ID).from(SESSION_TOKENS)
-                .where(SESSION_TOKENS.SESSION_TOKEN.eq(UUID.fromString(sessionId)))
-                .fetchOne(SESSION_TOKENS.USER_ID);
-        if (userId == null) {
-            writeCompletion(invocation, Map.of(
-                    "outcome", ResourceFactory.createStringLiteral("UNKNOWN"),
-                    "sessionId", ResourceFactory.createStringLiteral(sessionId)));
-        } else {
-            writeCompletion(invocation, Map.of(
-                    "outcome", ResourceFactory.createStringLiteral("ACTIVE"),
-                    "sessionId", ResourceFactory.createStringLiteral(sessionId),
-                    "userId", ResourceFactory.createStringLiteral(userId.toString())));
+        Set<String> users = region.read(sessionId, "userId");
+        if (users.isEmpty()) {
+            return Map.of("outcome", "UNKNOWN", "sessionId", sessionId);
         }
+        return Map.of("outcome", "ACTIVE", "sessionId", sessionId,
+                "userId", users.iterator().next());
     }
 }

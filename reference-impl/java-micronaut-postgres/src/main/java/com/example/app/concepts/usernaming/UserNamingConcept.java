@@ -1,119 +1,66 @@
 package com.example.app.concepts.usernaming;
 
-import dev.clad.engine.ActionLog;
-import dev.clad.engine.ActionRecord;
-import dev.clad.engine.CompletionBus;
-import dev.clad.engine.ConceptAgent;
-import dev.clad.engine.SyncEvaluator;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.jooq.DSLContext;
+import dev.legible.engine.Concept;
+import dev.legible.engine.Region;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
-import static com.example.app.db.tables.Usernames.USERNAMES;
-
 /**
- * The User concept: who exists in the system.
- *
- * <p>State lives in the {@code usernames} table (concept-owned). Two actions:
- * <ul>
- *   <li>{@code register} — adds a (userId, username) record.</li>
- *   <li>{@code lookupByUsername} — emits {@code outcome=FOUND|UNKNOWN}.</li>
- * </ul>
- *
- * <p>Coordination goes through the shared in-memory action log; only concept
- * state is relational (JOOQ over Postgres).
+ * Associates usernames with opaque user identifiers. State is the relation
+ * {@code username: UserId -> String} held in this concept's own region.
  */
-@Singleton
-public final class UserNamingConcept extends ConceptAgent {
+public final class UserNamingConcept implements Concept {
 
-    /** IRI used in :concept triples. */
-    public static final String IRI = "https://clad.dev/concept/usernaming";
+    private final Region region;
 
-    private final DSLContext dsl;
-
-    @Inject
-    public UserNamingConcept(ActionLog actionLog, CompletionBus completionBus,
-                       SyncEvaluator evaluator, DSLContext dsl) {
-        super(actionLog, completionBus, evaluator);
-        this.dsl = dsl;
-    }
-
-    /** Test-only constructor — sync evaluation bypassed for isolated tests. */
-    public UserNamingConcept(ActionLog actionLog, CompletionBus completionBus, DSLContext dsl) {
-        super(actionLog, completionBus);
-        this.dsl = dsl;
+    public UserNamingConcept(Region region) {
+        this.region = region;
     }
 
     @Override
-    protected String conceptIRI() {
-        return IRI;
+    public String name() {
+        return "UserNaming";
     }
 
     @Override
-    public void pollAll() {
-        pollAndProcess("register");
-        pollAndProcess("lookupByUsername");
+    public Map<String, Object> execute(String action, Map<String, Object> input) {
+        return switch (action) {
+            case "register" -> register(input);
+            case "lookupByUsername" -> lookup(input);
+            default -> Map.of("outcome", "error", "message", "unknown action: " + action);
+        };
     }
 
-    @Override
-    protected void processInvocation(ActionRecord invocation) {
-        switch (invocation.actionName()) {
-            case "register" -> doRegister(invocation);
-            case "lookupByUsername" -> doLookup(invocation);
-            default -> writeError(invocation, "unknown action: " + invocation.actionName());
-        }
-    }
-
-    /** Test/seed helper to pre-populate the user table. */
+    /** Test/seed helper — pre-populate a (userId, username) fact. */
     public void seedUser(String userId, String username) {
-        dsl.insertInto(USERNAMES, USERNAMES.USER_ID, USERNAMES.USERNAME)
-                .values(UUID.fromString(userId), username)
-                .onConflictDoNothing()
-                .execute();
+        region.write(userId, "username", username);
     }
 
-    private void doRegister(ActionRecord invocation) {
-        String username = invocation.binding("username");
-        if (username == null) { writeError(invocation, "missing username"); return; }
-        if (existsByUsername(username)) {
-            writeRefusal(invocation, "username already taken: " + username);
-            return;
+    private Map<String, Object> register(Map<String, Object> input) {
+        String username = (String) input.get("username");
+        if (username == null) {
+            return Map.of("outcome", "error", "message", "missing username");
+        }
+        if (!region.subjects("username", username).isEmpty()) {
+            return Map.of("outcome", "refused", "message", "username already taken: " + username);
         }
         String userId = UUID.randomUUID().toString();
-        seedUser(userId, username);
-        writeCompletion(invocation, Map.of(
-                "outcome", ResourceFactory.createStringLiteral("REGISTERED"),
-                "userId", ResourceFactory.createStringLiteral(userId),
-                "username", ResourceFactory.createStringLiteral(username)));
+        region.write(userId, "username", username);
+        return Map.of("outcome", "REGISTERED", "userId", userId, "username", username);
     }
 
-    private void doLookup(ActionRecord invocation) {
-        String username = invocation.binding("username");
-        if (username == null) { writeError(invocation, "missing username"); return; }
-        String userId = findUserIdByUsername(username);
-        if (userId == null) {
-            writeRefusal(invocation, "username not found: " + username);
-        } else {
-            writeCompletion(invocation, Map.of(
-                    "outcome", ResourceFactory.createStringLiteral("FOUND"),
-                    "userId", ResourceFactory.createStringLiteral(userId),
-                    "username", ResourceFactory.createStringLiteral(username)));
+    private Map<String, Object> lookup(Map<String, Object> input) {
+        String username = (String) input.get("username");
+        if (username == null) {
+            return Map.of("outcome", "error", "message", "missing username");
         }
-    }
-
-    private boolean existsByUsername(String username) {
-        return dsl.fetchExists(dsl.selectOne().from(USERNAMES)
-                .where(USERNAMES.USERNAME.eq(username)));
-    }
-
-    private String findUserIdByUsername(String username) {
-        UUID userId = dsl.select(USERNAMES.USER_ID).from(USERNAMES)
-                .where(USERNAMES.USERNAME.eq(username))
-                .fetchOne(USERNAMES.USER_ID);
-        return userId == null ? null : userId.toString();
+        Set<String> subjects = region.subjects("username", username);
+        if (subjects.isEmpty()) {
+            return Map.of("outcome", "refused", "message", "username not found: " + username);
+        }
+        String userId = subjects.iterator().next();
+        return Map.of("outcome", "FOUND", "userId", userId, "username", username);
     }
 }

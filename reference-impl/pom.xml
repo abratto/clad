@@ -16,6 +16,7 @@
   <modules>
     <module>clad-engine</module>
     <module>legible-engine</module>
+    <module>java-plain</module>
     <module>java-legible</module>
     <module>legible-bench</module>
     <module>legible-storage</module>

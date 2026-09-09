@@ -37,7 +37,7 @@ class LegibleArchitectureRulesTest {
 
     private static final JavaClasses CLASSES = new ClassFileImporter()
             .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-            .importPackages("com.example.app", "dev.clad.engine");
+            .importPackages("com.example.app", "dev.legible.engine", "dev.legible.storage");
 
     /** R1 — no cross-concept imports. */
     @Test
@@ -71,23 +71,25 @@ class LegibleArchitectureRulesTest {
                 .check(CLASSES);
     }
 
-    /** R2 (relational) — a JOOQ table is owned by exactly one concept. No two
-     * concepts may reference the same generated table (one region per concept). */
+    /** R2 — a concept accesses only its own named region: the region() call
+     * inside each concept's package names that concept (source-level scan,
+     * since regions are per-fact-store at runtime). */
     @Test
-    void r2_no_cross_concept_table_access() throws IOException {
+    void r2_one_region_per_concept() throws IOException {
         Path conceptsRoot = Path.of("src/main/java/com/example/app/concepts");
-        Pattern tableRef = Pattern.compile(Pattern.quote(DB_TABLES) + "\\.([A-Z][A-Za-z0-9]*)");
+        Pattern regionRef = Pattern.compile("region\\(\"([A-Za-z]+)\"");
         Map<String, Set<String>> owners = new TreeMap<>();
         try (var dirs = Files.list(conceptsRoot)) {
             for (Path conceptDir : dirs.filter(Files::isDirectory).toList()) {
                 String conceptName = conceptDir.getFileName().toString();
                 try (var files = Files.walk(conceptDir)) {
                     for (Path javaFile : files.filter(p -> p.toString().endsWith(".java")).toList()) {
+                        String conceptNameFromClass = conceptDir.getFileName().toString();
                         String text = Files.readString(javaFile);
-                        Matcher matcher = tableRef.matcher(text);
+                        Matcher matcher = regionRef.matcher(text);
                         while (matcher.find()) {
                             owners.computeIfAbsent(matcher.group(1),
-                                    k -> new TreeSet<>()).add(conceptName);
+                                    k -> new TreeSet<>()).add(conceptNameFromClass);
                         }
                     }
                 }
@@ -96,31 +98,33 @@ class LegibleArchitectureRulesTest {
         for (var entry : owners.entrySet()) {
             if (entry.getValue().size() > 1) {
                 throw new AssertionError(
-                        "table '" + entry.getKey() + "' is referenced by multiple concepts "
-                                + entry.getValue() + " — each concept owns its own table (R2).");
+                        "region '" + entry.getKey() + "' is requested by multiple concepts "
+                                + entry.getValue() + " — one named region per concept (R2).");
             }
         }
     }
 
-    /** R5 — every {@code *Concept} class extends {@link dev.clad.engine.ConceptAgent}. */
+    /** R5 — every {@code *Concept} class implements {@link dev.legible.engine.Concept}. */
     @Test
     void r5_every_concept_class_is_a_concept_agent() {
         classes()
                 .that().resideInAPackage(CONCEPTS_ROOT + "..")
                 .and().haveSimpleNameEndingWith("Concept")
-                .should().beAssignableTo(dev.clad.engine.ConceptAgent.class)
+                .should().beAssignableTo(dev.legible.engine.Concept.class)
                 .check(CLASSES);
     }
 
-    /** R3 — sync classes are declarative SyncAgent implementations. */
+    /** R3 — syncs are declarative factory holders, not coordinators. */
     @Test
-    void r3_sync_package_classes_are_sync_agents() {
+    void r3_no_imperative_coordinators() {
+        noClasses()
+                .should().haveNameMatching(".*Coordinator")
+                .orShould().haveNameMatching(".*Orchestrator")
+                .check(CLASSES);
         classes()
                 .that().resideInAPackage("com.example.app.syncs..")
                 .and().areNotAnonymousClasses()
-                .and().areNotMemberClasses()
-                .and().haveNameNotMatching(".*\\$.*")
-                .should().beAssignableTo(dev.clad.engine.SyncAgent.class)
+                .should().haveOnlyFinalFields()
                 .check(CLASSES);
     }
 

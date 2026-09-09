@@ -1,70 +1,30 @@
 package com.example.app.syncs;
 
-import com.example.app.concepts.session.SessionConcept;
-import dev.clad.engine.ActionLog;
-import dev.clad.engine.FlowManager;
-import dev.clad.engine.SyncAgent;
-import dev.clad.engine.SyncMetadata;
-import dev.clad.engine.SyncTrigger;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
+import dev.legible.engine.Clause;
+import dev.legible.engine.Source;
+import dev.legible.engine.SyncRule;
+import java.util.List;
+import java.util.Map;
+import static dev.legible.engine.SyncRule.invoke;
+import static dev.legible.engine.SyncRule.lit;
+import static dev.legible.engine.SyncRule.ref;
 
 /**
- * Sync: WhenSessionGrantGrantedThenWebRespondForLogin
+ * Row 4a[GRANTED]-to-5: when Session.grant[GRANTED] then Web.respond(200, sessionToken).
  *
- * <p>When: {@code Session/grant[outcome=GRANTED]}
- * <p>Then: {@code Web/respond { statusCode: 200, sessionToken }}
+ * <p>The declarative SyncRule realization of the Stage 03 WhenSessionGrantGrantedThenWebRespondForLogin.sync.md.
+ * Trigger and target tokens are copied verbatim from the approved chain
+ * table (literal lock). No imperative branching, no state, no I/O (R3).
  */
-@SyncMetadata(
-        flow = "Login",
-        step = 4,
-        triggeredBy = "Session/grant[GRANTED]",
-        fires = "Web/respond[200]")
-@Singleton
-public final class WhenSessionGrantGrantedThenWebRespondForLogin extends SyncAgent {
+public final class WhenSessionGrantGrantedThenWebRespondForLogin {
 
-    private static final String WEB_IRI = FlowManager.WEB_CONCEPT_IRI;
-    private static final String LOGIN_ROUTE = "login";
-
-    @Inject
-    public WhenSessionGrantGrantedThenWebRespondForLogin(ActionLog actionLog) {
-        super(actionLog);
-    }
-
-    @Override
-    public String syncName() { return "whenSessionGrantGrantedThenWebRespondForLogin"; }
-
-    @Override
-    public SyncTrigger trigger() {
-        return new SyncTrigger(SessionConcept.IRI, "grant", null);
-    }
-
-    @Override
-    protected String whereClause() {
-        return """
-            ?_when_1 :concept <%s> ;
-                     :name    "grant" ;
-                     :sessionId ?_sessionId .
-            << ?_when_1 :outcome "GRANTED" >> :flow ?_flow .
-            ?_web_req :concept <%s> ;
-                      :name    "request" ;
-                      :flow    ?_flow ;
-                      :input   ?_web_inp .
-            ?_web_inp :route ?_route .
-            """.formatted(SessionConcept.IRI, WEB_IRI);
-    }
-
-    @Override
-    protected String thenBindings() {
-        return """
-            ?_then_1 :concept <%s> ;
-                     :name    "respond" ;
-                     :input   [ :statusCode 200 ; :sessionToken ?_sessionId ] .
-            """.formatted(WEB_IRI);
-    }
-
-    @Override
-    protected String parameterizeSparql(String sparql) {
-        return bindLiteral(sparql, "_route", LOGIN_ROUTE);
+    public SyncRule rule() {
+        return SyncRule.of(
+                "WhenSessionGrantGrantedThenWebRespondForLogin",
+                "Session", "grant", "GRANTED",
+                List.of(new Clause.Bind("?sid", new Source.TriggerField("sessionId"))),
+                List.of(invoke("Web", "respond", Map.of(
+                        "status", lit(200),
+                        "sessionToken", ref("?sid")))));
     }
 }

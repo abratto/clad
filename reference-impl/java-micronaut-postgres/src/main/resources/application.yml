@@ -7,7 +7,7 @@ micronaut:
 
 datasources:
   default:
-    url: jdbc:postgresql://localhost:5432/clad
-    username: clad
-    password: clad
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/clad}
+    username: ${PGUSER:clad}
+    password: ${PGPASSWORD:clad}
     driver-class-name: org.postgresql.Driver

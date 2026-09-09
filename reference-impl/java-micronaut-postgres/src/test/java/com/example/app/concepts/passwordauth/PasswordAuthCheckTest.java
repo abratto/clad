@@ -8,17 +8,23 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @DisplayName("PasswordAuthCheck (Postgres)")
 class PasswordAuthCheckTest extends PostgresConceptTestBase {
 
     private static final String USER_ID = "22222222-2222-2222-2222-222222222222";
 
-    private PasswordAuthConcept concept;
+    private PasswordAuthConcept concept() {
+        return new PasswordAuthConcept(store.region("PasswordAuth"));
+    }
 
-    private void initConcept(String password) {
-        concept = new PasswordAuthConcept(log, bus, dsl);
+    private PasswordAuthConcept seeded(String password) {
+        PasswordAuthConcept concept = concept();
         concept.seedCredential(USER_ID, password);
+        return concept;
     }
 
     @Nested
@@ -26,15 +32,17 @@ class PasswordAuthCheckTest extends PostgresConceptTestBase {
     class WhenCredentialsMatch {
 
         @Test
-        @DisplayName("shouldReturnOk")
+        @DisplayName("shouldReturnOkAndKeepCredential")
         void shouldReturnOk() {
-            initConcept("correct-password");
-            writePendingInvocation(PasswordAuthConcept.IRI, "check",
-                    Map.of("userId", USER_ID, "password", "correct-password"));
+            PasswordAuthConcept concept = seeded("correct-password");
 
-            concept.pollAll();
+            Map<String, Object> completion = concept.execute("check", Map.of(
+                    "userId", USER_ID,
+                    "password", "correct-password"));
 
-            assertEquals("OK", readOutcome());
+            assertEquals("OK", completion.get("outcome"));
+            assertEquals(USER_ID, completion.get("userId"));
+            assertTrue(!store.region("PasswordAuth").read(USER_ID, "passwordHash").isEmpty());
         }
     }
 
@@ -43,15 +51,17 @@ class PasswordAuthCheckTest extends PostgresConceptTestBase {
     class WhenPasswordWrong {
 
         @Test
-        @DisplayName("shouldReturnBadPassword")
+        @DisplayName("shouldReturnBadPasswordAndCountFailure")
         void shouldReturnBadPassword() {
-            initConcept("correct-password");
-            writePendingInvocation(PasswordAuthConcept.IRI, "check",
-                    Map.of("userId", USER_ID, "password", "wrong-password"));
+            PasswordAuthConcept concept = seeded("correct-password");
 
-            concept.pollAll();
+            Map<String, Object> completion = concept.execute("check", Map.of(
+                    "userId", USER_ID,
+                    "password", "wrong-password"));
 
-            assertEquals("BAD_PASSWORD", readOutcome());
+            assertEquals("BAD_PASSWORD", completion.get("outcome"));
+            assertEquals("1", store.region("PasswordAuth")
+                    .read(USER_ID, "failedAttempts").iterator().next());
         }
     }
 
@@ -60,19 +70,22 @@ class PasswordAuthCheckTest extends PostgresConceptTestBase {
     class WhenAccountLocked {
 
         @Test
-        @DisplayName("shouldReturnLockedAfterFiveFailures")
-        void shouldReturnLockedAfterFiveFailures() {
-            initConcept("correct-password");
+        @DisplayName("shouldReturnLockedWhenThresholdReached")
+        void shouldReturnLocked() {
+            PasswordAuthConcept concept = seeded("correct-password");
             for (int i = 0; i < 5; i++) {
-                writePendingInvocation(PasswordAuthConcept.IRI, "check",
-                        Map.of("userId", USER_ID, "password", "wrong-password"));
-                concept.pollAll();
+                concept.execute("check", Map.of(
+                        "userId", USER_ID,
+                        "password", "incorrect"));
             }
-            writePendingInvocation(PasswordAuthConcept.IRI, "check",
-                    Map.of("userId", USER_ID, "password", "correct-password"));
-            concept.pollAll();
 
-            assertEquals("LOCKED", readOutcome());
+            Map<String, Object> completion = concept.execute("check", Map.of(
+                    "userId", USER_ID,
+                    "password", "correct-password"));
+
+            assertEquals("LOCKED", completion.get("outcome"));
+            assertTrue(store.region("PasswordAuth").read(USER_ID, "lockedUntil")
+                    .iterator().next() != null);
         }
     }
 }

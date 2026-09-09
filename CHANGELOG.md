@@ -10,6 +10,57 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.3.5] — 2026-09-04
+
+### Added
+
+- **`reference-impl/java-plain`** — the plain-Java quick-start profile on the
+  fire-after-commit engine: the login feature only, zero framework (no DI,
+  no HTTP server; the transport surface is a `LoginApp.login` method call),
+  with ported concept/flow-trace/concurrency tests, a console demo
+  (`PlainDemoApp`), and a README quick-start with copy-out scaffold guidance.
+
+### Changed
+
+- **`java-micronaut-postgres` re-lowered onto the fire-after-commit engine**
+  (maintenance record
+  `maintenance/reference-profiles-fire-after-commit.md`, design and evidence
+  gates approved):
+  - Engine swap: legacy `dev.clad.engine` ConceptAgent/SyncAgent SPARQL
+    classes → `dev.legible.engine` `Concept`/`SyncRule`; one declarative
+    `SyncRule` carrier class per Stage 03 `*.sync.md` (seven) plus
+    `LoginSyncRules`; same four login scenarios, same status codes, same
+    field values as the canonical profile.
+  - Concept state now Postgres via `legible-storage`'s
+    `RmapPostgresFactStore` — typed tables *derived* from the Stage 03b data
+    models (`LoginSchemas`); Flyway owns the base DDL timeline
+    (`V1__login_rmap.sql` mirrors the derivation; jOOQ codegen introspects
+    it). Legacy hand-written per-concept migrations retired.
+  - Transport surface trimmed to the UC contract: `WebController` +
+    `LoginGateway` (transport-only) re-based; `AuthController`,
+    `GraphQLController`, `StaticPageController`, `JooqFactory`,
+    `FlowArchivingStorage` removed (recorded deliberate reduction; rollback
+    = module revert). jOOQ/reactor/graphql-java deps adjusted accordingly.
+  - Debug surface re-based onto the engine `DebugApi` (`/api/dev/flows`,
+    `/flow/{id}`, `/stuck`, `/concept/{name}/facts`, `/syncs`);
+    startup ordering fixed (Flyway → R-map DDL → demo seed).
+  - Tests: `PostgresConceptTestBase` rebuilt on Testcontainers + R-map
+    schema; concept tests assert outcome + completion fields (R14/R16);
+    ArchUnit rules re-based (R1 slices, R2 one-region-per-concept source
+    scan, R3 no coordinators, R4 transport-only annotations, R5 Concept SPI).
+    16/16 green under Testcontainers.
+  - **Containerized**: reactor-aware multi-stage `Dockerfile`,
+    `docker-compose.yml` (app + Postgres, env-driven `application.yml`),
+    and `fly.toml` for Fly.io. Docker smoke verified all four scenarios
+    (200 sessionToken; 401 opaque on wrong-password and unknown-user; 401
+    visible lockout message) with the debug surface live over
+    `RmapPostgresFactStore`.
+- **Docs**: `reference-impl/README.md` gains a profiles-at-a-glance table —
+  `java-plain` (quick start), `java-legible` (canonical multi-feature),
+  `java-micronaut-postgres` (durable deployable), `java-micronaut-jena`
+  (legacy showcase, no new work); `QUALITY_GATE.md` profile gate commands;
+  `clad.properties`/`CONTEXT_MANIFEST.md` profile guidance.
+
 ## [0.3.4] — 2026-09-04
 
 ### Changed
