@@ -279,14 +279,21 @@ workflow.session-per-stage=false
 
 CLAD is **public, pre-1.0, and still evolving.** It ships a complete
 methodology loop, agent guides, a worked example
-([`features/UC-00-login/`](features/UC-00-login/README.md)), and two Java
-reference profiles under
-[`reference-impl/`](reference-impl/README.md): the canonical
-[`java-legible/`](reference-impl/java-legible/) profile on the
-zero-dependency fire-after-commit engine (`dev.legible.engine`), and a
-legacy [`java-micronaut-jena/`](reference-impl/java-micronaut-jena/)
-profile kept until re-lowered. The methodology is profile-agnostic;
-`java-legible` is the recommended implementation today. Pre-1.0 CLAD
+([`features/UC-00-login/`](features/UC-00-login/README.md)), and a tiered
+reference stack under
+[`reference-impl/`](reference-impl/README.md) on the zero-dependency
+fire-after-commit engine (`dev.legible.engine`): [`java-plain/`](reference-impl/java-plain/)
+(a plain-Java quick-start: the login feature only, no framework — the
+transport surface is a method call), the canonical multi-feature
+[`java-legible/`](reference-impl/java-legible/) profile (the recommended
+implementation), and a durable deployable
+[`java-micronaut-postgres/`](reference-impl/java-micronaut-postgres/)
+profile — Micronaut for the HTTP transport, Postgres concept state derived
+from the Stage 03b data models (R-map), with a `Dockerfile` +
+`docker-compose.yml` and a `fly.toml` for Fly.io. The legacy
+[`java-micronaut-jena/`](reference-impl/java-micronaut-jena/) transactional
+RDF/SPARQL profile remains as a showcase only — no new work targets it. The
+methodology is profile-agnostic. Pre-1.0 CLAD
 releases may include breaking methodology changes. This repository uses
 [Semantic Versioning](https://semver.org/) and annotated Git tags;
 downstream CLAD-based projects define their own release policy. See
@@ -340,9 +347,11 @@ clad/
 │
 └── reference-impl/
     ├── legible-engine/             Canonical engine (dev.legible.engine, zero-dependency)
+    ├── java-plain/                 Plain-Java quick-start (login only, no framework)
     ├── java-legible/               Canonical profile — recommended
+    ├── java-micronaut-postgres/    Durable profile (Micronaut + R-map Postgres, Docker/Fly.io)
     ├── legible-storage/            FactStore backends (Jena / Postgres)
-    └── java-micronaut-jena/        Legacy RDF/SPARQL profile
+    └── java-micronaut-jena/        Legacy RDF/SPARQL profile (showcase only)
 ```
 
 ## License

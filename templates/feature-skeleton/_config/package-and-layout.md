@@ -32,15 +32,18 @@ reference implementation when they are not correct for this project.
   Copy starter code/patterns from the selected reference profile into
   your own app/runtime directory and point this file at those real
   package and source roots.
-6. **Copy the engine; do not reimplement it.** The reference profile's
-  `engine/` package (e.g. `ConceptAgent`, `SyncAgent`, `ActionLog`,
-  `SyncDispatcher`, `FlowManager`) plus its ArchUnit rule test is
-  reusable runtime infrastructure and the only execution profile shipped
-  today. Copy those classes into `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/engine/`
-  **verbatim**, changing only the package declaration to match
-  `APP_PACKAGE_ROOT`. Never author engine/runtime classes from scratch
-  when the reference profile already provides them. Only concepts, syncs,
-  boundary DTOs, and the HTTP entry are written per feature.
+6. **Take the engine; never reimplement it.** The fire-after-commit engine
+   (`reference-impl/legible-engine/src/main/java/dev/legible/engine/` —
+   `SyncEngine`, `SyncRule`, `Concept`, `FactStore`, `Region`, action log,
+   debug surface) is reusable runtime infrastructure shipped by CLAD v0.3.5
+   either as a Maven dependency (`com.example.clad:legible-engine`) or
+   copied **verbatim** into `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/engine/`,
+   changing only the package declaration. Never author engine/runtime
+   classes from scratch. For a durable stack the reference is
+   `reference-impl/java-micronaut-postgres/` (Micronaut transport, R-map
+   concept state via `com.example.clad:legible-storage`); for a scaffold
+   without a framework use `reference-impl/java-plain/`. Only concepts,
+   syncs, boundary DTOs, and the transport adapter are written per feature.
 
 ## Java profile mapping hints
 
