@@ -1,16 +1,34 @@
+<!--
+  WORKED EXAMPLE - contract synced from templates/feature-skeleton/.
+  UC-00's output/ is historical/frozen (gate content hashes); it may
+  contain legacy artefacts. See features/UC-00-login/README.md
+  SS"Contract vs example".
+-->
+
 # Stage 04d — Concept TDD (router)
 
 ## Pre-condition (agent must verify before starting)
 
-**`../04c_flow-tests/output/` must be non-empty.** If it is empty, stop
-immediately and tell the human that Stage 04c must be completed and
-gated before Stage 04d can begin.
+Run the following **before** writing any artefacts for this stage:
+
+```
+python3 ../../../../../quality-gate/verify_gate_approval.py \
+  --feature ../../../ \
+  --required-gates 3
+```
+
+If this script exits with a non-zero status, stop immediately.
+Gate 3 has not been approved — do not proceed.
+
+**Additionally:** `../04c_flow-tests/output/` must be non-empty.
+If it is empty, stop and tell the human that Stage 04c flow tests
+have not been produced.
 
 Run the iterative-change readiness check before writing any artefacts:
 
 ```
 python3 ../../../../../quality-gate/verify_iterative_change_readiness.py \
-   --feature ../../../
+  --feature ../../../
 ```
 
 If this reports an iterative concept/sync change with no valid `_changes/`
@@ -21,12 +39,18 @@ artefact, stop and complete the artefact-impact matrix first.
 This stage is the ICM router for concept TDD. It exists to make the
 London School red/green handoff structural: `04d-red` derives and
 approves tests, `04d-green` implements only against those approved
-tests.
+tests. One concept, one test fixture, no other concepts in scope (R1).
 
 **Feeds:**
 
 - approved red concept tests + handoff bundle -> `04d_green-impl/`
 - green concept implementation -> `04e_sync-tdd/`
+
+**Agent stance for this stage:**
+- Read `methodology/implementation/TDD.md` before starting either child stage.
+- If a test needs another concept's state or sync orchestration, it does not belong in `04d`; send it to `04e`.
+- `04d-red` may write tests and derivation artefacts only.
+- `04d-green` may implement only against approved `04d-red` tests.
 
 ## Inputs
 
@@ -39,6 +63,8 @@ tests.
 | `../../../_config/build-and-test.md` | 3 | Canonical build/test command inherited by child stages |
 | `../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings inherited by child stages |
 | `../../../../../methodology/implementation/TDD.md` | 3 | London School structural handoff rules |
+| `../../../../../reference-impl/legible-engine/README.md` (default profile) | 3 | Canonical engine contract (`Concept`, `SyncRule`, `Region`) |
+| `../../../../../reference-impl/java-micronaut-jena/SYNC_LOWERING.md` (legacy profile only) | 3 | Legacy SPARQL lowering (SELECT, UPDATE, writeCompletion). Do NOT follow when targeting java-legible |
 
 ## Process
 
@@ -47,8 +73,16 @@ The child stages are executable auto-advance stages. Run them strictly in order:
 1. [`04d_red-tests/`](04d_red-tests/CONTEXT.md) — derive executable
    concept tests, run them red, and record the handoff bundle.
 2. [`04d_green-impl/`](04d_green-impl/CONTEXT.md) — implement only
-   against the completed red tests until they are green.
+  against the completed red tests until they are green.
 
+
+## Progress checklist
+
+- [ ] Red tests derived from SPEC outcomes
+- [ ] Every SPEC outcome has a matching test method
+- [ ] Tests assert field values, not just outcomes (R14/R16)
+- [ ] Green implementation makes all concept tests pass
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 (none — child stages own outputs and side effects)
@@ -66,11 +100,14 @@ The child stages are executable auto-advance stages. Run them strictly in order:
 
 ## Gate
 
-Auto-advances (next human gate: Stage 04c already passed). The gate fires
-only after `04d_green-impl/` is green.
+Auto-advances through `04d-red`, `04d-green`, then `04e-red`. Concept tests are mechanically derived
+from the approved use case (04c) and SPECs (04b). The red→green handoff
+is automated — `verify_concept_test_derivation.py` is the gate between
+04d-red and 04d-green. No human approval is required at this boundary;
+the design was settled at 04c (Gate 3).
 
-## Advancing
+## Next stage
 
 -> [`04d_red-tests/CONTEXT.md`](04d_red-tests/CONTEXT.md) — Concept test derivation (red)
 
-Run `./clad advance`; this container does not choose the next child stage.
+The agent proceeds without a human gate.

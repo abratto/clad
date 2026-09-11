@@ -127,7 +127,18 @@ read these files directly instead: `AGENTS.md` §1–3, `CONTEXT.md`,
     If it fails, the stage is not complete. In implementation stages
     (04c–04e), `test.command` runs this gate automatically, so you do
     not need to invoke it separately.
-15. **CLAD release rule.** When publishing this repository's CLAD distribution,
+15. **Sub-agent orchestration (recommended default).** If your harness can
+    spawn sub-agents, run **one sub-agent per stage**, each driving
+    `./clad advance`. The parent session orchestrates; a sub-agent re-orients
+    from disk, produces exactly one stage's `Outputs`, runs the stage `Verify`
+    + `./clad verify`, and ends its turn with `./clad advance`. On `NEXT STAGE`
+    the parent spawns the next stage; at a human gate the sub-agent returns and
+    the parent/human approves with `./clad approve <N>` before continuing. The
+    sub-agent never self-selects a stage or approves a gate. Full loop, producer/
+    consumer advance semantics, and the no-sub-agent fallback:
+    [`STAGES.md`](methodology/implementation/STAGES.md) §"Orchestration: one
+    sub-agent per stage".
+16. **CLAD release rule.** When publishing this repository's CLAD distribution,
    a release is an annotated Git tag named `vMAJOR.MINOR.PATCH` on a green
    `main` commit, with a matching version section in `CHANGELOG.md`. Agents may
    prepare release notes and verify the candidate commit, but must not create
@@ -156,7 +167,7 @@ reference and are not repeated here. The three essentials to remember:
 - **Per-UC scope:** Stages 01–05 run once per in-scope goal, each in
   `features/UC-XX-<slug>/`. One folder per confirmed in-scope goal.
 - **Gates:** Gate 1 (Requirements) at 01b, Gate 2 (Architecture) at 03b,
-  Gate 3 (Executable) at 04c. Stages between gates auto-advance.
+  Gate 3 (Executable spec) at 04c. Stages between gates auto-advance.
   Stages 04a–04e implement the outside-in TDD double-loop: `04c` is the
   outer red test (a flow); `04d`/`04e` are the inner red→green TDD on
   concepts and syncs.
@@ -208,8 +219,9 @@ and warns without blocking when a configured path points into the seed's
 Two human-only workflow keys (`workflow.autonomous`,
 `workflow.session-per-stage`) are described inline there and in
 `STAGES.md` §"Workflow control". `test.command` there is the sole valid
-test invocation (R19). The canonical `storage.layer` is
-"In-memory FactStore relations (fire-after-commit engine)".
+test invocation (R19). The canonical `storage.layer` default is the
+in-memory `FactStore` relations of the fire-after-commit engine; read the
+current value from `clad.properties` rather than a quoted copy.
 
 ### 4b. Agent Skills (with fallback)
 

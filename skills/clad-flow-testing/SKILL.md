@@ -11,7 +11,7 @@ description: Write outer-red flow tests during CLAD Stage 04c. Use when producin
 
 Writing the outer-red flow tests — Gherkin `.feature` files and
 step-definition skeletons for each use-case scenario. This is Gate 3
-(Executable specification) — the last human gate before implementation.
+(Executable spec) — the last human gate before implementation.
 
 ## Files
 

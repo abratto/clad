@@ -1,10 +1,25 @@
+<!--
+  WORKED EXAMPLE - contract synced from templates/feature-skeleton/.
+  UC-00's output/ is historical/frozen (gate content hashes); it may
+  contain legacy artefacts. See features/UC-00-login/README.md
+  SS"Contract vs example".
+-->
+
 # Stage 04e-green — Sync Implementation (green)
 
 ## Pre-condition (agent must verify before starting)
 
-**`../04e_red-tests/output/sync-test-derivation.md` must exist and be
-human-approved.** If the red sync tests are missing or not yet approved,
-stop and send the work back to `04e-red`.
+Run the following **before** writing any sync implementation code:
+
+```
+python3 ../../../../../../quality-gate/verify_stage_sequence.py \
+   --feature ../../../../ \
+   --through 04e-red
+```
+
+If this script exits with a non-zero status, stop immediately.
+Stage 04e-red sync test derivation is missing — do not implement
+before sync tests are derived.
 
 ## Why this stage exists
 
@@ -29,6 +44,7 @@ not redesign approved tests.
 | `../04e_red-tests/output/` | 4 | Approved red sync tests and handoff bundle |
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for green evidence |
 | `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
+| Skill: `clad-sync-tdd` | 3 | Sync TDD reference (see skills/ directory) |
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
 | `../../../../../../reference-impl/java-legible/README.md` and `../../../../../../reference-impl/legible-engine/README.md` (default profile) | 3 | Profile conventions for the canonical fire-after-commit profile |
@@ -45,28 +61,33 @@ not redesign approved tests.
    stop and send the work back to `04e-red` or Stage 03.
 4. Derive behavior from the approved upstream artefacts first: the
    Stage 03 sync specs, the `04b` SPEC slices, the `04c` expected
-   authored action chain, and the approved red sync tests. On the
-   canonical `java-legible` profile, each approved sync is a declarative
-   `SyncRule` in `LoginSyncs`; on the legacy `java-micronaut-jena`
-   profile, use `SYNC_LOWERING.md` as the deterministic lowering contract
-   and `CANONICAL_EXEMPLAR.md` only as a realization pattern for class,
-   package, and test shape.
-5. Place sync code in the canonical Java sync package bucket: each
-   approved sync becomes one class under `<APP_PACKAGE_ROOT>.syncs`,
-   with tests mirrored under the corresponding sync test package. Do
-   not place syncs in `engine`, `infrastructure`, `concepts`, or ad hoc
-   sibling packages.
+   authored action chain, and the approved red sync tests. If the
+   selected profile is Java/Jena/Micronaut, use
+   `SYNC_LOWERING.md` as the deterministic lowering contract and
+   `CANONICAL_EXEMPLAR.md` only as a realization pattern for class,
+   package, and test shape. Neither may override the feature's own
+   approved artefacts.
+5. If the selected profile is Java/Jena/Micronaut, place sync code in
+   the canonical sync package bucket: each approved sync becomes one
+   class under `<APP_PACKAGE_ROOT>.syncs`, with tests mirrored under the
+   corresponding sync test package. Do not place syncs in `engine`,
+   `infrastructure`, `concepts`, or ad hoc sibling packages.
 6. Keep sync logic declarative. Do not invent imperative coordinator
    classes, extra executable syncs, or branching business logic. A
    class that sequences ordered domain calls or chooses the final
    scenario branch inline is a defect, not an acceptable shortcut.
-7. Run the canonical command from `../../../../_config/build-and-test.md`
-   until sync tests and the `04c` flow tests are green, then record the
-   command and result in `output/green-evidence.md`.
+ 7. Run the canonical command from `../../../../_config/build-and-test.md`
+    until sync tests and the `04c` flow tests are green, then record the
+    command and result in `output/green-evidence.md`.
+ 8. On the Gherkin track: after sync tests and flow tests are green,
+    enable the Cucumber runner (remove `@Disabled` from step-definition
+    classes) and re-run. Confirm all Gherkin scenarios pass. Capture
+    the Cucumber report (HTML or JSON) as supplementary gate evidence.
 
 ## Outputs
 
-- (Side effect:) `<SyncName>.java` and green `<SyncName>Test.java` files per sync
+- `output/green-evidence.md` — executed green command, result, and implementation files changed
+- (Side effect:) `<SyncName>.java` and green `<SyncName>Test.java` files (or profile equivalents) per sync
 
 ## Verify
 
@@ -77,17 +98,38 @@ not redesign approved tests.
    the same diff.
 - Executed command evidence shows: test compilation succeeds, sync tests
   are green, and flow tests are green.
-- Run `quality-gate/verify_implementation_parity.py` with the Java sync
-   source directory and `--features-dir features/`. It must confirm every
-   sync class has a corresponding Stage 03 spec and mechanically follows
-   the `When<Trigger>Then<Target>[For<Scope>]` naming grammar.
-- Run `quality-gate/verify_sync_implementation_parity.py` with
-  `--sync-dir ../../../03_syncs/output/` and the selected profile's sync
-  source directory. It must confirm every approved Stage 03 sync contract
-  has a corresponding implementation (a declarative `SyncRule` on
-  `java-legible`, or a legacy `@Singleton` `SyncAgent` class).
-- Behavior is traceable first to the approved upstream artefacts; the
-   Java exemplar was used only as a realization pattern.
+- Advance runs these checks for this stage; all must pass:
+  `verify_implementation_parity.py` (every sync class has a Stage 03 spec
+  and follows the `When<Trigger>Then<Target>[For<Scope>]` grammar),
+  `verify_sync_implementation_parity.py` (every Stage 03 sync has a
+  matching declarative implementation), `verify_sync_route_filters.py`
+  (R11 route filters on shared-trigger syncs), `verify_sync_declarative.py`
+  (R3: no imperative coordinator/orchestrator), and
+  `verify_action_log_isolation.py`.
+
+### Cucumber-green gate
+
+```
+python3 ../../../../../../quality-gate/verify_cucumber_green.py \
+  --feature-root ../../../../ \
+  [--test-command <your-build-and-test-command>]
+```
+
+- **verify_cucumber_green.py:** runs the test command and confirms all
+  Cucumber scenarios pass. Fails on undefined/skipped/failing
+  scenarios. Passes only when every Gherkin scenario is green.
+
+### Flow-test verification
+
+- All Gherkin scenarios in `../../04c_flow-tests/output/*.feature` are
+  green via the Cucumber runner.
+- The Cucumber report (HTML or JSON) is captured alongside the executed
+  build-and-test evidence and shows 0 failed scenarios.
+- The runtime token chain observed by each passing Gherkin scenario
+  matches the expected authored action chain recorded in
+  `../../04c_flow-tests/output/` for each scenario.
+- Behavior is traceable first to the approved upstream artefacts; any
+   profile exemplar was used only as a realization pattern.
 - Every generated sync test/implementation pair corresponds to exactly
   one approved Stage 03 sync; no extra executable syncs exist without an
   upstream sync contract.
@@ -102,13 +144,17 @@ not redesign approved tests.
 - Sync implementation package/source path matches
   `../../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,
   `APP_SOURCE_ROOT`, `APP_TEST_SOURCE_ROOT`).
-- Sync classes are under `<APP_PACKAGE_ROOT>.syncs` and not in `engine`,
-   `infrastructure`, `api`, `concepts`, or ad hoc sibling packages.
+- For the Java/Jena/Micronaut profile, sync classes are under
+   `<APP_PACKAGE_ROOT>.syncs` and not in `engine`, `infrastructure`,
+   `api`, `concepts`, or ad hoc sibling packages.
 
 ## Gate
 
-Auto-advances to Stage 05 after green evidence is recorded.
+Auto-advances to Stage 05. All sync tests and the 04c flow tests
+must be green (`mvn test` passes) before advancing.
 
-## Advancing
+## Next stage
 
-Run `./clad advance`; it selects Stage 05 after this stage's checks pass.
+-> [`../../../05_verify/CONTEXT.md`](../../../05_verify/CONTEXT.md) — Verify + close
+
+The agent proceeds to Stage 05 without a human gate.

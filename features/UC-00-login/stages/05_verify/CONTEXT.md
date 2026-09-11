@@ -1,4 +1,31 @@
-# Stage 05 — Verify and close (UC-00-login)
+<!--
+  WORKED EXAMPLE - contract synced from templates/feature-skeleton/.
+  UC-00's output/ is historical/frozen (gate content hashes); it may
+  contain legacy artefacts. See features/UC-00-login/README.md
+  SS"Contract vs example".
+-->
+
+# Stage 05 — Verify and close
+
+## Pre-condition (agent must verify before starting)
+
+Run the following **before** writing any verify artefacts:
+
+```
+python3 ../../../../quality-gate/verify_stage_sequence.py \
+  --feature ../.. \
+  --through 04e-green
+```
+
+Additionally, the full test suite must pass (`mvn test`).
+If either check fails, stop — do not proceed to verification
+until all upstream stages are complete and tests pass.
+
+This stage has two parts. **Verify** is the back-trace from runtime
+flow tokens to the use case (this is what Stage 05 has always been).
+**Close** is the deliberate hand-off — smoke the running instance,
+update tracking, leave a resume-point — that prevents the feature
+from going "done" implicitly the moment the PR merges.
 
 ## Why this stage exists
 
@@ -17,91 +44,161 @@ that the deployable thing actually runs (Part 2, smoke). Without it,
 
 | Path | Layer | Why |
 |---|---|---|
-| `../01_usecase/output/usecase.md` | 4 | Scenarios |
+| `../01_usecase/output/usecase.md` | 4 | Scenarios to verify against |
 | `../03_syncs/output/` | 4 | Authorising sync rules |
-| `../04_implement/output/implementation-manifest.md` | 4 | What was built |
+| `../04_implement/04c_flow-tests/output/` | 4 | Outer test specs for cross-reference (.feature or markdown) |
 | (a flow-token log from a representative test run) | 4 | Runtime evidence |
+| (Cucumber HTML/JSON report, Gherkin track only) | 4 | Supplementary scenario-pass evidence |
+| Skill: `clad-verification` | 3 | Verification reference (see skills/ directory) |
 | `../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics |
-| Skill: `clad-verification` | 3 | Verification reference |
-| `../../../../reference-impl/java-legible/README.md` (default profile; `java-micronaut-jena/README.md` legacy only) | 3 | Runtime debug surface for the selected profile |
-
-## Pre-condition (agent must verify before starting)
-
-```
-python3 ../../../../quality-gate/verify_gate_approval.py --feature ../../ --required-gates 3
-```
-
-Gate 3 (Executable specification) must be approved and the full test
-suite must pass (the `test.command` from `clad.properties`) before Stage 05
-begins. If either fails, return to the owning stage.
+| `../../../../reference-impl/java-legible/README.md` (default profile) | 3 | Runtime evidence surface for the canonical fire-after-commit profile (`DebugApi`, archived flow records) |
+| `../../../../reference-impl/java-micronaut-jena/README.md` (legacy profile only) | 3 | Legacy `/api/dev/*` HTTP debug endpoints |
+| `../../../../methodology/overlays/TRACKING.md` | 3 | Optional — only if the TRACKING overlay is in use |
 
 ## Process
 
-### Part 1 — Verify
+### Part 1 — Verify (back-trace)
 
-Walk the flow-token tree for each scenario; check every token
-back-traces to a sync or use-case scenario. Write
-`output/verification-trace.md`. (UC-00 also keeps the older
-`trace.md` filename around as the canonical name; this seed uses
-`verification-trace.md` historically — both are acceptable.)
+For each named scenario in the use case:
 
-Also check that transport entry and transport exit were reached through
-the authorised action/sync chain rather than being short-circuited
-inside the controller / route handler.
+1. Find the root flow token (the `Web.request` matching the
+   scenario's trigger).
+2. Walk the parent-linked tree of children.
+3. Check that the chain matches the syncs in `03_syncs/output/`.
+4. Check that no action appears in the chain that is not authorised
+   by either a use-case scenario or a sync.
+5. Check that the runtime chain actually crossed the bootstrap
+   boundary the right way: transport entry -> authorised concept/sync
+   chain -> transport exit, rather than being short-circuited inside the
+   controller / route handler.
 
-In this profile, the default runtime evidence surface is the selected
-profile's debug surface (canonical `java-legible` fire-after-commit
-engine's `/api/dev/…`; legacy `java-micronaut-jena` RDF debug controller)
-documented in the reference-impl README. Prefer the registered-sync /
-archived-flow / stuck / concept-state inspection endpoints as the primary
-runtime evidence, rather than predicted chains.
+On the Gherkin track, additionally cross-reference:
+   - Every Gherkin `Scenario` / `Scenario Outline` name in
+     `../04_implement/04c_flow-tests/output/*.feature` matches a
+     use-case scenario name in `../01_usecase/output/usecase.md`.
+   - Every scenario's trace entry references its Gherkin scenario
+     name and line number alongside the use-case heading.
+
+When the selected profile exposes a read-oriented runtime debug surface,
+use that surface as the default proof source for the walk before you
+write `trace.md`. For the Java reference profile, prefer `/api/dev/flows`
+to confirm the registered sync plan, `/api/dev/flow/{token}` to inspect
+the archived action history for one flow token, `/api/dev/stuck` to rule
+out missing `:output`, and `/api/dev/concept/{name}/triples` when you
+need to verify concept state alongside the flow trace.
+
+Write a per-scenario walk to `output/trace.md`. If anything failed
+step 3 or 4, add an entry to `output/findings.md` and mark which
+earlier stage owns the defect — **do not proceed to closure** until
+findings are resolved.
 
 ### Part 2 — Close
 
-1. Boot the selected profile, hit `POST /login` for each scenario,
-   capture in `output/smoke.md`.
-2. Update tracking (or note "not applicable") in `output/tracking.md`.
-3. Add a `Resume point:` line at the top of the trace file.
+Once `trace.md` is clean and `findings.md` is empty (or absent), do
+**all three** of the following:
 
+1. **Smoke test the running instance.** Boot the profile (e.g.
+   `mvn exec:java` for the Java profile), exercise each scenario's
+   trigger by hand or with a small script, and confirm the response
+   matches the use case. Capture the commands and observed responses
+   in `output/smoke.md`. This is the only step that proves the
+   *deployable* artefact, not just the test suite, behaves.
+2. **Update tracking** (if the TRACKING overlay is in use). Move the
+   roadmap entry from `doing` to `done`; relabel the issue/PR
+   `clad:done`; close the issue if appropriate. If the TRACKING
+   overlay is not in use, write `output/tracking.md` containing the
+   single line `Not applicable — TRACKING overlay not in use.`
+3. **Leave a resume-point.** Append a one-line `Resume point:` entry
+   to the top of `output/trace.md` describing the next reasonable
+   piece of work (typically the next feature, the next iterative
+   change, or "no follow-up planned"). The next session's first read
+   should land on it.
+
+
+## Progress checklist
+
+- [ ] Flow tokens back-traced to use-case scenarios
+- [ ] Every scenario marked covered/partial/missing
+- [ ] Deployable artefact smoke-tested
+- [ ] `trace.md`, `findings.md`, `smoke.md`, `tracking.md` produced
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
-- `output/verification-trace.md` (with `Resume point:` line at top)
-- `output/findings.md` (only if violations found)
-- `output/smoke.md`
-- `output/tracking.md`
+- `output/trace.md` — per-scenario verification walk; **also**
+  carries the resume-point line at the top
+- `output/findings.md` — only if Part 1 found violations
+- `output/smoke.md` — recorded smoke run (Part 2.1)
+- `output/tracking.md` — closure note (Part 2.2)
 
 ## Verify
 
-- Every scenario has a trace entry.
-- The trace is backed by captured runtime evidence from the selected
-  profile's debug surface or another executed runtime inspection command,
-  not only by predicted test chains.
+Automated close-evidence self-audit (advisory — warnings, never blocks):
+
+```
+python3 ../../../../quality-gate/verify_close_evidence.py \
+  --feature-root ../.. \
+  --test-source-root <APP_TEST_SOURCE_ROOT>
+```
+
+- Confirms `trace.md` (the canonical name) is present and warns on the legacy
+  `verification-trace.md`.
+- Warns when an adapter surface is declared but no enabled flow/integration
+  test exists. This makes the "required, not optional" integration test
+  visible to `advance`/`./clad verify`; it is advisory because there is no
+  reliable profile-agnostic definition of that test.
+
+- Every scenario has an entry in `trace.md`.
+- `findings.md`, if present, names the owning stage for each finding.
+- `trace.md` is backed by captured runtime evidence from the profile's
+  debug surface or equivalent executed inspection commands, not only by
+  predicted test chains.
 - The captured runtime evidence shows that transport entry and exit were
   reached through the authorised action/sync chain, not by imperative
   controller branching.
-- `smoke.md` records a real (not predicted) curl/response per scenario.
-- `tracking.md` exists.
-- Trace file begins with `Resume point:`.
-- **Cross-stage check (back):** every observed flow token back-traces
-  to a use-case scenario.
+- `smoke.md` exists and contains a real (not predicted) command +
+  response per scenario.
+- `tracking.md` exists, even if only to record that no overlay is in
+  use.
+- `trace.md` begins with a `Resume point:` line.
+- **Adapter-surface integration test:** features exposing any adapter
+  surface (HTTP, CLI, GraphQL, pub/sub) **must** carry a profile-specific
+  integration test that exercises that surface end-to-end (response shape
+  + state round-tripping). Derived alongside the 04c flow tests. Required,
+  not optional. Distinct from Gherkin flow tests (action token chain).
+  A *failing* integration test blocks the build (`mvn test`); a *missing*
+  one is surfaced as a warning by `verify_close_evidence.py` (above) and
+  confirmed by this human checklist.
+- **Cross-stage check (back):** every flow token observed at runtime
+  back-traces to a use-case scenario.
 
 ### Gherkin/Cucumber coverage
 
-- Every Gherkin scenario name (`login.feature` →
-  `features/UC-00-login/stages/04_implement/04c_flow-tests/output/`)
-  matches a `trace.md` heading/cross-reference.
-- The Cucumber report (from `test.command`) shows 0 failed scenarios for
-  the scenarios smoked during verification.
-- Gherkin scenarios provide no additional coverage beyond what the use
-  case defines.
+- Every Gherkin scenario name in
+  `../04_implement/04c_flow-tests/output/*.feature` appears as a
+  heading or cross-reference in `trace.md`.
+- The Cucumber report (if present) shows 0 failed scenarios for the
+  scenarios exercised in `smoke.md`.
+- The Gherkin scenarios provide no additional coverage beyond what the
+  use case already defines — they are a derived view, not a new
+  contract.
 
 ## Gate
 
-- Findings → loop back to owning stage.
-- No further gate after closure.
+Auto-closes. The agent runs verification scripts, records results
+in trace.md, smoke.md, and tracking.md. No human gate required —
+the human inspects the results at their convenience.
+
+Any verify-stage finding in trace.md sends the loop back to whichever
+stage owns the defect; closure does not run until findings are clear.
 
 ## Next stage
 
-**This is the final stage.** When the gate passes, the feature is complete.
+**This is the final stage.** When verification passes, the feature is
+complete.
 
-To start the next feature, run system-scope Stage 00 at [`features/_system/stages/00_actor-goal/CONTEXT.md`](../../../../features/_system/stages/00_actor-goal/CONTEXT.md). After that gate passes, copy [`templates/feature-skeleton/`](../../../../templates/feature-skeleton/) to `features/UC-XX-<slug>/` and begin at `stages/01_usecase/CONTEXT.md`.
+To start the next feature, run system-scope Stage 00 at
+[`features/_system/stages/00_actor-goal/CONTEXT.md`](../../../../features/_system/stages/00_actor-goal/CONTEXT.md).
+After that gate passes, copy
+[`templates/feature-skeleton/`](../../../../templates/feature-skeleton/)
+to `features/UC-XX-<slug>/` and begin at
+`stages/01_usecase/CONTEXT.md`.

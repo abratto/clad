@@ -1,3 +1,10 @@
+<!--
+  WORKED EXAMPLE - contract synced from templates/feature-skeleton/.
+  UC-00's output/ is historical/frozen (gate content hashes); it may
+  contain legacy artefacts. See features/UC-00-login/README.md
+  SS"Contract vs example".
+-->
+
 # Stage 03 — Synchronizations
 
 ## Why this stage exists
@@ -11,7 +18,7 @@ mechanical.
 
 **Feeds:**
 
-- `<name>.sync.md` → 03a (every `then` call and every `where` clause is tabulated; Pattern D reads are flagged), 04c (the sync chain is what the outer flow test asserts), 04e (one inner red→green TDD pass per sync), 05 (the verifier checks that every observed call is authorised by a sync or a use-case scenario).
+- `<name>.sync.md` → 03a (every `then` call and every `where` clause is tabulated; Pattern D reads are flagged), 04c (the sync chain is what the outer flow test asserts), 04e (one inner red→green TDD loop per sync).
 
 **Agent stance for this stage:** if you reach for an `if`, you are in
 the wrong file. Branching belongs inside a concept action's outcomes;
@@ -24,119 +31,183 @@ the sync just says *"when outcome X fires → then call Y."*
 | `../01_usecase/output/usecase.md` | 4 | Scenarios to satisfy |
 | `../02_concepts/output/` | 4 | Concepts available to coordinate |
 | `../01b_chain-table/output/` | 4 | The action chain each sync formalises |
+| Skill: `clad-sync-design` | 3 | Sync design reference (see skills/ directory) |
 | `../../../../methodology/architecture/SYNCHRONIZATIONS.md` | 3 | Sync semantics |
-| `../../../../methodology/architecture/SYNC_PATTERNS.md` | 3 | The four `where` patterns (A/B/C/D) |
-| `../../../../methodology/implementation/RULES.md` | 3 | Hard rules (R3) |
-| Skill: `clad-sync-design` | 3 | Sync design reference |
+| `../../../../methodology/architecture/SYNC_PATTERNS.md` | 3 | The four legal `where` patterns (A/B/C/D) |
+| `../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../templates/sync.md` | 3 | Output template |
 
 ## Process
 
-For each scenario in the use case, identify the chain of concept actions
-that fulfils it. Each coordination link becomes one sync.
+**Deterministic generation first.** This stage is a mechanical lowering of
+01b chain tables + 02 concepts. Do NOT author syncs from scratch. First run:
 
-Before writing sync prose, build a per-sync **Sync Contract Matrix** from
-the approved chain table and concept files. For each transition, record
-the source row id, target row id, exact `when` signature, exact `then`
-signature, and any allowed literals. Copy tokens verbatim.
+Generated via:
+```
+python3 ../../../../quality-gate/generate_syncs.py --feature ../../ --write
+```
+
+`generate_syncs.py` emits one `*.sync.md` per chain-table transition with the
+Sync Contract Matrix, the compressed-rule name, and the `when`/`then` skeleton,
+auto-labelling A/B/C bindings. It leaves `<!-- TODO ... -->` markers for the
+things that are genuinely not derivable: `then` argument values, `where`
+sources, and any Pattern D concept-state read. Resolve ONLY those markers
+(never re-author the name, matrix, or trigger/target — they are derived and
+must match the generator's output exactly). If a Pattern D read appears
+warranted, author it deliberately and add its `D:` label + source; do not
+invent a cross-concept read the chain table did not authorise.
+
+Count the transitions in every approved chain table in
+`01b_chain-table/output/` for this feature. Each transition (row N →
+row N+1) becomes exactly one sync file. Do not collapse multiple
+transitions into one sync.
+
+Before writing any sync prose, build a per-sync **Sync Contract Matrix**
+from the approved chain table and concept files. For each transition,
+capture exactly these tokens: source row id, target row id, `when`
+signature, `then` signature, and allowed literals. Copy them verbatim.
+This is a preflight check, not a place to reinterpret names.
 
 If any action signature, outcome name, argument name, or literal differs
-between `../01b_chain-table/output/` and `../02_concepts/output/`, stop
-and reopen Stage 02. Stage 03 does not normalize earlier-stage drift.
+between 01b and 02, stop and reopen Stage 02 before writing any sync
+file. Stage 03 derives coordination from approved contracts; it does not
+repair contract drift.
 
-Syncs use paper-style block syntax: `sync <Name>`, `when { }` / `where { }` /
-`then { }`, with `Concept/action:` namespace qualifiers (slash separator,
-colon after action), `?variable` bindings, and `=> [ outcome ]` for
-outcome matching. The sync name and file stem follow the compressed rule
-grammar from `SYNCHRONIZATIONS.md`:
-`When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>]`.
-All `?variable`s are scoped across the entire sync.
+For each transition, write one rule-shaped
+`When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>].sync.md`:
+- `when:` the outcome that fires (e.g. `Account.validate(...) -> Valid`)
+- `where:` data-routing only — field-path references and sync constants.
+  No function calls, no arithmetic, no I/O. If you need a computation,
+  it belongs inside the concept action, not here. Label every line with
+  its pattern: `A:` / `B:` / `C:` / `D:` per `SYNC_PATTERNS.md`.
+- Pattern A binds only from names already declared by the approved
+  `when` token. It may not read `body.*`, `request.*`, or other raw
+  transport structure. If a needed Pattern A name is missing, reopen
+  Stage 01b and fix the trigger contract before continuing.
+- `where:` is binding-only. No JSON assembly, no ad hoc projection
+  extraction, and no payload reshaping. If a downstream action needs a
+  different shape, the upstream concept action must emit it explicitly.
+- `where:` is also under a **literal lock**. Status codes remain numeric,
+  not quoted strings. Status values keep their exact casing and
+  hyphenation. Action argument names must match the Stage 02 signatures
+  exactly.
+- `where:` may not invent convenience fields. A response sync may use
+  only constants from the target chain row, or fields explicitly emitted
+  by the triggering/prior action outcomes and declared in `where:`.
+- `then:` the next concept action to invoke.
 
-The `where` clause is a **declarative query language** — identifier
-minting (`bind ( uuid() as ?x )`), concept-state reads (`Concept: { … }`,
-the Pattern D construct), `OPTIONAL { … }` conditional reads, and
-`BIND ( ?x AS ?_eachthen )` aggregation. The full construct catalogue and
-examples are in
-[`../../../../methodology/architecture/SYNCHRONIZATIONS.md`](../../../../methodology/architecture/SYNCHRONIZATIONS.md)
-§"Where clause expressiveness"; do not re-derive them here.
+The sync file stem and `sync <Name>` header must match the naming rule
+from `SYNCHRONIZATIONS.md`: prefix with `When`, use `Then` between the
+trigger and target sides, and append `For<Scope>` when the same edge can
+occur in multiple routes, flows, or use cases.
 
-What `where` still must NOT do:
-- **Branch on business conditions** — `if ?role = "admin"` belongs in a concept's outcomes
-- **Perform I/O or side effects** — reads are for binding; writes belong in `then`
-- **Mutate state** — `where` is read-only
-- **Execute custom computation** — hashing, signing, arithmetic, JSON assembly all belong in concept actions
+Syncs are declarative — no imperative branching, no state, no I/O.
+Every sync's `Cites` section names the use-case scenario it satisfies.
+Optionally also emit `output/<scenario-name>.sync-summary.md` as a
+derived, non-canonical review table that summarizes one scenario's syncs
+as `Step | Sync | When | Then | Where summary | Key`. If present, it
+must be mechanically derivable from the canonical per-sync files and may
+not introduce new logic.
 
-Response bodies may use only constants from the target chain row or
-fields explicitly emitted by an earlier approved outcome and declared in
-`where`. Exact literals are locked: numeric status codes stay numeric,
-and string/status values keep their approved casing and hyphenation.
 
-Each sync's `Cites` section names the use-case scenarios it satisfies.
-Each sync also includes a "Where clause patterns" table mapping every
-binding to its Pattern (A/B/C/D) for Stage 03a's audit.
+## Progress checklist
 
-An optional `output/<scenario-name>.sync-summary.md` may be emitted as a
-derived, non-canonical per-scenario review table (`Step | Sync | When |
-Then | Where summary | Key`) if it is copied mechanically from the
-canonical sync files and introduces no new logic.
-
+- [ ] One `.sync.md` per chain-table row (When → Then)
+- [ ] `when` clause names trigger concept + action + outcome
+- [ ] `then` clause names target concept + action + inputs
+- [ ] Sync Contract Matrix complete for each sync
+- [ ] Shared-trigger syncs have route filters (R11/R15)
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
-- `output/WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin.sync.md`
-- `output/WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin.sync.md`
-- `output/WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin.sync.md`
-- `output/WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md`
-- `output/WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md`
-- `output/WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md`
-- `output/WhenSessionGrantGrantedThenWebRespondForLogin.sync.md`
+- `output/<name>.sync.md` — one per coordination rule
 
 ## Verify
 
 ### Automated checks
 
+Run the following before requesting the human gate:
+
 ```
-python3 ../../../../quality-gate/verify_sync_matrix.py --sync-dir output --chain-dir ../01b_chain-table/output
+python3 ../../../../quality-gate/verify_sync_matrix.py \
+  --sync-dir output --chain-dir ../01b_chain-table/output
 python3 ../../../../quality-gate/verify_scenario_coverage.py \
   --goals ../../../_system/stages/00_actor-goal/output/goals.md \
   --usecase ../01_usecase/output/usecase.md \
   --chain-dir ../01b_chain-table/output \
   --sync-dir output
-python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected "WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin.sync.md,WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin.sync.md,WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin.sync.md,WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md,WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md,WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md,WhenSessionGrantGrantedThenWebRespondForLogin.sync.md"
+python3 ../../../../quality-gate/verify_sync_cycle_graph.py \
+  --sync-dir output
+python3 ../../../../quality-gate/verify_sync_overlap.py \
+  --sync-dir output
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "<name>.sync.md,…"  # one per coordination rule
 ```
 
-- **verify_sync_matrix.py:** every sync has a valid Sync Contract Matrix.
-- **verify_scenario_coverage.py:** every scenario is satisfied by at least one sync.
-- **verify_file_manifest.py:** `output/` contains exactly the expected sync files.
+- **verify_sync_matrix.py:** every sync has a complete Sync Contract Matrix
+  with valid row IDs, `when`/`then` signatures, and allowed literals.
+- **verify_scenario_coverage.py:** every use-case scenario is cited by at
+  least one sync.
+- **verify_sync_cycle_graph.py:** no cross-concept sync cycle (A→B→A).
+  `Web` (bootstrap) and self-references are excluded.
+- **verify_sync_overlap.py:** no two syncs share 2+ concepts with
+  conflicting lock order (deadlock risk). Same-order overlaps warn.
+- **verify_file_manifest.py:** `output/` matches the expected sync list.
 
 ### Semantic checks (human)
 
-- No sync contains `if`/`else` over business state.
-- No sync persists state.
-- Every sync has a one-row Sync Contract Matrix that names the exact
-  source row, target row, `when`, `then`, and allowed literals it was
-  derived from.
-- Numeric transport status codes remain numeric, not quoted strings.
-- String literals and status values preserve their exact approved casing
-  and hyphenation.
-- Response payloads contain only chain-row constants or fields explicitly
-  emitted by earlier approved outcomes and declared in `where:`.
-- If any 03 signature differs from 01b or 02, stop and reopen Stage 02
-  instead of resolving the mismatch inside a sync.
-- **Cross-stage check (back):** every named scenario in
-  `../01_usecase/output/usecase.md` is satisfied by at least one sync.
-- **Cross-stage check (forward):** every sync contract written here must
-  later lower to one Stage 04e `SyncAgent` implementation; Stage 04e-green
-  verifies this with `quality-gate/verify_sync_implementation_parity.py`.
-- **Filename contract:** the files in `output/` match the `Outputs`
-  section exactly, with no extras and no omissions.
+- No sync contains imperative branching or persists state.
+- **Sync count:** the number of sync files in `output/` equals the
+  number of transitions in the chain table(s) for this feature (each
+  chain-table row-to-row arrow = one sync).
 - **Sync naming:** every filename stem and `sync <Name>` header follows
-  the compressed `When<Trigger>Then<Target>` rule grammar.
+  `When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>]`.
+- **Where-clause discipline:** no `where` line contains a function call,
+  arithmetic expression, or I/O operation. Every line is a field-path
+  reference (`when.field`, `result_of(<#N>).field`) or a sync constant
+  (exact approved literal). Pattern labels (`A:` / `B:` / `C:` / `D:`) are
+  present on every `where` line.
+- **Pattern A discipline:** every Pattern A binding reads only from a
+  name declared by the approved `when` token. No `body.*`, `request.*`,
+  or other raw transport paths are permitted in Stage 03.
+- **Sync Contract Matrix:** each sync can be traced back to one source
+  row and one target row from 01b, with `when`/`then` signatures copied
+  exactly from the approved contracts.
+- **Literal lock:** exact literal identity is preserved across stages.
+  Numeric transport status codes stay numeric, string literals keep their
+  exact casing and hyphenation, and action argument names match the 02
+  concept signatures exactly.
+- **No invented payload fields:** every field referenced in `then`,
+  including `Web.respond(...)` bodies, is either a Stage 03 constant from
+  the chain row or a field explicitly emitted by an earlier approved
+  action outcome and declared in `where:`.
+- **Declare before use:** every variable referenced in a `then` line
+  is either carried directly from the `when` outcome's flow token or
+  explicitly declared in a `where` clause with a pattern label. No
+  undeclared variable references permitted.
+- **Cross-stage signature lock:** if any 03 `when`/`then` signature does
+  not exactly match the corresponding 01b row or the 02 concept action
+  signature, stop and reopen Stage 02 instead of guessing.
+- **Cross-stage check (back):** every named scenario in
+  `01_usecase/output/usecase.md` is satisfied by at least one sync, or
+  is a `Web`-only failure path (call this out explicitly in the sync
+  pack's notes).
+- **Cross-stage check (back to 01b) — repeated action backstop:** scan
+  the full sync set for any `<Concept>.<action>` that appears as the
+  `then` target of one sync and also as the `when` source of another,
+  where both share the same concept action name. If the same
+  `<Concept>.<action>` appears more than once across the `then` lines
+  of the sync set, this indicates that the chain table contained a
+  repeated action invocation that was not caught at the 01b gate. Stop,
+  do not proceed to 03a, and surface the finding to the human: name the
+  duplicated action and the chain table rows that produced it. The chain
+  table must be corrected and re-approved before the syncs can be
+  re-derived.
 
 ## Gate
 
-Auto-advances (next human gate: Stage 03b). The quality-gate scripts
-(`verify_sync_matrix.py`, `verify_scenario_coverage.py`,
-`verify_file_manifest.py`) must all pass before advancing.
+Auto-advances (next human gate: Stage 03b). The `verify_sync_matrix.py` and
+`verify_scenario_coverage.py` scripts must pass before advancing.
 
 ## Next stage
 

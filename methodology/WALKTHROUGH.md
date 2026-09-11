@@ -336,7 +336,7 @@ with its own `CONTEXT.md`. For UC-00 in this round:
 - **04d (Concept TDD router):** structural handoff point for concept red/green. Open [`04d_concept-tdd/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04d_concept-tdd/CONTEXT.md), then run [`04d_red-tests/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04d_concept-tdd/04d_red-tests/CONTEXT.md) to derive red concept tests (automated gate: `verify_concept_test_derivation.py`), followed by [`04d_green-impl/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04d_concept-tdd/04d_green-impl/CONTEXT.md) to implement them.
 - **04e (Sync TDD router):** structural handoff point for sync red/green. Open [`04e_sync-tdd/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04e_sync-tdd/CONTEXT.md), then run [`04e_red-tests/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04e_sync-tdd/04e_red-tests/CONTEXT.md) to derive red sync tests (automated gate: `verify_sync_matrix.py`), followed by [`04e_green-impl/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04e_sync-tdd/04e_green-impl/CONTEXT.md) to implement them and turn the `04c` flow tests green.
 
-**Human gates across the loop:** Gate 1 (01b — Requirements), Gate 2 (03b — Architecture), **Gate 3 (04c — Executable specification)**. No human gates at 04d or 04e — those red→green handoffs are automated by quality-gate scripts.
+**Human gates across the loop:** Gate 1 (01b — Requirements), Gate 2 (03b — Architecture), **Gate 3 (04c — Executable spec)**. No human gates at 04d or 04e — those red→green handoffs are automated by quality-gate scripts.
 
 > **Agent stance for the whole of Stage 04:** the spec artefacts
 > from 02–03 are now your contract; if a test wants behaviour the

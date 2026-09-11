@@ -119,6 +119,18 @@ Contributors and agents may propose a version and draft release notes, but do
 not create, push, move, or delete release tags without explicit maintainer
 authorization. Downstream project maintainers define their own release policy.
 
+## Machine-facing contract (consumer integrations)
+
+[`methodology/implementation/MACHINE_CONTRACT.md`](methodology/implementation/MACHINE_CONTRACT.md)
+defines the JSON descriptor that downstream consumers — most notably the
+`clad-agent` runtime — use instead of re-parsing CLAD Markdown. It is a
+**consumer-facing integration contract, not workflow guidance**: an agent
+working inside a CLAD-derived repo follows the stage `CONTEXT.md` files and
+never reads this document. Touch the descriptor (`quality-gate/contract.py`,
+`quality-gate/describe_feature.py`) only when changing that integration;
+per `MACHINE_CONTRACT.md`, incompatible changes need a descriptor major
+version and a changelog note.
+
 ## Style
 
 - Markdown: ATX headings, fenced code blocks with language tags, line wrap

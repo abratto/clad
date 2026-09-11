@@ -1,3 +1,10 @@
+<!--
+  WORKED EXAMPLE - contract synced from templates/feature-skeleton/.
+  UC-00's output/ is historical/frozen (gate content hashes); it may
+  contain legacy artefacts. See features/UC-00-login/README.md
+  SS"Contract vs example".
+-->
+
 # Stage 04e — Sync TDD (router)
 
 ## Pre-condition (agent must verify before starting)
@@ -24,6 +31,13 @@ turns the outer flow tests green.
 - approved red sync tests + handoff bundle -> `04e_green-impl/`
 - green sync implementation and green flow tests -> `05_verify/`
 
+**Agent stance for this stage:**
+- If a sync needs imperative branching to make a test pass, the defect
+  is in Stage 03; push the branching down into concept outcomes and
+  re-derive the sync.
+- `04e-red` may write sync tests and derivation artefacts only.
+- `04e-green` may implement only against approved `04e-red` tests.
+
 ## Inputs
 
 | Path | Layer | Why |
@@ -46,6 +60,15 @@ The child stages are executable auto-advance stages. Run them strictly in order:
    against the completed red sync tests until they and the `04c` flow
    tests are green.
 
+
+## Progress checklist
+
+- [ ] Red tests derived from Stage 03 sync specs
+- [ ] Green implementation makes all sync tests pass
+- [ ] Outer flow tests from 04c go green
+- [ ] No imperative branching in sync classes (R3)
+- [ ] Infrastructure controllers are transport-only (R4)
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 (none — child stages own outputs and side effects)
@@ -57,19 +80,21 @@ The child stages are executable auto-advance stages. Run them strictly in order:
 - `04e_red-tests/output/sync-test-derivation.md` exists.
 - All approved sync tests are green at the end of `04e_green-impl/`.
 - All flow tests from `04c` are green at the end of `04e_green-impl/`.
-- Run `quality-gate/verify_sync_implementation_parity.py` with the active
-   Stage 03 sync output directory and Java sync source directory. It must
-   confirm every approved Stage 03 sync has a matching `SyncAgent` class.
 - No extra executable syncs exist without an approved Stage 03 sync.
 
 ## Gate
 
-Auto-advances through Stage 05.
+Auto-advances through `04e-red`, `04e-green`, then Stage 05. Sync tests are
+mechanically derived from approved chain tables and sync specs. The Stage 04e
+implementation-parity and declarative checks (`verify_implementation_parity.py`,
+`verify_sync_implementation_parity.py`, `verify_sync_declarative.py`,
+`verify_sync_route_filters.py`, `verify_action_log_isolation.py`,
+`verify_cucumber_green.py`) are the automated gate. No human approval is
+required at the 04e-red boundary. The flow tests from 04c must go green at
+the end of 04e-green.
 
-## Advancing
+## Next stage
 
 -> [`04e_red-tests/CONTEXT.md`](04e_red-tests/CONTEXT.md) — Sync test derivation (red)
 
-(Stage 04 router is satisfied when `04e_green-impl/` is green; advance directly to Stage 05.)
-
-Run `./clad advance`; this container does not choose the next child stage.
+The agent proceeds without a human gate.

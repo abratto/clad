@@ -1,112 +1,139 @@
-# Stage 03b — Data model (UC-00-login)
+<!--
+  WORKED EXAMPLE - contract synced from templates/feature-skeleton/.
+  UC-00's output/ is historical/frozen (gate content hashes); it may
+  contain legacy artefacts. See features/UC-00-login/README.md
+  SS"Contract vs example".
+-->
+
+# Stage 03b — Data model
 
 ## Why this stage exists
 
-This stage makes UC-00's conceptual state model explicit **before** any
-profile mapping or test implementation starts. The feature has no
-Pattern D reads, so the data model is driven almost entirely by each
-concept's own `state` section.
+This stage separates **conceptual data modeling** from implementation.
+It turns each concept's approved `state` section plus any approved
+Pattern D exposure from 03a into a **profile-neutral** fact model
+before Stage 04 starts talking about RDF, SQL, document fields, or
+other storage primitives.
 
 **Feeds:**
 
-- `UserNaming.data-model.md`, `PasswordAuth.data-model.md`, `Session.data-model.md` → 04a storage mapping when a persistent profile exists
+- `<Name>.data-model.md` → 04a (profile-specific storage mapping), 04d (state invariants remain visible when implementation starts).
+
+**Agent stance for this stage:** this stage models facts and
+constraints, not databases. If you find yourself naming a table,
+property IRI, migration, or schema library, you are too far downstream.
 
 ## Inputs
 
 | Path | Layer | Why |
 |---|---|---|
 | `../02_concepts/output/` | 4 | Approved concept state sections |
-| `../03a_dependency-review/output/pattern-d-summary.md` | 4 | Confirms UC-00 has no Pattern D field exposure |
+| `../03a_dependency-review/output/pattern-d-summary.md` | 4 | Approved cross-concept fields that must be exposed conceptually |
+| Skill: `clad-data-modeling` | 3 | Data modeling reference (see skills/ directory) |
 | `../../../../methodology/architecture/DATA_MODEL_NOTES.md` | 3 | Conceptual data-model procedure |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R2 |
-| Skill: `clad-data-modeling` | 3 | Data modeling reference |
 | `../../../../templates/data-model.md` | 3 | Output template |
 
 ## Process
 
-Produce one profile-neutral conceptual data-model file per business
-concept: `UserNaming`, `PasswordAuth`, and `Session`. Follow the seven CSDP
-steps explicitly, not a compressed summary. Use the approved state
-sections exactly; do not introduce profile-specific field types or
-runtime-only helper structures.
+**Deterministic generation first.** The CSDP is judgement-laden, so the
+generator emits the full seven-step skeleton and auto-fills only the parts that
+are mechanical from the concept `## State` annotations. First run:
 
+Generated via:
+```
+python3 ../../../../quality-gate/generate_data_model.py --feature ../../ --write
+```
+
+`generate_data_model.py` emits one `<Name>.data-model.md` per business concept
+with Object types, Fact types, and (where the state line carries a
+`-- mandatory` / `-- optional` / `-- unique` annotation) uniqueness + mandatory
+roles derived automatically. It leaves `<TODO: judgment>` markers on steps that
+are genuine modelling decisions (familiar examples/elementary facts, combination
+checks, value/subtype constraints, final checks). Resolve those markers;
+the derived Object/Fact/constraint rows must stay as the generator produced them
+unless you can point to an error in the upstream state section.
+
+For each approved concept spec, derive a profile-neutral conceptual data
+model by following the seven CSDP steps in `DATA_MODEL_NOTES.md`.
+The output must make those steps inspectable in text form: familiar
+examples, elementary facts, draft fact model, combination/derivation
+checks, uniqueness and arity, mandatory/logical derivations, value/set/
+subtype constraints, and final checks. If a concept truly has no state,
+still produce a `<Name>.data-model.md` file recording that fact rather
+than skipping the concept silently.
+
+Every fact and constraint must trace 1:1 to approved Stage 02 state or
+approved Pattern D exposure from 03a. Do not add foreign keys,
+cross-concept joins, storage-specific indexes, or implementation-only
+helper fields.
+
+
+## Progress checklist
+
+- [ ] One `.data-model.md` per concept
+- [ ] All 7 CSDP steps present
+- [ ] Fact types derived from concept `state` section
+- [ ] Constraints derived from concept `actions` pre/post
+- [ ] No concept-state read fields missed (from 03a)
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
-- `output/UserNaming.data-model.md`
-- `output/PasswordAuth.data-model.md`
-- `output/Session.data-model.md`
+- `output/<Name>.data-model.md` per concept — profile-neutral conceptual data model following the seven-step CSDP structure
 
 ## Verify
 
 ### Automated checks
 
+Run the following before requesting the human gate:
+
 ```
 python3 ../../../../quality-gate/verify_data_model.py \
   --data-dir output --concept-dir ../02_concepts/output
 python3 ../../../../quality-gate/verify_file_manifest.py \
-  --dir output --expected "UserNaming.data-model.md,PasswordAuth.data-model.md,Session.data-model.md"
+  --dir output --expected "<Name>.data-model.md,…"  # one per concept
 ```
 
-- **verify_data_model.py:** validates CSDP steps, constraints, no
-  storage leakage, no cross-concept references.
-- **verify_file_manifest.py:** `output/` contains exactly one `.data-model.md`
-  per business concept.
+- **verify_data_model.py:** validates all 7 CSDP steps present, all
+  sub-sections present, constraint sections have content or "None",
+  no storage-leakage patterns, and no cross-concept entity type
+  references.
+- **verify_file_manifest.py:** one `.data-model.md` file per concept.
 
 ### Semantic checks (human)
 
-- Three data-model files exist, one per business concept in UC-00.
-- Each file exposes the seven CSDP steps in text form.
-- Every fact type traces directly to the concept's approved `state`
-  section.
-- No Pattern D exposure is invented, because `pattern-d-summary.md`
-  states there are none.
-- Uniqueness, mandatory, derivation, and value/set/subtype sections are
-  explicit, even when they conclude `None`.
-- No RDF, SQL, or document-store mapping detail appears in the files.
+- Every fact type traces back to approved Stage 02 state or approved
+  Pattern D exposure from 03a.
+- Elementary facts are explicit and remain concept-local.
+- No cross-concept foreign key or direct region-sharing relationship is
+  introduced.
+- **Cross-stage check (back):** every Pattern D field in
+  `pattern-d-summary.md` appears in the owner concept's data model.
 
-## Gate instruction — STOP AND PRESENT
-
-### Step 1 — Present artefacts
+## Gate instruction — this stage ends a human gate
 
 Run:
 
 ```
-python3 ../../../../quality-gate/present_gate.py \
-  --feature ../../../ \
-  --gate 2
+./clad advance
 ```
 
-Present the output to the human. **Do NOT proceed past this point.**
+(Long form: `python3 quality-gate/advance.py --feature features/UC-XX-<slug>`.)
 
-### Step 2 — Wait for human approval
+`advance.py` owns the gate: it runs `verify_data_model.py` and
+`verify_file_manifest.py`, writes the stage receipt, prints the artefact
+summary and the `approve_gate.py --gate 2` command, and stops (exit 10).
+Present its summary to the human and **wait**. Do NOT run `present_gate.py`
+yourself and do NOT edit `RESUME.md`.
 
-Wait for the human to say "approved" (or "Gate 2 approved").
-Do NOT update RESUME.md yourself.
-
-### Step 3 — Record approval
-
-Only after the human explicitly approves, run:
-
-```
-python3 ../../../../quality-gate/approve_gate.py \
-  --feature ../../../ \
-  --gate 2
-```
-
-This updates RESUME.md to mark Gate 2 as approved.
-
-### Step 4 — Proceed
-
-After `approve_gate.py` exits successfully, proceed to Stage 04a
-(storage mapping). Stages 04a–04b auto-advance. The next human gate is
-**Gate 3 (Executable specification)** at Stage 04c.
-
-The `verify_data_model.py` and `verify_file_manifest.py` scripts must
-pass before requesting the gate.
+Only after the human explicitly says "approved", run the approval command
+`advance.py` printed, then re-run `./clad advance` to cross the gate. Gate 2
+is the **Architecture** gate; Stages 04a and 04b auto-advance, and the next
+human gate is **Gate 3 (Executable spec)** at Stage 04c.
 
 ## Next stage
 
 → [`../04_implement/CONTEXT.md`](../04_implement/CONTEXT.md) — Implement (router)
 
-Do NOT open this file until the human approves Gate 2. After
-`approve_gate.py` exits successfully, open the next CONTEXT.md.
+Do NOT open this file until `advance.py` prints it as the NEXT STAGE, which
+happens only after the human approves Gate 2.

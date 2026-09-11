@@ -1,10 +1,25 @@
+<!--
+  WORKED EXAMPLE - contract synced from templates/feature-skeleton/.
+  UC-00's output/ is historical/frozen (gate content hashes); it may
+  contain legacy artefacts. See features/UC-00-login/README.md
+  SS"Contract vs example".
+-->
+
 # Stage 04e-red — Sync Test Derivation (red)
 
 ## Pre-condition (agent must verify before starting)
 
-**`../../04d_concept-tdd/04d_green-impl/` must be complete and approved.**
-If concept green work is not approved, stop and tell the human that
-`04d-green` must finish before `04e-red` can begin.
+Run the following **before** writing any sync test artefacts:
+
+```
+python3 ../../../../../../quality-gate/verify_stage_sequence.py \
+  --feature ../../../../ \
+  --through 04d-green
+```
+
+Additionally, concept tests must be green (`mvn test` passes).
+If either check fails, stop — concept implementation must be
+complete before sync tests can be derived.
 
 ## Why this stage exists
 
@@ -29,6 +44,7 @@ no sync implementation belongs here.
 | `../../04d_concept-tdd/04d_red-tests/output/` | 4 | Approved concept-level test derivation |
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for red evidence |
 | `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
+| Skill: `clad-sync-tdd` | 3 | Sync TDD reference (see skills/ directory) |
 | `../../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
@@ -43,8 +59,10 @@ no sync implementation belongs here.
 2. Write the sync test file(s) only under `APP_TEST_SOURCE_ROOT`.
    Do not write or modify sync implementation code in this stage.
 3. Run the canonical command from `../../../../_config/build-and-test.md`
-   and confirm the result is true red: test compilation succeeds and the
-   sync tests fail for behavioral reasons.
+   and confirm the result is true red. Greenfield (the sync wiring type does
+   not exist yet): a compile failure naming exactly that missing type is
+   acceptable red evidence. Once it exists: tests compile and fail for
+   behavioral reasons. `@Disabled`/skipped tests are never red.
 4. Record the derivation map and the red-to-green handoff bundle in
    `output/sync-test-derivation.md`: approved test files, exact
    package/class/method names, red evidence command, expected red
@@ -55,9 +73,31 @@ no sync implementation belongs here.
 ## Outputs
 
 - `output/sync-test-derivation.md` — derivation map plus handoff bundle
-- (Side effect:) `<SyncName>Test.java` per sync
+- (Side effect:) `<SyncName>Test.java` (or profile equivalent) per sync
 
 ## Verify
+
+### Automated checks
+
+Run the following before requesting the human gate:
+
+```
+python3 ../../../../../../quality-gate/verify_profile_paths.py \
+  --feature ../../../../
+python3 ../../../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "sync-test-derivation.md"
+python3 ../../../../../../quality-gate/verify_test_naming.py \
+  --test-source-root <APP_TEST_SOURCE_ROOT> \
+  --scope syncs
+```
+
+- **verify_file_manifest.py:** `output/` contains exactly
+  `sync-test-derivation.md`.
+- **verify_test_naming.py:** every sync test class follows London School
+  naming conventions (class: `<SyncName>Test`, method prefix: `should`,
+  `@Nested` groups present, `// GIVEN/WHEN/THEN` comments).
+
+### Semantic checks (human)
 
 - `output/sync-test-derivation.md` exists.
 - Every sync test row traces back to an approved Stage 03 sync plus the
@@ -67,17 +107,31 @@ no sync implementation belongs here.
   that the green implementation must satisfy.
 - Sync tests live under `APP_TEST_SOURCE_ROOT` and packages consistent
   with `APP_PACKAGE_ROOT`.
-- Executed red evidence shows successful test compilation and
-  behavioral test failure.
+- Executed red evidence shows either (greenfield) a compile failure naming
+  exactly the missing sync-wiring type, or (once it exists) successful test
+  compilation plus behavioral test failure. A skipped/disabled test is not
+  red.
 - No sync implementation was introduced or changed during this stage.
 - The handoff bundle names the approved test files, exact
   package/class/method names, the red evidence command, expected red
   outcome, and the next implementation target.
 
+### Flow-test coverage
+
+- Every Gherkin `Scenario` in `../../04c_flow-tests/output/*.feature` is
+  covered by at least one sync test row in the derivation map.
+- The sync test's trigger pattern matches the `When` step's expected
+  token-chain root, and its expected actions match the chain-table rows
+  that the step definitions will invoke.
+- The Cucumber runner compiles (tests can stay red — the sync tests
+  provide the behavioral failure evidence).
+
 ## Gate
 
-Auto-advances to `04e-green` after the derivation checks pass.
+Auto-advances to 04e-green. Sync tests are mechanically derived from
+approved chain tables and sync specs. The `verify_sync_matrix.py` and
+`verify_scenario_coverage.py` scripts must pass before advancing.
 
-## Advancing
+## Next stage
 
-Run `./clad advance`; it selects `04e-green` after this stage's checks pass.
+-> [`../04e_green-impl/CONTEXT.md`](../04e_green-impl/CONTEXT.md) — Implement approved sync tests only

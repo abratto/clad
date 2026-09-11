@@ -20,15 +20,22 @@ authorised it.
 
 ## Outcome casing
 
-**Outcome values MUST use SCREAMING_SNAKE_CASE**, matching the Java
-enum variant name exactly. Examples: `VALID`, `ACCOUNT_EXISTS`,
-`VALIDATION_FAILED`, `CREATED`, `ROUTED`, `SENT`.
+There are two casings, and they have different owners:
 
-PascalCase variants (e.g. `AccountExists`, `ValidationFailed`) are
-wrong and will fail cross-stage consistency checks in Stage 05.
+- **SPEC enum (authoritative, `04b_spec/output/`): SCREAMING_SNAKE_CASE.**
+  Examples: `VALID`, `ACCOUNT_EXISTS`, `VALIDATION_FAILED`, `CREATED`,
+  `ROUTED`, `SENT`. Chain tables, SPECs, and derivation maps use this form.
+- **Runtime token (profile-defined):** the casing the concept action
+  actually returns in its completion map. The canonical `java-legible`
+  profile uses PascalCase (`Valid`, `Routed`, `Healthy`); other profiles may
+  use the SPEC casing directly.
 
-When writing flow test specs (Stage 04c), copy outcome values directly
-from the SPEC slice (`04b_spec/output/`) — do not invent casing.
+`verify_outcome_alignment.py` normalises the two (`normalize_outcome`) so a
+PascalCase runtime token and a SCREAMING_SNAKE SPEC enum are compared
+case-insensitively. Do not invent casing: copy SPEC enums from
+`04b_spec/output/`, and copy runtime tokens from the profile's own concepts
+and tests. Consistency is "same token under normalisation", not "identical
+bytes".
 
 ## One token per invocation
 

@@ -10,6 +10,96 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.4.0] — 2026-09-11
+
+The "contract-fidelity" release: the workflow definitions and the checks that
+enforce them now agree, checks that passed vacuously on the canonical profile
+actually check, and the orchestration loop is documented and validated
+end-to-end. Minor version per `DELIVERY.md` §7 (methodology/contract changes).
+
+### Added
+
+- **Orchestration: one sub-agent per stage (recommended default).**
+  `STAGES.md` §"Orchestration: one sub-agent per stage", `AGENTS.md` §2,
+  `HANDOVER.md`, the `clad-handover` skill, and the feature-skeleton README
+  specify the validated loop: each sub-agent re-orients, produces one stage,
+  runs the stage `Verify` + `./clad verify`, and ends its turn with
+  `./clad advance`; the parent orchestrates and approves gates; a
+  no-sub-agent fallback is stated.
+- **Machine-facing descriptor** (`MACHINE_CONTRACT.md`, `contract.py`,
+  `describe_feature.py`): a versioned envelope with six `*.v1` capabilities
+  and an `expectedOutputs` map covering every per-UC stage, keyed by canonical
+  stage id. Consumer-facing only (see `CONTRIBUTING.md`).
+- **New gates/checks:** `verify_chain_grammar.py` (exactly one outcome token
+  per chain-table row), `verify_close_evidence.py` (canonical `trace.md`;
+  enabled adapter integration test), and `verify_concept_state_relational.py`
+  at Stage 02.
+- **Tests:** `test_stage_contract_consistency.py`, `test_clad_cli.py`,
+  `test_concept_test_derivation.py`, `test_gap_checks.py`,
+  `test_checker_scoping.py`, `test_machine_contract.py`.
+
+### Changed
+
+- **Executable stage model reconciled with the per-stage contracts.** Check
+  attributions corrected (concept-state at 02; outcome-alignment and
+  action-chain at 04b; relational mapping at 04a; cycle/overlap at 03;
+  route-filters/declarative/action-log at 04e-green); `gherkin_derivation`
+  (04c) and `concept_test_derivation` (04d-red) now gate.
+- **Checks are real, not vacuous, on the canonical profile:**
+  `verify_sync_implementation_parity.py` parses `SyncRule.of` and, with
+  `--strict-trigger`, verifies the trigger and primary `then` target;
+  `verify_test_naming.py` selects flat-layout tests by class shape;
+  `verify_action_log_isolation.py` has a canonical `FactStore`/`Region` mode;
+  `verify_concept_field_assertions.py` inspects flat layouts; file manifests
+  for 01b/02/03a/03b/04b are derived from approved upstream artefacts and
+  enforced by `advance`.
+- **`test.command` scoped to `-pl java-legible -am`** so the R19 gate runs
+  without Docker (R20 record `maintenance/clad-test-command-scope.md`); the
+  full-reactor Docker command is documented as the CI gate.
+- **Docs:** `WEB_CONCEPT.md` documents `request(route, params)` and the R11
+  `?route` guard idiom; `FLOW_TOKENS.md` separates SPEC enum casing from
+  profile runtime casing; `QUALITY_GATE.md` and `CONTEXT_MANIFEST.md` updated;
+  the UC-00 worked example's contracts are resynced to the template while its
+  outputs stay frozen.
+
+### Fixed
+
+- Autonomous mode no longer deadlocks (`verify_gate_approval.py` accepts
+  `auto-approved`, hyphen-aware); stage inference honours legacy Stage-04
+  evidence; `advance.py` defers whole-suite checks; step-definition checks
+  `SKIP` without Cucumber glue.
+- `verify_concept_test_derivation.py` parses its own template; `./clad`
+  active-feature discovery prefers in-progress work (covered by tests).
+- `verify_cucumber_green.py` scopes surefire discovery to the target module
+  (no stale cross-module false positive); `verify_sync_route_filters.py`
+  warns instead of passing silently.
+- Bootstrap entry action unified on `Web.request`; Stage-00 input paths and
+  four wrong contract breadcrumb depths corrected; Gate-3 label unified;
+  `HANDOVER.md` and the commit-cadence contradiction fixed; generators fixed
+  (feature filename from the use-case H1, terminal token bracket, card
+  title/pattern/bootstrap cross-check); `parse_goals` in-scope filtering;
+  `slugify` camelCase splitting.
+- Greenfield red evidence documented (a compile failure naming exactly the
+  missing production type is acceptable red before the type exists).
+
+### Known limitations
+
+- R11 route scoping is **WARN-only** for `SyncRule` profiles; blocking
+  enforcement needs a deliberate engine route-propagation design change.
+- Several checks are intentionally advisory (concept matrix, same-order sync
+  overlap, close evidence).
+- Durable-profile runtime tests (`legible-storage`, `java-micronaut-postgres`)
+  require Docker/Testcontainers and run in CI, not in a bare environment.
+
+### Validation
+
+- 86 `quality-gate` tests; `verify_artefacts.py` and `verify_links.py` green;
+  `mvn test -f reference-impl/pom.xml -pl java-legible -am` green.
+- End-to-end authoring validated with one sub-agent per stage driving
+  `./clad advance`, through Gates 1–3 and implementation to green Java with
+  runtime flow-token back-trace; a derived-repo rehearsal accompanies the
+  release PR.
+
 ## [0.3.5] — 2026-09-04
 
 ### Added

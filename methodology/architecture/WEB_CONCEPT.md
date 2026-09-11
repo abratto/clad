@@ -11,7 +11,7 @@ CLAD. Other transports use the same pattern under a different name:
 
 | Transport | Bootstrap concept | Entry action | Exit action |
 |---|---|---|---|
-| HTTP / REST | `Web` | `request(path, params)` | `respond(status, body)` |
+| HTTP / REST | `Web` | `request(route, params)` | `respond(status, body)` |
 | gRPC | `Grpc` | `receive(call)` | `reply(status, message)` |
 | Kafka / event stream | `Stream` | `consume(event)` | `publish(topic, payload)` |
 | CLI | `Cli` | `invoke(args)` | `print(exitCode, output)` |
@@ -22,6 +22,12 @@ bootstrap concept receives an HTTP request, normalises it into a flow
 token, and syncs route it into the action chain. The pair
 `request(...)` / `respond(status, body)` mirrors the request/response
 cycle directly.
+
+**`route` is a first-class input.** The canonical Java profile passes the
+route (e.g. `route: "login"`) plus the request fields to `Web.request`; a
+sync that responds on behalf of one route binds `?route` from the request
+(`Source.TriggerInput("route")` or `Source.SiblingInput("Web","request","route")`)
+and guards it with `Clause.Guard("?route", lit(<route>))` (R11).
 
 The pattern is identical in all cases. Only the transport vocabulary
 changes. Hard rule R4 applies to every bootstrap concept: **no

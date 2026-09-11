@@ -1,4 +1,24 @@
-# Stage 02 — Concept specs (UC-00-login)
+<!--
+  WORKED EXAMPLE - contract synced from templates/feature-skeleton/.
+  UC-00's output/ is historical/frozen (gate content hashes); it may
+  contain legacy artefacts. See features/UC-00-login/README.md
+  SS"Contract vs example".
+-->
+
+# Stage 02 — Concept specs
+
+## Pre-condition (agent must verify before starting)
+
+Run the following **before** writing any artefacts for this stage:
+
+```
+python3 ../../../../quality-gate/verify_gate_approval.py \
+  --feature ../../ \
+  --required-gates 1
+```
+
+If this script exits with a non-zero status, stop immediately.
+Gate 1 has not been approved — do not proceed.
 
 ## Why this stage exists
 
@@ -17,85 +37,111 @@ another concept's state, actions, or types beyond opaque ids.
 import another concept's type, stop — that coordination belongs in a
 sync, not in this file.
 
-> **Note:** Stages 01a (`responsibility-map`) and 01b (`chain-table`)
-> precede this one. Read them first.
+> **Note:** in Round 4 the choreography review (which concepts exist;
+> what they own; how they fan out per scenario) was lifted into two
+> upstream stages — `01a_responsibility-map/` and `01b_chain-table/`.
+> This stage now does **only** the per-concept anatomy: full state,
+> action signatures with outcomes, flow-token shape, and the
+> operational principle.
 
 ## Inputs
 
 | Path | Layer | Why |
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Use case |
-| `../01a_responsibility-map/output/responsibility-map.md` | 4 | Agreed concept set |
-| `../01b_chain-table/output/` | 4 | Agreed action choreography per scenario |
-| `../00_actor-goal/output/actors.md` | 4 | Cross-stage check |
+| `../01a_responsibility-map/output/responsibility-map.md` | 4 | The agreed concept set |
+| `../01b_chain-table/output/` | 4 | The agreed action choreography (per scenario) — **read every file before naming any outcome** |
+| `../../../_system/stages/00_actor-goal/output/actors.md` | 4 | For cross-stage check |
+| Skill: `clad-concept-design` | 3 | Concept design reference (see skills/ directory) |
 | `../../../../methodology/architecture/CONCEPTS.md` | 3 | Concept anatomy |
-| `../../../../methodology/implementation/RULES.md` | 3 | R1, R2 |
-| Skill: `clad-concept-design` | 3 | Concept design reference |
+| `../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R2 |
 | `../../../../templates/concept.md` | 3 | Output template |
 
 ## Process
 
-For each row in `01a_responsibility-map/output/responsibility-map.md`,
-draft `<Name>.concept.md` per the template — concept header with type
-parameters, purpose, state (paper-syntax relational notation with
-multiplicity annotations), full action signatures (inputs, outcomes,
-effect on state, flow-token fields), and operational principle.
-Outcomes must match the ones used in `01b_chain-table/output/`.
-R1: no concept references another.
+For each concept already listed in
+`01a_responsibility-map/output/responsibility-map.md`, draft
+`<Name>.concept.md` per the template — full state, full action
+signatures (inputs, outcomes, effect on state, flow-token fields),
+and an operational principle.
 
-(`Web` is the bootstrap concept and does not get a `Web.concept.md` —
-its anatomy is described in
-[`../../../../methodology/architecture/WEB_CONCEPT.md`](../../../../methodology/architecture/WEB_CONCEPT.md).)
+**Outcome alignment is mandatory:** every action output name MUST
+exactly match the outcome strings used in the approved chain tables in
+`01b_chain-table/output/`. Open every chain table file before naming
+any outcome. If you need an outcome the chain table did not name,
+return to Stage 01b and amend the chain table first — do not invent
+outcomes here.
 
-## Pre-condition (agent must verify before starting)
+**State and input discipline:** do not add state fields or action
+inputs that have no basis in the chain table or responsibility map.
+If a field is absent from both, raise it as an open question in the
+concept's Notes section for the human reviewer.
 
-```
-python3 ../../../../quality-gate/verify_gate_approval.py --feature ../../ --required-gates 1
-```
+**Bootstrap concept exclusion:** bootstrap concepts such as `Web`,
+`Grpc`, `Cli`, or `Stream` do not belong in `02_concepts/output/`
+unless the feature has explicitly declared a methodology deviation.
+Bootstrap-only concepts are governed by the shared bootstrap-concept
+docs, not per-feature concept files. If one appears here without an
+explicit deviation, stop and reopen Stage 02 instead of carrying that
+file forward.
 
-Gate 1 (Requirements) must be approved before Stage 02 begins. If this
-fails, return to Stage 01b and complete gate approval.
+R1 still applies: no concept names another concept's state, actions,
+or types beyond opaque ids.
 
+
+## Progress checklist
+
+- [ ] One `.concept.md` per non-Web concept
+- [ ] State section uses Alloy-like relational notation
+- [ ] Actions have case-split outcomes matching chain table
+- [ ] Operational principle includes witness traces
+- [ ] No cross-concept references (R1)
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
-- `output/UserNaming.concept.md`
-- `output/PasswordAuth.concept.md`
-- `output/Session.concept.md`
+- `output/<Name>.concept.md` — one per concept in the responsibility map
 
 ## Verify
 
 ### Automated checks
 
+Run the following before requesting the human gate:
+
 ```
-python3 ../../../../quality-gate/verify_action_chain.py \
-  --resp-map ../01a_responsibility-map/output/responsibility-map.md \
-  --chain-dir ../01b_chain-table/output \
-  --concept-dir output \
-  --sync-dir ../03_syncs/output \
-  --dep-dir ../03a_dependency-review/output \
-  --spec-dir ../04_implement/04b_spec/output
+python3 ../../../../quality-gate/verify_concept_state_relational.py \
+  --concept-dir output
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output \
-  --expected "UserNaming.concept.md,PasswordAuth.concept.md,Session.concept.md"
+  --expected "<Name>.concept.md,…"  # one per concept in the responsibility map
 ```
 
-- **verify_action_chain.py:** every action used in chain tables flows consistently.
-- **verify_file_manifest.py:** `output/` contains exactly one `.concept.md` per business concept.
+- **verify_concept_state_relational.py:** each concept's `## State` is a
+  relation over a set of individuals (`field: Subject -> Value`), not a
+  single instance's field list, and no relation's subject is the concept's
+  own name.
+- **verify_file_manifest.py:** `output/` contains exactly one
+  `.concept.md` file per concept in the responsibility map.
+- **Cross-artefact action-name parity** (`verify_action_chain.py`) needs the
+  syncs, dependency cards, and SPECs, so it runs at Stage 04b, not here.
 
 ### Semantic checks (human)
 
-- One file per non-`Web` row in the responsibility map.
-- Every action used in any `01b_chain-table/output/*-chain.md` is
-  declared with the same outcome enum in the corresponding concept.
+- **Input/state discipline:** no state field or action input appears
+  that has no basis in the chain table or responsibility map.
+- **Action discipline:** no action is declared that is not listed in
+  `01a_responsibility-map/output/responsibility-map.md`.
+- **Bootstrap exclusion:** no bootstrap concept file appears in
+  `output/` unless the feature explicitly declares that deviation.
 - No concept names another concept's state, actions, or types.
-- **Cross-stage check (back):** the UC-00 actor (`UserNaming`) appears in
+- **Cross-stage check (back):** every actor in
+  `features/_system/stages/00_actor-goal/output/actors.md` whose goal is in-scope appears in
   at least one concept's operational principle.
 
 ## Gate
 
 Auto-advances (next human gate: Stage 03b). The quality-gate scripts
-(`verify_action_chain.py`, `verify_file_manifest.py`) must all pass
-before advancing.
+(`verify_concept_state_relational.py`, `verify_file_manifest.py`) must all
+pass before advancing.
 
 ## Next stage
 

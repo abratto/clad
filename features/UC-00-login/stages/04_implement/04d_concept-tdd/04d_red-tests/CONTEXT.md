@@ -1,10 +1,24 @@
+<!--
+  WORKED EXAMPLE - contract synced from templates/feature-skeleton/.
+  UC-00's output/ is historical/frozen (gate content hashes); it may
+  contain legacy artefacts. See features/UC-00-login/README.md
+  SS"Contract vs example".
+-->
+
 # Stage 04d-red — Concept Test Derivation (red)
 
 ## Pre-condition (agent must verify before starting)
 
-**`../../04c_flow-tests/output/` must be non-empty.** If it is empty,
-stop immediately and tell the human that Stage 04c must be completed and
-gated before `04d-red` can begin.
+Run the following **before** writing any artefacts for this stage:
+
+```
+python3 ../../../../../../quality-gate/verify_stage_sequence.py \
+  --feature ../../../../ \
+  --through 04c
+```
+
+If this script exits with a non-zero status, stop immediately.
+Required upstream stage outputs are missing — do not proceed.
 
 ## Why this stage exists
 
@@ -28,6 +42,7 @@ here.
 | `../../04c_flow-tests/output/` | 4 | Drives test derivation |
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for red evidence |
 | `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
+| Skill: `clad-concept-tdd` | 3 | Concept TDD reference (see skills/ directory) |
 | `../../../../../../templates/test-intent-derivation-map.md` | 3 | Coverage template |
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5, R14, R16 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School derivation rules |
@@ -41,40 +56,86 @@ here.
    from `04b_spec/output/` that are not exercised by the flow tests.
 2. Write the concept test file(s) only under `APP_TEST_SOURCE_ROOT`.
    Do not write or modify production implementation code in this stage.
-3. After asserting each outcome token, assert the primary completion
-  fields that `writeCompletion` writes and downstream syncs consume.
-  Outcome-only tests are incomplete.
+3. **Test isolation (default profile, `java-legible`):** concept tests
+   instantiate the concept against an in-memory `FactStore` region and call
+   `execute(action, input)` directly. They assert the returned map's
+   `outcome` plus its named completion fields — sync orchestration belongs
+   in `04e`, never here. See `reference-impl/java-legible/README.md` and the
+   exemplar tests under `dev/legible/example/login`. On the legacy
+   `java-micronaut-jena` profile, use the test-mode `PredicateConceptAgent`
+   constructor instead (see that README §"Using the predicate engine").
+4. After asserting each outcome token, assert the primary completion
+   fields that `writeCompletion` writes and downstream syncs consume.
+   Outcome-only tests are incomplete.
 4. Run the canonical command from `../../../../_config/build-and-test.md`
-   and confirm the result is true red: test compilation succeeds and the
-   tests fail for behavioral reasons.
+   and confirm the result is true red. Greenfield (the production concept
+   type does not exist yet): a compile failure naming exactly that missing
+   type is acceptable red evidence. Once the type exists: tests compile and
+   fail for behavioral reasons. `@Disabled`/skipped tests are never red.
 5. Record the derivation map and the red-to-green handoff bundle in
    `output/concept-test-derivation.md`: approved test files, exact
    package/class/method names, red evidence command, expected red
    outcome, and the next implementation target.
-6. Record the derivation map and handoff bundle. No human approval is
-  required at this boundary; Gate 3 approved the executable specification.
+6. Record the derivation map and the handoff bundle. The automated
+  gate (`verify_concept_test_derivation.py`) confirms the tests cover
+  all SPEC outcomes. No human approval is required at this boundary;
+  the design was settled at 04c (Gate 3).
 
 ## Outputs
 
 - `output/concept-test-derivation.md` — derivation map plus handoff bundle
-- (Side effect:) `<Name>ConceptTest.java` per concept
+- (Side effect:) `<Concept><Action>Test.java` (or profile equivalent) per concept action
 
 ## Verify
+
+### Automated checks
+
+Run the following before requesting the human gate:
+
+```
+python3 ../../../../../../quality-gate/verify_profile_paths.py \
+  --feature ../../../../
+python3 ../../../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "concept-test-derivation.md"
+python3 ../../../../../../quality-gate/verify_concept_test_derivation.py \
+  --spec-dir ../../04b_spec/output \
+  --derivation output/concept-test-derivation.md \
+  --test-source-root <APP_TEST_SOURCE_ROOT>
+python3 ../../../../../../quality-gate/verify_concept_field_assertions.py \
+  --spec-dir ../../04b_spec/output \
+  --test-source-root <APP_TEST_SOURCE_ROOT>
+python3 ../../../../../../quality-gate/verify_test_naming.py \
+  --test-source-root <APP_TEST_SOURCE_ROOT> \
+  --scope concepts
+```
+
+- **verify_file_manifest.py:** `output/` contains exactly
+  `concept-test-derivation.md`.
+- **verify_concept_test_derivation.py:** every SPEC outcome has a matching
+  test row in the derivation map; every named test method exists in the
+  Java source; outcome names match verbatim.
+- **verify_concept_field_assertions.py:** Java concept tests that assert
+  an outcome also assert every required completion field from the SPEC
+  flow-token shape.
+- **verify_test_naming.py:** every concept test class follows London School
+  naming conventions (class: `<Concept><Action>Test`, method prefix: `should`,
+  `@Nested` groups present, `// GIVEN/WHEN/THEN` comments).
+
+### Semantic checks (human)
 
 - `output/concept-test-derivation.md` exists.
 - Every test row traces back to an approved `04c` flow test or an
   approved `04b` SPEC outcome. No test case was invented without one of
   those sources.
-- Run `quality-gate/verify_concept_field_assertions.py` with the UC-00
-  SPEC directory and Java test source root; every concept test that
-  asserts an outcome must also assert required completion fields.
 - Every concept test asserts the outcome and the primary completion
   fields downstream syncs consume; no valid-input primary field assertion
   accepts null or empty string.
 - Tests live under `APP_TEST_SOURCE_ROOT` and packages consistent with
   `APP_PACKAGE_ROOT`.
-- Executed red evidence shows successful test compilation and
-  behavioral test failure.
+- Executed red evidence shows either (greenfield) a compile failure naming
+  exactly the missing production type, or (once the type exists) successful
+  test compilation plus behavioral test failure. A skipped/disabled test is
+  not red.
 - No test depends on another concept's state or sync orchestration;
   those cases belong in `04e`.
 - No production concept implementation was introduced or changed during
@@ -85,8 +146,14 @@ here.
 
 ## Gate
 
-Auto-advances to `04d-green` after the derivation checks pass.
+Auto-advances to 04d-green. Concept tests are mechanically derived
+from approved artefacts (Gate 3 flow tests + 04b SPECs) — they verify
+implementation fidelity, not settle design. The
+`verify_concept_test_derivation.py` and `verify_file_manifest.py`
+scripts must pass before advancing. If either fails, the agent stops
+— the derivation does not match the SPEC outcomes or the expected
+files are missing.
 
-## Advancing
+## Next stage
 
-Run `./clad advance`; it selects `04d-green` after this stage's checks pass.
+-> [`../04d_green-impl/CONTEXT.md`](../04d_green-impl/CONTEXT.md) — Implement approved concept tests only

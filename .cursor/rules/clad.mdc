@@ -31,7 +31,7 @@ performing any action.
 1. No concept imports another concept.
 2. One named persistence region per concept (when persistence applies).
 3. Syncs are declarative (`when … then …`), not imperative branching.
-4. `Web` (or equivalent HTTP entry) is the sole bootstrap concept.
+4. One primary bootstrap adapter owns each transport surface (`Web` for HTTP; `Grpc`, `Stream`, or `Cli` for others).
 5. Every action emits a flow token.
 
 R1–R5 are the WYSIWID architectural rules. Four additional process rules

@@ -1,128 +1,161 @@
-# Stage 01b — Chain table (UC-00-login)
+<!--
+  WORKED EXAMPLE - contract synced from templates/feature-skeleton/.
+  UC-00's output/ is historical/frozen (gate content hashes); it may
+  contain legacy artefacts. See features/UC-00-login/README.md
+  SS"Contract vs example".
+-->
+
+# Stage 01b — Chain table (per scenario)
 
 ## Why this stage exists
 
 The **choreography review surface** — one scenario per file, easier to
-read than four declarative syncs at once. 01b is also the **canonical
+read than six declarative syncs at once. 01b is also the **canonical
 resolver for action-name disputes**: if a sync spec (Stage 03)
-disagrees with a chain table, the table wins. That rule is what
-reconciled `Session.open` → `Session.grant` and `PasswordAuth.verify` →
-`PasswordAuth.check` in this feature — see PR #6.
+disagrees with a chain table, the table wins. That rule keeps Stage 03
+from silently inventing names that nothing else will recognise.
 
 **Feeds:**
 
-- `<scenario>-chain.md` → 02 (every action used must be declared in the matching concept spec with the same outcome enum), 03 (each row formalises into a sync `when`/`then` link), 03a (the chain is the source of truth for inbound calls per concept), 04c (flow tests assert the chain end-to-end at runtime).
+- `<scenario>-chain.md` → 02 (every action used must be declared in the matching concept spec with the same outcome enum), 03 (each row formalises into a sync `when`/`then` link), 03a (the chain is the dependency graph 03a audits), 04c (the flow test asserts the token sequence the chain predicts).
 
 **Agent stance for this stage:** every row is an explicit `When -> Then`
-edge with a named outcome. If you cannot name the outcome or trigger,
-the concept set is wrong — go back to 01a, do not invent.
+edge with a named outcome. If you cannot name the outcome or the
+trigger, the concept set is wrong — go back to 01a, do not invent.
 
 ## Inputs
 
 | Path | Layer | Why |
 |---|---|---|
-| `../01_usecase/output/usecase.md` | 4 | UC-00-login scenarios |
-| `../01a_responsibility-map/output/responsibility-map.md` | 4 | Available concepts and actions |
-| `../../../../methodology/architecture/SYNCHRONIZATIONS.md` | 3 | Forward link to Stage 03 |
-| Skill: `clad-chain-table` | 3 | Chain-table authoring reference |
+| `../01_usecase/output/usecase.md` | 4 | Scenarios to choreograph |
+| `../01a_responsibility-map/output/responsibility-map.md` | 4 | Available concepts and their actions |
+| Skill: `clad-chain-table` | 3 | Chain table reference (see skills/ directory) |
+| `../../../../methodology/architecture/SYNCHRONIZATIONS.md` | 3 | What syncs are (so the chain table can be lifted into them later) |
 | `../../../../templates/chain-table.md` | 3 | Output template |
 
 ## Process
 
-For each named scenario in `01_usecase/output/usecase.md`, produce
-`output/<scenario-name>-chain.md` using only concepts and actions
-from `01a_responsibility-map/output/responsibility-map.md`. The
-chain is the ordered list of explicit `When -> Then` edges that
-fulfils the scenario; the last row is always a `... -> Web.respond`
-terminal response.
+For each named scenario in `01_usecase/output/usecase.md`, produce one
+file `output/<scenario-name>-chain.md`. The chain is the ordered
+sequence of explicit `When -> Then` steps that fulfils the scenario,
+with the downstream action's `Inputs`, resulting `Outcome`, and one-line
+justification. Use the actions and concepts already named in the
+responsibility map — do not invent new ones.
 
-If the use case has 2+ scenarios: also produce
-`output/login-all-scenarios-chain.md` (consolidated view). This
-non-canonical artefact merges all scenario chains into one
-branching table and combined FSM diagram. It uses the same concrete
-Stage 01b shape as the per-scenario chains
-(`Scenario(s) | When | Then | Inputs | Outcome | Why this path`)
-and keeps the WYSIWID `When -> Then` causality explicit in the table
-itself.
-Stages 03–04 will use it
-to verify complete outcome coverage and prevent implementation gaps.
-`Inputs` in this artefact are action arguments only; join provenance
-still belongs exclusively to Stage 03 sync `where` clauses.
-Template: `../../../../templates/consolidated-chain.md`.
+This mapping is deterministic: one top-level Stage 01 scenario becomes
+one Stage 01b chain file. Keep that scenario's extensions in the same
+file as additional branch rows when they share the same trigger and user
+goal. Do not split ordinary failure extensions into separate chain files.
 
+Each row is one transition branch. If one action can complete with
+multiple outcomes that lead to different `Web.respond[...]` contracts or
+different next actions, split those branches into separate rows instead
+of collapsing them into one line.
+
+If a downstream action needs request-originated data, the approved 01b
+row must name those carried fields on the trigger contract itself
+(for example `Web.request[Routed(email, password)]`). Stage 03 may bind
+Pattern A values only from names that 01b has already declared.
+
+Optionally include a Mermaid `stateDiagram-v2` as a derived view. Do not
+use `sequenceDiagram`. The diagram must be mechanically derivable from
+the canonical table: one table row, one arrow.
+
+This stage exists to give the human a single, scenario-shaped review
+surface **before** Stage 03 commits the choreography to declarative
+sync rules. Reviewing a full sync pack at once is harder than reviewing
+one chain table per scenario.
+
+
+## Progress checklist
+
+- [ ] One chain file per use-case scenario
+- [ ] First row is bootstrap entry action (Web/request[routed])
+- [ ] Last row is respond action with status code
+- [ ] Outcome values match those in the responsibility map
+- [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
-- `output/successful-login-chain.md` — canonical
-- `output/wrong-password-chain.md` — canonical
-- `output/unknown-user-chain.md` — canonical
-- `output/lockout-chain.md` — canonical
-- `output/login-all-scenarios-chain.md` — consolidated (non-canonical, implementation aid)
+- `output/<scenario-name>-chain.md` — one per scenario in the use case
 
 ## Verify
 
 ### Automated checks
 
+Run the following before requesting the human gate:
+
 ```
-python3 ../../../../quality-gate/verify_file_manifest.py --dir output --expected "successful-login-chain.md,wrong-password-chain.md,unknown-user-chain.md,lockout-chain.md,login-all-scenarios-chain.md"
+python3 ../../../../quality-gate/verify_chain_grammar.py \
+  --chain-dir output
+python3 ../../../../quality-gate/verify_file_manifest.py \
+  --dir output --expected "<scenario-name>-chain.md"  # one per scenario
 ```
 
-- **verify_file_manifest.py:** `output/` contains exactly the expected chain files.
+- **verify_chain_grammar.py:** every row carries exactly one backticked
+  outcome token (no pipe unions, no multi-token cells).
+- **verify_file_manifest.py:** `output/` contains exactly one
+  `<scenario-name>-chain.md` per use-case scenario.
 
 ### Semantic checks (human)
 
-- Every scenario has exactly one chain file (canonical).
-- Consolidated chain (non-canonical):
-  - Every row in the consolidated table traces back to a specific scenario chain.
-  - Every non-root row already states one explicit `When -> Then` transition for Stage 03.
-  - Every error outcome from the four scenarios appears in the consolidated branching table.
-  - Concept outcome enums match across all per-scenario files (e.g., PasswordAuth.check: [Ok, BadPassword, Locked] appears in all files that use it).
-  - `Inputs` expose downstream action arguments only; no `Where`/join provenance appears in Stage 01b.
-- The first row of each scenario chain is `Web/request[...] -> Web.request`; the last is `... -> Web.respond[...]`.
-- Every action used appears in the responsibility map.
-- Mermaid `stateDiagram-v2` diagrams render at [mermaid.live](https://mermaid.live) with no errors.
+- Every scenario in `01_usecase/output/usecase.md` has exactly one
+  chain file.
+- The rows in each chain file cover the top-level scenario's main flow
+  plus its extensions, not some narrower happy-path-only subset unless
+  the Stage 01 scenario itself truly has no extensions.
+- Every concept and action that appears in a chain table is listed in
+  `01a_responsibility-map/output/responsibility-map.md`.
+- The first row of every chain is `Web/request[...] -> Web.request` (R4);
+  the last row of every chain is `... -> Web.respond[...]`.
+- **One branch per row; one outcome token per row.** An action invoked
+  once may complete with several outcomes. Model each outcome as its own
+  row: the same source action appears in the `When` cell with a different
+  completion token (`Health.check[Healthy]`, `Health.check[Unhealthy]`),
+  and each row resolves to its own `Then`/status. That is a branch, not a
+  repeated invocation.
+- **No duplicate branches.** The same `<Concept>.<action>` must not
+  appear twice as a `Then` with the same outcome and target, and two rows
+  must not describe the same branch. If two rows are genuinely the same
+  branch, merge them; if they are different outcomes of one invocation,
+  keep them as separate rows. Do not collapse distinct `Web.respond[...]`
+  contracts into a single outcome cell — `verify_chain_grammar.py` requires
+  exactly one backticked outcome token per row.
+- **Cross-stage check (back):** the chain's trigger and final response
+  match the scenario's *Trigger* and *Expected outcomes* in the use
+  case.
+- **Trigger contract completeness:** if a non-root row's `Then` action
+  needs request-originated values, those values are named explicitly on
+  the approved trigger token instead of being left implicit for Stage 03
+  to recover later.
+- **No collapsed branch rows:** if one state would need multiple arrows
+  in the derived diagram, the table already contains multiple rows.
+  Do not combine distinct `Web.respond[...]` contracts or distinct next
+  actions into one canonical row.
 
-## Gate instruction — STOP AND PRESENT
-
-### Step 1 — Present artefacts
+## Gate instruction — this stage ends a human gate
 
 Run:
 
 ```
-python3 ../../../quality-gate/present_gate.py \
-  --feature ../../ \
-  --gate 1
+./clad advance
 ```
 
-Present the output to the human. **Do NOT proceed past this point.**
+(Long form: `python3 quality-gate/advance.py --feature features/UC-XX-<slug>`.)
 
-### Step 2 — Wait for human approval
+`advance.py` owns the gate: it runs `verify_chain_grammar.py` and
+`verify_file_manifest.py`, writes the stage receipt, prints the artefact
+summary and the `approve_gate.py --gate 1` command, and stops (exit 10).
+Present its summary to the human and **wait**. Do NOT run `present_gate.py`
+yourself and do NOT edit `RESUME.md`.
 
-Wait for the human to say "approved" (or "Gate 1 approved").
-Do NOT update RESUME.md yourself.
-
-### Step 3 — Record approval
-
-Only after the human explicitly approves, run:
-
-```
-python3 ../../../quality-gate/approve_gate.py \
-  --feature ../../ \
-  --gate 1
-```
-
-This updates RESUME.md to mark Gate 1 as approved.
-
-### Step 4 — Proceed
-
-After `approve_gate.py` exits successfully, proceed to Stage 02
-(concept specs). Stages 02, 03 auto-advance. The next human gate is
-**Gate 2 (Architecture)** at Stage 03b.
-
-The `verify_file_manifest.py` script must pass before requesting the gate.
+Only after the human explicitly says "approved", run the approval command
+`advance.py` printed, then re-run `./clad advance` to cross the gate. Gate 1
+is the **Requirements** gate; Stages 02 and 03 auto-advance, and the next
+human gate is **Gate 2 (Architecture)** at Stage 03b.
 
 ## Next stage
 
 → [`../02_concepts/CONTEXT.md`](../02_concepts/CONTEXT.md) — Concept specs (full anatomy)
 
-Do NOT open this file until the human approves Gate 1. After
-`approve_gate.py` exits successfully, open the next CONTEXT.md.
+Do NOT open this file until `advance.py` prints it as the NEXT STAGE, which
+happens only after the human approves Gate 1.

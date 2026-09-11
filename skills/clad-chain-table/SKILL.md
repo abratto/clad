@@ -20,7 +20,7 @@ Stage 01b `Inputs` names `SYNCHRONIZATIONS.md`, `templates/chain-table.md`, and 
 ## Process
 
 1. For each named scenario in the use case, produce one chain-table file.
-2. First row: `Web.handle`. Last row: `Web.respond`.
+2. First row: `Web.request`. Last row: `Web.respond`.
 3. One transition branch per row — do not collapse multiple derived
    arrows into one canonical table row.
 4. Derive the Mermaid `stateDiagram-v2` mechanically from the table.
@@ -30,6 +30,6 @@ Stage 01b `Inputs` names `SYNCHRONIZATIONS.md`, `templates/chain-table.md`, and 
 ## Hard constraints
 
 - One file per top-level Stage 01 scenario.
-- First row = `Web.handle`, last row = `Web.respond`.
+- First row = `Web.request`, last row = `Web.respond`.
 - Every `Then` concept must be listed in the responsibility map.
 - The table and diagram must be presented in the same turn.

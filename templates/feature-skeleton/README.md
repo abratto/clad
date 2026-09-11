@@ -25,6 +25,16 @@ name (e.g. `comment-thread`, not `Comment Thread Feature`).
 Run Stage 00 (`features/_system/stages/00_actor-goal/`) to completion
 **before** copying this skeleton for any UC.
 
+## How to walk the stages
+
+Do not pick the next stage yourself: after each stage's `output/` is written,
+run `./clad advance` and treat its stdout as your next instruction. If your
+harness can spawn sub-agents, the recommended default is **one sub-agent per
+stage, each driving `./clad advance`** — the parent orchestrates and approves
+gates, and each sub-agent produces exactly one stage. See
+`methodology/implementation/STAGES.md`
+§"Orchestration: one sub-agent per stage" for the loop and the fallback.
+
 ## What is in here
 
 - `_config/voice.md` — placeholder explaining feature-scoped Layer-3 reference material
