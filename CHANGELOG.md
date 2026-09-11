@@ -10,10 +10,12 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
-## [Unreleased]
+## [0.5.0] — 2026-09-11
 
 Simplification and legacy retirement (maintenance change
-`maintenance/clad-simplification-and-legacy-retirement.md`).
+`maintenance/clad-simplification-and-legacy-retirement.md`). Minor version per
+`DELIVERY.md` §7: a shipped profile was removed and the framework surface was
+simplified; feature contracts are unchanged.
 
 ### Removed
 
