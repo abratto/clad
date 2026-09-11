@@ -54,10 +54,25 @@ class ChainRow:
     outcome_base: str
     outcome_payload: Optional[str]
     why: str
+    outcome_tokens: List[str] = field(default_factory=list)
+    outcome_bases: List[str] = field(default_factory=list)
 
 
 def _split_row(line: str) -> List[str]:
-    return [c.strip() for c in line.split("|")]
+    """Split a Markdown row without treating pipes in code spans as columns."""
+    cells: List[str] = []
+    current: List[str] = []
+    in_code = False
+    for char in line:
+        if char == "`":
+            in_code = not in_code
+        if char == "|" and not in_code:
+            cells.append("".join(current).strip())
+            current = []
+        else:
+            current.append(char)
+    cells.append("".join(current).strip())
+    return cells
 
 
 def parse_chain_table(path: str) -> List[ChainRow]:
@@ -96,10 +111,14 @@ def parse_chain_table(path: str) -> List[ChainRow]:
         concept, action = m.group(1), m.group(2)
         then_suffix = m.group(3) if m.group(3) else None
 
-        # Outcome column is backtick-quoted; take the first token.
-        outcome_match = re.search(r"`([^`]+)`", outcome_col)
-        outcome_raw = outcome_match.group(1) if outcome_match else ""
-        outcome_base = re.sub(r"\(.*?\)", "", outcome_raw).strip()
+        # Each row is one branch, so the Outcome cell must contain one token.
+        # Keep all tokens in the parsed representation so malformed legacy
+        # union cells cannot be silently truncated by downstream consumers.
+        outcome_tokens = re.findall(r"`([^`]+)`", outcome_col)
+        outcome_raw = outcome_tokens[0] if outcome_tokens else ""
+        outcome_bases = [re.sub(r"\(.*?\)", "", token).strip()
+                 for token in outcome_tokens]
+        outcome_base = outcome_bases[0] if outcome_bases else ""
         payload_match = re.search(r"\(([^)]*)\)", outcome_raw)
         outcome_payload = payload_match.group(1) if payload_match else None
 
@@ -114,6 +133,8 @@ def parse_chain_table(path: str) -> List[ChainRow]:
             outcome_base=outcome_base,
             outcome_payload=outcome_payload,
             why=why_col,
+            outcome_tokens=outcome_tokens,
+            outcome_bases=outcome_bases,
         ))
     return rows
 
@@ -484,12 +505,21 @@ def parse_scenario_names(usecase_path: str) -> Set[str]:
 
 
 def parse_goals(path: str) -> Set[str]:
+    """Return the in-scope goal names from `goals.md`.
+
+    Reads the `| Actor | Goal | ... | In scope? |` table header, then keeps
+    only rows whose `In scope?` column starts with `yes`. Rows without an
+    `In scope?` column are kept (older goal tables). Out-of-scope goals must
+    not be counted as coverage targets.
+    """
     goals: Set[str] = set()
+    header: List[str] = []
+    in_table = False
     with open(path) as f:
         lines = f.readlines()
-    in_table = False
     for line in lines:
         if line.strip().startswith("| Actor | Goal |"):
+            header = [c.strip().lower() for c in _split_row(line)]
             in_table = True
             continue
         if in_table:
@@ -499,8 +529,22 @@ def parse_goals(path: str) -> Set[str]:
             if re.match(r"^\|[\s\-:]+\|", line):
                 continue
             parts = _split_row(line)
-            if len(parts) >= 3:
-                goals.add(parts[2])
+            if len(parts) < 3:
+                continue
+            try:
+                goal_idx = header.index("goal")
+            except ValueError:
+                goal_idx = 2
+            try:
+                scope_idx = header.index("in scope?")
+            except ValueError:
+                scope_idx = None
+            if scope_idx is not None and scope_idx < len(parts):
+                if not parts[scope_idx].strip().lower().startswith("yes"):
+                    continue
+            goal = parts[goal_idx].strip().strip("`").strip()
+            if goal:
+                goals.add(goal)
     return goals
 
 
@@ -509,9 +553,80 @@ def parse_goals(path: str) -> Set[str]:
 # --------------------------------------------------------------------------
 
 def slugify(name: str) -> str:
-    s = name.lower().strip()
+    s = name.strip()
+    # Split camelCase / acronym runs so a goal like `CheckLiveness` slugs to
+    # `check-liveness` and matches a kebab-case scenario of the same name.
+    s = re.sub(r"([a-z0-9])([A-Z])", r"\1-\2", s)
+    s = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1-\2", s)
+    s = s.lower()
     s = re.sub(r"[^a-z0-9]+", "-", s)
     return s.strip("-")
+
+
+def feature_slug(feature_root: str) -> str:
+    """Derive the use-case feature slug from its H1 (`# UC-XX — Ping` -> `ping`)."""
+    usecase = os.path.join(feature_root, "stages", "01_usecase", "output",
+                           "usecase.md")
+    if os.path.isfile(usecase):
+        with open(usecase, encoding="utf-8") as handle:
+            text = handle.read()
+        m = re.search(r"^#\s+(?:UC-[\w-]+\s*[—–-]\s*)?(.+)$", text, re.MULTILINE)
+        if m:
+            slug = slugify(m.group(1))
+            if slug:
+                return slug
+    return slugify(os.path.basename(feature_root.rstrip("/")).replace("UC-", "", 1))
+
+
+def expected_stage_outputs(feature_root: str) -> Dict[str, List[str]]:
+    """Map canonical stage id -> expected output filenames, derived from the
+    feature's approved upstream artefacts (not from the target directory).
+    Profile-dependent stages are omitted except for the in-memory default."""
+    def _dir(rel: str) -> str:
+        return os.path.join(feature_root, "stages", rel, "output")
+
+    out: Dict[str, List[str]] = {}
+    out["01"] = ["usecase.md"]
+    out["01a"] = ["responsibility-map.md"]
+
+    usecase = os.path.join(_dir("01_usecase"), "usecase.md")
+    if os.path.isfile(usecase):
+        out["01b"] = [slugify(name) + "-chain.md"
+                      for name in sorted(parse_scenario_names(usecase))]
+
+    resp_map = os.path.join(_dir("01a_responsibility-map"),
+                            "responsibility-map.md")
+    concepts: List[str] = []
+    if os.path.isfile(resp_map):
+        concepts = [c for c in sorted(parse_responsibility_map(resp_map))
+                    if c != "Web"]
+        out["02"] = [c + ".concept.md" for c in concepts]
+
+    out["04a"] = ["_NOT_APPLICABLE.md"]
+
+    if concepts:
+        out["03b"] = [c + ".data-model.md" for c in concepts]
+        out["04b"] = [c + ".spec.md" for c in concepts]
+
+    sync_specs = parse_syncs(_dir("03_syncs")) if os.path.isdir(_dir("03_syncs")) else []
+    if sync_specs:
+        out["03"] = [s.name + ".sync.md" for s in sync_specs]
+        participating = set()
+        for s in sync_specs:
+            if s.trigger_concept:
+                participating.add(s.trigger_concept)
+            participating.update(c for c, _ in s.then_targets)
+        out["03a"] = [c + "-card.md" for c in sorted(participating)] + [
+            "pattern-d-summary.md", "concept-matrix.md"]
+
+    slug = feature_slug(feature_root)
+    out["04c"] = [(slug or "flow") + ".feature"]
+    out["04d-red"] = ["concept-test-derivation.md"]
+    out["04d-green"] = ["green-evidence.md"]
+    out["04e-red"] = ["sync-test-derivation.md"]
+    out["04e-green"] = ["green-evidence.md"]
+    out["05"] = ["trace.md", "smoke.md", "tracking.md"]
+    return out
 
 
 def normalize_outcome(name: str) -> str:

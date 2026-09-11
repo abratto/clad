@@ -37,7 +37,7 @@
 | 3 | `<PreviousName>.<previousAction>[<Outcome>]` | `<Name>.<actionName>` | `<args>` | `<Outcome>` | … |
 | 4 | `<Name>.<actionName>[<Outcome>]` | `<Bootstrap>.<exitAction>` | `<transport result>` | `Sent` | Closes the transport exchange |
 
-> For HTTP, substitute `Web/request`, `Web.handle`, and `Web.respond`. See
+> For HTTP, substitute `Web/request`, `Web.request`, and `Web.respond`. See
 > `methodology/architecture/WEB_CONCEPT.md` for the equivalent gRPC, stream,
 > and CLI bootstrap vocabulary.
 
@@ -46,6 +46,12 @@
 > `Refused` means the action's precondition evaluated to false — the
 > concept did not execute, no state changed, and the sync layer routes the
 > refusal to an appropriate response (e.g. 401, 404, 422).
+>
+> Each row must contain exactly one backticked Outcome token. Do not write
+> pipe-separated unions such as `` `Deleted | NotFound` `` or multiple outcome
+> tokens in one cell. Each branch gets its own row, even when the target action
+> is the same. The deterministic `verify_chain_grammar.py` check enforces this
+> boundary because the pipe character is also the Markdown table delimiter.
 
 > **Why this shape is Level 2b, not Level 3a.**
 > - The row's `Then` is the concrete rendering of the WYSIWID Level 2b
@@ -58,9 +64,9 @@
 >   names already declared by the approved trigger contract.
 > - Those carried names must appear on the **handoff token consumed by the
 >   next row**, not merely on the original `Web/request[...]` token. If
->   row 2 consumes `Web.handle[Routed]`, then row 1 must emit
+>   row 2 consumes `Web.request[Routed]`, then row 1 must emit
 >   `Routed(email, password)` and row 2 must consume
->   `Web.handle[Routed(email, password)]`.
+>   `Web.request[Routed(email, password)]`.
 > - `Inputs` show the action's implementation-facing arguments only.
 >   They are **not** provenance, join logic, or sync bindings.
 > - Stage 03 is the first place where `where` provenance and the
@@ -113,7 +119,7 @@ is not a metaphor — it is a property a reviewer can check by
 inspection of the table alone, before any sync is written.
 
 - **States** = action outcomes, typed as `Ok`/`<NamedFailure>`/`Refused`. The
-  initial state is the row-1 `Web/request -> Web.handle` handoff; the
+  initial state is the row-1 `Web/request -> Web.request` handoff; the
   terminal states are `Web.respond` invocations (success or failure).
 - **Events** = the outcomes that completing actions emit
   (`Ok`, `BadPassword`, `Refused`, …). Every completion emits
@@ -136,7 +142,7 @@ table and the derived diagram are isomorphic.
 Stage 03 turns the Level 2b `When -> Then` structure into
 explicit sync rules:
 
-1. Row 1 is the root `Web.handle` entry. It is **not** itself a sync.
+1. Row 1 is the root `Web.request` entry. It is **not** itself a sync.
 2. Every non-root row becomes one Stage 03 `then` target.
 3. The matching Stage 03 `when` is copied from the row's explicit
   `When` token.
@@ -151,15 +157,15 @@ back into raw HTTP/body structure.
 Bad:
 
 ```text
-1 | Web/request[POST /register](name, identifier) | Web.handle | ... | Routed
-2 | Web.handle[Routed] | Member.register | name, identifier | ...
+1 | Web/request[POST /register](name, identifier) | Web.request | ... | Routed
+2 | Web.request[Routed] | Member.register | name, identifier | ...
 ```
 
 Good:
 
 ```text
-1 | Web/request[POST /register] | Web.handle | ... | Routed(name, identifier)
-2 | Web.handle[Routed(name, identifier)] | Member.register | name, identifier | ...
+1 | Web/request[POST /register] | Web.request | ... | Routed(name, identifier)
+2 | Web.request[Routed(name, identifier)] | Member.register | name, identifier | ...
 ```
 
 So Stage 01b answers *what fires what*; Stage 03 adds *where each

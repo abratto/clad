@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+"""Verify the lossless, one-branch grammar of Stage 01b chain tables."""
+
+import argparse
+import os
+import sys
+
+from artifact_parsers import parse_chain_table
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Verify one explicit outcome token per chain-table row")
+    parser.add_argument("--chain-dir", required=True)
+    args = parser.parse_args()
+
+    failures = []
+    checked = 0
+    for filename in sorted(os.listdir(args.chain_dir)):
+        if (not filename.endswith("-chain.md")
+            or filename.endswith("-all-scenarios-chain.md")):
+            continue
+        path = os.path.join(args.chain_dir, filename)
+        for row in parse_chain_table(path):
+            checked += 1
+            if len(row.outcome_tokens) != 1:
+                failures.append(
+                    f"{filename}:{row.row_num}: Outcome must contain exactly "
+                    f"one backticked token (found {len(row.outcome_tokens)})")
+                continue
+            if "|" in row.outcome_tokens[0]:
+                failures.append(
+                    f"{filename}:{row.row_num}: Outcome token must not use "
+                    "pipe-separated union syntax; add one row per branch")
+
+    if failures:
+        for failure in failures:
+            print(f"FAIL  {failure}")
+        sys.exit(1)
+    print(f"PASS  {checked} chain-table rows use one explicit outcome token")
+
+
+if __name__ == "__main__":
+    main()

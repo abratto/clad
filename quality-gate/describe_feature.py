@@ -29,6 +29,11 @@ from typing import Dict, List
 
 import artifact_parsers as ap
 import clad_stages as cs
+from contract import (
+    FEATURE_DESCRIPTOR_CAPABILITIES,
+    FEATURE_DESCRIPTOR_NAME,
+    FEATURE_DESCRIPTOR_VERSION,
+)
 
 
 def concepts(feature_root: str) -> List[Dict]:
@@ -101,34 +106,24 @@ def action_outcomes(feature_root: str) -> Dict[str, List[str]]:
             continue
         for r in ap.parse_chain_table(os.path.join(chain_dir, fname)):
             key = f"{r.then_concept}.{r.then_action}"
-            if not r.outcome_base:
-                continue
             vals = out.setdefault(key, [])
-            if r.outcome_base not in vals:
-                vals.append(r.outcome_base)
+            for outcome in r.outcome_bases:
+                if outcome not in vals:
+                    vals.append(outcome)
     return out
 
 
 def expected_outputs(feature_root: str) -> Dict[str, List[str]]:
-    """Map stage id -> the artefact filenames that stage is expected to produce."""
-    out: Dict[str, List[str]] = {}
+    """Map **canonical stage id** -> the artefact filenames that stage is
+    expected to produce (the MACHINE_CONTRACT `expected-outputs.v1` payload).
 
-    out["02_concepts"] = [c["name"] + ".concept.md" for c in concepts(feature_root)]
-    out["03_syncs"] = [s["name"] + ".sync.md" for s in syncs(feature_root)]
-    out["03a_dependency-review"] = [
-        c["name"] + "-card.md" for c in concepts(feature_root)] + ["pattern-d-summary.md"]
-    out["03b_data-model"] = [c["name"] + ".data-model.md" for c in concepts(feature_root)]
-    out["04_implement/04b_spec"] = [c["name"] + ".spec.md" for c in concepts(feature_root)]
-
-    chain_dir = cs.CHAIN_DIR(feature_root)
-    chain_files = []
-    if os.path.isdir(chain_dir):
-        chain_files = sorted(
-            f for f in os.listdir(chain_dir)
-            if f.endswith("-chain.md") and not f.endswith("-all-scenarios-chain.md"))
-    out["01b_chain-table"] = chain_files
-
-    return out
+    Covers every per-UC stage. Expectations for 01b/02/03/03a/03b/04b are
+    derived from the approved upstream artefacts (use case, responsibility
+    map, syncs), so the descriptor is a check, not an echo. `04a` reflects the
+    in-memory default (`_NOT_APPLICABLE.md`); a persistent profile instead
+    produces `<Name>.storage.md` per concept.
+    """
+    return ap.expected_stage_outputs(feature_root)
 
 
 def main() -> None:
@@ -143,6 +138,11 @@ def main() -> None:
         sys.exit(1)
 
     descriptor = {
+        "contract": {
+            "name": FEATURE_DESCRIPTOR_NAME,
+            "version": FEATURE_DESCRIPTOR_VERSION,
+            "capabilities": list(FEATURE_DESCRIPTOR_CAPABILITIES),
+        },
         "feature": os.path.basename(feature_root.rstrip("/")),
         "concepts": concepts(feature_root),
         "scenarios": scenarios(feature_root),
