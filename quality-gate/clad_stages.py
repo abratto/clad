@@ -26,6 +26,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional
 
+import artifact_parsers as ap
+
 
 # --------------------------------------------------------------------------
 # Check specification
@@ -248,11 +250,15 @@ _IMPL_PARITY = Check(
 _SYNC_IMPL_PARITY = Check(
     name="sync_implementation_parity",
     script="verify_sync_implementation_parity.py",
+    # Scope to this feature's sync specs. Using --features-dir here would
+    # demand that every other feature's syncs have an implementation in this
+    # feature's impl dir (cross-feature false failures).
     build_args=lambda r: [
         "--sync-impl-dir", _sync_impl_dir(r),
-        "--features-dir", _features_dir(r),
+        "--sync-dir", SYNC_DIR(r),
+        "--strict-trigger",
     ],
-    requires=lambda r: [_sync_impl_dir(r)],
+    requires=lambda r: [_sync_impl_dir(r), SYNC_DIR(r)],
 )
 
 _FIELD_ASSERTIONS = Check(
@@ -309,6 +315,187 @@ _SYNC_OVERLAP = Check(
     requires=lambda r: [SYNC_DIR(r)],
 )
 
+def _cucumber_glue_present(feature_root: str) -> bool:
+    """True when the configured test source tree contains Cucumber step
+    definitions. Step-definition checks are Gherkin-track-only; a profile
+    whose flow tests are direct (no Cucumber glue) is out of scope for them."""
+    root = _test_source_root(feature_root)
+    if not root:
+        return False
+    for dirpath, _dirs, files in os.walk(root):
+        for name in files:
+            if not name.endswith(".java"):
+                continue
+            try:
+                with open(os.path.join(dirpath, name)) as fh:
+                    text = fh.read()
+            except OSError:
+                continue
+            if re.search(r"@(?:Given|When|Then|And|But)\s*\(", text):
+                return True
+    return False
+
+
+def _glue_requires(feature_root: str) -> List[str]:
+    """Requires list for step-definition checks: skip when no Cucumber glue."""
+    if _cucumber_glue_present(feature_root):
+        return [output_dir(feature_root, "04_implement/04c_flow-tests"),
+                _test_source_root(feature_root)]
+    return [os.path.join(
+        output_dir(feature_root, "04_implement/04c_flow-tests"),
+        "__no_cucumber_glue__")]
+
+
+def _stepdef_derivation_requires(feature_root: str) -> List[str]:
+    """Requires list for the step-definition-derivation check (needs the
+    chain dir plus Cucumber glue; skip when the profile has no glue)."""
+    if _cucumber_glue_present(feature_root):
+        return [CHAIN_DIR(feature_root), _test_source_root(feature_root)]
+    return [os.path.join(
+        output_dir(feature_root, "04_implement/04c_flow-tests"),
+        "__no_cucumber_glue__")]
+
+
+def _expected_outputs(feature_root: str, key: str) -> List[str]:
+    try:
+        return ap.expected_stage_outputs(feature_root).get(key, [])
+    except Exception:  # noqa: BLE001 - never let a parse error crash the gate
+        return []
+
+
+def _manifest_check(name: str, rel: str, key: str) -> Check:
+    """A file-manifest check whose expected list is derived from the feature's
+    approved upstream artefacts (see artifact_parsers.expected_stage_outputs)."""
+    def _present(r: str) -> bool:
+        return bool(_expected_outputs(r, key))
+
+    return Check(
+        name=name + "_file_manifest",
+        script="verify_file_manifest.py",
+        build_args=lambda r: [
+            "--dir", output_dir(r, rel),
+            "--expected", ",".join(_expected_outputs(r, key)),
+        ],
+        requires=lambda r: (
+            [output_dir(r, rel)] if _present(r)
+            else [os.path.join(output_dir(r, rel), "__no_expected_outputs__")]
+        ),
+    )
+
+
+def _port_spec(feature_root: str) -> str:
+    return os.path.join(
+        os.path.dirname(feature_root), "_system", "stages", "00_actor-goal",
+        "output", "port-spec.md")
+
+
+def _feature_files_dir(feature_root: str) -> str:
+    root = _test_source_root(feature_root)
+    if not root:
+        return ""
+    candidate = os.path.join(root, "resources", "features")
+    return candidate if os.path.isdir(candidate) else ""
+
+
+_CHAIN_MANIFEST = _manifest_check("chain", "01b_chain-table", "01b")
+_CONCEPT_MANIFEST = _manifest_check("concept", "02_concepts", "02")
+_CARD_MANIFEST = _manifest_check("dependency", "03a_dependency-review", "03a")
+_DATA_MODEL_MANIFEST = _manifest_check("data_model", "03b_data-model", "03b")
+_SPEC_MANIFEST = _manifest_check("spec", "04_implement/04b_spec", "04b")
+
+_PORT_SPEC_04B = Check(
+    name="port_spec_contract",
+    script="verify_port_spec_contract.py",
+    build_args=lambda r: [
+        "--port-spec", _port_spec(r),
+        "--spec-dir", _spec_dir(r),
+    ],
+    requires=lambda r: [_port_spec(r), _spec_dir(r)],
+)
+
+_PORT_SPEC_04C = Check(
+    name="port_spec_contract",
+    script="verify_port_spec_contract.py",
+    build_args=lambda r: [
+        "--port-spec", _port_spec(r),
+        "--spec-dir", _spec_dir(r),
+        "--feature-dir", output_dir(r, "04_implement/04c_flow-tests"),
+    ],
+    requires=lambda r: [_port_spec(r), _spec_dir(r)],
+)
+
+_CLOSE_EVIDENCE = Check(
+    name="close_evidence",
+    script="verify_close_evidence.py",
+    build_args=lambda r: [
+        "--feature-root", r,
+        "--test-source-root", _test_source_root(r),
+    ],
+    requires=lambda r: [output_dir(r, "05_verify")],
+)
+
+_FEATURE_FILE_PRESENCE = Check(
+    name="feature_file_presence",
+    script="verify_feature_file_presence.py",
+    build_args=lambda r: [
+        "--feature-output-dir", output_dir(r, "04_implement/04c_flow-tests"),
+        "--feature-files-dir", _feature_files_dir(r),
+    ],
+    requires=lambda r: [_feature_files_dir(r)] if _feature_files_dir(r)
+    else [os.path.join(output_dir(r, "04_implement/04c_flow-tests"),
+                       "__no_feature_files_dir__")],
+)
+
+
+def _first_feature(feature_root: str) -> str:
+    """First canonical `.feature` file in the 04c output dir, or ''."""
+    flow_dir = output_dir(feature_root, "04_implement/04c_flow-tests")
+    if not os.path.isdir(flow_dir):
+        return ""
+    for name in sorted(os.listdir(flow_dir)):
+        if name.endswith(".feature"):
+            return os.path.join(flow_dir, name)
+    return ""
+
+
+def _gh_des_features(feature_root: str) -> List[str]:
+    """Requires list for the Gherkin-derivation check: the feature file when
+    present, otherwise a non-existent sentinel so the check reports `skip`."""
+    feature = _first_feature(feature_root)
+    return [feature] if feature else [
+        os.path.join(output_dir(feature_root, "04_implement/04c_flow-tests"),
+                     "__no_feature_file__")]
+
+
+_GHERKIN_DERIVATION = Check(
+    name="gherkin_derivation",
+    script="verify_gherkin_derivation.py",
+    build_args=lambda r: [
+        "--usecase", _usecase(r),
+        "--feature", _first_feature(r),
+        "--sync-dir", SYNC_DIR(r),
+    ],
+    requires=lambda r: [_usecase(r), SYNC_DIR(r)] + _gh_des_features(r),
+)
+
+_CONCEPT_TEST_DERIVATION = Check(
+    name="concept_test_derivation",
+    script="verify_concept_test_derivation.py",
+    build_args=lambda r: [
+        "--spec-dir", _spec_dir(r),
+        "--derivation", os.path.join(
+            output_dir(r, "04_implement/04d_concept-tdd/04d_red-tests"),
+            "concept-test-derivation.md"),
+        "--test-source-root", _test_source_root(r),
+    ],
+    requires=lambda r: [
+        _spec_dir(r),
+        os.path.join(output_dir(r, "04_implement/04d_concept-tdd/04d_red-tests"),
+                     "concept-test-derivation.md"),
+        _test_source_root(r),
+    ],
+)
+
 _STEP_DEF_PARITY = Check(
     name="step_definition_parity",
     script="verify_step_definition_parity.py",
@@ -316,8 +503,7 @@ _STEP_DEF_PARITY = Check(
         "--feature-files-dir", output_dir(r, "04_implement/04c_flow-tests"),
         "--glue-dir", _test_source_root(r),
     ],
-    requires=lambda r: [output_dir(r, "04_implement/04c_flow-tests"),
-                        _test_source_root(r)],
+    requires=_glue_requires,
 )
 
 _STEP_DEF_DERIVATION = Check(
@@ -327,7 +513,7 @@ _STEP_DEF_DERIVATION = Check(
         "--chain-dir", CHAIN_DIR(r),
         "--glue-dir", _test_source_root(r),
     ],
-    requires=lambda r: [CHAIN_DIR(r), _test_source_root(r)],
+    requires=_stepdef_derivation_requires,
 )
 
 # File-manifest checks for stages with predictable single-file outputs.
@@ -354,6 +540,13 @@ _FILE_02A = Check(
     requires=lambda r: [output_dir(r, "01a_responsibility-map")],
 )
 
+_CHAIN_GRAMMAR = Check(
+    name="chain_grammar",
+    script="verify_chain_grammar.py",
+    build_args=lambda r: ["--chain-dir", CHAIN_DIR(r)],
+    requires=lambda r: [CHAIN_DIR(r)],
+)
+
 _CONCEPT_STATE_RELATIONAL = Check(
     name="concept_state_relational",
     script="verify_concept_state_relational.py",
@@ -378,29 +571,34 @@ STAGES: List[Stage] = [
           checks=[_FILE_01]),
     Stage("01a", "Responsibility map", "01a_responsibility-map",
           checks=[_FILE_02A]),
-    Stage("01b", "Chain table", "01b_chain-table", gate_after=1),
-    Stage("02", "Concept specs", "02_concepts", checks=[_CONCEPT_STATE_RELATIONAL]),
+        Stage("01b", "Chain table", "01b_chain-table", gate_after=1,
+            checks=[_CHAIN_GRAMMAR, _CHAIN_MANIFEST]),
+    Stage("02", "Concept specs", "02_concepts",
+          checks=[_CONCEPT_STATE_RELATIONAL, _CONCEPT_MANIFEST]),
     Stage("03", "Syncs", "03_syncs", checks=[_SCENARIO_COVERAGE, _SYNC_MATRIX,
           _SYNC_CYCLE_GRAPH, _SYNC_OVERLAP]),
     Stage("03a", "Dependency review", "03a_dependency-review",
-          checks=[_SYNC_ROUTE_FILTERS]),
-    Stage("03b", "Data model", "03b_data-model", gate_after=2, checks=[_DATA_MODEL]),
+          checks=[_CARD_MANIFEST]),
+    Stage("03b", "Data model", "03b_data-model", gate_after=2,
+          checks=[_DATA_MODEL, _DATA_MODEL_MANIFEST]),
     Stage("04a", "Storage mapping", "04_implement/04a_storage-mapping",
           checks=[_RELATIONAL_MAPPING]),
     Stage("04b", "SPEC", "04_implement/04b_spec",
-          checks=[_SPEC_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN]),
+          checks=[_SPEC_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN,
+                  _SPEC_MANIFEST, _PORT_SPEC_04B]),
     Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3,
-          checks=[_FEATURE_IMPL_PATHS, _STEP_DEF_PARITY, _STEP_DEF_DERIVATION]),
+          checks=[_FEATURE_IMPL_PATHS, _GHERKIN_DERIVATION, _STEP_DEF_PARITY,
+                  _STEP_DEF_DERIVATION, _FEATURE_FILE_PRESENCE, _PORT_SPEC_04C]),
         Stage("04d-red", "Concept TDD red", "04_implement/04d_concept-tdd/04d_red-tests",
-            checks=[_FEATURE_IMPL_PATHS, _FIELD_ASSERTIONS]),
+            checks=[_FEATURE_IMPL_PATHS, _CONCEPT_TEST_DERIVATION, _FIELD_ASSERTIONS]),
         Stage("04d-green", "Concept TDD green", "04_implement/04d_concept-tdd/04d_green-impl",
             checks=[_FEATURE_IMPL_PATHS, _FIELD_ASSERTIONS]),
         Stage("04e-red", "Sync TDD red", "04_implement/04e_sync-tdd/04e_red-tests",
             checks=[_FEATURE_IMPL_PATHS]),
         Stage("04e-green", "Sync TDD green", "04_implement/04e_sync-tdd/04e_green-impl",
-            checks=[_IMPL_PARITY, _SYNC_IMPL_PARITY, _SYNC_DECLARATIVE,
-                _ACTION_LOG_ISOLATION, _CUCUMBER_GREEN]),
-    Stage("05", "Verify", "05_verify"),
+            checks=[_IMPL_PARITY, _SYNC_IMPL_PARITY, _SYNC_ROUTE_FILTERS,
+                _SYNC_DECLARATIVE, _ACTION_LOG_ISOLATION, _CUCUMBER_GREEN]),
+    Stage("05", "Verify", "05_verify", checks=[_CLOSE_EVIDENCE]),
 ]
 
 GATE_LABELS = {

@@ -81,6 +81,8 @@ upstream prose, but it may not redesign approved tests.
 ## Verify
 
 - All approved concept tests are green.
+- Advance runs `verify_concept_field_assertions.py` and
+  `verify_profile_paths.py` for this stage; both must pass.
 - Run `quality-gate/verify_iterative_change_coupling.py` before merge when
    concept implementation changed; matching Stage 02 concept artefacts must be
    in the same diff.

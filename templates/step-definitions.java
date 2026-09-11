@@ -8,7 +8,7 @@
 //
 // Derivation rules (cross-reference with 01b chain-table rows):
 //   Given precondition fixture    ← chain-table row whose action seeds concept state
-//   When trigger method           ← chain-table row 1 (Web/request → Web.handle)
+//   When trigger method           ← chain-table row 1 (Web/request → Web.request)
 //   Then response assertion       ← chain-table last row (Session.grant → Web.respond)
 //   Then token chain assertion    ← every non-root row's When/Then/Outcome copied verbatim
 //
@@ -78,7 +78,7 @@ public class <FeatureName>StepDefinitions {
     @When("the user submits POST /login with {string} and {string}")
     public void login(String username, String password) {
         // Invoke the flow root via HTTP test client.
-        // Maps to chain-table row 1: Web/request[POST /login] → Web.handle
+        // Maps to chain-table row 1: Web/request[POST /login] → Web.request
         // Expected token chain from chain-table rows 2–5:
         //   User.lookupByUsername → PasswordAuth.check[OK]
         //   → Session.grant → Web.respond[200]

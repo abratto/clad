@@ -103,48 +103,30 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 - **Cross-stage check (back):** every Pattern D field in
   `pattern-d-summary.md` appears in the owner concept's data model.
 
-## Gate instruction — STOP AND PRESENT
-
-### Step 1 — Present artefacts
+## Gate instruction — this stage ends a human gate
 
 Run:
 
 ```
-python3 ../../../../quality-gate/present_gate.py \
-  --feature ../../../ \
-  --gate 2
+./clad advance
 ```
 
-Present the output to the human. **Do NOT proceed past this point.**
+(Long form: `python3 quality-gate/advance.py --feature features/UC-XX-<slug>`.)
 
-### Step 2 — Wait for human approval
+`advance.py` owns the gate: it runs `verify_data_model.py` and
+`verify_file_manifest.py`, writes the stage receipt, prints the artefact
+summary and the `approve_gate.py --gate 2` command, and stops (exit 10).
+Present its summary to the human and **wait**. Do NOT run `present_gate.py`
+yourself and do NOT edit `RESUME.md`.
 
-Wait for the human to say "approved" (or "Gate 2 approved").
-Do NOT update RESUME.md yourself.
-
-### Step 3 — Record approval
-
-Only after the human explicitly approves, run:
-
-```
-python3 ../../../../quality-gate/approve_gate.py \
-  --feature ../../../ \
-  --gate 2
-```
-
-This updates RESUME.md to mark Gate 2 as approved.
-
-### Step 4 — Proceed
-
-After `approve_gate.py` exits successfully, proceed to Stage 04a
-(storage mapping). Stages 04a–04b auto-advance. The next human gate is
-**Gate 3 (Executable specification)** at Stage 04c.
-
-The `verify_data_model.py` and `verify_file_manifest.py` scripts must
-pass before requesting the gate.
+Only after the human explicitly says "approved", run the approval command
+`advance.py` printed, then re-run `./clad advance` to cross the gate. Gate 2
+is the **Architecture** gate; Stages 04a and 04b auto-advance, and the next
+human gate is **Gate 3 (Executable spec)** at Stage 04c.
 
 ## Next stage
 
 → [`../04_implement/CONTEXT.md`](../04_implement/CONTEXT.md) — Implement (router)
 
-To advance, the human says: **"Proceed to Stage 04."**
+Do NOT open this file until `advance.py` prints it as the NEXT STAGE, which
+happens only after the human approves Gate 2.

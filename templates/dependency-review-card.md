@@ -41,13 +41,18 @@
 >                  sync constant (all within the same flow token)
 >   concept-state — argument from a named-region read of another concept
 
-| Action | Flow (sync) | Data received | Source |
-|---|---|---|---|
-| `<actionName>` | `<SyncName>` (`<scenario>`) | `<arg1>, <arg2>` | `body.email` / `result_of(Other.action).bar` / literal `200` / `Other.field` |
-| `<actionName>` | `<SyncName>` (`<scenario>`) | … | … |
+| Action | Flow (sync) | Data received | Pattern | Source |
+|---|---|---|---|---|
+| `<actionName>` | `<SyncName>` (`<scenario>`) | `<arg1>, <arg2>` | `A`/`B`/`C` | `when.field` / `result_of(Other.action).bar` / literal `200` / `Other.field` |
+| `<actionName>` | `<SyncName>` (`<scenario>`) | … | … | … |
+
+> The `Pattern` column is the `SYNC_PATTERNS.md` data-flow label for how the
+> argument reached this invocation: `A` (from the trigger token), `B` (from a
+> prior action's output), or `C` (a sync constant). `D` is a concept-state
+> read and belongs in Section 2, not here.
 
 > **Example:** Given these two syncs:
->   Sync 1 — `when: Web.handle -> Routed` / `then: Account.validate(email, password)`
+>   Sync 1 — `when: Web.request -> Routed` / `then: Account.validate(email, password)`
 >   Sync 2 — `when: Account.validate -> Valid` / `then: Account.create(email, password)`
 >
 > The Section 1 table for `Account` has exactly **2 rows**:

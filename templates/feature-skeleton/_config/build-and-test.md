@@ -30,5 +30,5 @@ If your stack supports running a single test class / package, include an example
 Stages that require executed evidence (not just intent):
 
 - **04c**: before claiming "red and ready", prove test compilation succeeds.
-- **04d/04e**: "red" means **executed failing tests** (not `@Disabled`, not compilation failures).
+- **04d/04e**: "red" means **executed failing tests** once the production type exists. For a greenfield type that does not exist yet, a compile failure naming exactly that missing type is acceptable red evidence (see `TDD.md` §"Greenfield red evidence"). `@Disabled`/skipped is never red.
 - **04e gate**: provide executed evidence that tests compile and that sync + flow tests are green.

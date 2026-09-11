@@ -116,6 +116,48 @@ def check_file(filepath: str) -> List[str]:
         )
     return violations
 
+_SYNC_RULE_HEAD = re.compile(
+    r'SyncRule\.of\(\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"([^"]*)"')
+_SYNC_RULE_RESPOND = re.compile(r'invoke\(\s*"Web"\s*,\s*"respond"')
+_SYNC_RULE_ROUTE_GUARD = re.compile(r'(?:Clause\.)?(?:Guard|Bind)\(\s*"\?route"')
+
+
+def scan_sync_rule_ambiguity(root):
+    """Warn (never block) when a business-triggered respond sync shares its
+    exact trigger `(concept, action, outcome)` with another sync and carries no
+    route guard — positive evidence of the R11 hazard. The legacy SyncTrigger
+    path stays blocking; canonical enforcement is deferred by design."""
+    from collections import defaultdict
+    parsed = []
+    for java_file in sorted(root.glob("*.java")):
+        text = java_file.read_text(encoding="utf-8", errors="replace")
+        heads = list(_SYNC_RULE_HEAD.finditer(text))
+        for index, m in enumerate(heads):
+            start = m.start()
+            end = heads[index + 1].start() if index + 1 < len(heads) else len(text)
+            body = text[start:end]
+            name, concept, action, outcome = m.groups()
+            parsed.append((
+                name, concept, action, outcome,
+                bool(_SYNC_RULE_RESPOND.search(body)),
+                bool(_SYNC_RULE_ROUTE_GUARD.search(body)),
+            ))
+    groups = defaultdict(list)
+    for rule in parsed:
+        _name, concept, _action, _outcome, writes, _guard = rule
+        if concept != "Web" and writes:
+            groups[(rule[1], rule[2], rule[3])].append(rule)
+    warnings = []
+    for (concept, action, outcome), rules in groups.items():
+        if len(rules) > 1 and not any(r[5] for r in rules):
+            names = ", ".join(r[0] for r in rules)
+            warnings.append(
+                f"R11: {len(rules)} syncs share trigger "
+                f"{concept}/{action}[{outcome}] and write Web/respond with no "
+                f"route guard: {names}")
+    return warnings, len(parsed)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Verify business-concept syncs have route filters (R11)")
@@ -138,9 +180,28 @@ def main():
         sys.exit(0)
 
     all_violations = []
+    legacy_syncs = 0
     for java_file in sorted(root.glob("*.java")):
+        text = java_file.read_text(encoding="utf-8", errors="replace")
+        if "SyncTrigger(" in text:
+            legacy_syncs += 1
         violations = check_file(str(java_file))
         all_violations.extend(violations)
+
+    # The R11 parser recognises the legacy SPARQL `SyncTrigger` shape. A
+    # `SyncRule.of(...)` profile has no legacy `whereClause()`, so R11 cannot be
+    # evaluated from source here — say so explicitly instead of a silent PASS.
+    if legacy_syncs == 0:
+        warnings, parsed_rules = scan_sync_rule_ambiguity(root)
+        for warning in warnings:
+            print(f"WARN  {warning}")
+        if warnings:
+            print(f"WARN  R11 route scoping: {len(warnings)} ambiguous "
+                  f"SyncRule trigger(s); add a ?route guard or review Stage 03a.")
+        else:
+            print(f"PASS  R11 route scoping: {parsed_rules} SyncRule(s) "
+                  f"examined, no ambiguous shared-trigger respond sync.")
+        sys.exit(0)
 
     if all_violations:
         print(f"FAIL  R11: {len(all_violations)} business-concept sync(s) missing route filter")

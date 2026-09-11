@@ -6,9 +6,11 @@ Why this exists:
   Previously, stage pre-conditions were human-readable prose ("Check RESUME.md
   for Gate 1: Approved") that an LLM could silently skip reading. This script
   makes the check deterministic: it reads the feature's RESUME.md, confirms
-  the required gates are marked "approved", and cross-validates that the
-  corresponding stage output directories are non-empty. It exits non-zero if
-  any check fails, stopping the pipeline before the next stage starts.
+  the required gates are marked `approved` (human) or `auto-approved`
+  (workflow.autonomous=true), and cross-validates that the corresponding stage
+  output directories are non-empty. Human approvals are additionally bound to
+  a content hash; auto-approved gates are exempt. It exits non-zero if any
+  check fails, stopping the pipeline before the next stage starts.
 
 Usage:
   python3 verify_gate_approval.py \\
@@ -29,19 +31,26 @@ import argparse
 import os
 import re
 import sys
+from typing import Optional
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import clad_stages as cs  # noqa: E402
-from verify_stage_sequence import compute_gate_hash, gate_hash_recorded  # noqa: E402
+from verify_stage_sequence import (  # noqa: E402
+    APPROVED_STATES,
+    compute_gate_hash,
+    gate_hash_recorded,
+)
 
 
 GATE_LABELS = cs.GATE_LABELS
 
-GATE_OUTPUT_DIRS = {
-    1: os.path.join("stages", "01b_chain-table", "output"),
-    2: os.path.join("stages", "03b_data-model", "output"),
-    3: os.path.join("stages", "04_implement", "04c_flow-tests", "output"),
-}
+
+def gate_output_dir(feature_root: str, gate_num: int) -> Optional[str]:
+    """The output directory of the gate's marker stage (the last stage the
+    gate approves), derived from the shared stage model — not a local copy."""
+    block = cs.gate_stages(gate_num)
+    stage = cs.stage_by_id(block[-1]) if block else None
+    return stage.output_dir(feature_root) if stage else None
 
 
 def main():
@@ -73,7 +82,7 @@ def main():
 
     for gate_num in required_gates:
         label = GATE_LABELS.get(gate_num, f"Gate {gate_num}")
-        pattern = rf"^- \*\*Gate {gate_num} \({re.escape(label)}\):\*\*\s+`(\w+)`"
+        pattern = rf"^- \*\*Gate {gate_num} \({re.escape(label)}\):\*\*\s+`([\w-]+)`"
         match = re.search(pattern, content, re.MULTILINE)
         if not match:
             print(f"FAIL  Gate {gate_num} ({label}) line not found in {resume_path}")
@@ -81,15 +90,14 @@ def main():
             all_passed = False
             continue
         status = match.group(1)
-        if status != "approved":
-            print(f"FAIL  Gate {gate_num} ({label}) is not 'approved' in {resume_path} "
-                  f"(found '{status}')")
+        if status not in APPROVED_STATES:
+            print(f"FAIL  Gate {gate_num} ({label}) is not approved in "
+                  f"{resume_path} (found '{status}')")
             all_passed = False
             continue
         # Cross-check: output directory exists and is non-empty
-        rel_dir = GATE_OUTPUT_DIRS.get(gate_num)
-        if rel_dir:
-            out_dir = os.path.join(feature_root, rel_dir)
+        out_dir = gate_output_dir(feature_root, gate_num)
+        if out_dir:
             if not os.path.isdir(out_dir):
                 print(f"FAIL  Gate {gate_num} output directory not found: {out_dir}")
                 all_passed = False
@@ -100,6 +108,12 @@ def main():
                 print(f"FAIL  Gate {gate_num} output directory is empty: {out_dir}")
                 all_passed = False
                 continue
+        # auto-approved gates are the documented "a human never reviewed this"
+        # escape hatch (workflow.autonomous=true). They carry no content hash
+        # and are exempt from staleness, matching verify_stage_sequence.
+        if status == "auto-approved":
+            print(f"PASS  Gate {gate_num} ({label}) — auto-approved, output present")
+            continue
         # Content binding: a human approval is bound to the hash of the gate's
         # stages. Missing hash = legacy approval (must be re-baselined); a
         # mismatch = the artefacts changed since approval (must be re-presented).

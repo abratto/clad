@@ -61,6 +61,14 @@ If an agent claims a Stage 04 sub-stage is done without the required
 test/source files or without executed command evidence, that claim is
 invalid.
 
+**Greenfield red evidence.** For a brand-new concept or sync, the red tests
+may be written before the production type exists. In that case the honest
+red is a **compile failure naming exactly the missing production type** —
+record it as the red evidence, together with the target type the green stage
+will create. Once the production type exists (brownfield/iterative change),
+red must instead be a compiling test that fails behaviourally. A `@Disabled`
+or skipped test is never red; it is deferred work.
+
 ## Stage 04 order and gates are mandatory
 
 The executable order is `04b -> 04c -> 04d-red -> 04d-green -> 04e-red

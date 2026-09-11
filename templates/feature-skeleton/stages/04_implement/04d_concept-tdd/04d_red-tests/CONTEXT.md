@@ -61,8 +61,10 @@ here.
    fields that `writeCompletion` writes and downstream syncs consume.
    Outcome-only tests are incomplete.
 4. Run the canonical command from `../../../../_config/build-and-test.md`
-   and confirm the result is true red: test compilation succeeds and the
-   tests fail for behavioral reasons.
+   and confirm the result is true red. Greenfield (the production concept
+   type does not exist yet): a compile failure naming exactly that missing
+   type is acceptable red evidence. Once the type exists: tests compile and
+   fail for behavioral reasons. `@Disabled`/skipped tests are never red.
 5. Record the derivation map and the red-to-green handoff bundle in
    `output/concept-test-derivation.md`: approved test files, exact
    package/class/method names, red evidence command, expected red
@@ -84,6 +86,8 @@ here.
 Run the following before requesting the human gate:
 
 ```
+python3 ../../../../../../quality-gate/verify_profile_paths.py \
+  --feature ../../../../
 python3 ../../../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "concept-test-derivation.md"
 python3 ../../../../../../quality-gate/verify_concept_test_derivation.py \
@@ -121,8 +125,10 @@ python3 ../../../../../../quality-gate/verify_test_naming.py \
   accepts null or empty string.
 - Tests live under `APP_TEST_SOURCE_ROOT` and packages consistent with
   `APP_PACKAGE_ROOT`.
-- Executed red evidence shows successful test compilation and
-  behavioral test failure.
+- Executed red evidence shows either (greenfield) a compile failure naming
+  exactly the missing production type, or (once the type exists) successful
+  test compilation plus behavioral test failure. A skipped/disabled test is
+  not red.
 - No test depends on another concept's state or sync orchestration;
   those cases belong in `04e`.
 - No production concept implementation was introduced or changed during

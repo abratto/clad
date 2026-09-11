@@ -219,29 +219,54 @@ the slug into the fixed `HANDOVER.md` block rather than asking the model
 to write a "here is where we are" summary. This keeps the handoff from
 becoming another LLM-judgement surface.
 
-### Delegating the successor stage to a sub-agent
+### Orchestration: one sub-agent per stage (recommended default)
 
-On harnesses that support sub-agents, the fresh-session handoff doubles as a
-sub-agent mission: a sub-agent starts with its own context window, which is
-exactly the reset `session-per-stage` is trying to achieve, without the human
-manually starting a new conversation.
+On harnesses that can spawn sub-agents (a "task" / "delegate" tool, a fresh
+context per call), **one sub-agent per stage is the recommended default** for
+walking a feature. It gives every stage its own context window — the reset
+`workflow.session-per-stage` is trying to achieve — without a human manually
+starting a new conversation, and it keeps the transition decision with
+`./clad advance` rather than the model.
 
-To delegate the next stage, spawn a sub-agent with the HANDOVER block as its
-prompt (the slug is already substituted by `advance.py`), rather than pasting
-it into a new top-level session. The sub-agent re-orients from disk exactly as
-a fresh session would; its task ends at the same place — after writing the
-stage's `output/`, it reports back and the parent runs `advance.py` again.
+The parent session is the **orchestrator**; each sub-agent owns exactly one
+stage. The loop:
 
-Two boundaries that keep this safe:
+1. **Parent** runs `./clad advance` (or reads the active feature's `RESUME.md`)
+   to learn the current/next stage.
+2. **Parent** spawns one sub-agent for that stage, handing it the
+   [`HANDOVER.md`](HANDOVER.md) block (slug already substituted) plus the
+   stage's `CONTEXT.md` path as its mission.
+3. **Sub-agent** re-orients from disk, loads only the stage `Inputs`, produces
+   the stage `Outputs`, runs the stage's `## Verify` self-audit and
+   `./clad verify`, then **ends its turn by running `./clad advance`** and
+   reports the output. It opens no other stage.
+4. **Auto-advance:** if `advance.py` prints `NEXT STAGE`, the sub-agent returns;
+   the parent spawns the next stage's sub-agent.
+5. **Human gate:** if `advance.py` stops at a gate (exit `10`), the sub-agent
+   returns the gate summary and does **not** approve. The human reviews and the
+   parent/human runs `./clad approve <N>`; the next stage's sub-agent then
+   crosses the gate with its entry `./clad advance`.
 
-- **The gate decision stays with the human.** A sub-agent produces the stage's
-  artefacts and returns; it never runs `approve_gate.py` on its own. Approval
-  and `advance.py` remain the parent/human's actions.
-- **One stage per sub-agent.** The HANDOVER block is scoped to a single stage's
-  re-orientation; do not hand a sub-agent a whole gate block or the full
-  pipeline. If a parent delegates more than one stage its context grows and the
-  isolation is lost — the same reason `session-per-stage` exists in the first
-  place.
+**Producer runs advance; consumer re-runs it.** The stage that produced the
+output ends its turn with `advance` so its checks execute while it still has the
+context to fix a failure. The next stage's sub-agent *also* runs `advance` on
+entry — idempotent re-orientation, not the authoritative transition. The
+authoritative decision is always `advance.py`'s.
+
+Boundaries that keep this safe:
+
+- **One stage per sub-agent.** Never hand a sub-agent a whole gate block or the
+  full pipeline; its context would grow and the isolation would be lost.
+- **No self-selection.** A sub-agent never picks a stage or opens a
+  `CONTEXT.md` that `advance.py` did not print.
+- **The gate decision stays with the human.** A sub-agent never runs
+  `approve_gate.py`; approval and `advance.py` remain the parent/human's actions.
+
+**Fallback when sub-agents are unavailable.** Run the same loop in one
+session, one stage at a time, ending each turn with `./clad advance`, or set
+`workflow.session-per-stage=true` so `advance.py` stops after every stage and
+prints the handoff for a fresh human-started session. The stage contract and
+gates are identical either way.
 
 ## The stage contract
 
@@ -287,7 +312,7 @@ files below are the single source of truth for per-stage instructions:
 | 03b | `stages/03b_data-model/CONTEXT.md` | `<Name>.data-model.md` per concept | **Gate 2 (Architecture)** |
 | 04a | `stages/04_implement/04a_storage-mapping/CONTEXT.md` | `<Name>.storage.md` or `_NOT_APPLICABLE.md` | Auto → 04c |
 | 04b | `stages/04_implement/04b_spec/CONTEXT.md` | `<Name>.spec.md` per concept | Auto → 04c |
-| 04c | `stages/04_implement/04c_flow-tests/CONTEXT.md` | `.feature` files + step definitions | **Gate 3 (Executable)** |
+| 04c | `stages/04_implement/04c_flow-tests/CONTEXT.md` | `.feature` files + step definitions | **Gate 3 (Executable spec)** |
 | 04d-red | `stages/04_implement/04d_concept-tdd/04d_red-tests/CONTEXT.md` | `concept-test-derivation.md` | Auto → 04d-green |
 | 04d-green | `stages/04_implement/04d_concept-tdd/04d_green-impl/CONTEXT.md` | `green-evidence.md` | Auto → 04e-red |
 | 04e-red | `stages/04_implement/04e_sync-tdd/04e_red-tests/CONTEXT.md` | `sync-test-derivation.md` | Auto → 04e-green |
@@ -434,5 +459,5 @@ reviewing at the gate?" Read top to bottom for a single feature.
 |---|---|---|---|---|
 | **1 (Requirements)** | 01 → 01a → 01b | Project brief (Stage 00) | usecase.md, responsibility-map.md, chain-table.md | Actors/goals correct? Scenarios cover all flows? Concept boundaries right? Action chains plausible? |
 | **2 (Architecture)** | 02 → 03 → 03a → 03b | Approved requirements | concept.md, sync.md, dep-cards, data-model.md | Concept state machines cover the chains? Sync coordination declarative? Concept-state reads intentional? Data model complete? |
-| **3 (Executable)** | 04a → 04b → 04c | Approved architecture | storage.md, spec.md, .feature files | Tests capture the right scenarios and inputs? |
+| **3 (Executable spec)** | 04a → 04b → 04c | Approved architecture | storage.md, spec.md, .feature files | Tests capture the right scenarios and inputs? |
 | **Auto (Delivery)** | 04d-red → 04d-green → 04e-red → 04e-green → 05 | (nothing — all upstream artefacts approved) | concept code, sync code, test code, trace.md, smoke.md, tracking.md | (none — script-checked: `mvn test` passes, quality-gate scripts pass) |

@@ -13,10 +13,16 @@ needs to re-orient from disk.
 
 On harnesses that support sub-agents, the same block is a ready-made
 sub-agent mission: spawn a sub-agent with this block (slug already
-substituted) to give it a clean context window for exactly one stage,
-then have it report back and re-run `advance.py` from the parent. The
-gate decision and `advance.py` remain the parent/human's actions — the
-sub-agent only produces the stage's `output/`.
+substituted) to give it a clean context window for exactly one stage.
+This is the **recommended default when orchestration is available** —
+one sub-agent per stage, each driving `./clad advance`. The producing
+sub-agent ends its turn with `./clad advance`; the parent spawns the
+next stage, or, at a human gate, the parent/human approves and the next
+sub-agent crosses the gate on entry. See
+[`STAGES.md`](STAGES.md) §"Orchestration: one sub-agent per stage" for
+the full loop and the no-sub-agent fallback. The gate decision stays
+with the parent/human — the sub-agent only produces the stage's
+`output/`.
 
 ## Human input (only one placeholder)
 
@@ -36,7 +42,17 @@ Before doing anything, read these files in this exact order:
 4. `methodology/implementation/HANDOVER.md`
 5. `templates/usecase.md`
 
-Then locate the current stage by inspecting `features/{{UC-XX-slug}}/stages/` in chronological order. The current stage is the first stage directory that has no `output/` files, or has an `output/` directory with no artefacts.
+Then determine the current stage the sanctioned way — run:
+
+```
+python3 quality-gate/advance.py --feature features/{{UC-XX-slug}}
+```
+
+`advance.py` owns the transition decision (never self-select a stage). Its
+output names the current stage, the next stage, or a human gate. If it is
+unavailable, you may fall back to inspecting
+`features/{{UC-XX-slug}}/stages/` in chronological order, but you must still
+run `advance.py` before writing anything.
 
 Then read all prior stages' `output/` artefacts in chronological order to build full context.
 
@@ -50,8 +66,8 @@ Before any edits or stage work, state out loud:
 Then wait for explicit human confirmation before doing anything else.
 
 Standing rules you must follow:
-- Gate behaviour: stop after every stage output is produced and wait for explicit human approval before proceeding.
-- Commit cadence: one commit per gate approval on the feature branch, message format `feat(UC-XX): Stage NN — <artefact name>`.
+- Gate behaviour: stages auto-advance between human gates. Stop and wait for explicit human approval only at Gate 1 (after 01b), Gate 2 (after 03b), and Gate 3 (after 04c). `advance.py` owns the transition and prints the gate summary and approval command — do not self-select a stage or write your own approval prompt.
+- Commit cadence: one commit per gate approval on the feature branch, message format `feat(UC-XX): Gate N — <label> (stages NN–NN)`.
 - Branch name: `feat/UC-XX-<slug>`.
 - Never write artefacts directly to `main`.
 - After each gate approval, overwrite `features/{{UC-XX-slug}}/RESUME.md` before committing.

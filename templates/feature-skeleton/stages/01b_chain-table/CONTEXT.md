@@ -47,7 +47,7 @@ of collapsing them into one line.
 
 If a downstream action needs request-originated data, the approved 01b
 row must name those carried fields on the trigger contract itself
-(for example `Web.handle[Routed(email, password)]`). Stage 03 may bind
+(for example `Web.request[Routed(email, password)]`). Stage 03 may bind
 Pattern A values only from names that 01b has already declared.
 
 Optionally include a Mermaid `stateDiagram-v2` as a derived view. Do not
@@ -63,7 +63,7 @@ one chain table per scenario.
 ## Progress checklist
 
 - [ ] One chain file per use-case scenario
-- [ ] First row is bootstrap entry action (Web/handle[routed])
+- [ ] First row is bootstrap entry action (Web/request[routed])
 - [ ] Last row is respond action with status code
 - [ ] Outcome values match those in the responsibility map
 - [ ] Self-audit: `./clad verify` passes
@@ -78,10 +78,14 @@ one chain table per scenario.
 Run the following before requesting the human gate:
 
 ```
+python3 ../../../../quality-gate/verify_chain_grammar.py \
+  --chain-dir output
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<scenario-name>-chain.md"  # one per scenario
 ```
 
+- **verify_chain_grammar.py:** every row carries exactly one backticked
+  outcome token (no pipe unions, no multi-token cells).
 - **verify_file_manifest.py:** `output/` contains exactly one
   `<scenario-name>-chain.md` per use-case scenario.
 
@@ -94,15 +98,21 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   the Stage 01 scenario itself truly has no extensions.
 - Every concept and action that appears in a chain table is listed in
   `01a_responsibility-map/output/responsibility-map.md`.
-- The first row of every chain is `Web/request[...] -> Web.handle` (R4);
+- The first row of every chain is `Web/request[...] -> Web.request` (R4);
   the last row of every chain is `... -> Web.respond[...]`.
-- **No repeated action invocations.** Each `<Concept>.<action>` pair
-  may appear at most once per chain. If the same action appears in two
-  rows, those rows must be merged: a single action invocation produces
-  one outcome per execution path, and all reachable outcomes are listed
-  in the `Outcome` column of that single row. Two rows for the same
-  action means outcomes are being split that belong together — that is
-  a defect in the chain table, not a valid choreography choice.
+- **One branch per row; one outcome token per row.** An action invoked
+  once may complete with several outcomes. Model each outcome as its own
+  row: the same source action appears in the `When` cell with a different
+  completion token (`Health.check[Healthy]`, `Health.check[Unhealthy]`),
+  and each row resolves to its own `Then`/status. That is a branch, not a
+  repeated invocation.
+- **No duplicate branches.** The same `<Concept>.<action>` must not
+  appear twice as a `Then` with the same outcome and target, and two rows
+  must not describe the same branch. If two rows are genuinely the same
+  branch, merge them; if they are different outcomes of one invocation,
+  keep them as separate rows. Do not collapse distinct `Web.respond[...]`
+  contracts into a single outcome cell — `verify_chain_grammar.py` requires
+  exactly one backticked outcome token per row.
 - **Cross-stage check (back):** the chain's trigger and final response
   match the scenario's *Trigger* and *Expected outcomes* in the use
   case.
@@ -115,48 +125,30 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   Do not combine distinct `Web.respond[...]` contracts or distinct next
   actions into one canonical row.
 
-## Gate instruction — STOP AND PRESENT
-
-### Step 1 — Present artefacts
+## Gate instruction — this stage ends a human gate
 
 Run:
 
 ```
-python3 ../../../quality-gate/present_gate.py \
-  --feature ../../ \
-  --gate 1
+./clad advance
 ```
 
-Present the output to the human. **Do NOT proceed past this point.**
+(Long form: `python3 quality-gate/advance.py --feature features/UC-XX-<slug>`.)
 
-### Step 2 — Wait for human approval
+`advance.py` owns the gate: it runs `verify_chain_grammar.py` and
+`verify_file_manifest.py`, writes the stage receipt, prints the artefact
+summary and the `approve_gate.py --gate 1` command, and stops (exit 10).
+Present its summary to the human and **wait**. Do NOT run `present_gate.py`
+yourself and do NOT edit `RESUME.md`.
 
-Wait for the human to say "approved" (or "Gate 1 approved").
-Do NOT update RESUME.md yourself.
-
-### Step 3 — Record approval
-
-Only after the human explicitly approves, run:
-
-```
-python3 ../../../quality-gate/approve_gate.py \
-  --feature ../../ \
-  --gate 1
-```
-
-This updates RESUME.md to mark Gate 1 as approved.
-
-### Step 4 — Proceed
-
-After `approve_gate.py` exits successfully, proceed to Stage 02
-(concept specs). Stages 02, 03 auto-advance. The next human gate is
-**Gate 2 (Architecture)** at Stage 03b.
-
-The `verify_file_manifest.py` script must pass before requesting the gate.
+Only after the human explicitly says "approved", run the approval command
+`advance.py` printed, then re-run `./clad advance` to cross the gate. Gate 1
+is the **Requirements** gate; Stages 02 and 03 auto-advance, and the next
+human gate is **Gate 2 (Architecture)** at Stage 03b.
 
 ## Next stage
 
 → [`../02_concepts/CONTEXT.md`](../02_concepts/CONTEXT.md) — Concept specs (full anatomy)
 
-Do NOT open this file until the human approves Gate 1. After
-`approve_gate.py` exits successfully, open the next CONTEXT.md.
+Do NOT open this file until `advance.py` prints it as the NEXT STAGE, which
+happens only after the human approves Gate 1.

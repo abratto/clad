@@ -292,6 +292,84 @@ class GateContentBindingTests(unittest.TestCase):
             self.assertIn("already current", second.stdout)
 
 
+class GateApprovalAutonomyTests(unittest.TestCase):
+    """auto-approved gates and stage pre-conditions must interoperate."""
+
+    def _populate_all(self, feature):
+        for stage in stages.STAGES:
+            output = Path(stage.output_dir(str(feature)))
+            output.mkdir(parents=True, exist_ok=True)
+            (output / "evidence.md").write_text(stage.id, encoding="utf-8")
+
+    def _gate_approval(self, feature, gates):
+        return subprocess.run(
+            [
+                sys.executable,
+                str(QUALITY_GATE / "verify_gate_approval.py"),
+                "--feature", str(feature), "--required-gates", gates,
+            ],
+            cwd=REPO_ROOT, capture_output=True, text=True,
+        )
+
+    def test_auto_approved_gate_satisfies_stage_precondition(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-01-auto"
+            shutil.copytree(REPO_ROOT / "templates/feature-skeleton", feature)
+            resume = feature / "RESUME.md"
+            resume.write_text(
+                resume.read_text(encoding="utf-8").replace(
+                    "`pending`", "`auto-approved`"),
+                encoding="utf-8",
+            )
+            self._populate_all(feature)
+
+            result = self._gate_approval(feature, "1,2,3")
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("auto-approved", result.stdout)
+
+    def test_autonomous_advance_records_auto_approved_and_unblocks_precondition(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-01-autonomous"
+            shutil.copytree(REPO_ROOT / "templates/feature-skeleton", feature)
+            usecase = Path(stages.stage_by_id("01").output_dir(str(feature)))
+            usecase.mkdir(parents=True, exist_ok=True)
+            (usecase / "usecase.md").write_text(
+                "### Scenario: Login\n\nmain flow\n", encoding="utf-8")
+            resp = Path(stages.stage_by_id("01a").output_dir(str(feature)))
+            resp.mkdir(parents=True, exist_ok=True)
+            (resp / "responsibility-map.md").write_text(
+                "| Concept | State | Actions |\n|---|---|---|\n"
+                "| Web | none | handle |\n",
+                encoding="utf-8")
+            output = Path(stages.stage_by_id("01b").output_dir(str(feature)))
+            output.mkdir(parents=True, exist_ok=True)
+            # Filename must match the Stage 01 scenario slug (`Login` -> login).
+            (output / "login-chain.md").write_text(
+                "| When | Then | Inputs | Outcome | Why |\n"
+                "|---|---|---|---|---|\n"
+                "| `Web.request[Routed]` | `Web.handle` | `routed` | `Ok` | entry |\n",
+                encoding="utf-8",
+            )
+
+            advance_result = subprocess.run(
+                [
+                    sys.executable,
+                    str(QUALITY_GATE / "advance.py"),
+                    "--feature", str(feature),
+                    "--autonomous", "true",
+                ],
+                cwd=REPO_ROOT, capture_output=True, text=True,
+            )
+            self.assertEqual(advance_result.returncode, 0,
+                             advance_result.stdout + advance_result.stderr)
+            self.assertIn("auto-approved", (feature / "RESUME.md").read_text(
+                encoding="utf-8"))
+
+            precondition = self._gate_approval(feature, "1")
+            self.assertEqual(precondition.returncode, 0,
+                             precondition.stdout + precondition.stderr)
+
+
 class ConceptStateRelationalTests(unittest.TestCase):
     """Stage 02 gate: concept state must be relational, not object fields."""
 

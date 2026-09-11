@@ -94,10 +94,15 @@ package names as examples only.
 Run the following before requesting the human gate:
 
 ```
-python3 ../../../../quality-gate/verify_file_manifest.py \
+python3 ../../../../../quality-gate/verify_relational_mapping.py \
+  --storage-dir output
+python3 ../../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<Name>.storage.md,…"  # one per concept, or _NOT_APPLICABLE.md
 ```
 
+- **verify_relational_mapping.py:** for relational profiles, the mapping
+  honours Rmap (no foreign key crosses a concept boundary). Skips when
+  the profile is not relational or `_NOT_APPLICABLE.md` is used.
 - **verify_file_manifest.py:** `output/` contains exactly one
   `.storage.md` per concept or a single `_NOT_APPLICABLE.md`.
 

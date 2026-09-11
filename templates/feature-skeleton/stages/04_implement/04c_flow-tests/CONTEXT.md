@@ -20,7 +20,7 @@ use-case scenario, with no invented steps.
   05 (Gherkin scenario names link the trace to executable specs).
 - `<Feature>StepDefinitions.java` (skeleton, `@Disabled`) → the outer
   loop of TDD itself.
-- `../../../../templates/feature.feature` → Gherkin output template
+- `../../../../../templates/feature.feature` → Gherkin output template
   with derivation rules.
 
 **Agent stance for this stage:** these tests must read like the use
@@ -78,8 +78,12 @@ derived status codes/token chains.
    under `APP_TEST_SOURCE_ROOT`, packaged under `APP_PACKAGE_ROOT`, pointing
    at the `.feature` file's resource directory.
 4. Place the `.feature` file under
-   `APP_TEST_SOURCE_ROOT/resources/features/<feature-name>.feature`.
+   `<APP_TEST_SOURCE_ROOT>/resources/features/<feature-name>.feature`.
    Place step-definition classes under `APP_PACKAGE_ROOT.steps`.
+   The exact discovery path is profile-defined: `resources/features/` is the
+   template placeholder; many Maven projects instead use the test-resources
+   tree (`src/test/resources/features/`). Whatever the profile uses must
+   match `verify_feature_file_presence.py --feature-files-dir`.
 5. Before claiming "red and ready", run the canonical build-and-test
    command from `../../../_config/build-and-test.md` (or the targeted
    equivalent documented there) and verify test compilation succeeds. At
@@ -140,6 +144,8 @@ python3 ../../../../../quality-gate/verify_feature_file_presence.py \
 ### Automated checks
 
 ```
+python3 ../../../../../quality-gate/verify_profile_paths.py \
+  --feature ../../../
 python3 ../../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<feature-name>.feature,…"  # one .feature file per use case
 python3 ../../../../../quality-gate/verify_gherkin_derivation.py \
@@ -158,12 +164,21 @@ python3 ../../../../../quality-gate/verify_port_spec_contract.py \
   --feature-dir output
 ```
 
+- **verify_profile_paths.py:** the effective `test.source.root` /
+  `concept.impl.dir` / `sync.impl.dir` resolve inside the feature's
+  declared `_config/package-and-layout.md` roots. Blocks on a wrong-tree
+  mismatch, warns on a seed `reference-impl/` pointer.
 - **verify_file_manifest.py:** `output/` contains exactly the expected
   `.feature` file(s).
 - **verify_gherkin_derivation.py:** every use-case scenario has a
   matching Gherkin Scenario, every Scenario has Given/When/Then,
   response status codes match sync spec `then` clauses (per
   GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1).
+- **verify_step_definition_parity.py / verify_step_definition_derivation.py:**
+  on the Cucumber track, every step has a non-empty definition. When the
+  selected profile's outer loop is a direct (non-Cucumber) flow test with no
+  step definitions, `advance.py` reports these two checks as `skip` — the
+  profile's own flow test is the outer red instead.
 - **verify_port_spec_contract.py:** skips when no `port-spec.md` exists;
   otherwise checks response-shape SPEC output and `@contract` scenarios
   are present.
@@ -213,46 +228,26 @@ python3 ../../../../../quality-gate/verify_port_spec_contract.py \
   The stub test files and the executed compilation evidence are part of
   the stage contract.
 
-## Gate instruction — STOP AND PRESENT
-
-### Step 1 — Present artefacts
+## Gate instruction — this stage ends a human gate
 
 Run:
 
 ```
-python3 ../../../../../quality-gate/present_gate.py \
-  --feature ../../../ \
-  --gate 3
+./clad advance
 ```
 
-Present the output to the human. **Do NOT proceed past this point.**
+(Long form: `python3 quality-gate/advance.py --feature features/UC-XX-<slug>`.)
 
-### Step 2 — Wait for human approval
+`advance.py` owns the gate: it runs this stage's checks
+(`verify_profile_paths.py`, `verify_gherkin_derivation.py`,
+`verify_step_definition_parity.py`, `verify_step_definition_derivation.py`),
+writes the stage receipt, prints the artefact summary and the
+`approve_gate.py --gate 3` command, and stops (exit 10). Present its summary
+to the human and **wait**. Do NOT run `present_gate.py` yourself and do NOT
+edit `RESUME.md`.
 
-Wait for the human to say "approved" (or "Gate 3 approved").
-Do NOT update RESUME.md yourself.
-
-### Step 3 — Record approval
-
-Only after the human explicitly approves, run:
-
-```
-python3 ../../../../../quality-gate/approve_gate.py \
-  --feature ../../../ \
-  --gate 3
-```
-
-This updates RESUME.md to mark Gate 3 as approved.
-
-### Step 4 — Proceed
-
-After `approve_gate.py` exits successfully, proceed through stages
-04d, 04e, and 05 (auto-advance, no further human gates).
-
-The `verify_file_manifest.py` and `verify_gherkin_derivation.py` scripts
-must pass before requesting the gate.
-
-## Advancing
-
-Run `./clad advance`. After Gate 3 is approved, it directs the agent to
-`04d_red-tests/CONTEXT.md`; do not select the child stage manually.
+Only after the human explicitly says "approved", run the approval command
+`advance.py` printed, then re-run `./clad advance`. Gate 3 is the
+**Executable spec** gate; Stages 04d, 04e, and 05 then auto-advance with no
+further human gates. After Gate 3 is approved, `advance.py` directs the agent
+to `04d_red-tests/CONTEXT.md`; do not select the child stage manually.

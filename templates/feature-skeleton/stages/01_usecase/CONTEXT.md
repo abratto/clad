@@ -23,8 +23,8 @@ under-specifying them.
 
 | Path | Layer | Why |
 |---|---|---|
-| `../00_actor-goal/output/actors.md` | 4 | Confirmed actors |
-| `../00_actor-goal/output/goals.md` | 4 | Confirmed goals |
+| `../../../_system/stages/00_actor-goal/output/actors.md` | 4 | Confirmed actors |
+| `../../../_system/stages/00_actor-goal/output/goals.md` | 4 | Confirmed goals |
 | Skill: `clad-usecase-authoring` | 3 | Use case authoring reference (see skills/ directory) |
 | `../../../../methodology/core/CLAD.md` | 3 | Methodology |
 | `../../../../templates/usecase.md` | 3 | Output template |
@@ -44,7 +44,7 @@ into Stage 01b. If a failure branch shares the same trigger and user
 goal, keep it as an extension under that top-level scenario rather than
 creating a second top-level scenario with a success-only name.
 
-Check `../../clad.properties` for `stages.usecase.require-sequence-diagram`.
+Check `../../../../clad.properties` for `stages.usecase.require-sequence-diagram`.
 If set to `true` (the default): **a Mermaid `sequenceDiagram` is
 required** inside each scenario as a derived, human-facing interaction
 sketch. If set to `false`, the diagram is optional.
@@ -81,7 +81,7 @@ Run the following before requesting the human gate:
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "usecase.md"
 python3 ../../../../quality-gate/verify_scenario_coverage.py \
-  --goals ../00_actor-goal/output/goals.md \
+  --goals ../../../_system/stages/00_actor-goal/output/goals.md \
   --usecase output/usecase.md \
   --chain-dir ../01b_chain-table/output \
   --sync-dir ../03_syncs/output
@@ -109,7 +109,7 @@ python3 ../../../../quality-gate/verify_scenario_coverage.py \
 - Out-of-scope section is non-empty.
 - The operational principle reads as a coherent story, not a feature list.
 - **Cross-stage check (back):** every in-scope goal in
-  `00_actor-goal/output/goals.md` corresponds to at least one named
+  `features/_system/stages/00_actor-goal/output/goals.md` corresponds to at least one named
   scenario in `usecase.md`.
 - Scenario names are not misleadingly happy-path-only when the scenario
   also contains failure extensions that will be carried into the same

@@ -137,18 +137,30 @@ def scan_tests(test_source_root, required_by_action):
                 continue
             path = os.path.join(root, fname)
             text = read(path)
-            package_match = PACKAGE_RE.search(text)
-            if not package_match or ".concepts." not in package_match.group(1):
-                continue
             class_match = CLASS_RE.search(text)
             if not class_match:
                 continue
             class_name = class_match.group(1)
-            concept_slug = package_match.group(1).split(".concepts.", 1)[1].split(".", 1)[0]
-            concept_name = next(
-                (name for name in actions_by_concept if name.lower() == concept_slug.lower()),
-                pascal(concept_slug),
-            )
+            # Locate the concept this test belongs to. Prefer the legacy/canonical
+            # `.concepts.<slug>` package bucket; also accept the flat profile
+            # layout used by the reference impls (`...example.<concept>.<Concept><Action>Test`),
+            # matched by class-name prefix so flow/sync tests are not misread.
+            concept_name = None
+            package_match = PACKAGE_RE.search(text)
+            if package_match and ".concepts." in package_match.group(1):
+                concept_slug = package_match.group(1).split(".concepts.", 1)[1].split(".", 1)[0]
+                concept_name = next(
+                    (name for name in actions_by_concept
+                     if name.lower() == concept_slug.lower()),
+                    pascal(concept_slug),
+                )
+            if concept_name is None:
+                for name in sorted(actions_by_concept, key=len, reverse=True):
+                    if class_name.lower().startswith(name.lower()):
+                        concept_name = name
+                        break
+            if concept_name is None:
+                continue
             action = matching_action(class_name, concept_name, actions_by_concept.get(concept_name, set()))
             if not action:
                 continue

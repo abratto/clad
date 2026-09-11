@@ -43,7 +43,14 @@ def _token_chain_comment(chain_dir: str, scenario: str) -> str:
     rows = ap.parse_chain_table(chain_file)
     tokens = []
     for r in rows:
-        suffix = f"[{r.outcome_base}]" if r.outcome_base else ""
+        # Terminal rows carry their transport bracket in the `Then` cell
+        # (`Web.respond[200]`); non-terminal rows bracket the outcome token.
+        if r.then_suffix:
+            suffix = r.then_suffix
+        elif r.outcome_base:
+            suffix = f"[{r.outcome_base}]"
+        else:
+            suffix = ""
         tokens.append(f"{r.then_concept}.{r.then_action}{suffix}")
     return "#   " + " -> ".join(tokens)
 
@@ -147,14 +154,21 @@ def main() -> None:
     feature_root = os.path.abspath(args.feature)
     out_dir = os.path.join(feature_root, "stages", "04_implement",
                            "04c_flow-tests", "output")
-    feature_name = os.path.basename(feature_root.rstrip("/"))
-    # prefer the usecase-derived name for the filename
+    # Prefer the use-case H1 name for the filename (`# UC-XX — Health` -> health.feature),
+    # falling back to the feature-folder slug when there is no use case yet.
+    feature_folder = os.path.basename(feature_root.rstrip("/"))
     usecase_path = os.path.join(feature_root, "stages", "01_usecase", "output",
                                 "usecase.md")
-    fname = "flow.feature"
+    base = ""
     if os.path.isfile(usecase_path):
-        base = ap.slugify(feature_name.replace("UC-", "", 1))
-        fname = (base or "flow") + ".feature"
+        uc_text = open(usecase_path, encoding="utf-8").read()
+        title_m = re.search(
+            r"^#\s+(?:UC-[\w-]+\s*[—–-]\s*)?(.+)$", uc_text, re.MULTILINE)
+        if title_m:
+            base = ap.slugify(title_m.group(1))
+    if not base:
+        base = ap.slugify(feature_folder.replace("UC-", "", 1))
+    fname = (base or "flow") + ".feature"
 
     content = build_feature(feature_root)
     if content is None:

@@ -44,7 +44,8 @@ def parse_chain_outcomes(chain_dir):
         for r in parse_chain_table(os.path.join(chain_dir, fname)):
             if r.then_suffix is not None:
                 continue
-            rows.append((r.then_concept, r.then_action, r.outcome_base))
+            for outcome_base in r.outcome_bases:
+                rows.append((r.then_concept, r.then_action, outcome_base))
     return rows
 
 

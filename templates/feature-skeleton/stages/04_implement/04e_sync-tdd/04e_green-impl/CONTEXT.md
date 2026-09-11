@@ -91,11 +91,14 @@ not redesign approved tests.
    the same diff.
 - Executed command evidence shows: test compilation succeeds, sync tests
   are green, and flow tests are green.
-- Run `quality-gate/verify_implementation_parity.py` with
-   `--sync-impl-dir <APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/syncs` and
-   `--features-dir ../../../../../../features`. It must confirm every sync class
-   has a corresponding Stage 03 spec and mechanically follows the
-   `When<Trigger>Then<Target>[For<Scope>]` naming grammar.
+- Advance runs these checks for this stage; all must pass:
+  `verify_implementation_parity.py` (every sync class has a Stage 03 spec
+  and follows the `When<Trigger>Then<Target>[For<Scope>]` grammar),
+  `verify_sync_implementation_parity.py` (every Stage 03 sync has a
+  matching declarative implementation), `verify_sync_route_filters.py`
+  (R11 route filters on shared-trigger syncs), `verify_sync_declarative.py`
+  (R3: no imperative coordinator/orchestrator), and
+  `verify_action_log_isolation.py`.
 
 ### Cucumber-green gate
 

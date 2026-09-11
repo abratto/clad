@@ -73,7 +73,7 @@
 | Conditional | — |
 | Excluded | concept spec, sync spec, implementation material |
 | Outputs | `<scenario>-chain.md` (one per scenario) |
-| Verify | `verify_file_manifest.py` + present_gate.py |
+| Verify | `verify_chain_grammar.py`; `verify_file_manifest.py` + present_gate.py |
 | Gate | **G1 (Requirements)** |
 | Profile | profile-agnostic |
 
@@ -85,7 +85,7 @@
 | Conditional | — |
 | Excluded | sync spec, data-model, implementation material |
 | Outputs | `<Name>.concept.md` (one per business concept) |
-| Verify | `verify_action_chain.py`; `verify_file_manifest.py` |
+| Verify | `verify_concept_state_relational.py`; `verify_file_manifest.py` |
 | Gate | auto → 03b |
 | Profile | profile-agnostic |
 
@@ -97,7 +97,7 @@
 | Conditional | — |
 | Excluded | data-model, SPEC, implementation material (do not pre-author `04e` lowering) |
 | Outputs | `<name>.sync.md` (one per rule); optional `<scenario>-sync-summary.md` |
-| Verify | `verify_sync_matrix.py`; `verify_scenario_coverage.py`; `verify_file_manifest.py` |
+| Verify | `verify_sync_matrix.py`; `verify_scenario_coverage.py`; `verify_sync_cycle_graph.py`; `verify_sync_overlap.py`; `verify_file_manifest.py` |
 | Gate | auto → 03b |
 | Profile | profile-agnostic |
 
@@ -109,7 +109,7 @@
 | Conditional | — |
 | Excluded | data-model, implementation material |
 | Outputs | `<concept>-card.md` (one per concept); `pattern-d-summary.md`; `concept-matrix.md` |
-| Verify | `verify_file_manifest.py`; `verify_sync_route_filters.py` |
+| Verify | `verify_file_manifest.py`; route-filter audit (design, per card; mechanised at 04e-green) |
 | Gate | auto → 03b |
 | Profile | profile-agnostic |
 
@@ -133,7 +133,7 @@
 | Conditional | profile reference docs (e.g. `reference-impl/<profile>/README.md`) — only when a persistent profile is selected |
 | Excluded | SPEC/flow test/concept-sync implementation material |
 | Outputs | `<Name>.storage.md` per concept **or** `_NOT_APPLICABLE.md` (in-memory profile) |
-| Verify | `verify_file_manifest.py` |
+| Verify | `verify_relational_mapping.py`; `verify_file_manifest.py` |
 | Gate | auto → 04c |
 | Profile | default = in-memory `FactStore` (`java-legible`); durable R-map Postgres via `java-micronaut-postgres`; legacy Jena conditional |
 
@@ -145,7 +145,7 @@
 | Conditional | `00_actor-goal/output/port-spec.md` (external adapter contract) |
 | Excluded | flow test/implementation material |
 | Outputs | `<Name>.spec.md` per concept |
-| Verify | `verify_spec_parity.py`; `verify_file_manifest.py`; `verify_port_spec_contract.py` |
+| Verify | `verify_spec_parity.py`; `verify_outcome_alignment.py`; `verify_action_chain.py`; `verify_file_manifest.py`; `verify_port_spec_contract.py` |
 | Gate | auto → 04c |
 | Profile | profile-agnostic |
 
@@ -157,8 +157,8 @@
 | Conditional | `00_actor-goal/output/port-spec.md` (`@contract` scenarios) |
 | Excluded | concept/sync green implementation (red phase: tests only) |
 | Outputs | `<feature-name>.feature`; step-definition skeleton; Cucumber runner |
-| Verify | `verify_feature_file_presence.py`; `verify_file_manifest.py`; `verify_gherkin_derivation.py`; `verify_step_definition_parity.py`; `verify_step_definition_derivation.py`; `verify_port_spec_contract.py` |
-| Gate | **G3 (Executable)** |
+| Verify | `verify_profile_paths.py`; `verify_feature_file_presence.py`; `verify_file_manifest.py`; `verify_gherkin_derivation.py`; `verify_step_definition_parity.py`; `verify_step_definition_derivation.py`; `verify_port_spec_contract.py` |
+| Gate | **G3 (Executable spec)** |
 | Profile | profile-specific test setup, chosen profile's build-and-test; impl/test paths bind per feature `_config/<key>.md` override, checked by `verify_profile_paths` |
 
 ## Stage 04d-red — concept test derivation
@@ -169,7 +169,7 @@
 | Conditional | profile conventions (`reference-impl/java-legible/` default; `java-micronaut-jena/` legacy only) |
 | Excluded | green implementation code (tests only) |
 | Outputs | `concept-test-derivation.md` + test files |
-| Verify | `verify_file_manifest.py`; `verify_concept_test_derivation.py`; `verify_concept_field_assertions.py`; `verify_test_naming.py` |
+| Verify | `verify_profile_paths.py`; `verify_file_manifest.py`; `verify_concept_test_derivation.py`; `verify_concept_field_assertions.py`; `verify_test_naming.py` |
 | Gate | auto → 04d-green |
 | Profile | default `java-legible`; legacy Jena conditional; impl/test paths bind per feature `_config/<key>.md` override, checked by `verify_profile_paths` |
 
@@ -181,7 +181,7 @@
 | Conditional | profile conventions (`java-legible` default; `java-micronaut-jena` legacy only) |
 | Excluded | sync implementation (belongs in 04e) |
 | Outputs | `<Name>Concept.java` + green tests (side effects) |
-| Verify | green tests; field-value assertions; iterative-change coupling |
+| Verify | green tests; `verify_concept_field_assertions.py`; `verify_profile_paths.py`; iterative-change coupling |
 | Gate | auto → 04e-red |
 | Profile | default `java-legible`; legacy Jena conditional; impl/test paths bind per feature `_config/<key>.md` override, checked by `verify_profile_paths` |
 
@@ -193,7 +193,7 @@
 | Conditional | profile conventions (`java-legible` default; `java-micronaut-jena` legacy only) |
 | Excluded | green sync implementation (tests only) |
 | Outputs | `sync-test-derivation.md` + test files |
-| Verify | `verify_file_manifest.py`; `verify_test_naming.py` |
+| Verify | `verify_profile_paths.py`; `verify_file_manifest.py`; `verify_test_naming.py` |
 | Gate | auto → 04e-green |
 | Profile | default `java-legible`; legacy Jena conditional; impl/test paths bind per feature `_config/<key>.md` override, checked by `verify_profile_paths` |
 
@@ -205,7 +205,7 @@
 | Conditional | profile lowering contract (`SYNC_LOWERING.md` — Java/Jena/Micronaut legacy only); `java-legible` default |
 | Excluded | new syncs, coordinator classes (declarative only) |
 | Outputs | `green-evidence.md`; `<SyncName>.java` + green tests |
-| Verify | `verify_cucumber_green.py`; `verify_implementation_parity.py`; `verify_sync_implementation_parity.py` |
+| Verify | `verify_cucumber_green.py`; `verify_implementation_parity.py`; `verify_sync_implementation_parity.py`; `verify_sync_route_filters.py`; `verify_sync_declarative.py`; `verify_action_log_isolation.py` |
 | Gate | auto → 05 |
 | Profile | default `java-legible`; legacy Jena conditional; impl/test paths bind per feature `_config/<key>.md` override, checked by `verify_profile_paths` |
 
@@ -217,7 +217,7 @@
 | Conditional | `reference-impl/<profile>/README.md` (selected profile's runtime debug surface) |
 | Excluded | any downstream material (this is the final stage) |
 | Outputs | `trace.md`; `findings.md`; `smoke.md`; `tracking.md` |
-| Verify | back-trace every token to a scenario; smoke run; Gherkin coverage |
+| Verify | `verify_close_evidence.py` (advisory: canonical `trace.md`, enabled adapter integration test); back-trace every token to a scenario; smoke run; Gherkin coverage |
 | Gate | auto (close) |
 | Profile | selected profile's runtime debug surface (default `java-legible`; legacy Jena conditional) |
 

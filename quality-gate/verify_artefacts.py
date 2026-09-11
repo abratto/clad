@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 
 import clad_stages as cs
-from verify_stage_sequence import active_reentry_change
+from verify_stage_sequence import active_reentry_change, stage_has_evidence
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
@@ -70,7 +70,7 @@ def _current_stage(feature_root):
         return current
     last = None
     for stage in cs.STAGES:
-        if cs.dir_is_populated(stage.output_dir(feature_root)):
+        if stage_has_evidence(feature_root, stage.id):
             last = stage
     return last
 

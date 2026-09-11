@@ -58,7 +58,12 @@ import subprocess
 import sys
 
 import clad_stages as cs
-from verify_stage_sequence import compute_output_hash, gate_approval_current, gate_status
+from verify_stage_sequence import (
+    compute_output_hash,
+    gate_approval_current,
+    gate_status,
+    stage_has_evidence,
+)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BAR = "=" * 64
@@ -134,7 +139,9 @@ def determine_stage(feature_root: str, explicit: str | None):
         return stage
     last = -1
     for i, stage in enumerate(cs.STAGES):
-        if cs.dir_is_populated(stage.output_dir(feature_root)):
+        # stage_has_evidence() accepts documented legacy Stage 04 parent
+        # evidence, not just a populated child output dir.
+        if stage_has_evidence(feature_root, stage.id):
             last = i
     if last < 0:
         print(BAR)
@@ -204,6 +211,14 @@ def git_diff_changed(feature_root: str, change_path: str) -> str:
 def run_checks(feature_root: str, stage: cs.Stage) -> list[dict]:
     results = []
     for check in stage.checks:
+        if check.skip_in_artefact_gate:
+            results.append({
+                "name": check.name, "script": check.script, "status": "skip",
+                "detail": "handled by the profile test command (test.command), "
+                          "not the design-time advance gate",
+                "exit": None,
+            })
+            continue
         missing = [p for p in check.requires(feature_root)
                    if not (os.path.exists(p) and (
                        os.path.isfile(p) and os.path.getsize(p) > 0
@@ -477,8 +492,9 @@ def main() -> None:
             print(AGENT_INSTRUCTION)
             print("  Present the diff and impact matrix to the human for review.")
             print("  When the human says 'approved', run:")
-            print(f"    python3 quality-gate/approve_gate.py "
-                  f"--feature {args.feature} --iterative {change_name}")
+            print(f"    ./clad approve-iter {change_name}")
+            print(f"    # (or: python3 quality-gate/approve_gate.py "
+                  f"--feature {args.feature} --iterative {change_name})")
             print("  then commit all changed files + _changes/ artefact together.")
             print(BAR)
             sys.exit(10)
@@ -567,9 +583,11 @@ def main() -> None:
                 print(AGENT_INSTRUCTION)
                 print("  Present the artefact summary above to the human and WAIT.")
                 print("  Do NOT advance. When the human explicitly says 'approved', run:")
-                print(f"    python3 quality-gate/approve_gate.py --feature {args.feature} --gate {gate}")
+                print(f"    ./clad approve {gate}")
+                print(f"    # (or: python3 quality-gate/approve_gate.py --feature {args.feature} --gate {gate})")
                 print("  then re-run:")
-                print(f"    python3 quality-gate/advance.py --feature {args.feature}")
+                print("    ./clad advance")
+                print(f"    # (or: python3 quality-gate/advance.py --feature {args.feature})")
                 print(BAR)
                 sys.exit(10)
         else:
@@ -606,7 +624,8 @@ def main() -> None:
     print("  Load the CONTEXT.md above, load only the files its Inputs table")
     print("  names, and produce its Outputs. Do NOT open any other stage.")
     print("  When finished, run:")
-    print(f"    python3 quality-gate/advance.py --feature {args.feature}")
+    print("    ./clad advance")
+    print(f"    # (or: python3 quality-gate/advance.py --feature {args.feature})")
     print(BAR)
     sys.exit(0)
 

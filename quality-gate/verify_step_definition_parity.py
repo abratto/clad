@@ -208,8 +208,11 @@ def main():
         sys.exit(1)
 
     if not os.path.isdir(args.glue_dir):
-        print(f"FAIL  glue directory not found: {args.glue_dir}")
-        sys.exit(1)
+        # Gherkin-track-only check: a profile whose outer loop is a direct
+        # (non-Cucumber) flow test has no step-definition glue. Skip, do not
+        # fail (matches advance.py's _cucumber_glue_present gating).
+        print(f"SKIP  no Cucumber glue directory: {args.glue_dir}")
+        sys.exit(0)
 
     # Collect all steps from all .feature files
     all_steps = []  # (filename, type, text)

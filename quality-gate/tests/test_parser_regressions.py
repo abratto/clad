@@ -36,6 +36,28 @@ public class {name} extends SyncAgent {{
 '''
 
 
+class ParserUnitFixtures(unittest.TestCase):
+    def test_parse_goals_keeps_only_in_scope(self):
+        sys.path.insert(0, str(REPO_ROOT / "quality-gate"))
+        import artifact_parsers as ap
+        with tempfile.TemporaryDirectory() as temporary:
+            goals = Path(temporary) / "goals.md"
+            write(goals,
+                  "# Goals\n\n"
+                  "| Actor | Goal | Rationale | Priority | In scope? |\n"
+                  "|---|---|---|---|---|\n"
+                  "| `Op` | `CheckHealth` | to check | P0 | yes |\n"
+                  "| `Op` | `SilenceAlert` | to silence | P2 | no |\n")
+            self.assertEqual(ap.parse_goals(str(goals)), {"CheckHealth"})
+
+    def test_slugify_splits_camel_case(self):
+        sys.path.insert(0, str(REPO_ROOT / "quality-gate"))
+        import artifact_parsers as ap
+        self.assertEqual(ap.slugify("CheckLiveness"), "check-liveness")
+        self.assertEqual(ap.slugify("HTTPRequest"), "http-request")
+        self.assertEqual(ap.slugify("successful-login"), "successful-login")
+
+
 class ImplementationParityFixtures(unittest.TestCase):
 
     def test_compact_matrix_contracts_lower_to_matching_sync_classes(self):

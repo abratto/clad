@@ -39,7 +39,7 @@
 
 | Concept | Owned state (one line) | Owned actions | Notes |
 |---|---|---|---|
-| `Web` | route table | `handle`, `respond` | Bootstrap concept — see `methodology/architecture/WEB_CONCEPT.md`. Replace with `Grpc`, `Stream`, `Cli`, etc. if this feature's transport is not HTTP. |
+| `Web` | route table | `request`, `respond` | Bootstrap concept — see `methodology/architecture/WEB_CONCEPT.md`. Replace with `Grpc`, `Stream`, `Cli`, etc. if this feature's transport is not HTTP. |
 | `<Name>` | `<field>: <Type>`, `<field>: <Type>` | `<actionName>`, `<actionName>` | <e.g. "no persistence in v1"> |
 | `<Name>` | … | … | |
 

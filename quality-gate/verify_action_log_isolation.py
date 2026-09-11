@@ -66,6 +66,17 @@ _ENGINE_BYPASS_PATTERNS = re.compile(
 )
 
 
+# Canonical fire-after-commit engine: direct FactStore/Region access outside
+# the engine and concept classes is the isolation violation (the ActionLog/SPARQL
+# patterns above target the legacy profile).
+_CANONICAL_STORE_ACCESS = re.compile(
+    r'\b(?:factStore|FactStore|store)\s*\.\s*'
+    r'(?:region|getRegion|write|read|query|all|delete|put)\s*\('
+)
+_CANONICAL_ALLOWED = re.compile(
+    r'(?:Concept|App|Syncs)\.java$'
+)
+
 # Pattern that waives a file from ActionLog isolation checks.
 # Add this comment to a file that legitimately needs direct ActionLog access
 # (e.g. debug endpoints, introspection controllers, testing utilities):
@@ -223,8 +234,40 @@ def main():
             break
 
     if not infra_dir:
-        print(f"INFO  no infrastructure/ directory found under {app_root} "
-              f"— nothing to check")
+        # No legacy infrastructure/ layer. If this looks like the canonical
+        # fire-after-commit engine, check that only concepts/engine/app wire
+        # the FactStore; otherwise say plainly that nothing was evaluated.
+        canonical = [p for p in Path(app_root).rglob("*.java")
+                     if "engine" not in p.parts]
+        has_factstore = any("FactStore" in p.read_text(errors="ignore")
+                            for p in canonical)
+        if not has_factstore:
+            print(f"WARN  ActionLog/region isolation not evaluated for "
+                  f"{app_root} — no legacy infrastructure/ and no canonical "
+                  f"FactStore wiring found. Review R4 manually.")
+            sys.exit(0)
+        violations = []
+        checked = 0
+        for p in canonical:
+            if str(p).endswith((".Concept.java", "Concept.java")):
+                continue
+            if _CANONICAL_ALLOWED.search(str(p)):
+                continue
+            if "engine" in p.parts:
+                continue
+            text = strip_comments_and_strings(p.read_text(errors="ignore"))
+            checked += 1
+            for m in _CANONICAL_STORE_ACCESS.finditer(text):
+                violations.append((str(p.relative_to(app_root)),
+                                   text[:m.start()].count("\n") + 1, m.group(0)))
+        if violations:
+            print(f"FAIL  {len(violations)} direct FactStore/Region access "
+                  f"violation(s) outside engine/concepts (R4):")
+            for rel, lineno, call in violations:
+                print(f"    {rel}:{lineno}: {call}...")
+            sys.exit(1)
+        print(f"PASS  canonical store isolation: {checked} non-engine file(s) "
+              f"avoid direct FactStore/Region access")
         sys.exit(0)
 
     all_defects = []

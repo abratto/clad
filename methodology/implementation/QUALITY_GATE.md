@@ -57,14 +57,22 @@ not relax the *intent*.
    - **Semantic (human):** Verify every scenario's main flow starts
      with an action by an actor, no domain entity is named as an
      actor, and every scenario has an explicit trigger statement.
-8. **Stage 02 outcome alignment and chain-table checks.**
-   When a diff touches `features/UC-*/stages/02_concepts/` or
+8. **Stage 02 concept-state shape; Stage 04b outcome alignment and
+   chain-table checks.** When a diff touches
+   `features/UC-*/stages/02_concepts/` or
    `features/UC-*/stages/01b_chain-table/`:
-   - **Automated:** Run `quality-gate/verify_outcome_alignment.py`
-     to check every chain-table outcome matches a SPEC outcome enum.
-   - **Automated:** Run `quality-gate/verify_action_chain.py`
-     to check action names flow consistently from responsibility map
-     through chain tables, concept specs, syncs, cards, and SPECs.
+   - **Automated (Stage 02):** Run
+     `quality-gate/verify_concept_state_relational.py` to check each
+     concept's `## State` is a relation over a set of individuals, not a
+     single instance's field list.
+   - **Automated (Stage 04b):** Run
+     `quality-gate/verify_outcome_alignment.py` to check every
+     chain-table outcome matches a SPEC outcome enum. This runs at 04b
+     because the SPECs it compares against do not exist before then.
+   - **Automated (Stage 04b):** Run
+     `quality-gate/verify_action_chain.py` to check action names flow
+     consistently from responsibility map through chain tables, concept
+     specs, syncs, cards, and SPECs.
    - **Automated:** Run `quality-gate/verify_file_manifest.py`
      for each stage's `output/` directory.
    - **Semantic (human):** Verify no bootstrap concept file
@@ -208,22 +216,27 @@ consistency checks across the CLAD artefact chain:
 | `verify_file_manifest.py` | Any | `output/` contains exactly the expected files |
 | `verify_profile_paths.py` | 04c–04e | Profile-path integrity: configured `test.source.root`/impl dirs resolve inside the feature's declared `package-and-layout.md` roots (blocks); warns on seed `reference-impl/` pointers when the layout declares elsewhere |
 | `verify_scenario_coverage.py` | 01, 01b, 03 | Goal → scenario → chain → sync coverage |
-| `verify_outcome_alignment.py` | 02 | Chain-table outcomes match SPEC enums |
-| `verify_action_chain.py` | 02–04b | Action names consistent across all artefacts |
+| `verify_concept_state_relational.py` | 02 | Concept `## State` is a relation over a set of individuals, not one instance's field list |
+| `verify_outcome_alignment.py` | 04b | Chain-table outcomes match SPEC enums |
+| `verify_action_chain.py` | 04b | Action names consistent across responsibility map, chain tables, concept specs, syncs, cards, and SPECs |
 | `verify_sync_matrix.py` | 03 | Every sync has a complete Sync Contract Matrix |
 | `verify_sync_cycle_graph.py` | 03 | Detects design-time cross-concept sync cycles (A→B→A). Excludes Web (bootstrap) and self-references (A→A). Accepts `--advisory` flag for refactoring analysis on existing projects |
 | `verify_sync_overlap.py` | 03 | Detects sync pairs sharing 2+ concepts. Lock-order aware: conflicting order = deadlock risk (blocking), same order = safe (advisory). Accepts `--advisory` flag to downgrade all findings to warnings |
 | `verify_concept_matrix.py` | 03 | Builds FR×DP matrix from use-case scenarios × concepts. Flags God Objects (>75% scenario coverage), duplication (identical patterns), and entanglement (shared scenarios). Always advisory (exit 0) — patterns need human judgment |
-| `verify_sync_route_filters.py` | 03, 03a | Shared-trigger syncs carry route filters |
+| `verify_sync_route_filters.py` | 04e-green | Legacy `SyncTrigger` shared-trigger syncs must carry route filters (R11, blocking); `SyncRule.of` profiles get a WARN on genuinely ambiguous shared triggers. |
+| `verify_sync_declarative.py` | 04e-green | Sync implementations are declarative (R3); no coordinators/orchestrators, no imperative branching |
+| `verify_action_log_isolation.py` | 04e-green | The action log is transient execution state, isolated from durable concept regions |
 | `verify_data_model.py` | 03b | CSDP structure, storage-leakage prevention |
+| `verify_relational_mapping.py` | 04a | Relational storage mappings honour Rmap and R2 (no cross-concept foreign key); skips for non-relational profiles |
 | `verify_spec_parity.py` | 04b | Action name parity between concept specs and SPECs |
 | `verify_port_spec_contract.py` | 04b, 04c | When `port-spec.md` exists, directional entries are complete; inbound entries have response shapes and `@contract` scenarios |
 | `verify_iterative_change_readiness.py` | 04+ | Iterative concept/sync spec or implementation changes have a structured `_changes/` classification and artefact-impact matrix |
 | `verify_iterative_change_coupling.py` | 04+ | Concept/sync implementation changes are committed with their matching Stage 02/03 artefacts |
 | `verify_maintenance_change_readiness.py` | Maintenance | Engine/profile/deployment changes have an active maintenance record and cleared design/evidence gates |
 | `verify_implementation_parity.py` | 04+ | Implementation concept/sync classes have corresponding stage artefact specs; sync names lower mechanically from Stage 03 rules |
-| `verify_sync_implementation_parity.py` | 04e | Stage 03 sync contracts have corresponding Java `SyncAgent` implementations |
+| `verify_sync_implementation_parity.py` | 04e | Stage 03 sync contracts have a matching implementation (legacy `SyncAgent` class or `SyncRule.of` rule); with `--strict-trigger`, trigger and primary `then` target must match |
 | `verify_feature_file_presence.py` | 04c | Pre-flight: `.feature` file exists in output + Cucumber discovery path |
+| `verify_close_evidence.py` | 05 | Advisory: canonical `trace.md` present (warns on legacy name); enabled adapter integration test exists when an adapter surface is declared |
 | `verify_gherkin_derivation.py` | 04c | `.feature` file derivation per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1 |
 | `verify_concept_test_derivation.py` | 04d | Every SPEC outcome has a matching concept test row and Java method |
 | `verify_concept_field_assertions.py` | 04d | Java concept tests assert required completion fields from SPEC flow-token shapes |

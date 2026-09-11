@@ -151,8 +151,10 @@ def main():
         sys.exit(1)
 
     if not os.path.isdir(args.glue_dir):
-        print(f"FAIL  glue directory not found: {args.glue_dir}")
-        sys.exit(1)
+        # Gherkin-track-only check: no Cucumber glue means no step definitions
+        # to derive; skip rather than fail (matches advance.py's gating).
+        print(f"SKIP  no Cucumber glue directory: {args.glue_dir}")
+        sys.exit(0)
 
     chain_actions = extract_action_names(args.chain_dir)
     if not chain_actions:

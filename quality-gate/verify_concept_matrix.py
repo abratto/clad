@@ -50,14 +50,30 @@ def extract_scenarios(usecase_path):
 
 
 def extract_concepts(resp_map_path):
-    """Extract concept names from the responsibility map (backtick format)."""
-    with open(resp_map_path) as fh:
-        text = fh.read()
+    """Concept names from the responsibility map's `## Concepts` table.
+
+    Reads only the first column of the Concepts table so incidental
+    backticked cells (owned actions, state) are never mistaken for concepts.
+    The `Web` bootstrap concept is excluded from the FR×DP matrix by design
+    (it appears in every scenario and would read as a God Object).
+    """
     concepts = []
-    for m in _CONCEPT_RE.finditer(text):
-        name = m.group(1)
-        if name not in ('Concept', '---', '', 'Web'):
-            concepts.append(name)
+    in_table = False
+    with open(resp_map_path) as fh:
+        for line in fh:
+            stripped = line.strip()
+            if stripped.startswith("| Concept |"):
+                in_table = True
+                continue
+            if in_table:
+                if not stripped.startswith("|"):
+                    break
+                if re.match(r"^\|[\s\-:|]+\|", stripped):
+                    continue
+                first = stripped.strip("|").split("|", 1)[0].strip()
+                first = first.strip("`").strip()
+                if first and first != "Concept" and first != "Web":
+                    concepts.append(first)
     return concepts
 
 

@@ -54,7 +54,7 @@ that the deployable thing actually runs (Part 2, smoke). Without it,
 
 For each named scenario in the use case:
 
-1. Find the root flow token (the `Web.handle` matching the
+1. Find the root flow token (the `Web.request` matching the
    scenario's trigger).
 2. Walk the parent-linked tree of children.
 3. Check that the chain matches the syncs in `03_syncs/output/`.
@@ -125,6 +125,21 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
 
 ## Verify
 
+Automated close-evidence self-audit (advisory — warnings, never blocks):
+
+```
+python3 ../../../../quality-gate/verify_close_evidence.py \
+  --feature-root ../.. \
+  --test-source-root <APP_TEST_SOURCE_ROOT>
+```
+
+- Confirms `trace.md` (the canonical name) is present and warns on the legacy
+  `verification-trace.md`.
+- Warns when an adapter surface is declared but no enabled flow/integration
+  test exists. This makes the "required, not optional" integration test
+  visible to `advance`/`./clad verify`; it is advisory because there is no
+  reliable profile-agnostic definition of that test.
+
 - Every scenario has an entry in `trace.md`.
 - `findings.md`, if present, names the owning stage for each finding.
 - `trace.md` is backed by captured runtime evidence from the profile's
@@ -144,7 +159,8 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
   + state round-tripping). Derived alongside the 04c flow tests. Required,
   not optional. Distinct from Gherkin flow tests (action token chain).
   A *failing* integration test blocks the build (`mvn test`); a *missing*
-  one is caught only by this human checklist — no script enforces existence.
+  one is surfaced as a warning by `verify_close_evidence.py` (above) and
+  confirmed by this human checklist.
 - **Cross-stage check (back):** every flow token observed at runtime
   back-traces to a use-case scenario.
 

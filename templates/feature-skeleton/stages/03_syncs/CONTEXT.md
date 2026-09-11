@@ -125,9 +125,13 @@ Run the following before requesting the human gate:
 python3 ../../../../quality-gate/verify_sync_matrix.py \
   --sync-dir output --chain-dir ../01b_chain-table/output
 python3 ../../../../quality-gate/verify_scenario_coverage.py \
-  --goals ../00_actor-goal/output/goals.md \
+  --goals ../../../_system/stages/00_actor-goal/output/goals.md \
   --usecase ../01_usecase/output/usecase.md \
   --chain-dir ../01b_chain-table/output \
+  --sync-dir output
+python3 ../../../../quality-gate/verify_sync_cycle_graph.py \
+  --sync-dir output
+python3 ../../../../quality-gate/verify_sync_overlap.py \
   --sync-dir output
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<name>.sync.md,…"  # one per coordination rule
@@ -137,6 +141,10 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   with valid row IDs, `when`/`then` signatures, and allowed literals.
 - **verify_scenario_coverage.py:** every use-case scenario is cited by at
   least one sync.
+- **verify_sync_cycle_graph.py:** no cross-concept sync cycle (A→B→A).
+  `Web` (bootstrap) and self-references are excluded.
+- **verify_sync_overlap.py:** no two syncs share 2+ concepts with
+  conflicting lock order (deadlock risk). Same-order overlaps warn.
 - **verify_file_manifest.py:** `output/` matches the expected sync list.
 
 ### Semantic checks (human)

@@ -52,8 +52,10 @@ no sync implementation belongs here.
 2. Write the sync test file(s) only under `APP_TEST_SOURCE_ROOT`.
    Do not write or modify sync implementation code in this stage.
 3. Run the canonical command from `../../../../_config/build-and-test.md`
-   and confirm the result is true red: test compilation succeeds and the
-   sync tests fail for behavioral reasons.
+   and confirm the result is true red. Greenfield (the sync wiring type does
+   not exist yet): a compile failure naming exactly that missing type is
+   acceptable red evidence. Once it exists: tests compile and fail for
+   behavioral reasons. `@Disabled`/skipped tests are never red.
 4. Record the derivation map and the red-to-green handoff bundle in
    `output/sync-test-derivation.md`: approved test files, exact
    package/class/method names, red evidence command, expected red
@@ -73,9 +75,11 @@ no sync implementation belongs here.
 Run the following before requesting the human gate:
 
 ```
-python3 ../../../../quality-gate/verify_file_manifest.py \
+python3 ../../../../../../quality-gate/verify_profile_paths.py \
+  --feature ../../../../
+python3 ../../../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "sync-test-derivation.md"
-python3 ../../../../quality-gate/verify_test_naming.py \
+python3 ../../../../../../quality-gate/verify_test_naming.py \
   --test-source-root <APP_TEST_SOURCE_ROOT> \
   --scope syncs
 ```
@@ -96,8 +100,10 @@ python3 ../../../../quality-gate/verify_test_naming.py \
   that the green implementation must satisfy.
 - Sync tests live under `APP_TEST_SOURCE_ROOT` and packages consistent
   with `APP_PACKAGE_ROOT`.
-- Executed red evidence shows successful test compilation and
-  behavioral test failure.
+- Executed red evidence shows either (greenfield) a compile failure naming
+  exactly the missing sync-wiring type, or (once it exists) successful test
+  compilation plus behavioral test failure. A skipped/disabled test is not
+  red.
 - No sync implementation was introduced or changed during this stage.
 - The handoff bundle names the approved test files, exact
   package/class/method names, the red evidence command, expected red

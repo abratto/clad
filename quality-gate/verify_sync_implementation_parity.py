@@ -12,11 +12,13 @@ Why this exists:
 Checks:
   1. Every *.sync.md under --sync-dir or --features-dir has a Sync Contract
      Matrix row with parseable when/then signatures.
-  2. A matching class named <SyncName> exists under --sync-impl-dir.
-  3. The class is annotated @Singleton and extends SyncAgent.
-  4. With --strict-trigger, the class exposes matching trigger evidence,
-      preferably through @SyncMetadata(triggeredBy = "Concept/action[OUTCOME]")
-      and otherwise through trigger()/whereClause() source text.
+  2. A matching implementation named <SyncName> exists under --sync-impl-dir,
+     either a legacy class or a `SyncRule.of("<SyncName>", ...)` declaration.
+  3. Legacy shape only: the class is annotated @Singleton and extends SyncAgent.
+  4. With --strict-trigger, the implementation's trigger concept/action/outcome
+     (and primary `then` target, when declared inline via `invoke(...)`) must
+     match the Stage 03 contract. Legacy classes supply this via
+     @SyncMetadata(triggeredBy = "Concept/action[OUTCOME]") or trigger() source.
 
 Usage:
   python3 quality-gate/verify_sync_implementation_parity.py \
@@ -52,6 +54,8 @@ OUTCOME_LITERAL_RE = re.compile(r":outcome\s+\"([^\"]+)\"")
 SYNC_RULE_TRIGGER_RE = re.compile(
     r'SyncRule\.of\(\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"([^"]*)"'
 )
+# `then` targets declared inline within a SyncRule.of(...) body.
+SYNC_RULE_INVOKE_RE = re.compile(r'invoke\(\s*"(\w+)"\s*,\s*"(\w+)"')
 
 
 def normalize_token(raw):
@@ -302,10 +306,12 @@ def parse_java_sync(path, text):
     return {
         "path": path,
         "class_name": class_name,
+        "shape": "sync_agent",
         "extends_sync_agent": class_match is not None,
         "singleton": "@Singleton" in text,
         "trigger": trigger,
         "fires": fires,
+        "then_targets": [],
     }
 
 
@@ -327,16 +333,21 @@ def collect_java_syncs(sync_impl_dir):
             if legacy is not None:
                 classes[stem] = legacy
             # New shape: SyncRule.of("Name", "concept", "action", "outcome", ...)
-            # (one file may declare many syncs).
-            for m in SYNC_RULE_TRIGGER_RE.finditer(text):
+            # (one file may declare many syncs). The body of each rule runs to
+            # the next declaration; inline `invoke(...)` targets are its `then`.
+            heads = list(SYNC_RULE_TRIGGER_RE.finditer(text))
+            for index, m in enumerate(heads):
                 name, concept, action, outcome = m.groups()
+                start = m.start()
+                end = heads[index + 1].start() if index + 1 < len(heads) else len(text)
+                then_targets = SYNC_RULE_INVOKE_RE.findall(text[start:end])
                 classes[name] = {
                     "path": path,
                     "class_name": name,
-                    "extends_sync_agent": True,
-                    "singleton": True,
+                    "shape": "sync_rule",
                     "trigger": (concept, action, outcome or None),
                     "fires": None,
+                    "then_targets": then_targets,
                 }
     return classes, []
 
@@ -352,7 +363,20 @@ def trigger_matches(spec, trigger):
     )
 
 
-def fires_matches(spec, fires):
+def fires_matches(spec, java_sync):
+    """True if the Java rule's `then` target(s) include the Stage 03 target.
+
+    Handles both shapes: inline `invoke(...)` targets for `SyncRule.of`, and
+    `@SyncMetadata(fires=...)` for legacy `SyncAgent` classes. Unverifiable
+    targets (e.g. a `respond(...)` helper with no inline invocation) pass, so
+    only positive evidence of a mismatch fails."""
+    targets = java_sync.get("then_targets") or []
+    if targets:
+        return any(
+            normalize_token(concept) == normalize_token(spec["then_concept"])
+            and normalize_token(action) == normalize_token(spec["then_action"])
+            for concept, action in targets)
+    fires = java_sync.get("fires")
     if not fires:
         return True
     concept, action, _ = fires
@@ -371,20 +395,25 @@ def format_trigger(trigger):
 
 def check_spec_implementation(spec, java_sync, strict_trigger):
     failures = []
-    if not java_sync["extends_sync_agent"]:
-        failures.append((java_sync["path"], "matching class does not extend SyncAgent"))
-    if not java_sync["singleton"]:
-        failures.append((java_sync["path"], "matching SyncAgent class is missing @Singleton"))
+    # The @Singleton/SyncAgent contract only applies to the legacy shape; a
+    # SyncRule.of declaration is a static rule, not a class.
+    if java_sync.get("shape") == "sync_agent":
+        if not java_sync["extends_sync_agent"]:
+            failures.append((java_sync["path"], "matching class does not extend SyncAgent"))
+        if not java_sync["singleton"]:
+            failures.append((java_sync["path"], "matching SyncAgent class is missing @Singleton"))
     if strict_trigger and not trigger_matches(spec, java_sync["trigger"]):
         expected = f"{spec['when_concept']}/{spec['when_action']}[{spec['when_outcome']}]"
         failures.append((
             java_sync["path"],
             f"trigger mismatch: expected {expected}, found {format_trigger(java_sync['trigger'])}",
         ))
-    if strict_trigger and not fires_matches(spec, java_sync["fires"]):
+    if strict_trigger and not fires_matches(spec, java_sync):
         expected = f"{spec['then_concept']}/{spec['then_action']}"
-        actual = "/".join(java_sync["fires"][:2]) if java_sync["fires"] else "<not declared>"
-        failures.append((java_sync["path"], f"fires metadata mismatch: expected {expected}, found {actual}"))
+        actual = (java_sync.get("then_targets")
+                  or ([java_sync["fires"][:2]] if java_sync.get("fires") else []))
+        actual_label = "/".join(actual[0]) if actual else "<not declared>"
+        failures.append((java_sync["path"], f"fires mismatch: expected {expected}, found {actual_label}"))
     return failures
 
 

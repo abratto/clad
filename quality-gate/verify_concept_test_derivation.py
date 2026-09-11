@@ -88,11 +88,16 @@ def parse_derivation(derivation_path):
     current_action = None
     current_test_class = None
     table_format = None  # 'a' or 'b'
+    format_a_has_nested = False
 
     with open(derivation_path) as f:
         lines = f.readlines()
 
     for line in lines:
+        # Format A header: | # | @Nested | Test method | Outcome | ...
+        #                or | # | Test method | Outcome | ...
+        if "Test method" in line and "Outcome" in line:
+            format_a_has_nested = "@Nested" in line
         # Detect Format A heading:
         # ### `Copy.checkAvailable` → test class: `CopyConceptTest`
         m_a = re.match(
@@ -132,8 +137,16 @@ def parse_derivation(derivation_path):
         cols = [c for c in cols if c]
 
         if table_format == 'a':
-            # | # | Test method | Outcome | Source | Preconditions | Arrange |
-            if len(cols) >= 4:
+            # Template: | # | @Nested | Test method | Outcome | Source | ...
+            # Legacy:   | # | Test method | Outcome | Source | Preconditions |
+            if format_a_has_nested:
+                if len(cols) >= 5:
+                    test_method = cols[2].strip("`").rstrip("()")
+                    outcome = cols[3].strip("`")
+                    derivations.append((current_test_class, test_method,
+                                        outcome, current_concept,
+                                        current_action))
+            elif len(cols) >= 4:
                 test_method = cols[1].strip("`").rstrip("()")
                 outcome = cols[2].strip("`")
                 derivations.append((current_test_class, test_method,

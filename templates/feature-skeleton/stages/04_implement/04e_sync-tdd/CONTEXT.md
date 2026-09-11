@@ -77,11 +77,14 @@ The child stages are executable auto-advance stages. Run them strictly in order:
 
 ## Gate
 
-Auto-advances through `04e-red`, `04e-green`, then Stage 05. Sync tests are mechanically derived
-from approved chain tables and sync specs. The `verify_sync_matrix.py`
-and `verify_scenario_coverage.py` scripts are the automated gates.
-No human approval is required at the 04e-red boundary. The flow tests
-from 04c must go green at the end of 04e-green.
+Auto-advances through `04e-red`, `04e-green`, then Stage 05. Sync tests are
+mechanically derived from approved chain tables and sync specs. The Stage 04e
+implementation-parity and declarative checks (`verify_implementation_parity.py`,
+`verify_sync_implementation_parity.py`, `verify_sync_declarative.py`,
+`verify_sync_route_filters.py`, `verify_action_log_isolation.py`,
+`verify_cucumber_green.py`) are the automated gate. No human approval is
+required at the 04e-red boundary. The flow tests from 04c must go green at
+the end of 04e-green.
 
 ## Next stage
 

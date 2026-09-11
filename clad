@@ -29,28 +29,55 @@ else
     QG="$SCRIPT_DIR/quality-gate"
 fi
 
+resume_mtime() {
+    stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || echo 0
+}
+
 active_feature() {
-    # Highest priority: features with uncommitted iterative changes
-    # (_changes/ dir exists AND has uncommitted modifications).
+    # Highest priority: features with uncommitted iterative change records.
+    # Ignore the `.gitkeep` placeholder and any non-markdown file, so merely
+    # creating a feature folder does not outrank real in-progress work.
     for d in "$FEATURES_DIR"/UC-*/; do
         [ -d "$d" ] || continue
-        if [ -d "$d/_changes" ] && [ -n "$(git -C "$PROJECT_ROOT" status --porcelain -- "$d/_changes" 2>/dev/null)" ]; then
+        [ -d "$d/_changes" ] || continue
+        if [ -n "$(git -C "$PROJECT_ROOT" status --porcelain -- "$d/_changes" 2>/dev/null \
+                   | grep -E '\.md$' | grep -v '\.gitkeep' || true)" ]; then
             basename "$d"
             return 0
         fi
     done
-    # Next: features with an active (non-complete, non-TBD) current stage.
+    # Next: the most recently modified feature that is actually in progress
+    # (RESUME names a concrete stage that is neither TBD nor complete).
+    local best="" best_m=0 d resume stage m
     for d in "$FEATURES_DIR"/UC-*/; do
         [ -d "$d" ] || continue
-        local resume="$d/RESUME.md"
+        resume="$d/RESUME.md"
         [ -f "$resume" ] || continue
-        local stage
-        stage=$(grep 'Current stage' "$resume" 2>/dev/null | head -1 | sed 's/.*`\(.*\)`.*/\1/')
-        if [ -n "$stage" ] && ! echo "$stage" | grep -q 'feature complete' && [ "$stage" != "TBD" ]; then
-            basename "$d"
-            return 0
+        stage=$(grep -m1 'Current stage' "$resume" 2>/dev/null | sed 's/.*`\(.*\)`.*/\1/')
+        [ -n "$stage" ] || continue
+        case "$stage" in
+            TBD|None*|*"feature complete"*) continue;;
+        esac
+        m=$(resume_mtime "$resume")
+        if [ "${m:-0}" -gt "${best_m:-0}" ]; then
+            best_m="$m"; best="$(basename "$d")"
         fi
     done
+    if [ -n "$best" ]; then echo "$best"; return 0; fi
+    # Then: the most recently modified feature that is not complete (covers a
+    # freshly created, not-yet-started feature whose Current stage is TBD).
+    local best2="" best2_m=0
+    for d in "$FEATURES_DIR"/UC-*/; do
+        [ -d "$d" ] || continue
+        resume="$d/RESUME.md"
+        [ -f "$resume" ] || continue
+        if grep -qi 'feature complete' "$resume" 2>/dev/null; then continue; fi
+        m=$(resume_mtime "$resume")
+        if [ "${m:-0}" -gt "${best2_m:-0}" ]; then
+            best2_m="$m"; best2="$(basename "$d")"
+        fi
+    done
+    if [ -n "$best2" ]; then echo "$best2"; return 0; fi
     # Fallback: first feature with a RESUME.md
     for d in "$FEATURES_DIR"/UC-*/; do
         [ -d "$d" ] || continue

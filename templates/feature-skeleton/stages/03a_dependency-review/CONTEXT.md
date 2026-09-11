@@ -26,6 +26,7 @@ If a card needs an action that doesn't exist yet, you are mid-violation
 |---|---|---|
 | `../03_syncs/output/` | 4 | Every `then` invocation and every `where` clause to be tabulated |
 | `../01b_chain-table/output/` | 4 | The flows the syncs implement |
+| `../01_usecase/output/usecase.md` | 4 | Scenario names for the concept coverage matrix |
 | `../01a_responsibility-map/output/responsibility-map.md` | 4 | The set of concepts to produce a card for |
 | `../02_concepts/output/` | 4 | Action and field names to cite |
 | Skill: `clad-dependency-review` | 3 | Dependency review reference (see skills/ directory) |
@@ -161,11 +162,16 @@ Run the following before requesting the human gate:
 
 ```
 python3 ../../../../quality-gate/verify_file_manifest.py \
-  --dir output --expected "<concept>-card.md,…"  # one per concept + pattern-d-summary.md
+  --dir output --expected "<concept>-card.md,…"  # one per concept + pattern-d-summary.md,concept-matrix.md
 ```
 
 - **verify_file_manifest.py:** `output/` contains exactly one card
-  per concept in the responsibility map plus `pattern-d-summary.md`.
+  per concept in the responsibility map plus `pattern-d-summary.md` and
+  `concept-matrix.md`.
+- Route-filter enforcement is a design audit here (every shared-trigger
+  sync records its filter status or justification in a card) **and** is
+  enforced mechanically on the implementation at Stage 04e-green by
+  `verify_sync_route_filters.py`. It is not run on markdown sync specs.
 
 ### Semantic checks (human)
 

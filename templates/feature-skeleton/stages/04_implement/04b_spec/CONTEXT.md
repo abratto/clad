@@ -84,6 +84,15 @@ Run the following before requesting the human gate:
 ```
 python3 ../../../../../quality-gate/verify_spec_parity.py \
   --concept-dir ../../02_concepts/output --spec-dir output
+python3 ../../../../../quality-gate/verify_outcome_alignment.py \
+  --chain-dir ../../01b_chain-table/output --spec-dir output
+python3 ../../../../../quality-gate/verify_action_chain.py \
+  --resp-map ../../01a_responsibility-map/output/responsibility-map.md \
+  --chain-dir ../../01b_chain-table/output \
+  --concept-dir ../../02_concepts/output \
+  --sync-dir ../../03_syncs/output \
+  --dep-dir ../../03a_dependency-review/output \
+  --spec-dir output
 python3 ../../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<Name>.spec.md,…"  # one per business concept
 python3 ../../../../../quality-gate/verify_port_spec_contract.py \
@@ -93,6 +102,13 @@ python3 ../../../../../quality-gate/verify_port_spec_contract.py \
 
 - **verify_spec_parity.py:** every action name in every concept spec
   has a matching entry in the corresponding SPEC file, and vice versa.
+- **verify_outcome_alignment.py:** every chain-table outcome token
+  appears in the corresponding SPEC's outcome enum. This is the first
+  stage where both sides exist, which is why it runs here rather than at
+  Stage 02.
+- **verify_action_chain.py:** every action flows consistently through
+  the responsibility map, chain tables, concept specs, syncs,
+  dependency cards, and SPECs.
 - **verify_file_manifest.py:** one `.spec.md` file per business concept.
 - **verify_port_spec_contract.py:** skips when no `port-spec.md` exists;
   otherwise checks the port spec is concrete and at least one SPEC file
@@ -115,7 +131,8 @@ python3 ../../../../../quality-gate/verify_port_spec_contract.py \
 
 ## Gate
 
-Auto-advances (next human gate: Stage 04c). The `verify_spec_parity.py` script must
+Auto-advances (next human gate: Stage 04c). The `verify_spec_parity.py`,
+`verify_outcome_alignment.py`, and `verify_action_chain.py` scripts must
 pass before advancing.
 
 ## Next stage

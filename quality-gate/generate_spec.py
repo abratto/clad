@@ -39,7 +39,8 @@ def collect_outcomes(feature_root: str) -> Dict[Tuple[str, str], Set[str]]:
         if not fname.endswith("-chain.md") or fname.endswith("-all-scenarios-chain.md"):
             continue
         for row in ap.parse_chain_table(os.path.join(chain_dir, fname)):
-            out.setdefault((row.then_concept, row.then_action), set()).add(row.outcome_base)
+            out.setdefault((row.then_concept, row.then_action), set()).update(
+                row.outcome_bases)
     return out
 
 

@@ -8,7 +8,7 @@
 
 ## Triggered by
 
-- `Web.handle <method> <route>` from scenario "<name>" in
+- `Web.request <method> <route>` from scenario "<name>" in
   `../01_usecase/output/usecase.md`
 
 ## Expected chain
@@ -18,7 +18,7 @@ token count prediction; it names the concept actions that must exist at
 runtime for this scenario to be considered correctly implemented.
 
 ```
-Web.handle(<route>)
+Web.request(<route>)
   └─ <Concept>.<action>(<args>)
        └─ <Concept>.<action>(<args>)
        └─ <Concept>.<action>(<args>)

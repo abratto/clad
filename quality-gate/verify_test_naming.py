@@ -39,20 +39,61 @@ ACTION_LINE_RE = re.compile(r'\*:\s+(\w+)\.(\w+)')
 CONCEPT_PACKAGE_RE = re.compile(r'concepts\.(\w+)')
 
 
+# Class names that look like `<X><Y>Test` but are not concept tests.
+_NON_CONCEPT_SECOND = {
+    'Flow', 'Integration', 'Smoke', 'Trace', 'Debug', 'Semantics',
+    'Concurrency', 'Base',
+}
+
+
+def _camel_parts(name):
+    return re.findall(r'[A-Z][a-z0-9]*', name)
+
+
+def _class_name_of(text):
+    match = CLASS_NAME_RE.search(text)
+    return match.group(1) if match else None
+
+
 def find_java_files(root, package_names):
-    """Walk source root for test Java files under the given packages."""
+    """Return `(path, scope_hint)` for test files to check.
+
+    Files under a `concepts/` or `syncs/` package directory are selected as
+    before (hint `None`, scope derived from the package). Files in a flat
+    profile package (e.g. `dev.legible.example.health`) are selected by class
+    shape instead: `When*Test` for the sync scope, and a 3+-segment
+    `<Concept><Action>Test` (excluding Flow/Integration/… tests) for the
+    concept scope. This keeps flow/integration tests out of the naming gate
+    while making the gate real for flat layouts."""
     files = []
     if not os.path.isdir(root):
         return files
-    for dirpath, dirnames, filenames in os.walk(root):
+    want_concepts = 'concepts' in package_names
+    want_syncs = 'syncs' in package_names
+    for dirpath, _dirnames, filenames in os.walk(root):
         for fname in filenames:
-            if fname.endswith('Test.java') and not fname.endswith('Base.java'):
-                full = os.path.join(dirpath, fname)
-                for pkg in package_names:
-                    marker = os.sep + pkg + os.sep
-                    if marker in full:
-                        files.append(full)
-                        break
+            if not fname.endswith('Test.java') or fname.endswith('Base.java'):
+                continue
+            full = os.path.join(dirpath, fname)
+            if any(os.sep + pkg + os.sep in full for pkg in package_names):
+                files.append((full, None))
+                continue
+            try:
+                with open(full, encoding='utf-8') as handle:
+                    text = handle.read()
+            except OSError:
+                continue
+            name = _class_name_of(text)
+            if not name:
+                continue
+            if want_syncs and name.startswith('When'):
+                files.append((full, 'sync'))
+                continue
+            parts = _camel_parts(name)
+            if (want_concepts and len(parts) >= 3 and parts[-1] == 'Test'
+                    and parts[-2] not in _NON_CONCEPT_SECOND
+                    and re.search(r'\bnew\s+\w+Concept\b', text)):
+                files.append((full, 'concept'))
     return sorted(files)
 
 
@@ -194,10 +235,14 @@ def main():
     file_count = 0
     method_count = 0
 
-    for f in files:
+    for f, scope_hint in files:
         info = scan_file(f)
         if info is None:
             continue
+        if scope_hint == 'sync':
+            info['is_sync'] = True
+        elif scope_hint == 'concept':
+            info['is_concept'] = True
         file_count += 1
         method_count += len(info['methods'])
         violations = check_conventions(f, info)
@@ -220,9 +265,15 @@ def main():
 
     if not all_pass:
         total = 0
-        for f in files:
+        for f, scope_hint in files:
             info = scan_file(f)
-            if info and check_conventions(f, info):
+            if not info:
+                continue
+            if scope_hint == 'sync':
+                info['is_sync'] = True
+            elif scope_hint == 'concept':
+                info['is_concept'] = True
+            if check_conventions(f, info):
                 total += len(check_conventions(f, info))
         print(f"\n{total} total violation(s). "
               "See above for details.")

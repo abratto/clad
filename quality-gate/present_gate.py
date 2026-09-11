@@ -14,36 +14,13 @@ import argparse
 import os
 import sys
 
-# Stage IDs grouped by gate
-GATE_STAGES = {
-    1: {
-        "label": "Requirements",
-        "stages": ["01", "01a", "01b"],
-        "description": "Use case, responsibility map, chain tables"
-    },
-    2: {
-        "label": "Architecture",
-        "stages": ["02", "03", "03a", "03b"],
-        "description": "Concept specs, syncs, dependency review, data model"
-    },
-    3: {
-        "label": "Executable specification",
-        "stages": ["04a", "04b", "04c"],
-        "description": "Storage mapping, SPEC, flow tests (.feature)"
-    },
-}
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import clad_stages as cs  # noqa: E402
 
-STAGE_NAMES = {
-    "01": "Use case",
-    "01a": "Responsibility map",
-    "01b": "Chain table",
-    "02": "Concept specs",
-    "03": "Syncs",
-    "03a": "Dependency review",
-    "03b": "Data model",
-    "04a": "Storage mapping",
-    "04b": "SPEC",
-    "04c": "Flow tests",
+GATE_DESCRIPTIONS = {
+    1: "Use case, responsibility map, chain tables",
+    2: "Concept specs, syncs, dependency review, data model",
+    3: "Storage mapping, SPEC, flow tests (.feature)",
 }
 
 
@@ -54,49 +31,27 @@ def main():
     args = parser.parse_args()
 
     feature_root = os.path.abspath(args.feature)
-    gate_info = GATE_STAGES[args.gate]
     feature_name = os.path.basename(feature_root)
+    label = cs.GATE_LABELS[args.gate]
+    stage_ids = cs.gate_stages(args.gate)
 
     print(f"=" * 60)
-    print(f"  GATE {args.gate} — {gate_info['label']}")
+    print(f"  GATE {args.gate} — {label}")
     print(f"  Feature: {feature_name}")
-    print(f"  {gate_info['description']}")
+    print(f"  {GATE_DESCRIPTIONS.get(args.gate, '')}")
     print(f"=" * 60)
     print()
 
     all_ok = True
-    for stage_id in gate_info["stages"]:
-        stage_name = STAGE_NAMES.get(stage_id, stage_id)
-        # Determine the output directory path
-        if stage_id in ("01", "01a", "01b", "02", "03", "03a", "03b"):
-            out_dir = os.path.join(feature_root, "stages", f"{stage_id}_{STAGE_NAMES.get(stage_id, stage_id).lower().replace(' ', '_')}", "output")
-        elif stage_id.startswith("04"):
-            sub = {"04a": "04a_storage-mapping", "04b": "04b_spec", "04c": "04c_flow-tests"}[stage_id]
-            out_dir = os.path.join(feature_root, "stages", "04_implement", sub, "output")
-        else:
-            out_dir = os.path.join(feature_root, "stages", f"{stage_id}_", "output")
+    for stage_id in stage_ids:
+        stage = cs.stage_by_id(stage_id)
+        stage_name = stage.label if stage else stage_id
+        out_dir = stage.output_dir(feature_root) if stage else ""
 
-        # Try to find the actual output directory
-        real_dirs = []
-        for root, dirs, files in os.walk(os.path.join(feature_root, "stages")):
-            if root.endswith("/output"):
-                real_dirs.append(root)
-
-        # Match by stage
-        matching = [d for d in real_dirs if f"_{stage_id}" in d or f"/{stage_id}_" in d or f"0{stage_id}" in d]
-
-        if not matching:
-            # Try broader match
-            for d in real_dirs:
-                path_parts = d.split("/")
-                for part in path_parts:
-                    if stage_id in part:
-                        matching.append(d)
-                        break
-
-        if matching:
-            out_dir = matching[0]
-            files = [f for f in os.listdir(out_dir) if f != ".gitkeep" and f != ".gitkeep.md" and not f.startswith(".")]
+        if out_dir and os.path.isdir(out_dir):
+            files = [f for f in os.listdir(out_dir)
+                     if f != ".gitkeep" and f != ".gitkeep.md"
+                     and not f.startswith(".")]
             if files:
                 print(f"  {stage_name}:")
                 for f in sorted(files):

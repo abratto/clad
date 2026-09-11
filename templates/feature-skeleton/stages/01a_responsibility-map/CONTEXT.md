@@ -20,7 +20,7 @@ signatures or coordination here. Names and one-line state only.
 | Path | Layer | Why |
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Scenarios to cover |
-| `../00_actor-goal/output/actors.md` | 4 | For cross-stage check |
+| `../../../_system/stages/00_actor-goal/output/actors.md` | 4 | For cross-stage check |
 | Skill: `clad-responsibility-mapping` | 3 | Responsibility map reference (see skills/ directory) |
 | `../../../../methodology/architecture/CONCEPTS.md` | 3 | What counts as a concept |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rule R1 |
@@ -86,7 +86,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   row, and every Derivation rubric row is either represented by a final
   concept or explicitly rejected in *Out of scope*.
 - **Cross-stage check (back):** every actor in
-  `../00_actor-goal/output/actors.md` whose goal is in-scope is
+  `../../../_system/stages/00_actor-goal/output/actors.md` whose goal is in-scope is
   represented by at least one concept (typically as the actor of that
   concept's first action).
 - **Coverage:** every scenario in `../01_usecase/output/usecase.md`
@@ -96,7 +96,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   extensions into the main success scenario row.
 - **Bootstrap concept check:** every transport boundary this feature
   crosses must have a bootstrap concept in the Concepts table. For
-  HTTP features this is `Web` (`handle`, `respond`). For other
+  HTTP features this is `Web` (`request`, `respond`). For other
   transports use the appropriate bootstrap concept (e.g. `Grpc`,
   `Stream`, `Cli` — see
   `../../../../methodology/architecture/WEB_CONCEPT.md` for the

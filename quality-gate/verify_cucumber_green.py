@@ -74,8 +74,33 @@ def find_repo_root(any_path):
         d = parent
 
 
-def find_surefire_reports(feature_root):
-    """Search for target/surefire-reports relative to feature_root."""
+def selected_modules(test_cmd):
+    """Module names named by a Maven `-pl/--projects a,b` flag, or None."""
+    if not test_cmd:
+        return None
+    import re as _re
+    m = _re.search(r"(?:-pl|--projects)[=\s]+([\w.,/:-]+)", test_cmd)
+    if not m:
+        return None
+    return {part.strip() for part in m.group(1).split(",") if part.strip()}
+
+
+def _has_cucumber_reports(surefire_dir):
+    if not surefire_dir or not os.path.isdir(surefire_dir):
+        return False
+    try:
+        return any("cucumber" in f.lower() and f.startswith("TEST-")
+                   for f in os.listdir(surefire_dir))
+    except OSError:
+        return False
+
+
+def find_surefire_reports(feature_root, only_modules=None):
+    """Search for target/surefire-reports relative to feature_root.
+
+    `only_modules`, when given, restricts the multi-module scan to the modules
+    named by the test command (`-pl`), so a stale report from a different
+    module is never mistaken for this profile's Cucumber evidence."""
     d = Path(feature_root).resolve()
     while True:
         candidate = d / "target" / "surefire-reports"
@@ -89,21 +114,13 @@ def find_surefire_reports(feature_root):
         # Multi-module reference-impl layout: reference-impl/<module>/target/surefire-reports
         ref = d / "reference-impl"
         if ref.is_dir():
-            for module_dir in sorted(ref.iterdir()):
+            modules = [m for m in sorted(ref.iterdir())
+                       if only_modules is None or m.name in only_modules]
+            for module_dir in modules:
                 c3 = module_dir / "target" / "surefire-reports"
-                if not c3.is_dir():
-                    continue
-                # Prefer the module that actually ran Cucumber scenarios.
-                try:
-                    has_cucumber = any(
-                        f.startswith("TEST-") and "cucumber" in f.lower()
-                        for f in os.listdir(c3))
-                except OSError:
-                    has_cucumber = False
-                if has_cucumber:
+                if c3.is_dir() and _has_cucumber_reports(str(c3)):
                     return str(c3)
-            # Fall back to the first module with any surefire reports.
-            for module_dir in sorted(ref.iterdir()):
+            for module_dir in modules:
                 c3 = module_dir / "target" / "surefire-reports"
                 if c3.is_dir():
                     return str(c3)
@@ -225,8 +242,18 @@ def main():
               f"Set test.command in clad.properties or pass --test-command.")
         sys.exit(1)
 
-    # Resolve surefire dir
-    surefire_dir = args.surefire_dir or find_surefire_reports(feature_root)
+    # Resolve surefire dir, scoped to the module(s) the test command targets
+    modules = selected_modules(test_cmd)
+    surefire_dir = args.surefire_dir or find_surefire_reports(feature_root, modules)
+    cucumber_json = find_cucumber_json(feature_root)
+
+    # Not a Cucumber track: no Cucumber report artifacts in the selected scope.
+    # Skip (exit 0) rather than demand scenarios the profile does not run.
+    if (not args.surefire_dir and not cucumber_json
+            and not _has_cucumber_reports(surefire_dir)):
+        print("SKIP  no Cucumber scenarios/results in the selected profile — "
+              "this is not a Cucumber track.")
+        sys.exit(0)
 
     # Run tests from repo root so relative paths in test.command resolve correctly
     print(f"INFO  Running: {test_cmd}")

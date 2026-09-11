@@ -52,11 +52,12 @@ repo — the branch must exist before the first `git add` of feature
 artefacts. Do not commit artefacts directly to `main`.
 
 **Commit cadence:** one commit per gate approval on the branch. After the
-human approves a stage's output, commit all that stage's output files in
-a single commit using the message convention:
+human approves a gate (a block of stages), commit all the stages' output
+files accumulated since the previous gate in a single commit using the
+message convention:
 
 ```
-feat(UC-XX): Stage NN — <artefact name>
+feat(UC-XX): Gate N — <label> (stages NN–NN)
 ```
 
 Example commit sequence for a feature (one commit per gate):
@@ -87,7 +88,7 @@ following on every PR. Each maps to a CLAD invariant.
 | Markdown link check | No broken cross-stage links | `methodology/`, `features/`, root `*.md` |
 | Concept-import grep (R1) | No `import` across `concepts.<X>.<Y>` packages | `reference-impl/**/src/main/java/**` |
 | Tracking hygiene (overlay) | At most one `doing` phase + fresh resume point | `ROADMAP.md` (skipped if absent) |
-| `mvn verify` (when Java profile changed) | Format, lint, unit + integration tests, ArchUnit hard-rule tests | `reference-impl/java-micronaut-jena/` |
+| `mvn verify` (when a Java profile changed) | Format, lint, unit + integration tests, ArchUnit hard-rule tests | canonical `reference-impl/java-legible/`; other profiles (`java-plain`, `java-micronaut-postgres`) run their documented gate command |
 | Stage-output edit guard (advisory) | Edits to `stages/NN_*/output/` come from re-running the stage, not freelance edits | warning only — humans judge in review |
 
 CI is intentionally short. Add a check only when the *cost* of a

@@ -17,8 +17,8 @@
 
 | # | Scenario(s) | When | Then | Inputs | Outcome | Why this path |
 |---|---|---|---|---|---|---|
-| 1 | all | `Web/request[<route>]` | `Web.handle` | `<route>`, `<request body>` | `Routed` | Entry point (R4) |
-| 2 | main, scenario-X | `Web.handle[Routed]` | `<Concept1>.<action1>` | `<args>` | `<outcome>` | Happy path continuation |
+| 1 | all | `Web/request[<route>]` | `Web.request` | `<route>`, `<request body>` | `Routed` | Entry point (R4) |
+| 2 | main, scenario-X | `Web.request[Routed]` | `<Concept1>.<action1>` | `<args>` | `<outcome>` | Happy path continuation |
 | 2a | scenario-Y | `<Concept1>.<action1>[<error>]` | `Web.respond[<status>]` | `<status>`, `<body>` | `Sent` | Short-circuit error |
 | 3 | main | `<Concept1>.<action1>[<outcome>]` | `<Concept2>.<action2>` | `<args>` | `<outcome>` | Next step (happy path) |
 | 3a | scenario-Z | `<Concept2>.<action2>[<error>]` | `Web.respond[<status>]` | `<status>`, `<body>` | `Sent` | Branch error |
@@ -46,7 +46,7 @@ Stage 01b collapse into a pseudo-sync specification.
 
 Read each non-root row as a derived causal rule:
 
-- row 1: `Web/request -> Web.handle`
+- row 1: `Web/request -> Web.request`
 - every later row: `this row's explicit When -> this row's Then`
 
 That is the exact bridge into Stage 03 sync authoring.
@@ -79,7 +79,7 @@ Use this checklist when implementing Stages 03–04 to ensure no outcome is miss
   - [ ] `<Concept2>.<action2>`: `[<outcome1>, <outcome2>, …]` ✓ matches the consolidated chain rows
   - [ ] (repeat for all concepts)
 - [ ] Sync rules:
-  - [ ] One sync per non-root row ✓ root `Web.handle` is not a sync
+  - [ ] One sync per non-root row ✓ root `Web.request` is not a sync
   - [ ] All error syncs present ✓ every `[error:X]` has a sync to terminal response
   - [ ] No invented transitions ✓ only "When/Then" pairs from this table
 - [ ] Flow tests (Stage 04c):

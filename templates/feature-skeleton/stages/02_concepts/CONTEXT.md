@@ -44,7 +44,7 @@ sync, not in this file.
 | `../01_usecase/output/usecase.md` | 4 | Use case |
 | `../01a_responsibility-map/output/responsibility-map.md` | 4 | The agreed concept set |
 | `../01b_chain-table/output/` | 4 | The agreed action choreography (per scenario) — **read every file before naming any outcome** |
-| `../00_actor-goal/output/actors.md` | 4 | For cross-stage check |
+| `../../../_system/stages/00_actor-goal/output/actors.md` | 4 | For cross-stage check |
 | Skill: `clad-concept-design` | 3 | Concept design reference (see skills/ directory) |
 | `../../../../methodology/architecture/CONCEPTS.md` | 3 | Concept anatomy |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R2 |
@@ -101,23 +101,21 @@ or types beyond opaque ids.
 Run the following before requesting the human gate:
 
 ```
-python3 ../../../../quality-gate/verify_action_chain.py \
-  --resp-map ../01a_responsibility-map/output/responsibility-map.md \
-  --chain-dir ../01b_chain-table/output \
-  --concept-dir output \
-  --sync-dir ../03_syncs/output \
-  --dep-dir ../03a_dependency-review/output \
-  --spec-dir ../04_implement/04b_spec/output
+python3 ../../../../quality-gate/verify_concept_state_relational.py \
+  --concept-dir output
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output \
   --expected "<Name>.concept.md,…"  # one per concept in the responsibility map
 ```
 
-- **verify_action_chain.py:** every action used in chain tables flows
-  consistently through the responsibility map, concept specs, syncs,
-  dependency cards, and SPECs.
+- **verify_concept_state_relational.py:** each concept's `## State` is a
+  relation over a set of individuals (`field: Subject -> Value`), not a
+  single instance's field list, and no relation's subject is the concept's
+  own name.
 - **verify_file_manifest.py:** `output/` contains exactly one
   `.concept.md` file per concept in the responsibility map.
+- **Cross-artefact action-name parity** (`verify_action_chain.py`) needs the
+  syncs, dependency cards, and SPECs, so it runs at Stage 04b, not here.
 
 ### Semantic checks (human)
 
@@ -129,14 +127,14 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   `output/` unless the feature explicitly declares that deviation.
 - No concept names another concept's state, actions, or types.
 - **Cross-stage check (back):** every actor in
-  `00_actor-goal/output/actors.md` whose goal is in-scope appears in
+  `features/_system/stages/00_actor-goal/output/actors.md` whose goal is in-scope appears in
   at least one concept's operational principle.
 
 ## Gate
 
 Auto-advances (next human gate: Stage 03b). The quality-gate scripts
-(`verify_action_chain.py`, `verify_file_manifest.py`) must all pass
-before advancing.
+(`verify_concept_state_relational.py`, `verify_file_manifest.py`) must all
+pass before advancing.
 
 ## Next stage
 
