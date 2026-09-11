@@ -81,6 +81,9 @@ end-to-end. Minor version per `DELIVERY.md` §7 (methodology/contract changes).
   `slugify` camelCase splitting.
 - Greenfield red evidence documented (a compile failure naming exactly the
   missing production type is acceptable red before the type exists).
+- `generate_syncs.py` derives syncs by **completion match**, not adjacent row
+  position, so a chain with an extension branch no longer fabricates a sync
+  across the terminal row (found in the derived-repo rehearsal).
 
 ### Known limitations
 

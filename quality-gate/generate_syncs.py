@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set, Tuple
@@ -87,12 +88,37 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
         rows = ap.parse_chain_table(os.path.join(chain_dir, fname))
         scenario = fname.replace("-chain.md", "")
 
-        # Row 0 is the Web entry (Web/request -> Web.request) — not a sync.
-        # Every other row i (including terminal Web.respond rows) is one sync:
-        #   when = row(i-1) action + outcome, then = row(i) action.
-        for idx in range(1, len(rows)):
-            row = rows[idx]
-            prev = rows[idx - 1]
+        # Derive the invocation graph by matching completions, not by adjacent
+        # position: a row R is driven by an earlier row P whose `Then` action is
+        # R's `When` action and whose `Outcome` is R's `When` completion. This
+        # is branch-safe — a row that opens an extension branch points back to
+        # its (non-adjacent) producer instead of producing a fabricated sync
+        # across the terminal row.
+        def _when_parts(raw: str):
+            m = re.match(r"^([A-Za-z]+)[./]([A-Za-z]+)\[([^\]]*)\]\s*$",
+                         (raw or "").strip().strip("`"))
+            return (m.group(1), m.group(2), m.group(3).strip()) if m else None
+
+        producers = [(r.then_concept, r.then_action,
+                      ap.normalize_outcome(r.outcome_base), r) for r in rows]
+
+        for row in rows:
+            parts = _when_parts(row.when)
+            if parts is None:
+                continue
+            wc, wa, wo = parts
+            wo_base = re.sub(r"\(.*?\)", "", wo).strip()
+            matches = [prow for (pc, pa, po, prow) in producers
+                       if pc == wc and pa == wa
+                       and po == ap.normalize_outcome(wo_base)
+                       and prow is not row]
+            if not matches:
+                continue  # root row (Web/request entry) — not a sync
+            if len(matches) > 1:
+                warnings.append(
+                    f"{fname} row {row.row_num}: {len(matches)} rows produce "
+                    f"{wc}/{wa}[{wo}]; using row {matches[0].row_num}")
+            prev = matches[0]
 
             trigger_concept = prev.then_concept
             trigger_action = prev.then_action

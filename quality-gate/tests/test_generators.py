@@ -188,5 +188,47 @@ class GeneratorPropertyTests(unittest.TestCase):
                              f"{script.name} failed on regenerated chain:\n{r.stdout}{r.stderr}")
 
 
+class BranchedChainGeneratorTests(unittest.TestCase):
+    """A chain with an extension branch must derive one sync per real edge,
+    matched by completion token — not by adjacent row position (which used to
+    fabricate a sync across the terminal row)."""
+
+    def test_branch_rows_derive_four_syncs_no_fabrication(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "features/UC-01-library-loans"
+            chain = feature / "stages/01b_chain-table/output"
+            chain.mkdir(parents=True)
+            rows = [
+                ("1", "`Web/request[POST /lend]`", "`Web.request`", "`Routed`"),
+                ("2", "`Web.request[Routed]`", "`Inventory.lend`", "`Lent`"),
+                ("3", "`Inventory.lend[Lent]`", "`Ledger.record`", "`Recorded`"),
+                ("4", "`Ledger.record[Recorded]`", "`Web.respond[200]`", "`Sent`"),
+                ("5", "`Web.request[Routed]`", "`Inventory.lend`", "`Unavailable`"),
+                ("6", "`Inventory.lend[Unavailable]`", "`Web.respond[409]`", "`Sent`"),
+            ]
+            body = ["# Chain table — `lend-copy`", "",
+                    "| # | When | Then | Inputs | Outcome | Why this step |",
+                    "|---|---|---|---|---|---|"]
+            for num, when, then, outcome in rows:
+                body.append(f"| {num} | {when} | {then} | `x` | {outcome} | e |")
+            (chain / "lend-copy-chain.md").write_text(
+                "\n".join(body) + "\n", encoding="utf-8")
+
+            r = run(GEN_SYNCS, "--feature", feature)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            stems = sorted(line.split("WRITE ", 1)[1].split("  ")[0]
+                           .replace(".sync.md", "")
+                           for line in r.stdout.splitlines()
+                           if "WOULD WRITE" in line)
+            self.assertEqual(len(stems), 4, stems)
+            self.assertIn("WhenWebRequestRoutedThenInventoryLendForLibraryLoans", stems)
+            self.assertIn("WhenInventoryLendLentThenLedgerRecordForLibraryLoans", stems)
+            self.assertIn("WhenLedgerRecordRecordedThenWebRespondForLibraryLoans", stems)
+            self.assertIn("WhenInventoryLendUnavailableThenWebRespondForLibraryLoans", stems)
+            # The old positional pairing fabricated this transition across the
+            # terminal row 4 -> branch row 5.
+            self.assertNotIn("WhenWebRespondSentThenInventoryLendForLibraryLoans", stems)
+
+
 if __name__ == "__main__":
     unittest.main()
