@@ -3,7 +3,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `active`
+- **Status:** `closed`
 - **Affected profile(s):** `all profiles` (canonical `reference-impl/java-legible` retained; legacy `java-micronaut-jena`/`clad-engine` retired)
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
@@ -49,7 +49,7 @@ unification (S5) was deferred.
 
 ### Evidence gate
 
-Pending: completed after the test matrix is green and the deletion verified.
+Approved: test matrix green (artefacts, links, 85 tests, canonical module build) and the deletion verified.
 
 ## Notes
 
