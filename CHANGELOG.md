@@ -84,11 +84,28 @@ end-to-end. Minor version per `DELIVERY.md` §7 (methodology/contract changes).
 - `generate_syncs.py` derives syncs by **completion match**, not adjacent row
   position, so a chain with an extension branch no longer fabricates a sync
   across the terminal row (found in the derived-repo rehearsal).
+- `verify_concept_matrix.py` now reads only the chain file for the scenario
+  being scored (the comment promised this; the code previously unioned every
+  chain file into every row).
+- `verify_relational_mapping.py` no longer misclassifies documents that merely
+  contain the substring `table` ("mutable") or the prose word "references" as
+  relational foreign keys.
+- `verify_action_log_isolation.py` warns instead of passing silently when the
+  canonical mode inspects zero files.
+- Stage 04d-green/04e-green contracts now defer package placement to the
+  feature's `_config/package-and-layout.md` (flat `<APP_PACKAGE_ROOT>` for
+  `java-legible`, `.concepts.<name>`/`.syncs` buckets for other profiles), and
+  the 04c `.feature` discovery path is stated relative to the configured
+  `test.source.root`.
 
 ### Known limitations
 
 - R11 route scoping is **WARN-only** for `SyncRule` profiles; blocking
   enforcement needs a deliberate engine route-propagation design change.
+- `verify_iterative_change_coupling.py` (R17) recognises the
+  `concepts/<name>/` and `syncs/<name>.java` buckets only, so the canonical
+  `java-legible` flat layout is not coupling-checked by that script (the
+  stage-time `verify_sync_implementation_parity` covers the flat shape).
 - Several checks are intentionally advisory (concept matrix, same-order sync
   overlap, close evidence).
 - Durable-profile runtime tests (`legible-storage`, `java-micronaut-postgres`)

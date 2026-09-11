@@ -266,8 +266,13 @@ def main():
             for rel, lineno, call in violations:
                 print(f"    {rel}:{lineno}: {call}...")
             sys.exit(1)
-        print(f"PASS  canonical store isolation: {checked} non-engine file(s) "
-              f"avoid direct FactStore/Region access")
+        if checked == 0:
+            print("WARN  canonical store isolation not evaluated: no "
+                  "non-engine, non-concept source files to inspect "
+                  "(expected only for a very small app).")
+        else:
+            print(f"PASS  canonical store isolation: {checked} non-engine "
+                  f"file(s) avoid direct FactStore/Region access")
         sys.exit(0)
 
     all_defects = []

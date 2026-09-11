@@ -19,13 +19,18 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-# A relational storage mapping declares a SQL-ish schema surface.
+# A relational storage mapping declares a SQL-ish schema surface. Avoid bare
+# `table` (matches "mutable") and `non-relational` / `not relational`.
 RELATIONAL_MARKER = re.compile(
-    r"(PostgreSQL|Postgres|relational|CREATE TABLE|schema per|table)", re.IGNORECASE)
+    r"(PostgreSQL|Postgres|CREATE\s+TABLE|FOREIGN\s+KEY|\bschema per\b|"
+    r"\bR-?map\b|(?<!non-)(?<!not )\brelational\b)",
+    re.IGNORECASE)
 
 # Any FK declaration in a CLAD mapping is a cross-concept coupling (concepts own
 # isolated regions; cross-concept identifiers are opaque, never references).
-FK_RE = re.compile(r"\b(REFERENCES|FOREIGN KEY)\b", re.IGNORECASE)
+# Case-sensitive and DDL-shaped, so prose like "never references into ..." is
+# not mistaken for a foreign-key declaration.
+FK_RE = re.compile(r"\b(?:REFERENCES|FOREIGN\s+KEY)\b")
 
 
 def is_relational(text):

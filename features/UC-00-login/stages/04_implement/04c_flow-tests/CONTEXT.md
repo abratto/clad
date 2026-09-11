@@ -85,8 +85,14 @@ derived status codes/token chains.
    under `APP_TEST_SOURCE_ROOT`, packaged under `APP_PACKAGE_ROOT`, pointing
    at the `.feature` file's resource directory.
 4. Place the `.feature` file under
-   `APP_TEST_SOURCE_ROOT/resources/features/<feature-name>.feature`.
+   `<APP_TEST_SOURCE_ROOT>/resources/features/<feature-name>.feature`.
    Place step-definition classes under `APP_PACKAGE_ROOT.steps`.
+   The discovery path is relative to the feature's configured
+   `test.source.root` (see `_config/`): the wired check resolves
+   `verify_feature_file_presence.py --feature-files-dir
+   <test.source.root>/resources/features/`. Many Maven projects instead use
+   the test-resources tree (`src/test/resources/features/`); whatever the
+   profile uses, the file must exist where `--feature-files-dir` points.
 5. Before claiming "red and ready", run the canonical build-and-test
    command from `../../../_config/build-and-test.md` (or the targeted
    equivalent documented there) and verify test compilation succeeds. At

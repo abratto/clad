@@ -33,6 +33,8 @@ import re
 import sys
 from collections import defaultdict
 
+import artifact_parsers as ap
+
 
 _SCENARIO_RE = re.compile(r'^###\s+Scenario:\s+(.+)$', re.MULTILINE)
 # Matches concept names in chain-table When/Then columns:
@@ -86,17 +88,18 @@ def build_matrix(scenarios, concepts, chain_dir):
     for scenario in scenarios:
         row = {}
         concepts_in_chain = set()
-        for fname in os.listdir(chain_dir):
-            if not fname.endswith('.md'):
-                continue
-            path = os.path.join(chain_dir, fname)
-            with open(path) as fh:
-                text = fh.read()
-            # Only count rows from the file matching this scenario
-            # (skip consolidated files that list all scenarios)
-            if 'all-scenarios' in fname:
-                continue
-            concepts_in_chain.update(_CHAIN_CONCEPT_RE.findall(text))
+        # Prefer the chain file matching this scenario (`<scenario-slug>-chain.md`).
+        # Fall back to every per-scenario chain file only when no exact match
+        # exists (legacy/unnamed), never the consolidated view.
+        target = ap.slugify(scenario) + "-chain.md"
+        if os.path.isfile(os.path.join(chain_dir, target)):
+            files = [target]
+        else:
+            files = [f for f in sorted(os.listdir(chain_dir))
+                     if f.endswith(".md") and "all-scenarios" not in f]
+        for fname in files:
+            with open(os.path.join(chain_dir, fname)) as fh:
+                concepts_in_chain.update(_CHAIN_CONCEPT_RE.findall(fh.read()))
 
         for c in concepts_in_chain:
             if c in concepts:

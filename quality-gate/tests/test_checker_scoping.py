@@ -155,5 +155,47 @@ class CloseEvidenceTests(unittest.TestCase):
             self.assertIn("@Disabled", result.stdout)
 
 
+class RehearsalRegressionTests(unittest.TestCase):
+    def test_concept_matrix_does_not_cross_scenarios(self):
+        sys.path.insert(0, str(QG))
+        import verify_concept_matrix as vcm
+        with tempfile.TemporaryDirectory() as temporary:
+            chain = Path(temporary)
+            (chain / "alpha-chain.md").write_text(
+                "| 2 | `Alpha.do[Ok]` | `Web.respond[200]` | `x` | `Sent` | e |\n",
+                encoding="utf-8")
+            (chain / "beta-chain.md").write_text(
+                "| 2 | `Beta.do[Ok]` | `Web.respond[200]` | `x` | `Sent` | e |\n",
+                encoding="utf-8")
+            matrix, _coverage = vcm.build_matrix(
+                ["alpha", "beta"], ["Alpha", "Beta"], str(chain))
+            self.assertEqual(matrix["alpha"], {"Alpha": "X"}, matrix)
+            self.assertEqual(matrix["beta"], {"Beta": "X"}, matrix)
+
+    def test_relational_mapping_ignores_prose_and_mutable(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            d = Path(temporary)
+            (d / "Inventory.storage.md").write_text(
+                "# Inventory storage\n\n"
+                "Fields are held in-place (mutable) in the concept region.\n"
+                "The concept never references into another concept's region.\n",
+                encoding="utf-8")
+            result = run(str(QG / "verify_relational_mapping.py"),
+                         "--storage-dir", str(d))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("no relational storage mappings", result.stdout)
+
+    def test_action_log_isolation_warns_when_nothing_inspected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "WidgetApp.java").write_text(
+                "class WidgetApp { FactStore factStore; }\n", encoding="utf-8")
+            result = run(str(QG / "verify_action_log_isolation.py"),
+                         "--app-source-root", str(root))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("WARN", result.stdout)
+            self.assertIn("not evaluated", result.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

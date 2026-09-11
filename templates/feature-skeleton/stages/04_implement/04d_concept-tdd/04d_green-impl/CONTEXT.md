@@ -61,11 +61,13 @@ upstream prose, but it may not redesign approved tests.
    is a realization pattern only and must not override the feature's
    approved artefacts. The `java-micronaut-jena` profile is legacy: consult
    its docs only when that profile was explicitly selected in Stage 04a.
-5. Place concept code in the canonical concept package bucket (for the
-   default profile: one `*Concept` class implementing `Concept` under
-   `<APP_PACKAGE_ROOT>.concepts.<name>`, with tests mirrored under the
-   corresponding test package). Do not place concept classes in
-   `engine`, `syncs`, `infrastructure`, or ad hoc sibling packages.
+5. Place concept code where the feature's `_config/package-and-layout.md`
+   directs. Some profiles bucket concepts under
+   `<APP_PACKAGE_ROOT>.concepts.<name>`; the canonical `java-legible` profile
+   uses a flat `<APP_PACKAGE_ROOT>` package (e.g.
+   `dev.legible.example.<feature>`), matching its exemplar. Never place
+   concept classes in `engine`, `syncs`, `infrastructure`, or ad hoc sibling
+   packages.
 6. Use the storage mapping from `04a_storage-mapping/output/` when applicable. Do not
    replace the selected profile's storage layer with an in-memory
    substitute.
@@ -101,8 +103,10 @@ upstream prose, but it may not redesign approved tests.
 - Implementation package/source path matches
   `../../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,
   `APP_SOURCE_ROOT`, `APP_TEST_SOURCE_ROOT`).
-- Concept classes are under `<APP_PACKAGE_ROOT>.concepts.<name>` and not
-   in `engine`, `infrastructure`, `api`, `syncs`, or ad hoc sibling packages.
+- Concept classes live in the package `_config/package-and-layout.md`
+   declares (flat `<APP_PACKAGE_ROOT>` for `java-legible`; a
+   `.concepts.<name>` bucket for other profiles) and not in `engine`,
+   `infrastructure`, `api`, `syncs`, or ad hoc sibling packages.
 
 ## Gate
 
