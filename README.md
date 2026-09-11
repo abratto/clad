@@ -265,7 +265,9 @@ project-wide defaults:
 
 ```properties
 # The canonical test command — runs the artefact gate before tests.
-test.command=python3 quality-gate/verify_artefacts.py && mvn test
+# This repo scopes it to the canonical profile so the gate runs without Docker;
+# set it to your own project's test command.
+test.command=python3 quality-gate/verify_artefacts.py && mvn test -f reference-impl/pom.xml -pl java-legible -am
 
 # Describe your persistence technology.
 storage.layer=In-memory FactStore relations (canonical fire-after-commit profile)

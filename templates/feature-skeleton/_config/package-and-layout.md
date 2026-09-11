@@ -35,8 +35,9 @@ reference implementation when they are not correct for this project.
 6. **Take the engine; never reimplement it.** The fire-after-commit engine
    (`reference-impl/legible-engine/src/main/java/dev/legible/engine/` —
    `SyncEngine`, `SyncRule`, `Concept`, `FactStore`, `Region`, action log,
-   debug surface) is reusable runtime infrastructure shipped by CLAD v0.3.5
-   either as a Maven dependency (`com.example.clad:legible-engine`) or
+   debug surface) is reusable runtime infrastructure shipped by the current
+   CLAD release (v0.4.0) either as a Maven dependency
+   (`com.example.clad:legible-engine`) or
    copied **verbatim** into `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/engine/`,
    changing only the package declaration. Never author engine/runtime
    classes from scratch. For a durable stack the reference is

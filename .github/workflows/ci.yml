@@ -42,27 +42,34 @@ jobs:
       - name: Check ROADMAP.md hygiene
         run: bash .github/scripts/check-roadmap-hygiene.sh
 
-  java-verify:
-    name: Java reference profile (mvn verify)
+  artefact-gate:
+    name: Artefact pipeline + quality-gate tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Detect changes under reference-impl/java-micronaut-jena
-        id: detect
-        run: |
-          if [ -f reference-impl/java-micronaut-jena/pom.xml ]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          fi
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Artefact pipeline gate
+        run: python3 quality-gate/verify_artefacts.py
+      - name: Quality-gate regression tests
+        run: python3 -m pytest quality-gate/tests -q
+
+  java-verify:
+    name: Java reference profile (canonical java-legible)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - name: Set up JDK 21
-        if: steps.detect.outputs.run == 'true'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
           cache: maven
-      - name: mvn verify
-        if: steps.detect.outputs.run == 'true'
-        working-directory: reference-impl/java-micronaut-jena
-        run: mvn -B -ntp verify
+      # Canonical profile module + its reactor deps. The durable profiles
+      # (legible-storage, java-micronaut-postgres) add Docker/Testcontainers;
+      # run the full reactor `mvn -B -ntp test -f reference-impl/pom.xml` in a
+      # Docker-capable job when validating those.
+      - name: mvn test (java-legible)
+        run: mvn -B -ntp test -f reference-impl/pom.xml -pl java-legible -am

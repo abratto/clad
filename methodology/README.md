@@ -32,10 +32,14 @@ CLAD targets. They are paraphrases of, and citations to, Meng & Jackson
 ## 3. Implementation — hard rules and the workspace scaffold
 
 1. [`implementation/RULES.md`](implementation/RULES.md) — the non-negotiable rules
-2. [`implementation/STAGES.md`](implementation/STAGES.md) — how CLAD stages map onto the ICM scaffold
+2. [`implementation/STAGES.md`](implementation/STAGES.md) — how CLAD stages map onto the ICM scaffold, the gate model, and the recommended one-sub-agent-per-stage orchestration
 3. [`implementation/STORAGE_MAPPING.md`](implementation/STORAGE_MAPPING.md) — mapping conceptual data models onto a concrete profile (Stage 04a)
-4. [`implementation/QUALITY_GATE.md`](implementation/QUALITY_GATE.md) — local pre-commit checks per profile
-5. [`implementation/DELIVERY.md`](implementation/DELIVERY.md) — trunk-based delivery posture, CI gate, branch protection
+4. [`implementation/TDD.md`](implementation/TDD.md) — the outside-in London School TDD double-loop discipline for Stage 04
+5. [`implementation/QUALITY_GATE.md`](implementation/QUALITY_GATE.md) — local pre-commit checks per profile
+6. [`implementation/CONTEXT_MANIFEST.md`](implementation/CONTEXT_MANIFEST.md) — the per-stage file manifest (what each stage loads and writes)
+7. [`implementation/HANDOVER.md`](implementation/HANDOVER.md) — the fresh-session / sub-agent handoff prompt
+8. [`implementation/MACHINE_CONTRACT.md`](implementation/MACHINE_CONTRACT.md) — the consumer-facing feature descriptor for runtimes such as `clad-agent`
+9. [`implementation/DELIVERY.md`](implementation/DELIVERY.md) — trunk-based delivery posture, CI gate, branch protection
 
 ## 4. Reference
 
