@@ -1,8 +1,12 @@
 # Security policy
 
 CLAD is a methodology repository. Most files are markdown, templates, and
-agent guides. The only executable code is the optional Java reference
-profile under [`reference-impl/java-micronaut-jena/`](reference-impl/java-micronaut-jena/).
+agent guides. The executable code is the optional Java reference profiles
+under [`reference-impl/`](reference-impl/) (the canonical
+[`java-legible`](reference-impl/java-legible/) and the durable
+[`java-micronaut-postgres`](reference-impl/java-micronaut-postgres/)
+profiles); the legacy Jena/RDF stack was retired (see
+[`reference-impl/LEGACY.md`](reference-impl/LEGACY.md)).
 
 ## Reporting a vulnerability
 

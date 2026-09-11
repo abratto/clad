@@ -189,10 +189,10 @@ runtime artefacts in the chosen profile:
 | `usecase.md` Postconditions—Failure (*"no state is modified"*) | flow test assertion that no concept's state changed across the request | What mechanises no-enumeration on negative paths. |
 
 See [`reference-impl/java-legible/README.md`](../../reference-impl/java-legible/README.md)
-for the canonical (fire-after-commit) mappings and
-[`reference-impl/java-micronaut-jena/README.md`](../../reference-impl/java-micronaut-jena/README.md)
-for the legacy profile, and [`MENTAL_MODEL.md`](MENTAL_MODEL.md) for
-the OO ↔ WYSIWID intuition.
+for the canonical (fire-after-commit) mappings, and
+[`MENTAL_MODEL.md`](MENTAL_MODEL.md) for the OO ↔ WYSIWID intuition. The
+legacy Jena profile was retired (see
+[`../../reference-impl/LEGACY.md`](../../reference-impl/LEGACY.md)).
 
 ---
 

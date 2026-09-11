@@ -9,12 +9,10 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 COPY reference-impl/pom.xml reference-impl/pom.xml
-COPY reference-impl/clad-engine/ reference-impl/clad-engine/
 COPY reference-impl/legible-engine/ reference-impl/legible-engine/
 COPY reference-impl/legible-storage/ reference-impl/legible-storage/
 COPY reference-impl/java-micronaut-postgres/ reference-impl/java-micronaut-postgres/
 COPY reference-impl/java-legible/ reference-impl/java-legible/
-COPY reference-impl/java-micronaut-jena/pom.xml reference-impl/java-micronaut-jena/pom.xml
 COPY reference-impl/legible-bench/pom.xml reference-impl/legible-bench/pom.xml
 COPY reference-impl/java-plain/pom.xml reference-impl/java-plain/pom.xml
 WORKDIR /app/reference-impl/java-micronaut-postgres

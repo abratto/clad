@@ -44,7 +44,7 @@ class SyncParityTests(unittest.TestCase):
                          "--sync-dir", str(UC00_SYNCS),
                          "--sync-impl-dir", str(impl), "--strict-trigger")
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("fires mismatch", result.stdout)
+            self.assertIn("then mismatch", result.stdout)
 
 
 class TestNamingFlatLayoutTests(unittest.TestCase):

@@ -1,10 +1,10 @@
-<!-- Worked example for Stage 04a (04a_storage-mapping). Illustrative only: based on the UC-00 User concept and the Java/Jena reference profile. -->
+<!-- Worked example for Stage 04a (04a_storage-mapping). Illustrative only: shows one concrete RDF/named-graph mapping. CLAD ships no RDF profile now (the Jena profile was retired); use this shape only when your own profile stores concepts in named graphs. -->
 
 # User — storage mapping
 
 ## Profile
 
-- Profile: `reference-impl/java-micronaut-jena` (RDF named-graph profile)
+- Profile: `<your RDF / named-graph profile>`
 - Region identifier: `concept:user`
 
 ## Identity and value realization

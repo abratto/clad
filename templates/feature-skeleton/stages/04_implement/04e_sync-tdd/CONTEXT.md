@@ -1,16 +1,10 @@
 # Stage 04e — Sync TDD (router)
 
-## Pre-condition (agent must verify before starting)
+## Pre-condition
 
-Run the iterative-change readiness check before writing any artefacts:
-
-```
-python3 ../../../../../quality-gate/verify_iterative_change_readiness.py \
-   --feature ../../../
-```
-
-If this reports an iterative concept/sync change with no valid `_changes/`
-artefact, stop and complete the artefact-impact matrix first.
+`advance.py` enforces stage order and upstream gate approval before this
+stage runs — see `STAGES.md` §"Stage lifecycle (standard)". Do not start
+until it has printed this stage as `NEXT STAGE`.
 
 ## Why this stage exists
 

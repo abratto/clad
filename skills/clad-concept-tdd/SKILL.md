@@ -7,9 +7,8 @@ description: Execute concept-level TDD during CLAD Stage 04d. Use when deriving 
 
 > **Role:** required stage guidance for Stage 04d. The stage `CONTEXT.md`
 > `Inputs` table is authoritative for *which files to load*; load those
-> exactly. A profile's conventions are **conditional** — follow the
-> canonical `java-legible` (fire-after-commit) profile unless
-> `clad.properties` selects a legacy (e.g. `java-micronaut-jena`) profile.
+> exactly. Follow the canonical `java-legible` (fire-after-commit)
+> profile's conventions.
 
 ## What this skill covers
 

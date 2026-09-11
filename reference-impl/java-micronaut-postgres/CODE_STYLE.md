@@ -1,6 +1,6 @@
 # Code style — `reference-impl/java-micronaut-postgres/`
 
-Profile-specific conventions. The action-log engine is shared (`dev.clad.engine`);
+Profile-specific conventions. The runtime engine is shared (`dev.legible.engine`);
 this profile's own code is the concept-state persistence + app shape.
 
 ## Packages
@@ -9,13 +9,13 @@ this profile's own code is the concept-state persistence + app shape.
 com.example.app
 ├── infrastructure          WebController (sole HTTP entry; R4), DebugController
 ├── api                     DTOs for HTTP boundary + ResponseAssembler
-├── concepts.<name>         Exactly one *Concept class; extends dev.clad.engine.ConceptAgent
+├── concepts.<name>         Exactly one *Concept class implementing dev.legible.engine.Concept
 ├── syncs                   Declarative when/then rules (one final class per sync)
 ├── storage                 JooqFactory (ActionLog + DataSource + DSLContext + Flyway)
 └── db                      JOOQ-generated tables (com.example.app.db, generated)
 
-dev.clad.engine (shared clad-engine module)
-└── ActionLog, FlowManager, ConceptAgent, SyncAgent, SyncDispatcher, … (shared)
+dev.legible.engine (shared legible-engine module)
+└── SyncEngine, Concept, SyncRule, FactStore, Region, … (shared)
 ```
 
 ## Concept-state conventions (JOOQ + Flyway)
@@ -47,9 +47,9 @@ dev.clad.engine (shared clad-engine module)
 
 ## Coordination is unchanged
 
-Concepts extend `dev.clad.engine.ConceptAgent` and call `writeCompletion` /
-`writeRefusal` / `writeError` with `RDFNode` outputs exactly as in the Jena
-profile. The action log is in-memory RDF; only state persistence differs.
+Concepts implement `dev.legible.engine.Concept` and return a completion map
+(`outcome` + named fields) exactly as in the canonical `java-legible` profile;
+only state persistence differs.
 
 ## Tests
 

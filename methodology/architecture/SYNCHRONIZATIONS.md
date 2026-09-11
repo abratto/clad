@@ -118,8 +118,7 @@ then {
 - **Hide orchestration in an imperative coordinator class.** A class
   that sequences ordered domain calls with `if` / `then` branching is
   not a sync in CLAD terms, even if it sits in a `sync` package. In the
-  Java profiles, executable syncs are declarative `SyncRule`s (legacy:
-  `SyncAgent` subclasses); a
+  Java profiles, executable syncs are declarative `SyncRule`s; a
   `*Coordinator` or `*Orchestrator` class is a design smell that should
   fail review unless it is a thin transport/runtime adapter with an
   explicit waiver.

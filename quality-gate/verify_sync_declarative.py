@@ -4,7 +4,7 @@ verify_sync_declarative.py — Gate: sync implementations must be declarative.
 
 Why this exists:
     CLAD architecture rule R3 requires syncs to be declarative — they express
-    coordination in SPARQL patterns, not in imperative Java branching. A sync
+    coordination in declarative SyncRule patterns, not in imperative Java branching. A sync
     class with if/else/switch statements, for/while loops, or named as a
     Coordinator/Orchestrator violates the WYSIWID contract and turns syncs from
     reviewable declarative rules into imperative procedural code.
@@ -19,15 +19,15 @@ Why this exists:
 
     1. **Coordinator/Orchestrator class names.** A class named
        *Coordinator or *Orchestrator inside the sync directory indicates
-       that coordination logic has leaked out of the SPARQL dispatch engine
+       that coordination logic has leaked out of the declarative sync engine
        and into imperative Java. CLAD's SyncDispatcher engine handles
        coordination declaratively — no Java coordinator is needed.
 
     2. **Imperative branching in method bodies.** if/else/switch/for/while
        statements inside a sync class mean the author is doing in Java what
-       should be done in SPARQL. Different outcomes from a trigger action
+       should be done in separate SyncRules. Different outcomes from a trigger action
        should be separate sync classes (one per outcome path), not a single
-       class with if/else chains. SPARQL FILTER handles multi-outcome
+       class with if/else chains. Separate SyncRules handle multi-outcome
        dispatch declaratively.
 
     3. **Non-final fields.** Mutable instance state in a sync class is a
@@ -43,7 +43,7 @@ Checks:
     1. No class in the sync impl directory matches *Coordinator or *Orchestrator.
     2. No sync class contains imperative branching keywords (if/else/switch/
        for/while/do) in method bodies, after stripping comments and string
-       literals (including SPARQL text blocks).
+       literals (including Java text blocks).
     3. Every field declaration in a sync class is final.
 
 Usage:
@@ -63,7 +63,7 @@ from pathlib import Path
 _BLOCK_COMMENT_RE = re.compile(r'/\*.*?\*/', re.DOTALL)
 # Matches // line comments (but not http:// or https://)
 _LINE_COMMENT_RE = re.compile(r'(?<!:)//.*$', re.MULTILINE)
-# Matches Java text blocks ("""...""") — common for SPARQL queries in syncs
+# Matches Java text blocks ("""...""") — sometimes used in syncs
 _TEXT_BLOCK_RE = re.compile(r'"""[\s\S]*?"""', re.MULTILINE)
 # Matches string literals ("..." or '...')
 _STRING_RE = re.compile(r'"(?:\\.|[^"\\])*"')
@@ -166,14 +166,13 @@ def extract_method_bodies(source):
 
 
 def _is_sync_file(path):
-    """True if the Java source declares syncs — either a legacy
-    `class X extends SyncAgent` or a new-shape `SyncRule.of(...)`."""
+    """True if the Java source declares syncs — a `SyncRule.of(...)` rule."""
     try:
         with open(path, encoding="utf-8") as handle:
             text = handle.read()
     except (OSError, UnicodeDecodeError):
         return False
-    return "extends SyncAgent" in text or "SyncRule.of(" in text
+    return "SyncRule.of(" in text
 
 
 def check_file(filepath):
@@ -199,7 +198,7 @@ def check_file(filepath):
     orch_matches = _ORCHESTRATOR_RE.findall(source)
     for name in orch_matches:
         defects.append((0, f"orchestrator class '{name}' — orchestration "
-                           f"belongs in SPARQL patterns, not in a Java "
+                           f"belongs in declarative SyncRules, not in a Java "
                            f"orchestrator (R3)"))
 
     # --- Check 2: Imperative branching in method bodies ---
@@ -216,7 +215,7 @@ def check_file(filepath):
             defects.append((0, f"imperative branching in method "
                                f"'{method_name}()' — contains {unique}. "
                                f"Use separate sync classes per outcome path "
-                               f"and SPARQL FILTER for multi-outcome dispatch "
+                               f"and separate SyncRules for multi-outcome dispatch "
                                f"(R3)"))
 
     # --- Check 3: Non-final fields ---
@@ -333,8 +332,8 @@ def main():
               f"file(s)")
         print()
         print("  CLAD syncs must be declarative (R3). Coordination is expressed")
-        print("  in SPARQL patterns, not in Java branching. Split outcome paths")
-        print("  into separate sync classes; use SPARQL FILTER for dispatch.")
+        print("  in declarative SyncRules, not in Java branching. Split outcome paths")
+        print("  into separate SyncRules for dispatch.")
         print("  See methodology/architecture/SYNCHRONIZATIONS.md.")
         sys.exit(1)
     else:

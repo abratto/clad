@@ -293,8 +293,9 @@ implementation), and a durable deployable
 profile — Micronaut for the HTTP transport, Postgres concept state derived
 from the Stage 03b data models (R-map), with a `Dockerfile` +
 `docker-compose.yml` and a `fly.toml` for Fly.io. The legacy
-[`java-micronaut-jena/`](reference-impl/java-micronaut-jena/) transactional
-RDF/SPARQL profile remains as a showcase only — no new work targets it. The
+transactional RDF/SPARQL (Jena) profile was **retired** — it is no longer
+built, checked, or maintained, and remains available only at tag `v0.4.0`
+(see [`reference-impl/LEGACY.md`](reference-impl/LEGACY.md)). The
 methodology is profile-agnostic. Pre-1.0 CLAD
 releases may include breaking methodology changes. This repository uses
 [Semantic Versioning](https://semver.org/) and annotated Git tags;
@@ -353,7 +354,7 @@ clad/
     ├── java-legible/               Canonical profile — recommended
     ├── java-micronaut-postgres/    Durable profile (Micronaut + R-map Postgres, Docker/Fly.io)
     ├── legible-storage/            FactStore backends (Jena / Postgres)
-    └── java-micronaut-jena/        Legacy RDF/SPARQL profile (showcase only)
+    └── LEGACY.md                   Retired Jena/RDF stack pointer (last at v0.4.0)
 ```
 
 ## License

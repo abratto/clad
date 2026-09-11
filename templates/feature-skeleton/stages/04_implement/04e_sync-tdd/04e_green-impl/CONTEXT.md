@@ -1,18 +1,10 @@
 # Stage 04e-green — Sync Implementation (green)
 
-## Pre-condition (agent must verify before starting)
+## Pre-condition
 
-Run the following **before** writing any sync implementation code:
-
-```
-python3 ../../../../../../quality-gate/verify_stage_sequence.py \
-   --feature ../../../../ \
-   --through 04e-red
-```
-
-If this script exits with a non-zero status, stop immediately.
-Stage 04e-red sync test derivation is missing — do not implement
-before sync tests are derived.
+`advance.py` enforces stage order and upstream gate approval before this
+stage runs — see `STAGES.md` §"Stage lifecycle (standard)". Do not start
+until it has printed this stage as `NEXT STAGE`.
 
 ## Why this stage exists
 
@@ -41,7 +33,6 @@ not redesign approved tests.
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
 | `../../../../../../reference-impl/java-legible/README.md` and `../../../../../../reference-impl/legible-engine/README.md` (default profile) | 3 | Profile conventions for the canonical fire-after-commit profile |
-| `../../../../../../reference-impl/java-micronaut-jena/{README.md,CODE_STYLE.md,SYNC_LOWERING.md,CANONICAL_EXEMPLAR.md}` (legacy profile only) | 3 | Legacy RDF/SPARQL profile realization. Do NOT follow when targeting java-legible |
 
 ## Process
 
@@ -54,15 +45,10 @@ not redesign approved tests.
    stop and send the work back to `04e-red` or Stage 03.
 4. Derive behavior from the approved upstream artefacts first: the
    Stage 03 sync specs, the `04b` SPEC slices, the `04c` expected
-   authored action chain, and the approved red sync tests. If the
-   selected profile is Java/Jena/Micronaut, use
-   `SYNC_LOWERING.md` as the deterministic lowering contract and
-   `CANONICAL_EXEMPLAR.md` only as a realization pattern for class,
-   package, and test shape. Neither may override the feature's own
-   approved artefacts.
+   authored action chain, and the approved red sync tests.
 5. Place sync code where the feature's `_config/package-and-layout.md`
    directs: each approved sync becomes one implementation (a
-   `SyncRule.of(...)` or a legacy `SyncAgent` class). Some profiles bucket
+   `SyncRule.of(...)`). Some profiles bucket
    syncs under `<APP_PACKAGE_ROOT>.syncs`; the canonical `java-legible`
    profile uses a flat `<APP_PACKAGE_ROOT>` package (e.g.
    `dev.legible.example.<feature>`). Do not place syncs in `engine`,

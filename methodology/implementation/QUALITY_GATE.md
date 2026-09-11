@@ -121,8 +121,7 @@ not relax the *intent*.
        assert required completion field values, not only outcome tokens.
       - **Automated:** At the end of Stage 04e-green, run
         `quality-gate/verify_sync_implementation_parity.py` to confirm every
-        approved Stage 03 sync contract has a matching implementation
-        (a declarative `SyncRule`, or a legacy `SyncAgent` class).
+        approved Stage 03 sync contract has a matching SyncRule implementation.
      - The automated checks replace the previous semantic (human) checks.
        04d and 04e auto-advance; the scripts are the gate.
 12. **Implementation parity checks (R17 enforcement).**
@@ -150,8 +149,7 @@ not relax the *intent*.
       with `--sync-impl-dir` pointing at the changed sync package and either
       `--sync-dir` for the active feature or `--features-dir features/` for a
       whole-tree gate. The check fails if any Stage 03 sync contract lacks a
-      matching implementation (a declarative `SyncRule`, or a legacy
-      `@Singleton` `SyncAgent`). Profiles whose runtime
+      matching implementation (a declarative `SyncRule`). Profiles whose runtime
       vocabulary mirrors Stage 03 exactly may add `--strict-trigger` to also
       require trigger/fires metadata to match the contract's `when`/`then`
       signatures.
@@ -177,32 +175,25 @@ not relax the *intent*.
 
 The canonical profile is `reference-impl/java-legible/` (fire-after-commit
 engine, in-memory `FactStore`). The plain-Java quick-start is
-`reference-impl/java-plain/` (same engine, login only, zero framework,
-gate: `mvn -pl java-plain -am test`). The durable deployable profile is
-`reference-impl/java-micronaut-postgres/` re-lowered onto the fire-after-commit
-engine (Micronaut transport, `RmapPostgresFactStore`; gate:
+`reference-impl/java-plain/` (same engine, login only, zero framework). The
+durable deployable profile is `reference-impl/java-micronaut-postgres/`
+(Micronaut transport, `RmapPostgresFactStore`, gate:
 `mvn -pl legible-storage,java-micronaut-postgres -am test`);
-`reference-impl/legible-storage/` carries the Jena/Postgres FactStore
-conformance suites. The legacy `reference-impl/java-micronaut-jena/`
-profile maps the principles above to:
+`reference-impl/legible-storage/` carries the FactStore conformance suites.
+The legacy Jena/RDF profile was retired — it is not built or checked
+(see [`reference-impl/LEGACY.md`](../../reference-impl/LEGACY.md)).
 
-| Principle | Command |
-|---|---|
-| Format clean | `mvn spotless:apply` (then `spotless:check` is part of `verify`) |
-| Lint clean | bundled into `mvn verify` |
-| Tests green | `mvn verify` runs unit + integration |
-| Hard-rule check | `LegibleArchitectureRulesTest` (ArchUnit) runs as part of `mvn verify` |
-| Smoke check (when relevant) | `mvn exec:java` then exercise the route per Stage 05 closure |
-
-The single command that exercises the gate is:
+The canonical single command that exercises the gate (as wired in
+`clad.properties`) is:
 
 ```
-mvn verify
+python3 quality-gate/verify_artefacts.py && mvn test -f reference-impl/pom.xml -pl java-legible -am
 ```
 
-If `mvn verify` is green and the diff has no naked `TODO`/`FIXME`,
-the commit is gate-clean. Pre-push hooks may automate the check; the
-hook is convenience, not the gate itself.
+If that is green and the diff has no naked `TODO`/`FIXME`, the commit is
+gate-clean. Pre-push hooks may automate the check; the hook is convenience,
+not the gate itself. (The full-reactor `mvn test -f reference-impl/pom.xml`
+also runs the Docker-backed durable modules; run it in a Docker-capable CI.)
 
 ### Quality-gate scripts (profile-agnostic)
 
@@ -234,7 +225,7 @@ consistency checks across the CLAD artefact chain:
 | `verify_iterative_change_coupling.py` | 04+ | Concept/sync implementation changes are committed with their matching Stage 02/03 artefacts |
 | `verify_maintenance_change_readiness.py` | Maintenance | Engine/profile/deployment changes have an active maintenance record and cleared design/evidence gates |
 | `verify_implementation_parity.py` | 04+ | Implementation concept/sync classes have corresponding stage artefact specs; sync names lower mechanically from Stage 03 rules |
-| `verify_sync_implementation_parity.py` | 04e | Stage 03 sync contracts have a matching implementation (legacy `SyncAgent` class or `SyncRule.of` rule); with `--strict-trigger`, trigger and primary `then` target must match |
+| `verify_sync_implementation_parity.py` | 04e | Stage 03 sync contracts have a matching `SyncRule.of` implementation; with `--strict-trigger`, trigger and primary `then` target must match |
 | `verify_feature_file_presence.py` | 04c | Pre-flight: `.feature` file exists in output + Cucumber discovery path |
 | `verify_close_evidence.py` | 05 | Advisory: canonical `trace.md` present (warns on legacy name); enabled adapter integration test exists when an adapter surface is declared |
 | `verify_gherkin_derivation.py` | 04c | `.feature` file derivation per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1 |
@@ -351,8 +342,7 @@ commit cannot land until the pipeline is intact."
 - **R1:** No class under a concept package may import a class under
   another concept package.
 - **R2 (heuristic):** One concept class per concept (one `Region` per concept).
-- **R3:** Syncs are declarative — `SyncRule`s (or legacy `SyncAgent`
-  subclasses) with only final
+- **R3:** Syncs are declarative — `SyncRule`s with only final
   fields. No imperative branching in sync source. No
   `*Coordinator`/`*Orchestrator` classes without explicit waiver.
 - **R4:** Only the bootstrap adapter has HTTP annotations.

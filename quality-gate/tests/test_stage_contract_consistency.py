@@ -2,8 +2,8 @@
 """Drift guard: the executable stage model must agree with the contracts.
 
 `clad_stages.py` is the machine projection of the per-UC workflow. The
-authored contract for each stage is its `CONTEXT.md` (see AGENTS.md §4a and
-CONTEXT_MANIFEST.md). This test fails when the two drift apart: a check wired
+authored contract for each stage is its `CONTEXT.md` (see AGENTS.md §4a).
+This test fails when the two drift apart: a check wired
 into `advance.py` that the stage contract never names, a stage with no
 contract file, a missing script, or a gate/label mismatch.
 """

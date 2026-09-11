@@ -36,8 +36,7 @@ edits. Known historical deviations, preserved for illustration only:
   plus step-definition skeleton and Cucumber runner. The canonical
   `java-legible` profile implements its outer loop as a direct
   `LoginFlowTest` with no Cucumber glue, so `advance.py` reports the
-  step-definition checks as `skip` (the Cucumber glue lives only in the
-  legacy `java-micronaut-jena` profile).
+  step-definition checks as `skip`.
 - `04d`/`04e` carry migration-placeholder derivation files whose table
   format and test-class names predate the current
   `test-intent-derivation-map` contract; `verify_concept_test_derivation.py`
@@ -107,7 +106,7 @@ to navigate the feature:
 - [`../../methodology/architecture/MENTAL_MODEL.md`](../../methodology/architecture/MENTAL_MODEL.md) — OO ↔ WYSIWID intuition; useful before reading the concept specs.
 - [`../../methodology/architecture/SYNC_PATTERNS.md`](../../methodology/architecture/SYNC_PATTERNS.md) — the four legal `where` patterns; needed for `WhenSessionGrantGrantedThenWebRespondForLogin`'s Pattern B `where:` clause and for reading the 03a cards.
 - [`_config/voice.md`](_config/voice.md) — feature-scoped reference for the tone of the no-enumerating error message.
-- [`../../reference-impl/java-micronaut-jena/`](../../reference-impl/java-micronaut-jena/) — minimal Java stubs honouring R1–R5 (ArchUnit-checked).
+- [`../../reference-impl/java-legible/`](../../reference-impl/java-legible/) — the canonical Java profile realizing this feature, honouring R1–R5 (ArchUnit-checked).
 
 ## Status
 

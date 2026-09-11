@@ -22,8 +22,8 @@ class IterativeChangeCouplingTests(unittest.TestCase):
             "@@ -3,6 +3,6 @@\n"
             "-import com.example.app.engine.ActionLog;\n"
             "-import com.example.app.engine.ConceptAgent;\n"
-            "+import dev.clad.engine.ActionLog;\n"
-            "+import dev.clad.engine.ConceptAgent;\n"
+            "+import dev.legible.engine.ActionLog;\n"
+            "+import dev.legible.engine.ConceptAgent;\n"
         )
         self.assertTrue(coupling.is_import_or_package_only_diff(diff))
 
@@ -33,7 +33,7 @@ class IterativeChangeCouplingTests(unittest.TestCase):
             "+++ b/FlowManager.java\n"
             "@@ -1 +1 @@\n"
             "-package com.example.app.engine;\n"
-            "+package dev.clad.engine;\n"
+            "+package dev.legible.engine;\n"
         )
         self.assertTrue(coupling.is_import_or_package_only_diff(diff))
 
@@ -53,7 +53,7 @@ class IterativeChangeCouplingTests(unittest.TestCase):
             "+++ b/UserConcept.java\n"
             "@@ -3,7 +3,7 @@\n"
             "-import com.example.app.engine.ConceptAgent;\n"
-            "+import dev.clad.engine.ConceptAgent;\n"
+            "+import dev.legible.engine.ConceptAgent;\n"
             " \n"
             "     private void doRegister(ActionRecord inv) {\n"
             "-        String u = inv.binding(\"username\");\n"

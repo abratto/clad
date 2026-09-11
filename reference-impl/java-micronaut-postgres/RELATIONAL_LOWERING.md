@@ -1,8 +1,8 @@
 # Relational lowering — Stage 03b data model → Postgres schema
 
 The deterministic contract for mapping an approved Stage 03b conceptual data
-model into this profile's relational schema. This is the relational analog of
-`SYNC_LOWERING.md` (which does the same job for syncs → SPARQL).
+model into this profile's relational schema. Sync lowering is handled by the declarative `SyncRule` model shared with
+the canonical profile.
 
 ## Source of truth
 

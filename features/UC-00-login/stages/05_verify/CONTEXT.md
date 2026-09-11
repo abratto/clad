@@ -7,25 +7,11 @@
 
 # Stage 05 — Verify and close
 
-## Pre-condition (agent must verify before starting)
+## Pre-condition
 
-Run the following **before** writing any verify artefacts:
-
-```
-python3 ../../../../quality-gate/verify_stage_sequence.py \
-  --feature ../.. \
-  --through 04e-green
-```
-
-Additionally, the full test suite must pass (`mvn test`).
-If either check fails, stop — do not proceed to verification
-until all upstream stages are complete and tests pass.
-
-This stage has two parts. **Verify** is the back-trace from runtime
-flow tokens to the use case (this is what Stage 05 has always been).
-**Close** is the deliberate hand-off — smoke the running instance,
-update tracking, leave a resume-point — that prevents the feature
-from going "done" implicitly the moment the PR merges.
+`advance.py` enforces stage order and upstream gate approval before this
+stage runs — see `STAGES.md` §"Stage lifecycle (standard)". Do not start
+until it has printed this stage as `NEXT STAGE`.
 
 ## Why this stage exists
 
@@ -52,7 +38,6 @@ that the deployable thing actually runs (Part 2, smoke). Without it,
 | Skill: `clad-verification` | 3 | Verification reference (see skills/ directory) |
 | `../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics |
 | `../../../../reference-impl/java-legible/README.md` (default profile) | 3 | Runtime evidence surface for the canonical fire-after-commit profile (`DebugApi`, archived flow records) |
-| `../../../../reference-impl/java-micronaut-jena/README.md` (legacy profile only) | 3 | Legacy `/api/dev/*` HTTP debug endpoints |
 | `../../../../methodology/overlays/TRACKING.md` | 3 | Optional — only if the TRACKING overlay is in use |
 
 ## Process

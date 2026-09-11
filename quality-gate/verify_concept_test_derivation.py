@@ -29,139 +29,17 @@ import os
 import re
 import sys
 
+import artifact_parsers as ap
+
 
 def parse_spec_outcomes(spec_dir):
-    """
-    Parse SPEC files. Return dict:
-      {(concept, action): set_of_outcomes}
-    """
-    result = {}
-    if not os.path.isdir(spec_dir):
-        return result
-
-    for fname in sorted(os.listdir(spec_dir)):
-        if not fname.endswith(".spec.md"):
-            continue
-        concept = fname.replace(".spec.md", "")
-        path = os.path.join(spec_dir, fname)
-        with open(path) as f:
-            content = f.read()
-
-        lines = content.split("\n")
-        current_action = None
-
-        for line in lines:
-            # Detect action section: ### `actionName(...)`
-            m_action = re.match(r"^###\s+`(\w+)\(", line.strip())
-            if m_action:
-                current_action = m_action.group(1)
-                result.setdefault((concept, current_action), set())
-                continue
-
-            if current_action is None:
-                continue
-
-            # Match: - **Outcomes (enum):** `OK`, `BAD_PASSWORD`, `LOCKED`
-            m_out = re.match(r"^- \*\*Outcomes.*?:\*\*\s+(.+)$", line.strip())
-            if m_out:
-                outcomes_str = m_out.group(1)
-                outcomes = re.findall(r"`([^`]+)`", outcomes_str)
-                result[(concept, current_action)] = set(outcomes)
-                current_action = None
-
-    return result
+    """Shared SPEC-outcome parser (artifact_parsers)."""
+    return ap.parse_spec_outcomes(spec_dir)
 
 
 def parse_derivation(derivation_path):
-    """
-    Parse concept-test-derivation.md. Return:
-      - derivations: list of (test_class, test_method, outcome, concept, action)
-      - handoff_bundle: dict of handoff items
-    Handles two table formats:
-      Format A (template): `### Concept.action → test class: TestClass` heading
-          with columns: | # | Test method | Outcome | Source | Preconditions | Arrange |
-      Format B (compact): `## Concept.action(args) -> Result` heading
-          with columns: | # | Outcome | Test class | Test method | Flow-test source |
-    """
-    derivations = []
-    current_concept = None
-    current_action = None
-    current_test_class = None
-    table_format = None  # 'a' or 'b'
-    format_a_has_nested = False
-
-    with open(derivation_path) as f:
-        lines = f.readlines()
-
-    for line in lines:
-        # Format A header: | # | @Nested | Test method | Outcome | ...
-        #                or | # | Test method | Outcome | ...
-        if "Test method" in line and "Outcome" in line:
-            format_a_has_nested = "@Nested" in line
-        # Detect Format A heading:
-        # ### `Copy.checkAvailable` → test class: `CopyConceptTest`
-        m_a = re.match(
-            r"^###\s+`(\w+)\.(\w+)`\s*.*?→\s*test\s+class:\s*`(\w+)`",
-            line.strip()
-        )
-        if m_a:
-            current_concept = m_a.group(1)
-            current_action = m_a.group(2)
-            current_test_class = m_a.group(3)
-            table_format = 'a'
-            continue
-
-        # Detect Format B heading:
-        # ## Title.create(name) -> CreateResult
-        m_b = re.match(
-            r"^##\s+(\w+)\.(\w+)\(.*?\).*?->",
-            line.strip()
-        )
-        if m_b:
-            current_concept = m_b.group(1)
-            current_action = m_b.group(2)
-            current_test_class = None
-            table_format = 'b'
-            continue
-
-        if current_concept is None or current_action is None:
-            continue
-
-        # Detect table row: | 1 | ...
-        m_row = re.match(r"^\|\s*\d+\s*\|", line.strip())
-        if not m_row:
-            continue
-
-        cols = [c.strip() for c in line.strip().split("|")]
-        # Remove empty first/last from split
-        cols = [c for c in cols if c]
-
-        if table_format == 'a':
-            # Template: | # | @Nested | Test method | Outcome | Source | ...
-            # Legacy:   | # | Test method | Outcome | Source | Preconditions |
-            if format_a_has_nested:
-                if len(cols) >= 5:
-                    test_method = cols[2].strip("`").rstrip("()")
-                    outcome = cols[3].strip("`")
-                    derivations.append((current_test_class, test_method,
-                                        outcome, current_concept,
-                                        current_action))
-            elif len(cols) >= 4:
-                test_method = cols[1].strip("`").rstrip("()")
-                outcome = cols[2].strip("`")
-                derivations.append((current_test_class, test_method,
-                                    outcome, current_concept, current_action))
-
-        elif table_format == 'b':
-            # | # | Outcome | Test class | Test method | Flow-test source |
-            if len(cols) >= 4:
-                outcome = cols[1].strip("`")
-                tc = cols[2].strip("`")
-                test_method = cols[3].strip("`").rstrip("()")
-                derivations.append((tc, test_method, outcome,
-                                    current_concept, current_action))
-
-    return derivations
+    """Shared derivation-map parser (artifact_parsers)."""
+    return ap.parse_derivation_map(derivation_path)
 
 
 def find_java_test_class(test_source_root, test_class):

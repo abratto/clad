@@ -1,18 +1,10 @@
 # Stage 04d-green — Concept Implementation (green)
 
-## Pre-condition (agent must verify before starting)
+## Pre-condition
 
-Run the following **before** writing any implementation code:
-
-```
-python3 ../../../../../../quality-gate/verify_stage_sequence.py \
-   --feature ../../../../ \
-   --through 04d-red
-```
-
-If this script exits with a non-zero status, stop immediately.
-Stage 04d-red concept test derivation is missing — do not implement
-before tests are derived.
+`advance.py` enforces stage order and upstream gate approval before this
+stage runs — see `STAGES.md` §"Stage lifecycle (standard)". Do not start
+until it has printed this stage as `NEXT STAGE`.
 
 ## Why this stage exists
 
@@ -40,7 +32,6 @@ upstream prose, but it may not redesign approved tests.
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5, R8, R9, R14, R16 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
 | `../../../../../../reference-impl/java-legible/README.md` and `../../../../../../reference-impl/legible-engine/README.md` (default profile) | 3 | Profile conventions for the canonical fire-after-commit profile |
-| `../../../../../../reference-impl/java-micronaut-jena/README.md`, `CODE_STYLE.md`, `CANONICAL_EXEMPLAR.md`, `SYNC_LOWERING.md` (legacy profile only) | 3 | Legacy RDF/SPARQL profile: ConceptAgent/SyncAgent lowering patterns. Do NOT follow when targeting java-legible |
 
 ## Process
 
@@ -59,8 +50,7 @@ upstream prose, but it may not redesign approved tests.
    state lives in its own `Region` and whose actions are map→map (see
    `legible-engine/README.md`); the exemplar (`dev/legible/example/login`)
    is a realization pattern only and must not override the feature's
-   approved artefacts. The `java-micronaut-jena` profile is legacy: consult
-   its docs only when that profile was explicitly selected in Stage 04a.
+   approved artefacts.
 5. Place concept code where the feature's `_config/package-and-layout.md`
    directs. Some profiles bucket concepts under
    `<APP_PACKAGE_ROOT>.concepts.<name>`; the canonical `java-legible` profile

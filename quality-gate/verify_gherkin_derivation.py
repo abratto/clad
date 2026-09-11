@@ -29,43 +29,17 @@ import os
 import re
 import sys
 
+import artifact_parsers as ap
+
 
 def parse_usecase_scenarios(path):
-    """Return set of scenario names from ### Scenario: headings in usecase.md."""
-    names = set()
-    with open(path) as f:
-        for line in f:
-            m = re.match(r"^### Scenario:\s+(.+)$", line.strip())
-            if m:
-                names.add(m.group(1).strip())
-    return names
+    """Shared use-case scenario parser (artifact_parsers)."""
+    return ap.parse_scenario_names(path)
 
 
 def parse_feature_scenarios(path):
-    """Return dict of scenario name -> list of lines for each Scenario or Scenario Outline."""
-    scenarios = {}
-    current_name = None
-    current_lines = []
-    in_outline = False
-
-    with open(path) as f:
-        lines = f.readlines()
-
-    for line in lines:
-        m_scenario = re.match(r"^\s*(?:Scenario|Scenario\s+Outline):\s+(.+)$", line.strip())
-        if m_scenario:
-            if current_name:
-                scenarios[current_name] = current_lines
-            current_name = m_scenario.group(1).strip()
-            current_lines = [line]
-            in_outline = "Outline" in line
-        elif current_name:
-            current_lines.append(line)
-
-    if current_name:
-        scenarios[current_name] = current_lines
-
-    return scenarios, in_outline
+    """Shared Gherkin feature parser (artifact_parsers)."""
+    return ap.parse_feature_scenarios(path)
 
 
 def parse_sync_status_codes(sync_dir):

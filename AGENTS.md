@@ -35,9 +35,9 @@ read these files directly instead: `AGENTS.md` §1–3, `CONTEXT.md`,
    stop and refresh the feature-local contract before continuing that
    stage. Do not keep executing a stale copied contract once the drift is
    visible.
-   The per-stage file manifest lives in
-   [`methodology/implementation/CONTEXT_MANIFEST.md`](methodology/implementation/CONTEXT_MANIFEST.md)
-   — use it to confirm you are loading the right files, nothing more.
+   Each stage's `Inputs`/`Outputs`/`Verify` sections are the authoritative
+   file manifest — load exactly the files they name, nothing more. The
+   machine-readable projection is `quality-gate/describe_feature.py`.
 2. **Write to `output/` and stop at the gate.** Every stage ends with a
     review gate. After you write the stage's outputs, summarise what you
     produced and **wait** for the human to inspect/edit before moving on.
@@ -322,7 +322,6 @@ Full pointers:
 
 - Methodology reading order: [`methodology/README.md`](methodology/README.md)
 - Stage map + gates: [`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)
-- Per-stage file manifest: [`methodology/implementation/CONTEXT_MANIFEST.md`](methodology/implementation/CONTEXT_MANIFEST.md)
 - Hard rules: [`methodology/implementation/RULES.md`](methodology/implementation/RULES.md)
 - Artefact dependency graph: [`methodology/architecture/ARTEFACT_MAP.md`](methodology/architecture/ARTEFACT_MAP.md)
 - Artefact-to-code traceability: [`methodology/architecture/TRACEABILITY.md`](methodology/architecture/TRACEABILITY.md)

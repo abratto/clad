@@ -1,31 +1,10 @@
 # Stage 04d — Concept TDD (router)
 
-## Pre-condition (agent must verify before starting)
+## Pre-condition
 
-Run the following **before** writing any artefacts for this stage:
-
-```
-python3 ../../../../../quality-gate/verify_gate_approval.py \
-  --feature ../../../ \
-  --required-gates 3
-```
-
-If this script exits with a non-zero status, stop immediately.
-Gate 3 has not been approved — do not proceed.
-
-**Additionally:** `../04c_flow-tests/output/` must be non-empty.
-If it is empty, stop and tell the human that Stage 04c flow tests
-have not been produced.
-
-Run the iterative-change readiness check before writing any artefacts:
-
-```
-python3 ../../../../../quality-gate/verify_iterative_change_readiness.py \
-  --feature ../../../
-```
-
-If this reports an iterative concept/sync change with no valid `_changes/`
-artefact, stop and complete the artefact-impact matrix first.
+`advance.py` enforces stage order and upstream gate approval before this
+stage runs — see `STAGES.md` §"Stage lifecycle (standard)". Do not start
+until it has printed this stage as `NEXT STAGE`.
 
 ## Why this stage exists
 
@@ -57,7 +36,6 @@ tests. One concept, one test fixture, no other concepts in scope (R1).
 | `../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings inherited by child stages |
 | `../../../../../methodology/implementation/TDD.md` | 3 | London School structural handoff rules |
 | `../../../../../reference-impl/legible-engine/README.md` (default profile) | 3 | Canonical engine contract (`Concept`, `SyncRule`, `Region`) |
-| `../../../../../reference-impl/java-micronaut-jena/SYNC_LOWERING.md` (legacy profile only) | 3 | Legacy SPARQL lowering (SELECT, UPDATE, writeCompletion). Do NOT follow when targeting java-legible |
 
 ## Process
 

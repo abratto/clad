@@ -4,9 +4,9 @@
 > package `dev.legible.engine`) is the canonical runtime. It realises the
 > Meng & Jackson synchronization semantics directly — no transactions, no
 > RDF/SPARQL substrate. The older transactional-predicate engine
-> (`reference-impl/clad-engine/`, `dev.clad.engine`) remains as the Jena/
-> Postgres profiles are re-lowered; see the maintenance record
-> `maintenance/fire-after-commit-engine.md`.
+> (`dev.clad.engine`) was retired along with its Jena/RDF profile; the last
+> version that contains it is tag `v0.4.0` (see
+> `reference-impl/LEGACY.md` and `maintenance/fire-after-commit-engine.md`).
 
 ## What the engine does
 

@@ -11,10 +11,10 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Replicates the methodology of the Jena profile's {@code ConcurrencyTest}
- * (reference-impl/java-micronaut-jena/.../flows/ConcurrencyTest.java) against the
- * canonical engine: same concurrency levels, same requests-per-thread, unique
- * user per request, same metrics (mean/p50/p95/p99/req-s/errors).
+ * Replicates the methodology of the retired Jena profile's {@code ConcurrencyTest}
+ * (last available at tag {@code v0.4.0}) against the canonical engine: same
+ * concurrency levels, same requests-per-thread, unique user per request, same
+ * metrics (mean/p50/p95/p99/req-s/errors).
  */
 public final class ConcurrencyBench {
 

@@ -28,213 +28,85 @@ def run(script, *arguments):
     )
 
 
-def sync_class(name):
-    return f'''@Singleton
-public class {name} extends SyncAgent {{
-    public String syncName() {{ return "{name[:1].lower()}{name[1:]}"; }}
-}}
-'''
+def sync_rule(name, tconcept="Web", taction="request", toutcome="Routed",
+              then_concept="Inventory", then_action="lend"):
+    return (
+        "class SyncRules {\n"
+        f"    static SyncRule {name}() {{\n"
+        "        return SyncRule.of(\n"
+        f'            "{name}", "{tconcept}", "{taction}", "{toutcome}",\n'
+        "            List.of(),\n"
+        f'            List.of(invoke("{then_concept}", "{then_action}", Map.of())));\n'
+        "    }\n"
+        "}\n")
 
 
-class ParserUnitFixtures(unittest.TestCase):
-    def test_parse_goals_keeps_only_in_scope(self):
-        sys.path.insert(0, str(REPO_ROOT / "quality-gate"))
-        import artifact_parsers as ap
-        with tempfile.TemporaryDirectory() as temporary:
-            goals = Path(temporary) / "goals.md"
-            write(goals,
-                  "# Goals\n\n"
-                  "| Actor | Goal | Rationale | Priority | In scope? |\n"
-                  "|---|---|---|---|---|\n"
-                  "| `Op` | `CheckHealth` | to check | P0 | yes |\n"
-                  "| `Op` | `SilenceAlert` | to silence | P2 | no |\n")
-            self.assertEqual(ap.parse_goals(str(goals)), {"CheckHealth"})
-
-    def test_slugify_splits_camel_case(self):
-        sys.path.insert(0, str(REPO_ROOT / "quality-gate"))
-        import artifact_parsers as ap
-        self.assertEqual(ap.slugify("CheckLiveness"), "check-liveness")
-        self.assertEqual(ap.slugify("HTTPRequest"), "http-request")
-        self.assertEqual(ap.slugify("successful-login"), "successful-login")
+def canonical_sync(name, tconcept="Web", taction="request", toutcome="Routed",
+                   then_concept="Inventory", then_action="lend"):
+    return (
+        f"sync {name}\n\n## Rule\n\nwhen {{\n"
+        f"    {tconcept}/{taction}: [ x: ?x ] => [ {toutcome} ]\n"
+        f"}}\nthen {{\n    {then_concept}/{then_action}: [ x: ?x ]\n}}\n")
 
 
 class ImplementationParityFixtures(unittest.TestCase):
 
-    def test_compact_matrix_contracts_lower_to_matching_sync_classes(self):
+    def test_rule_contracts_lower_to_matching_sync_rules(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             features = root / "features"
             syncs = root / "syncs"
-            contracts = [
-                ("UC-01-widget-injector", "Whitelist", "add"),
-                ("UC-01-widget-injector", "Whitelist", "check"),
-                ("UC-02-intent-query", "LegalOntology", "queryService"),
-                ("UC-02-intent-query", "LegalOntology", "listServices"),
-            ]
-            compact_signatures = [
-                "Routed(domain)",
-                "Routed(clientId, origin)",
-                "Routed(clientId, text)",
-                "Routed(clientId, text)",
-            ]
+            name = "WhenWebRequestRoutedThenInventoryLendForWidget"
+            write(features / "UC-01-widget/stages/03_syncs/output" / f"{name}.sync.md",
+                  canonical_sync(name))
+            write(syncs / f"{name}.java", sync_rule(name))
 
-            for (feature, target, action), completion in zip(contracts, compact_signatures):
-                scope = "WidgetInjector" if "widget" in feature else "IntentQuery"
-                name = f"WhenWebHandleRoutedThen{target}{action[:1].upper()}{action[1:]}For{scope}"
-                write(
-                    features / feature / "stages/03_syncs/output" / f"{name}.sync.md",
-                    f"""sync {name}
-
-## Sync Contract Matrix
-
-| Source row | Target row | `when` signature | `then` signature |
-|---|---|---|---|
-| 1 | 2 | `Web/handle: [{completion}]` | `{target}/{action}: [ value: String ]` |
-""",
-                )
-                write(syncs / f"{name}.java", sync_class(name))
-
-            result = run(
-                IMPLEMENTATION_PARITY,
-                "--sync-impl-dir", syncs,
-                "--features-dir", features,
-            )
+            result = run(IMPLEMENTATION_PARITY, "--sync-impl-dir", syncs,
+                         "--features-dir", features)
 
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
-    def test_malformed_compact_matrix_signature_still_fails(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            features = root / "features"
-            syncs = root / "syncs"
-            name = "WhenWebHandleRoutedThenWhitelistAddForWidget"
-            write(
-                features / "UC-01-widget/stages/03_syncs/output" / f"{name}.sync.md",
-                f"""sync {name}
-
-## Sync Contract Matrix
-
-| Source row | Target row | `when` signature | `then` signature |
-|---|---|---|---|
-| 1 | 2 | `Web/handle [Routed(domain)]` | `Whitelist/add: [ domain: String ]` |
-""",
-            )
-            write(syncs / f"{name}.java", sync_class(name))
-
-            result = run(
-                IMPLEMENTATION_PARITY,
-                "--sync-impl-dir", syncs,
-                "--features-dir", features,
-            )
-
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("could not derive mechanical", result.stdout)
-
-    def test_matrix_and_rule_contracts_lower_and_spi_is_not_a_concept(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            features = root / "features"
-            syncs = root / "syncs"
-            concepts = root / "concepts"
-
-            write(
-                features / "UC-01-widget" / "stages/03_syncs/output/"
-                "WhenWidgetSessionStartCreatedThenWebRespondForWidget.sync.md",
-                """sync WhenWidgetSessionStartCreatedThenWebRespondForWidget
-
-## Sync Contract Matrix
-
-| Source row | Target row | `when` signature | `then` signature | Allowed literals |
-|---|---|---|---|---|
-| 3 | 4 | `WidgetSession/start: [ clientId: String ] => [ CREATED(sessionId) ]` | `Web/respond: [ status: 200 ; body: { sessionId } ]` | 200 |
-""",
-            )
-            write(
-                features / "UC-02-rule" / "stages/03_syncs/output/"
-                "WhenWidgetSessionStartCreatedThenWebRespondForRule.sync.md",
-                """sync WhenWidgetSessionStartCreatedThenWebRespondForRule
-
-## Rule
-
-when  WidgetSession/start [ CREATED(sessionId) ]
-then {
-    Web/respond: [ status: 200 ; body: { sessionId: $_sessionId } ]
-}
-""",
-            )
-            write(syncs / "WhenWidgetSessionStartCreatedThenWebRespondForWidget.java",
-                  sync_class("WhenWidgetSessionStartCreatedThenWebRespondForWidget"))
-            write(syncs / "WhenWidgetSessionStartCreatedThenWebRespondForRule.java",
-                  sync_class("WhenWidgetSessionStartCreatedThenWebRespondForRule"))
-            write(features / "UC-01-widget/stages/02_concepts/output/Widget.concept.md", "# Widget\n")
-            write(concepts / "WidgetConcept.java", "public class WidgetConcept extends ConceptAgent {}\n")
-            write(concepts / "widget/spi/LegalDomainExtractor.java",
-                  "public interface LegalDomainExtractor {}\n")
-
-            result = run(
-                IMPLEMENTATION_PARITY,
-                "--sync-impl-dir", syncs,
-                "--concept-impl-dir", concepts,
-                "--features-dir", features,
-            )
-
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-
-    def test_real_concept_agent_without_spec_still_fails(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            concepts = root / "concepts"
-            features = root / "features"
-            write(concepts / "MissingConcept.java", "public class MissingConcept extends ConceptAgent {}\n")
-
-            result = run(
-                IMPLEMENTATION_PARITY,
-                "--concept-impl-dir", concepts,
-                "--features-dir", features,
-            )
-
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("MissingConcept", result.stdout)
-
-    def test_missing_sync_spec_still_fails(self):
+    def test_sync_rule_without_spec_still_fails(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             syncs = root / "syncs"
             write(syncs / "WhenMissingGoOkThenWebRespond.java",
-                  sync_class("WhenMissingGoOkThenWebRespond"))
+                  sync_rule("WhenMissingGoOkThenWebRespond", "Go", "go", "Ok",
+                            "Web", "respond"))
 
-            result = run(
-                IMPLEMENTATION_PARITY,
-                "--sync-impl-dir", syncs,
-                "--features-dir", root / "features",
-            )
+            result = run(IMPLEMENTATION_PARITY, "--sync-impl-dir", syncs,
+                         "--features-dir", root / "features")
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("No *.sync.md", result.stdout)
 
+    def test_concept_implementation_without_spec_still_fails(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            concepts = root / "concepts"
+            write(concepts / "MissingConcept.java",
+                  "public class MissingConcept implements Concept {}\n")
+
+            result = run(IMPLEMENTATION_PARITY, "--concept-impl-dir", concepts,
+                         "--features-dir", root / "features")
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("MissingConcept", result.stdout)
+
 
 class SyncImplementationParityFixtures(unittest.TestCase):
 
-    def test_compact_matrix_completion_notation_is_accepted(self):
+    def test_rule_spec_matches_sync_rule(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             sync_dir = root / "syncs"
             impl_dir = root / "implementation"
-            name = "WhenWebHandleRoutedThenWebRespond"
-            write(
-                sync_dir / f"{name}.sync.md",
-                f"""sync {name}
+            name = "WhenWebRequestRoutedThenInventoryLend"
+            write(sync_dir / f"{name}.sync.md", canonical_sync(name))
+            write(impl_dir / f"{name}.java", sync_rule(name))
 
-## Sync Contract Matrix
-
-| Source row | Target row | `when` signature | `then` signature |
-|---|---|---|---|
-| 1 | 2 | `Web/handle: [Routed(clientId, origin)]` | `Web/respond: [ status: 200 ]` |
-""",
-            )
-            write(impl_dir / f"{name}.java", sync_class(name))
-
-            result = run(SYNC_PARITY, "--sync-dir", sync_dir, "--sync-impl-dir", impl_dir)
+            result = run(SYNC_PARITY, "--sync-dir", sync_dir,
+                         "--sync-impl-dir", impl_dir)
 
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 

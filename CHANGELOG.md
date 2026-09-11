@@ -10,6 +10,44 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [Unreleased]
+
+Simplification and legacy retirement (maintenance change
+`maintenance/clad-simplification-and-legacy-retirement.md`).
+
+### Removed
+
+- **The legacy transactional/RDF stack is retired.** `reference-impl/clad-engine/`
+  (`dev.clad.engine`) and `reference-impl/java-micronaut-jena/` are deleted;
+  they are no longer modules, built, or checked. The last version containing
+  them is tag `v0.4.0` — see `reference-impl/LEGACY.md`. The legacy
+  `SyncTrigger`/SPARQL branches were removed from `verify_sync_route_filters`,
+  `verify_sync_implementation_parity`, `verify_implementation_parity`,
+  `verify_action_log_isolation`, and `verify_sync_declarative`; those checks
+  now target the canonical `SyncRule`/`FactStore` shapes only.
+- `quality-gate/verify_sync_variable_names.py` (retired rule R10; unreferenced).
+- `methodology/implementation/CONTEXT_MANIFEST.md` — its per-stage
+  Inputs/Outputs/Verify now live only in each stage `CONTEXT.md`; the machine
+  projection is `quality-gate/describe_feature.py`.
+
+### Changed
+
+- **One artefact grammar.** `artifact_parsers` gains `parse_derivation_map`
+  and `parse_feature_scenarios`; `verify_concept_test_derivation`,
+  `verify_gherkin_derivation`, `verify_sync_implementation_parity`, and
+  `verify_implementation_parity` now parse through the shared layer instead of
+  hand-rolled regex/table parsers.
+- **Centralised stage lifecycle.** `STAGES.md` §"Stage lifecycle (standard)"
+  holds the standard pre-condition/gate/next-stage conventions; the redundant
+  per-stage pre-condition command blocks were removed from the template
+  contracts (the `advance.py` guard enforces them).
+- Stage 04d/04e/05 contracts no longer reference the retired profile.
+- CI already targets the canonical `java-legible` module; docs referencing the
+  legacy profile were updated across `README.md`, `CONTEXT.md`,
+  `SECURITY.md`, `reference-impl/README.md`, `ENGINE.md`, `ARTEFACT_MAP.md`,
+  `GHERKIN_INTEGRATION.md`, `SYNCHRONIZATIONS.md`, `QUALITY_GATE.md`,
+  `RULES.md`, the postgres profile docs, and the TDD skills.
+
 ## [0.4.0] — 2026-09-11
 
 The "contract-fidelity" release: the workflow definitions and the checks that

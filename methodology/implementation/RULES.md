@@ -205,9 +205,7 @@ file under:
 - `features/UC-*/stages/02_concepts/output/` (concept specs)
 - `features/UC-*/stages/03_syncs/output/` (sync specs)
 - any profile's implementation source for concepts or syncs
-  (e.g. `reference-impl/java-legible/src/main/java/dev/legible/example/.../`
-  (canonical profile), or `reference-impl/java-micronaut-jena/src/.../{concepts,syncs}/`
-  (legacy profile))
+  (e.g. `reference-impl/java-legible/src/main/java/dev/legible/example/.../`)
 
 the agent MUST:
 

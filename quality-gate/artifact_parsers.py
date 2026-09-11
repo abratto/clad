@@ -494,6 +494,91 @@ def parse_spec_outcomes(spec_dir: str) -> Dict[Tuple[str, str], Set[str]]:
 # Use case (Stage 01) and goals (Stage 00)
 # --------------------------------------------------------------------------
 
+def parse_derivation_map(path: str) -> List[Tuple[str, str, str, str, str]]:
+    """Parse a Stage 04d/04e derivation map.
+
+    Returns a list of `(test_class, test_method, outcome, concept, action)`,
+    accepting both the template Format A
+    (`### Concept.action -> test class: Class` + `| # | @Nested | Test method |
+    Outcome | ... |`) and its legacy no-`@Nested` header, plus Format B
+    (`## Concept.action(...) -> Result`). Single source of truth for the
+    grammar shared by `verify_concept_test_derivation` and the generators.
+    """
+    derivations: List[Tuple[str, str, str, str, str]] = []
+    current_concept = None
+    current_action = None
+    current_test_class = None
+    table_format = None
+    format_a_has_nested = False
+    with open(path) as handle:
+        lines = handle.readlines()
+    for line in lines:
+        if "Test method" in line and "Outcome" in line:
+            format_a_has_nested = "@Nested" in line
+        m_a = re.match(
+            r"^###\s+`(\w+)\.(\w+)`\s*.*?→\s*test\s+class:\s*`(\w+)`",
+            line.strip())
+        if m_a:
+            current_concept, current_action, current_test_class = m_a.groups()
+            table_format = 'a'
+            continue
+        m_b = re.match(r"^##\s+(\w+)\.(\w+)\(.*?\).*?->", line.strip())
+        if m_b:
+            current_concept, current_action = m_b.groups()
+            current_test_class = None
+            table_format = 'b'
+            continue
+        if current_concept is None or current_action is None:
+            continue
+        if not re.match(r"^\|\s*\d+\s*\|", line.strip()):
+            continue
+        cols = [c.strip() for c in line.strip().split("|")]
+        cols = [c for c in cols if c]
+        if table_format == 'a':
+            if format_a_has_nested and len(cols) >= 5:
+                derivations.append((
+                    current_test_class, cols[2].strip("`").rstrip("()"),
+                    cols[3].strip("`"), current_concept, current_action))
+            elif not format_a_has_nested and len(cols) >= 4:
+                derivations.append((
+                    current_test_class, cols[1].strip("`").rstrip("()"),
+                    cols[2].strip("`"), current_concept, current_action))
+        elif table_format == 'b' and len(cols) >= 4:
+            derivations.append((
+                cols[2].strip("`"), cols[3].strip("`").rstrip("()"),
+                cols[1].strip("`"), current_concept, current_action))
+    return derivations
+
+
+def parse_feature_scenarios(path: str):
+    """Return `(scenarios, in_outline)` for a Gherkin `.feature` file.
+
+    `scenarios` maps Scenario/Scenario Outline name -> its raw lines.
+    `in_outline` is the last-seen scenario's outline flag (kept for the
+    existing `verify_gherkin_derivation` behavior).
+    """
+    scenarios = {}
+    current_name = None
+    current_lines = []
+    in_outline = False
+    with open(path) as handle:
+        lines = handle.readlines()
+    for line in lines:
+        m_scenario = re.match(
+            r"^\s*(?:Scenario|Scenario\s+Outline):\s+(.+)$", line.strip())
+        if m_scenario:
+            if current_name:
+                scenarios[current_name] = current_lines
+            current_name = m_scenario.group(1).strip()
+            current_lines = [line]
+            in_outline = "Outline" in line
+        elif current_name:
+            current_lines.append(line)
+    if current_name:
+        scenarios[current_name] = current_lines
+    return scenarios, in_outline
+
+
 def parse_scenario_names(usecase_path: str) -> Set[str]:
     names: Set[str] = set()
     with open(usecase_path) as f:

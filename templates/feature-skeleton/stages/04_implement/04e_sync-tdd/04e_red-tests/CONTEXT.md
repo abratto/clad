@@ -1,18 +1,10 @@
 # Stage 04e-red — Sync Test Derivation (red)
 
-## Pre-condition (agent must verify before starting)
+## Pre-condition
 
-Run the following **before** writing any sync test artefacts:
-
-```
-python3 ../../../../../../quality-gate/verify_stage_sequence.py \
-  --feature ../../../../ \
-  --through 04d-green
-```
-
-Additionally, concept tests must be green (`mvn test` passes).
-If either check fails, stop — concept implementation must be
-complete before sync tests can be derived.
+`advance.py` enforces stage order and upstream gate approval before this
+stage runs — see `STAGES.md` §"Stage lifecycle (standard)". Do not start
+until it has printed this stage as `NEXT STAGE`.
 
 ## Why this stage exists
 
@@ -42,7 +34,6 @@ no sync implementation belongs here.
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rule R3 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School handoff semantics |
 | `../../../../../../reference-impl/java-legible/README.md` and `../../../../../../reference-impl/legible-engine/README.md` (default profile) | 3 | Profile conventions for the canonical fire-after-commit profile |
-| `../../../../../../reference-impl/java-micronaut-jena/{README.md,CODE_STYLE.md,SYNC_LOWERING.md}` (legacy profile only) | 3 | Legacy RDF/SPARQL lowering contract. Do NOT follow when targeting java-legible |
 
 ## Process
 

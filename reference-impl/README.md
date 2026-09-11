@@ -35,17 +35,13 @@ the canonical runtime is the **fire-after-commit engine**:
   engine is storage-agnostic: the same `Concept`/`SyncRule` code runs on
   in-memory, Jena, and Postgres with identical outcomes.
 
-## Legacy transactional engine
+## Retired: legacy transactional engine
 
-The original transactional-predicate engine remains only for the RDF/SPARQL
-profile, until it too is re-lowered onto the fire-after-commit engine (no
-further maintenance work should target it):
-
-- [`clad-engine/`](clad-engine/) — the legacy RDF/SPARQL coordination
-  engine (`dev.clad.engine`): `ActionLog`, `ConceptAgent`, `SyncAgent`,
-  `SyncDispatcher`, `FlowManager`, `Storage`.
-- [`java-micronaut-jena/`](java-micronaut-jena/) — Java 21 + Micronaut for
-  HTTP, Apache Jena for per-concept RDF graphs (legacy RDF/SPARQL profile).
+The original transactional-predicate/RDF (Jena) stack — the `clad-engine`
+module and the `java-micronaut-jena` profile — was **retired** after the
+`java-micronaut-postgres` re-lowering. It is not built, checked, or
+maintained here. The last version that contains it is tag `v0.4.0`; see
+[`LEGACY.md`](LEGACY.md).
 
 ## Profiles at a glance
 
@@ -54,7 +50,6 @@ further maintenance work should target it):
 | `java-plain` | the smallest complete example / method-call quick start | none (method call) | in-memory `FactStore` |
 | `java-legible` | the full sync-model catalogue (seed features) | none / method call | in-memory `FactStore` |
 | `java-micronaut-postgres` | durable deployable stack (HTTP, SQL, containers, Fly.io) | Micronaut HTTP | Postgres (`RmapPostgresFactStore`) |
-| `java-micronaut-jena` | the legacy transactional showcase (no new work) | Micronaut HTTP | Jena RDF named graphs |
 
 ## Why the engine was re-architected
 

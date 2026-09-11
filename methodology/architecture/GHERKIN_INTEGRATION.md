@@ -247,20 +247,17 @@ values.
 
 ## 7. Worked example: UC-00-login
 
-The reference implementation under
-[`../../reference-impl/java-micronaut-jena/`](../../reference-impl/java-micronaut-jena/)
-contains a complete worked example of the Gherkin track:
+The login `.feature` lives with the feature:
 
 | Artefact | File | Derivation source |
 |---|---|---|
-| `.feature` file | `src/test/resources/features/login.feature` | `features/UC-00-login/stages/01_usecase/output/usecase.md` (scenarios, preconditions, triggers, postconditions) + `stages/03_syncs/output/` (response body literals) |
-| Step definitions | `src/test/java/.../steps/LoginStepDefinitions.java` | `stages/01b_chain-table/output/*-chain.md` (row 1 → `@When`, last row → `@Then`, middle rows → token chain) + `stages/04_implement/04b_spec/output/` (outcome enums) |
-| Cucumber runner | `src/test/java/.../steps/CucumberTest.java` | `@Suite` + `@SelectClasspathResource("features")` |
+| `.feature` file | `features/UC-00-login/stages/04_implement/04c_flow-tests/output/login.feature` | `stages/01_usecase/output/usecase.md` (scenarios, preconditions, triggers, postconditions) + `stages/03_syncs/output/` (response body literals) |
 
-The step definitions use **lazy server initialisation** (no Cucumber
-`@BeforeAll` hook) to avoid Cucumber lifecycle issues. The
-`EmbeddedServer` starts when the first `@Given("the system is running")`
-step executes, via `ensureServerRunning()`.
+The canonical `java-legible` profile runs its outer loop as a **direct JUnit
+flow test** (`LoginFlowTest`) rather than Cucumber step definitions, so it has
+no `steps/` glue — the step-definition checks `SKIP` for that profile. A
+Cucumber-based profile additionally derives a step-definition class from
+`templates/step-definitions.java` and a runner class.
 
 ---
 
@@ -309,5 +306,4 @@ When operating at Stage 04c, follow this checklist:
 | Gherkin template | [`../../templates/feature.feature`](../../templates/feature.feature) | Output template with derivation rules |
 | Step-def skeleton template | [`../../templates/step-definitions.java`](../../templates/step-definitions.java) | Step-def derivation rules |
 | 04c CONTEXT | [`../../templates/feature-skeleton/stages/04_implement/04c_flow-tests/CONTEXT.md`](../../templates/feature-skeleton/stages/04_implement/04c_flow-tests/CONTEXT.md) | Stage process, verify items |
-| Worked example | [`../../reference-impl/java-micronaut-jena/src/test/resources/features/login.feature`](../../reference-impl/java-micronaut-jena/src/test/resources/features/login.feature) | Real `.feature` file |
-| Worked example | [`../../reference-impl/java-micronaut-jena/src/test/java/com/example/app/steps/LoginStepDefinitions.java`](../../reference-impl/java-micronaut-jena/src/test/java/com/example/app/steps/LoginStepDefinitions.java) | Real step-definition class |
+| Worked example | [`../../features/UC-00-login/stages/04_implement/04c_flow-tests/output/login.feature`](../../features/UC-00-login/stages/04_implement/04c_flow-tests/output/login.feature) | Real `.feature` file |

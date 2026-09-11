@@ -7,18 +7,11 @@
 
 # Stage 02 — Concept specs
 
-## Pre-condition (agent must verify before starting)
+## Pre-condition
 
-Run the following **before** writing any artefacts for this stage:
-
-```
-python3 ../../../../quality-gate/verify_gate_approval.py \
-  --feature ../../ \
-  --required-gates 1
-```
-
-If this script exits with a non-zero status, stop immediately.
-Gate 1 has not been approved — do not proceed.
+`advance.py` enforces stage order and upstream gate approval before this
+stage runs — see `STAGES.md` §"Stage lifecycle (standard)". Do not start
+until it has printed this stage as `NEXT STAGE`.
 
 ## Why this stage exists
 

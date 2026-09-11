@@ -14,13 +14,11 @@
   <description>CLAD reference implementations (Java/Micronaut profiles) reactor.</description>
 
   <modules>
-    <module>clad-engine</module>
     <module>legible-engine</module>
     <module>java-plain</module>
     <module>java-legible</module>
     <module>legible-bench</module>
     <module>legible-storage</module>
-    <module>java-micronaut-jena</module>
     <module>java-micronaut-postgres</module>
   </modules>
 

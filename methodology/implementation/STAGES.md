@@ -294,11 +294,35 @@ this precedence order unless the stage contract states otherwise:
 If the needed value is still missing after that order, stop and ask the
 human instead of guessing from examples or `.example` files.
 
+## Stage lifecycle (standard)
+
+Every stage contract follows the same lifecycle; a stage's `CONTEXT.md` states
+only what is specific to that stage.
+
+- **Enter via `advance.py`.** The prior stage (or the human at a gate) ends by
+  running `./clad advance`, which runs the upstream sequence/gate guard and
+  prints this stage as `NEXT STAGE`. Do not open a stage `advance` has not
+  named.
+- **The pre-condition is enforced, not prose.** The stage-order and
+  gate-approval checks that used to appear as a per-stage pre-condition
+  command (`verify_gate_approval.py` / `verify_stage_sequence.py`) are run by
+  `advance.py`'s guard; you do not run them by hand.
+- **Auto-advance** stages move on once their deterministic checks pass.
+  **Gate** stages make `advance.py` stop (exit `10`) and present the artefact
+  summary; the human approves with `./clad approve <N>`, then `./clad advance`
+  crosses the gate.
+- **Exit via `advance.py`.** After writing the `Outputs`, run `./clad advance`
+  and treat its stdout as the next instruction. Never self-select the next
+  stage. See §"Gate-driven advance" and §"Orchestration: one sub-agent per
+  stage".
+
 ## Stage-by-stage
 
 Each stage's authoritative contract — inputs, process, outputs, verify
-checks, and gate rules — lives in that stage's `CONTEXT.md` file. The
-files below are the single source of truth for per-stage instructions:
+checks, and gate rules — lives in that stage's `CONTEXT.md` file. This table
+and those contracts are the whole per-stage manifest; the machine-readable
+projection is `quality-gate/describe_feature.py`. The files below are the
+single source of truth for per-stage instructions:
 
 | Stage | CONTEXT.md path (relative to feature root) | Produces | Gate |
 |---|---|---|---|

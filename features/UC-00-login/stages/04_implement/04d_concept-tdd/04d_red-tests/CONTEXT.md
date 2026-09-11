@@ -7,18 +7,11 @@
 
 # Stage 04d-red — Concept Test Derivation (red)
 
-## Pre-condition (agent must verify before starting)
+## Pre-condition
 
-Run the following **before** writing any artefacts for this stage:
-
-```
-python3 ../../../../../../quality-gate/verify_stage_sequence.py \
-  --feature ../../../../ \
-  --through 04c
-```
-
-If this script exits with a non-zero status, stop immediately.
-Required upstream stage outputs are missing — do not proceed.
+`advance.py` enforces stage order and upstream gate approval before this
+stage runs — see `STAGES.md` §"Stage lifecycle (standard)". Do not start
+until it has printed this stage as `NEXT STAGE`.
 
 ## Why this stage exists
 
@@ -47,7 +40,6 @@ here.
 | `../../../../../../methodology/implementation/RULES.md` | 3 | Hard rules R1, R5, R14, R16 |
 | `../../../../../../methodology/implementation/TDD.md` | 3 | London School derivation rules |
 | `../../../../../../reference-impl/java-legible/README.md` and `../../../../../../reference-impl/legible-engine/README.md` (default profile) | 3 | Profile conventions for the canonical fire-after-commit profile |
-| `../../../../../../reference-impl/java-micronaut-jena/README.md` (legacy profile only) | 3 | Legacy RDF/SPARQL profile conventions. Do NOT follow when targeting java-legible |
 
 ## Process
 
@@ -61,9 +53,7 @@ here.
    `execute(action, input)` directly. They assert the returned map's
    `outcome` plus its named completion fields — sync orchestration belongs
    in `04e`, never here. See `reference-impl/java-legible/README.md` and the
-   exemplar tests under `dev/legible/example/login`. On the legacy
-   `java-micronaut-jena` profile, use the test-mode `PredicateConceptAgent`
-   constructor instead (see that README §"Using the predicate engine").
+   exemplar tests under `dev/legible/example/login`.
 4. After asserting each outcome token, assert the primary completion
    fields that `writeCompletion` writes and downstream syncs consume.
    Outcome-only tests are incomplete.

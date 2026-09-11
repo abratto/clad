@@ -45,7 +45,6 @@ sub-stage.
 | `../../../../methodology/implementation/STAGES.md` | 3 | Stage 04 routing contract |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rules |
 | `../../../../reference-impl/java-legible/README.md` (default profile) | 3 | Runtime evidence surface for the canonical fire-after-commit profile |
-| `../../../../reference-impl/java-micronaut-jena/README.md` (legacy profile only) | 3 | Legacy `/api/dev/*` HTTP debug endpoints |
 
 ## Process
 

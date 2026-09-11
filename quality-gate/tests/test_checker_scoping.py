@@ -102,29 +102,6 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
 
-class LegacyRouteFilterTests(unittest.TestCase):
-    def test_shared_trigger_without_route_guard_fails(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            impl = Path(temporary)
-            write(impl / "LoginRespond.java",
-                  "class LoginRespond extends SyncAgent {\n"
-                  "  SyncTrigger trigger() {\n"
-                  "    return new SyncTrigger(SessionConcept.IRI, \"grant\");\n"
-                  "  }\n"
-                  "  String fires = \"Web/respond\";\n"
-                  "  String whereClause() {\n"
-                  "    return \"?u userId ?uid\";\n"
-                  "  }\n"
-                  "  String thenBindings() {\n"
-                  "    return \"concept <http://x/concept/web>\";\n"
-                  "  }\n"
-                  "}\n")
-            result = run(str(QG / "verify_sync_route_filters.py"),
-                         "--sync-impl-dir", str(impl))
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("route filter", result.stdout)
-
-
 class StepDefinitionSkipTests(unittest.TestCase):
     def test_missing_glue_dir_skips(self):
         with tempfile.TemporaryDirectory() as temporary:

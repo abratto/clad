@@ -41,17 +41,14 @@ import os
 import re
 import sys
 
+import artifact_parsers as ap
+
 IMPL_EXTENSIONS = {".java", ".kt", ".scala"}
 SYNC_DECL_RE = re.compile(r"^sync\s+(\w+)\s*$", re.MULTILINE)
-RULE_BLOCK_RE = re.compile(r"## Rule\s*(.*?)(?=^##\s+|\Z)", re.MULTILINE | re.DOTALL)
-ARROW_WHEN_RE = re.compile(r"(\w+)/(\w+)\s*:\s*\[[^\]]*\]\s*=>\s*\[([^\]]*)\]", re.DOTALL)
-COMPACT_WHEN_RE = re.compile(r"(\w+)/(\w+)\s*:\s*\[([^\]]*)\]", re.DOTALL)
-RULE_WHEN_RE = re.compile(r"^\s*when\s+(\w+)/(\w+)\s*\[([^\]]*)\]", re.MULTILINE)
 THEN_RE = re.compile(r"(\w+)/(\w+)\s*:")
 MATRIX_HEADING = "## Sync Contract Matrix"
 CONCEPT_AGENT_RE = re.compile(
-    r"\bclass\s+(\w+)\s+(?:extends\s+(?:[\w.]+\.)?(?:Predicate)?ConceptAgent|implements\s+(?:[\w.]+\.)?Concept)\b"
-)
+    r"\bclass\s+(\w+)\s+implements\s+(?:[\w.]+\.)?Concept\b")
 
 # Bootstrap concepts (transport boundary) have no per-feature *.concept.md —
 # their anatomy is documented in methodology/architecture/WEB_CONCEPT.md.
@@ -139,80 +136,25 @@ def split_table_row(line):
     return [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
 
 
-def matrix_contracts(text):
-    lines = text.splitlines()
-    try:
-        start = lines.index(MATRIX_HEADING)
-    except ValueError:
-        return None
-
-    table = []
-    for line in lines[start + 1:]:
-        if line.startswith("|"):
-            table.append(split_table_row(line))
-        elif table and line.strip():
-            break
-    if len(table) < 3:
-        return []
-
-    columns = {re.sub(r"[^a-z]", "", name.lower()): index for index, name in enumerate(table[0])}
-    when_index = columns.get("whensignature")
-    then_index = columns.get("thensignature")
-    if when_index is None or then_index is None:
-        return []
-
-    contracts = []
-    for row in table[1:]:
-        if all(re.fullmatch(r":?-{3,}:?", cell.replace(" ", "")) for cell in row if cell):
-            continue
-        if len(row) <= max(when_index, then_index):
-            return []
-        when_match = (
-            ARROW_WHEN_RE.fullmatch(row[when_index].strip())
-            or COMPACT_WHEN_RE.fullmatch(row[when_index].strip())
-        )
-        then_match = THEN_RE.search(row[then_index])
-        if not when_match or not then_match:
-            return []
-        contracts.append((*when_match.groups(), *then_match.groups()))
-    return contracts
-
-
-def rule_contract(text):
-    rule_match = RULE_BLOCK_RE.search(text)
-    if not rule_match:
-        return None
-    rule = rule_match.group(1)
-    when_match = RULE_WHEN_RE.search(rule) or ARROW_WHEN_RE.search(rule)
-    then_match = THEN_RE.search(rule[when_match.end():] if when_match else rule)
-    if not when_match or not then_match:
-        return None
-    return (*when_match.groups(), *then_match.groups())
-
-
 def expected_sync_names(path, text):
-    contracts = matrix_contracts(text)
-    if contracts is None:
-        contract = rule_contract(text)
-        contracts = [contract] if contract else []
-    if not contracts:
+    """Mechanical When...Then[For<Scope>] name(s) for a canonical sync spec."""
+    spec = ap.parse_sync(path)
+    if spec is None or not spec.trigger_concept or not spec.then_targets:
         return []
-
     scope = feature_scope_from_path(path)
-    names = []
-    for when_concept, when_action, completion, then_concept, then_action in contracts:
-        base = (
-            "When"
-            + pascal_token(when_concept)
-            + pascal_token(when_action)
-            + first_completion_token(completion)
-            + "Then"
-            + pascal_token(then_concept)
-            + pascal_token(then_action)
-        )
-        names.append(base)
-        if scope:
-            names.append(base + "For" + scope)
+    then_concept, then_action = spec.then_targets[0]
+    base = (
+        "When"
+        + pascal_token(spec.trigger_concept)
+        + pascal_token(spec.trigger_action)
+        + first_completion_token(spec.trigger_outcome)
+        + "Then"
+        + pascal_token(then_concept)
+        + pascal_token(then_action)
+    )
+    names = [base]
+    if scope:
+        names.append(base + "For" + scope)
     return names
 
 
@@ -243,24 +185,21 @@ def collect_sync_specs(features_dir):
 
 
 def collect_sync_names(directory):
-    """Return a list of (path, sync_name, is_legacy_class) for each sync
-    implementation found recursively under directory — either a legacy
-    `class X extends SyncAgent` or a new-shape `SyncRule.of("X", ...)`."""
+    """Return a list of (path, sync_name) for each `SyncRule.of("X", ...)`
+    declaration found recursively under directory."""
     results = []
     if not os.path.isdir(directory):
         return results
     for root, _, files in os.walk(directory):
         for filename in files:
-            stem, ext = os.path.splitext(filename)
+            _stem, ext = os.path.splitext(filename)
             if ext not in IMPL_EXTENSIONS:
                 continue
             path = os.path.join(root, filename)
             with open(path, encoding="utf-8") as handle:
                 text = handle.read()
-            for m in re.finditer(r"\bclass\s+(\w+)\s+extends\s+SyncAgent\b", text):
-                results.append((path, m.group(1), True))
             for m in SYNC_RULE_OF_RE.finditer(text):
-                results.append((path, m.group(1), False))
+                results.append((path, m.group(1)))
     return results
 
 
@@ -274,7 +213,7 @@ def check_syncs(sync_impl_dir, features_dir):
 
     sync_specs, spec_failures = collect_sync_specs(features_dir)
     failures.extend(spec_failures)
-    for path, sync_name, is_legacy_class in collect_sync_names(sync_impl_dir):
+    for path, sync_name in collect_sync_names(sync_impl_dir):
         sync_spec = sync_specs.get(sync_name.lower())
         if not sync_spec:
             failures.append(
@@ -287,14 +226,6 @@ def check_syncs(sync_impl_dir, features_dir):
                 (path, f"sync '{sync_name}' does not match mechanical name from "
                        f"{sync_spec['path']} (expected one of: {', '.join(sync_spec['expected'])})")
             )
-        if is_legacy_class:
-            expected_runtime = lower_camel(sync_name)
-            with open(path, encoding="utf-8") as handle:
-                source = handle.read()
-            if f'return "{expected_runtime}"' not in source:
-                failures.append(
-                    (path, f"syncName() must return lower camel case '{expected_runtime}'")
-                )
     return failures
 
 

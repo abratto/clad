@@ -7,9 +7,7 @@ description: Execute sync-level TDD during CLAD Stage 04e. Use when deriving red
 
 > **Role:** required stage guidance for Stage 04e. The stage `CONTEXT.md`
 > `Inputs` table is authoritative for *which files to load*; load those
-> exactly. Profile conventions are **conditional**: follow the canonical
-> `java-legible` profile unless `clad.properties` selects a legacy
-> (`java-micronaut-jena`) profile.
+> exactly. Follow the canonical `java-legible` profile's conventions.
 
 ## What this skill covers
 
