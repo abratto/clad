@@ -10,7 +10,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `active`
+- **Status:** `closed`
 - **Affected profile(s):** `reference-impl/legible-engine` (DSL extension), `reference-impl/java-legible` (migration), `reference-impl/java-micronaut-postgres` (inherits; no behaviour change), `reference-impl/java-plain` (inherits; no behaviour change)
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
