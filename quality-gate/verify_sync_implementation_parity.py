@@ -119,9 +119,12 @@ def collect_java_syncs(sync_impl_dir):
             symbols = symbol_table(os.path.dirname(path))
             for index, ((start, _end), groups) in enumerate(heads):
                 name = groups[0]
-                concept = symbols.get(groups[1], groups[1])
-                action = symbols.get(groups[2], groups[2])
-                outcome_raw = groups[3] if len(groups) > 3 else None
+                if len(groups) == 5:  # fluent-DSL layout: name, quote, concept, action, outcome
+                    concept, action = groups[2], groups[3]
+                    outcome_raw = groups[4] if len(groups) > 4 else None
+                else:
+                    concept, action = groups[1], groups[2]
+                    outcome_raw = groups[3] if len(groups) > 3 else None
                 outcome = symbols.get(outcome_raw, outcome_raw) if outcome_raw else ""
                 end = heads[index + 1][0][0] if index + 1 < len(heads) else len(text)
                 rules[name] = {
