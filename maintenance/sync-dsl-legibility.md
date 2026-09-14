@@ -10,7 +10,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `active`
+- **Status:** `closed`
 - **Affected profile(s):** `reference-impl/legible-engine` (DSL sugar), `reference-impl/java-legible` (migration, 27 rules), `reference-impl/java-micronaut-postgres` (migration, 7 rules + constants), `features/UC-00-login` (mechanical Stage 03 rename, R17 iterative re-entry), derived-repo migration tool
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
@@ -86,9 +86,9 @@ Human approved in-conversation (fluent builder shape, concept/action constants, 
 
 ### Evidence gate
 
-Pending human approval of the evidence summary presented in-conversation; the UC-00
-rename iterative change (`sync-name-grammar-v2`) was already approved in its own
-loop and committed (72ac629).
+Approved by the human after the test matrix was presented; evidence commit
+released as tagged v0.6.0 (secondary amend of the initial docs commit landed
+as a single tagged evidence commit with the UC-00 iterative rename in 72ac629).
 
 ## Notes
 
