@@ -35,7 +35,7 @@ _SYNC_RULE_OF_HEAD = re.compile(
 # Fluent DSL shape (see maintenance/sync-dsl-legibility.md):
 #   rule("Name")\n .when("Concept", "action"[, "outcome"]) [optional .matching(...)]
 _DSL_RULE_HEAD = re.compile(
-    r'rule\(\s*"(\w+)"\s*\)(?:.{0,400}?)\.when\(\s*([A-Za-z_]\w*)\s*,\s*([A-Za-z_]\w*)\s*(?:,\s*"?([A-Za-z_0-9]\w*)"?)?\s*\)',
+    r'rule\(\s*"(\w+)"\s*\)(?:.{0,400}?)\.when\(\s*("?)([A-Za-z_][\w.]*)\2\s*,\s*"?([A-Za-z_][\w.]*)"?(?:\s*,\s*"?([A-Za-z_0-9]\w*)"?)?\s*\)',
     re.DOTALL)
 _SYNC_RULE_INVOKE = re.compile(
     r'invoke\(\s*("?)([A-Za-z_]\w*)\1\s*,\s*("?)([A-Za-z_]\w*)\3')
