@@ -10,6 +10,18 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.5.1] — 2026-09-12
+
+### Changed
+
+- **Release-order documentation.** The when-input matching engine change was
+  tagged `v0.3.6` but landed on `main` after the parallel `v0.4.0`/`v0.5.0`
+  simplification releases; `SYNC_ENGINE_EVOLUTION.md` now carries the
+  release-order note, refers to the retired legacy stack via
+  `reference-impl/LEGACY.md` (last version containing it: `v0.4.0`), and the
+  changelog is the sequence header. Versions remain immutable tags; this
+  entry supersedes numbering for future releases.
+
 ## [0.5.0] — 2026-09-11
 
 Simplification and legacy retirement (maintenance change

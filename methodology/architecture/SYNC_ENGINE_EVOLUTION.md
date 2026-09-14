@@ -26,10 +26,13 @@ atomic transaction.
   (RDF-star programmatic construction)** are the scars of this engine —
   both now retired with notes in [`implementation/RULES.md`](../implementation/RULES.md).
 
-Worked artefacts survive in `reference-impl/java-micronaut-jena/`
-(legacy showcase, no new work) and `reference-impl/java-micronaut-postgres`
-was re-lowered off it in v0.3.5 (see
-`reference-impl/../maintenance/reference-profiles-fire-after-commit.md`).
+The stack was retired in v0.5.0: `reference-impl/clad-engine/` and
+`reference-impl/java-micronaut-jena/` are no longer in the build or any
+quality-gate check, and receive no maintenance; the last version containing
+them is tag `v0.4.0` (see
+[`reference-impl/LEGACY.md`](../../reference-impl/LEGACY.md)).
+`reference-impl/java-micronaut-postgres` was re-lowered off it in v0.3.5
+(see `maintenance/reference-profiles-fire-after-commit.md`).
 
 ## 2. Fire-after-commit (v0.3.2, `dev.legible.engine`)
 
@@ -52,7 +55,13 @@ the need for transactions, and also allows much finer granularity"
 `reference-impl/clad-engine/` retains the retiring machinery;
 `maintenance/fire-after-commit-engine.md` records the change itself.
 
-## 3. Paper-faithful when-matching (v0.3.6)
+## 3. Paper-faithful when-matching
+
+> **Release-order note:** this change was tagged `v0.3.6`, but it landed on
+> `main` after the parallel `v0.4.0`/`v0.5.0` simplification releases
+> (grammar normalization + legacy retirement) and is content on the
+> v0.5.0-or-later tree. Versions remain immutable tags; the changelog is
+> the sequencing reference.
 
 The last parity step with the paper authors' own reference
 implementation (MIT 61040 conceptbox, `implementing-synchronizations.md`):
