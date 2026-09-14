@@ -79,6 +79,8 @@ def symbol_table(package_dir):
             table[ident] = literals.get(value, value)
         else:
             table[ident] = value
+    for qual, literal in dict(literals).items():
+        table.setdefault(qual, literal)
     return table
 
 
@@ -116,7 +118,11 @@ def collect_java_syncs(sync_impl_dir):
             heads = [(m.span(), m.groups()) for m in _SYNC_RULE_OF_HEAD.finditer(text)]
             heads += [(m.span(), m.groups()) for m in _DSL_RULE_HEAD.finditer(text)]
             heads.sort()
-            symbols = symbol_table(os.path.dirname(path))
+            # Constants may live in sibling concept classes — walk module root.
+            module_root = path
+            for _ in range(2):
+                module_root = os.path.dirname(module_root)
+            symbols = symbol_table(module_root)
             for index, ((start, _end), groups) in enumerate(heads):
                 name = groups[0]
                 if len(groups) == 5:  # fluent-DSL layout: name, quote, concept, action, outcome

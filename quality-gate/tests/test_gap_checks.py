@@ -15,6 +15,12 @@ UC00_SYNCS = REPO_ROOT / "features/UC-00-login/stages/03_syncs/output"
 LOGIN_IMPL = REPO_ROOT / "reference-impl/java-legible/src/main/java/dev/legible/example/login"
 
 
+
+
+def write(path, content):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
 def run(*args, cwd=REPO_ROOT):
     return subprocess.run([sys.executable, *args], cwd=cwd,
                           capture_output=True, text=True)
@@ -158,3 +164,47 @@ class CloseEvidenceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ParityConstantsSiblingLayoutTests(unittest.TestCase):
+    """Regression (conduit rebuild UC-01 finding): derived repos whose concept
+    constants live in sibling `concepts/` packages — the symbol table must
+    walk the Java module root, not the syncs dir alone."""
+
+    def test_strict_trigger_resolves_constants_in_sibling_package(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "app"
+            # Module-root layout: concepts package + syncs package siblings.
+            concept_dir = root / "java/src/main/java/com/example/concepts"
+            sync_dir = root / "syncs"
+            concept_dir.mkdir(parents=True)
+            sink_sync = root / "java/src/main/java/com/example/syncs"
+            sink_sync.mkdir(parents=True)
+            spec_name = "WebRespondForWidgetWhenWebRequestRouted"
+            spec_dir = root / "features/UC-01-widget/stages/03_syncs/output"
+            spec_dir.mkdir(parents=True)
+            write(spec_dir / f"{spec_name}.sync.md",
+                  "sync " + spec_name + "\n\n## Rule\n\nwhen {\n"
+                  "    Web/request: [ x: ?x ] => [ Routed ]\n}\nthen {\n"
+                  "    Inventory/lend: [ x: ?x ]\n}\n")
+            write(sink_sync / f"{spec_name}.java",
+                  "final class C {\n"
+                  "    SyncRule rule() {\n"
+                  '        return rule("' + spec_name + '")\n'
+                  "            .when(Web.NAME, Web.REQUEST, \"Routed\")\n"
+                  "            .then(invoke(Inventory.NAME, Inventory.LEND, args()));\n"
+                  "    }\n}\n")
+            write(concept_dir / "Web.java",
+                  "final class Web {\n"
+                  "    public static final String NAME = \"Web\";\n"
+                  "    public static final String REQUEST = \"request\";\n}\n")
+            write(concept_dir / "Inventory.java",
+                  "final class Inventory {\n"
+                  "    public static final String NAME = \"Inventory\";\n"
+                  "    public static final String LEND = \"lend\";\n}\n")
+            result = run(str(QG / "verify_sync_implementation_parity.py"),
+                         "--sync-dir", str(spec_dir),
+                         "--sync-impl-dir", str(sink_sync),
+                         "--strict-trigger")
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+

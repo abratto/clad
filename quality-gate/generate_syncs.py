@@ -108,21 +108,32 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                 continue
             wc, wa, wo = parts
             wo_base = re.sub(r"\(.*?\)", "", wo).strip()
-            matches = [prow for (pc, pa, po, prow) in producers
-                       if pc == wc and pa == wa
-                       and po == ap.normalize_outcome(wo_base)
-                       and prow is not row]
-            if not matches:
+            action_matches = [prow for (pc, pa, po, prow) in producers
+                              if pc == wc and pa == wa
+                              and prow is not row]
+            # Prefer the exact-outcome producer, then any action match; the
+            # outcome-mismatch case is the extension-row carrier (the chain
+            # table's rows 7-9 shape) — verified in the conduit rebuild
+            # experiment (maintenance/generate-syncs-branch-carriers.md).
+            matches = [a for a in action_matches
+                       if ap.normalize_outcome(a.outcome_base)
+                       == ap.normalize_outcome(wo_base)]
+            if matches:
+                prev = matches[0]
+                trigger_outcome_raw = prev.outcome_base
+            elif action_matches:
+                prev = action_matches[0]
+                trigger_outcome_raw = wo_base  # extension outcome (branch row)
+            else:
                 continue  # root row (Web/request entry) — not a sync
-            if len(matches) > 1:
+            if len(action_matches) > 1 and len(action_matches) != len(matches):
                 warnings.append(
-                    f"{fname} row {row.row_num}: {len(matches)} rows produce "
-                    f"{wc}/{wa}[{wo}]; using row {matches[0].row_num}")
-            prev = matches[0]
+                    f"{fname} row {row.row_num}: {len(action_matches)} rows produce "
+                    f"{wc}/{wa}; using row {prev.row_num} "
+                    f"(outcome {trigger_outcome_raw})")
 
             trigger_concept = prev.then_concept
             trigger_action = prev.then_action
-            trigger_outcome_raw = prev.outcome_base
             trigger_completion = completion_token(trigger_outcome_raw)
 
             target_concept = row.then_concept
