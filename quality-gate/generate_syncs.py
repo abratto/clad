@@ -128,16 +128,17 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
             target_concept = row.then_concept
             target_action = row.then_action
 
+            # Grammar v2 (effect-first): <Target><Action>[For<Scope>]When<Trigger><Action><Completion>
             base = (
-                "When"
+                ap.pascal_token(target_concept)
+                + ap.pascal_token(target_action)
+                + ("For" + scope if scope else "")
+                + "When"
                 + ap.pascal_token(trigger_concept)
                 + ap.pascal_token(trigger_action)
                 + ap.first_completion_token(trigger_outcome_raw)
-                + "Then"
-                + ap.pascal_token(target_concept)
-                + ap.pascal_token(target_action)
             )
-            stem = base + (f"For{scope}" if scope else "")
+            stem = base
 
             source_row_id = str(prev.row_num)
             target_row_id = str(row.row_num)

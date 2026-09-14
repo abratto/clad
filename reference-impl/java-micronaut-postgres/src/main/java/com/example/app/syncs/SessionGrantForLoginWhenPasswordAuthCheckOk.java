@@ -12,15 +12,16 @@ import static dev.legible.engine.SyncRule.ref;
 /**
  * Row 3b[OK]-to-4a: when PasswordAuth.check[OK] then Session.grant(userId).
  *
- * <p>The declarative SyncRule realization of the Stage 03 WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md.
+ * <p>The declarative SyncRule realization of the Stage 03 WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md (grammar v2 name: SessionGrantForLoginWhenPasswordAuthCheckOk; see maintenance/sync-dsl-legibility.md).
  * Trigger and target tokens are copied verbatim from the approved chain
  * table (literal lock). No imperative branching, no state, no I/O (R3).
  */
-public final class WhenPasswordAuthCheckOkThenSessionGrantForLogin {
+public final class SessionGrantForLoginWhenPasswordAuthCheckOk {
 
     public SyncRule rule() {
         return SyncRule.of(
-                "WhenPasswordAuthCheckOkThenSessionGrantForLogin",
+                // renamed to grammar v2: "WhenPasswordAuthCheckOkThenSessionGrantForLogin" -> "SessionGrantForLoginWhenPasswordAuthCheckOk"
+                "SessionGrantForLoginWhenPasswordAuthCheckOk",
                 "PasswordAuth", "check", "OK",
                 List.of(new Clause.Bind("?user", new Source.TriggerField("userId"))),
                 List.of(invoke("Session", "grant", Map.of("userId", ref("?user")))));

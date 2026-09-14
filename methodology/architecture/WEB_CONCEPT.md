@@ -188,15 +188,29 @@ choreography rather than ambient.
 sequenceDiagram
     participant Client
     participant Web
+    participant Log as ActionLog<br/>per-flow, private
+    participant Syncs as Syncs (declarative)
+    participant Engine as SyncEngine
     participant <BusinessConcept>
     Client->>Web: HTTP request
     Web->>Web: request(...) — emits flow token
-    Web-->>Web: (sync fires on Web.request)
-    Web->>+<BusinessConcept>: action(...)
+    Note over Web,Log: Web.request invocation + completion committed to the<br/>flow's private ActionLog
+    Engine->>Syncs: evaluate rules for Web.request[routed]
+    Syncs-->>Engine: match → frames → mint next invocation
+    Engine->>+<BusinessConcept>: action(...)
     <BusinessConcept>-->>-Web: outcome
-    Web-->>Web: (sync fires on outcome)
+    Note over Web,Log: completion committed; causedBySync/parent recorded
+    Syncs-->>Engine: next rule matched on outcome → frames → then-invocation(s)
     Web->>Client: respond(status, body)
 ```
+
+> Note: the diagram above is the **mental-model view** (spec level). In the
+> running engine, *all* flow driving is done by `SyncEngine.run` — the Web
+> participant here is the bootstrap `Web` **concept** (`request`/`respond`
+> actions), there is no runtime `Sync` component, and syncs participate
+> only as declarative data the engine evaluates after each commit (see
+> [`SYNC_ENGINE_EVOLUTION.md`](SYNC_ENGINE_EVOLUTION.md) for the standing
+> capability comparison).
 
 ## Why bootstrap concepts are not in `02_concepts/output/`
 

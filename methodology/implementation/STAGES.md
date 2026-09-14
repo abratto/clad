@@ -380,6 +380,7 @@ only asked to write what cannot be scripted:
 | 03 (syncs) | `quality-gate/generate_syncs.py` | Pattern D concept-state reads, `then` argument values, `where` sources |
 | 03a (dependency cards) | `quality-gate/generate_sync_cards.py` | filling the `<args>`/`<source>`/`<field>`/`<id>` placeholders verbatim |
 | 04b (SPECs) | `quality-gate/generate_spec.py` | input types + flow-token shape transcription |
+| 04e (sync code) | `quality-gate/generate_syncs_java.py` | judgement items only: Pattern D sources, non-literal `then`-argument values; the v2 name and trigger/target are mechanically derived (see `maintenance/sync-dsl-legibility.md`) |
 
 For these stages the stage `CONTEXT.md` instructs: *run the generator first,
 then resolve only the TODO markers — do not re-author the derived skeleton.* A
@@ -420,9 +421,11 @@ These rules apply to individual stages and do not appear in the
 - **Stage 01b chain tables** are the canonical resolver for
   action/outcome disputes. If a sync spec disagrees with a chain table,
   the table wins.
-- **Stage 03 sync names** must follow the compressed grammar:
-  `When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>]`.
-  See [`../architecture/SYNCHRONIZATIONS.md`](../architecture/SYNCHRONIZATIONS.md) §"Naming".
+- **Stage 03 sync names** follow the effect-first grammar (v0.6+):
+  `<TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>`.
+  Frozen pre-v0.6 artefacts keep the old condition-first `When…Then…` names
+  as historical evidence. See
+  [`../architecture/SYNCHRONIZATIONS.md`](../architecture/SYNCHRONIZATIONS.md) §"Naming".
 - **Stage 03a** is an audit stage — it copies tokens exactly, produces
   no new design, and surfaces drift back to the owning stage.
 - **Stage 04 implements the outside-in TDD double-loop:** 04c is the

@@ -1,23 +1,34 @@
 package dev.legible.example.token;
 
-import dev.legible.engine.Clause;
-import dev.legible.engine.Source;
 import dev.legible.engine.SyncRule;
-import dev.legible.engine.ThenInvocation;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static dev.legible.engine.SyncRule.invoke;
-import static dev.legible.engine.SyncRule.lit;
-import static dev.legible.engine.SyncRule.ref;
+import static dev.legible.engine.Dsl.args;
+import static dev.legible.engine.Dsl.bind;
+import static dev.legible.engine.Dsl.invoke;
+import static dev.legible.engine.Dsl.lit;
+import static dev.legible.engine.Dsl.ref;
+import static dev.legible.engine.Dsl.rule;
+import static dev.legible.engine.Dsl.triggerField;
+import static dev.legible.engine.Dsl.triggerInput;
+import static dev.legible.engine.Dsl.uuid;
+import static dev.legible.example.token.TokenConcept.ISSUE;
+import static dev.legible.example.token.TokenConcept.NAME;
 
 /**
  * The one construct the earlier examples never exercised: {@code bind(uuid())}
  * in a sync's {@code where} clause. The token id is minted by the sync
  * ({@code bind(uuid() as ?tokenId)}) and handed to {@code Token.issue}, which
  * records it without minting its own id.
+ *
+ * <p>Names follow the effect-first grammar (see
+ * {@code maintenance/sync-dsl-legibility.md}):
+ * {@code <TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>}.
+ * Route discrimination is a {@code when}-matcher
+ * ({@code Web/respond: [ route: "issue" ]} on the trigger token), not a
+ * {@code where} clause.
  */
 public final class TokenSyncs {
 
@@ -25,33 +36,26 @@ public final class TokenSyncs {
     }
 
     public static List<SyncRule> all() {
-        return List.of(requestToIssue(), issueToRespond());
+        return List.of(tokenIssueForIssue(), webRespondForIssueWhenTokenIssueIssued());
     }
 
-    private static SyncRule requestToIssue() {
-        return SyncRule.of(
-                "WhenWebRequestRoutedThenTokenIssueForIssue",
-                "Web", "request", "routed",
-                Map.of("route", "issue"),
-                List.of(
-                        new Clause.Bind("?userId", new Source.TriggerInput("userId")),
-                        new Clause.Bind("?tokenId", new Source.Uuid())),
-                List.of(invoke("Token", "issue",
-                        Map.of("tokenId", ref("?tokenId"), "userId", ref("?userId")))));
+    private static SyncRule tokenIssueForIssue() {
+        return rule("TokenIssueForIssueWhenWebRequestRouted")
+            .when("Web", "request", "routed")
+            .matching(Map.of("route", "issue"))
+            .where(bind("?userId", triggerInput("userId")),
+                   bind("?tokenId", uuid()))
+            .then(invoke(NAME, ISSUE,
+                    args("tokenId", ref("?tokenId"), "userId", ref("?userId"))))
+            .build();
     }
 
-    private static SyncRule issueToRespond() {
-        return SyncRule.of(
-                "WhenTokenIssueIssuedThenWebRespondForIssue",
-                "Token", "issue", "ISSUED",
-                List.of(new Clause.Bind("?tokenId", new Source.TriggerField("tokenId"))),
-                List.of(respond(Map.of("tokenId", ref("?tokenId")))));
-    }
-
-    private static ThenInvocation respond(Map<String, Source> fields) {
-        Map<String, Source> args = new LinkedHashMap<>();
-        args.put("status", lit(200));
-        args.putAll(fields);
-        return invoke("Web", "respond", args);
+    private static SyncRule webRespondForIssueWhenTokenIssueIssued() {
+        return rule("WebRespondForIssueWhenTokenIssueIssued")
+            .when(NAME, ISSUE, "ISSUED")
+            .where(bind("?tokenId", triggerField("tokenId")))
+            .then(invoke("Web", "respond",
+                    args("status", lit(200), "tokenId", ref("?tokenId"))))
+            .build();
     }
 }

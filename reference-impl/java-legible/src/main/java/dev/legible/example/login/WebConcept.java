@@ -16,9 +16,14 @@ import java.util.Map;
  */
 public final class WebConcept implements Concept {
 
+    /** Concept constants for sync rule authoring (see maintenance/sync-dsl-legibility.md). */
+    public static final String NAME = "Web";
+    public static final String REQUEST = "request";
+    public static final String RESPOND = "respond";
+
     @Override
     public String name() {
-        return "Web";
+        return NAME;
     }
 
     @Override

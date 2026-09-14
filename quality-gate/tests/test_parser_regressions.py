@@ -56,7 +56,8 @@ class ImplementationParityFixtures(unittest.TestCase):
             root = Path(temporary)
             features = root / "features"
             syncs = root / "syncs"
-            name = "WhenWebRequestRoutedThenInventoryLendForWidget"
+            # Grammar v2 (effect-first, maintenance/sync-dsl-legibility.md).
+            name = "InventoryLendForWidgetWhenWebRequestRouted"
             write(features / "UC-01-widget/stages/03_syncs/output" / f"{name}.sync.md",
                   canonical_sync(name))
             write(syncs / f"{name}.java", sync_rule(name))
@@ -101,7 +102,7 @@ class SyncImplementationParityFixtures(unittest.TestCase):
             root = Path(temporary)
             sync_dir = root / "syncs"
             impl_dir = root / "implementation"
-            name = "WhenWebRequestRoutedThenInventoryLend"
+            name = "InventoryLendWhenWebRequestRouted"
             write(sync_dir / f"{name}.sync.md", canonical_sync(name))
             write(impl_dir / f"{name}.java", sync_rule(name))
 

@@ -34,7 +34,7 @@ class SyncParityTests(unittest.TestCase):
                 'class S {\n'
                 '  static SyncRule a() {\n'
                 '    return SyncRule.of(\n'
-                '        "WhenSessionGrantGrantedThenWebRespondForLogin",\n'
+                '        "WebRespondForLoginWhenSessionGrantGranted",\n'
                 '        "Session", "grant", "GRANTED",\n'
                 '        List.of(),\n'
                 '        List.of(invoke("Book", "reserve", Map.of())));\n'

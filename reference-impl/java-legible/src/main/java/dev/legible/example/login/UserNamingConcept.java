@@ -13,6 +13,11 @@ import java.util.UUID;
  */
 public final class UserNamingConcept implements Concept {
 
+    /** Concept constants for sync rule authoring (see maintenance/sync-dsl-legibility.md). */
+    public static final String NAME = "UserNaming";
+    public static final String REGISTER = "register";
+    public static final String LOOKUP_BY_USERNAME = "lookupByUsername";
+
     private final Region region;
 
     public UserNamingConcept(Region region) {
@@ -21,7 +26,7 @@ public final class UserNamingConcept implements Concept {
 
     @Override
     public String name() {
-        return "UserNaming";
+        return NAME;
     }
 
     @Override

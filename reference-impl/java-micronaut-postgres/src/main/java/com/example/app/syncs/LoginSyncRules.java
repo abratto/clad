@@ -6,7 +6,8 @@ import java.util.List;
 
 /**
  * Assembles the seven login synchronization rules authored in this profile.
- * One class per {@code *.sync.md} — one rule per class, the declarative
+ * One class per {@code *.sync.md} (v2 effect-first names — see
+ * maintenance/sync-dsl-legibility.md); one rule per class, the declarative
  * {@code SyncRule} realization of Stage 03.
  */
 public final class LoginSyncRules {
@@ -16,12 +17,12 @@ public final class LoginSyncRules {
 
     public static List<SyncRule> all() {
         return List.of(
-                new WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin().rule(),
-                new WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin().rule(),
-                new WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin().rule(),
-                new WhenPasswordAuthCheckOkThenSessionGrantForLogin().rule(),
-                new WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin().rule(),
-                new WhenPasswordAuthCheckLockedThenWebRespondForLogin().rule(),
-                new WhenSessionGrantGrantedThenWebRespondForLogin().rule());
+                new UserNamingLookupByUsernameForLoginWhenWebRequestRouted().rule(),
+                new PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound().rule(),
+                new WebRespondForLoginWhenUserNamingLookupByUsernameRefused().rule(),
+                new SessionGrantForLoginWhenPasswordAuthCheckOk().rule(),
+                new WebRespondForLoginWhenPasswordAuthCheckBadPassword().rule(),
+                new WebRespondForLoginWhenPasswordAuthCheckLocked().rule(),
+                new WebRespondForLoginWhenSessionGrantGranted().rule());
     }
 }

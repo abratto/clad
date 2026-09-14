@@ -1,23 +1,40 @@
 package dev.legible.example.login;
 
-import dev.legible.engine.Clause;
-import dev.legible.engine.Source;
 import dev.legible.engine.SyncRule;
-import dev.legible.engine.ThenInvocation;
 
 import java.util.List;
 import java.util.Map;
 
-import static dev.legible.engine.SyncRule.invoke;
-import static dev.legible.engine.SyncRule.lit;
-import static dev.legible.engine.SyncRule.ref;
+import static dev.legible.engine.Dsl.args;
+import static dev.legible.engine.Dsl.bind;
+import static dev.legible.engine.Dsl.invoke;
+import static dev.legible.engine.Dsl.lit;
+import static dev.legible.engine.Dsl.ref;
+import static dev.legible.engine.Dsl.rule;
+import static dev.legible.engine.Dsl.siblingInput;
+import static dev.legible.engine.Dsl.triggerField;
+import static dev.legible.engine.Dsl.triggerInput;
+import static dev.legible.example.login.LoginNames.PASSWORD_AUTH;
+import static dev.legible.example.login.LoginNames.SESSION;
+import static dev.legible.example.login.LoginNames.USER_NAMING;
+import static dev.legible.example.login.LoginNames.WEB;
+import static dev.legible.example.login.PasswordAuthConcept.CHECK;
+import static dev.legible.example.login.SessionConcept.GRANT;
+import static dev.legible.example.login.UserNamingConcept.LOOKUP_BY_USERNAME;
+import static dev.legible.example.login.WebConcept.REQUEST;
+import static dev.legible.example.login.WebConcept.RESPOND;
 
 /**
- * The seven login synchronizations, re-expressed paper-faithfully as
- * {@code when}/{@code where}/{@code then} rules. Each maps 1:1 to a Stage 03
- * {@code *.sync.md}. The only change from the Jena profile is the bootstrap
- * concept: {@code Web/request} (the paper's name) replaces {@code Web/handle},
- * collapsing the old "bootstrap handoff exception".
+ * The seven login synchronizations, expressed paper-faithfully as
+ * {@code when → where → then} rules through the fluent DSL. Each maps 1:1 to a
+ * Stage 03 {@code *.sync.md}; the only change from the original Jena profile
+ * was the bootstrap concept name ({@code Web/request} for {@code Web/handle}).
+ *
+ * <p>Names follow the effect-first grammar (see
+ * {@code maintenance/sync-dsl-legibility.md}):
+ * {@code <TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>}.
+ * All {@code Web/request} rules carry {@code route} as a {@code when}-matcher,
+ * so the disjoint route scopes are visible before the body is even read.
  */
 public final class LoginSyncs {
 
@@ -26,90 +43,83 @@ public final class LoginSyncs {
 
     public static List<SyncRule> all() {
         return List.of(
-                webRequestRoutedToLookup(),
-                lookupFoundToCheck(),
-                lookupRefusedToRespond(),
-                checkOkToGrant(),
-                checkBadPasswordToRespond(),
-                checkLockedToRespond(),
-                grantGrantedToRespond());
+                userNamingLookupForLoginWhenWebRequestRouted(),
+                passwordAuthCheckForLoginWhenUserNamingLookupFound(),
+                webRespondForLoginWhenUserNamingLookupRefused(),
+                sessionGrantForLoginWhenPasswordAuthCheckOk(),
+                webRespondForLoginWhenPasswordAuthCheckBadPassword(),
+                webRespondForLoginWhenPasswordAuthCheckLocked(),
+                webRespondForLoginWhenSessionGrantGranted());
     }
 
     /** Row 1→2: when Web/request[routed] → UserNaming.lookupByUsername(username). */
-    static SyncRule webRequestRoutedToLookup() {
-        return SyncRule.of(
-                "WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin",
-                "Web", "request", "routed",
-                List.of(new Clause.Bind("?u", new Source.TriggerInput("username"))),
-                List.of(invoke("UserNaming", "lookupByUsername", Map.of("username", ref("?u")))));
+    private static SyncRule userNamingLookupForLoginWhenWebRequestRouted() {
+        return rule("UserNamingLookupByUsernameForLoginWhenWebRequestRouted")
+            .when(WEB, REQUEST, "routed")
+            .matching(Map.of("route", "login"))
+            .where(bind("?u", triggerInput("username")))
+            .then(invoke(USER_NAMING, LOOKUP_BY_USERNAME, args("username", ref("?u"))))
+            .build();
     }
 
     /** Row 2[Found]→3b: when UserNaming.lookupByUsername[FOUND] → PasswordAuth.check(userId, password). */
-    static SyncRule lookupFoundToCheck() {
-        return SyncRule.of(
-                "WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin",
-                "UserNaming", "lookupByUsername", "FOUND",
-                List.of(
-                        new Clause.Bind("?user", new Source.TriggerField("userId")),
-                        new Clause.Bind("?p", new Source.SiblingInput("Web", "request", "password"))),
-                List.of(invoke("PasswordAuth", "check",
-                        Map.of("userId", ref("?user"), "password", ref("?p")))));
+    private static SyncRule passwordAuthCheckForLoginWhenUserNamingLookupFound() {
+        return rule("PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound")
+            .when(USER_NAMING, LOOKUP_BY_USERNAME, "FOUND")
+            .where(bind("?user", triggerField("userId")),
+                   bind("?p", siblingInput(WEB, REQUEST, "password")))
+            .then(invoke(PASSWORD_AUTH, CHECK,
+                    args("userId", ref("?user"), "password", ref("?p"))))
+            .build();
     }
 
     /** Row 2[refused]→3a: when UserNaming.lookupByUsername[refused] → Web.respond(401, opaque message). */
-    static SyncRule lookupRefusedToRespond() {
-        return SyncRule.of(
-                "WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin",
-                "UserNaming", "lookupByUsername", "refused",
-                List.of(),
-                List.of(respond(401, "username or password didn't match", null)));
+    private static SyncRule webRespondForLoginWhenUserNamingLookupRefused() {
+        return rule("WebRespondForLoginWhenUserNamingLookupByUsernameRefused")
+            .when(USER_NAMING, LOOKUP_BY_USERNAME, "refused")
+            .then(invoke(WEB, RESPOND, args(
+                    "status", lit(401),
+                    "message", lit("username or password didn't match"))))
+            .build();
     }
 
     /** Row 3b[OK]→4a: when PasswordAuth.check[OK] → Session.grant(userId). */
-    static SyncRule checkOkToGrant() {
-        return SyncRule.of(
-                "WhenPasswordAuthCheckOkThenSessionGrantForLogin",
-                "PasswordAuth", "check", "OK",
-                List.of(new Clause.Bind("?user", new Source.TriggerField("userId"))),
-                List.of(invoke("Session", "grant", Map.of("userId", ref("?user")))));
+    private static SyncRule sessionGrantForLoginWhenPasswordAuthCheckOk() {
+        return rule("SessionGrantForLoginWhenPasswordAuthCheckOk")
+            .when(PASSWORD_AUTH, CHECK, "OK")
+            .where(bind("?user", triggerField("userId")))
+            .then(invoke(SESSION, GRANT, args("userId", ref("?user"))))
+            .build();
     }
 
     /** Row 3b[BAD_PASSWORD]→4b: respond 401 opaque. */
-    static SyncRule checkBadPasswordToRespond() {
-        return SyncRule.of(
-                "WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin",
-                "PasswordAuth", "check", "BAD_PASSWORD",
-                List.of(),
-                List.of(respond(401, "username or password didn't match", null)));
+    private static SyncRule webRespondForLoginWhenPasswordAuthCheckBadPassword() {
+        return rule("WebRespondForLoginWhenPasswordAuthCheckBadPassword")
+            .when(PASSWORD_AUTH, CHECK, "BAD_PASSWORD")
+            .then(invoke(WEB, RESPOND, args(
+                    "status", lit(401),
+                    "message", lit("username or password didn't match"))))
+            .build();
     }
 
     /** Row 3b[LOCKED]→4c: respond 401 with the visible lockout message. */
-    static SyncRule checkLockedToRespond() {
-        return SyncRule.of(
-                "WhenPasswordAuthCheckLockedThenWebRespondForLogin",
-                "PasswordAuth", "check", "LOCKED",
-                List.of(),
-                List.of(respond(401, "Too many attempts. Try again in 15 minutes.", null)));
+    private static SyncRule webRespondForLoginWhenPasswordAuthCheckLocked() {
+        return rule("WebRespondForLoginWhenPasswordAuthCheckLocked")
+            .when(PASSWORD_AUTH, CHECK, "LOCKED")
+            .then(invoke(WEB, RESPOND, args(
+                    "status", lit(401),
+                    "message", lit("Too many attempts. Try again in 15 minutes."))))
+            .build();
     }
 
     /** Row 4a[GRANTED]→5: when Session.grant[GRANTED] → Web.respond(200, sessionToken). */
-    static SyncRule grantGrantedToRespond() {
-        return SyncRule.of(
-                "WhenSessionGrantGrantedThenWebRespondForLogin",
-                "Session", "grant", "GRANTED",
-                List.of(new Clause.Bind("?sid", new Source.TriggerField("sessionId"))),
-                List.of(respond(200, null, "?sid")));
-    }
-
-    private static ThenInvocation respond(int status, String message, String sessionTokenVar) {
-        Map<String, Source> args = new java.util.LinkedHashMap<>();
-        args.put("status", lit(status));
-        if (message != null) {
-            args.put("message", lit(message));
-        }
-        if (sessionTokenVar != null) {
-            args.put("sessionToken", ref(sessionTokenVar));
-        }
-        return invoke("Web", "respond", args);
+    private static SyncRule webRespondForLoginWhenSessionGrantGranted() {
+        return rule("WebRespondForLoginWhenSessionGrantGranted")
+            .when(SESSION, GRANT, "GRANTED")
+            .where(bind("?sid", triggerField("sessionId")))
+            .then(invoke(WEB, RESPOND, args(
+                    "status", lit(200),
+                    "sessionToken", ref("?sid"))))
+            .build();
     }
 }

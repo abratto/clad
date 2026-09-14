@@ -65,34 +65,40 @@ actions.
 
 ## Naming
 
-A sync name must read as a compressed `when X then Y` rule:
+A sync name reads effect-first (grammar v2, see
+`maintenance/sync-dsl-legibility.md`; the pre-v0.6 condition-first form
+survives only in pre-existing frozen artefacts):
 
 ```
-When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>]
+<TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>
 ```
 
 Rules:
 
-- Prefix every sync name with `When`.
-- Use `Then` as the separator between the trigger side and target side.
+- Lead with the **effect** — the `then` side — because that is what a
+  reader of a sync pack or a `causedBySync` back-trace wants first
+  (paper-authors' style: effect, scope, condition — cf. conceptbox's
+  `NotifyWhenReachTen`).
+- Use `When` as the separator between the effect and its trigger.
 - Use PascalCase for the Stage 03 sync name and `.sync.md` file stem.
-- Derive `TriggerConcept`, `TriggerAction`, `TargetConcept`, and
-  `TargetAction` directly from the first `when` and `then` signatures.
-- Derive `TriggerCompletion` from the first completion token in the
-  `when` arrow's right side. For `[ ok ; userId: ?u ]`, use `Ok`; for
+- Derive `TargetConcept`/`TargetAction` from the first `then`
+  signature; `TriggerConcept`/`TriggerAction` from the first `when`.
+- Derive `TriggerCompletion` from the first completion token on the right
+  side of the `when` arrow. For `[ ok ; userId: ?u ]`, use `Ok`; for
   `[ error: "notFound" ]`, use `NotFound`; for `[ refused ]`, use
-  `Refused`.
-- Omit `TriggerCompletion` only when the trigger has no completion token.
-- Append `For<Scope>` when the same trigger/target edge can occur in
-  multiple routes, flows, use cases, or other scopes.
+  `Refused`. Omit it only when the trigger has no completion token.
+- Glue `For<Scope>` to the **effect** side when the same target can occur
+  in multiple routes/flows/scope — route scoping is an effect property,
+  per R15.
 - The `sync <Name>` header and filename stem must match exactly. Profile
-  implementations should lower the same stem mechanically; for Java, the
-  class name is the same PascalCase stem and `syncName()` is lower camel case.
+  implementations lower the same stem mechanically; for Java, the class
+  name is the same PascalCase stem (and per-rule carrier class if the
+  profile authors one class per rule).
 
 Example:
 
 ```
-sync WhenPasswordAuthCheckOkThenSessionGrantForLogin
+sync SessionGrantForLoginWhenPasswordAuthCheckOk
 
 when {
     PasswordAuth/check: [ userId: ?user ; password: ?pass ] => [ ok ; userId: ?user ]
@@ -184,6 +190,18 @@ A sync doesn't fire once per `when` match. It fires once per **frame** —
 each distinct set of variable bindings that satisfies the `where` clause.
 This is the same model used by Eagon Meng's `sync-blank` reference
 implementation and the WYSIWID paper's predicate semantics.
+
+**Origin of the term.** "Frames" comes from the paper (predicate
+semantics over the causal flow) and its authors' own machine-readable
+realization — the MIT 61040 `conceptbox` engine, whose `Frames` type the
+implementation doc calls "a `Record<symbol, unknown>` binding set, one
+`then`-fire per frame" (`conceptbox/design/background/implementing-synchronizations.md`).
+CLAD's engine realizes the same intent as plain `Map<String, Object>`
+frames in [`WhereEvaluator`](../../reference-impl/legible-engine/src/main/java/dev/legible/engine/WhereEvaluator.java)
+— deliberately *without* conceptbox's `frames.query/filter/collectAs`
+imperative API, whose expressive power CLAD declines in `where` (see
+§"Input matching in the when clause" and the non-adoptions in
+`SYNC_ENGINE_EVOLUTION.md`).
 
 A frame is simply one row in the `where` clause's result set. If a
 `where` clause queries "all followers of this post" and finds three

@@ -79,6 +79,25 @@ implementation (MIT 61040 conceptbox, `implementing-synchronizations.md`):
   and [`SYNC_PATTERNS.md`](SYNC_PATTERNS.md)
   (`SYNCHRONIZATIONS.md` §"Input matching in the when clause").
 
+## 4. Java legibility: fluent DSL + effect-first naming (v0.6+)
+
+Two authoring-surface moves landed with `maintenance/sync-dsl-legibility.md`
+(no Option-4 adoption — the SPARQL-era "no gap by readable code" property
+is preserved by keeping the executed data human-readable debuggable Java,
+with the `.sync.md`/parity pairing as the audit surface rather than an
+interpreter):
+
+- **Fluent DSL sugar** — `Dsl.rule("name").when(...).matching(...).where(...).then(...).build()`
+  plus static `bind`/`guard`/`optional`/`fanOut`/`uuid`/`stateRead`/`args`
+  factories so hand-written rules read like the spec's `when → where → then`
+  and use concept/action constants instead of positional strings.
+- **Effect-first naming grammar v2, strict green-only**:
+  `<TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>`
+  — matching the paper-authors' own naming style (conceptbox's
+  `NotifyWhenReachTen`). Pre-v0.6 condition-first names survive only as
+  frozen historical artefacts (`UC-00` outputs renamed mechanically via
+  `_changes/sync-name-grammar-v2.md`, gates re-recorded).
+
 ## Standing comparison to the reference implementation
 
 | Capability | conceptbox (paper authors) | CLAD engine |

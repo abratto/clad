@@ -9,6 +9,10 @@ import java.util.UUID;
 /** Comments on posts. State: {@code post(commentId) -> postId}. */
 public final class CommentingConcept implements Concept {
 
+    /** Concept constants for sync rule authoring (see maintenance/sync-dsl-legibility.md). */
+    public static final String NAME = "Commenting";
+    public static final String COMMENT = "comment";
+
     private final Region region;
 
     public CommentingConcept(Region region) {
@@ -17,7 +21,7 @@ public final class CommentingConcept implements Concept {
 
     @Override
     public String name() {
-        return "Commenting";
+        return NAME;
     }
 
     @Override

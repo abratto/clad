@@ -9,6 +9,10 @@ import java.util.UUID;
 /** Posts: who authored them. State: {@code author(postId) -> authorId}. */
 public final class PostingConcept implements Concept {
 
+    /** Concept constants for sync rule authoring (see maintenance/sync-dsl-legibility.md). */
+    public static final String NAME = "Posting";
+    public static final String CREATE_POST = "createPost";
+
     private final Region region;
 
     public PostingConcept(Region region) {
@@ -17,7 +21,7 @@ public final class PostingConcept implements Concept {
 
     @Override
     public String name() {
-        return "Posting";
+        return NAME;
     }
 
     @Override

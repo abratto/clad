@@ -12,6 +12,10 @@ import java.util.Map;
  */
 public final class TokenConcept implements Concept {
 
+    /** Concept constants for sync rule authoring (see maintenance/sync-dsl-legibility.md). */
+    public static final String NAME = "Token";
+    public static final String ISSUE = "issue";
+
     private final Region region;
 
     public TokenConcept(Region region) {
@@ -20,7 +24,7 @@ public final class TokenConcept implements Concept {
 
     @Override
     public String name() {
-        return "Token";
+        return NAME;
     }
 
     @Override

@@ -54,8 +54,10 @@ CONCEPT_AGENT_RE = re.compile(
 # their anatomy is documented in methodology/architecture/WEB_CONCEPT.md.
 BOOTSTRAP_CONCEPTS = {"Web", "Grpc", "Stream", "Cli"}
 
-# New-shape sync declarations: SyncRule.of("Name", "concept", "action", ...).
+# Sync-rule declarations: legacy SyncRule.of("Name", ...) and the fluent
+# DSL chain rule("Name") ... .when(...) (see maintenance/sync-dsl-legibility.md).
 SYNC_RULE_OF_RE = re.compile(r'SyncRule\.of\(\s*"(\w+)"')
+DSL_RULE_RE = re.compile(r'\brule\(\s*"(\w+)"\s*\)')
 
 
 def collect_class_names(directory):
@@ -137,24 +139,33 @@ def split_table_row(line):
 
 
 def expected_sync_names(path, text):
-    """Mechanical When...Then[For<Scope>] name(s) for a canonical sync spec."""
+    """Mechanical effect-first name(s) for a canonical sync spec (grammar v2,
+    see maintenance/sync-dsl-legibility.md):
+    <TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>"""
     spec = ap.parse_sync(path)
     if spec is None or not spec.trigger_concept or not spec.then_targets:
         return []
     scope = feature_scope_from_path(path)
     then_concept, then_action = spec.then_targets[0]
     base = (
-        "When"
+        pascal_token(then_concept)
+        + pascal_token(then_action)
+        + "When"
         + pascal_token(spec.trigger_concept)
         + pascal_token(spec.trigger_action)
         + first_completion_token(spec.trigger_outcome)
-        + "Then"
-        + pascal_token(then_concept)
-        + pascal_token(then_action)
     )
     names = [base]
     if scope:
-        names.append(base + "For" + scope)
+        names.append(
+            pascal_token(then_concept)
+            + pascal_token(then_action)
+            + "For" + scope
+            + "When"
+            + pascal_token(spec.trigger_concept)
+            + pascal_token(spec.trigger_action)
+            + first_completion_token(spec.trigger_outcome)
+        )
     return names
 
 
@@ -174,7 +185,7 @@ def collect_sync_specs(features_dir):
             failures.append((path, f"filename stem '{stem}' does not match sync declaration '{declared}'"))
         expected = expected_sync_names(path, text)
         if not expected:
-            failures.append((path, "could not derive mechanical When...Then sync name from ## Rule"))
+            failures.append((path, "could not derive mechanical v2 sync name from ## Rule"))
             continue
         if stem not in expected:
             failures.append(
@@ -199,6 +210,8 @@ def collect_sync_names(directory):
             with open(path, encoding="utf-8") as handle:
                 text = handle.read()
             for m in SYNC_RULE_OF_RE.finditer(text):
+                results.append((path, m.group(1)))
+            for m in DSL_RULE_RE.finditer(text):
                 results.append((path, m.group(1)))
     return results
 

@@ -10,6 +10,56 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.6.0] — 2026-09-14
+
+### Changed
+
+- **Sync authoring legibility + naming grammar v2** (maintenance record
+  `maintenance/sync-dsl-legibility.md`, design + evidence gates recorded
+  in-conversation; feature contracts preserved — same triggers, targets,
+  outcomes, route probing, and chain tables):
+  - **Fluent DSL** in `legible-engine` (`Dsl`: `rule(...).when(...).matching(...).where(...).then(...).build()`
+    plus `bind`/`guard`/`optional`/`fanOut`/`uuid`/`stateRead`/`args`
+    factories) so hand-written `SyncRule` records read like the spec block
+    and carry concept/action constants (per-feature `*Names` relay classes:
+    `LoginNames`, `SocialNames`, `TaggingNames`).
+  - **All 32 stocked example rules migrated** (java-legible 27; the
+    re-lowered `java-micronaut-postgres` 7) to the fluent DSL and renamed to
+    the effect-first grammar; behaviour oracle unchanged (FlowTrace,
+    LoginFlow, TaggingFlow, SocialFlow, TokenFlow, Concurrency all green).
+  - **Effect-first naming grammar, strict green-only**:
+    `<TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>`
+    (the paper-authors' own descriptive style — conceptbox's
+    `NotifyWhenReachTen`). The UC-00 Artifacts were mechanically renamed
+    through its iterative-change loop (`_changes/sync-name-grammar-v2.md`,
+    Gates 1/2 re-presented and re-approved; nothing behavioral).
+  - `generate_syncs.py` derives grammar-v2 stems; `verify_implementation_parity`
+    / `verify_sync_implementation_parity` pair specs against both legacy
+    `SyncRule.of(...)` *and* the fluent-DSL chain, resolving concept/action
+    constants through a package symbol table; strict v2 name lowering.
+  - `verify_sync_route_filters` reads `.matching(...)` as route-scoping
+    evidence alongside `?route` guards.
+
+### Added
+
+- **`quality-gate/generate_syncs_java.py`** — mechanical spec → code lowering
+  that emits the fluent-DSL SyncRule realizations in both emitter shapes
+  (java-legible consolidated list / micronaut per-rule carrier class) from
+  the same `artifact_parsers` grammar the verifiers use, with TODO markers
+  only for Pattern D judgment items and non-literal `then` args — so
+  generated code satisfies `verify_sync_implementation_parity.py` by
+  construction.
+- **`legible-engine` `Dsl`** — the sugar surface above (sealed `Clause` /
+  `Source` records unchanged; zero behavioural delta).
+
+### Non-adoptions
+
+- **`.sync.md`-as-runtime-data (Option 4) declined** with rationale: the
+  Legible goal is that the executed data is directly human-readable,
+  debuggable Java — the SPARQL-era "no gap by readable code" property. The
+  `.sync.md`/parity pairing remains the audit surface; an interpreter
+  would insert a hidden translation layer between spec and execution.
+
 ## [0.5.1] — 2026-09-12
 
 ### Changed

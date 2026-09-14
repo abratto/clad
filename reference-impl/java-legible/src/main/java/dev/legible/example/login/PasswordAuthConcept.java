@@ -13,6 +13,11 @@ import java.util.Set;
  */
 public final class PasswordAuthConcept implements Concept {
 
+    /** Concept constants for sync rule authoring (see maintenance/sync-dsl-legibility.md). */
+    public static final String NAME = "PasswordAuth";
+    public static final String SET_CREDENTIAL = "setCredential";
+    public static final String CHECK = "check";
+
     private static final int LOCKOUT_THRESHOLD = 5;
     private static final long LOCKOUT_WINDOW_MILLIS = 15L * 60L * 1000L;
 
@@ -24,7 +29,7 @@ public final class PasswordAuthConcept implements Concept {
 
     @Override
     public String name() {
-        return "PasswordAuth";
+        return NAME;
     }
 
     @Override

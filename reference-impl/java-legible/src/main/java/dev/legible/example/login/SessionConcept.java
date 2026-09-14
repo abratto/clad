@@ -13,6 +13,11 @@ import java.util.UUID;
  */
 public final class SessionConcept implements Concept {
 
+    /** Concept constants for sync rule authoring (see maintenance/sync-dsl-legibility.md). */
+    public static final String NAME = "Session";
+    public static final String GRANT = "grant";
+    public static final String LOOKUP = "lookup";
+
     private final Region region;
 
     public SessionConcept(Region region) {
@@ -21,7 +26,7 @@ public final class SessionConcept implements Concept {
 
     @Override
     public String name() {
-        return "Session";
+        return NAME;
     }
 
     @Override

@@ -10,6 +10,10 @@ import java.util.UUID;
 /** Notifications per user. State: {@code notification(userId) -> message} (a set). */
 public final class NotifyingConcept implements Concept {
 
+    /** Concept constants for sync rule authoring (see maintenance/sync-dsl-legibility.md). */
+    public static final String NAME = "Notifying";
+    public static final String NOTIFY = "notify";
+
     private final Region region;
 
     public NotifyingConcept(Region region) {
@@ -18,7 +22,7 @@ public final class NotifyingConcept implements Concept {
 
     @Override
     public String name() {
-        return "Notifying";
+        return NAME;
     }
 
     @Override

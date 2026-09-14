@@ -8,6 +8,10 @@ import java.util.Map;
 /** Who follows whom. State: {@code target(followerId) -> targetId} (a set). */
 public final class FollowingConcept implements Concept {
 
+    /** Concept constants for sync rule authoring (see maintenance/sync-dsl-legibility.md). */
+    public static final String NAME = "Following";
+    public static final String FOLLOW = "follow";
+
     private final Region region;
 
     public FollowingConcept(Region region) {
@@ -16,7 +20,7 @@ public final class FollowingConcept implements Concept {
 
     @Override
     public String name() {
-        return "Following";
+        return NAME;
     }
 
     @Override

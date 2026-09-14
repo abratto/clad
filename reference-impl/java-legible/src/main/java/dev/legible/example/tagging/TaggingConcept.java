@@ -8,6 +8,9 @@ import java.util.Map;
 /** Tags on posts. State: {@code tag(postId) -> tagName} (a set per post). */
 public final class TaggingConcept implements Concept {
 
+        public static final String NAME = "Tagging";
+    public static final String TAG = "tag";
+
     private final Region region;
 
     public TaggingConcept(Region region) {
@@ -16,7 +19,7 @@ public final class TaggingConcept implements Concept {
 
     @Override
     public String name() {
-        return "Tagging";
+        return NAME;
     }
 
     @Override

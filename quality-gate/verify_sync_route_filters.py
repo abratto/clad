@@ -32,7 +32,7 @@ from pathlib import Path
 _SYNC_RULE_HEAD = re.compile(
     r'SyncRule\.of\(\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"([^"]*)"')
 _SYNC_RULE_RESPOND = re.compile(r'invoke\(\s*"Web"\s*,\s*"respond"')
-_SYNC_RULE_ROUTE_GUARD = re.compile(r'(?:Clause\.)?(?:Guard|Bind)\(\s*"\?route"|Map\.of\(\s*"route"')
+_SYNC_RULE_ROUTE_GUARD = re.compile(r'(?:Clause\.)?(?:Guard|Bind)\(\s*"\?route"|Map\.of\(\s*"route"|\.matching\(\s*Map\.of\(\s*"route"')
 
 
 def scan_sync_rule_ambiguity(root):

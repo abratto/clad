@@ -8,6 +8,10 @@ import java.util.Map;
 /** Who watches which tag. State: {@code watch(userId) -> tagName} (a set). */
 public final class SubscribingConcept implements Concept {
 
+    /** Concept constants for sync rule authoring (see maintenance/sync-dsl-legibility.md). */
+    public static final String NAME = "Subscribing";
+    public static final String SUBSCRIBE = "subscribe";
+
     private final Region region;
 
     public SubscribingConcept(Region region) {
@@ -16,7 +20,7 @@ public final class SubscribingConcept implements Concept {
 
     @Override
     public String name() {
-        return "Subscribing";
+        return NAME;
     }
 
     @Override

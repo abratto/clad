@@ -267,8 +267,8 @@ branching, no state, no I/O. Every `where` clause labels its pattern
 
 For UC-00 the agent writes:
 
-- [`WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md`](../features/UC-00-login/stages/03_syncs/output/WhenPasswordAuthCheckOkThenSessionGrantForLogin.sync.md) — `when PasswordAuth.check(userId, password) -> Ok` then `Session.grant(userId)` then `Web.respond(200, { sessionToken })`. The `where: B: sessionId = result_of(Session.grant).sessionId` is **Pattern B** (flow-sibling); see [`SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md).
-- [`WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md`](../features/UC-00-login/stages/03_syncs/output/WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md) — lockout response path.
+- [`SessionGrantForLoginWhenPasswordAuthCheckOk.sync.md`](../features/UC-00-login/stages/03_syncs/output/SessionGrantForLoginWhenPasswordAuthCheckOk.sync.md) — `when PasswordAuth.check(userId, password) -> Ok` then `Session.grant(userId)` then `Web.respond(200, { sessionToken })`. The `where: B: sessionId = result_of(Session.grant).sessionId` is **Pattern B** (flow-sibling); see [`SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md).
+- [`WebRespondForLoginWhenPasswordAuthCheckLocked.sync.md`](../features/UC-00-login/stages/03_syncs/output/WebRespondForLoginWhenPasswordAuthCheckLocked.sync.md) — lockout response path.
 
 The unhappy paths (`wrong-password`, `unknown-user`, `lockout`) are also
 syncs. Stage 03 remains the single declarative coordination surface for

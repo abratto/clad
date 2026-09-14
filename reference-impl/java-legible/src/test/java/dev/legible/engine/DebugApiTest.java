@@ -38,7 +38,7 @@ class DebugApiTest {
         assertEquals("Web", actions.get(4).get("concept"));
         assertEquals("respond", actions.get(4).get("action"));
         assertEquals(200, ((Map<?, ?>) actions.get(4).get("fields")).get("status"));
-        assertEquals("WhenSessionGrantGrantedThenWebRespondForLogin",
+        assertEquals("WebRespondForLoginWhenSessionGrantGranted",
                 actions.get(4).get("causedBySync"));
     }
 

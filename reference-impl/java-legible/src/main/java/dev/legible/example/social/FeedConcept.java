@@ -9,6 +9,10 @@ import java.util.Map;
 /** A per-user feed of items. State: {@code item(userId) -> itemId} (a set). */
 public final class FeedConcept implements Concept {
 
+    /** Concept constants for sync rule authoring (see maintenance/sync-dsl-legibility.md). */
+    public static final String NAME = "Feed";
+    public static final String APPEND = "append";
+
     private final Region region;
 
     public FeedConcept(Region region) {
@@ -17,7 +21,7 @@ public final class FeedConcept implements Concept {
 
     @Override
     public String name() {
-        return "Feed";
+        return NAME;
     }
 
     @Override

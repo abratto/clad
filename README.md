@@ -142,30 +142,44 @@ feature for downstream runtimes, keeping the parsing grammar in one place.
 ### Runtime architecture
 
 Every HTTP request in a CLAD system flows through exactly one path.
-Concepts do business work. Syncs coordinate. Infrastructure is transport-only.
+Concepts do business work. Syncs **declare** coordination as declarative
+records; the engine **performs** it after each commit — syncs participate
+only through that evaluation (no sync ever calls into anything or holds
+state; each synthesized invocation records `causedBySync`). Infrastructure
+is transport-only.
 
 ```mermaid
 sequenceDiagram
     participant Client
     participant Controller as Infrastructure<br/>transport-only
     participant Engine as SyncEngine<br/>fire-after-commit
+    participant Syncs as Syncs (declarative)<br/>SyncRule: when→where→then
     participant Concepts as Concepts<br/>UserNaming, PasswordAuth, Session
-    participant Syncs as Syncs<br/>SyncRule: when X → then Y
+    participant Log as ActionLog<br/>per-flow, private
 
     Client->>Controller: POST /api/login
     Note over Controller: 1. Normalize input (transport → engine format)
     Controller->>Engine: engine.run("Web", "request", { route, username, password })
     Note over Engine: 2. Execute Web/request, commit, then fire matching syncs to quiescence
+
+    Note over Engine,Concepts: — per completion: evaluate declarative syncs, then execute —
     Engine->>Concepts: UserNaming.lookupByUsername(username)
     Concepts-->>Engine: { outcome: FOUND, userId }
-    Engine->>Engine: when UserNaming/lookupByUsername[FOUND] → PasswordAuth.check
+    Note over Engine,Log: every invocation+completion is committed to the<br/>flow's private ActionLog (causedBySync/parent lineage)
+    Engine->>Syncs: evaluate rules for Web.request + UserNaming lookupByUsername[FOUND]
+    Note over Syncs: pure data — trigger (incl. input matcher),<br/>Binder clauses → frames, one then per frame
+    Syncs-->>Engine: match: when lookupByUsername[FOUND] → PasswordAuth.check
+    Note over Engine,Syncs: 3. Mint invocation, causedBySync = rule name
     Engine->>Concepts: PasswordAuth.check(userId, password)
     Concepts-->>Engine: { outcome: OK, userId }
-    Engine->>Engine: when PasswordAuth/check[OK] → Session.grant
+    Engine->>Syncs: evaluate rules for check[OK]
+    Syncs-->>Engine: match: when PasswordAuth/check[OK] → Session.grant
     Engine->>Concepts: Session.grant(userId)
     Concepts-->>Engine: { outcome: GRANTED, sessionId }
-    Engine->>Engine: when Session/grant[GRANTED] → Web.respond
-    Note over Engine: 3. Flow completes at quiescence — run() returns the Web/respond fields
+    Engine->>Syncs: evaluate rules for Session.grant[GRANTED]
+    Syncs-->>Engine: match: when Session/grant[GRANTED] → Web.respond
+    Note over Engine,Log: 4. Flow completes at quiescence — run() returns the Web/respond fields
+    Engine-->>Controller: 200 { sessionToken: "..." }
     Controller-->>Client: 200 { sessionToken: "..." }
 ```
 

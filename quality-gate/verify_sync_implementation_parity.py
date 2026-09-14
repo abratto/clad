@@ -29,9 +29,57 @@ import artifact_parsers as ap
 
 
 SYNC_SUFFIX = ".sync.md"
-_SYNC_RULE_HEAD = re.compile(
+# Legacy shape: SyncRule.of("Name", "concept", "action", "outcome", ...)
+_SYNC_RULE_OF_HEAD = re.compile(
     r'SyncRule\.of\(\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"([^"]*)"')
-_SYNC_RULE_INVOKE = re.compile(r'invoke\(\s*"(\w+)"\s*,\s*"(\w+)"')
+# Fluent DSL shape (see maintenance/sync-dsl-legibility.md):
+#   rule("Name")\n .when("Concept", "action"[, "outcome"]) [optional .matching(...)]
+_DSL_RULE_HEAD = re.compile(
+    r'rule\(\s*"(\w+)"\s*\)(?:.{0,400}?)\.when\(\s*([A-Za-z_]\w*)\s*,\s*([A-Za-z_]\w*)\s*(?:,\s*"?([A-Za-z_0-9]\w*)"?)?\s*\)',
+    re.DOTALL)
+_SYNC_RULE_INVOKE = re.compile(
+    r'invoke\(\s*("?)([A-Za-z_]\w*)\1\s*,\s*("?)([A-Za-z_]\w*)\3')
+
+
+def sync_invoke_targets(symbols, text):
+    return [(symbols.get(c, c), symbols.get(a, a))
+            for m in _SYNC_RULE_INVOKE.finditer(text)
+            for c, a in [(m.group(2), m.group(4))]]
+
+
+def symbol_table(package_dir):
+    """Resolve `public static final String <ID> = <value>;` constants found
+    under a package directory so `.when(WEB, REQUEST, "routed")`-style
+    constant references resolve to literal values. Chained values
+    (`String WEB = WebConcept.NAME;`) resolve transitively through the
+    qualified map (see maintenance/sync-dsl-legibility.md)."""
+    literals = {}        # Class.CONST -> literal
+    simple = {}          # CONST -> (literal | qualified ref)
+    if not package_dir or not os.path.isdir(package_dir):
+        return table_out(literals, simple)
+    const_re = re.compile(r'String\s+([A-Z][A-Z0-9_]+)\s*=\s*("?)([A-Za-z0-9_."]+)\2;')
+    for root, _, files in os.walk(package_dir):
+        class_name = None
+        for fn in files:
+            if not fn.endswith(".java"):
+                continue
+            path = os.path.join(root, fn)
+            text = open(path, encoding="utf-8").read()
+            cm = re.search(r'(?:final class|class)\s+([A-Za-z_]\w*)', text)
+            cname = cm.group(1) if cm else fn[:-5]
+            for m in const_re.finditer(text):
+                key = f"{cm.group(1) if cm else fn[:-5]}.{m.group(1)}"
+                literals.setdefault(key, m.group(3))
+                simple.setdefault(m.group(1), m.group(3))
+    table = {}
+    for ident, value in simple.items():
+        if value in literals:
+            table[ident] = literals[value]
+        elif re.match(r"^[A-Za-z_]\w*\.[A-Z]", value):
+            table[ident] = literals.get(value, value)
+        else:
+            table[ident] = value
+    return table
 
 
 def normalize_token(raw):
@@ -65,15 +113,21 @@ def collect_java_syncs(sync_impl_dir):
                 continue
             path = os.path.join(root, filename)
             text = open(path, encoding="utf-8").read()
-            heads = list(_SYNC_RULE_HEAD.finditer(text))
-            for index, m in enumerate(heads):
-                name, concept, action, outcome = m.groups()
-                start = m.start()
-                end = heads[index + 1].start() if index + 1 < len(heads) else len(text)
+            heads = [(m.span(), m.groups()) for m in _SYNC_RULE_OF_HEAD.finditer(text)]
+            heads += [(m.span(), m.groups()) for m in _DSL_RULE_HEAD.finditer(text)]
+            heads.sort()
+            symbols = symbol_table(os.path.dirname(path))
+            for index, ((start, _end), groups) in enumerate(heads):
+                name = groups[0]
+                concept = symbols.get(groups[1], groups[1])
+                action = symbols.get(groups[2], groups[2])
+                outcome_raw = groups[3] if len(groups) > 3 else None
+                outcome = symbols.get(outcome_raw, outcome_raw) if outcome_raw else ""
+                end = heads[index + 1][0][0] if index + 1 < len(heads) else len(text)
                 rules[name] = {
                     "path": path,
                     "trigger": (concept, action, outcome or None),
-                    "then_targets": _SYNC_RULE_INVOKE.findall(text[start:end]),
+                    "then_targets": sync_invoke_targets(symbols, text[start:end]),
                 }
     return rules, []
 

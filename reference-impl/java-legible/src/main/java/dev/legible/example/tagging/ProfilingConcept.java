@@ -11,6 +11,10 @@ import java.util.Map;
  */
 public final class ProfilingConcept implements Concept {
 
+    /** Concept constants for sync rule authoring (see maintenance/sync-dsl-legibility.md). */
+    public static final String NAME = "Profiling";
+    public static final String SET_BIO = "setBio";
+
     private final Region region;
 
     public ProfilingConcept(Region region) {
@@ -19,7 +23,7 @@ public final class ProfilingConcept implements Concept {
 
     @Override
     public String name() {
-        return "Profiling";
+        return NAME;
     }
 
     @Override
