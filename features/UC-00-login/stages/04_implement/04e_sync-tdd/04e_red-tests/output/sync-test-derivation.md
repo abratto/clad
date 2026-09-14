@@ -14,22 +14,22 @@
 
 | Sync | Chain table | Flow scenario | Tested by |
 |---|---|---|---|
-| `WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `CucumberTest` |
-| `WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin` | Row 2→3 | successful-login, wrong-pw, lockout | `CucumberTest` |
-| `WhenPasswordAuthCheckOkThenSessionGrantForLogin` | Row 3→4 | successful-login | `CucumberTest` |
-| `WhenSessionGrantGrantedThenWebRespondForLogin` | Row 4→5 | successful-login | `CucumberTest` |
-| `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin` | Row 3a | wrong-password | `CucumberTest` |
-| `WhenPasswordAuthCheckLockedThenWebRespondForLogin` | Row 3b | lockout | `CucumberTest` |
+| `UserNamingLookupByUsernameForLoginWhenWebRequestRouted` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `CucumberTest` |
+| `PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound` | Row 2→3 | successful-login, wrong-pw, lockout | `CucumberTest` |
+| `SessionGrantForLoginWhenPasswordAuthCheckOk` | Row 3→4 | successful-login | `CucumberTest` |
+| `WebRespondForLoginWhenSessionGrantGranted` | Row 4→5 | successful-login | `CucumberTest` |
+| `WebRespondForLoginWhenPasswordAuthCheckBadPassword` | Row 3a | wrong-password | `CucumberTest` |
+| `WebRespondForLoginWhenPasswordAuthCheckLocked` | Row 3b | lockout | `CucumberTest` |
 | `WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin` | Row 2a | unknown-user | `CucumberTest` |
 
 ## Gherkin scenario coverage
 
 | Scenario | Syncs exercised |
 |---|---|
-| `successful-login` | WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckOkThenSessionGrantForLogin, WhenSessionGrantGrantedThenWebRespondForLogin |
-| `wrong-password` | WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin |
-| `lockout` | WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin, WhenPasswordAuthCheckLockedThenWebRespondForLogin |
-| `unknown-user` | WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin, WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin |
+| `successful-login` | UserNamingLookupByUsernameForLoginWhenWebRequestRouted, PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound, SessionGrantForLoginWhenPasswordAuthCheckOk, WebRespondForLoginWhenSessionGrantGranted |
+| `wrong-password` | UserNamingLookupByUsernameForLoginWhenWebRequestRouted, PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound, WebRespondForLoginWhenPasswordAuthCheckBadPassword |
+| `lockout` | UserNamingLookupByUsernameForLoginWhenWebRequestRouted, PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound, WebRespondForLoginWhenPasswordAuthCheckLocked |
+| `unknown-user` | UserNamingLookupByUsernameForLoginWhenWebRequestRouted, WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin |
 
 All 4 Cucumber scenarios pass (0 failures).
 
@@ -50,7 +50,7 @@ All 4 Cucumber scenarios pass (0 failures).
 
 The reference implementation tests syncs through flow-level integration
 tests (CucumberTest) and a dedicated unit test for
-`WhenPasswordAuthCheckOkThenSessionGrantForLogin`. All sync implementations
+`SessionGrantForLoginWhenPasswordAuthCheckOk`. All sync implementations
 exist under `com.example.app.syncs` with matching spec artefacts.
 
 ---
@@ -59,9 +59,9 @@ exist under `com.example.app.syncs` with matching spec artefacts.
 
 - **Approved red tests:** None — existing tests are flow-level and pass green
 - **Sync package:** `com.example.app.syncs`
-- **Sync classes:** `WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin`, `WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin`,
-  `WhenPasswordAuthCheckOkThenSessionGrantForLogin`, `WhenSessionGrantGrantedThenWebRespondForLogin`, `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin`,
-  `WhenPasswordAuthCheckLockedThenWebRespondForLogin`, `WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin`
+- **Sync classes:** `UserNamingLookupByUsernameForLoginWhenWebRequestRouted`, `PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound`,
+  `SessionGrantForLoginWhenPasswordAuthCheckOk`, `WebRespondForLoginWhenSessionGrantGranted`, `WebRespondForLoginWhenPasswordAuthCheckBadPassword`,
+  `WebRespondForLoginWhenPasswordAuthCheckLocked`, `WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin`
 - **Test command:** `mvn -f reference-impl/java-micronaut-jena/pom.xml test`
 - **Expected red outcome:** N/A — existing tests are green
 - **Next implementation target:** Stage 05 verification

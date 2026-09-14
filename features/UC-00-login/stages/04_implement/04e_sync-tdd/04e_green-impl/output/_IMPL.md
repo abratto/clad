@@ -3,12 +3,12 @@
 
 Implementation classes exist under `reference-impl/java-micronaut-jena/src/main/java/com/example/app/syncs/`:
 
-- `WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin.java`
-- `WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin.java`
-- `WhenPasswordAuthCheckOkThenSessionGrantForLogin.java`
-- `WhenSessionGrantGrantedThenWebRespondForLogin.java`
-- `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.java`
-- `WhenPasswordAuthCheckLockedThenWebRespondForLogin.java`
+- `UserNamingLookupByUsernameForLoginWhenWebRequestRouted.java`
+- `PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound.java`
+- `SessionGrantForLoginWhenPasswordAuthCheckOk.java`
+- `WebRespondForLoginWhenSessionGrantGranted.java`
+- `WebRespondForLoginWhenPasswordAuthCheckBadPassword.java`
+- `WebRespondForLoginWhenPasswordAuthCheckLocked.java`
 - `WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin.java`
 
 ## Verification

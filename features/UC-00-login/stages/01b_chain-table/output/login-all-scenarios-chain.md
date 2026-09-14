@@ -110,10 +110,10 @@ Row 1 is the root `Web.request` entry; it is not itself a sync.
 
 For each non-root row's derived `When -> Then` transition:
 
-2. **Row 1→2:** When `Web.request[Routed]`, invoke `UserNaming.lookupByUsername` → sync name: `WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin`
-3. **Row 2 [Found] → 3b:** When `UserNaming.lookupByUsername[Found(userId)]`, invoke `PasswordAuth.check` → sync: `WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin`
-4. **Row 2 [Refused] → 3a:** When `UserNaming.lookupByUsername[Refused]`, invoke `Web.respond[401]` → sync: `WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin`
-5. **Row 3b [Ok] → 4a:** When `PasswordAuth.check[Ok]`, invoke `Session.grant` → sync: `WhenPasswordAuthCheckOkThenSessionGrantForLogin`
-6. **Row 3b [BadPassword] → 4b:** When `PasswordAuth.check[BadPassword]`, invoke `Web.respond[401]` → sync: `WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin`
-7. **Row 3b [Locked] → 4c:** When `PasswordAuth.check[Locked]`, invoke `Web.respond[401]` → sync: `WhenPasswordAuthCheckLockedThenWebRespondForLogin`
-8. **Row 4a [Granted] → 5:** When `Session.grant[Granted(sessionId)]`, invoke `Web.respond[200]` → sync: `WhenSessionGrantGrantedThenWebRespondForLogin`
+2. **Row 1→2:** When `Web.request[Routed]`, invoke `UserNaming.lookupByUsername` → sync name: `UserNamingLookupByUsernameForLoginWhenWebRequestRouted`
+3. **Row 2 [Found] → 3b:** When `UserNaming.lookupByUsername[Found(userId)]`, invoke `PasswordAuth.check` → sync: `PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound`
+4. **Row 2 [Refused] → 3a:** When `UserNaming.lookupByUsername[Refused]`, invoke `Web.respond[401]` → sync: `WebRespondForLoginWhenUserNamingLookupByUsernameRefused`
+5. **Row 3b [Ok] → 4a:** When `PasswordAuth.check[Ok]`, invoke `Session.grant` → sync: `SessionGrantForLoginWhenPasswordAuthCheckOk`
+6. **Row 3b [BadPassword] → 4b:** When `PasswordAuth.check[BadPassword]`, invoke `Web.respond[401]` → sync: `WebRespondForLoginWhenPasswordAuthCheckBadPassword`
+7. **Row 3b [Locked] → 4c:** When `PasswordAuth.check[Locked]`, invoke `Web.respond[401]` → sync: `WebRespondForLoginWhenPasswordAuthCheckLocked`
+8. **Row 4a [Granted] → 5:** When `Session.grant[Granted(sessionId)]`, invoke `Web.respond[200]` → sync: `WebRespondForLoginWhenSessionGrantGranted`

@@ -1,4 +1,4 @@
-sync WhenSessionGrantGrantedThenWebRespondForLogin
+sync WebRespondForLoginWhenSessionGrantGranted
 
 ## Sync Contract Matrix
 

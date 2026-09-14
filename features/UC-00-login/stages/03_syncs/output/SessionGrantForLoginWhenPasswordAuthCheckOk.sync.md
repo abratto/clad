@@ -1,4 +1,4 @@
-sync WhenPasswordAuthCheckOkThenSessionGrantForLogin
+sync SessionGrantForLoginWhenPasswordAuthCheckOk
 
 ## Sync Contract Matrix
 
