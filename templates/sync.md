@@ -58,6 +58,7 @@ then {
 > Which use-case scenario(s) this sync exists to satisfy.
 
 - `../01_usecase/output/usecase.md` — scenario "<name>"
+  (cite the scenario by its **display name** exactly as written in usecase.md's `### Scenario:` heading — not the slug; a slug-mismatch fails `verify_scenario_coverage` at Stage 03)
 
 ## Notes
 

@@ -19,3 +19,6 @@ every Stage 04b and Stage 04c `CONTEXT.md` Inputs table must list it as
 a required Layer-4 input. Inbound entries drive Stage 04b response shapes and
 Stage 04c `@contract` scenarios; outbound entries name their adapter-boundary
 evidence and owning concept or engine capability.
+
+
+**Value base note** (`sync.impl.dir.md`, `concept.impl.dir.md`, `test.source.root.md`): the file body is a path **relative to the repo root** (e.g. `app/src/main/java/dev/<pkg>/syncs`) — not relative to this `_config/` folder.
