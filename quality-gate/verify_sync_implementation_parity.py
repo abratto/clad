@@ -128,11 +128,16 @@ def collect_java_syncs(sync_impl_dir):
                 outcome = symbols.get(outcome_raw, outcome_raw) if outcome_raw else ""
                 end = heads[index + 1][0][0] if index + 1 < len(heads) else len(text)
                 rules[name] = {
+                    "symbols": {k: v for k, v in symbols.items()},
                     "path": path,
                     "trigger": (concept, action, outcome or None),
                     "then_targets": sync_invoke_targets(symbols, text[start:end]),
                 }
     return rules, []
+
+
+def _deref(symbol, symbols):
+    return symbols.get(symbol, symbol)
 
 
 def trigger_matches(spec, trigger):
@@ -184,7 +189,9 @@ def main():
         if not rule:
             failures.append((label, "no matching SyncRule.of declaration found"))
             continue
-        if args.strict_trigger and not trigger_matches(spec, rule["trigger"]):
+        if args.strict_trigger and not trigger_matches(
+                spec,
+                tuple(_deref(x, rule.get("symbols", {})) for x in rule["trigger"])):
             c, a, o = rule["trigger"]
             failures.append((
                 label, f"trigger mismatch: expected "
