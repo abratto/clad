@@ -48,9 +48,8 @@ public final class TaggingSyncs {
         return SyncRule.of(
                 "WhenWebRequestRoutedThenPostingCreatePostForPublish",
                 "Web", "request", "routed",
+                Map.of("route", "publish"),
                 List.of(
-                        new Clause.Bind("?route", new Source.TriggerInput("route")),
-                        new Clause.Guard("?route", lit("publish")),
                         new Clause.Bind("?author", new Source.TriggerInput("author")),
                         new Clause.Bind("?content", new Source.TriggerInput("content"))),
                 List.of(invoke("Posting", "createPost",
@@ -69,9 +68,8 @@ public final class TaggingSyncs {
         return SyncRule.of(
                 "WhenWebRequestRoutedThenTaggingTagForTag",
                 "Web", "request", "routed",
+                Map.of("route", "tag"),
                 List.of(
-                        new Clause.Bind("?route", new Source.TriggerInput("route")),
-                        new Clause.Guard("?route", lit("tag")),
                         new Clause.Bind("?postId", new Source.TriggerInput("postId")),
                         new Clause.Bind("?tag", new Source.TriggerInput("tag"))),
                 List.of(invoke("Tagging", "tag",
@@ -92,9 +90,8 @@ public final class TaggingSyncs {
         return SyncRule.of(
                 "WhenWebRequestRoutedThenSubscribingSubscribeForSubscribe",
                 "Web", "request", "routed",
+                Map.of("route", "subscribe"),
                 List.of(
-                        new Clause.Bind("?route", new Source.TriggerInput("route")),
-                        new Clause.Guard("?route", lit("subscribe")),
                         new Clause.Bind("?userId", new Source.TriggerInput("userId")),
                         new Clause.Bind("?tag", new Source.TriggerInput("tag"))),
                 List.of(invoke("Subscribing", "subscribe",
@@ -115,9 +112,8 @@ public final class TaggingSyncs {
         return SyncRule.of(
                 "WhenWebRequestRoutedThenProfilingSetBioForSetBio",
                 "Web", "request", "routed",
+                Map.of("route", "set-bio"),
                 List.of(
-                        new Clause.Bind("?route", new Source.TriggerInput("route")),
-                        new Clause.Guard("?route", lit("set-bio")),
                         new Clause.Bind("?userId", new Source.TriggerInput("userId")),
                         new Clause.Bind("?bio", new Source.TriggerInput("bio"))),
                 List.of(invoke("Profiling", "setBio",
@@ -132,9 +128,8 @@ public final class TaggingSyncs {
         return SyncRule.of(
                 "WhenWebRequestRoutedThenWebRespondForProfile",
                 "Web", "request", "routed",
+                Map.of("route", "profile"),
                 List.of(
-                        new Clause.Bind("?route", new Source.TriggerInput("route")),
-                        new Clause.Guard("?route", lit("profile")),
                         new Clause.Bind("?userId", new Source.TriggerInput("userId")),
                         new Clause.OptionalClause(new Clause.Bind("?bio",
                                 new Source.StateRead("Profiling", ref("?userId"), "bio")))),
@@ -149,9 +144,8 @@ public final class TaggingSyncs {
         return SyncRule.of(
                 "WhenWebRequestRoutedThenWebRespondForListTags",
                 "Web", "request", "routed",
+                Map.of("route", "list-tags"),
                 List.of(
-                        new Clause.Bind("?route", new Source.TriggerInput("route")),
-                        new Clause.Guard("?route", lit("list-tags")),
                         new Clause.Bind("?postId", new Source.TriggerInput("postId")),
                         new Clause.Bind("?tag", new Source.StateRead("Tagging", ref("?postId"), "tag"))),
                 List.of(respond(Map.of("postId", ref("?postId")))),

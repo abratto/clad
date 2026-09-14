@@ -180,12 +180,17 @@ At minimum, a concept unit test asserts:
 ## R15. Shared-trigger syncs declare route scope
 
 A sync whose trigger action can be produced by more than one named
-flow/route must either carry an explicit route filter or document why
-route-agnostic firing is correct. Stage 03a records this in the
+flow/route must scope itself before it can fire. Since engine v0.3.6 the
+preferred surface is a **`when`-clause input matcher** — `SyncRule`
+matches trigger input values directly
+(`when Web/request (route: "profile") : routed`), mirroring the reference
+implementation's `when X (param: value)` shape. A `where`-clause `Guard`
+remains legal for scoping the when-matcher cannot express (comparisons
+against non-literal operands). Stage 03a records the route analysis in the
 dependency review cards.
 
-A sync that fires on a shared trigger without a route filter or explicit
-route-agnostic justification is a defect.
+A sync that fires on a shared trigger with no when-matcher and no guard,
+and no explicit route-agnostic justification, is a defect.
 
 ## R16. Stage 04d tests assert completion field values
 

@@ -53,6 +53,11 @@ maintained here. The last version that contains it is tag `v0.4.0`; see
 
 ## Why the engine was re-architected
 
+The full evolution — sync-as-transaction SPARQL engine → fire-after-commit →
+paper-faithful when-matching, with the standing capability comparison to the
+paper authors' reference implementation — is
+[`../methodology/architecture/SYNC_ENGINE_EVOLUTION.md`](../methodology/architecture/SYNC_ENGINE_EVOLUTION.md).
+
 The legacy engine encoded the older "sync-as-transaction" reading of
 Jackson's *The Essence of Software*: `ConceptAgent.writeCompletion` performed
 an *atomic composite write* (completion + downstream syncs in one Jena

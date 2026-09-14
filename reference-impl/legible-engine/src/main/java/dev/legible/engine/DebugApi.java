@@ -113,6 +113,7 @@ public final class DebugApi {
                     Map<String, Object> e = new LinkedHashMap<>();
                     e.put("name", r.name);
                     e.put("trigger", r.triggerConcept + "/" + r.triggerAction
+                            + (r.inputPattern == null ? "" : " (input: " + r.inputPattern + ")")
                             + (r.triggerOutcome == null ? "" : "[" + r.triggerOutcome + "]"));
                     e.put("then", r.then.stream().map(t -> t.concept() + "/" + t.action()).toList());
                     return e;

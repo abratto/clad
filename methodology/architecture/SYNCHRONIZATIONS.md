@@ -146,6 +146,38 @@ In the sync's source file, patterns are documented in a "Where clause
 patterns" table (see the [`templates/sync.md`](../../templates/sync.md)).
 Stage 03a's dependency review scans this table for concept-state read rows.
 
+## Input matching in the when clause
+
+A `when` token may constrain the trigger action's **input values** as well
+as action and outcome:
+
+```
+when {
+    Web/request: [ route: "profile" ] => [ routed ]
+}
+then { ... }
+```
+
+This is the paper-faithful dispatch shape the reference implementation
+uses — `when Requesting.request (path: "/my-files")` — and, since engine
+v0.3.6, it is the preferred way to scope shared triggers by route (R15).
+A `Rule` firing requires every constrained input key to be present with
+the equal value. A `where`-clause `Guard` remains legal for comparisons a
+literal when-matcher cannot express (non-literal operands, e.g. guarding
+against a sibling's field).
+
+What this is **not**: business branching. Route identity is transport
+metadata authored by the chain table, not business state. Discrimination
+over business state still belongs in concept outcomes (R3).
+
+Deliberate divergence from the reference implementation: its `where`
+accepts imperative filters (`frames.filter(count >= 10)`) and JSON payload
+assembly, and calls rich concept query actions. CLAD's `where` is a
+declarative bind/filter phase only — discrimination belongs in concept
+outcomes, payload shapes in concept actions, and rich lookups in
+`FanOut` + state reads. See
+[`SYNC_PATTERNS.md`](SYNC_PATTERNS.md) and R3.
+
 ## How syncs fan out — the Frames model
 
 A sync doesn't fire once per `when` match. It fires once per **frame** —

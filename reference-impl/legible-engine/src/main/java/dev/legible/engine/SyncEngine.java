@@ -90,7 +90,8 @@ public final class SyncEngine {
      * outcome bucket plus any-any-outcome rules for that {@code concept/action},
      * in declaration order.
      */
-    private List<SyncRule> matchingRules(String concept, String action, String outcome) {
+    private List<SyncRule> matchingRules(String concept, String action, String outcome,
+                                         Map<String, Object> input) {
         List<SyncRule> exact = triggerIndex.get(key(concept, action, outcome));
         List<SyncRule> any = triggerIndex.get(concept + "/" + action);
         if (exact == null && any == null) {
@@ -104,7 +105,25 @@ public final class SyncEngine {
         if (any != null) {
             result.addAll(any);
         }
-        return result;
+        // When-clause input matcher (R15): a rule fires only if every matcher
+        // entry — key present, equal value — holds in the trigger input.
+        return result.stream()
+                .filter(rule -> patternMatches(rule.inputPattern, input))
+                .toList();
+    }
+
+    private static boolean patternMatches(Map<String, Object> pattern,
+                                          Map<String, Object> input) {
+        if (pattern == null) return true;
+        for (Map.Entry<String, Object> e : pattern.entrySet()) {
+            if (!input.containsKey(e.getKey())) return false;
+            Object expected = e.getValue();
+            Object actual = input.get(e.getKey());
+            if (expected == null ? actual != null : !expected.equals(actual)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public FactStore facts() {
@@ -206,7 +225,7 @@ public final class SyncEngine {
         // Look up only the rules whose trigger (concept/action/outcome) matches
         // this completion, via the index built at construction — not a scan of
         // every rule. null-outcome rules are included by the index for any outcome.
-        for (SyncRule rule : matchingRules(inv.concept(), inv.action(), outcome)) {
+        for (SyncRule rule : matchingRules(inv.concept(), inv.action(), outcome, inv.input())) {
             if (flowLog.hasEmission(inv.actionId(), rule.name)) continue; // exactly-once dedup
             for (Map<String, Object> frame : evaluator.evaluate(rule, inv, comp)) {
                 for (ThenInvocation then : rule.then) {

@@ -44,9 +44,8 @@ public final class SocialSyncs {
         return SyncRule.of(
                 "WhenWebRequestRoutedThenPostingCreatePostForPublish",
                 "Web", "request", "routed",
+                Map.of("route", "publish"),
                 List.of(
-                        new Clause.Bind("?route", new Source.TriggerInput("route")),
-                        new Clause.Guard("?route", lit("publish")),
                         new Clause.Bind("?author", new Source.TriggerInput("author")),
                         new Clause.Bind("?content", new Source.TriggerInput("content"))),
                 List.of(invoke("Posting", "createPost",
@@ -65,9 +64,8 @@ public final class SocialSyncs {
         return SyncRule.of(
                 "WhenWebRequestRoutedThenCommentingCommentForComment",
                 "Web", "request", "routed",
+                Map.of("route", "comment"),
                 List.of(
-                        new Clause.Bind("?route", new Source.TriggerInput("route")),
-                        new Clause.Guard("?route", lit("comment")),
                         new Clause.Bind("?postId", new Source.TriggerInput("postId")),
                         new Clause.Bind("?author", new Source.TriggerInput("author")),
                         new Clause.Bind("?text", new Source.TriggerInput("text"))),
@@ -120,9 +118,8 @@ public final class SocialSyncs {
         return SyncRule.of(
                 "WhenWebRequestRoutedThenFollowingFollowForFollow",
                 "Web", "request", "routed",
+                Map.of("route", "follow"),
                 List.of(
-                        new Clause.Bind("?route", new Source.TriggerInput("route")),
-                        new Clause.Guard("?route", lit("follow")),
                         new Clause.Bind("?follower", new Source.TriggerInput("follower")),
                         new Clause.Bind("?target", new Source.TriggerInput("target"))),
                 List.of(invoke("Following", "follow",

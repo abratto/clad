@@ -32,9 +32,8 @@ public final class TokenSyncs {
         return SyncRule.of(
                 "WhenWebRequestRoutedThenTokenIssueForIssue",
                 "Web", "request", "routed",
+                Map.of("route", "issue"),
                 List.of(
-                        new Clause.Bind("?route", new Source.TriggerInput("route")),
-                        new Clause.Guard("?route", lit("issue")),
                         new Clause.Bind("?userId", new Source.TriggerInput("userId")),
                         new Clause.Bind("?tokenId", new Source.Uuid())),
                 List.of(invoke("Token", "issue",

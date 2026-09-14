@@ -19,6 +19,18 @@ CONTEXT "Process" + "Semantic checks" and are not duplicated here. -->
 
 ```
 when {
+    <Concept>/<action>: [ <param>: <requiredValue> ; ?<var> ; ... ] => [ <outcome> ]
+}
+```
+
+Optional: a `when` may **constrain trigger input values** (input matcher,
+R15): `Web/request: [ route: "profile" ] => [ routed ]`. Every constrained
+key must be present with the equal value for the sync to fire. Use it for
+route scoping on shared triggers; `Guard` stays for non-literal
+comparisons. The rule block:
+
+```
+when {
     <Concept>/<action>: [ <param>: ?<var> ; ... ] => [ <output>: ?<var> ]
 }
 where {

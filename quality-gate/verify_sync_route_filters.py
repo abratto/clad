@@ -4,7 +4,9 @@ verify_sync_route_filters.py — R11: route scoping on shared-trigger syncs.
 
 A sync that fires on a business-concept action (not the `Web` bootstrap) and
 writes `Web/respond` can collide with another route that produces the same
-trigger. This check warns (never blocks) when two or more `SyncRule.of` rules
+trigger. This check warns (never blocks) when two or more `SyncRule.of` rules share a trigger
+and none carries a route guard (`?route`) or a `when`-clause input matcher
+(`Map.of("route", lit(...))` — R15 matcher form)
 share the same `(concept, action, outcome)` trigger and none carries a `?route`
 guard — positive evidence of the R11 hazard.
 
@@ -30,12 +32,12 @@ from pathlib import Path
 _SYNC_RULE_HEAD = re.compile(
     r'SyncRule\.of\(\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"([^"]*)"')
 _SYNC_RULE_RESPOND = re.compile(r'invoke\(\s*"Web"\s*,\s*"respond"')
-_SYNC_RULE_ROUTE_GUARD = re.compile(r'(?:Clause\.)?(?:Guard|Bind)\(\s*"\?route"')
+_SYNC_RULE_ROUTE_GUARD = re.compile(r'(?:Clause\.)?(?:Guard|Bind)\(\s*"\?route"|Map\.of\(\s*"route"')
 
 
 def scan_sync_rule_ambiguity(root):
     parsed = []
-    for java_file in sorted(root.glob("*.java")):
+    for java_file in sorted(root.rglob("*.java")):
         text = java_file.read_text(encoding="utf-8", errors="replace")
         heads = list(_SYNC_RULE_HEAD.finditer(text))
         for index, m in enumerate(heads):
