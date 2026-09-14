@@ -44,6 +44,14 @@ edits. Known historical deviations, preserved for illustration only:
   `<Concept><Action>Test` mapping.
 - `05` writes `verification-trace.md`; the current contract names
   `trace.md` (both are accepted by the example's own verify notes).
+- `04d`–`05` outputs written before v0.5.0 cite the retired legacy stack
+  (`reference-impl/java-micronaut-jena/`, `SyncAgent`, SPARQL test
+  commands). The historical engineering record names the stack the
+  feature was built on; that stack is retired as of v0.5.0 — the last
+  version containing it is `v0.4.0` (see
+  [`../../reference-impl/LEGACY.md`](../../reference-impl/LEGACY.md)), and
+  the canonical realizations are `reference-impl/java-legible/` and
+  `reference-impl/java-micronaut-postgres/`.
 
 For a copyable starting point always use
 [`templates/feature-skeleton/`](../../templates/feature-skeleton/), never
