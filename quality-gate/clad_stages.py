@@ -283,6 +283,34 @@ _CUCUMBER_GREEN = Check(
     skip_in_artefact_gate=True,
 )
 
+_TEST_CONTINUITY_04D = Check(
+    name="test_continuity",
+    script="verify_test_continuity.py",
+    build_args=lambda r: [
+        "--derivation", os.path.join(
+            output_dir(r, "04_implement/04d_concept-tdd/04d_red-tests"),
+            "concept-test-derivation.md"),
+        "--test-source-root", _test_source_root(r),
+    ],
+    requires=lambda r: [os.path.join(
+        output_dir(r, "04_implement/04d_concept-tdd/04d_red-tests"),
+        "concept-test-derivation.md"), _test_source_root(r)],
+)
+
+_TEST_CONTINUITY_04E = Check(
+    name="test_continuity",
+    script="verify_test_continuity.py",
+    build_args=lambda r: [
+        "--derivation", os.path.join(
+            output_dir(r, "04_implement/04e_sync-tdd/04e_red-tests"),
+            "sync-test-derivation.md"),
+        "--test-source-root", _test_source_root(r),
+    ],
+    requires=lambda r: [os.path.join(
+        output_dir(r, "04_implement/04e_sync-tdd/04e_red-tests"),
+        "sync-test-derivation.md"), _test_source_root(r)],
+)
+
 _SYNC_DECLARATIVE = Check(
     name="sync_declarative",
     script="verify_sync_declarative.py",
@@ -592,12 +620,13 @@ STAGES: List[Stage] = [
         Stage("04d-red", "Concept TDD red", "04_implement/04d_concept-tdd/04d_red-tests",
             checks=[_FEATURE_IMPL_PATHS, _CONCEPT_TEST_DERIVATION, _FIELD_ASSERTIONS]),
         Stage("04d-green", "Concept TDD green", "04_implement/04d_concept-tdd/04d_green-impl",
-            checks=[_FEATURE_IMPL_PATHS, _FIELD_ASSERTIONS]),
+            checks=[_FEATURE_IMPL_PATHS, _FIELD_ASSERTIONS, _TEST_CONTINUITY_04D]),
         Stage("04e-red", "Sync TDD red", "04_implement/04e_sync-tdd/04e_red-tests",
             checks=[_FEATURE_IMPL_PATHS]),
         Stage("04e-green", "Sync TDD green", "04_implement/04e_sync-tdd/04e_green-impl",
             checks=[_IMPL_PARITY, _SYNC_IMPL_PARITY, _SYNC_ROUTE_FILTERS,
-                _SYNC_DECLARATIVE, _ACTION_LOG_ISOLATION, _CUCUMBER_GREEN]),
+                _SYNC_DECLARATIVE, _ACTION_LOG_ISOLATION, _CUCUMBER_GREEN,
+                _TEST_CONTINUITY_04E]),
     Stage("05", "Verify", "05_verify", checks=[_CLOSE_EVIDENCE]),
 ]
 

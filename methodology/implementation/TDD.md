@@ -69,6 +69,17 @@ will create. Once the production type exists (brownfield/iterative change),
 red must instead be a compiling test that fails behaviourally. A `@Disabled`
 or skipped test is never red; it is deferred work.
 
+**Failure class is part of red evidence (T1).** The discourse's "red
+illusion" — an agent registering an unrelated crash (NPE, syntax error,
+import failure in an existing file) as red — is mechanized in CLAD: the red
+stage records, in the derivation map, the **failure class + message
+excerpt** of every failing test, and the green stage asserts the recorded
+class is behavioural (or the greenfield missing-symbol shape above). With
+this rider, both red and green stage contracts require the record, and
+`verify_test_continuity.py` (contract T2) additionally proves the red test
+files are byte-identical at green time — so a red "fixed" by rewriting the
+test cannot pass the gate.
+
 ## Stage 04 order and gates are mandatory
 
 The executable order is `04b -> 04c -> 04d-red -> 04d-green -> 04e-red

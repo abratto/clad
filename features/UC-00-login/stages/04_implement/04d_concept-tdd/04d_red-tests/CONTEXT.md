@@ -4,7 +4,6 @@
   contain legacy artefacts. See features/UC-00-login/README.md
   SS"Contract vs example".
 -->
-
 # Stage 04d-red — Concept Test Derivation (red)
 
 ## Pre-condition
@@ -74,6 +73,7 @@ here.
 ## Outputs
 
 - `output/concept-test-derivation.md` — derivation map plus handoff bundle
+- The derivation map **must** include a `## Test file continuity` section: one row per produced test file, with the file's repo-root-relative (test-source-root-relative) path and its SHA-256, computed right after the red run. The green stage recomputes the hashes (`verify_test_continuity.py`); any drift or missing test file fails the stage, routing the change back through the red stage as an R17 re-entry.
 - (Side effect:) `<Concept><Action>Test.java` (or profile equivalent) per concept action
 
 ## Verify
@@ -122,10 +122,15 @@ python3 ../../../../../../quality-gate/verify_test_naming.py \
   accepts null or empty string.
 - Tests live under `APP_TEST_SOURCE_ROOT` and packages consistent with
   `APP_PACKAGE_ROOT`.
-- Executed red evidence shows either (greenfield) a compile failure naming
-  exactly the missing production type, or (once the type exists) successful
-  test compilation plus behavioral test failure. A skipped/disabled test is
-  not red.
+- Executed red evidence shows either (a) a behavioral assertion failure, or
+  the sanctioned (b) greenfield shape: a compile failure naming exactly the
+  missing production type. The derivation map must record, per failing test,
+  the **failure class + message excerpt** (e.g. `AssertionFailedError —
+  expected Created but was null`) taken from the executed run's
+  surefire/stdout evidence. Anything else — NPE, syntax error unrelated to
+  the target, import failure in an *existing* file — is NOT red evidence:
+  stop and fix the test authoring instead of recording it. A
+  skipped/disabled test is not red.
 - No test depends on another concept's state or sync orchestration;
   those cases belong in `04e`.
 - No production concept implementation was introduced or changed during

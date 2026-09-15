@@ -57,6 +57,7 @@ no sync implementation belongs here.
 ## Outputs
 
 - `output/sync-test-derivation.md` — derivation map plus handoff bundle
+- The derivation map **must** include a `## Test file continuity` section: one row per produced test file, with the file's repo-root-relative (test-source-root-relative) path and its SHA-256, computed right after the red run. The green stage recomputes the hashes (`verify_test_continuity.py`); any drift or missing test file fails the stage, routing the change back through the red stage as an R17 re-entry.
 - (Side effect:) `<SyncName>Test.java` (or profile equivalent) per sync
 
 ## Verify
@@ -91,10 +92,15 @@ python3 ../../../../../../quality-gate/verify_test_naming.py \
   that the green implementation must satisfy.
 - Sync tests live under `APP_TEST_SOURCE_ROOT` and packages consistent
   with `APP_PACKAGE_ROOT`.
-- Executed red evidence shows either (greenfield) a compile failure naming
-  exactly the missing sync-wiring type, or (once it exists) successful test
-  compilation plus behavioral test failure. A skipped/disabled test is not
-  red.
+- Executed red evidence shows either (a) a behavioral assertion failure, or
+  the sanctioned (b) greenfield shape: a compile failure naming exactly the
+  missing sync-wiring type. The derivation map must record, per failing
+  test, the **failure class + message excerpt** (e.g. `AssertionFailedError
+  — expected Sent but was null`) taken from the executed run's
+  surefire/stdout evidence. Anything else — NPE, syntax error unrelated to
+  the target, import failure in an *existing* file — is NOT red evidence:
+  stop and fix the test authoring instead of recording it. A
+  skipped/disabled test is not red.
 - No sync implementation was introduced or changed during this stage.
 - The handoff bundle names the approved test files, exact
   package/class/method names, the red evidence command, expected red

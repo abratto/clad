@@ -4,7 +4,6 @@
   contain legacy artefacts. See features/UC-00-login/README.md
   SS"Contract vs example".
 -->
-
 # Stage 04d-green — Concept Implementation (green)
 
 ## Pre-condition
@@ -12,6 +11,8 @@
 `advance.py` enforces stage order and upstream gate approval before this
 stage runs — see `STAGES.md` §"Stage lifecycle (standard)". Do not start
 until it has printed this stage as `NEXT STAGE`.
+- The red receipt's recorded failure classes must all be behavioral (or the sanctioned greenfield missing-symbol shape); a red receipt with an unacceptable failure class sends the stage back to the red half.
+- Red test files are unchanged since the red receipt (`verify_test_continuity.py` runs at this stage and fails when a listed test file drifted; route any needed change through the owning red stage as an R17 re-entry — never edit red tests from the green stage).
 
 ## Why this stage exists
 

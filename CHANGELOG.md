@@ -12,6 +12,26 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [0.6.0] — 2026-09-14
 
+### Added
+
+- **Red/green test continuity gates (T1+T2)** (maintenance record
+  `maintenance/red-green-test-continuity.md`, design gate pre-approved
+  in-conversation, evidence gate recorded after the test matrix ran
+  green; feature contracts preserved — test-fidelity hardening only):
+  - **T2 — red→green test-file immutability:** new
+    `quality-gate/verify_test_continuity.py` recomputes the SHA-256 of
+    every red-stage test file listed in the derivation map's new
+    `## Test file continuity` section; any drift fails the green stage
+    and routes the change back through 04d-red/04e-red as an R17
+    re-entry. Registered as check `test_continuity` on Stages 04d-green
+    and 04e-green; SKIPs when the section is absent (no retrofit).
+  - **T1 — red-for-the-right-reason:** the 04d-red/04e-red contracts
+    now require a recorded failure class + message excerpt per failing
+    test (behavioral assertion failure, or the sanctioned greenfield
+    missing-symbol shape); the 04d-green/04e-green pre-conditions
+    assert the recorded class. Rider in
+    `methodology/implementation/TDD.md` mechanizes the "red illusion".
+
 ### Changed
 
 - **Sync authoring legibility + naming grammar v2** (maintenance record

@@ -83,3 +83,20 @@
 
 > If this bundle is missing, the red stage is not ready to hand off to
 > green implementation.
+
+## Test file continuity
+
+> Contract T2: red test files are immutable from the green stage. The red
+> agent fills this table right after the red run; the green stage's
+> `verify_test_continuity.py` recomputes the SHA-256 of every row. Drift
+> or a missing file fails the green stage — route the change through the
+> owning red stage as an R17 re-entry, never edit red tests from the
+> green stage.
+
+| Test file (test-source-root-relative) | SHA-256 at red |
+|---|---|
+| `dev/conduit/app/concepts/passwordauth/PasswordAuthVerifyTest.java` | `<64-hex-sha256>` |
+
+> If the produced test files have no diffable source location (or the
+> red stage produced none), omit this section entirely: the continuity
+> check SKIPs when the section is absent.
