@@ -137,6 +137,13 @@ _SCENARIO_COVERAGE = Check(
     requires=lambda r: [_goals(r), _usecase(r), CHAIN_DIR(r), SYNC_DIR(r)],
 )
 
+_SYNC_TRANSITION_COVERAGE = Check(
+    name="sync_transition_coverage",
+    script="verify_sync_transition_coverage.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [CHAIN_DIR(r), SYNC_DIR(r)],
+)
+
 _SYNC_MATRIX = Check(
     name="sync_matrix",
     script="verify_sync_matrix.py",
@@ -610,6 +617,7 @@ STAGES: List[Stage] = [
     Stage("02", "Concept specs", "02_concepts",
           checks=[_CONCEPT_STATE_RELATIONAL, _CONCEPT_MANIFEST]),
     Stage("03", "Syncs", "03_syncs", checks=[_SCENARIO_COVERAGE, _SYNC_MATRIX,
+          _SYNC_TRANSITION_COVERAGE,
           _SYNC_CYCLE_GRAPH, _SYNC_OVERLAP]),
     Stage("03a", "Dependency review", "03a_dependency-review",
           checks=[_CARD_MANIFEST]),

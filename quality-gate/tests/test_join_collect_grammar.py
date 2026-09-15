@@ -263,3 +263,34 @@ class JoinerAwareVerifierTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class JoinNamingAndCoverageTests(unittest.TestCase):
+    """Payload-free join stems (OS filename limit) + Stage-03 coverage check."""
+
+    def test_join_stem_strips_conjunct_payloads(self):
+        conjuncts = [
+            ap.Conjunct(name="a", concept="Catalog", action="lookupBySlug",
+                        outcome="Found(articleId, authorId)"),
+            ap.Conjunct(name="b", concept="Following", action="isFollowing",
+                        outcome="Following(flag)"),
+        ]
+        stem = ap.sync_stem("Web", "respond", "ReadArticle", conjuncts, True)
+        self.assertEqual(
+            stem,
+            "WebRespondForReadArticleWhenJoinCatalogLookupBySlugFoundAndFollowingIsFollowingFollowing")
+        self.assertLess(len(stem) + len(".sync.md"), 255)
+
+    def test_transition_coverage_flags_a_missing_sync(self):
+        import verify_sync_transition_coverage as cov
+        # UC-00-login: all transitions present -> PASS.
+        r = subprocess.run(
+            [sys.executable, str(QUALITY_GATE / "verify_sync_transition_coverage.py"),
+             "--feature", str(REPO_ROOT / "features/UC-00-login")],
+            cwd=REPO_ROOT, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("PASS", r.stdout)
+
+
+if __name__ == "__main__":
+    unittest.main()

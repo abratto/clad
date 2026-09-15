@@ -64,3 +64,4 @@ Approved: parity/verifier/template plumbing landed; the four validation commands
 - Join semantics: `SyncRule.Trigger` (named); the engine files the rule under **every** conjunct and checks all triggers have a matching committed completion in the flow; the latest matching invocation wins per conjunct (deterministic by flow order).
 - Determinism: `collect`/`collectBy` order values deterministically; `distinct`/`scan` de-duplicate + order (`region.read` returns an unordered set).
 - Downstream: the conduit rebuild fork inherits the engine files.
+- **Experiment-found follow-ups (UC-05):** (a) the join stem joined *every* conjunct payload, exceeding `NAME_MAX` (255) for a 6-conjunct join — fixed to use payload-free conjunct completions; (b) Stage 03 could pass with a missing sync — added `verify_sync_transition_coverage.py` (derives the expected stems and fails on a shortfall; tolerates pre-v0.6 legacy names when counts agree).

@@ -954,9 +954,12 @@ def sync_stem(then_concept: str, then_action: str, scope: str,
     base = (pascal_token(then_concept) + pascal_token(then_action)
             + ("For" + scope if scope else ""))
     if is_join:
+        # Payload-free completions per conjunct: joining every payload would
+        # blow past the OS filename limit (NAME_MAX 255) for richer joins,
+        # and the completion token is the documented grammar for a conjunct.
         parts = [
             pascal_token(c.concept) + pascal_token(c.action)
-            + completion_with_payload(c.outcome)
+            + first_completion_token(c.outcome)
             for c in conjuncts
         ]
         return base + "WhenJoin" + "And".join(parts)
