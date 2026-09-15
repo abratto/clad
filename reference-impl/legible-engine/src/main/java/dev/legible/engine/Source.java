@@ -17,12 +17,21 @@ package dev.legible.engine;
  *       and code-free (no filters/aggregation); returns the subject set as a
  *       single collected value. Not the declined {@code frames.query/collectAs}
  *       imperative API — see maintenance/engine-subjects-inverse-read.md.</li>
+ *   <li>{@link Collect} — gather the inner source's values into ONE List value
+ *       (declarative aggregate; see maintenance/engine-declarative-join-collect.md).</li>
+ *   <li>{@link Distinct} — de-duplicate + order the inner source's values into
+ *       one List value.</li>
+ *   <li>{@link Scan} — every value of a predicate across a concept's region,
+ *       as one List value (corpus read).</li>
+ *   <li>{@link ConjunctField} — a named conjunct's completion field (join, Pattern B).</li>
+ *   <li>{@link ConjunctInput} — a named conjunct's invocation input (join, Pattern A).</li>
  * </ul>
  */
 public sealed interface Source permits
         Source.Literal, Source.VarRef, Source.Uuid, Source.TriggerInput,
         Source.TriggerField, Source.SiblingInput, Source.SiblingField, Source.StateRead,
-        Source.Subjects {
+        Source.Subjects, Source.Collect, Source.Distinct, Source.Scan,
+        Source.ConjunctField, Source.ConjunctInput {
 
     record Literal(Object value) implements Source {}
 
@@ -42,4 +51,19 @@ public sealed interface Source permits
 
     /** Subjects s where {@code predicate(s) = object}; collected to one List value. */
     record Subjects(String concept, String predicate, Source object) implements Source {}
+
+    /** Gather every value the inner source yields into ONE List value. */
+    record Collect(Source inner) implements Source {}
+
+    /** De-duplicate (deterministically ordered) the inner source's values into one List value. */
+    record Distinct(Source inner) implements Source {}
+
+    /** Every value of {@code predicate} across {@code concept}'s region, as one List value. */
+    record Scan(String concept, String predicate) implements Source {}
+
+    /** A completion field of a named {@code when}-conjunct (joined rule). */
+    record ConjunctField(String conjunct, String field) implements Source {}
+
+    /** An invocation input of a named {@code when}-conjunct (joined rule). */
+    record ConjunctInput(String conjunct, String field) implements Source {}
 }

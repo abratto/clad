@@ -39,12 +39,44 @@ public final class Dsl {
         return new RuleBuilder(name);
     }
 
+    /** Named {@code when}-conjunct builder (join); may carry its own input matcher (R15). */
+    public static final class TriggerSpec {
+        private final String name;
+        private final String concept;
+        private final String action;
+        private final String outcome;
+        private Map<String, Object> pattern;
+
+        private TriggerSpec(String name, String concept, String action, String outcome) {
+            this.name = name;
+            this.concept = concept;
+            this.action = action;
+            this.outcome = outcome;
+        }
+
+        /** Per-conjunct input matcher (R15): every key must hold in that conjunct's input. */
+        public TriggerSpec matching(Map<String, Object> pattern) {
+            this.pattern = pattern;
+            return this;
+        }
+
+        private SyncRule.Trigger build() {
+            return new SyncRule.Trigger(name, concept, action, outcome, pattern);
+        }
+    }
+
+    /**
+     * One named {@code when}-conjunct for a synchronised (multi-{@code when})
+     * rule: {@code .when(conj("listed", Catalog, LIST, "Listed")).and(conj(...))}.
+     * The first conjunct is the primary trigger.
+     */
+    public static TriggerSpec conj(String name, String concept, String action, String outcome) {
+        return new TriggerSpec(name, concept, action, outcome);
+    }
+
     public static final class RuleBuilder {
         private final String name;
-        private String triggerConcept;
-        private String triggerAction;
-        private String triggerOutcome;
-        private Map<String, Object> inputPattern;
+        private final List<SyncRule.Trigger> triggers = new ArrayList<>();
         private List<Clause> where = new ArrayList<>();
         private List<ThenInvocation> then = new ArrayList<>();
         private String groupBy;
@@ -55,22 +87,35 @@ public final class Dsl {
 
         /** Trigger without a completion token: fires for any outcome. */
         public RuleBuilder when(String concept, String action) {
-            this.triggerConcept = concept;
-            this.triggerAction = action;
-            return this;
+            return when(concept, action, null);
         }
 
         /** Trigger with an outcome token. */
         public RuleBuilder when(String concept, String action, String outcome) {
-            this.triggerConcept = concept;
-            this.triggerAction = action;
-            this.triggerOutcome = outcome;
+            triggers.add(new SyncRule.Trigger("when", concept, action, outcome, null));
             return this;
         }
 
-        /** When-clause input matcher (R15, v0.3.6): every key must hold in the trigger input. */
+        /** First conjunct of a synchronised rule. */
+        public RuleBuilder when(TriggerSpec spec) {
+            triggers.add(spec.build());
+            return this;
+        }
+
+        /** Additional conjunct of a synchronised rule. */
+        public RuleBuilder and(TriggerSpec spec) {
+            triggers.add(spec.build());
+            return this;
+        }
+
+        /** When-clause input matcher (R15, v0.3.6): applies to the most recent trigger/conjunct. */
         public RuleBuilder matching(Map<String, Object> pattern) {
-            this.inputPattern = pattern;
+            if (triggers.isEmpty()) {
+                throw new IllegalStateException("matching() requires a preceding when()/and()");
+            }
+            int last = triggers.size() - 1;
+            SyncRule.Trigger t = triggers.get(last);
+            triggers.set(last, new SyncRule.Trigger(t.name(), t.concept(), t.action(), t.outcome(), pattern));
             return this;
         }
 
@@ -91,8 +136,7 @@ public final class Dsl {
         }
 
         public SyncRule build() {
-            return SyncRule.of(name, triggerConcept, triggerAction, triggerOutcome,
-                    inputPattern, where, then, groupBy);
+            return SyncRule.ofJoin(name, triggers, where, then, groupBy);
         }
     }
 
@@ -122,8 +166,37 @@ public final class Dsl {
      * {@code predicate(subject) = object}, collected into one List value.
      * Dual of {@link #stateRead}; declarative, code-free.
      */
+    /** A named conjunct's completion field (join binding, Pattern B). */
+    public static Source conjunctField(String conjunct, String field) {
+        return new Source.ConjunctField(conjunct, field);
+    }
+
+    /** A named conjunct's invocation input (join binding, Pattern A). */
+    public static Source conjunctInput(String conjunct, String field) {
+        return new Source.ConjunctInput(conjunct, field);
+    }
+
     public static Source subjects(String concept, String predicate, Source object) {
         return new Source.Subjects(concept, predicate, object);
+    }
+
+    /**
+     * Declarative aggregate: gather every value the inner source yields into
+     * ONE List value bound by the enclosing {@code bind}.  The code-free
+     * analogue of conceptbox's {@code collectAs} — no filters/JSON.
+     */
+    public static Source collect(Source inner) {
+        return new Source.Collect(inner);
+    }
+
+    /** De-duplicated, deterministically ordered copy of the inner source's values (one List value). */
+    public static Source distinct(Source inner) {
+        return new Source.Distinct(inner);
+    }
+
+    /** Every value of {@code predicate} across {@code concept}'s region, as one List value. */
+    public static Source scan(String concept, String predicate) {
+        return new Source.Scan(concept, predicate);
     }
 
     /** A previously bound variable. */
@@ -176,6 +249,15 @@ public final class Dsl {
     }
 
     /** Apply {@code inner}; if it yields nothing, keep the original frame ({@code OPTIONAL}). */
+    /**
+     * Group frames by {@code groupKey} (null = collapse all) and bind {@code var}
+     * to the gathered {@code source} values per group — the frame-set analogue
+     * of {@link #collect}.
+     */
+    public static Clause collectBy(String var, Source source, String groupKey) {
+        return new Clause.CollectBy(var, source, groupKey);
+    }
+
     public static Clause optional(Clause inner) {
         return new Clause.OptionalClause(inner);
     }

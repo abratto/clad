@@ -1,47 +1,59 @@
 package dev.legible.engine;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 /**
- * A declarative synchronization rule: {@code when} a trigger action completes
- * with a given outcome, {@code where} certain bindings hold, {@code then} invoke
- * further actions. Syncs are pure data — no branching, no state (R3).
+ * A declarative synchronization rule: {@code when} one or more action
+ * completions (a join) occur with given outcomes, {@code where} certain
+ * bindings hold, {@code then} invoke further actions. Syncs are pure data — no
+ * branching, no state (R3).
  *
  * <p>One rule = one Stage 03 {@code *.sync.md}, mirroring the paper's
- * {@code when}/{@code where}/{@code then} block syntax.
+ * {@code when}/{@code where}/{@code then} block syntax. A rule with more than
+ * one {@link Trigger} is a <em>synchronised</em> (multi-{@code when}) rule: it
+ * fires once when every conjunct has a matching completion in the same flow.
  */
 public final class SyncRule {
 
+    /** One {@code when} conjunct: a matched action pattern. */
+    public record Trigger(String name, String concept, String action, String outcome,
+                          Map<String, Object> inputPattern) {
+        public Trigger {
+            inputPattern = inputPattern == null || inputPattern.isEmpty()
+                    ? null : Map.copyOf(inputPattern);
+        }
+
+        public Trigger(String name, String concept, String action, String outcome) {
+            this(name, concept, action, outcome, null);
+        }
+    }
+
     public final String name;
-    public final String triggerConcept;
+    /** All {@code when} conjuncts (>=1). The first is the primary. */
+    public final List<Trigger> triggers;
+    public final String triggerConcept;   // primary (triggers[0]), for backwards compatibility
     public final String triggerAction;
-    public final String triggerOutcome; // null = any outcome
+    public final String triggerOutcome;   // null = any outcome
     /**
-     * Optional input-pattern matcher on the trigger action's input:
-     * every key must be present with an equal value for the rule to fire
-     * ({@code when Web/request (route: "profile") : routed}). {@code null}
-     * or empty = any input. Pattern matching on trigger inputs mirrors the
-     * reference implementation's {@code when X (param: value)} shape and is
-     * the preferred way to scope shared triggers by route (R15) — the
-     * {@code where}-clause {@code Guard} remains for comparisons a literal
-     * when-matcher cannot express.
+     * Primary trigger's optional input-pattern matcher (R15). Per-conjunct
+     * matchers live on each {@link Trigger}.
      */
     public final Map<String, Object> inputPattern;
     public final List<Clause> where;
     public final List<ThenInvocation> then;
     public final String groupBy; // optional ?_eachthen aggregation key
 
-    private SyncRule(String name, String triggerConcept, String triggerAction,
-                     String triggerOutcome, Map<String, Object> inputPattern,
-                     List<Clause> where,
+    private SyncRule(String name, List<Trigger> triggers, List<Clause> where,
                      List<ThenInvocation> then, String groupBy) {
         this.name = name;
-        this.triggerConcept = triggerConcept;
-        this.triggerAction = triggerAction;
-        this.triggerOutcome = triggerOutcome;
-        this.inputPattern = inputPattern == null || inputPattern.isEmpty()
-                ? null : Map.copyOf(inputPattern);
+        this.triggers = List.copyOf(triggers);
+        Trigger primary = this.triggers.get(0);
+        this.triggerConcept = primary.concept();
+        this.triggerAction = primary.action();
+        this.triggerOutcome = primary.outcome();
+        this.inputPattern = primary.inputPattern();
         this.where = List.copyOf(where);
         this.then = List.copyOf(then);
         this.groupBy = groupBy;
@@ -50,33 +62,44 @@ public final class SyncRule {
     public static SyncRule of(String name, String triggerConcept, String triggerAction,
                               String triggerOutcome, List<Clause> where,
                               List<ThenInvocation> then) {
-        return new SyncRule(name, triggerConcept, triggerAction, triggerOutcome,
-                null, where, then, null);
+        return of(name, triggerConcept, triggerAction, triggerOutcome, null, where, then, null);
     }
 
     public static SyncRule of(String name, String triggerConcept, String triggerAction,
                               String triggerOutcome, List<Clause> where,
                               List<ThenInvocation> then, String groupBy) {
-        return new SyncRule(name, triggerConcept, triggerAction, triggerOutcome,
-                null, where, then, groupBy);
+        return of(name, triggerConcept, triggerAction, triggerOutcome, null, where, then, groupBy);
     }
 
     public static SyncRule of(String name, String triggerConcept, String triggerAction,
                               String triggerOutcome, Map<String, Object> inputPattern,
                               List<Clause> where, List<ThenInvocation> then) {
-        return new SyncRule(name, triggerConcept, triggerAction, triggerOutcome,
-                inputPattern, where, then, null);
+        return of(name, triggerConcept, triggerAction, triggerOutcome, inputPattern, where, then, null);
     }
 
     public static SyncRule of(String name, String triggerConcept, String triggerAction,
                               String triggerOutcome, Map<String, Object> inputPattern,
                               List<Clause> where, List<ThenInvocation> then, String groupBy) {
-        return new SyncRule(name, triggerConcept, triggerAction, triggerOutcome,
-                inputPattern, where, then, groupBy);
+        return new SyncRule(name,
+                List.of(new Trigger("when", triggerConcept, triggerAction, triggerOutcome, inputPattern)),
+                where, then, groupBy);
     }
 
-    // Convenience constructors for the most common data sources, so sync
-    // declarations read close to the spec's `when`/`where`/`then` syntax.
+    /** Synchronised (multi-{@code when}) rule: fires once when all triggers matched in one flow. */
+    public static SyncRule ofJoin(String name, List<Trigger> triggers, List<Clause> where,
+                                  List<ThenInvocation> then, String groupBy) {
+        if (triggers == null || triggers.isEmpty()) {
+            throw new IllegalArgumentException("a sync requires at least one trigger");
+        }
+        return new SyncRule(name, new ArrayList<>(triggers), where, then, groupBy);
+    }
+
+    /** True when this rule has more than one {@code when} conjunct (a join). */
+    public boolean isJoin() {
+        return triggers.size() > 1;
+    }
+
+    // Convenience constructors for the most common data sources.
 
     public static Source lit(Object value) {
         return new Source.Literal(value);

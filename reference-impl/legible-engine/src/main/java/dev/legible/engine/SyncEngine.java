@@ -5,8 +5,11 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -43,7 +46,10 @@ public final class SyncEngine {
      * and exactly-once semantics, but O(matching rules) not O(all rules) per
      * completion.
      */
-    private final Map<String, List<SyncRule>> triggerIndex;
+    private final Map<String, List<IndexEntry>> triggerIndex;
+
+    /** One index entry: the rule and which of its conjuncts is filed here. */
+    private record IndexEntry(SyncRule rule, int conjunct) {}
     private final FlowArchiver archiver;
     private final Map<String, ActionLog> inFlight = new ConcurrentHashMap<>();
     private final Map<String, Object> conceptLocks = new ConcurrentHashMap<>();
@@ -65,17 +71,23 @@ public final class SyncEngine {
         this.archiver = archiver;
     }
 
-    /** Build the {@code concept/action/outcome} -> rules index (order-preserving). */
-    private static Map<String, List<SyncRule>> buildTriggerIndex(List<SyncRule> rules) {
-        Map<String, List<SyncRule>> index = new HashMap<>();
+    /**
+     * Build the {@code concept/action/outcome} -> entries index (order-preserving).
+     * Every conjunct of a (possibly synchronised) rule is filed, so a completion
+     * for any conjunct surfaces the rule for the completeness check.
+     */
+    private static Map<String, List<IndexEntry>> buildTriggerIndex(List<SyncRule> rules) {
+        Map<String, List<IndexEntry>> index = new HashMap<>();
         for (SyncRule rule : rules) {
-            if (rule.triggerOutcome == null) {
-                // Outcome-agnostic trigger: filed under bare `concept/action`.
-                index.computeIfAbsent(rule.triggerConcept + "/" + rule.triggerAction,
-                        k -> new ArrayList<>()).add(rule);
-            } else {
-                index.computeIfAbsent(key(rule.triggerConcept, rule.triggerAction,
-                        rule.triggerOutcome), k -> new ArrayList<>()).add(rule);
+            for (int i = 0; i < rule.triggers.size(); i++) {
+                SyncRule.Trigger t = rule.triggers.get(i);
+                IndexEntry entry = new IndexEntry(rule, i);
+                index.computeIfAbsent(t.concept() + "/" + t.action(),
+                        k -> new ArrayList<>()).add(entry);
+                if (t.outcome() != null) {
+                    index.computeIfAbsent(key(t.concept(), t.action(), t.outcome()),
+                            k -> new ArrayList<>()).add(entry);
+                }
             }
         }
         return index;
@@ -86,32 +98,55 @@ public final class SyncEngine {
     }
 
     /**
-     * Rules whose trigger matches {@code (concept, action, outcome)}: the exact
-     * outcome bucket plus any-any-outcome rules for that {@code concept/action},
-     * in declaration order.
+     * Candidate rules whose conjunct matches {@code (concept, action, outcome,
+     * input)} — the exact outcome bucket plus any-outcome entries for that
+     * {@code concept/action}, in declaration order, filtered by the matched
+     * conjunct's input-pattern matcher (R15; ABSENT sentinel honoured).
      */
-    private List<SyncRule> matchingRules(String concept, String action, String outcome,
-                                         Map<String, Object> input) {
-        List<SyncRule> exact = triggerIndex.get(key(concept, action, outcome));
-        List<SyncRule> any = triggerIndex.get(concept + "/" + action);
+    private List<IndexEntry> candidateEntries(String concept, String action, String outcome,
+                                              Map<String, Object> input) {
+        List<IndexEntry> exact = triggerIndex.get(key(concept, action, outcome));
+        List<IndexEntry> any = triggerIndex.get(concept + "/" + action);
         if (exact == null && any == null) {
             return List.of();
         }
-        List<SyncRule> result = new ArrayList<>((exact == null ? 0 : exact.size())
-                + (any == null ? 0 : any.size()));
-        if (exact != null) {
-            result.addAll(exact);
+        Set<IndexEntry> ordered = new LinkedHashSet<>();
+        if (exact != null) ordered.addAll(exact);
+        if (any != null) ordered.addAll(any);
+        List<IndexEntry> result = new ArrayList<>(ordered.size());
+        for (IndexEntry entry : ordered) {
+            SyncRule.Trigger t = entry.rule().triggers.get(entry.conjunct());
+            if (patternMatches(t.inputPattern(), input)) {
+                result.add(entry);
+            }
         }
-        if (any != null) {
-            result.addAll(any);
+        return result;
+    }
+
+    /**
+     * Match every conjunct of {@code rule} against the flow's committed
+     * completions, returning the matched context, or {@code null} when some
+     * conjunct has no match yet. The latest matching invocation wins per
+     * conjunct (deterministic by flow order).
+     */
+    private Conjuncts matchConjuncts(SyncRule rule, ActionLog flowLog, String flowId) {
+        Map<String, Invocation> invs = new LinkedHashMap<>();
+        Map<String, Completion> comps = new LinkedHashMap<>();
+        for (SyncRule.Trigger t : rule.triggers) {
+            Invocation found = null;
+            for (Invocation i : flowLog.invocations(flowId)) {
+                if (!i.concept().equals(t.concept()) || !i.action().equals(t.action())) continue;
+                Optional<Completion> c = flowLog.completion(i.actionId());
+                if (c.isEmpty()) continue;
+                if (t.outcome() != null && !t.outcome().equals(c.get().outcome())) continue;
+                if (!patternMatches(t.inputPattern(), i.input())) continue;
+                found = i;
+            }
+            if (found == null) return null;
+            invs.put(t.name(), found);
+            comps.put(t.name(), flowLog.completion(found.actionId()).orElseThrow());
         }
-        // When-clause input matcher (R15): every matcher entry must hold in
-        // the trigger input — key with equal value, or key ABSENT when the
-        // matcher value is the ABSENT sentinel
-        // (maintenance/engine-absent-input-matcher.md).
-        return result.stream()
-                .filter(rule -> patternMatches(rule.inputPattern, input))
-                .toList();
+        return new Conjuncts(invs, comps);
     }
 
     static boolean patternMatches(Map<String, Object> pattern,
@@ -226,18 +261,23 @@ public final class SyncEngine {
         flowLog.appendCompletion(new Completion(inv.actionId(), inv.flowId(), inv.concept(),
                 inv.action(), outcome, fields, System.currentTimeMillis()));
 
-        Completion comp = flowLog.completion(inv.actionId()).orElseThrow();
-        // Look up only the rules whose trigger (concept/action/outcome) matches
-        // this completion, via the index built at construction — not a scan of
-        // every rule. null-outcome rules are included by the index for any outcome.
-        for (SyncRule rule : matchingRules(inv.concept(), inv.action(), outcome, inv.input())) {
-            if (flowLog.hasEmission(inv.actionId(), rule.name)) continue; // exactly-once dedup
-            for (Map<String, Object> frame : evaluator.evaluate(rule, inv, comp)) {
+        // Look up only the entries whose conjunct matches this completion, via
+        // the index built at construction — not a scan of every rule.
+        for (IndexEntry entry : candidateEntries(inv.concept(), inv.action(), outcome, inv.input())) {
+            SyncRule rule = entry.rule();
+            Conjuncts conjuncts = matchConjuncts(rule, flowLog, inv.flowId());
+            if (conjuncts == null) continue; // not all conjuncts present yet
+            SyncRule.Trigger primary = rule.triggers.get(0);
+            Invocation primaryInv = conjuncts.invocation(primary.name());
+            Completion primaryComp = conjuncts.completion(primary.name());
+            if (flowLog.hasEmission(primaryInv.actionId(), rule.name)) continue; // exactly-once
+            for (Map<String, Object> frame : evaluator.evaluate(rule, primaryInv, primaryComp, conjuncts)) {
                 for (ThenInvocation then : rule.then) {
                     Map<String, Object> args = new LinkedHashMap<>();
-                    then.args().forEach((k, src) -> args.put(k, resolveScalar(evaluator, src, frame, inv, comp)));
+                    then.args().forEach((k, src) ->
+                            args.put(k, resolveScalar(evaluator, src, frame, primaryInv, primaryComp, conjuncts)));
                     String newId = "a-" + UUID.randomUUID();
-                    flowLog.appendInvocation(new Invocation(newId, inv.flowId(), inv.actionId(),
+                    flowLog.appendInvocation(new Invocation(newId, inv.flowId(), primaryInv.actionId(),
                             rule.name, then.concept(), then.action(), args, System.currentTimeMillis()));
                     pending.add(newId);
                 }
@@ -259,8 +299,8 @@ public final class SyncEngine {
     }
 
     private Object resolveScalar(WhereEvaluator evaluator, Source src, Map<String, Object> frame,
-                                 Invocation inv, Completion comp) {
-        List<Object> values = evaluator.resolve(src, frame, inv, comp);
+                                 Invocation inv, Completion comp, Conjuncts conjuncts) {
+        List<Object> values = evaluator.resolve(src, frame, inv, comp, conjuncts);
         return values.isEmpty() ? null : values.get(0);
     }
 }

@@ -1,0 +1,64 @@
+# Maintenance change — `engine-declarative-join-collect`
+
+- **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
+- **Change class:** `platform`
+- **Status:** `active`
+- **Affected profile(s):** `reference-impl/legible-engine` (DSL + `where`/`when` semantics), all profiles via inheritance
+- **Feature-contract impact:** `preserved`
+- **Design gate:** `approved` (human in-conversation: "go with your recommendations")
+- **Evidence gate:** `pending`
+- **Change summary:** Close the two expressiveness gaps the conduit rebuild experiment surfaced (UC-03/UC-04) **declaratively**: (1) a synchronised (multi-`when`) **join** — a rule with several named conjuncts fires once when every conjunct has completed in the same flow; (2) declarative **collect** — `collect`/`distinct`/`scan` sources and a `collectBy` clause gather values into one `List` binding. Both are code-free (R3 preserved); they are **not** conceptbox's imperative `frames.query/filter/collectAs` (see below).
+
+## Why not `frames.query/filter/collectAs`
+
+`SYNCHRONIZATIONS.md` §"How syncs fan out" and `SYNC_ENGINE_EVOLUTION.md` §3 record CLAD's deliberate divergence: `where` is a declarative bind/filter phase, not imperative code; in-`where` filters/JSON assembly are declined (R3), and concept query actions as `where` sources are a deferred non-goal. This change adds **no** filters, query DSL, or JSON assembly — only:
+- a multi-action `when` **join** (the paper's own model: "a multi-action join selecting which completed actions in the flow match", all sharing one flow token);
+- **aggregation** as a value-producing source (`collect`, the declarative analogue of `collectAs`), not a query/filter surface.
+
+Both are parseable, gate-checkable, and keep the `when`/`where`/`then` records mechanically auditable.
+
+## Contract impact
+
+| Invariant | Status | Evidence or re-entry |
+|---|---|---|
+| Action outcomes and response contracts | `preserved` | Single-trigger rules behave exactly as before; reactor `mvn test` green |
+| Action ordering and sync deduplication | `preserved` | Dedup keyed on the primary matched action id + rule name (single-trigger unchanged); join fires once per matched set |
+| Flow-token lineage | `preserved` | Joined emission's `parentActionId` = primary conjunct's action id; `causedBySync` = rule name |
+| Storage/retention semantics | `preserved` | `collectBy`/`scan` read via the existing `Region`/`FactStore` SPI |
+
+## Impact matrix
+
+| Surface | Touched? | How |
+|---|---|---|
+| Engine or profile contract documentation | yes | `SyncRule`/`WhereEvaluator`/`Source`/`Clause` javadoc; `SYNCHRONIZATIONS.md`, `SYNC_ENGINE_EVOLUTION.md`, `SYNC_PATTERNS.md`; templates |
+| Profile configuration or deployment files | no | — |
+| Engine/runtime implementation | yes | `SyncRule` (Trigger list), `SyncEngine` (per-conjunct index + completeness + conjunct context), `WhereEvaluator` (Conjuncts, collect/distinct/scan/collectBy), `Source`/`Clause`/`Dsl`, new `Conjuncts` |
+| Profile tests | yes | `JoinEngineTest`, `CollectClausesTest` |
+| UC artefact chain | no (additive) | Future chains may use joined `When` rows / collect; no retrofit |
+
+## Test matrix
+
+| Invariant | Test level | Command or test | Status | Evidence |
+|---|---|---|---|---|
+| Join fires once when all conjuncts complete; order-independent; not while a conjunct missing | unit | `mvn -f reference-impl/pom.xml -pl legible-engine test` (`JoinEngineTest`) | pass | 3 cases |
+| `collect` gathers into one List value; `distinct` dedups+orders; `scan` reads a predicate; `collectBy` groups frames | unit | same (`CollectClausesTest`) | pass | 4 cases |
+| Single-trigger rules + stocked profiles unaffected | unit | `mvn -f reference-impl/pom.xml test` | pass | reactor BUILD SUCCESS |
+| Gate suites unaffected | unit | `python3 -m unittest discover -s quality-gate/tests -t quality-gate/tests` | pass | OK |
+| Gate pipeline intact | integration | `python3 quality-gate/verify_artefacts.py` | pending | after record committed |
+| Templates/verifiers support joined `When` + collect syntax | unit | quality-gate tests (added) | pending | B2 |
+
+## Gates
+
+### Design gate
+
+Approved in-conversation by the human ("go with your recommendations") before implementation.
+
+### Evidence gate
+
+Pending the parity/verifier/template plumbing (B2/B3) and the full gate + reactor runs.
+
+## Notes
+
+- Join semantics: `SyncRule.Trigger` (named); the engine files the rule under **every** conjunct and checks all triggers have a matching committed completion in the flow; the latest matching invocation wins per conjunct (deterministic by flow order).
+- Determinism: `collect`/`collectBy` order values deterministically; `distinct`/`scan` de-duplicate + order (`region.read` returns an unordered set).
+- Downstream: the conduit rebuild fork inherits the engine files.
