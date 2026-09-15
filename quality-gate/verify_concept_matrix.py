@@ -94,6 +94,12 @@ def _concepts_in_chain(path):
         else:
             for m in re.findall(r"([A-Za-z]\w*)[/.]\w+", row.when or ""):
                 names.add(m)
+    if not names:
+        # Tolerant fallback for minimal/synthetic chain fragments the strict
+        # parser may not accept (no header row): scan backticked Concept.action.
+        with open(path) as fh:
+            for m in re.findall(r"`([A-Za-z]\w*)[/.]\w+", fh.read()):
+                names.add(m)
     return names
 
 def build_matrix(scenarios, concepts, chain_dir):
