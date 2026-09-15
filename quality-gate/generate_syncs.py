@@ -192,7 +192,8 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                 stem = ap.sync_stem(target_concept, target_action, scope,
                                     joined, True)
                 when_sig = " \u2227 ".join(
-                    (f"{n}: " if n else "") + f"{c}/{a}: [...] => [ {o} ]"
+                    (f"{n}: " if n else "")
+                    + f"{c}/{a}: [...] => [ {ap.first_completion_token(o)} ]"
                     for (n, c, a, o, _rn) in resolved)
                 first = resolved[0]
                 syncs.append(GeneratedSync(
@@ -307,7 +308,7 @@ def render_sync(g: GeneratedSync) -> str:
             prefix = f"{name}: " if name else ""
             lines.append(
                 f"    {prefix}{concept}/{action}: [ ... ] => "
-                f"[ {completion_with_payload(outcome_raw)} ; ... ]")
+                f"[ {ap.first_completion_token(outcome_raw)} ; ... ]")
     else:
         lines.append(f"    {g.trigger_concept}/{g.trigger_action}: [ ... ] => [ {g.trigger_completion} ; ... ]")
     lines.append("}")
