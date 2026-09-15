@@ -74,6 +74,16 @@ file forward.
 R1 still applies: no concept names another concept's state, actions,
 or types beyond opaque ids.
 
+**Shared concepts (cross-feature contract).** Concept classes are shared
+across features even though each feature authors its own `*.concept.md`.
+Before declaring an action, check the other features' `02_concepts/output/`
+for the same `Concept.action`: **reuse its exact input signature and outcome
+enum**. Extend only *additively* — add new outcome tokens or new optional
+parameters — never rename an existing outcome or parameter, and never
+redeclare the action with a different vocabulary. `verify_shared_action_contracts.py`
+(part of the artefact gate) fails when two features give one shared action
+disjoint outcome vocabularies, and warns on incompatible input shapes.
+
 
 ## Progress checklist
 
