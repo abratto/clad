@@ -31,6 +31,15 @@ file `methodology/` is the source of truth for what each version contains.
     missing-symbol shape); the 04d-green/04e-green pre-conditions
     assert the recorded class. Rider in
     `methodology/implementation/TDD.md` mechanizes the "red illusion".
+  - **Sync generator: payload-bearing outcome tokens** (experiment-found,
+    conduit rebuild UC-03): `generate_syncs.py` now joins an outcome
+    payload into the PascalCase completion for the sync stem
+    (`Released(blankFields)` → `…WhenClaimingReleaseReleasedBlankFields`)
+    and prefers a producer whose raw outcome equals the row's When token,
+    so payload-distinct respond carriers no longer collide into one stem
+    and get deduped silently. Emission confirmed unchanged on
+    payload-free chains (UC-00: 7; UC-02 probe: 6) and un-deduped on the
+    payload-bearing chain (UC-03: 17 → 18).
 
 ### Changed
 

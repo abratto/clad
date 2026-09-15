@@ -67,6 +67,27 @@ def completion_token(outcome_base: str) -> str:
     return ap.first_completion_token(outcome_base)
 
 
+def completion_with_payload(outcome_raw: str) -> str:
+    """PascalCase completion including any outcome payload.
+
+    Two outcomes of one action may differ only in payload
+    (`Released` vs `Released(blankFields)`); the sync stem must stay
+    unique across them, so the payload joins the completion token
+    (`...ReleasedBlankFields`). Matches the conduit rebuild
+    experiment (maintenance/generate-syncs-branch-carriers.md).
+    """
+    name = ap.first_completion_token(outcome_raw)
+    m = re.search(r"\(([^)]*)\)", outcome_raw or "")
+    if not m:
+        return name
+    payload = "".join(
+        w.capitalize() for w in re.split(r"[^A-Za-z0-9]+", m.group(1)) if w)
+    # skip a payload that names nothing (bare type name == base token)
+    if not payload or payload.lower() == name.lower():
+        return name
+    return name + payload
+
+
 def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], List[str]]:
     chain_dir = cs.CHAIN_DIR(feature_root)
     concept_dir = cs.CONCEPT_DIR(feature_root)
@@ -118,9 +139,18 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
             matches = [a for a in action_matches
                        if ap.normalize_outcome(a.outcome_base)
                        == ap.normalize_outcome(wo_base)]
-            if matches:
-                prev = matches[0]
-                trigger_outcome_raw = prev.outcome_base
+            # Prefer the producer whose raw outcome equals the row's When
+            # token verbatim: two rows of one action may differ only in
+            # outcome payload (`Released` vs `Released(blankFields)`).
+            raw_matches = [a for a in matches
+                           if (getattr(a, "outcome_raw", "") or "").strip("\"")
+                              == wo]
+            picked = raw_matches or matches
+            if picked:
+                prev = picked[0]
+                trigger_outcome_raw = getattr(prev, "outcome_raw", None) or \
+                    prev.outcome_base
+
             elif action_matches:
                 prev = action_matches[0]
                 trigger_outcome_raw = wo_base  # extension outcome (branch row)
@@ -147,7 +177,7 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                 + "When"
                 + ap.pascal_token(trigger_concept)
                 + ap.pascal_token(trigger_action)
-                + ap.first_completion_token(trigger_outcome_raw)
+                + completion_with_payload(trigger_outcome_raw)
             )
             stem = base
 
