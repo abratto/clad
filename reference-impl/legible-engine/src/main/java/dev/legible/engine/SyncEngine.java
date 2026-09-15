@@ -119,7 +119,10 @@ public final class SyncEngine {
         if (pattern == null) return true;
         for (Map.Entry<String, Object> e : pattern.entrySet()) {
             if (e.getValue() == Dsl.ABSENT) {
-                if (input.containsKey(e.getKey())) return false;
+                // Absent == no value: the key is missing OR carries null.
+                // This engine's arg builder always inserts a key (null for an
+                // unbound/empty source), so both shapes must match.
+                if (input.get(e.getKey()) != null) return false;
                 continue;
             }
             if (!input.containsKey(e.getKey())) return false;

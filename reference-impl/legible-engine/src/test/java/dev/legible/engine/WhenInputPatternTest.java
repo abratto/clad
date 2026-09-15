@@ -34,4 +34,19 @@ class WhenInputPatternTest {
         assertFalse(SyncEngine.patternMatches(pattern,
                 Map.of("userId", "u-77", "username", "n@new")));
     }
+
+    @Test
+    void absentSentinelTreatsNullValueAsAbsent() {
+        // This engine's arg builder always inserts a key (null for an
+        // unbound/empty source), so a key carrying null is "absent".
+        Map<String, Object> pattern = Map.of("email", Dsl.ABSENT,
+                                             "username", Dsl.ABSENT);
+        Map<String, Object> nullValued = new java.util.LinkedHashMap<>();
+        nullValued.put("userId", "u-77");
+        nullValued.put("email", null);
+        nullValued.put("username", null);
+        assertTrue(SyncEngine.patternMatches(pattern, nullValued));
+        nullValued.put("email", "e@new");
+        assertFalse(SyncEngine.patternMatches(pattern, nullValued));
+    }
 }

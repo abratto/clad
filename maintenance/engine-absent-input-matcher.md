@@ -49,6 +49,8 @@ Evidence recorded from the executed reactor run; Status set `closed` with the ch
 
 ## Notes
 
+- Absent = missing key OR null value (engine arg builder inserts null for empty sources).
+
 - `patternMatches` made package-visible static so the engine test exercises the matcher directly; behavioural surface unchanged.
 - Semantics: sentinel-first check (`e.getValue() == Dsl.ABSENT → !containsKey`), eliminating the old null-ambiguity branch (`expected == null`); a matcher map cannot contain a true null value since `Map.of`/`Map.copyOf` reject nulls — the old branch was unreachable and is removed.
 - Downstream: conduit rebuild experiment's `app/` (fork copy of `legible-engine`) inherits via file sync.
