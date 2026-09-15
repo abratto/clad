@@ -12,11 +12,17 @@ package dev.legible.engine;
  *   <li>{@link SiblingInput} — a field of a sibling action's input, in the same flow.</li>
  *   <li>{@link SiblingField} — a field of a sibling action's completion, in the same flow.</li>
  *   <li>{@link StateRead} — a concept-state read (Pattern D).</li>
+ *   <li>{@link Subjects} — the inverse-index read: the subjects for which
+ *       {@code predicate(subject) = object} (Pattern D inverse). Declarative
+ *       and code-free (no filters/aggregation); returns the subject set as a
+ *       single collected value. Not the declined {@code frames.query/collectAs}
+ *       imperative API — see maintenance/engine-subjects-inverse-read.md.</li>
  * </ul>
  */
 public sealed interface Source permits
         Source.Literal, Source.VarRef, Source.Uuid, Source.TriggerInput,
-        Source.TriggerField, Source.SiblingInput, Source.SiblingField, Source.StateRead {
+        Source.TriggerField, Source.SiblingInput, Source.SiblingField, Source.StateRead,
+        Source.Subjects {
 
     record Literal(Object value) implements Source {}
 
@@ -33,4 +39,7 @@ public sealed interface Source permits
     record SiblingField(String concept, String action, String field) implements Source {}
 
     record StateRead(String concept, Source subject, String predicate) implements Source {}
+
+    /** Subjects s where {@code predicate(s) = object}; collected to one List value. */
+    record Subjects(String concept, String predicate, Source object) implements Source {}
 }

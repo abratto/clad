@@ -83,6 +83,19 @@ public final class WhereEvaluator {
             }
             return out;
         }
+        if (s instanceof Source.Subjects sj) {
+            List<Object> objs = resolve(sj.object(), frame, inv, comp);
+            if (objs.isEmpty()) {
+                return List.of(); // object absent -> no collected value
+            }
+            java.util.TreeSet<String> collected = new java.util.TreeSet<>();
+            for (Object obj : objs) {
+                collected.addAll(
+                        facts.region(sj.concept()).subjects(sj.predicate(), String.valueOf(obj)));
+            }
+            // ONE value: the collected subject list (deterministic order).
+            return List.of(new ArrayList<>(collected));
+        }
         throw new IllegalStateException("unknown source: " + s);
     }
 

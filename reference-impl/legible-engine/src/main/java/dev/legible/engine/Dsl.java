@@ -117,6 +117,15 @@ public final class Dsl {
         return new Source.Literal(value);
     }
 
+    /**
+     * Inverse-index read (Pattern D inverse): the subjects for which
+     * {@code predicate(subject) = object}, collected into one List value.
+     * Dual of {@link #stateRead}; declarative, code-free.
+     */
+    public static Source subjects(String concept, String predicate, Source object) {
+        return new Source.Subjects(concept, predicate, object);
+    }
+
     /** A previously bound variable. */
     public static Source ref(String var) {
         return new Source.VarRef(var);
