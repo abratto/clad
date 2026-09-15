@@ -56,6 +56,9 @@ class GeneratedSync:
     binds: List[Tuple[str, str, str]]  # (var, pattern, source)
     pattern_d_notes: List[str]
     cited_scenario: str
+    is_join: bool = False
+    conjuncts: List[Tuple[Optional[str], str, str, str]] = field(default_factory=list)
+    # ^ (name, concept, action, outcome_raw) in declared conjunct order
 
 
 def completion_token(outcome_base: str) -> str:
@@ -86,6 +89,45 @@ def completion_with_payload(outcome_raw: str) -> str:
     if not payload or payload.lower() == name.lower():
         return name
     return name + payload
+
+
+def _resolve_when_source(wc, wa, wo, producers, current_row, warnings, fname):
+    """Resolve one `when` token to its producer row + trigger outcome raw.
+
+    Branch-safe completion matching (not adjacent position): the producer is
+    an earlier row P whose `Then` action equals this token's action and whose
+    `Outcome` equals its completion. Returns `None` for a root row. Mirrors
+    the long-standing single-trigger matching so single rows are unchanged.
+    """
+    wo_base = re.sub(r"\(.*?\)", "", wo).strip()
+    action_matches = [prow for (pc, pa, po, prow) in producers
+                      if pc == wc and pa == wa and prow is not current_row]
+    # Prefer the exact-outcome producer, then any action match; the
+    # outcome-mismatch case is the extension-row carrier (the chain table's
+    # rows 7-9 shape) — conduit rebuild experiment, maintenance/
+    # generate-syncs-branch-carriers.md.
+    matches = [a for a in action_matches
+               if ap.normalize_outcome(a.outcome_base)
+               == ap.normalize_outcome(wo_base)]
+    # Prefer the producer whose raw outcome equals the row's When token
+    # verbatim: two rows of one action may differ only in outcome payload.
+    raw_matches = [a for a in matches
+                   if (getattr(a, "outcome_raw", "") or "").strip("\"") == wo]
+    picked = raw_matches or matches
+    if picked:
+        prev = picked[0]
+        trigger_outcome_raw = getattr(prev, "outcome_raw", None) or prev.outcome_base
+    elif action_matches:
+        prev = action_matches[0]
+        trigger_outcome_raw = wo_base  # extension outcome (branch row)
+    else:
+        return None
+    if len(action_matches) > 1 and len(action_matches) != len(matches):
+        warnings.append(
+            f"{fname} row {current_row.row_num}: {len(action_matches)} rows produce "
+            f"{wc}/{wa}; using row {prev.row_num} "
+            f"(outcome {trigger_outcome_raw})")
+    return prev, trigger_outcome_raw
 
 
 def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], List[str]]:
@@ -124,43 +166,65 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                       ap.normalize_outcome(r.outcome_base), r) for r in rows]
 
         for row in rows:
+            # A composite `When` (join) resolves EVERY conjunct to its producer
+            # and emits one joined sync with all conjuncts in declared order.
+            if row.composite_when and row.conjuncts:
+                resolved = []
+                for c in row.conjuncts:
+                    source = _resolve_when_source(
+                        c.concept, c.action, c.outcome, producers, row,
+                        warnings, fname)
+                    if source is None:
+                        resolved.append(None)
+                        break
+                    prev_c, outcome_raw = source
+                    resolved.append((c.name, prev_c.then_concept,
+                                     prev_c.then_action, outcome_raw,
+                                     prev_c.row_num))
+                if not resolved or resolved[-1] is None:
+                    warnings.append(
+                        f"{fname} row {row.row_num}: joined `When` has an "
+                        f"unresolved conjunct; skipped")
+                    continue
+                target_concept, target_action = row.then_concept, row.then_action
+                joined = [ap.Conjunct(n, c, a, o)
+                          for (n, c, a, o, _rn) in resolved]
+                stem = ap.sync_stem(target_concept, target_action, scope,
+                                    joined, True)
+                when_sig = " \u2227 ".join(
+                    (f"{n}: " if n else "") + f"{c}/{a}: [...] => [ {o} ]"
+                    for (n, c, a, o, _rn) in resolved)
+                first = resolved[0]
+                syncs.append(GeneratedSync(
+                    name=stem,
+                    stem=stem,
+                    trigger_concept=first[1],
+                    trigger_action=first[2],
+                    trigger_completion=completion_with_payload(first[3]),
+                    target_concept=target_concept,
+                    target_action=target_action,
+                    source_row="+".join(str(rn) for *_x, rn in resolved),
+                    target_row=str(row.row_num),
+                    when_sig=when_sig,
+                    then_sig=f"{target_concept}/{target_action}: [ <args> ]",
+                    literals="<none>",
+                    binds=[],
+                    pattern_d_notes=[],
+                    cited_scenario=scenario,
+                    is_join=True,
+                    conjuncts=[(n, c, a, o) for (n, c, a, o, _rn) in resolved],
+                ))
+                continue
+
             parts = _when_parts(row.when)
             if parts is None:
                 continue
             wc, wa, wo = parts
-            wo_base = re.sub(r"\(.*?\)", "", wo).strip()
-            action_matches = [prow for (pc, pa, po, prow) in producers
-                              if pc == wc and pa == wa
-                              and prow is not row]
-            # Prefer the exact-outcome producer, then any action match; the
-            # outcome-mismatch case is the extension-row carrier (the chain
-            # table's rows 7-9 shape) — verified in the conduit rebuild
-            # experiment (maintenance/generate-syncs-branch-carriers.md).
-            matches = [a for a in action_matches
-                       if ap.normalize_outcome(a.outcome_base)
-                       == ap.normalize_outcome(wo_base)]
-            # Prefer the producer whose raw outcome equals the row's When
-            # token verbatim: two rows of one action may differ only in
-            # outcome payload (`Released` vs `Released(blankFields)`).
-            raw_matches = [a for a in matches
-                           if (getattr(a, "outcome_raw", "") or "").strip("\"")
-                              == wo]
-            picked = raw_matches or matches
-            if picked:
-                prev = picked[0]
-                trigger_outcome_raw = getattr(prev, "outcome_raw", None) or \
-                    prev.outcome_base
-
-            elif action_matches:
-                prev = action_matches[0]
-                trigger_outcome_raw = wo_base  # extension outcome (branch row)
-            else:
+            source = _resolve_when_source(wc, wa, wo, producers, row,
+                                          warnings, fname)
+            if source is None:
                 continue  # root row (Web/request entry) — not a sync
-            if len(action_matches) > 1 and len(action_matches) != len(matches):
-                warnings.append(
-                    f"{fname} row {row.row_num}: {len(action_matches)} rows produce "
-                    f"{wc}/{wa}; using row {prev.row_num} "
-                    f"(outcome {trigger_outcome_raw})")
+            prev, trigger_outcome_raw = source
 
             trigger_concept = prev.then_concept
             trigger_action = prev.then_action
@@ -238,7 +302,14 @@ def render_sync(g: GeneratedSync) -> str:
     lines.append("")
     lines.append("```")
     lines.append("when {")
-    lines.append(f"    {g.trigger_concept}/{g.trigger_action}: [ ... ] => [ {g.trigger_completion} ; ... ]")
+    if g.is_join and g.conjuncts:
+        for name, concept, action, outcome_raw in g.conjuncts:
+            prefix = f"{name}: " if name else ""
+            lines.append(
+                f"    {prefix}{concept}/{action}: [ ... ] => "
+                f"[ {completion_with_payload(outcome_raw)} ; ... ]")
+    else:
+        lines.append(f"    {g.trigger_concept}/{g.trigger_action}: [ ... ] => [ {g.trigger_completion} ; ... ]")
     lines.append("}")
     if g.binds or g.pattern_d_notes:
         lines.append("where {")

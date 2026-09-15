@@ -100,6 +100,15 @@ def check_sync_matrix(sync_dir):
         if not then_sig:
             failures.append((fname, "empty `then` signature"))
 
+        # A multi-`when` join signature (`a: A/act: [...] => [ X ] ∧ b: ...`)
+        # is legal — one Then, one outcome per row — but every conjunct must
+        # be non-empty. Classic single-trigger signatures are unaffected.
+        if "\u2227" in when_sig:
+            conjuncts = [part.strip() for part in when_sig.split("\u2227")]
+            if any(not part for part in conjuncts):
+                failures.append(
+                    (fname, "joined `when` signature has an empty conjunct"))
+
     return failures
 
 

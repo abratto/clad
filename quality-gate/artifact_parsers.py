@@ -35,6 +35,28 @@ from typing import Dict, List, Optional, Set, Tuple
 # Chain tables (Stage 01b)
 # --------------------------------------------------------------------------
 
+# U+2227 LOGICAL AND — the join separator in a composite chain-table `When`
+# cell (see maintenance/engine-declarative-join-collect.md).
+AND = "\u2227"
+
+
+@dataclass
+class Conjunct:
+    """One `when` conjunct.
+
+    Chain tables spell a conjunct `[name: ]Concept/action[Outcome]` and sync
+    specs spell it `[name: ]Concept/action: [ inputs ] => [ Outcome ; fields ]`.
+    `name` is None for the classic single, unnamed trigger. `outcome` is the
+    raw completion token, including any parenthesised payload
+    (`Found(userId)`, `ok`, `Released(blankFields)`).
+    """
+    name: Optional[str]
+    concept: str
+    action: str
+    outcome: str
+    inputs: str = ""
+
+
 @dataclass
 class ChainRow:
     """One row of a chain-table (the `# | When | Then | Inputs | Outcome | Why`
@@ -43,6 +65,11 @@ class ChainRow:
     removed (`Found(userId)` -> `Found`), and `outcome_payload` is the raw
     parenthesised content (or None). `then_suffix` is the bracketed action
     suffix when present (`[200]`, `[401]`) — these mark terminal respond rows.
+
+    `conjuncts` is the ordered list of `When` conjuncts. A classic row yields
+    exactly one unnamed conjunct; a join row yields >=1 `∧`-separated
+    conjuncts (each optionally named). `composite_when` is True only when the
+    raw cell used the `∧` separator.
     """
     row_num: int
     when: str
@@ -56,6 +83,44 @@ class ChainRow:
     why: str
     outcome_tokens: List[str] = field(default_factory=list)
     outcome_bases: List[str] = field(default_factory=list)
+    then_raw: str = ""
+    conjuncts: List[Conjunct] = field(default_factory=list)
+    composite_when: bool = False
+
+
+_CHAIN_CONJUNCT_RE = re.compile(
+    r"(?:([A-Za-z_]\w*)\s*:\s*)?"          # optional conjunct name
+    r"([A-Za-z_]\w*)\s*[./]\s*([A-Za-z_]\w*)"  # Concept.action / Concept/action
+    r"\s*(?:\[([^\]]*)\])?\s*$"            # optional [Outcome]
+)
+
+
+def parse_chain_when(cell: str) -> Tuple[List[Conjunct], bool]:
+    """Parse a chain-table `When` cell into ordered conjuncts.
+
+    Returns `(conjuncts, composite)`. A classic cell yields exactly one
+    unnamed conjunct; a join cell (>=1 `∧`-separated conjuncts, each
+    optionally named `name: Concept/action[Outcome]`) yields one Conjunct per
+    part. `composite` is True when the raw cell used the `∧` separator.
+    """
+    raw = cell.replace("`", "").strip()
+    composite = AND in raw
+    parts = raw.split(AND) if composite else [raw]
+    conjuncts: List[Conjunct] = []
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        m = _CHAIN_CONJUNCT_RE.match(part)
+        if not m:
+            continue
+        conjuncts.append(Conjunct(
+            name=m.group(1),
+            concept=m.group(2),
+            action=m.group(3),
+            outcome=(m.group(4) or "").strip(),
+        ))
+    return conjuncts, composite
 
 
 def _split_row(line: str) -> List[str]:
@@ -122,6 +187,8 @@ def parse_chain_table(path: str) -> List[ChainRow]:
         payload_match = re.search(r"\(([^)]*)\)", outcome_raw)
         outcome_payload = payload_match.group(1) if payload_match else None
 
+        conjuncts, composite_when = parse_chain_when(when_col)
+
         rows.append(ChainRow(
             row_num=num,
             when=when_col.strip("`"),
@@ -135,6 +202,9 @@ def parse_chain_table(path: str) -> List[ChainRow]:
             why=why_col,
             outcome_tokens=outcome_tokens,
             outcome_bases=outcome_bases,
+            then_raw=then_col,
+            conjuncts=conjuncts,
+            composite_when=composite_when,
         ))
     return rows
 
@@ -348,10 +418,61 @@ class SyncSpec:
     has_pattern_d: bool
     pattern_d_concepts: List[str] = field(default_factory=list)
     route_literals: Tuple[str, ...] = ()  # matched-literal signature (R15)
+    conjuncts: List[Conjunct] = field(default_factory=list)
+    is_join: bool = False
+    collect_forms: List[str] = field(default_factory=list)
+
+
+def extract_block(text: str, keyword: str) -> str:
+    """Return the content of the first `<keyword> { ... }` block, matching
+    nested braces. Falls back to a bare `partition('}')` slice when balanced,
+    so classic single-block specs parse exactly as before.
+    """
+    marker = keyword + " {"
+    idx = text.find(marker)
+    if idx < 0:
+        return ""
+    start = idx + len(keyword) + 1  # index of the opening '{'
+    depth = 0
+    for i in range(start, len(text)):
+        ch = text[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start + 1:i]
+    return text[start + 1:]
+
+
+# A sync `when` conjunct: `[name: ]Concept/action: [ inputs ] => [ completion ]`.
+# The optional name is only matched when an identifier is followed by `:`
+# before another `Concept/action` token, so the classic unnamed trigger still
+# parses byte-for-byte.
+_SYNC_CONJUNCT_RE = re.compile(
+    r"(?:([A-Za-z_]\w*)\s*:\s*)?"
+    r"([A-Za-z_]\w*)\s*/\s*([A-Za-z_]\w*)\s*:\s*"
+    r"\[([^\]]*)\]\s*=>\s*\[([^\]]*)\]")
+
+
+def _first_completion_token(right: str) -> str:
+    """First token on the right of a `=> [...]` arrow (`ok ; userId: ?u` -> `ok`)."""
+    right = (right or "").strip()
+    outcome_m = re.match(r"([A-Za-z][A-Za-z0-9_]*)", right)
+    return outcome_m.group(1) if outcome_m else right
+
+
+# Declarative collect `where` forms (maintenance/engine-declarative-join-collect.md).
+# Detected for Pattern-D / aggregate reporting; the forms are:
+#   collect ( <source> as ?var )
+#   collect distinct ( <source> as ?var )
+#   collect by ?groupKey ( <source> as ?var )
+_COLLECT_RE = re.compile(
+    r"\bcollect\b\s*(distinct\b\s*)?(?:by\s+\?\w+\s*)?\([^)]*\)")
 
 
 def parse_sync(path: str) -> Optional[SyncSpec]:
-    """Parse one *.sync.md file into its name, trigger, targets, and Pattern D flag."""
+    """Parse one *.sync.md file into its name, trigger(s), targets, and flags."""
     if not os.path.isfile(path) or not path.endswith(".sync.md"):
         return None
     fname = os.path.basename(path)
@@ -361,18 +482,27 @@ def parse_sync(path: str) -> Optional[SyncSpec]:
     name_match = re.search(r"^sync\s+(\w+)", text, re.MULTILINE)
     name = name_match.group(1) if name_match else fname.replace(".sync.md", "")
 
-    when_block = text.partition("when {")[2].partition("}")[0] if "when {" in text else ""
-    then_block = text.partition("then {")[2].partition("}")[0] if "then {" in text else ""
+    when_block = extract_block(text, "when")
+    then_block = extract_block(text, "then")
 
-    trigger_concept, trigger_action, trigger_outcome = "", "", ""
-    when_main = re.search(r"(\w+)/(\w+)\s*:\s*\[([^\]]*)\]\s*=>\s*\[([^\]]*)\]", when_block)
-    if when_main:
-        trigger_concept = when_main.group(1)
-        trigger_action = when_main.group(2)
-        # Completion = first token on the right of the arrow.
-        right = when_main.group(4).strip()
-        outcome_m = re.match(r"([A-Za-z][A-Za-z0-9_]*)", right)
-        trigger_outcome = outcome_m.group(1) if outcome_m else right
+    conjuncts: List[Conjunct] = []
+    for m in _SYNC_CONJUNCT_RE.finditer(when_block):
+        conjuncts.append(Conjunct(
+            name=m.group(1),
+            concept=m.group(2),
+            action=m.group(3),
+            inputs=m.group(4).strip(),
+            outcome=_first_completion_token(m.group(5))))
+    # A rule is a join when it declares more than one conjunct, or a single
+    # *named* conjunct (the agreed multi-`when` syntax).
+    is_join = len(conjuncts) > 1 or any(c.name for c in conjuncts)
+
+    if conjuncts:
+        primary = conjuncts[0]
+        trigger_concept, trigger_action = primary.concept, primary.action
+        trigger_outcome = primary.outcome
+    else:
+        trigger_concept, trigger_action, trigger_outcome = "", "", ""
 
     then_targets: List[Tuple[str, str]] = []
     for m in re.finditer(r"([A-Za-z]+)/([A-Za-z]+)\s*:", then_block):
@@ -382,7 +512,7 @@ def parse_sync(path: str) -> Optional[SyncSpec]:
     cited: List[str] = re.findall(r"—\s+scenario\s+[\"`']([^\"`']+)[\"`']", text)
 
     # Pattern D = a concept-state read in the where block: `Concept: { ... }`
-    where_block = text.partition("where {")[2].partition("}")[0] if "where {" in text else ""
+    where_block = extract_block(text, "where")
     has_pattern_d = bool(re.search(r"[A-Za-z]+\s*:\s*\{", where_block))
     pattern_d_concepts = re.findall(r"([A-Za-z][A-Za-z0-9]*)\s*:\s*\{", where_block)
     # DSL-authored concept-state reads and inverse-index reads
@@ -395,6 +525,8 @@ def parse_sync(path: str) -> Optional[SyncSpec]:
         if c not in pattern_d_concepts:
             pattern_d_concepts.append(c)
     has_pattern_d = has_pattern_d or bool(pattern_d_concepts)
+    # Declarative collect forms (collect / collect distinct / collect by).
+    collect_forms = [m.group(0).strip() for m in _COLLECT_RE.finditer(where_block)]
     # Route literal signature (R15): matched literal constraints the when/where
     # blocks apply to the trigger/targets (e.g. `check = "entry"`,
     # `cause = "stale"`). Value-side literals only; ?var binds excluded.
@@ -419,6 +551,9 @@ def parse_sync(path: str) -> Optional[SyncSpec]:
         route_literals=route_literals,
         has_pattern_d=has_pattern_d,
         pattern_d_concepts=pattern_d_concepts,
+        conjuncts=conjuncts,
+        is_join=is_join,
+        collect_forms=collect_forms,
     )
 
 
@@ -723,8 +858,12 @@ def expected_stage_outputs(feature_root: str) -> Dict[str, List[str]]:
         out["03"] = [s.name + ".sync.md" for s in sync_specs]
         participating = set()
         for s in sync_specs:
-            if s.trigger_concept:
-                participating.add(s.trigger_concept)
+            # A joined rule participates in every conjunct's concept, not
+            # just the primary trigger.
+            for concept in ([c.concept for c in s.conjuncts]
+                            or [s.trigger_concept]):
+                if concept:
+                    participating.add(concept)
             participating.update(c for c, _ in s.then_targets)
         out["03a"] = [c + "-card.md" for c in sorted(participating)] + [
             "pattern-d-summary.md", "concept-matrix.md"]
@@ -782,6 +921,50 @@ def first_completion_token(completion: str) -> str:
             return pascal_token(part.split(":", 1)[0].split("(", 1)[0])
         return pascal_token(part.split("(", 1)[0])
     return ""
+
+
+def completion_with_payload(outcome_raw: str) -> str:
+    """PascalCase completion including any outcome payload.
+
+    Two outcomes of one action may differ only in payload (`Released` vs
+    `Released(blankFields)`); the sync stem must stay unique across them, so
+    the payload joins the completion token (`...ReleasedBlankFields`). Shared
+    by `generate_syncs` and `verify_implementation_parity` so the derived name
+    cannot drift.
+    """
+    name = first_completion_token(outcome_raw)
+    m = re.search(r"\(([^)]*)\)", outcome_raw or "")
+    if not m:
+        return name
+    payload = "".join(
+        word.capitalize() for word in re.split(r"[^A-Za-z0-9]+", m.group(1)) if word)
+    if not payload or payload.lower() == name.lower():
+        return name
+    return name + payload
+
+
+def sync_stem(then_concept: str, then_action: str, scope: str,
+              conjuncts: List["Conjunct"], is_join: bool) -> str:
+    """Mechanical sync stem (grammar v2 / join grammar).
+
+    Single-trigger: `<Target><Action>[For<Scope>]When<C><A><Outcome>`.
+    Joined rule:    `<Target><Action>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2>...`
+    in declared conjunct order (deterministic).
+    """
+    base = (pascal_token(then_concept) + pascal_token(then_action)
+            + ("For" + scope if scope else ""))
+    if is_join:
+        parts = [
+            pascal_token(c.concept) + pascal_token(c.action)
+            + completion_with_payload(c.outcome)
+            for c in conjuncts
+        ]
+        return base + "WhenJoin" + "And".join(parts)
+    if not conjuncts:
+        return base + "When"
+    c = conjuncts[0]
+    return (base + "When" + pascal_token(c.concept) + pascal_token(c.action)
+            + completion_with_payload(c.outcome))
 
 
 def feature_scope_from_path(path: str) -> str:

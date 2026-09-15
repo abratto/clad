@@ -45,6 +45,13 @@ multiple outcomes that lead to different `Web.respond[...]` contracts or
 different next actions, split those branches into separate rows instead
 of collapsing them into one line.
 
+A row may also be a **join**: its `When` cell lists several conjuncts
+separated by `∧` (U+2227), each optionally named `name:
+Concept/action[Outcome]`. Such a row fires once when every conjunct has
+completed in the same flow, and still carries exactly one `Then` and one
+`Outcome` token. Single-conjunct rows keep the classic form. See
+`../../../../methodology/architecture/SYNCHRONIZATIONS.md`.
+
 If a downstream action needs request-originated data, the approved 01b
 row must name those carried fields on the trigger contract itself
 (for example `Web.request[Routed(email, password)]`). Stage 03 may bind

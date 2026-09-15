@@ -28,7 +28,7 @@ import os
 import sys
 from collections import defaultdict
 
-from artifact_parsers import parse_syncs
+from artifact_parsers import Conjunct, parse_syncs
 
 
 def parse_syncs_edges(sync_dir):
@@ -41,14 +41,20 @@ def parse_syncs_edges(sync_dir):
     `check = entry | application` device, conduit rebuild experiment) are
     therefore DISTINCT nodes and cannot constitute a false cycle through
     the same concept.
+
+    A joined (multi-`when`) rule contributes an incoming edge from **every**
+    conjunct's source, not only the primary — the rule can fire only when all
+    conjuncts completed, so each is a real dependency.
     """
     edges = []
     for s in parse_syncs(sync_dir):
         sign = "+".join(s.route_literals or ())
-        src = (s.trigger_concept, s.trigger_action,
-               (s.trigger_outcome or "").strip(), sign)
-        for concept, action in s.then_targets:
-            edges.append((s.name, src, (concept, action, "", sign)))
+        sources = s.conjuncts or [
+            Conjunct(None, s.trigger_concept, s.trigger_action, s.trigger_outcome)]
+        for c in sources:
+            src = (c.concept, c.action, (c.outcome or "").strip(), sign)
+            for concept, action in s.then_targets:
+                edges.append((s.name, src, (concept, action, "", sign)))
     return edges
 
 

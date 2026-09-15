@@ -31,20 +31,46 @@ from pathlib import Path
 
 _SYNC_RULE_HEAD = re.compile(
     r'SyncRule\.of\(\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"([^"]*)"')
+# Joined rules and fluent-DSL rules: `.when(conj("name","Concept","action","outcome"))`
+# or `.when("Concept","action"[,"outcome"])`. The first conjunct is primary.
+_RULE_ANY_HEAD = re.compile(r'(?:SyncRule\.ofJoin|rule)\(\s*"(\w+)"')
+_CONJ_HEAD = re.compile(
+    r'conj\(\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"([^"]*)"')
+_WHEN_HEAD = re.compile(
+    r'\.when\(\s*"(\w+)"\s*,\s*"(\w+)"(?:\s*,\s*"([^"]*)")?')
 _SYNC_RULE_RESPOND = re.compile(r'invoke\(\s*"Web"\s*,\s*"respond"')
 _SYNC_RULE_ROUTE_GUARD = re.compile(r'(?:Clause\.)?(?:Guard|Bind)\(\s*"\?route"|Map\.of\(\s*"route"|\.matching\(\s*Map\.of\(\s*"route"')
+
+
+def _primary_trigger(body):
+    """`(concept, action, outcome)` of a joined/DSL rule body's primary
+    conjunct: the first `conj(...)`, else the first `.when(...)`."""
+    m = _CONJ_HEAD.search(body)
+    if m:
+        return m.group(2), m.group(3), m.group(4)
+    m = _WHEN_HEAD.search(body)
+    if m:
+        return m.group(1), m.group(2), (m.group(3) or "")
+    return "", "", ""
 
 
 def scan_sync_rule_ambiguity(root):
     parsed = []
     for java_file in sorted(root.rglob("*.java")):
         text = java_file.read_text(encoding="utf-8", errors="replace")
-        heads = list(_SYNC_RULE_HEAD.finditer(text))
-        for index, m in enumerate(heads):
-            start = m.start()
-            end = heads[index + 1].start() if index + 1 < len(heads) else len(text)
+        heads = [(m.start(), m.groups()) for m in _SYNC_RULE_HEAD.finditer(text)]
+        heads += [(m.start(), (m.group(1),)) for m in _RULE_ANY_HEAD.finditer(text)]
+        heads.sort()
+        for index, (start, groups) in enumerate(heads):
+            end = heads[index + 1][0] if index + 1 < len(heads) else len(text)
             body = text[start:end]
-            name, concept, action, outcome = m.groups()
+            if len(groups) == 4:
+                name, concept, action, outcome = groups
+            else:
+                name = groups[0]
+                concept, action, outcome = _primary_trigger(body)
+                if not concept:
+                    continue  # trigger not statically resolvable; leave to review
             parsed.append((
                 name, concept, action, outcome,
                 bool(_SYNC_RULE_RESPOND.search(body)),

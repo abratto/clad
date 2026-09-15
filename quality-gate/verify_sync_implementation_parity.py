@@ -29,7 +29,10 @@ import artifact_parsers as ap
 
 
 SYNC_SUFFIX = ".sync.md"
-# Legacy shape: SyncRule.of("Name", "concept", "action", "outcome", ...)
+# Any rule declaration head: legacy `SyncRule.of("Name", ...)`, joined
+# `SyncRule.ofJoin("Name", ...)`, or fluent `rule("Name")`.
+_RULE_HEAD = re.compile(r'(?:SyncRule\.ofJoin|SyncRule\.of|rule)\(\s*"(\w+)"')
+# Legacy positional shape: SyncRule.of("Name", "concept", "action", "outcome", ...)
 _SYNC_RULE_OF_HEAD = re.compile(
     r'SyncRule\.of\(\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"([^"]*)"')
 # Fluent DSL shape (see maintenance/sync-dsl-legibility.md):
@@ -37,6 +40,9 @@ _SYNC_RULE_OF_HEAD = re.compile(
 _DSL_RULE_HEAD = re.compile(
     r'rule\(\s*"(\w+)"\s*\)(?:.{0,400}?)\.when\(\s*("?)([A-Za-z_][\w.]*)\2\s*,\s*"?([A-Za-z_][\w.]*)"?(?:\s*,\s*"?([A-Za-z_0-9]\w*)"?)?\s*\)',
     re.DOTALL)
+# Joined DSL conjunct (the primary is the first): conj("name", "Concept", "action", "outcome")
+_CONJ_HEAD = re.compile(
+    r'conj\(\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"([^"]*)"')
 _SYNC_RULE_INVOKE = re.compile(
     r'invoke\(\s*("?)([A-Za-z_]\w*)\1\s*,\s*("?)([A-Za-z_]\w*)\3')
 
@@ -115,29 +121,33 @@ def collect_java_syncs(sync_impl_dir):
                 continue
             path = os.path.join(root, filename)
             text = open(path, encoding="utf-8").read()
-            heads = [(m.span(), m.groups()) for m in _SYNC_RULE_OF_HEAD.finditer(text)]
-            heads += [(m.span(), m.groups()) for m in _DSL_RULE_HEAD.finditer(text)]
+            heads = [(m.start(), m.group(1)) for m in _RULE_HEAD.finditer(text)]
             heads.sort()
             # Constants may live in sibling concept classes — walk module root.
             module_root = path
             for _ in range(2):
                 module_root = os.path.dirname(module_root)
             symbols = symbol_table(module_root)
-            for index, ((start, _end), groups) in enumerate(heads):
-                name = groups[0]
-                if len(groups) == 5:  # fluent-DSL layout: name, quote, concept, action, outcome
-                    concept, action = groups[2], groups[3]
-                    outcome_raw = groups[4] if len(groups) > 4 else None
-                else:
-                    concept, action = groups[1], groups[2]
-                    outcome_raw = groups[3] if len(groups) > 3 else None
+            for index, (start, name) in enumerate(heads):
+                end = heads[index + 1][0] if index + 1 < len(heads) else len(text)
+                body = text[start:end]
+                concept = action = outcome_raw = None
+                m_of = _SYNC_RULE_OF_HEAD.match(body)
+                m_join = _CONJ_HEAD.search(body)
+                m_dsl = _DSL_RULE_HEAD.search(body)
+                if m_of:
+                    concept, action, outcome_raw = m_of.group(2), m_of.group(3), m_of.group(4)
+                elif m_join:
+                    concept, action, outcome_raw = m_join.group(2), m_join.group(3), m_join.group(4)
+                elif m_dsl:
+                    concept, action = m_dsl.group(3), m_dsl.group(4)
+                    outcome_raw = m_dsl.group(5)
                 outcome = symbols.get(outcome_raw, outcome_raw) if outcome_raw else ""
-                end = heads[index + 1][0][0] if index + 1 < len(heads) else len(text)
                 rules[name] = {
                     "symbols": {k: v for k, v in symbols.items()},
                     "path": path,
                     "trigger": (concept, action, outcome or None),
-                    "then_targets": sync_invoke_targets(symbols, text[start:end]),
+                    "then_targets": sync_invoke_targets(symbols, body),
                 }
     return rules, []
 

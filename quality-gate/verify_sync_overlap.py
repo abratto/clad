@@ -27,16 +27,23 @@ import re
 import sys
 from collections import defaultdict
 
+from artifact_parsers import extract_block
+
 
 _WHEN_CONCEPT_RE = re.compile(r'(\w+)/\w+\s*:', re.MULTILINE)
 _THEN_CONCEPT_RE = re.compile(r'(\w+)/\w+\s*:', re.MULTILINE)
 
 
 def extract_concepts(text):
-    """Extract unique concept names from sync text."""
+    """Extract unique concept names from sync text.
+
+    The `when` block may hold a multi-`when` join (all conjunct sources are
+    touched); brace matching keeps nested `collect`-clause braces in `where`
+    from truncating the scan.
+    """
     concepts = set()
-    when_block = text.partition('when {')[2].partition('}')[0] if 'when {' in text else ''
-    then_block = text.partition('then {')[2].partition('}')[0] if 'then {' in text else ''
+    when_block = extract_block(text, 'when')
+    then_block = extract_block(text, 'then')
     concepts.update(_WHEN_CONCEPT_RE.findall(when_block))
     concepts.update(_THEN_CONCEPT_RE.findall(then_block))
     return concepts
@@ -45,8 +52,8 @@ def extract_concepts(text):
 def extract_concept_order(text):
     """Extract concept acquisition order from sync text.
     Returns ordered list of unique concepts as they appear in when→then."""
-    when_block = text.partition('when {')[2].partition('}')[0] if 'when {' in text else ''
-    then_block = text.partition('then {')[2].partition('}')[0] if 'then {' in text else ''
+    when_block = extract_block(text, 'when')
+    then_block = extract_block(text, 'then')
     seen = set()
     order = []
     for m in _WHEN_CONCEPT_RE.finditer(when_block):
@@ -66,8 +73,8 @@ def _sync_signature(path):
     """Read the sync's when/where literal assignments (route signature)."""
     with open(path) as fh:
         text = fh.read()
-    when_block = text.partition('when {')[2].partition('}')[0]
-    where_block = text.partition('where {')[2].partition('}')[0]
+    when_block = extract_block(text, 'when')
+    where_block = extract_block(text, 'where')
     lits = set()
     for clause in (when_block, where_block):
         lits |= set(re.findall(r"([\w]+)\s*=\s*([\"'])([^\"']*)\2", clause))

@@ -75,6 +75,51 @@ the coupling is **explicit and visible**: every concept-state read
 appears as a row in the sync spec and again in the 03a per-concept
 card's Section 2. It cannot happen invisibly.
 
+## Joined rules: naming a conjunct
+
+A joined (multi-`when`) rule matches several completions in one flow. Each
+conjunct is named, and a binding names which one it reads:
+
+```
+when {
+    list: Catalog/list: [ id: ?id ] => [ Listed ; id: ?id ]
+    tag:  Tagging/tag:  [ id: ?id ] => [ Tagged ; id: ?id ]
+}
+where {
+    bind ( list.id as ?listedId )   // Pattern B — list's completion field
+    bind ( tag.param  as ?p )       // Pattern A — tag's invocation input
+}
+```
+
+- `name.field` reads the named conjunct's **completion** field — still
+  internal flow data (Pattern B), no cross-concept read.
+- `name.param` reads the named conjunct's **invocation input** — still
+  internal flow data (Pattern A).
+- A `Concept: { ... }` state read inside a join is still a Pattern D
+  concept-state read and is audited exactly as before.
+
+Joining does not add a new data category; it only scopes an existing A/B
+binding to one named conjunct.
+
+## Collect / aggregate bindings
+
+`collect`/`distinct`/`scan`/`collectBy` are **value-producing sources**, not
+a query/filter surface:
+
+```
+where {
+    collect by ?article ( Tagging: { ?article tags: ?tag } as ?tags )
+}
+```
+
+- The inner source is itself an A/B/C/D binding (`Tagging: { … }` here is a
+  Pattern D concept-state read, so the audit is unchanged).
+- `collect` only gathers the values that source already yields into one
+  `List`; `distinct` de-duplicates and orders; `collectBy` groups frames.
+- No filters, no arithmetic, no JSON assembly. This is the deliberate
+  distinction from conceptbox's imperative `frames.query/filter/collectAs`
+  (`SYNCHRONIZATIONS.md` §"Collect", R3).
+
 ---
 
 ## Why the distinction matters

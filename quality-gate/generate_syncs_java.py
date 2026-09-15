@@ -44,6 +44,10 @@ def _snake_to_camel(text: str) -> str:
     return parts[0] + "".join(p.capitalize() for p in parts[1:])
 
 
+def _lower_first(name: str) -> str:
+    return name[:1].lower() + name[1:] if name else name
+
+
 def _source_java(spec) -> list[str]:
     """Emit one line per `where` source to be lowered. TODOs for judgement."""
     lines = []
@@ -65,15 +69,24 @@ def spec_has_pattern_d(spec) -> bool:
 def render_dsl_rule(spec) -> list[str]:
     """Emit one v2-named fluent-DSL rule block from a parsed sync spec."""
     lines = []
-    lines.append(f'    private SyncRule {snake_rule_name(spec.name)}() {{')
+    lines.append('    public SyncRule rule() {')
     lines.append(f'        return rule("{spec.name}")')
     # Trigger concept/action come from the parsed `when` block; completion
     # token name normalized to the actual outcome token used in the Java enum
     # space (e.g. { outcome: "FOUND" } -> "FOUND"). Concept/action constants
     # are the agent's authoring step (per profile) — emit string literals.
-    when = (spec.trigger_concept, spec.trigger_action)
-    lines.append(f'            .when("{when0(when=spec)}", "{spec.trigger_action}", '
-                 f'"{spec.trigger_outcome or ""}"),'.rstrip(","))
+    if spec.is_join and spec.conjuncts:
+        # Synchronised (multi-`when`) rule: one `conj(...)` per conjunct in
+        # declared order (maintenance/engine-declarative-join-collect.md).
+        for index, conjunct in enumerate(spec.conjuncts):
+            method = ".when" if index == 0 else ".and"
+            name = conjunct.name or f"c{index + 1}"
+            lines.append(
+                f'            {method}(conj("{name}", "{conjunct.concept}", '
+                f'"{conjunct.action}", "{conjunct.outcome}"))')
+    else:
+        lines.append(f'            .when("{spec.trigger_concept}", "{spec.trigger_action}", '
+                     f'"{spec.trigger_outcome or ""}"),'.rstrip(","))
     for (tc, ta) in spec.then_targets[:1]:
         lines.append(f'            .then(invoke("{tc}", "{ta}", args()))')
     lines.append('            .build();')
@@ -130,10 +143,6 @@ def main() -> None:
         print(f"SKIP  no .sync.md specs found under {sync_dir}")
         return
 
-    grouped: dict[str, list] = {}
-    for s in specs:
-        grouped.setdefault(s.name.split("For")[0] if "For" in s.name else s.stem, []).append(s)
-
     print(f"  CLAD sync lowering — {len(specs)} rule(s), profile={args.profile}")
     errors = []
     for s in specs:
@@ -162,14 +171,14 @@ def main() -> None:
             "import dev.legible.engine.SyncRule;\n"
             "import static dev.legible.engine.Dsl.args;\n"
             "import static dev.legible.engine.Dsl.bind;\n"
+            "import static dev.legible.engine.Dsl.conj;\n"
             "import static dev.legible.engine.Dsl.invoke;\n"
             "import static dev.legible.engine.Dsl.lit;\n"
             "import static dev.legible.engine.Dsl.ref;\n"
             "import static dev.legible.engine.Dsl.rule;\n\n"
             "/** Generated from " + stem + ".sync.md — resolve only the TODO markers;\n"
             " *  never re-author the name, trigger, or target (rule sees sync rule contract). */\n"
-            "public final class " + java_name + " {\n"
-            "    public SyncRule rule() {\n" + body + "\n    }\n}\n")
+            "public final class " + java_name + " {\n" + body + "\n}\n")
         print("wrote", out_path)
 
 

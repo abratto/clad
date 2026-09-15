@@ -53,6 +53,19 @@
 > is the same. The deterministic `verify_chain_grammar.py` check enforces this
 > boundary because the pipe character is also the Markdown table delimiter.
 
+> **Joins (multi-`when`).** A row whose `Then` fires only after *several*
+> actions have completed in the same flow writes a composite `When` cell: the
+> conjuncts are separated by `∧` (U+2227), and each is optionally named
+> `name: Concept/action[Outcome]`. Single-conjunct rows keep the classic
+> form. A join row still has exactly one `Then` and one `Outcome` token.
+>
+> ```
+> | 4 | `list: Catalog.list[Listed] ∧ tag: Tagging.tag[Tagged]` | `Web.respond[200]` | `200` | `Sent` | Fires once when both completed |
+> ```
+>
+> See `SYNCHRONIZATIONS.md` §"Joins (multi-`when`)" for the semantics; the
+> join fires once when every conjunct has a matching completion in the flow.
+
 > **Why this shape is Level 2b, not Level 3a.**
 > - The row's `Then` is the concrete rendering of the WYSIWID Level 2b
 >   **Then**.

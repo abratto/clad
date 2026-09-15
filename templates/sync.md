@@ -44,6 +44,41 @@ then {
 }
 ```
 
+**Joins (multi-`when`).** A sync may declare several named conjuncts; it
+fires once when every conjunct has completed in the same flow (order
+independent). The first conjunct is the primary. Bind a conjunct's
+completion or input as `name.field` / `name.param`:
+
+```
+when {
+    a: Catalog/list: [ id: ?id ] => [ Listed ; id: ?id ]
+    b: Tagging/tag: [ id: ?id ] => [ Tagged ; id: ?id ]
+}
+then {
+    Web/respond: [ listed: ?id ]
+}
+```
+
+A single *unnamed* conjunct keeps the classic form (and naming) unchanged.
+The joined stem is
+`<Target><Action>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2><A2><Out2>…` in
+declared conjunct order — e.g.
+`WebRespondWhenJoinCatalogListListedAndTaggingTagTagged`.
+
+**Aggregation (`collect`).** The declarative analogue of `collectAs` —
+gather a source's values into **one `List` value** (no filters, no JSON, R3):
+
+```
+where {
+    collect ( <source> as ?<var> )
+    collect distinct ( <source> as ?<var> )       // de-duplicated + ordered
+    collect by ?<groupKey> ( <source> as ?<var> ) // one List per group
+}
+```
+
+This is *not* the declined imperative `frames.query/filter/collectAs`:
+`collect` only gathers values a declarative source already produces.
+
 ## Where clause patterns (for Stage 03a audit)
 
 | Binding | Pattern | Source |

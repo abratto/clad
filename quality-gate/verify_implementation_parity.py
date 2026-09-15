@@ -167,34 +167,55 @@ def _spec_trigger_outcome_full(path, text):
     return spec, spec.trigger_outcome
 
 
+def _matrix_completion_tokens(text):
+    """Ordered raw completion tokens (verbatim, payload included) from the
+    Sync Contract Matrix `when` signature: `... => [ ok ; x ]` -> `ok`."""
+    row = re.search(r"\| `\d+` \| `\d+` \| `([^`]+)` \|", text)
+    if not row:
+        return []
+    cell = row.group(1)
+    tokens = []
+    for m in re.finditer(r"=>\s*\[", cell):
+        i, depth, j = m.end(), 1, m.end()
+        while j < len(cell) and depth:
+            if cell[j] == "[":
+                depth += 1
+            elif cell[j] == "]":
+                depth -= 1
+            j += 1
+        tokens.append(cell[i:j - 1].split(";")[0].strip())
+    return tokens
+
+
 def expected_sync_names(path, text):
-    """Mechanical effect-first name(s) for a canonical sync spec (grammar v2,
-    see maintenance/sync-dsl-legibility.md):
-    <TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>"""
+    """Mechanical effect-first name(s) for a canonical sync spec.
+
+    Single-trigger (grammar v2, maintenance/sync-dsl-legibility.md):
+      <TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>
+    Joined rule (maintenance/engine-declarative-join-collect.md):
+      <TargetConcept><TargetAction>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2>...
+    """
     spec, outcome_full = _spec_trigger_outcome_full(path, text)
     if spec is None or not spec.trigger_concept or not spec.then_targets:
         return []
     scope = feature_scope_from_path(path)
     then_concept, then_action = spec.then_targets[0]
-    base = (
-        pascal_token(then_concept)
-        + pascal_token(then_action)
-        + "When"
-        + pascal_token(spec.trigger_concept)
-        + pascal_token(spec.trigger_action)
-        + completion_with_payload(outcome_full)
-    )
-    names = [base]
+
+    if spec.is_join and spec.conjuncts:
+        outcomes = _matrix_completion_tokens(text)
+        conjuncts = [
+            ap.Conjunct(c.name, c.concept, c.action,
+                        outcomes[i] if i < len(outcomes) else c.outcome)
+            for i, c in enumerate(spec.conjuncts)
+        ]
+    else:
+        conjuncts = [ap.Conjunct(None, spec.trigger_concept,
+                                 spec.trigger_action, outcome_full)]
+
+    names = [ap.sync_stem(then_concept, then_action, "", conjuncts, spec.is_join)]
     if scope:
-        names.append(
-            pascal_token(then_concept)
-            + pascal_token(then_action)
-            + "For" + scope
-            + "When"
-            + pascal_token(spec.trigger_concept)
-            + pascal_token(spec.trigger_action)
-            + completion_with_payload(outcome_full)
-        )
+        names.append(ap.sync_stem(then_concept, then_action, scope,
+                                  conjuncts, spec.is_join))
     return names
 
 

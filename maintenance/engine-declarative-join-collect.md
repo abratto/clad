@@ -2,11 +2,11 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `active`
+- **Status:** `closed`
 - **Affected profile(s):** `reference-impl/legible-engine` (DSL + `where`/`when` semantics), all profiles via inheritance
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved` (human in-conversation: "go with your recommendations")
-- **Evidence gate:** `pending`
+- **Evidence gate:** `approved`
 - **Change summary:** Close the two expressiveness gaps the conduit rebuild experiment surfaced (UC-03/UC-04) **declaratively**: (1) a synchronised (multi-`when`) **join** — a rule with several named conjuncts fires once when every conjunct has completed in the same flow; (2) declarative **collect** — `collect`/`distinct`/`scan` sources and a `collectBy` clause gather values into one `List` binding. Both are code-free (R3 preserved); they are **not** conceptbox's imperative `frames.query/filter/collectAs` (see below).
 
 ## Why not `frames.query/filter/collectAs`
@@ -43,9 +43,11 @@ Both are parseable, gate-checkable, and keep the `when`/`where`/`then` records m
 | Join fires once when all conjuncts complete; order-independent; not while a conjunct missing | unit | `mvn -f reference-impl/pom.xml -pl legible-engine test` (`JoinEngineTest`) | pass | 3 cases |
 | `collect` gathers into one List value; `distinct` dedups+orders; `scan` reads a predicate; `collectBy` groups frames | unit | same (`CollectClausesTest`) | pass | 4 cases |
 | Single-trigger rules + stocked profiles unaffected | unit | `mvn -f reference-impl/pom.xml test` | pass | reactor BUILD SUCCESS |
-| Gate suites unaffected | unit | `python3 -m unittest discover -s quality-gate/tests -t quality-gate/tests` | pass | OK |
-| Gate pipeline intact | integration | `python3 quality-gate/verify_artefacts.py` | pending | after record committed |
-| Templates/verifiers support joined `When` + collect syntax | unit | quality-gate tests (added) | pending | B2 |
+| Gate suites unaffected | unit | `python3 -m unittest discover -s quality-gate/tests -t quality-gate/tests` | pass | OK (101 tests) |
+| Gate pipeline intact | integration | `python3 quality-gate/verify_artefacts.py` | pass | artefact pipeline intact (UC-00-login stage 05) |
+| Templates/verifiers support joined `When` + collect syntax | unit | `python3 -m unittest discover -s quality-gate/tests -t quality-gate/tests` (`test_join_collect_grammar`) | pass | 12 cases: chain join parse, composite-`When` grammar, join stem, collect forms, matrix + cycle graph, Java emitter `conj` chain |
+| Docs/links updated | integration | `python3 quality-gate/verify_links.py` | pass | 306 links, 105 docs |
+| Backward compat: UC-00 chain/syncs unchanged | integration | stage 01b/03 `verify_chain_grammar` / `verify_sync_matrix` / `verify_sync_cycle_graph` / `verify_sync_overlap` | pass | 16 rows, 7 syncs |
 
 ## Gates
 
@@ -55,7 +57,7 @@ Approved in-conversation by the human ("go with your recommendations") before im
 
 ### Evidence gate
 
-Pending the parity/verifier/template plumbing (B2/B3) and the full gate + reactor runs.
+Approved: parity/verifier/template plumbing landed; the four validation commands (unittest, verify_artefacts, verify_links, reactor) are green and UC-00-login re-verifies (byte-for-byte backward compatible).
 
 ## Notes
 

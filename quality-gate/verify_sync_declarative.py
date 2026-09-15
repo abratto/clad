@@ -157,7 +157,11 @@ def extract_method_bodies(source):
             elif stripped[pos] == '}':
                 depth -= 1
                 if depth == 0:
-                    body = source[brace_pos:pos + 1]
+                    # Slice the *stripped* source: comment/string replacement
+                    # shortens earlier offsets, so slicing the original source
+                    # with these indices would capture unrelated text (e.g. a
+                    # class javadoc's `{@code ...}` braces).
+                    body = stripped[brace_pos:pos + 1]
                     bodies.append((name, body))
                     break
             pos += 1
@@ -166,13 +170,20 @@ def extract_method_bodies(source):
 
 
 def _is_sync_file(path):
-    """True if the Java source declares syncs — a `SyncRule.of(...)` rule."""
+    """True if the Java source declares syncs.
+
+    Recognises the legacy `SyncRule.of(...)` shape, the synchronised
+    `SyncRule.ofJoin(...)` shape, and the fluent `rule("Name")...build()`
+    DSL (which is how joined and collect-using rules are authored).
+    """
     try:
         with open(path, encoding="utf-8") as handle:
             text = handle.read()
     except (OSError, UnicodeDecodeError):
         return False
-    return "SyncRule.of(" in text
+    return ("SyncRule.of(" in text
+            or "SyncRule.ofJoin(" in text
+            or re.search(r'\brule\(\s*"', text) is not None)
 
 
 def check_file(filepath):

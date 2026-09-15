@@ -98,6 +98,26 @@ interpreter):
   frozen historical artefacts (`UC-00` outputs renamed mechanically via
   `_changes/sync-name-grammar-v2.md`, gates re-recorded).
 
+## 5. Declarative join + collect (v0.6+)
+
+`maintenance/engine-declarative-join-collect.md` closes the two
+expressiveness gaps the conduit rebuild experiment surfaced — without
+adopting conceptbox's imperative `frames.query/filter/collectAs`:
+
+- **Join** — a `SyncRule` may carry several named `Trigger` conjuncts
+  (`Dsl.conj(name, concept, action, outcome)` /
+  `SyncRule.ofJoin`). The engine indexes the rule under every conjunct and
+  fires once when all have committed in one flow. Conjunct sources are
+  `Dsl.conjunctField(name, field)` (Pattern B) and
+  `Dsl.conjunctInput(name, param)` (Pattern A).
+- **Collect** — `Dsl.collect(source)` / `Dsl.distinct(source)` /
+  `Dsl.scan(concept, predicate)` sources gather values into one `List`
+  binding; `Dsl.collectBy(var, source, groupKey)` groups frames and gathers
+  per group. Value-producing only — no filters, no JSON assembly (R3).
+
+Both are code-free; the spec grammar, generators, and quality-gate verifiers
+carry the same syntax (see `SYNCHRONIZATIONS.md` and `SYNC_PATTERNS.md`).
+
 ## Standing comparison to the reference implementation
 
 | Capability | conceptbox (paper authors) | CLAD engine |
@@ -108,8 +128,9 @@ interpreter):
 | concept query actions as where sources (`_getByTarget`) | yes | deferred (non-goal, record of v0.3.6) |
 | route guards | implicit in when-pattern matches | `Guard` remains for non-literal comparisons (R15) |
 | `?_eachthen` grouping | `collectAs` | parity (grouped dedup) |
+| declarative collect/`distinct`/`scan`/`collectBy` | `collectAs` (+ query actions) | direct since `engine-declarative-join-collect`: `collect`/`distinct`/`scan` sources and a `collectBy` clause (value-producing only, no filters/JSON) |
 | OPTIONAL | — | CLAD superset |
 | per-concept permutations | — | FanOut/StateRead (R-map aware) |
 | flow lineage `parent`/`causedBySync`, archiving, `/api/dev/*` debug, replay | partial (multi-when flow history only) | CLAD superset |
 | durable concept state | in-memory only | `FactStore` SPI (in-memory/Jena/Postgres) |
-| multi-`when` join declarative | direct | idiom: trigger + `SiblingInput`/`SiblingField` in the same flow |
+| multi-`when` join declarative | direct | **direct** since `engine-declarative-join-collect`: named conjuncts (`conj(...)` / `SyncRule.ofJoin`) fire once when all complete in one flow |

@@ -12,7 +12,8 @@ actions into **frames** (sets of variable bindings). Three phases,
 all declarative:
 
 1. **`when`** — a multi-action join selecting which completed actions
-   in the flow match specified patterns.
+   in the flow match specified patterns (realized directly by named
+   conjuncts; see §"Joins (multi-`when`)").
 2. **`where`** — a purely read-only query and filter phase. Frames are
    refined and expanded (fan-out) by querying concept state, but **no
    state mutation occurs here** — the `where` clause is a declarative
@@ -108,6 +109,25 @@ then {
 }
 ```
 
+For a **joined** (multi-`when`) rule the trigger side concatenates every
+conjunct in declared order, separated by `And` after the `WhenJoin` marker:
+
+```
+<TargetConcept><TargetAction>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2><A2><Out2>…
+```
+
+```
+sync WebRespondWhenJoinCatalogListListedAndTaggingTagTagged
+
+when {
+    a: Catalog/list: [ id: ?id ] => [ Listed ; id: ?id ]
+    b: Tagging/tag: [ id: ?id ] => [ Tagged ; id: ?id ]
+}
+then {
+    Web/respond: [ id: ?id ]
+}
+```
+
 ## What a sync must not do
 
 - **Branch on business conditions.** `if user.role == "admin"` does not
@@ -183,6 +203,50 @@ declarative bind/filter phase only — discrimination belongs in concept
 outcomes, payload shapes in concept actions, and rich lookups in
 `FanOut` + state reads. See
 [`SYNC_PATTERNS.md`](SYNC_PATTERNS.md) and R3.
+
+## Joins (multi-`when`)
+
+The paper's first `when` is "a **multi-action join** selecting which
+completed actions in the flow match specified patterns". CLAD realizes it
+directly: a sync may declare several **named conjuncts**, each with its own
+action, completion, and optional input matcher. The rule fires **once** when
+*every* conjunct has a matching completion in the same flow token.
+
+```
+sync WebRespondWhenJoinCatalogListAndTaggingTag
+
+when {
+    list: Catalog/list: [ id: ?id ] => [ Listed ; id: ?id ]
+    tag:  Tagging/tag:  [ id: ?id ] => [ Tagged ; id: ?id ]
+}
+where {
+    bind ( list.id as ?listedId )
+    bind ( tag.id as ?taggedId )
+}
+then {
+    Web/respond: [ id: ?listedId ]
+}
+```
+
+- The **first** conjunct is the primary trigger: its action id is the one
+  recorded for dedup and as the emission's `parentActionId`; the joined
+  emission's `causedBySync` is the rule name.
+- Conjunct completion order is irrelevant — the engine indexes the rule
+  under every conjunct and fires once all have committed in the flow.
+- Bindings name a conjunct explicitly: `name.field` reads that conjunct's
+  completion field (Pattern B), `name.param` its invocation input
+  (Pattern A). See [`SYNC_PATTERNS.md`](SYNC_PATTERNS.md).
+- A single *unnamed* conjunct keeps the classic one-trigger form and naming.
+- The joined name is
+  `<Target><Action>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2><A2><Out2>…`
+  in declared conjunct order (deterministic).
+- `generate_syncs.py` derives the joined skeleton and stem from the chain
+  table's composite `When`. A rule may also be **hand-authored** with the
+  same stem — parity compares the stem, not the emitter (`verify_sync_
+  implementation_parity.py`), so both paths satisfy the gate.
+
+This is code-free (R3): the join is data on the rule, not imperative
+matching logic. It is **not** the declined in-`where` query/filter surface.
 
 ## How syncs fan out — the Frames model
 
@@ -282,6 +346,35 @@ declarative equivalent of `GROUP BY`. Without `?_eachthen`, a
 sync whose `where` produces multiple bindings (e.g. one per tag) would
 fire the `then` clause once for each binding, which would produce a
 response per tag instead of one response per article.
+
+### Collect (declarative aggregation)
+
+`collect` gathers the values a declarative source yields into **one `List`
+value**, bound by the enclosing `bind`:
+
+```
+where {
+    collect ( Tagging: { ?article tags: ?tag } as ?tags )
+    collect distinct ( Tagging: { ?article tags: ?tag } as ?tags )
+    collect by ?article ( Tagging: { ?article tags: ?tag } as ?tags )
+}
+```
+
+- `collect ( <source> as ?var )` — every value the source produces, in one
+  `List`.
+- `collect distinct ( <source> as ?var )` — de-duplicated and
+  deterministically ordered.
+- `collect by ?groupKey ( <source> as ?var )` — frames grouped by
+  `?groupKey`, binding one `List` per group (the frame-set analogue of
+  `?_eachthen`).
+- `scan(Concept, predicate)` reads every value of a predicate across a
+  concept's region as one `List`; `distinct`/`collect` wrap any source.
+
+This is the declarative analogue of the reference implementation's
+`collectAs`, and is deliberately **not** its imperative
+`frames.query/filter/collectAs` API: there are no in-`where` filters, JSON
+assembly, or query DSL — `collect` only gathers values a source already
+produces (R3).
 
 ### What still does NOT belong in `where`
 

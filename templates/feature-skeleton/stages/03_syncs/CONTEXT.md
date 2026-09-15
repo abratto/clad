@@ -89,10 +89,24 @@ For each transition, write one rule-shaped
   by the triggering/prior action outcomes and declared in `where:`.
 - `then:` the next concept action to invoke.
 
+**Joins (`when` with several conjuncts).** When a Stage 01b row is a join
+(composite `∧`-separated `When`), lower it to one sync with named
+conjuncts `name: Concept/action: [ … ] => [ Outcome ; … ]`; it fires once
+when every conjunct completed in the same flow. Bind conjunct values as
+`name.field` / `name.param`. Its stem is
+`<Target><Action>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2>…` in declared
+order; a single unnamed conjunct keeps the classic form and naming.
+
+**Aggregation (`collect`).** The declarative `where` forms
+`collect ( <source> as ?var )`, `collect distinct ( … )`, and
+`collect by ?groupKey ( <source> as ?var )` gather values into one `List`
+binding. They are read-only and code-free — not `frames.query/filter/collectAs`.
+
 The sync file stem and `sync <Name>` header must match the naming rule
 from `SYNCHRONIZATIONS.md`: prefix with `When`, use `Then` between the
 trigger and target sides, and append `For<Scope>` when the same edge can
-occur in multiple routes, flows, or use cases.
+occur in multiple routes, flows, or use cases. Joined rules use the
+`WhenJoin…And…` form (see above).
 
 Syncs are declarative — no imperative branching, no state, no I/O.
 Every sync's `Cites` section names the use-case scenario it satisfies.
