@@ -134,6 +134,19 @@ def first_completion_token(completion):
     return ""
 
 
+def completion_with_payload(outcome_raw: str) -> str:
+    """PascalCase completion including an outcome payload (mirrors 268bc65)."""
+    name = first_completion_token(outcome_raw)
+    m = re.search(r"\(([^)]*)\)", outcome_raw or "")
+    if not m:
+        return name
+    payload = "".join(
+        seg.capitalize() for seg in re.split(r"[^A-Za-z0-9]+", m.group(1)) if seg)
+    if not payload or payload.lower() == name.lower():
+        return name
+    return name + payload
+
+
 def split_table_row(line):
     return [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
 
@@ -153,7 +166,7 @@ def expected_sync_names(path, text):
         + "When"
         + pascal_token(spec.trigger_concept)
         + pascal_token(spec.trigger_action)
-        + first_completion_token(spec.trigger_outcome)
+        + completion_with_payload(spec.trigger_outcome)
     )
     names = [base]
     if scope:
@@ -164,7 +177,7 @@ def expected_sync_names(path, text):
             + "When"
             + pascal_token(spec.trigger_concept)
             + pascal_token(spec.trigger_action)
-            + first_completion_token(spec.trigger_outcome)
+            + completion_with_payload(spec.trigger_outcome)
         )
     return names
 

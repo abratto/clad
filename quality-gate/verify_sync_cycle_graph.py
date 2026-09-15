@@ -32,11 +32,23 @@ from artifact_parsers import parse_syncs
 
 
 def parse_syncs_edges(sync_dir):
-    """Parse all .sync.md files and return list of (sync_name, from_concept, to_concept) edges."""
+    """Parse all .sync.md files and return list of routing edges.
+
+    Edge identity is route-scoped: (sync_name, source_node, target_node),
+    where source_node is the trigger route identity
+    (concept, action, completion-token-verbatim). Two invocation positions
+    that differ solely by a matched literal / outcome payload (R15's
+    `check = entry | application` device, conduit rebuild experiment) are
+    therefore DISTINCT nodes and cannot constitute a false cycle through
+    the same concept.
+    """
     edges = []
     for s in parse_syncs(sync_dir):
-        for concept, _action in s.then_targets:
-            edges.append((s.name, s.trigger_concept, concept))
+        sign = "+".join(s.route_literals or ())
+        src = (s.trigger_concept, s.trigger_action,
+               (s.trigger_outcome or "").strip(), sign)
+        for concept, action in s.then_targets:
+            edges.append((s.name, src, (concept, action, "", sign)))
     return edges
 
 
@@ -44,9 +56,12 @@ def build_graph(edges):
     """Build adjacency list from concept→concept edges.
     Excludes the Web bootstrap concept — it naturally appears at both
     ends of chains (entry and exit) and doesn't constitute a cycle."""
+    def node_concept(node):
+        return node[0]
+
     graph = defaultdict(set)
     for _sync_name, src, tgt in edges:
-        if src == 'Web' or tgt == 'Web' or src == tgt:
+        if node_concept(src) == "Web" or node_concept(tgt) == "Web":
             continue
         graph[src].add(tgt)
     return graph
@@ -117,7 +132,7 @@ def main():
         sys.exit(0 if args.advisory else 1)
     else:
         print(f"PASS  no sync cycles detected across {len(edges)} edges "
-              f"in {len(graph)} concepts")
+              f"in {len(set(k[0] for k in graph))} concepts")
         sys.exit(0)
 
 

@@ -347,6 +347,7 @@ class SyncSpec:
     cited_scenarios: List[str]
     has_pattern_d: bool
     pattern_d_concepts: List[str] = field(default_factory=list)
+    route_literals: Tuple[str, ...] = ()  # matched-literal signature (R15)
 
 
 def parse_sync(path: str) -> Optional[SyncSpec]:
@@ -377,12 +378,25 @@ def parse_sync(path: str) -> Optional[SyncSpec]:
     for m in re.finditer(r"([A-Za-z]+)/([A-Za-z]+)\s*:", then_block):
         then_targets.append((m.group(1), m.group(2)))
 
+
     cited: List[str] = re.findall(r"—\s+scenario\s+[\"`']([^\"`']+)[\"`']", text)
 
     # Pattern D = a concept-state read in the where block: `Concept: { ... }`
     where_block = text.partition("where {")[2].partition("}")[0] if "where {" in text else ""
     has_pattern_d = bool(re.search(r"[A-Za-z]+\s*:\s*\{", where_block))
     pattern_d_concepts = re.findall(r"([A-Za-z][A-Za-z0-9]*)\s*:\s*\{", where_block)
+    # Route literal signature (R15): matched literal constraints the when/where
+    # blocks apply to the trigger/targets (e.g. `check = "entry"`,
+    # `cause = "stale"`). Value-side literals only; ?var binds excluded.
+    route_literals_l: List[str] = []
+    for clause in (when_block, where_block):
+        for m in re.finditer(r"(\w+)\s*=\s*([\"'])([^\"']*)\2", clause):
+            route_literals_l.append(f"{m.group(1)}={m.group(3)}")
+        for m in re.finditer(r"(\w+)\s*=\s*([A-Za-z][A-Za-z0-9_]*)\s*[;,}]?\s*$",
+                             clause, re.MULTILINE):
+            if m.group(1) != "route":
+                route_literals_l.append(f"{m.group(1)}={m.group(2)}")
+    route_literals = tuple(sorted(set(route_literals_l)))
 
     return SyncSpec(
         name=name,
@@ -392,6 +406,7 @@ def parse_sync(path: str) -> Optional[SyncSpec]:
         trigger_outcome=trigger_outcome,
         then_targets=then_targets,
         cited_scenarios=cited,
+        route_literals=route_literals,
         has_pattern_d=has_pattern_d,
         pattern_d_concepts=pattern_d_concepts,
     )

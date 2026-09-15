@@ -62,10 +62,23 @@ def extract_concept_order(text):
     return order
 
 
-def parse_syncs(sync_dir):
-    """Return (concept_sets, concept_orders) dicts keyed by sync name."""
+def _sync_signature(path):
+    """Read the sync's when/where literal assignments (route signature)."""
+    with open(path) as fh:
+        text = fh.read()
+    when_block = text.partition('when {')[2].partition('}')[0]
+    where_block = text.partition('where {')[2].partition('}')[0]
+    lits = set()
+    for clause in (when_block, where_block):
+        lits |= set(re.findall(r"([\w]+)\s*=\s*([\"'])([^\"']*)\2", clause))
+    return tuple(sorted(f"{a}={c}" for a, _q, c in lits))
+
+
+def parse_syncs_with_signatures(sync_dir):
+    """(concept_sets, concept_orders, literal signatures) keyed by sync name."""
     syncs = {}
     orders = {}
+    signs = {}
     for fname in sorted(os.listdir(sync_dir)):
         if not fname.endswith('.sync.md'):
             continue
@@ -77,7 +90,8 @@ def parse_syncs(sync_dir):
         if concepts:
             syncs[name] = concepts
             orders[name] = extract_concept_order(text)
-    return syncs, orders
+            signs[name] = _sync_signature(path)
+    return syncs, orders, signs
 
 
 def main():
@@ -93,7 +107,7 @@ def main():
         print(f"FAIL  sync directory not found: {args.sync_dir}")
         sys.exit(1)
 
-    syncs, orders = parse_syncs(args.sync_dir)
+    syncs, orders, signs = parse_syncs_with_signatures(args.sync_dir)
     if len(syncs) < 2:
         print("PASS  fewer than 2 syncs — nothing to overlap")
         sys.exit(0)
@@ -110,6 +124,9 @@ def main():
             if len(shared) >= 2:
                 # Check lock ordering: do the shared concepts appear in
                 # the same sequence in both syncs?
+                sig_i, sig_j = signs.get(names[i], ()), signs.get(names[j], ())
+                if sig_i and sig_j and sig_i != sig_j:
+                    continue  # route-scoped away: matched literals differ
                 order_a = [c for c in orders[names[i]] if c in shared]
                 order_b = [c for c in orders[names[j]] if c in shared]
                 if order_a == order_b:

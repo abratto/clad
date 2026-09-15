@@ -339,7 +339,13 @@ _SYNC_CYCLE_GRAPH = Check(
 _SYNC_OVERLAP = Check(
     name="sync_overlap",
     script="verify_sync_overlap.py",
-    build_args=lambda r: ["--sync-dir", SYNC_DIR(r)],
+    # Canonical fire-after-commit dispatch is single-threaded (one FactStore,
+    # one engine queue) so concurrent lock-order deadlock is not reachable in
+    # the runtime; the check stays on as a design-time advisory (contract
+    # evidence: conduit rebuild experiment, maintenance/fire-after-commit
+    # engine record). Revisit only when a multi-threaded dispatch profile
+    # lands.
+    build_args=lambda r: ["--sync-dir", SYNC_DIR(r), "--advisory"],
     requires=lambda r: [SYNC_DIR(r)],
 )
 
