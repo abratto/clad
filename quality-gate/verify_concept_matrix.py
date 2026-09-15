@@ -79,6 +79,23 @@ def extract_concepts(resp_map_path):
     return concepts
 
 
+
+def _concepts_in_chain(path):
+    """Concept names touched by a chain file — the When conjunct(s) (named or
+    not, single or joined) plus the Then target, via the canonical parser."""
+    names = set()
+    for row in ap.parse_chain_table(path):
+        if row.then_concept:
+            names.add(row.then_concept)
+        conjuncts = getattr(row, "conjuncts", None)
+        if conjuncts:
+            for c in conjuncts:
+                names.add(c.concept)
+        else:
+            for m in re.findall(r"([A-Za-z]\w*)[/.]\w+", row.when or ""):
+                names.add(m)
+    return names
+
 def build_matrix(scenarios, concepts, chain_dir):
     """Build FR×DP matrix. Deduplicates: each concept at most once per scenario
     regardless of how many chain table rows it appears in."""
@@ -98,8 +115,7 @@ def build_matrix(scenarios, concepts, chain_dir):
             files = [f for f in sorted(os.listdir(chain_dir))
                      if f.endswith(".md") and "all-scenarios" not in f]
         for fname in files:
-            with open(os.path.join(chain_dir, fname)) as fh:
-                concepts_in_chain.update(_CHAIN_CONCEPT_RE.findall(fh.read()))
+            concepts_in_chain.update(_concepts_in_chain(os.path.join(chain_dir, fname)))
 
         for c in concepts_in_chain:
             if c in concepts:
