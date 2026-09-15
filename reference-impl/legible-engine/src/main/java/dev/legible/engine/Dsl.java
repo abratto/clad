@@ -100,6 +100,18 @@ public final class Dsl {
     // Source factories (kill the `new Source.X(...)` noise)
     // ------------------------------------------------------------------
 
+    /**
+     * Absent-input matcher sentinel for `when`-clause input patterns
+     * (maintenance/engine-absent-input-matcher.md): a pattern entry with
+     * this value requires the matched key to be ABSENT from the trigger
+     * input. Complements the R15 value matcher (key present, equal value)
+     * with its negation, which invocation-presence gating (partial-update
+     * fan-outs) needs. Not a {@code Source} — matcher values only.
+     */
+    public static final Object ABSENT = new Object() {
+        @Override public String toString() { return "absent"; }
+    };
+
     /** Existing convenience: a sync constant. */
     public static Source lit(Object value) {
         return new Source.Literal(value);

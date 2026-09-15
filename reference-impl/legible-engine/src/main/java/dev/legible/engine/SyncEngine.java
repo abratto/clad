@@ -105,23 +105,25 @@ public final class SyncEngine {
         if (any != null) {
             result.addAll(any);
         }
-        // When-clause input matcher (R15): a rule fires only if every matcher
-        // entry — key present, equal value — holds in the trigger input.
+        // When-clause input matcher (R15): every matcher entry must hold in
+        // the trigger input — key with equal value, or key ABSENT when the
+        // matcher value is the ABSENT sentinel
+        // (maintenance/engine-absent-input-matcher.md).
         return result.stream()
                 .filter(rule -> patternMatches(rule.inputPattern, input))
                 .toList();
     }
 
-    private static boolean patternMatches(Map<String, Object> pattern,
+    static boolean patternMatches(Map<String, Object> pattern,
                                           Map<String, Object> input) {
         if (pattern == null) return true;
         for (Map.Entry<String, Object> e : pattern.entrySet()) {
-            if (!input.containsKey(e.getKey())) return false;
-            Object expected = e.getValue();
-            Object actual = input.get(e.getKey());
-            if (expected == null ? actual != null : !expected.equals(actual)) {
-                return false;
+            if (e.getValue() == Dsl.ABSENT) {
+                if (input.containsKey(e.getKey())) return false;
+                continue;
             }
+            if (!input.containsKey(e.getKey())) return false;
+            if (!e.getValue().equals(input.get(e.getKey()))) return false;
         }
         return true;
     }

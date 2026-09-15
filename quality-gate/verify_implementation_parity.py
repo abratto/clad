@@ -151,11 +151,27 @@ def split_table_row(line):
     return [cell.strip().strip("`") for cell in line.strip().strip("|").split("|")]
 
 
+def _spec_trigger_outcome_full(path, text):
+    """Trigger outcome verbatim (incl. payload) from the Sync Contract Matrix's
+    `when` signature, falling back to the parsed rule-block form."""
+    spec = ap.parse_sync(path)
+    if spec is None:
+        return spec, ""
+    m = re.search(r"when`? signature.\|(?:[^|]*\\|){3}", text) if False else None
+    row = re.search(r"\| `\d+` \| `\d+` \| `([^`]+)` \|", text)
+    if row:
+        cell = row.group(1)
+        m = re.search(r"=>\s*\[\s*([A-Za-z][A-Za-z0-9_]*\(?[^)]*\)?|[A-Za-z][A-Za-z0-9_]*)", cell)
+        if m:
+            return spec, m.group(1).strip()
+    return spec, spec.trigger_outcome
+
+
 def expected_sync_names(path, text):
     """Mechanical effect-first name(s) for a canonical sync spec (grammar v2,
     see maintenance/sync-dsl-legibility.md):
     <TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>"""
-    spec = ap.parse_sync(path)
+    spec, outcome_full = _spec_trigger_outcome_full(path, text)
     if spec is None or not spec.trigger_concept or not spec.then_targets:
         return []
     scope = feature_scope_from_path(path)
@@ -166,7 +182,7 @@ def expected_sync_names(path, text):
         + "When"
         + pascal_token(spec.trigger_concept)
         + pascal_token(spec.trigger_action)
-        + completion_with_payload(spec.trigger_outcome)
+        + completion_with_payload(outcome_full)
     )
     names = [base]
     if scope:
@@ -177,7 +193,7 @@ def expected_sync_names(path, text):
             + "When"
             + pascal_token(spec.trigger_concept)
             + pascal_token(spec.trigger_action)
-            + completion_with_payload(spec.trigger_outcome)
+            + completion_with_payload(outcome_full)
         )
     return names
 
