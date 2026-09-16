@@ -59,7 +59,12 @@ def parse_required_fields(spec_dir):
                     if not field or field == "outcome" or field.endswith("?"):
                         continue
                     fields.append(field)
-                result[(flow_concept or concept, action)] = set(fields)
+                # One action may declare several flow-token shapes (modes),
+                # e.g. an overloaded read keyed by userId vs username, or an
+                # action that completes differently per outcome. Keep one
+                # required-field set per declared mode so a test that exercises
+                # one mode is not forced to assert another mode's fields.
+                result.setdefault((flow_concept or concept, action), []).append(set(fields))
     return result
 
 
@@ -164,8 +169,11 @@ def scan_tests(test_source_root, required_by_action):
             action = matching_action(class_name, concept_name, actions_by_concept.get(concept_name, set()))
             if not action:
                 continue
-            required_fields = required_by_action.get((concept_name, action), set())
-            if not required_fields:
+            required_modes = required_by_action.get((concept_name, action), [])
+            # Modes that require nothing impose no assertion; a method only
+            # needs to satisfy the required fields of the one mode it exercises.
+            required_modes = [fields for fields in required_modes if fields]
+            if not required_modes:
                 continue
             for method_name, body in test_methods(text):
                 if not has_outcome_assertion(body):
@@ -173,8 +181,16 @@ def scan_tests(test_source_root, required_by_action):
                 if is_refusal_test(body):
                     continue
                 checked += 1
-                for field in sorted(required_fields):
-                    if not has_field_assertion(body, field):
+                best_missing = None
+                for fields in required_modes:
+                    missing = sorted(f for f in fields if not has_field_assertion(body, f))
+                    if not missing:
+                        best_missing = None
+                        break
+                    if best_missing is None or len(missing) < len(best_missing):
+                        best_missing = missing
+                if best_missing:
+                    for field in best_missing:
                         failures.append(
                             f"{path}: {class_name}.{method_name}() asserts outcome "
                             f"but not required completion field '{field}'"

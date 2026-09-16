@@ -101,6 +101,55 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
                          "--test-source-root", str(tests))
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_multi_mode_action_accepts_any_declared_mode(self):
+        # One action may declare several flow-token modes (e.g. a read keyed by
+        # userId vs username, or a completion per outcome). A test exercising
+        # one mode must not be forced to assert another mode's fields — the
+        # last-declared block previously overwrote the earlier ones.
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            spec = root / "spec"
+            tests = root / "tests/dev/legible/example/widget"
+            write(spec / "Widget.spec.md",
+                  "# Widget\n\n### `view(userId)`\n"
+                  "- **Flow token:** `Widget.view { outcome, userId, email }`\n\n"
+                  "### `view(username)`\n"
+                  "- **Flow token:** `Widget.view { outcome, username, authors }`\n")
+            write(tests / "WidgetViewTest.java",
+                  "package dev.legible.example.widget;\n"
+                  "class WidgetViewTest {\n"
+                  "  @Test void shouldReturnWidget() { var r = c.view(u); "
+                  "assertEquals(\"Viewed\", r.readOutcome()); "
+                  "assertEquals(\"u1\", r.get(\"userId\")); "
+                  "assertEquals(\"a@b\", r.get(\"email\")); }\n"
+                  "}\n")
+            result = run(str(QG / "verify_concept_field_assertions.py"),
+                         "--spec-dir", str(spec),
+                         "--test-source-root", str(tests))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_multi_mode_action_still_requires_one_mode_fields(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            spec = root / "spec"
+            tests = root / "tests/dev/legible/example/widget"
+            write(spec / "Widget.spec.md",
+                  "# Widget\n\n### `view(userId)`\n"
+                  "- **Flow token:** `Widget.view { outcome, userId, email }`\n\n"
+                  "### `view(username)`\n"
+                  "- **Flow token:** `Widget.view { outcome, username, authors }`\n")
+            write(tests / "WidgetViewTest.java",
+                  "package dev.legible.example.widget;\n"
+                  "class WidgetViewTest {\n"
+                  "  @Test void shouldReturnWidget() { var r = c.view(u); "
+                  "assertEquals(\"Viewed\", r.readOutcome()); }\n"
+                  "}\n")
+            result = run(str(QG / "verify_concept_field_assertions.py"),
+                         "--spec-dir", str(spec),
+                         "--test-source-root", str(tests))
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("userId", result.stdout)
+
 
 class StepDefinitionSkipTests(unittest.TestCase):
     def test_missing_glue_dir_skips(self):
