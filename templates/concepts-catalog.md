@@ -34,7 +34,7 @@ These are two different things, and the distinction is load-bearing:
 - **Extrinsic dependence — app-specific, and reviewed.** In a given app, one
   concept may *require* another because nothing else is a suitable supplier
   (e.g. `Comment` requires `Post`). That is recorded in
-  [`../features/_system/concept-dependence.md`](../features/_system/concept-dependence.md),
+  `features/_system/concept-dependence.md`,
   never in a concept spec, and it is a hand-reviewed purpose judgment — not
   derived from the sync graph, and not authored by Stage 03a.
 

@@ -55,10 +55,17 @@ def introducers(concepts_dir):
 
 
 def feature_dirs(features_dir):
+    """The project's own features.
+
+    UC-00-login is the STOCKED worked example: a derived project carries it for
+    reference but does not inherit its concept vocabulary, so its concepts are
+    not required to be present in this project's corpus. It is excluded here
+    (consistent with verify_shared_action_contracts.py). A project's corpus
+    starts empty and grows only from its own features."""
     if not os.path.isdir(features_dir):
         return []
     return [os.path.join(features_dir, d) for d in sorted(os.listdir(features_dir))
-            if d.startswith("UC-")]
+            if d.startswith("UC-") and not d.startswith("UC-00")]
 
 
 def main():

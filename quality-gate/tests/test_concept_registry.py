@@ -149,6 +149,22 @@ class RegistryTests(unittest.TestCase):
             self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
             self.assertIn("must not redefine", r.stdout)
 
+    def test_stocked_worked_example_does_not_require_a_corpus(self):
+        """A derived project carries UC-00-login for reference but does not
+        inherit its vocabulary; the registry must not demand its promotion."""
+        with tempfile.TemporaryDirectory() as tmp:
+            features = Path(tmp) / "features"
+            uc00 = features / "UC-00-login"
+            out = uc00 / "stages" / "01a_responsibility-map" / "output"
+            out.mkdir(parents=True)
+            (out / "responsibility-map.md").write_text(
+                resp_map([("Foo", "new")]), encoding="utf-8")
+            (uc00 / "RESUME.md").write_text(
+                "- **Gate 2 (Architecture):** `approved`\n", encoding="utf-8")
+            r = run(REGISTRY, "--features-dir", str(features))
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertNotIn("not in the corpus", r.stdout)
+
     def test_approved_unpromoted_proposal_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
             feature = make_feature(tmp, [("Foo", "new")], specs=("Foo",),

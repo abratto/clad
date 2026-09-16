@@ -239,9 +239,9 @@ mention `UserNaming`'s state; it works with opaque `UserId`.
 each NEW concept. The proposals become the canonical corpus specs (introduced
 by UC-00-login) on Gate 2 approval:
 
-- [`UserNaming.concept.md`](../features/_system/concepts/UserNaming.concept.md)
-- [`PasswordAuth.concept.md`](../features/_system/concepts/PasswordAuth.concept.md)
-- [`Session.concept.md`](../features/_system/concepts/Session.concept.md)
+- [`UserNaming.concept.md`](../features/UC-00-login/stages/02_concepts/output/UserNaming.concept.md)
+- [`PasswordAuth.concept.md`](../features/UC-00-login/stages/02_concepts/output/PasswordAuth.concept.md)
+- [`Session.concept.md`](../features/UC-00-login/stages/02_concepts/output/Session.concept.md)
 
 **Gate question (canonical).**
 
