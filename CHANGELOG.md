@@ -10,36 +10,107 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
-## [0.6.0] — 2026-09-14
+## [0.7.0] — 2026-09-16
+
+Platform release from a full **13-use-case Conduit rebuild** driven through CLAD
+end-to-end. Every item below was surfaced by that experiment and carries
+`maintenance/` or `experiment-found` provenance; the stocked examples' feature
+contracts are unchanged (canonical `java-legible` reactor + the UC-00 worked
+example stay green).
 
 ### Added
 
-- **Red/green test continuity gates (T1+T2)** (maintenance record
-  `maintenance/red-green-test-continuity.md`, design gate pre-approved
-  in-conversation, evidence gate recorded after the test matrix ran
-  green; feature contracts preserved — test-fidelity hardening only):
-  - **T2 — red→green test-file immutability:** new
-    `quality-gate/verify_test_continuity.py` recomputes the SHA-256 of
-    every red-stage test file listed in the derivation map's new
-    `## Test file continuity` section; any drift fails the green stage
-    and routes the change back through 04d-red/04e-red as an R17
-    re-entry. Registered as check `test_continuity` on Stages 04d-green
-    and 04e-green; SKIPs when the section is absent (no retrofit).
-  - **T1 — red-for-the-right-reason:** the 04d-red/04e-red contracts
-    now require a recorded failure class + message excerpt per failing
-    test (behavioral assertion failure, or the sanctioned greenfield
-    missing-symbol shape); the 04d-green/04e-green pre-conditions
-    assert the recorded class. Rider in
-    `methodology/implementation/TDD.md` mechanizes the "red illusion".
-  - **Sync generator: payload-bearing outcome tokens** (experiment-found,
-    conduit rebuild UC-03): `generate_syncs.py` now joins an outcome
-    payload into the PascalCase completion for the sync stem
-    (`Released(blankFields)` → `…WhenClaimingReleaseReleasedBlankFields`)
-    and prefers a producer whose raw outcome equals the row's When token,
-    so payload-distinct respond carriers no longer collide into one stem
-    and get deduped silently. Emission confirmed unchanged on
-    payload-free chains (UC-00: 7; UC-02 probe: 6) and un-deduped on the
-    payload-bearing chain (UC-03: 17 → 18).
+- **Declarative join (multi-`when`)** — maintenance record
+  `maintenance/engine-declarative-join-collect.md`; experiment-found UC-04/UC-05.
+  A rule may declare several **named conjuncts** and fires once when every
+  conjunct has completed in the same flow, in any order (`SyncRule.Trigger` is
+  named; `Conjuncts` carries the matched invocation/completion per conjunct;
+  `Dsl.conj`/`.and` with `conjunctField`/`conjunctInput` sources). The nominal
+  shape is one respond carrying a whole envelope without sequencing reads; the
+  rebuild ships 6- and 7-conjunct joins.
+- **Declarative aggregation** (same record) — `collect`, `distinct`, `scan`
+  sources and a `collectBy` clause gather a source's values into one `List`
+  binding, grouped by a group key (`null` collapses all frames into one group).
+  Code-free by construction — deliberately **not** the declined imperative
+  `frames.query`/`filter`/`collectAs`.
+- **Empty-safe frame-set aggregation** — maintenance record
+  `maintenance/engine-empty-safe-aggregate.md`; experiment-found UC-07. A
+  `collectBy` reached with an **empty** frame set now emits one frame carrying
+  the empty list, so a zero-item collection answers a success envelope instead
+  of dropping the rule. `collectBy` gathers groups in **frame order** (not
+  sorted) so parallel `collectBy` clauses over the same frame set stay
+  positionally aligned.
+- **Declarative inverse-index read** — maintenance record
+  `maintenance/engine-subjects-inverse-read.md`; experiment-found UC-04.
+  `Source.Subjects` / `Dsl.subjects(concept, predicate, object)` returns the set
+  of subjects carrying a predicate value, so a filtered membership set resolves
+  without a concept query action (R1/R3 preserved).
+- **When-matcher absent sentinel** — experiment-found UC-03. `Dsl.ABSENT`
+  matches a trigger/input key that is missing **or** null, so shared triggers can
+  be scoped by absence (e.g. anonymous vs authenticated entries); the matcher
+  treats a null-valued argument as absent.
+- **Red/green test continuity gates (T1+T2)** — maintenance record
+  `maintenance/red-green-test-continuity.md`; test-fidelity hardening only.
+  `quality-gate/verify_test_continuity.py` recomputes the SHA-256 of every
+  red-stage test file listed in the derivation map's `## Test file continuity`
+  section and fails the green stage on drift (T2); the 04d-red/04e-red contracts
+  require a recorded failure class + message excerpt per failing test and the
+  green pre-conditions assert it (T1). Registered as `test_continuity`.
+- **Cross-feature shared-action contract drift guard**
+  (`quality-gate/verify_shared_action_contracts.py`; experiment-found UC-05):
+  for any `Concept.action` declared by two or more features, disjoint outcome
+  vocabularies **FAIL** and incompatible input shapes **WARN** — wired into
+  `verify_artefacts.py`, with a Stage-02 reuse directive.
+- **Stage-03 sync transition coverage**
+  (`quality-gate/verify_sync_transition_coverage.py`; experiment-found UC-05):
+  derives the expected sync stems from the chain tables and fails when a
+  transition was not emitted.
+
+### Changed
+
+- **Join/collect grammar plumbing** (maintenance record
+  `maintenance/engine-declarative-join-collect.md`) across
+  `artifact_parsers`, the generators, the verifiers, the templates, and the
+  methodology docs, so joined `When` rows and collect forms are parsed,
+  emitted, and checked consistently.
+- **Route-literal-aware cycle/overlap verifiers** (experiment-found UC-03):
+  `verify_sync_cycle_graph.py` / `verify_sync_overlap.py` read the when-matcher
+  route literal; overlap is **advisory** on the single-threaded
+  fire-after-commit profile.
+- **R14/R16 field checker accepts any declared flow-token mode**
+  (`verify_concept_field_assertions.py`; experiment-found UC-10): an overloaded
+  action keeps one required-field set **per declared mode**, so a test
+  exercising one mode is no longer forced to assert another mode's fields.
+- **Parity verifiers** (experiment-found UC-01/UC-03): resolve dotted/quoted
+  `.when` args and concept/action constants on the strict-trigger path.
+- **`artifact_parsers` detects DSL state/inverse reads as Pattern D**
+  (experiment-found UC-04).
+- **Concept matrix** (experiment-found UC-05): tolerant fallback for minimal
+  chain fragments and capture of joined/named `When` conjunct concepts.
+
+### Fixed
+
+- **`generate_syncs.py`** (experiment-found UC-02/UC-03/UC-05): branch-carrier
+  pairing + module-root constant walk; payload-join + raw-producer match
+  (`Released(blankFields)` → `…WhenClaimingReleaseReleasedBlankFields`), so
+  payload-distinct respond carriers no longer collide into one stem and get
+  deduped silently; payload-free join stems and join-conjunct completions
+  (a 6-conjunct stem had exceeded the 255-byte filename limit).
+- **`legible-engine` `CollectClausesTest`**: the `collectBy` group test now
+  asserts per-group **membership**, not within-group order — the engine
+  deliberately does not sort gathered values (frame order is load-bearing for
+  parallel-list alignment), and the old assertion only passed under a particular
+  `ConcurrentHashMap` iteration order.
+
+### Notes
+
+- Several items close expressiveness gaps measured during the rebuild
+  (`join`/`collect` were derived after UC-03/UC-04 repeatedly hit the absent
+  capability); the joint cost is recorded in the experiment ledger.
+- `_config` value-base note and the `Cites` display-name rider (experiment-found
+  UC-01) round out the release.
+
+## [0.6.0] — 2026-09-14
 
 ### Changed
 
