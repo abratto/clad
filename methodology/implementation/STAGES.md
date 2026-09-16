@@ -261,6 +261,13 @@ Boundaries that keep this safe:
   `CONTEXT.md` that `advance.py` did not print.
 - **The gate decision stays with the human.** A sub-agent never runs
   `approve_gate.py`; approval and `advance.py` remain the parent/human's actions.
+- **`RESUME.md` is machine-owned in part.** A sub-agent must not hand-edit the
+  `## Gate snapshot` block — the lines carrying `content hash` are written by
+  `approve_gate.py`, and hand-editing or deleting one makes the sequence guard
+  see a stale approval and blocks `advance` (observed in the conduit rebuild:
+  a custom RESUME rewrite clobbered the hashes). Only the live-memory bullets at
+  the top are agent-editable, and only when the stage/parent says so; otherwise
+  leave `RESUME.md` to `advance.py`.
 
 **Fallback when sub-agents are unavailable.** Run the same loop in one
 session, one stage at a time, ending each turn with `./clad advance`, or set

@@ -23,6 +23,15 @@ class StageWorkflowTests(unittest.TestCase):
     def make_feature(self, temporary):
         feature = Path(temporary) / "UC-01-workflow"
         shutil.copytree(REPO_ROOT / "templates/feature-skeleton", feature)
+        # A configured feature: `_config/package-and-layout.md` must be filled
+        # by Stage 04 (the skeleton ships `TBD`; verify_profile_paths fails a
+        # still-TBD layout once the feature reaches 04a).
+        (feature / "_config" / "package-and-layout.md").write_text(
+            "# Package & layout\n\n"
+            "- **APP_PACKAGE_ROOT:** `dev.legible.example`\n"
+            "- **APP_SOURCE_ROOT:** `reference-impl/java-legible/src/main/java`\n"
+            "- **APP_TEST_SOURCE_ROOT:** `reference-impl/java-legible/src/test/java`\n",
+            encoding="utf-8")
         return feature
 
     def populate_through(self, feature, stage_id):

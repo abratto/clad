@@ -71,4 +71,10 @@ Standing rules you must follow:
 - Branch name: `feat/UC-XX-<slug>`.
 - Never write artefacts directly to `main`.
 - After each gate approval, overwrite `features/{{UC-XX-slug}}/RESUME.md` before committing.
+- **RESUME.md is machine-owned in part.** Do NOT hand-edit the
+  `## Gate snapshot` block (the lines carrying `content hash`). `approve_gate.py`
+  writes it; hand-editing or deleting a hash line makes the sequence guard see a
+  stale/invalid approval and blocks `advance` (the conduit rebuild hit this once).
+  You may edit only the live-memory bullets at the top, and only when the task
+  says so — otherwise leave `RESUME.md` to `advance.py`.
 ```

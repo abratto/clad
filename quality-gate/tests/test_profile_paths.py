@@ -15,6 +15,7 @@
      skips when no layout is declared.
 """
 
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -120,6 +121,27 @@ class ConfigOverrideTests(unittest.TestCase):
 
 class ProfilePathsCheckTests(unittest.TestCase):
     """Layer 2: the blocking/warn/skip semantics of verify_profile_paths.py."""
+
+    def test_tbd_layout_fails_once_the_feature_reaches_stage_04(self):
+        """A still-TBD layout silently skipped the wrong-tree guard; it must
+        fail once the feature reaches Stage 04a, but stay skippable earlier
+        (the skeleton ships TBD)."""
+        tmp, root, feature = make_repo(with_layout=False)
+        try:
+            (feature / "_config" / "package-and-layout.md").write_text(
+                "- `APP_PACKAGE_ROOT`: `TBD`\n"
+                "- `APP_SOURCE_ROOT`: `TBD`\n"
+                "- `APP_TEST_SOURCE_ROOT`: `TBD`\n")
+            proc = run(SCRIPT, "--feature", feature)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+
+            (feature / "stages/04_implement/04a_storage-mapping/output").mkdir(
+                parents=True)
+            proc = run(SCRIPT, "--feature", feature)
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            self.assertIn("TBD", proc.stdout)
+        finally:
+            tmp.cleanup()
 
     def test_mismatch_blocks_and_names_the_escape_hatch(self):
         tmp, root, feature = make_repo(with_layout=True, layout_style="app")

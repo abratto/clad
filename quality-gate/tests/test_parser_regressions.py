@@ -9,6 +9,9 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+QUALITY_GATE = REPO_ROOT / "quality-gate"
+sys.path.insert(0, str(QUALITY_GATE))
+import artifact_parsers as ap  # noqa: E402
 IMPLEMENTATION_PARITY = REPO_ROOT / "quality-gate" / "verify_implementation_parity.py"
 SYNC_PARITY = REPO_ROOT / "quality-gate" / "verify_sync_implementation_parity.py"
 CUCUMBER_GREEN = REPO_ROOT / "quality-gate" / "verify_cucumber_green.py"
@@ -151,6 +154,30 @@ class CucumberGreenFixtures(unittest.TestCase):
         self.assertNotEqual(failing.returncode, 0)
         self.assertNotEqual(skipped.returncode, 0)
         self.assertNotEqual(zero.returncode, 0)
+
+
+class GoalScopeParsingTests(unittest.TestCase):
+    """`parse_goals` must not count the `## Out of scope` table.
+
+    The out-of-scope table repeats the `| Actor | Goal |` header but has no
+    `In scope?` column; it was being read as in-scope (the conduit rebuild
+    reported "19 in-scope goals" instead of 13)."""
+
+    def test_out_of_scope_table_is_not_counted(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "goals.md"
+            write(path,
+                  "# Goals\n\n"
+                  "| Actor | Goal | Rationale | Priority | In scope? |\n"
+                  "|---|---|---|---|---|\n"
+                  "| Member | Sign In | to authenticate | P0 | yes |\n"
+                  "| Reader | List Tags | to see tags | P1 | yes |\n\n"
+                  "## Out of scope\n\n"
+                  "| Actor | Goal | Rationale |\n"
+                  "|---|---|---|\n"
+                  "| Member | Logout | not in the spec |\n"
+                  "| System | Notify | no notification surface |\n")
+            self.assertEqual(ap.parse_goals(str(path)), {"Sign In", "List Tags"})
 
 
 if __name__ == "__main__":

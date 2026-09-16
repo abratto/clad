@@ -148,6 +148,47 @@ class GeneratorPropertyTests(unittest.TestCase):
         self.assertIn("Then the response status is 200", text)
         self.assertIn("Then the response status is 401", text)
 
+    def test_chain_lookup_resolves_slugified_scenario_name(self):
+        """A display-name scenario must resolve its slugified chain file.
+
+        The conduit rebuild hit this every UC: the generator looked up
+        `<scenario name>-chain.md` (spaced) while chain files are slugified
+        (`comment-on-article-add-comment-chain.md`), so it emitted `<TODO>`
+        token-chain stubs."""
+        sys.path.insert(0, str(QG))
+        import generate_feature_files as gff
+        with tempfile.TemporaryDirectory() as temporary:
+            chain_dir = Path(temporary)
+            write = chain_dir / "comment-on-article-add-comment-chain.md"
+            write.write_text("chain", encoding="utf-8")
+            self.assertEqual(str(write),
+                             gff._chain_file(str(chain_dir),
+                                             "Comment on Article — Add Comment"))
+            self.assertIsNone(gff._chain_file(str(chain_dir), "No Such Scenario"))
+
+    def test_route_scoped_bootstrap_renders_route_matcher(self):
+        """A `Web/request` bootstrap sync carries its R15 route matcher.
+
+        The generator previously emitted `[ ... ]` and the author added the
+        route/method by hand every UC."""
+        sys.path.insert(0, str(QG))
+        import generate_syncs as gs
+        g = gs.GeneratedSync(
+            name="SessionValidateForTagsWhenWebRequestRouted",
+            stem="SessionValidateForTagsWhenWebRequestRouted",
+            trigger_concept="Web", trigger_action="request",
+            trigger_completion="Routed",
+            target_concept="Session", target_action="validate",
+            source_row="1", target_row="2",
+            when_sig='Web/request: [ route: "tags" ; method: "GET" ] => [ Routed ]',
+            then_sig="Session/validate: [ <args> ]",
+            literals='route = "tags" ; method = "GET"',
+            binds=[], pattern_d_notes=[], cited_scenario="List Tags",
+            route="tags", method="GET")
+        out = gs.render_sync(g)
+        self.assertIn('route: "tags" ; method: "GET"', out)
+        self.assertIn('route = "tags"', out)
+
     def test_end_to_end_downstream_chain_passes_all_cross_stage_checks(self):
         """Regenerate the full derivable chain (03→03a→03b→04b→04c) from the
         authored upstream (01/01a/02) and run every cross-stage verify_* over

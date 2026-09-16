@@ -59,6 +59,10 @@ class GeneratedSync:
     is_join: bool = False
     conjuncts: List[Tuple[Optional[str], str, str, str]] = field(default_factory=list)
     # ^ (name, concept, action, outcome_raw) in declared conjunct order
+    route: Optional[str] = None
+    method: Optional[str] = None
+    # ^ when-matcher scope literals for a `Web/request` bootstrap sync (R15);
+    #   rendered into the generated `.sync.md` so the author need not add them.
 
 
 def completion_token(outcome_base: str) -> str:
@@ -151,6 +155,19 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
         rows = ap.parse_chain_table(os.path.join(chain_dir, fname))
         scenario = fname.replace("-chain.md", "")
 
+        # The flow root (row 1) carries the route/method in its When cell, e.g.
+        # `Web/request[route: "tags" ; method: "GET"]`. The bootstrap sync
+        # (`Web.request -> <first action>`) must keep that as its R15 route
+        # matcher. Authors previously added it by hand every UC.
+        root_route = root_method = None
+        if rows:
+            m = re.search(r'route\s*:\s*"([^"]+)"', rows[0].when or "")
+            if m:
+                root_route = m.group(1)
+            m = re.search(r'method\s*:\s*"([^"]+)"', rows[0].when or "")
+            if m:
+                root_method = m.group(1)
+
         # Derive the invocation graph by matching completions, not by adjacent
         # position: a row R is driven by an earlier row P whose `Then` action is
         # R's `When` action and whose `Outcome` is R's `When` completion. This
@@ -234,6 +251,12 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
             target_concept = row.then_concept
             target_action = row.then_action
 
+            # R15 route matcher: a `Web/request` bootstrap sync keeps the flow
+            # root's route/method as its when-clause input matcher.
+            route = method = None
+            if trigger_concept == "Web" and trigger_action == "request":
+                route, method = root_route, root_method
+
             # Grammar v2 (effect-first): <Target><Action>[For<Scope>]When<Trigger><Action><Completion>
             base = (
                 ap.pascal_token(target_concept)
@@ -249,10 +272,19 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
             source_row_id = str(prev.row_num)
             target_row_id = str(row.row_num)
 
-            when_sig = (f"{trigger_concept}/{trigger_action}: [...] => "
-                        f"[ {trigger_outcome_raw} ]")
+            if route:
+                scope_tokens = f'route: "{route}"'
+                if method:
+                    scope_tokens += f' ; method: "{method}"'
+                when_sig = (f"{trigger_concept}/{trigger_action}: [ {scope_tokens} ] => "
+                            f"[ {trigger_outcome_raw} ]")
+                literals = (f'route = "{route}"'
+                            + (f' ; method = "{method}"' if method else ""))
+            else:
+                when_sig = (f"{trigger_concept}/{trigger_action}: [...] => "
+                            f"[ {trigger_outcome_raw} ]")
+                literals = "<none>"
             then_sig = f"{target_concept}/{target_action}: [ <args> ]"
-            literals = "<none>"
 
             binds: List[Tuple[str, str, str]] = []
             pattern_d_notes: List[str] = []
@@ -276,16 +308,30 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                 binds=binds,
                 pattern_d_notes=pattern_d_notes,
                 cited_scenario=scenario,
+                route=route,
+                method=method,
             ))
 
     # A sync is defined once, not once per scenario that traverses it. Dedup by
     # stem, keeping first occurrence (canonical scenario order).
     seen: Set[str] = set()
+    seen_route: Dict[str, Optional[str]] = {}
     unique: List[GeneratedSync] = []
     for g in syncs:
         if g.stem not in seen:
             seen.add(g.stem)
+            seen_route[g.stem] = g.route
             unique.append(g)
+        elif g.route and seen_route.get(g.stem) and g.route != seen_route[g.stem]:
+            # The stem does not encode the route, so a distinct route-scoped
+            # bootstrap for the same edge collides and is dropped. Encode the
+            # route in the stem is a naming-grammar change; for now surface it
+            # so the author hand-authors the sibling carrier (the UC-09/UC-11
+            # workaround) rather than losing it silently.
+            warnings.append(
+                f"{g.stem}: two route-scoped bootstraps share a stem "
+                f"({seen_route[g.stem]!r} vs {g.route!r}); the second is not "
+                f"emitted — author it by hand with a distinct stem")
     return unique, warnings
 
 
@@ -310,7 +356,14 @@ def render_sync(g: GeneratedSync) -> str:
                 f"    {prefix}{concept}/{action}: [ ... ] => "
                 f"[ {ap.first_completion_token(outcome_raw)} ; ... ]")
     else:
-        lines.append(f"    {g.trigger_concept}/{g.trigger_action}: [ ... ] => [ {g.trigger_completion} ; ... ]")
+        if g.route:
+            scope_tokens = f'route: "{g.route}"'
+            if g.method:
+                scope_tokens += f' ; method: "{g.method}"'
+            when_cell = f"[ {scope_tokens} ]"
+        else:
+            when_cell = "[ ... ]"
+        lines.append(f"    {g.trigger_concept}/{g.trigger_action}: {when_cell} => [ {g.trigger_completion} ; ... ]")
     lines.append("}")
     if g.binds or g.pattern_d_notes:
         lines.append("where {")

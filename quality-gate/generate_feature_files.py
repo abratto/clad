@@ -35,10 +35,26 @@ import artifact_parsers as ap
 import clad_stages as cs
 
 
+def _chain_file(chain_dir: str, scenario: str) -> Optional[str]:
+    """The chain-table file for a scenario.
+
+    The canonical on-disk name is the SLUGIFIED scenario name (e.g. a scenario
+    `Comment on Article — Add Comment` is `comment-on-article-add-comment-chain.md`);
+    the raw/display name is tried second for legacy files. Resolving only the
+    raw name was a recurring friction across the conduit rebuild (the generator
+    found no chain table and emitted `<TODO>` stubs for every scenario).
+    """
+    for candidate in (ap.slugify(scenario), scenario):
+        path = os.path.join(chain_dir, candidate + "-chain.md")
+        if os.path.isfile(path):
+            return path
+    return None
+
+
 def _token_chain_comment(chain_dir: str, scenario: str) -> str:
     """A comment line naming the chain-table token sequence for a scenario."""
-    chain_file = os.path.join(chain_dir, scenario + "-chain.md")
-    if not os.path.isfile(chain_file):
+    chain_file = _chain_file(chain_dir, scenario)
+    if chain_file is None:
         return "#   <TODO: token chain — no chain table found for this scenario>"
     rows = ap.parse_chain_table(chain_file)
     tokens = []
@@ -57,8 +73,8 @@ def _token_chain_comment(chain_dir: str, scenario: str) -> str:
 
 def _scenario_status(chain_dir: str, scenario: str) -> Optional[int]:
     """The terminal Web.respond status for a scenario chain (row with then_suffix)."""
-    chain_file = os.path.join(chain_dir, scenario + "-chain.md")
-    if not os.path.isfile(chain_file):
+    chain_file = _chain_file(chain_dir, scenario)
+    if chain_file is None:
         return None
     rows = ap.parse_chain_table(chain_file)
     for r in rows:

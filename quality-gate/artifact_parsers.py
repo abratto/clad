@@ -760,9 +760,20 @@ def parse_goals(path: str) -> Set[str]:
     goals: Set[str] = set()
     header: List[str] = []
     in_table = False
+    # A `## Out of scope` section repeats the `| Actor | Goal |` header but
+    # carries no `In scope?` column; without this guard its rows were counted
+    # as in-scope goals (observed as "19 in-scope goals" throughout the conduit
+    # rebuild). Skip any table under an out-of-scope heading.
+    out_of_scope = False
     with open(path) as f:
         lines = f.readlines()
     for line in lines:
+        if line.startswith("##"):
+            out_of_scope = "out of scope" in line.lower()
+            in_table = False
+            continue
+        if out_of_scope:
+            continue
         if line.strip().startswith("| Actor | Goal |"):
             header = [c.strip().lower() for c in _split_row(line)]
             in_table = True

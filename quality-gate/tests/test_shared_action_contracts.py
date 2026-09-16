@@ -57,6 +57,25 @@ class SharedActionContractTests(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertIn("WARN", r.stdout)
 
+    def test_multi_mode_action_params_are_unioned(self):
+        """An overloaded action (several signature blocks) unions its params.
+
+        Collapsing to the last block made the earlier modes look like drift
+        (the conduit rebuild UC-10/UC-12 spurious `Profiling.view` WARNs)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp)
+            write_spec(f, "UC-01-a", "C", spec("view [ userId ] => [ Seen ]", "Seen"))
+            write_spec(f, "UC-02-b", "C",
+                       "concept C\n\n## Actions\n\n```\n"
+                       "view [ userId ] => [ Seen ]\n"
+                       "    flow token: { outcome: \"Seen\" }\n"
+                       "view [ username ] => [ Seen ]\n"
+                       "    flow token: { outcome: \"Seen\" }\n```\n")
+            r = run(f)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("PASS", r.stdout)
+            self.assertNotIn("input-shape differs", r.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -68,13 +68,21 @@ def parse_specs(features_dir: str):
             concept = m.group(1)
             with open(os.path.join(spec_dir, fname), encoding="utf-8") as fh:
                 text = fh.read()
-            signatures = dict(SIGNATURE.findall(text))
+            # An action may declare several signature blocks (modes) — e.g.
+            # `Profiling.view` keyed by userId and by username. Union the
+            # param sets across every block so an overloaded action's declared
+            # surface is the whole set; collapsing to the last block (a dict)
+            # reported the earlier modes as drift (the conduit rebuild UC-10 /
+            # UC-12 spurious input-shape WARNs).
+            signatures = defaultdict(set)
+            for action, params in SIGNATURE.findall(text):
+                signatures[action] |= _param_names(params)
             effect_tokens = EFFECT_TOKEN.findall(text)
             outcomes = set(OUTCOME.findall(text)) | set(effect_tokens)
             for action, params in signatures.items():
                 entry = contracts[(concept, action)].setdefault(
                     feature, {"params": set(), "outcomes": set()})
-                entry["params"] |= _param_names(params)
+                entry["params"] |= params
             # distribute the action's outcome tokens to every declared action
             if signatures and outcomes:
                 for action in signatures:
