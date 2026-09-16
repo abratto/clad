@@ -2,11 +2,13 @@ package dev.legible.engine;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Declarative collect/distinct/scan/collectBy (maintenance/
@@ -85,9 +87,19 @@ class CollectClausesTest {
         List<Map<String, Object>> frames = ev.evaluate(rule, INV, COMP);
 
         assertEquals(2, frames.size(), "one frame per article");
-        assertTrue(frames.stream().anyMatch(f ->
-                "a1".equals(f.get("?articleId")) && List.of("java", "rust").equals(f.get("?tags"))));
-        assertTrue(frames.stream().anyMatch(f ->
-                "a2".equals(f.get("?articleId")) && List.of("go").equals(f.get("?tags"))));
+        // `collectBy` emits one group per distinct groupKey in FRAME order, and
+        // gathers each group's values in source-read order. The source here is
+        // `Region.read` (an unordered set), so the WITHIN-group value order is
+        // not part of the contract and is deliberately not sorted —
+        // frame-order gathering is what keeps parallel `collectBy` clauses
+        // positionally aligned (see maintenance/engine-empty-safe-aggregate.md).
+        // Assert per-group membership, not order.
+        Map<String, Set<Object>> byArticle = new LinkedHashMap<>();
+        for (Map<String, Object> f : frames) {
+            byArticle.put((String) f.get("?articleId"),
+                    new LinkedHashSet<>((List<?>) f.get("?tags")));
+        }
+        assertEquals(Set.of("java", "rust"), byArticle.get("a1"));
+        assertEquals(Set.of("go"), byArticle.get("a2"));
     }
 }
