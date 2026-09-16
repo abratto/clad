@@ -108,6 +108,22 @@ derived status codes/token chains.
   and primary failure envelope. Keep them distinct from `@happy-path` and
   `@failure-path` intent scenarios. Outbound entries are covered by their
   named adapter-boundary tests, not synthetic HTTP scenarios.
+8. **Collection coverage (required when the response carries a collection).**
+   If any chain table or SPEC exposes a collection response — a plural envelope
+   key such as `articles`, `comments`, `tags`, `authors`, `following`, `flags`,
+   or a `List<...>` completion field — the feature must also exercise the
+   cardinality edges that flow tests otherwise miss: an **empty** collection, a
+   **multi-item** collection, and — where two lists are positionally aligned — a
+   **repeated-key** case. Record these in a `## Collection coverage` section in a
+   markdown file under `output/` (for example `flow-test-stubs.md`), naming the
+   binding(s) and each fixture; write `repeated-key: n/a — <reason>` when no
+   alignment exists. Design-time gates verify structure, not cardinality, so
+   these two defects (an empty collection never reached; a repeated key shifting
+   a positional list) otherwise survive every gate and surface only at Stage-05
+   runtime back-trace. `verify_collection_coverage.py` fails Stage 04c when a
+   collection-shaped feature omits the section or an entry. This is
+   **forward-only**: a feature already closed at Stage 05 is skipped (no
+   retrofit).
 
 **Token chain rules (read `FLOW_TOKENS.md` in full before writing):**
 - Outcome values MUST be SCREAMING_SNAKE_CASE, copied from the SPEC slice.
@@ -121,10 +137,12 @@ derived status codes/token chains.
 - [ ] Gherkin scenarios derived from chain table (G1–G5)
 - [ ] Step-definition methods have non-empty bodies
 - [ ] Step-def bodies reference chain-table action names
+- [ ] Collection coverage declared (empty / multi-item / repeated-key) when the response carries a collection
 - [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
 - `output/<feature-name>.feature` — one feature file per use case
+- `output/flow-test-stubs.md` (or another 04c markdown) — carries the `## Collection coverage` section when the response carries a collection
 - (Side effect:) `CucumberTest.java` (runner) + `<Feature>StepDefinitions.java` (skeleton, `@Disabled`)
 
 ## Verify
@@ -164,6 +182,8 @@ python3 ../../../../../quality-gate/verify_port_spec_contract.py \
   --port-spec ../../../../../features/_system/stages/00_actor-goal/output/port-spec.md \
   --spec-dir ../04b_spec/output \
   --feature-dir output
+python3 ../../../../../quality-gate/verify_collection_coverage.py \
+  --feature ../../../
 ```
 
 - **verify_profile_paths.py:** the effective `test.source.root` /
@@ -184,6 +204,11 @@ python3 ../../../../../quality-gate/verify_port_spec_contract.py \
 - **verify_port_spec_contract.py:** skips when no `port-spec.md` exists;
   otherwise checks response-shape SPEC output and `@contract` scenarios
   are present.
+- **verify_collection_coverage.py:** when the feature's chain tables or SPECs
+  expose a collection response, `output/` must carry a `## Collection coverage`
+  section naming the empty, multi-item, and repeated-key (`n/a` allowed with a
+  reason) fixtures. Skips non-collection features and features already closed
+  at Stage 05 (no retrofit).
 
 ### Semantic checks
 
@@ -201,6 +226,10 @@ python3 ../../../../../quality-gate/verify_port_spec_contract.py \
 - Every Gherkin `When` step traces back to a use-case main-flow step 1.
 - Every Gherkin `Then` step traces back to an expected outcome or
   postcondition — no invented assertions.
+- **Collection coverage:** when the response carries a collection, the feature
+  declares (and the flow tests exercise) the empty, multi-item, and
+  repeated-key cases; the `## Collection coverage` section names the binding(s)
+  and each fixture rather than being a bare checkbox.
 - Every step-definition method maps to a chain-table row (by matching
   the action name in its body).
 - Outcome values in step-definition assertions are SCREAMING_SNAKE_CASE,
@@ -242,7 +271,8 @@ Run:
 
 `advance.py` owns the gate: it runs this stage's checks
 (`verify_profile_paths.py`, `verify_gherkin_derivation.py`,
-`verify_step_definition_parity.py`, `verify_step_definition_derivation.py`),
+`verify_collection_coverage.py`, `verify_step_definition_parity.py`,
+`verify_step_definition_derivation.py`),
 writes the stage receipt, prints the artefact summary and the
 `approve_gate.py --gate 3` command, and stops (exit 10). Present its summary
 to the human and **wait**. Do NOT run `present_gate.py` yourself and do NOT

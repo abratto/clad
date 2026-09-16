@@ -23,6 +23,18 @@
 
      Postconditions — Failure with "no state is modified" → @no-state-change tag + explicit Then assertion.
 
+     Collection responses (see quality-gate/verify_collection_coverage.py):
+       when the response body carries a collection, also derive the cardinality
+       edges that flow tests otherwise miss and tag them:
+         @empty-collection  ← a zero-item success case
+         @multi-item        ← a case with at least two items
+         @repeated-key      ← two positionally-aligned lists share a key
+                              (omit only when no alignment exists)
+       and record them in a "## Collection coverage" section in
+       flow-test-stubs.md. Design-time gates verify structure, not cardinality,
+       so without these an empty collection or a repeated key survives to
+       Stage-05 runtime back-trace (the UC-07 / UC-12 class of defect).
+
      Derivation rules (cross-reference with ../02b_chain-table/output/):
        step-definition method signature   ← chain-table Then column action name
        step-def method body (expected)    ← chain-table Inputs + Outcome columns
@@ -82,6 +94,23 @@ Feature: <Feature name>
       | branch-condition | field1 | field2 | status | message | expected token chain |
       | <condition 1>    | <val>  | <val>  | <code> | <msg>   | <token seq>          |
       | <condition 2>    | <val>  | <val>  | <code> | <msg>   | <token seq>          |
+
+  @<scenario-name> @empty-collection @happy-path
+  Scenario: <scenario-name> — empty collection
+    Given <a corpus/relationship with zero items>
+    When <trigger action from main-flow step 1>
+    Then the response status is <2xx>
+    And the response body carries an empty collection (e.g. {"<plural>": []})
+    And the runtime token chain matches:<expected token sequence>
+
+  @<scenario-name> @multi-item @repeated-key @happy-path
+  Scenario: <scenario-name> — multiple items with a repeated key
+    Given <a corpus with >=2 items, at least two sharing the key that a
+      positionally-aligned list zips on>
+    When <trigger action from main-flow step 1>
+    Then the response status is <2xx>
+    And every positionally-aligned column is aligned for the repeated key
+    And the runtime token chain matches:<expected token sequence>
 
   @contract @<endpoint-slug>
   Scenario: <METHOD> <path> matches the external contract

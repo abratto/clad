@@ -126,6 +126,31 @@ Each `Examples:` row corresponds to one extension branch. The
 `<message>` literal is copied from the matching sync spec's `then`
 clause.
 
+### Rule G6 — Collection coverage (cardinality edges)
+
+When a scenario's response carries a **collection** (a plural envelope key
+such as `articles`, `comments`, `tags`, `authors`, `following`, `flags`, or a
+`List<...>` completion field), derive the cardinality edges that a happy-path
+scenario alone does not exercise, and tag each:
+
+```
+@empty-collection   the zero-item success case (e.g. {"articles": []})
+@multi-item         a case with at least two items
+@repeated-key       two positionally-aligned lists share a key (e.g. a page
+                    with a repeated author and a per-item flag list)
+```
+
+`@repeated-key` is omitted only when no positional alignment exists. Record the
+same coverage in the `## Collection coverage` section of the stage's
+`flow-test-stubs.md`, naming the binding(s) and each fixture.
+`quality-gate/verify_collection_coverage.py` fails Stage 04c when a
+collection-shaped feature omits the section or an entry.
+
+**Why.** Design-time gates verify structure, not cardinality. In the conduit
+rebuild experiment an empty thread and a multi-comment thread (UC-07), and later
+a feed page with a repeated author (UC-12), each passed every gate and were
+caught only by Stage-05 runtime back-trace. G6 moves that discovery to Gate 3.
+
 ---
 
 ## 4. Derivation rules: chain tables → step-definition methods
@@ -206,6 +231,12 @@ values.
 - The `.feature` file parses without syntax errors
   (`cucumber --dry-run` or profile equivalent).
 - No Gherkin step exists without a corresponding use-case element.
+- **Collection coverage (G6):** when the response carries a collection, the
+  feature has `@empty-collection` and `@multi-item` scenarios (and
+  `@repeated-key` where lists are positionally aligned), recorded in a
+  `## Collection coverage` section.
+- **Automated:** `verify_collection_coverage.py` enforces G6 for
+  collection-shaped features (forward-only; closed features are skipped).
 - **Automated:** `verify_gherkin_derivation.py` enforces rules G1–G5, S1–S3, E1.
 - **Automated:** `verify_step_definition_parity.py` checks that every
   step has a matching method with a non-empty body — catches stubs.
@@ -277,10 +308,13 @@ When operating at Stage 04c, follow this checklist:
 □ 4. Read 04b_spec/output/*.spec.md → extract outcome enums
 □ 5. Read 03_syncs/output/*.sync.md → extract response body literals
 □ 6. Derive the .feature file using Rules G1–G5
-□ 7. Derive the step-definition class using Rules S1–S3 and E1
-□ 8. Write the Cucumber runner class (CucumberTest.java)
-□ 9. Run the canonical build-and-test command → compilation succeeds
-□ 10. Verify: every Gherkin element traces to an upstream artefact
+□ 7. Derive the collection-coverage scenarios using Rule G6 (empty /
+     multi-item / repeated-key) and record the "## Collection coverage"
+     section in flow-test-stubs.md
+□ 8. Derive the step-definition class using Rules S1–S3 and E1
+□ 9. Write the Cucumber runner class (CucumberTest.java)
+□ 10. Run the canonical build-and-test command → compilation succeeds
+□ 11. Verify: every Gherkin element traces to an upstream artefact
 ```
 
 ### What not to do

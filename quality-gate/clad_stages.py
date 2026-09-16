@@ -519,6 +519,16 @@ _GHERKIN_DERIVATION = Check(
     requires=lambda r: [_usecase(r), SYNC_DIR(r)] + _gh_des_features(r),
 )
 
+_COLLECTION_COVERAGE = Check(
+    name="collection_coverage",
+    script="verify_collection_coverage.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [
+        CHAIN_DIR(r),
+        output_dir(r, "04_implement/04c_flow-tests"),
+    ],
+)
+
 _CONCEPT_TEST_DERIVATION = Check(
     name="concept_test_derivation",
     script="verify_concept_test_derivation.py",
@@ -629,7 +639,8 @@ STAGES: List[Stage] = [
           checks=[_SPEC_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN,
                   _SPEC_MANIFEST, _PORT_SPEC_04B]),
     Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3,
-          checks=[_FEATURE_IMPL_PATHS, _GHERKIN_DERIVATION, _STEP_DEF_PARITY,
+          checks=[_FEATURE_IMPL_PATHS, _GHERKIN_DERIVATION, _COLLECTION_COVERAGE,
+                  _STEP_DEF_PARITY,
                   _STEP_DEF_DERIVATION, _FEATURE_FILE_PRESENCE, _PORT_SPEC_04C]),
         Stage("04d-red", "Concept TDD red", "04_implement/04d_concept-tdd/04d_red-tests",
             checks=[_FEATURE_IMPL_PATHS, _CONCEPT_TEST_DERIVATION, _FIELD_ASSERTIONS]),
