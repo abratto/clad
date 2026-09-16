@@ -326,6 +326,15 @@ def check_concepts(concept_impl_dir, features_dir):
         return failures
 
     spec_stems = collect_spec_stems(features_dir, "02_concepts/output", ".concept.md")
+    # Canonical corpus specs (Model B). setdefault: a feature's own proposal
+    # under 02_concepts/output shadows the corpus spec of the same name.
+    corpus_dir = os.path.join(features_dir, "_system", "concepts")
+    if os.path.isdir(corpus_dir):
+        for filename in sorted(os.listdir(corpus_dir)):
+            if filename.endswith(".concept.md"):
+                spec_stems.setdefault(
+                    filename[: -len(".concept.md")].lower(),
+                    os.path.join(corpus_dir, filename))
     for path, class_name in collect_concept_class_names(concept_impl_dir):
         stripped = strip_concept_suffix(class_name)
         if stripped in BOOTSTRAP_CONCEPTS:

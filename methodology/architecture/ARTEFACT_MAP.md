@@ -106,9 +106,11 @@ Key edges to notice:
 - **Chain tables (01b) win over sync specs (03)** when action names
   disagree — because 03 cites 01b, not the other way around. (See
   PR #6 — `Session.open` reconciled to `Session.grant`.)
-- **03a is a pure-audit stage.** It has *no* downstream artefact of
-  its own except the cards and summary; its value is making coupling
-  visible *before* code at 04 ossifies it.
+- **03a is the per-UC coordination review.** It has *no* downstream artefact of
+  its own except the cards and summary; its value is making coupling visible
+  *before* code at 04 ossifies it. The cards are *evidence* for the app-level
+  concept-dependence graph (`features/_system/concept-dependence.md`), never
+  its source — 03a never emits that graph.
 - **04c is the outer red, 04e closes it.** Nothing else makes the
   flow tests go green; that is the whole point of separating 04d
   from 04e.
@@ -157,6 +159,11 @@ consumer need that?**
 | `<concept>-card.md` | 03a | 04d | Inbound action surface | The concept TDD knows what its boundary actually is. |
 | `<concept>-card.md` | 03a | 04e | Set of concepts this sync invokes | The sync TDD knows which concepts to double. |
 | `pattern-d-summary.md` | 03a | 03b | Single cross-cutting list of every concept-state read | One conceptual data-model checklist for the whole feature. |
+| `<concept>-card.md` | 03a | concept-dependence review | Coordination evidence | Evidence for a possible dependence edge; the edge itself is reviewed judgment, recorded in the graph. |
+| `concepts/<Name>.concept.md` | `_system` corpus | 01a, 02, 03b, 04b, 04d | Canonical concept anatomy | Resolved for a UC as its own proposals shadowing the corpus (`CONCEPT_DIR` union); promoted on Gate 2 via `./clad promote-concepts`. |
+| `concepts-catalog.md` | `generate_concepts_catalog.py` | 01a | Concept/action index | Generated; answers "does the action already exist?" without opening the full spec. |
+| `concept-dependence.md` | reviewed (human) | 01a, 03a, scheduling | App-level extrinsic dependence + valid subsets | Reviewed, not derived. 03a cards are evidence for an edge, never its source. |
+| `shared-triggers.md` | `generate_shared_triggers.py` | 03, 03a | Cross-UC triggers | Generated advisory view of the same `Concept.action` fired by another UC. |
 | `<Name>.data-model.md` | 03b | 04a | Approved fact types and constraints | The storage mapping must realize this model without drift. |
 | `<Name>.storage.md` (or `_NOT_APPLICABLE.md`) | 04a | 04d | Storage shape for the test fixture | The concept TDD builds against this mapping when persistence exists. |
 | `<Name>.spec.md` | 04b | 04c, 04d, 04e | Action signatures the test code compiles against | All inner-loop and outer-loop tests reference SPECs, not prose. |

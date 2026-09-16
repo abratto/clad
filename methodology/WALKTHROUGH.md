@@ -235,11 +235,13 @@ mention `UserNaming`'s state; it works with opaque `UserId`.
 `Web` does **not** get a `.concept.md` — see
 [`methodology/architecture/WEB_CONCEPT.md`](architecture/WEB_CONCEPT.md).
 
-**Outputs written:**
+**Outputs written:** the feature's `concept-bindings.md`, plus a proposal for
+each NEW concept. The proposals become the canonical corpus specs (introduced
+by UC-00-login) on Gate 2 approval:
 
-- [`UserNaming.concept.md`](../features/UC-00-login/stages/02_concepts/output/UserNaming.concept.md)
-- [`PasswordAuth.concept.md`](../features/UC-00-login/stages/02_concepts/output/PasswordAuth.concept.md)
-- [`Session.concept.md`](../features/UC-00-login/stages/02_concepts/output/Session.concept.md)
+- [`UserNaming.concept.md`](../features/_system/concepts/UserNaming.concept.md)
+- [`PasswordAuth.concept.md`](../features/_system/concepts/PasswordAuth.concept.md)
+- [`Session.concept.md`](../features/_system/concepts/Session.concept.md)
 
 **Gate question (canonical).**
 
@@ -256,7 +258,7 @@ mention `UserNaming`'s state; it works with opaque `UserId`.
 **Inputs opened:**
 
 - `../01_usecase/output/usecase.md` — scenarios to satisfy.
-- `../02_concepts/output/` — concepts to coordinate.
+- `concept-bindings.md` + the canonical concept specs (`features/_system/concepts/`) and any `02` proposals — concepts to coordinate.
 - `../01b_chain-table/output/` — the action chain each sync formalises.
 - [`methodology/architecture/SYNCHRONIZATIONS.md`](architecture/SYNCHRONIZATIONS.md), [`SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md), [`RULES.md`](implementation/RULES.md), [`templates/sync.md`](../templates/sync.md).
 
@@ -282,7 +284,7 @@ both success and failure responses.
 
 ---
 
-## Turn 8 — Stage 03a (Dependency review)
+## Turn 8 — Stage 03a (Coordination review)
 
 **CONTEXT loaded:** [`features/UC-00-login/stages/03a_dependency-review/CONTEXT.md`](../features/UC-00-login/stages/03a_dependency-review/CONTEXT.md)
 
@@ -291,7 +293,7 @@ both success and failure responses.
 - `../03_syncs/output/` — every `then` invocation, every `where` clause.
 - `../01b_chain-table/output/` — the flows.
 - `../01a_responsibility-map/output/responsibility-map.md` — concept set.
-- `../02_concepts/output/` — action and field names to cite.
+- `concept-bindings.md` + the canonical concept specs (`features/_system/concepts/`) and any `02` proposals — action and field names to cite.
 - [`methodology/architecture/SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md).
 - [`templates/dependency-review-card.md`](../templates/dependency-review-card.md), [`templates/pattern-d-summary.md`](../templates/pattern-d-summary.md).
 

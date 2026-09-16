@@ -24,6 +24,7 @@ import re
 import sys
 
 from artifact_parsers import parse_concept
+import artifact_parsers as ap
 
 
 def parse_concept_actions(path):
@@ -73,17 +74,19 @@ def normalize(name):
 def main():
     parser = argparse.ArgumentParser(
         description="Verify concept spec actions/outcomes match SPECs")
-    parser.add_argument("--concept-dir", required=True,
-                        help="Path to 02_concepts/output/")
+    parser.add_argument("--concept-dir", required=True, action="append",
+                        help="Concept-spec dir; repeatable. Earlier dirs shadow "
+                             "later ones by concept name.")
     parser.add_argument("--spec-dir", required=True,
                         help="Path to 04b_spec/output/")
     args = parser.parse_args()
 
-    concept_dir = args.concept_dir
+    concept_dirs = args.concept_dir
     spec_dir = args.spec_dir
 
-    if not os.path.isdir(concept_dir):
-        print(f"FAIL  concept directory not found: {concept_dir}")
+    missing = [d for d in concept_dirs if not os.path.isdir(d)]
+    if missing:
+        print(f"FAIL  concept directory not found: {missing[0]}")
         sys.exit(1)
     if not os.path.isdir(spec_dir):
         print(f"FAIL  spec directory not found: {spec_dir}")
@@ -96,18 +99,15 @@ def main():
               "files without an explicit methodology deviation")
         sys.exit(1)
 
-    concept_files = sorted([
-        f for f in os.listdir(concept_dir) if f.endswith(".concept.md")
-    ])
     spec_files = sorted([
         f for f in os.listdir(spec_dir) if f.endswith(".spec.md")
     ])
 
-    # Match concept specs to SPECs by name
+    # Match concept specs to SPECs by name. Concept sources are merged across
+    # dirs, a feature's own proposal shadowing the canonical corpus spec.
     concept_actions = {}
-    for fname in concept_files:
-        path = os.path.join(concept_dir, fname)
-        concept, actions = parse_concept_actions(path)
+    for concept, path in sorted(ap.concept_spec_paths(concept_dirs).items()):
+        _, actions = parse_concept_actions(path)
         concept_actions[concept] = actions
 
     spec_actions = {}

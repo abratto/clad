@@ -73,20 +73,20 @@ def main() -> None:
     args = parser.parse_args()
 
     feature_root = os.path.abspath(args.feature)
-    concept_dir = cs.CONCEPT_DIR(feature_root)
     spec_dir = os.path.join(feature_root, "stages", "04_implement", "04b_spec", "output")
 
-    if not os.path.isdir(concept_dir):
+    # Concept sources: the feature's own proposals shadow the canonical corpus
+    # by concept name (M1 union resolution).
+    specs = ap.concept_spec_paths(cs.concept_source_dirs(feature_root))
+    if not specs:
         print("No concept directory found.")
         sys.exit(1)
 
     outcomes = collect_outcomes(feature_root)
 
     n = 0
-    for fname in sorted(os.listdir(concept_dir)):
-        if not fname.endswith(".concept.md"):
-            continue
-        concept = ap.parse_concept(os.path.join(concept_dir, fname))
+    for name, path in sorted(specs.items()):
+        concept = ap.parse_concept(path)
         if concept.name == "Web":  # bootstrap — no SPEC
             continue
         out_path = os.path.join(spec_dir, concept.name + ".spec.md")

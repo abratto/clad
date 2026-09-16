@@ -16,7 +16,7 @@
 | Artefact | Path | Touched? | How |
 |---|---|---|---|
 | Use case | `features/UC-XX/stages/01_usecase/output/usecase.md` | yes \| no | <what changes> |
-| Concept(s) | `features/UC-XX/stages/02_concepts/output/*.concept.md` | yes \| no | <which concepts, what changes> |
+| Concept(s) | `features/_system/concepts/*.concept.md` (corpus) and/or `features/UC-XX/stages/02_concepts/output/*.concept.md` (proposals) | yes \| no | <which concepts, what changes> |
 | Sync(s) | `features/UC-XX/stages/03_syncs/output/*.sync.md` | yes \| no | <which syncs, what changes> |
 | SPEC slices | `features/UC-XX/stages/04_implement/04b_spec/output/*.spec.md` | yes \| no | <which> |
 | Flow tests | `features/UC-XX/stages/04_implement/04c_flow-tests/output/` | yes \| no | <which> |

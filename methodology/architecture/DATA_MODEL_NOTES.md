@@ -2,7 +2,7 @@
 
 CLAD's Stage 03b derives a **profile-neutral conceptual data model**
 from each concept's approved `state` section and any approved concept-state
-exposure from dependency review. This file is the procedural reference
+exposure from coordination review. This file is the procedural reference
 for that work: how to turn prose state into elementary facts, fact
 types, and constraints without smuggling in storage decisions.
 

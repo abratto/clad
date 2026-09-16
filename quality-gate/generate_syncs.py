@@ -136,15 +136,13 @@ def _resolve_when_source(wc, wa, wo, producers, current_row, warnings, fname):
 
 def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], List[str]]:
     chain_dir = cs.CHAIN_DIR(feature_root)
-    concept_dir = cs.CONCEPT_DIR(feature_root)
     scope = ap.feature_scope_from_path(feature_root)
 
+    # Concept sources: the feature's own proposals shadow the canonical corpus
+    # by concept name (M1 union resolution).
     concepts: Dict[str, ap.ConceptSpec] = {}
-    if os.path.isdir(concept_dir):
-        for fname in sorted(os.listdir(concept_dir)):
-            if fname.endswith(".concept.md"):
-                c = ap.parse_concept(os.path.join(concept_dir, fname))
-                concepts[c.name] = c
+    for name, path in ap.concept_spec_paths(cs.concept_source_dirs(feature_root)).items():
+        concepts[name] = ap.parse_concept(path)
 
     syncs: List[GeneratedSync] = []
     warnings: List[str] = []

@@ -17,6 +17,12 @@ def write_spec(features, feature, concept, body):
     (d / f"{concept}.concept.md").write_text(body, encoding="utf-8")
 
 
+def write_corpus(features, concept, body):
+    d = features / "_system" / "concepts"
+    d.mkdir(parents=True, exist_ok=True)
+    (d / f"{concept}.concept.md").write_text(body, encoding="utf-8")
+
+
 def run(features):
     return subprocess.run(
         [sys.executable, str(SCRIPT), "--features-dir", str(features)],
@@ -56,6 +62,31 @@ class SharedActionContractTests(unittest.TestCase):
             r = run(f)
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertIn("WARN", r.stdout)
+
+    def test_proposal_disjoint_from_corpus_fails(self):
+        """A feature proposal redefining a canonical action with a disjoint
+        outcome vocabulary is the Model B drift this guard now catches."""
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp)
+            write_corpus(f, "C", spec("count [ articleIds ] => [ Counts ]", "Counts"))
+            write_spec(f, "UC-01-a", "C",
+                       spec("count [ articleIds ] => [ Counted ]", "Counted"))
+            r = run(f)
+            self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+            self.assertIn("disjoint outcome vocabularies", r.stdout)
+            self.assertIn("corpus", r.stdout)
+
+    def test_proposal_additive_extension_passes(self):
+        """A proposal that adds an outcome to the canonical vocabulary is fine."""
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp)
+            write_corpus(f, "C", spec("count [ articleIds ] => [ Counts ]", "Counts"))
+            write_spec(f, "UC-01-a", "C",
+                       spec("count [ articleIds ] => [ Counts ]",
+                            "Counts\n    outcome: \"Empty\""))
+            r = run(f)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("PASS", r.stdout)
 
     def test_multi_mode_action_params_are_unioned(self):
         """An overloaded action (several signature blocks) unions its params.

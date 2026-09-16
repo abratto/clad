@@ -1,49 +1,48 @@
-# Concepts catalog — `<project name>`
+<!-- Reference for the system-scope concept catalog. The catalog is GENERATED —
+this file documents its columns and the intrinsic/extrinsic dependence
+distinction; it is not a fill-in template. Regenerate with
+`quality-gate/generate_concepts_catalog.py --write`. -->
 
-> Project-level catalog of every concept used across features. Useful
-> once you have **three or more** features. Below that, the per-
-> feature responsibility maps in `01a_responsibility-map/output/` are
-> sufficient and a project-level catalog is overhead.
+# Concepts catalog — generated reference
 
-## How to use this catalog
+The catalog lives at `features/_system/concepts-catalog.md` and is derived from
+the canonical corpus at `features/_system/concepts/<Name>.concept.md`. It is
+**never hand-maintained** — edit the corpus spec, then re-run the generator.
+It answers one question quickly: *does the capability (or action) my use case
+needs already exist?*
 
-- Add one row per concept the *first time* a feature uses it.
-- The owning feature column points at the feature where the concept
-  was introduced — this is its canonical home, where the
-  `<Name>.concept.md` lives.
-- Subsequent features that reuse a concept add their UC-id to the
-  *Used by* column rather than redefining the concept.
-- If two features try to define the same concept differently, that
-  is a structural conflict — resolve it before either feature merges
-  by re-running Stage 01a on whichever feature is younger.
+## Columns
 
-## Catalog
+| Column | Source |
+|---|---|
+| Concept | the corpus filename |
+| Purpose | the spec's `purpose` stanza |
+| Type params | the spec header `concept <Name> [TypeParams]` |
+| Actions | the spec's `## Actions` (names only) |
+| Introduced by | the spec's `introduced-by` provenance line |
+| Used by | features whose Stage-02 output binds the concept (`concept-bindings.md`) or carries a proposal |
+| Notes | derived flags (e.g. `stateless`) |
 
-| Concept | One-line capability | Owning feature | Used by | Notes |
-|---|---|---|---|---|
-| `User` | Identify a person to the system | UC-00-login | UC-00-login | Username uniqueness |
-| `PasswordAuth` | Verify a password against a stored credential | UC-00-login | UC-00-login | Includes lockout outcome |
-| `Session` | Issue and look up authenticated sessions | UC-00-login | UC-00-login | TTL fixed at issue time |
-| `<Bootstrap>` | Transport entry point (for example `Web`) | UC-00-login | (every feature) | See `methodology/architecture/WEB_CONCEPT.md` |
-| ... | ... | ... | ... | ... |
+## Intrinsic vs extrinsic dependence
 
-## Cross-feature rules
+These are two different things, and the distinction is load-bearing:
 
-- **R1 still holds.** The catalog does **not** authorise one
-  concept to import another. If two features need to coordinate via
-  a shared concept, they coordinate through syncs, the same as ever.
-- **One owning feature per concept.** If you are about to add a
-  concept whose owning feature is unclear, that is a sign the
-  feature boundaries are wrong — surface it to the human before
-  proceeding.
-- **Splitting and merging.** Splitting one catalog row into two, or
-  merging two rows, is a structural change in every feature that
-  used the affected concepts. Re-enter Stage 01a in each.
+- **Intrinsic dependence — there is none.** A concept never imports another
+  concept's state, actions, or types (hard rule **R1**). This is what makes
+  concepts independent and reusable; it is why they can be shared across use
+  cases. Nothing in this catalog authorises a concept to reach into a neighbour.
+- **Extrinsic dependence — app-specific, and reviewed.** In a given app, one
+  concept may *require* another because nothing else is a suitable supplier
+  (e.g. `Comment` requires `Post`). That is recorded in
+  [`../features/_system/concept-dependence.md`](../features/_system/concept-dependence.md),
+  never in a concept spec, and it is a hand-reviewed purpose judgment — not
+  derived from the sync graph, and not authored by Stage 03a.
+
+Coordination between concepts is expressed only by syncs (Stage 03). The
+catalog's *Used by* column is provenance, not coupling.
 
 ## Out of scope for the catalog
 
-- Concept *anatomy* (state, actions, outcomes) — that lives in the
-  owning feature's `02_concepts/output/<Name>.concept.md`.
-- Concept *dependencies* — there are none (R1).
-- Concept *implementation paths* — they live under
-  `reference-impl/<profile>/`.
+- Concept *anatomy* (state, actions, outcomes) — that lives in the corpus spec
+  `features/_system/concepts/<Name>.concept.md`.
+- Concept *implementation paths* — they live under `reference-impl/<profile>/`.

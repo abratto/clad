@@ -18,8 +18,9 @@ executable concept unit tests from approved outer artefacts, and
 
 ## Files
 
-The stage `CONTEXT.md` `Inputs` names the loading set: `02` concept specs,
-`04b` SPECs, `04c` flow tests, `_config/build-and-test.md`,
+The stage `CONTEXT.md` `Inputs` names the loading set: the canonical concept
+specs (`features/_system/concepts/`), this feature's `02` proposals and
+`concept-bindings.md`, `04b` SPECs, `04c` flow tests, `_config/build-and-test.md`,
 `_config/package-and-layout.md`, `TDD.md`, `RULES.md`,
 `templates/test-intent-derivation-map.md`. Profile reference docs
 (`reference-impl/<profile>/`) are loaded only when that profile is

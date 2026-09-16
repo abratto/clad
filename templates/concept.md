@@ -7,9 +7,16 @@ concept owns the *set*. See CONCEPTS.md §"State over a set, not fields of an ob
 
 Actions: OUTCOME ALIGNMENT — every outcome name must match the approved
 01b chain-table Outcome column verbatim. Never invent an outcome here;
-if one is missing, reopen Stage 01b. -->
+if one is missing, reopen Stage 01b.
+
+Provenance: `introduced-by <UC-XX-slug>` records the feature that first
+introduced the concept. In a UC's Stage-02 output this is a PROPOSAL
+(promoted to the corpus on gate approval); in the canonical corpus at
+features/_system/concepts/ it is the provenance of record. Do not edit
+it by hand in the corpus — promotion writes it. -->
 
 concept <ConceptName> [<TypeParams>]
+introduced-by <UC-XX-slug>
 purpose
     <one-line capability statement>
 
@@ -33,7 +40,17 @@ purpose
 table did not name, reopen Stage 01b — do not invent outcomes here. -->
 
 > The verbs this concept exposes. Each action is a local function call
-> from a sync or from `Web`. Two formats:
+> from a sync or from `Web`.
+>
+> **User actions vs system actions.** A *user action* is one an actor
+> can invoke directly (surfaced through the bootstrap concept); a
+> *system action* is invoked only by a sync — e.g. a lookup, or an
+> action that only ever appears in a `then`. Both belong in this file.
+> A sync may expose a single action (a `when`/`then` pair is a complete
+> concept invocation), so do not invent a user action merely because a
+> flow needs one.
+>
+> Two formats:
 >
 > **A. Precondition/postcondition** (failures are pure state-guard
 > violations): precondition failure → refusal (`:outcome "refused"`), no

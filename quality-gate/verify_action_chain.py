@@ -32,6 +32,7 @@ from artifact_parsers import (
     parse_resp_map_actions,
     parse_chain_table_actions,
     parse_concept_actions,
+    parse_concept_actions_multi,
     parse_sync_actions,
     parse_dep_card_actions,
     parse_spec_actions,
@@ -45,8 +46,9 @@ def main():
                         help="Path to 01a responsibility-map.md")
     parser.add_argument("--chain-dir", required=True,
                         help="Path to 01b_chain-table/output/")
-    parser.add_argument("--concept-dir", required=True,
-                        help="Path to 02_concepts/output/")
+    parser.add_argument("--concept-dir", required=True, action="append",
+                        help="Concept-spec dir; repeatable. Earlier dirs shadow "
+                             "later ones by concept name.")
     parser.add_argument("--sync-dir", required=True,
                         help="Path to 03_syncs/output/ (spec files)")
     parser.add_argument("--dep-dir", required=True,
@@ -58,7 +60,7 @@ def main():
     sources = {
         "responsibility map":  parse_resp_map_actions(args.resp_map),
         "chain tables":        parse_chain_table_actions(args.chain_dir),
-        "concept specs":       parse_concept_actions(args.concept_dir),
+        "concept specs":       parse_concept_actions_multi(args.concept_dir),
         "sync specs":          parse_sync_actions(args.sync_dir),
         "dep. cards":          parse_dep_card_actions(args.dep_dir),
         "SPECs":               parse_spec_actions(args.spec_dir),

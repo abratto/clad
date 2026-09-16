@@ -49,7 +49,7 @@ Three clauses, written as `{ }` blocks:
 A sync **fires only on a completion**, never mid-action. It cannot
 observe a concept's state directly (except via the `where` clause's
 explicit `Concept: { ... }` syntax — a concept-state read — appears in
-the 03a dependency review audit). It cannot call back into the concept
+the 03a coordination review audit). It cannot call back into the concept
 whose action triggered it without going through that concept's public
 actions.
 
@@ -170,7 +170,7 @@ The full pattern catalogue, with worked examples, anti-patterns, and
 03a audit guidance, is in [`SYNC_PATTERNS.md`](SYNC_PATTERNS.md).
 In the sync's source file, patterns are documented in a "Where clause
 patterns" table (see the [`templates/sync.md`](../../templates/sync.md)).
-Stage 03a's dependency review scans this table for concept-state read rows.
+Stage 03a's coordination review scans this table for concept-state read rows.
 
 ## Input matching in the when clause
 
@@ -320,7 +320,7 @@ Profile: { ?profile bio: ?bio ; image: ?image }
 ```
 
 Reads fields from named concept regions. This is a concept-state read — every such
-read is recorded in the Stage 03a dependency review. The syntax mirrors
+read is recorded in the Stage 03a coordination review. The syntax mirrors
 relation patterns: a subject variable, a semicolon-separated list
 of property bindings, and a dot (`.`) to terminate.
 

@@ -8,6 +8,7 @@ before you open any `CONTEXT.md`:
 | Scope | Stage | Folder | Created when |
 |---|---|---|---|
 | **System-level** (once per project brief) | 00 | `features/_system/stages/00_actor-goal/` | Exists in the repo; use as-is |
+| **System-level** (concept vocabulary, grows by promotion) | — | `features/_system/concepts/` (+ `concepts-catalog.md`, `concept-dependence.md`, `shared-triggers.md`) | Seeded from the first feature; grows as features propose concepts and promote them |
 | **Per-UC** (once per in-scope goal) | 01–05 | `features/UC-XX-<slug>/stages/NN_*/` | Created after Stage 00 gate, one folder per confirmed in-scope goal |
 
 **The order is non-negotiable:**
@@ -19,8 +20,12 @@ before you open any `CONTEXT.md`:
    folder for **each** in-scope goal (UC numbers from 01).
 4. Run Stages 01–05 inside each UC folder, one goal at a time.
 
-`features/_system/` never grows beyond Stage 00 output. Every stage
-from 01 onwards lives inside a per-UC folder.
+`features/_system/` holds system-scope artefacts only: Stage 00 output and the
+**concept vocabulary** (`concepts/`, `concepts-catalog.md`,
+`concept-dependence.md`, `shared-triggers.md`). Concepts are canonical,
+system-scope assets; use cases **compose** them (reuse / extend / propose)
+rather than re-deriving them. Every stage from 01 onwards lives inside a per-UC
+folder.
 
 ---
 
@@ -433,8 +438,12 @@ These rules apply to individual stages and do not appear in the
   Frozen pre-v0.6 artefacts keep the old condition-first `When…Then…` names
   as historical evidence. See
   [`../architecture/SYNCHRONIZATIONS.md`](../architecture/SYNCHRONIZATIONS.md) §"Naming".
-- **Stage 03a** is an audit stage — it copies tokens exactly, produces
-  no new design, and surfaces drift back to the owning stage.
+- **Stage 03a** is the per-UC **coordination review** — an audit stage that
+  copies tokens exactly, produces no new design, and surfaces sync-coupling
+  drift back to the owning stage. Its cards are *evidence* for a
+  concept-dependence edge, never its source; the app-level **concept
+  dependence graph** (`features/_system/concept-dependence.md`) is a separate,
+  reviewed system-scope artefact, and 03a never emits it.
 - **Stage 04 implements the outside-in TDD double-loop:** 04c is the
   outer red test (a flow), 04d and 04e are the inner red→green TDD on
   concepts and syncs.

@@ -10,6 +10,63 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.8.0] — 2026-09-16
+
+Minor release: **system-scope concept vocabulary (Model B)**. Concepts become
+canonical, system-scope, reusable assets that use cases *compose* — reuse,
+extend, or propose — instead of re-deriving per feature. Maintenance record
+`maintenance/system-scope-concept-vocabulary.md`; experiment-found (the Conduit
+rebuild re-derived `Session.concept.md` in six use cases with six divergent
+hashes, surfaced only at Stage 04).
+
+### Added
+
+- **Canonical concept corpus** — `features/_system/concepts/<Name>.concept.md`,
+  seeded from the `UC-00-login` worked example with `introduced-by` provenance.
+- **Generated catalog index** — `features/_system/concepts-catalog.md`
+  (`Concept | Purpose | Type params | Actions | Introduced by | Used by | Notes`)
+  via `quality-gate/generate_concepts_catalog.py`, so Stage 01a can answer
+  "does the action already exist?" without opening the full spec.
+- **App-level dependence graph** — `features/_system/concept-dependence.md`,
+  the reviewed *extrinsic* dependence graph (distinct from R1's absent
+  intrinsic dependence), plus valid subsets and topological levels.
+- **Cross-UC shared-trigger view** — `features/_system/shared-triggers.md` via
+  `quality-gate/generate_shared_triggers.py` (advisory).
+- **Criteria gate** — `quality-gate/verify_concept_criteria.py` (mechanical
+  subset) plus a human criteria checklist in the Stage 02 contract.
+- **`./clad promote-concepts`** — `quality-gate/promote_concepts.py`; promotes
+  an approved feature's NEW/EXTEND proposals into the corpus. Gated on Gate 2
+  approval, idempotent, receipted, refuses a frozen tree, never silent.
+- **Proposal and registry gates** — `quality-gate/verify_concept_proposals.py`
+  (NEW/EXTEND rows ⇔ `<Name>.concept.md` proposals) and
+  `quality-gate/verify_concept_registry.py` (one introducer; no reused concept
+  redefined; approved proposals promoted; catalog completeness).
+- **Rule R22** — a concept is defined once, in the canonical corpus.
+
+### Changed
+
+- **Concept resolution is a union (M1).** `clad_stages.concept_source_dirs()`
+  returns `[<feature>/02_concepts/output, features/_system/concepts]` — a
+  feature's proposal shadows the corpus spec of the same name. The four
+  concept-reading checks take a repeatable `--concept-dir`. A feature with no
+  corpus behaves exactly as before (legacy fallback).
+- **Stage 02** now always emits `concept-bindings.md` plus a proposal per
+  NEW/EXTEND concept; the file manifest is derived from the responsibility
+  map's new `Origin` column.
+- **Stage 01a** gains an `Origin` column (`new` | `reused:UC-XX` |
+  `extends:UC-XX`) and a *Proposals* section.
+- **Stage 03a** is re-described as the per-UC **coordination review** (folder
+  and artefact names unchanged); its cards are evidence for a dependence edge,
+  never its source.
+- **`verify_shared_action_contracts.py`** now compares each feature's proposal
+  against the canonical corpus (drift = a proposal diverging from the corpus),
+  keeping the legacy cross-feature comparison for pre-Model-B features.
+- **R17 coverage** — editing a canonical corpus concept is now
+  iterative-change-scoped (`verify_iterative_change_readiness.py`,
+  `verify_iterative_change_coupling.py`).
+- Stage 03b/04b/04d contracts resolve concept state from the corpus, not a
+  per-UC copy.
+
 ## [0.7.1] — 2026-09-16
 
 Patch release: two follow-ups from the same **13-use-case Conduit rebuild**,

@@ -18,7 +18,7 @@ CLAD targets. They are paraphrases of, and citations to, Meng & Jackson
 
 1. [`architecture/LEGIBLE.md`](architecture/LEGIBLE.md) — the WYSIWID idea
 2. [`architecture/MENTAL_MODEL.md`](architecture/MENTAL_MODEL.md) — OO ↔ WYSIWID parallel and the complete artefact map (start here if you come from OO)
-3. [`architecture/CONCEPTS.md`](architecture/CONCEPTS.md) — concept anatomy
+3. [`architecture/CONCEPTS.md`](architecture/CONCEPTS.md) — concept anatomy, criteria, and the system-scope vocabulary (corpus at `features/_system/concepts/`, generated catalog, reviewed dependence graph)
 4. [`architecture/SYNCHRONIZATIONS.md`](architecture/SYNCHRONIZATIONS.md) — sync semantics
 5. [`architecture/SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md) — the four legal data-flow patterns (A/B/C/D)
 6. [`architecture/FLOW_TOKENS.md`](architecture/FLOW_TOKENS.md) — provenance and back-tracing

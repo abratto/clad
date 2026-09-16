@@ -21,7 +21,8 @@ In code (under `reference-impl/`):
   one for the purpose of cross-talk).
 - No shared mutable singletons.
 
-In specs (under `features/UC-XX/stages/02_concepts/output/`):
+In specs (the canonical corpus `features/_system/concepts/`, plus any
+per-feature proposal under `features/UC-XX/stages/02_concepts/output/`):
 
 - A concept spec may not name another concept's state field.
 - A concept spec may name *types* that are passed in as opaque
@@ -187,7 +188,7 @@ matches trigger input values directly
 implementation's `when X (param: value)` shape. A `where`-clause `Guard`
 remains legal for scoping the when-matcher cannot express (comparisons
 against non-literal operands). Stage 03a records the route analysis in the
-dependency review cards.
+coordination review cards.
 
 A sync that fires on a shared trigger with no when-matcher and no guard,
 and no explicit route-agnostic justification, is a defect.
@@ -207,7 +208,8 @@ every primary completion field that downstream syncs read.
 `methodology/core/ITERATIVE_CHANGES.md` is binding. Before modifying any
 file under:
 
-- `features/UC-*/stages/02_concepts/output/` (concept specs)
+- `features/_system/concepts/` (canonical concept corpus)
+- `features/UC-*/stages/02_concepts/output/` (concept proposals)
 - `features/UC-*/stages/03_syncs/output/` (sync specs)
 - any profile's implementation source for concepts or syncs
   (e.g. `reference-impl/java-legible/src/main/java/dev/legible/example/.../`)
@@ -269,6 +271,27 @@ Mechanised by `quality-gate/verify_maintenance_change_readiness.py`.
 > action log is a structured append-only record store, and there is no
 > SPARQL to construct. The strict-vs-lenient parser hazard this rule
 > guarded against no longer exists.
+
+## R22. A concept is defined once, in the canonical corpus
+
+A concept's spec lives in exactly one place:
+`features/_system/concepts/<Name>.concept.md`. A use case **binds** to a
+canonical concept (emits `concept-bindings.md`, no spec copy), **proposes an
+extension** (an additive `extends` proposal), or **proposes a new** concept.
+Proposals enter the corpus only on Gate 2 approval, via
+`./clad promote-concepts` — never by hand, never silently.
+
+Re-deriving a concept per use case is the cross-feature drift this rule exists
+to prevent (observed in the Conduit rebuild: six divergent
+`Session.concept.md` across six use cases, surfaced only at Stage 04).
+
+This does **not** weaken R1. Independence is precisely what makes concepts
+reusable; coordination remains syncs-only, and no concept names another
+concept's state.
+
+Mechanised by `quality-gate/verify_concept_proposals.py` and
+`quality-gate/verify_concept_registry.py`; the corpus criteria by
+`quality-gate/verify_concept_criteria.py`.
 
 ---
 

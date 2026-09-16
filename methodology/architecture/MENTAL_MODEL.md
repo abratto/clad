@@ -21,12 +21,12 @@ two things that play the same structural role.
 | Field / instance variable | State field in concept's named region | Concept spec `state:` section, then data model (`<Name>.data-model.md`), then storage mapping (`<Name>.storage.md`) |
 | Encapsulation (`private`) | One named region per concept (R2); no other concept reads it | Hard rule R2; per-concept named graph (Java/Jena) or schema |
 | Method call between objects | Sync: `then: OtherConcept.action(...)` | One `*.sync.md` per coordination link |
-| `someOther.getFoo()` (field access on another object) | **concept-state read** — sync `where:` reads another concept's named region | `where:` clause in sync; row in 03a dependency review |
+| `someOther.getFoo()` (field access on another object) | **concept-state read** — sync `where:` reads another concept's named region | `where:` clause in sync; row in 03a coordination review |
 | Return value used by caller | internal flow data — flow-sibling output joined by flow-token id | `where:` clause; row in chain table |
 | Method parameter | internal flow data — read from the original `Web.request` body | `where:` clause; row in chain table |
 | Hard-coded literal in a caller | internal flow data — sync constant | `where:` clause |
 | Sequence diagram | Chain table (Stage 01b) — table form is canonical, Mermaid is derived | `<scenario>-chain.md` |
-| CRC card | Per-concept dependency review card (Stage 03a) | `<concept>-card.md` |
+| CRC card | Per-concept coordination review card (Stage 03a) | `<concept>-card.md` |
 | `interface` / public API | Concept's `actions:` section + outcome enums | Concept spec; `<Name>.spec.md` |
 | Dependency injection of a service | A sync that wires `Web.request → SomeService.action` | `*.sync.md` |
 | Observer / event bus | The action log (every action emits a flow-token completion event; syncs subscribe via `when:`) | Built into the runtime; not user code |
@@ -74,7 +74,7 @@ artefact "lives" in CLAD, this is the full map:
 | Class diagram | Responsibility map | 01a | output |
 | Sequence diagram | Chain table | 01b | output |
 | Class definition (with methods) | Concept spec | 02 | output |
-| CRC card (responsibilities + collaborators) | Dependency review card | 03a | output |
+| CRC card (responsibilities + collaborators) | Coordination review card | 03a | output |
 | Conceptual schema | Data model file | 03b | output |
 | Schema / storage realization | Storage mapping file | 04a | output |
 | Public interface (`.h`, `.d.ts`, etc.) | SPEC slice | 04b | output |

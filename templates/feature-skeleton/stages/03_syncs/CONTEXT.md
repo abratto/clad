@@ -22,7 +22,9 @@ the sync just says *"when outcome X fires → then call Y."*
 | Path | Layer | Why |
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Scenarios to satisfy |
-| `../02_concepts/output/` | 4 | Concepts available to coordinate |
+| `../02_concepts/output/concept-bindings.md` | 4 | Which canonical concepts this feature uses, and the actions it binds |
+| `../../../../features/_system/concepts/` | 4 | The canonical concept specs (`state`, actions) — source of truth for signatures |
+| `../02_concepts/output/<Name>.concept.md` | 4 | NEW/EXTEND proposals (not yet promoted) — same anatomy |
 | `../01b_chain-table/output/` | 4 | The action chain each sync formalises |
 | Skill: `clad-sync-design` | 3 | Sync design reference (see skills/ directory) |
 | `../../../../methodology/architecture/SYNCHRONIZATIONS.md` | 3 | Sync semantics |
@@ -65,6 +67,14 @@ If any action signature, outcome name, argument name, or literal differs
 between 01b and 02, stop and reopen Stage 02 before writing any sync
 file. Stage 03 derives coordination from approved contracts; it does not
 repair contract drift.
+
+**Shared triggers across features.** When a per-project cross-UC
+shared-trigger view exists (generated over every feature's `03_syncs/output/`),
+consult it before introducing a new trigger: another feature may already fire a
+sync on the same `Concept.action` completion. Reuse or reconcile it
+deliberately — a duplicated trigger with divergent routing is exactly the
+cross-feature drift this view surfaces. Stage 03a's coordination review consumes
+the same view.
 
 For each transition, write one rule-shaped
 `When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>].sync.md`:

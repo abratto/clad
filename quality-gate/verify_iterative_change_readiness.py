@@ -30,6 +30,10 @@ CATEGORIES = {"presentation", "behavioural", "behavioral", "structural"}
 PRODUCTION_CODE_ROW = "Production code"
 ITERATIVE_PATTERNS = (
     re.compile(r"^features/UC-[^/]+/stages/02_concepts/output/.*\.concept\.md$"),
+    # Canonical corpus specs are system-scope but iterative-change-scoped too:
+    # editing one changes a shared concept contract, so it must carry a
+    # `_changes/` record (maintenance change `system-scope-concept-vocabulary`).
+    re.compile(r"^features/_system/concepts/.*\.concept\.md$"),
     re.compile(r"^features/UC-[^/]+/stages/03_syncs/output/.*\.sync\.md$"),
     re.compile(r"(^|/)(concepts|syncs)/.*\.(java|kt|scala|ts|js|py)$"),
 )

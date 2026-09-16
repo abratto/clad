@@ -10,7 +10,8 @@ description: Extract per-concept SPEC slices during CLAD Stage 04b. Use when mec
 ## What this skill covers
 
 Mechanically extracting SPEC slices — one `<Name>.spec.md` per concept —
-from approved Stage 02 concept specs. SPECs declare action signatures,
+from the canonical concept specs (the corpus, shadowed by this feature's
+`02` proposals). SPECs declare action signatures,
 outcome enums, and flow-token shapes in a form that Stage 04c flow tests
 and Stage 04d concept TDD compile against.
 

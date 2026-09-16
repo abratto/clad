@@ -72,6 +72,16 @@ class IterativeChangeReadinessTests(unittest.TestCase):
             self.assertEqual(selected, str(historical))
             self.assertEqual(failures, [])
 
+    def test_canonical_corpus_concept_is_iterative_scope(self):
+        """Editing a canonical corpus spec must require a `_changes/` record,
+        exactly like a per-feature concept spec (M1 completeness)."""
+        self.assertTrue(readiness.in_iterative_scope(
+            "features/_system/concepts/PasswordAuth.concept.md"))
+        self.assertTrue(readiness.in_iterative_scope(
+            "features/UC-01-a/stages/02_concepts/output/C.concept.md"))
+        self.assertFalse(readiness.in_iterative_scope(
+            "features/_system/concepts-catalog.md"))
+
 
 if __name__ == "__main__":
     unittest.main()

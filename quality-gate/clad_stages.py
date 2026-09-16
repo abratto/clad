@@ -84,6 +84,10 @@ def _dir(rel: str) -> Callable[[str], str]:
 
 # Convenience references to the per-stage output directories.
 CHAIN_DIR = _dir("01b_chain-table")
+# Deprecated for concept-spec resolution: prefer `concept_source_dirs()` — the
+# effective concept source is the UNION of this feature's proposals and the
+# canonical corpus (maintenance change `system-scope-concept-vocabulary`, M1).
+# Kept for backward compatibility with derived repos and older scripts.
 CONCEPT_DIR = _dir("02_concepts")
 SYNC_DIR = _dir("03_syncs")
 DEP_DIR = _dir("03a_dependency-review")
@@ -93,6 +97,44 @@ DATA_DIR = _dir("03b_data-model")
 def _spec_dir(feature_root: str) -> str:
     return os.path.join(
         feature_root, "stages", "04_implement", "04b_spec", "output")
+
+
+def _concept_corpus_dir(feature_root: str) -> str:
+    """The system-scope concept corpus (maintenance change
+    `system-scope-concept-vocabulary`, decision D2).
+
+    Resolved through the repo-root-relative `concepts.dir` property, defaulting
+    to `features/_system/concepts`. Returns '' when the property points nowhere
+    and the default directory does not exist (a legacy feature)."""
+    corpus = _prop_path(feature_root, "concepts.dir")
+    if corpus:
+        return corpus
+    default = os.path.join(_repo_root(feature_root), "features", "_system",
+                           "concepts")
+    return default if os.path.isdir(default) else ""
+
+
+def concept_source_dirs(feature_root: str) -> List[str]:
+    """Ordered concept-spec source dirs for a feature (decision D5 / M1).
+
+    A feature's own Stage-02 output (its NEW/EXTEND proposals) shadows the
+    canonical corpus by concept name, so it is listed FIRST. When no corpus
+    exists (legacy / pre-Model-B feature) the result is just the feature's own
+    `02_concepts/output`, which is exactly the old behaviour."""
+    dirs = [output_dir(feature_root, "02_concepts")]
+    corpus = _concept_corpus_dir(feature_root)
+    if corpus:
+        dirs.append(corpus)
+    return dirs
+
+
+def _concept_dir_args(feature_root: str) -> List[str]:
+    """`--concept-dir <d>` repeated once per concept-source dir, in precedence
+    order. The consumer checks merge the dirs, earlier winning on a name clash."""
+    args: List[str] = []
+    for directory in concept_source_dirs(feature_root):
+        args += ["--concept-dir", directory]
+    return args
 
 
 # --------------------------------------------------------------------------
@@ -157,21 +199,15 @@ _SYNC_MATRIX = Check(
 _DATA_MODEL = Check(
     name="data_model",
     script="verify_data_model.py",
-    build_args=lambda r: [
-        "--data-dir", DATA_DIR(r),
-        "--concept-dir", CONCEPT_DIR(r),
-    ],
-    requires=lambda r: [DATA_DIR(r), CONCEPT_DIR(r)],
+    build_args=lambda r: ["--data-dir", DATA_DIR(r)] + _concept_dir_args(r),
+    requires=lambda r: [DATA_DIR(r)] + concept_source_dirs(r),
 )
 
 _SPEC_PARITY = Check(
     name="spec_parity",
     script="verify_spec_parity.py",
-    build_args=lambda r: [
-        "--concept-dir", CONCEPT_DIR(r),
-        "--spec-dir", _spec_dir(r),
-    ],
-    requires=lambda r: [CONCEPT_DIR(r), _spec_dir(r)],
+    build_args=lambda r: _concept_dir_args(r) + ["--spec-dir", _spec_dir(r)],
+    requires=lambda r: concept_source_dirs(r) + [_spec_dir(r)],
 )
 
 _OUTCOME_ALIGNMENT = Check(
@@ -190,14 +226,14 @@ _ACTION_CHAIN = Check(
     build_args=lambda r: [
         "--resp-map", _resp_map(r),
         "--chain-dir", CHAIN_DIR(r),
-        "--concept-dir", CONCEPT_DIR(r),
+        *_concept_dir_args(r),
         "--sync-dir", SYNC_DIR(r),
         "--dep-dir", DEP_DIR(r),
         "--spec-dir", _spec_dir(r),
     ],
     requires=lambda r: [
-        _resp_map(r), CHAIN_DIR(r), CONCEPT_DIR(r), SYNC_DIR(r), DEP_DIR(r),
-        _spec_dir(r),
+        _resp_map(r), CHAIN_DIR(r), *concept_source_dirs(r), SYNC_DIR(r),
+        DEP_DIR(r), _spec_dir(r),
     ],
 )
 
@@ -601,8 +637,22 @@ _CHAIN_GRAMMAR = Check(
 _CONCEPT_STATE_RELATIONAL = Check(
     name="concept_state_relational",
     script="verify_concept_state_relational.py",
-    build_args=lambda r: ["--concept-dir", CONCEPT_DIR(r)],
-    requires=lambda r: [CONCEPT_DIR(r)],
+    build_args=lambda r: _concept_dir_args(r),
+    requires=lambda r: concept_source_dirs(r),
+)
+
+_CONCEPT_CRITERIA = Check(
+    name="concept_criteria",
+    script="verify_concept_criteria.py",
+    build_args=lambda r: _concept_dir_args(r),
+    requires=lambda r: concept_source_dirs(r),
+)
+
+_CONCEPT_PROPOSALS = Check(
+    name="concept_proposals",
+    script="verify_concept_proposals.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [_resp_map(r), output_dir(r, "02_concepts")],
 )
 
 _RELATIONAL_MAPPING = Check(
@@ -625,7 +675,8 @@ STAGES: List[Stage] = [
         Stage("01b", "Chain table", "01b_chain-table", gate_after=1,
             checks=[_CHAIN_GRAMMAR, _CHAIN_MANIFEST]),
     Stage("02", "Concept specs", "02_concepts",
-          checks=[_CONCEPT_STATE_RELATIONAL, _CONCEPT_MANIFEST]),
+          checks=[_CONCEPT_STATE_RELATIONAL, _CONCEPT_CRITERIA,
+                  _CONCEPT_PROPOSALS, _CONCEPT_MANIFEST]),
     Stage("03", "Syncs", "03_syncs", checks=[_SCENARIO_COVERAGE, _SYNC_MATRIX,
           _SYNC_TRANSITION_COVERAGE,
           _SYNC_CYCLE_GRAPH, _SYNC_OVERLAP]),

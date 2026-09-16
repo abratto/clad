@@ -66,6 +66,16 @@ Examples:
 | Behavioural | Stage 02 (concepts) **or** Stage 03 (syncs), whichever owns the change | If outcomes change → Stage 02; if only the chain of actions changes → Stage 03 |
 | Structural | Stage 01a (responsibility map) | The concept set itself is changing, so the map is no longer accurate |
 
+**System-scope concepts (R22).** A concept's canonical spec lives in the
+corpus (`features/_system/concepts/`), so an iterative change that edits a
+canonical concept is scoped exactly like a per-feature concept change: it is
+caught by `verify_iterative_change_readiness.py` and must carry a `_changes/`
+record. A change to the concept *set* (structural) re-enters Stage 01a of the
+earliest affected feature and, if the corpus must grow, is promoted on that
+feature's Gate 2 via `./clad promote-concepts` — never by hand. Editing the
+generated `concepts-catalog.md` is never the change; edit the spec and
+regenerate.
+
 **Rule of thumb.** Find the *earliest* stage whose `output/` is no
 longer accurate after the change. Re-enter there. Re-running an
 earlier stage when its output is still accurate is over-production

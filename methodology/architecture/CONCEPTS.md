@@ -210,6 +210,60 @@ then   PasswordAuth/verify:      [ userId: u ; password: p ]     => [ error: "lo
 - Emit flow tokens on every action.
 - Define helper functions, types, and tests *internally*.
 
+## Concepts are reusable, system-scope assets
+
+A concept is the unit of reuse, not a per-feature artefact. The canonical spec
+lives once in `features/_system/concepts/<Name>.concept.md`; a use case
+**composes** it (reuse / extend / propose) rather than re-deriving it (hard
+rule **R22**). Reuse is roughly 90% of design — an app is a composition of
+concepts, and only the tricky ones need detailed specification
+(Jackson, *The Essence of Software*).
+
+### Concept criteria
+
+A good concept is:
+
+- **user-facing** — it serves an actor's goal, not an internal refactor;
+- **semantic** — its state and actions are meaningful, not mechanical;
+- **independent** — it can be specified without another concept's internals
+  (this is what makes it reusable);
+- **behavioral** — its behavior is described by an operational principle, not
+  a data schema alone;
+- **purposive** — one purpose, nameable in a short verb phrase;
+- **end-to-end** — the operational principle must exercise the concept alone.
+  If it degenerates to "when this action happens, the state updates so",
+  something is missing;
+- **familiar** — novelty is rare and justified;
+- **reusable** — it fits apps beyond the one that introduced it.
+
+The mechanical subset is enforced by `quality-gate/verify_concept_criteria.py`;
+the judgment subset is a human checklist in the Stage 02 contract.
+
+### State principles
+
+State should be sufficient (every field is needed), necessary (nothing needed
+is missing), typed with **no external types** (use type parameters), and at the
+most abstract structure that serves the purpose (a *set*, not a sequence,
+unless ordering is used). See §"State over a set, not fields of an object" and
+§"2. State — relational notation" above.
+
+### Factoring
+
+One apparent concept often factors into simpler concepts recomposed by syncs
+(e.g. `UserSession` → `User` + `Session[User]`). A sync may expose a single
+action. Concepts have **user actions** (invoked by an actor) and **system
+actions** (invoked only by a sync); both belong in the spec.
+
+### Dependence: intrinsic vs extrinsic
+
+Concepts have **no intrinsic dependence** — this is R1, and it is what makes
+them independently reusable and testable. They *do* have **extrinsic
+dependence in a given app**: "in this app, `Comment` requires `Post` because
+nothing else is a suitable target." That is recorded in the reviewed app-level
+graph `features/_system/concept-dependence.md` (a Parnas *uses* relation), not
+in any concept spec, and not derived from the sync graph. Coordination between
+concepts is always syncs.
+
 ## Notation provenance
 
 The state notation (`field: SubjectType -> FieldType`) is drawn from
@@ -391,7 +445,17 @@ Candidate feature F
 
 ## Authoring a concept (for agents)
 
-When stage `02_concepts/` runs, the agent should produce one
-`<Name>.concept.md` per concept identified in the use case. Use
-[`templates/concept.md`](../../templates/concept.md). Stop at the gate;
-the human will edit before stage `03_syncs/` runs.
+When stage `02_concepts/` runs, the agent consults the generated catalog
+(`features/_system/concepts-catalog.md`) and the responsibility map's `Origin`
+column, then:
+
+- **REUSE** (`reused:UC-XX`) — emit a binding row in
+  [`concept-bindings.md`](../../templates/concept-bindings.md) only; do **not**
+  author a spec copy. The canonical corpus spec is the source of truth.
+- **EXTEND / NEW** — emit a binding row **and** author a proposal
+  `<Name>.concept.md` using
+  [`templates/concept.md`](../../templates/concept.md). On Gate 2 approval the
+  proposal is promoted into the corpus via `./clad promote-concepts`.
+
+The feature always emits `concept-bindings.md`. Stop at the gate; the human
+will edit before stage `03_syncs/` runs.

@@ -78,7 +78,8 @@ not relax the *intent*.
    - **Semantic (human):** Verify no bootstrap concept file
      (`Web.concept.md`, etc.) appears in `02_concepts/output/`
      without an explicit deviation. Verify concept boundaries are
-     coherent.
+     coherent. Verify proposals correspond to the responsibility map's
+     NEW/EXTEND rows (REUSE rows bind, never re-author — R22).
 9. **Stage 03 sync contract checks (automated + semantic).**
    When a diff touches `features/UC-*/stages/03_syncs/`:
    - **Automated:** Run `quality-gate/verify_sync_matrix.py`
@@ -154,8 +155,9 @@ not relax the *intent*.
       require trigger/fires metadata to match the contract's `when`/`then`
       signatures.
     - **Semantic (human):** Verify the diff also contains updates to the
-      relevant `stages/02_concepts/output/` or `stages/03_syncs/output/`
-      artefacts. A Java-only diff with no artefact update is a hard-rule
+      relevant `_system/concepts/` (or `stages/02_concepts/output/` proposals)
+      or `stages/03_syncs/output/` artefacts. A Java-only diff with no
+      artefact update is a hard-rule
       (R17) violation even if the parity script passes (e.g. the spec
       file exists but its content no longer matches the code).
 13. **Platform maintenance governance.** When a diff touches engine/runtime

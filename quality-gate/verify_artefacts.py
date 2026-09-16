@@ -123,6 +123,21 @@ def main():
         for line in detail.splitlines():
             print(f"        {line}")
 
+    # Project-level concept registry (feature-independent).
+    code, out, err = run_script("verify_concept_registry.py",
+                                ["--features-dir", str(REPO_ROOT / "features")])
+    detail = (out + err).strip()
+    ok = code == 0
+    mark = "PASS" if ok else "FAIL"
+    print(f"\n  [{mark}] concept_registry")
+    if not ok:
+        all_pass = False
+        for line in detail.splitlines()[:8]:
+            print(f"        {line}")
+    elif detail.strip():
+        for line in detail.splitlines():
+            print(f"        {line}")
+
     for name, root in discover_features():
         any_features = True
         stage = _current_stage(root)

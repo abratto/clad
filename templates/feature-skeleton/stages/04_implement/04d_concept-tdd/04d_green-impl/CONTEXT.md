@@ -24,7 +24,9 @@ upstream prose, but it may not redesign approved tests.
 
 | Path | Layer | Why |
 |---|---|---|
-| `../../../02_concepts/output/` | 4 | Concept specs |
+| `../../../02_concepts/output/concept-bindings.md` | 4 | Which canonical concepts this feature uses |
+| `../../../../../../features/_system/concepts/` | 4 | Canonical concept specs (`state`, actions) |
+| `../../../02_concepts/output/<Name>.concept.md` | 4 | NEW/EXTEND proposals (not yet promoted) |
 | `../../04a_storage-mapping/output/` | 4 | Storage mapping when a persistent profile applies |
 | `../../04b_spec/output/` | 4 | SPEC slices to preserve outcome distinctions |
 | `../04d_red-tests/output/` | 4 | Approved red tests and handoff bundle |

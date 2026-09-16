@@ -238,14 +238,41 @@ class ResponsibilityMapEntry:
     owned_state: str
     owned_actions: List[str]
     notes: str
+    origin: str = ""
+
+
+# Column header fragments -> the field they supply. The Concepts table was
+# extended (maintenance change `system-scope-concept-vocabulary`) with an
+# `Origin` column; older maps have no such column. Resolve columns by header,
+# never by position, so both shapes parse.
+_RESP_COLUMN_MAP = (
+    ("Concept", "concept"),
+    ("Origin", "origin"),
+    ("Owned state", "owned_state"),
+    ("Owned actions", "owned_actions"),
+    ("Notes", "notes"),
+)
+
+
+def _resp_columns(header_parts: List[str]) -> Dict[int, str]:
+    columns: Dict[int, str] = {}
+    for idx, cell in enumerate(header_parts):
+        label = cell.strip()
+        for fragment, field in _RESP_COLUMN_MAP:
+            if label.startswith(fragment):
+                columns[idx] = field
+                break
+    return columns
 
 
 def parse_responsibility_map(path: str) -> Dict[str, ResponsibilityMapEntry]:
     entries: Dict[str, ResponsibilityMapEntry] = {}
     with open(path) as f:
+        columns: Dict[int, str] = {}
         in_table = False
         for line in f:
-            if line.strip().startswith("| Concept | Owned state"):
+            if line.lstrip().startswith("| Concept |") and "Owned state" in line:
+                columns = _resp_columns(_split_row(line))
                 in_table = True
                 continue
             if in_table:
@@ -255,17 +282,21 @@ def parse_responsibility_map(path: str) -> Dict[str, ResponsibilityMapEntry]:
                     in_table = False
                     continue
                 parts = _split_row(line)
-                if len(parts) >= 4:
-                    concept = parts[1].strip("`")
-                    owned_state = parts[2]
-                    owned_actions = re.findall(r"`([^`]+)`", parts[3])
-                    notes = parts[4] if len(parts) > 4 else ""
-                    entries[concept] = ResponsibilityMapEntry(
-                        concept=concept,
-                        owned_state=owned_state,
-                        owned_actions=owned_actions,
-                        notes=notes,
-                    )
+                fields: Dict[str, str] = {}
+                for idx, field in columns.items():
+                    if idx < len(parts):
+                        fields[field] = parts[idx]
+                concept = fields.get("concept", "").strip("`").strip()
+                if not concept:
+                    continue
+                entries[concept] = ResponsibilityMapEntry(
+                    concept=concept,
+                    owned_state=fields.get("owned_state", ""),
+                    owned_actions=re.findall(r"`([^`]+)`",
+                                             fields.get("owned_actions", "")),
+                    notes=fields.get("notes", ""),
+                    origin=fields.get("origin", "").strip("`").strip(),
+                )
     return entries
 
 
@@ -339,6 +370,25 @@ def parse_concept(path: str) -> ConceptSpec:
                        state_lines=state_lines, actions=deduped)
 
 
+def concept_spec_paths(concept_dirs: List[str]) -> Dict[str, str]:
+    """Map concept name -> spec path across one or more concept dirs.
+
+    Earlier dirs shadow later ones by concept name, so a feature's own Stage-02
+    proposal (NEW/EXTEND) shadows the canonical corpus spec of the same name.
+    Non-existent dirs are ignored.
+    """
+    out: Dict[str, str] = {}
+    for directory in concept_dirs:
+        if not os.path.isdir(directory):
+            continue
+        for fname in sorted(os.listdir(directory)):
+            if not fname.endswith(".concept.md"):
+                continue
+            out.setdefault(fname[: -len(".concept.md")],
+                           os.path.join(directory, fname))
+    return out
+
+
 def parse_concept_actions(concept_dir: str) -> Set[str]:
     """Set of Concept/action from concept spec files."""
     actions: Set[str] = set()
@@ -349,6 +399,17 @@ def parse_concept_actions(concept_dir: str) -> Set[str]:
             continue
         concept = fname.replace(".concept.md", "")
         for a in parse_concept(os.path.join(concept_dir, fname)).actions:
+            actions.add(f"{concept}/{a.name}")
+    return actions
+
+
+def parse_concept_actions_multi(concept_dirs: List[str]) -> Set[str]:
+    """Set of Concept/action merged across one or more concept dirs.
+
+    Earlier dirs shadow later ones by concept name (see concept_spec_paths)."""
+    actions: Set[str] = set()
+    for concept, path in concept_spec_paths(concept_dirs).items():
+        for a in parse_concept(path).actions:
             actions.add(f"{concept}/{a.name}")
     return actions
 
@@ -854,9 +915,20 @@ def expected_stage_outputs(feature_root: str) -> Dict[str, List[str]]:
                             "responsibility-map.md")
     concepts: List[str] = []
     if os.path.isfile(resp_map):
-        concepts = [c for c in sorted(parse_responsibility_map(resp_map))
-                    if c != "Web"]
-        out["02"] = [c + ".concept.md" for c in concepts]
+        entries = parse_responsibility_map(resp_map)
+        concepts = [c for c in sorted(entries) if c != "Web"]
+        if any(entries[c].origin for c in concepts):
+            # Model B map: Stage 02 always emits bindings, plus a proposal for
+            # every NEW/EXTEND concept. REUSE rows bind only (no spec copy).
+            proposals = [
+                c for c in concepts
+                if entries[c].origin.lower().startswith(("new", "extend"))
+            ]
+            out["02"] = ["concept-bindings.md"] + [
+                c + ".concept.md" for c in proposals]
+        else:
+            # Legacy map without an Origin column: one spec per concept.
+            out["02"] = [c + ".concept.md" for c in concepts]
 
     out["04a"] = ["_NOT_APPLICABLE.md"]
 

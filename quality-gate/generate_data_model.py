@@ -274,18 +274,18 @@ def main() -> None:
     args = parser.parse_args()
 
     feature_root = os.path.abspath(args.feature)
-    concept_dir = cs.CONCEPT_DIR(feature_root)
     data_dir = cs.DATA_DIR(feature_root)
 
-    if not os.path.isdir(concept_dir):
+    # Concept sources: the feature's own proposals shadow the canonical corpus
+    # by concept name (M1 union resolution).
+    specs = ap.concept_spec_paths(cs.concept_source_dirs(feature_root))
+    if not specs:
         print("No concept directory found.")
         sys.exit(1)
 
     n = 0
-    for fname in sorted(os.listdir(concept_dir)):
-        if not fname.endswith(".concept.md"):
-            continue
-        concept = ap.parse_concept(os.path.join(concept_dir, fname))
+    for name, path in sorted(specs.items()):
+        concept = ap.parse_concept(path)
         if concept.name == "Web":  # bootstrap — no data model
             continue
         out_path = os.path.join(data_dir, concept.name + ".data-model.md")
