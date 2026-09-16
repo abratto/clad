@@ -2,7 +2,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `active`
+- **Status:** `closed`
 - **Affected profile(s):** `reference-impl/legible-engine` (`where` frame evaluation), all profiles via inheritance
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved` (human in-conversation: "why not fix the engine root" → adopt the root fix)
