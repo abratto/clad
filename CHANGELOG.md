@@ -10,6 +10,41 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.7.1] — 2026-09-16
+
+Patch release: two follow-ups from the same **13-use-case Conduit rebuild**,
+shipped after `[0.7.0]`. Discipline and tooling hardening only — no engine
+behaviour changes; the `java-legible` reactor and the UC-00 worked example are
+unchanged and green.
+
+### Added
+
+- **Stage-04c collection coverage gate** (`quality-gate/verify_collection_coverage.py`;
+  experiment-found UC-07/UC-12) — requires a per-feature `## Collection coverage`
+  section naming the empty / multi-item / repeated-key fixture for every
+  collection-shaped feature, and is wired into Stage 04c. Forward-only:
+  features that closed before this release (no `## Collection coverage`) are
+  skipped. Maintenance record `maintenance/collection-coverage-gate.md`; Rule G6
+  in `methodology/architecture/GHERKIN_INTEGRATION.md`; skeleton 04c contract and
+  `templates/feature.feature` updated.
+
+### Changed
+
+- **Tooling hardening from the rebuild** (each with regression tests):
+  - `generate_feature_files.py` resolves the slugified `<scenario>-chain.md`
+    token chain instead of emitting `<TODO>` stubs.
+  - `artifact_parsers.parse_goals` skips the `## Out of scope` table (was
+    over-counting goals).
+  - `verify_shared_action_contracts.py` unions an overloaded action's signature
+    parameters across modes, removing spurious input-shape warnings for
+    multi-mode actions.
+  - `generate_syncs.py` renders the R15 route matcher into the `Web/request`
+    bootstrap sync and warns on same-stem / different-route bootstrap collisions.
+  - `verify_profile_paths.py` fails fast when `_config/package-and-layout.md` is
+    still `TBD` once a feature reaches Stage 04a.
+  - The RESUME `## Gate snapshot` content-hash block is machine-owned
+    (`methodology/implementation/HANDOVER.md`, `STAGES.md`).
+
 ## [0.7.0] — 2026-09-16
 
 Platform release from a full **13-use-case Conduit rebuild** driven through CLAD
