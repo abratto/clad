@@ -36,6 +36,16 @@ public final class WhereEvaluator {
         List<Map<String, Object>> frames = new ArrayList<>();
         frames.add(new LinkedHashMap<>());
         for (Clause clause : rule.where) {
+            if (frames.isEmpty() && clause instanceof Clause.CollectBy) {
+                // Empty-safe frame-set aggregate: an aggregate over ZERO frames
+                // still emits one frame carrying the empty list — a zero-item
+                // collection is a value, not an absence. Without this a
+                // fan-out over an empty relation yields no frames, so the
+                // aggregate (and any downstream join) never runs (conduit
+                // rebuild experiment UC-07: an article with no comments must
+                // still answer 200 {"comments": []}).
+                frames.add(new LinkedHashMap<>());
+            }
             if (clause instanceof Clause.CollectBy cb) {
                 frames = collectBy(frames, cb, inv, comp, conjuncts);
             } else {
@@ -45,7 +55,9 @@ public final class WhereEvaluator {
                 }
                 frames = next;
             }
-            if (frames.isEmpty()) return frames;
+            // Note: no early return on an empty frame set — a later CollectBy
+            // clause must still run (empty-safe aggregate above); other
+            // clauses over an empty set yield empty naturally.
         }
         if (rule.groupBy != null) {
             frames = dedupByGroup(frames, rule.groupBy);
