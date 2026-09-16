@@ -124,8 +124,10 @@ class ProfilePathsCheckTests(unittest.TestCase):
 
     def test_tbd_layout_fails_once_the_feature_reaches_stage_04(self):
         """A still-TBD layout silently skipped the wrong-tree guard; it must
-        fail once the feature reaches Stage 04a, but stay skippable earlier
-        (the skeleton ships TBD)."""
+        fail once the feature has produced Stage-04a output, but stay skippable
+        earlier. The skeleton pre-creates every stage output dir with a
+        `.gitkeep`, which must NOT count as reaching Stage 04 (it would fire
+        the guard at Stage 01 on a fresh feature)."""
         tmp, root, feature = make_repo(with_layout=False)
         try:
             (feature / "_config" / "package-and-layout.md").write_text(
@@ -135,8 +137,13 @@ class ProfilePathsCheckTests(unittest.TestCase):
             proc = run(SCRIPT, "--feature", feature)
             self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
 
-            (feature / "stages/04_implement/04a_storage-mapping/output").mkdir(
-                parents=True)
+            out = feature / "stages/04_implement/04a_storage-mapping/output"
+            out.mkdir(parents=True)
+            (out / ".gitkeep").write_text("")
+            proc = run(SCRIPT, "--feature", feature)
+            self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+
+            (out / "_NOT_APPLICABLE.md").write_text("in-memory profile\n")
             proc = run(SCRIPT, "--feature", feature)
             self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
             self.assertIn("TBD", proc.stdout)

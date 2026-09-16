@@ -122,7 +122,11 @@ def main():
     # had to be hand-filled at 04a every UC.)
     impl_output = os.path.join(feature_root, "stages", "04_implement",
                                "04a_storage-mapping", "output")
-    if os.path.isdir(impl_output):
+    # `dir_is_populated`, NOT `isdir`: the skeleton pre-creates every stage
+    # output directory with only a `.gitkeep`, so `isdir` is true from day one
+    # and this guard fired at Stage 01 on a fresh feature. Only a feature that
+    # has actually produced Stage-04a output is held to a concrete layout.
+    if cs.dir_is_populated(impl_output):
         # Strip markdown once so both the seed style (`APP_SOURCE_ROOT: TBD`)
         # and the template style (`- **APP_SOURCE_ROOT:** `TBD``) parse.
         normalized = open(layout).read().replace("`", "").replace("**", "")
