@@ -182,7 +182,11 @@ public final class WhereEvaluator {
         List<Map<String, Object>> out = new ArrayList<>();
         for (Map.Entry<String, Map<String, Object>> e : base.entrySet()) {
             Map<String, Object> nf = new LinkedHashMap<>(e.getValue());
-            nf.put(cb.var(), sortedValues(gathered.getOrDefault(e.getKey(), List.of())));
+            // Frame-iteration order (NOT sorted): parallel collectBy clauses
+            // over the same frame set must stay positionally aligned — a join
+            // consumer like Following.isFollowing zips two such lists. See
+            // maintenance/engine-empty-safe-aggregate.md.
+            nf.put(cb.var(), new ArrayList<>(gathered.getOrDefault(e.getKey(), List.of())));
             out.add(nf);
         }
         return out;

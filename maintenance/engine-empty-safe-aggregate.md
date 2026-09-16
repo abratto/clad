@@ -54,6 +54,6 @@ Recorded from the executed reactor run; Status `closed` with the change commit.
 
 ## Notes
 
-- Determinism/order of the gathered list is unchanged (`sortedValues` in `collectBy`).
+- `collectBy` now gathers in **frame-iteration order** (not sorted), so two parallel `collectBy` clauses over the same frame set stay positionally aligned (a join consumer like `Following.isFollowing` zips two such lists). Per-frame `collect`/`distinct`/`scan` keep their deterministic ordering (`sortedValues`/`distinctSorted`).
 - This is the **collection** half of the earlier join/collect work (`engine-declarative-join-collect`); the empty set was the remaining hole.
 - Downstream: the conduit rebuild fork inherits the engine file and re-derives UC-07's `commentIds`/`authorIds` gathering to use frame-set `collectBy` (one list-shaped `isFollowing`/`profilesOf` call).
