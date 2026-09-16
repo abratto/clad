@@ -29,7 +29,9 @@ here.
 
 | Path | Layer | Why |
 |---|---|---|
-| `../../../02_concepts/output/` | 4 | Concept specs |
+| `../../../02_concepts/output/concept-bindings.md` | 4 | Which canonical concepts this feature uses |
+| `../../../../../../features/_system/concepts/` | 4 | Canonical concept specs (`state`, actions) |
+| `../../../02_concepts/output/<Name>.concept.md` | 4 | NEW/EXTEND proposals (not yet promoted) |
 | `../../04b_spec/output/` | 4 | SPEC slices to compile against |
 | `../../04c_flow-tests/output/` | 4 | Drives test derivation |
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for red evidence |

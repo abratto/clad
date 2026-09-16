@@ -2,11 +2,12 @@
   "stage": "01a",
   "stage_label": "Responsibility map",
   "feature": "UC-00-login",
-  "checked_at": "2026-08-27T22:17:38.610907+00:00",
-  "git_sha": "a563e69",
-  "autonomy": "gated",
-  "output_hash": "1815ca7420a816eb3b0ffffe894ee0dc9ed41e7f37cd83ed40fca762bfb492d4",
-  "sequence_guard": "PASS  sequence intact through Stage 01a (Responsibility map)",
+  "checked_at": "2026-09-16T23:11:21.121953+00:00",
+  "git_sha": "b86260f",
+  "workflow_autonomous": false,
+  "workflow_session_per_stage": false,
+  "output_hash": "78074dd17fac1e6844aec4421272a434109b30e77b57ed377c031c47a1a67d5d",
+  "sequence_guard": "iterative diff review",
   "checks": [
     {
       "name": "file_manifest",

@@ -1,4 +1,5 @@
 concept PasswordAuth [UserId]
+introduced-by UC-00-login
 purpose
     to verify a principal by userId + password
 

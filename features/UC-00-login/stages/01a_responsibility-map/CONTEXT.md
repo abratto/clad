@@ -17,7 +17,7 @@ rework cost when a concept turns out to be wrong.
 
 **Feeds:**
 
-- `responsibility-map.md` → 01b (only listed concepts and actions may appear in chains), 02 (one `*.concept.md` is produced per row), 03a (one dependency-review card per concept).
+- `responsibility-map.md` → 01b (only listed concepts and actions may appear in chains), 02 (each row's `Origin` decides whether the feature binds to a canonical concept or proposes an addition), 03a (one dependency-review card per concept).
 
 **Agent stance for this stage:** resist the urge to draft full
 signatures or coordination here. Names and one-line state only.
@@ -27,6 +27,8 @@ signatures or coordination here. Names and one-line state only.
 | Path | Layer | Why |
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Scenarios to cover |
+| `../../../../features/_system/concepts-catalog.md` | 4 | Canonical vocabulary index — does the concept/action already exist? |
+| `../../../../features/_system/concept-dependence.md` | 4 | App-level extrinsic graph — existing dependence claims |
 | `../../../_system/stages/00_actor-goal/output/actors.md` | 4 | For cross-stage check |
 | Skill: `clad-responsibility-mapping` | 3 | Responsibility map reference (see skills/ directory) |
 | `../../../../methodology/architecture/CONCEPTS.md` | 3 | What counts as a concept |
@@ -40,6 +42,21 @@ each). Produce a single flat table with one row per concept: name,
 owned state (one line), owned actions (names only). Do **not** draft
 full concept specs here — that is Stage 02. Do **not** describe how
 concepts coordinate — that is Stage 01b.
+
+**Consult the vocabulary first.** Read
+`../../../../features/_system/concepts-catalog.md` (the generated index — it carries
+action names, so you can answer *"does the action I need already exist?"*
+without opening the full spec) and `../../../../features/_system/concept-dependence.md`.
+Classify each candidate concept's `Origin` in the Concepts table:
+
+- `reused:UC-XX` — the concept and all needed actions already exist canonically.
+- `extends:UC-XX` — the concept exists but the needed action/state does not.
+- `new` — otherwise.
+
+For every `new` / `extends` row, record a proposal in the table's *Proposals*
+section, including any dependence claim (`requires`). A `reused` row must not
+re-author the concept — Stage 02 binds to the canonical corpus spec. When the
+catalog does not yet exist (a project's first feature), every row is `new`.
 
 Before writing the final Concepts table, fill the **Derivation rubric**
 in `templates/responsibility-map.md`: one row per distinct use-case
@@ -92,6 +109,15 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 - Every final concept row is justified by at least one Derivation rubric
   row, and every Derivation rubric row is either represented by a final
   concept or explicitly rejected in *Out of scope*.
+- **Origin discipline:** every concept row carries an `Origin` of `new`,
+  `reused:UC-XX`, or `extends:UC-XX`. Every `reused` row's concept appears in
+  `../../../../features/_system/concepts-catalog.md` with every action listed in *Owned
+  actions*. Every `new` / `extends` row appears in the *Proposals* section.
+
+  The project-level registry check (`quality-gate/verify_concept_registry.py`,
+  part of `./clad verify`) confirms no concept is introduced twice and no
+  reused concept is redefined. Once Stage 02 exists, run it if you changed the
+  concept set.
 - **Cross-stage check (back):** every actor in
   `../../../_system/stages/00_actor-goal/output/actors.md` whose goal is in-scope is
   represented by at least one concept (typically as the actor of that

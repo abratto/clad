@@ -38,7 +38,9 @@ sub-stage.
 | Path | Layer | Why |
 |---|---|---|
 | `../03b_data-model/output/` | 4 | Approved conceptual data models |
-| `../02_concepts/output/` | 4 | Concept specs |
+| `../02_concepts/output/concept-bindings.md` | 4 | Which canonical concepts this feature uses |
+| `../../../../features/_system/concepts/` | 4 | Canonical concept specs (`state`, actions) |
+| `../02_concepts/output/<Name>.concept.md` | 4 | NEW/EXTEND proposals (not yet promoted) |
 | `../03_syncs/output/` | 4 | Sync specs |
 | `../../../../methodology/core/ITERATIVE_CHANGES.md` | 3 | Re-entry workflow for post-green changes |
 | `../../../../templates/artefact-impact-matrix.md` | 3 | Required `_changes/` worksheet for iterative changes |

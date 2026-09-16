@@ -28,7 +28,9 @@ upstream (Stage 02), not here.
 
 | Path | Layer | Why |
 |---|---|---|
-| `../../02_concepts/output/` | 4 | Concept specs |
+| `../../02_concepts/output/concept-bindings.md` | 4 | Which canonical concepts this feature uses |
+| `../../../../../features/_system/concepts/` | 4 | Canonical concept specs (`state`, actions) |
+| `../../02_concepts/output/<Name>.concept.md` | 4 | NEW/EXTEND proposals (not yet promoted) |
 | `../../../../../features/_system/stages/00_actor-goal/output/port-spec.md` | 4 | Required when present; external adapter response-shape contract |
 | Skill: `clad-spec-extraction` | 3 | SPEC extraction reference (see skills/ directory) |
 | `../../../../../templates/spec.md` | 3 | Output template |
@@ -46,8 +48,9 @@ python3 ../../../../../quality-gate/generate_spec.py --feature ../../../ --write
 `generate_spec.py` emits one `<Name>.spec.md` per business concept with the
 action list and outcome enums collected from the canonical chain tables. It
 leaves `<TODO>` markers for input types and flow-token shape; transcribe those
-from `../../02_concepts/output/<Name>.concept.md`. Do not add actions, outcomes,
-or fields the concept spec and chain tables did not declare.
+from the concept spec — the canonical corpus spec, or this feature's NEW/EXTEND
+proposal where one exists. Do not add actions, outcomes, or fields the concept
+spec and chain tables did not declare.
 
 Derive the SPEC contract slice **mechanically** from each concept
 spec: action signatures, outcome enums, flow-token shape. No prose
@@ -90,12 +93,15 @@ Run the following before requesting the human gate:
 
 ```
 python3 ../../../../../quality-gate/verify_spec_parity.py \
-  --concept-dir ../../02_concepts/output --spec-dir output
+  --concept-dir ../../../../../features/_system/concepts \
+  --concept-dir ../../02_concepts/output \
+  --spec-dir output
 python3 ../../../../../quality-gate/verify_outcome_alignment.py \
   --chain-dir ../../01b_chain-table/output --spec-dir output
 python3 ../../../../../quality-gate/verify_action_chain.py \
   --resp-map ../../01a_responsibility-map/output/responsibility-map.md \
   --chain-dir ../../01b_chain-table/output \
+  --concept-dir ../../../../../features/_system/concepts \
   --concept-dir ../../02_concepts/output \
   --sync-dir ../../03_syncs/output \
   --dep-dir ../../03a_dependency-review/output \

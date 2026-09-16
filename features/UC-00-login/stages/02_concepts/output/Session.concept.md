@@ -1,4 +1,5 @@
 concept Session [SessionId, UserId]
+introduced-by UC-00-login
 purpose
     to manage bearer-token sessions for a principal
 
