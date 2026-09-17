@@ -2,7 +2,7 @@
 
 - **Feature:** `UC-00-login`
 - **Branch:** `feat/UC-00-login`
-- **Last completed stage:** `Stage 05 — Verify`
+- **Last completed stage:** `Stage 04b — Concept contract`
 - **Iterative change `rename-user-to-usernaming`:** `approved`
 - **Iterative change `fire-after-commit-engine`:** `approved`
 - **Iterative change `sync-name-grammar-v2`:** `approved`
@@ -15,9 +15,9 @@
 - **Gate 2 (Architecture):** `approved`
 - **Gate 2 content hash:** `6677aa1a751b7ec9bfee81d7b2f214624e805c748f88ef31be531d19183be491`
 - **Gate 3 (Executable spec):** `approved`
-- **Gate 3 content hash:** `d3a55aa9eb899a8f3e2b2a81e598823b833ae2912468f621d77229a9a6392acc`
+- **Gate 3 content hash:** `f0becf2ad0182b1bff2652b3d5065a55bc285e4bac387584070748eee93019e1`
 - **Corrections at last gate:** `None`
 - **Deferred concepts:** `None`
-- **Next stage:** `None — feature complete`
+- **Next stage:** `Stage 04c — Flow tests`
 - **Next task:** `None — feature complete`
 - **Notes:** Worked example complete. Read for orientation; do not copy its stage `output/` artefacts into new features. Migrated to system-scope concepts (see `_changes/system-scope-concepts.md`).
