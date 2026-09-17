@@ -226,6 +226,28 @@ class PromotionTests(unittest.TestCase):
             again = run(PROMOTE, "--feature", str(feature))
             self.assertIn("no-op", again.stdout)
 
+    def test_dependence_claims_survive_escaped_pipes(self):
+        """A Proposals cell can contain `[ ok \\| refused ]`; splitting the row
+        on raw `|` mis-aligns the cells, and the claims column lists backticked
+        concept names, so extract those rather than the whole cell."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature = make_feature(tmp, [("Foo", "new"), ("Bar", "extends:UC-00-login")],
+                                   specs=("Foo", "Bar"), gate2="approved")
+            rm = (feature / "stages/01a_responsibility-map/output"
+                  / "responsibility-map.md")
+            rm.write_text(rm.read_text(encoding="utf-8") + (
+                "\n## Proposals\n\n"
+                "| Concept | Kind | Proposed addition (actions / state) "
+                "| Requires (dependence claim) | Rationale |\n"
+                "|---|---|---|---|---|\n"
+                "| `Foo` | `new` | action `run [ x ] => [ ok \\| refused ]` "
+                "| — | why |\n"
+                "| `Bar` | `extends:UC-00-login` | action `lend [ id ] => "
+                "[ ok \\| error: \"unavailable\" ]` | `Foo` | why |\n"),
+                encoding="utf-8")
+            import promote_concepts as pc  # noqa: E402
+            self.assertEqual(pc.dependence_claims(str(feature)), [("Bar", "Foo")])
+
     def test_promotes_then_is_idempotent(self):
         with tempfile.TemporaryDirectory() as tmp:
             feature = make_feature(tmp, [("Foo", "new")], specs=("Foo",),

@@ -103,15 +103,34 @@ def dependence_claims(feature_root: str):
     for line in section.group(1).splitlines():
         if not line.startswith("|"):
             continue
-        cells = [c.strip() for c in line.strip("|").split("|")]
+        # Cells may contain ESCAPED pipes — the concept grammar writes
+        # `[ ok \| refused ]` — so split on unescaped `|` only.
+        cells, current, escaped = [], [], False
+        for ch in line.strip().strip("|"):
+            if escaped:
+                current.append(ch)
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == "|":
+                cells.append("".join(current).strip())
+                current = []
+            else:
+                current.append(ch)
+        cells.append("".join(current).strip())
         if len(cells) < 4 or cells[0].startswith("---") or cells[0].startswith("<"):
             continue
         # Skip the header row (`| Concept | Kind | ... |`).
         if cells[0].strip("`").strip().lower() == "concept":
             continue
-        concept, _, _, requires = cells[0], cells[1], cells[2], cells[3]
-        if requires and requires not in ("—", "-", "n/a"):
-            claims.append((concept.strip("`"), requires.strip("`")))
+        concept = cells[0].strip("`")
+        # The claims column lists CONCEPTS, backticked and comma-separated; any
+        # qualifier (`*(unchanged)*`) is prose for the reviewer. Extract the
+        # backticked names rather than trusting the whole cell.
+        for target in re.findall(r"`([^`]+)`", cells[3]):
+            target = target.strip()
+            if target and target not in ("—", "-", "n/a"):
+                claims.append((concept, target))
     return claims
 
 
