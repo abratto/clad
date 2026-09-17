@@ -179,7 +179,20 @@ sync notation. This is the WYSIWID heart of the spec: if a reader can
 follow the operational principle, they understand the concept.
 
 The notation mirrors Stage 03 sync files, making it directly traceable:
-`after` = `when`, `then` = `then`. Happy path only — no branching.
+`after` = `when`, `then` = `then`. Happy path, one sequence, no branching —
+with one exception: a refusal that demonstrates the concept's invariant
+belongs here.
+
+**Each step after the first must depend on an earlier step's effect.** The
+`after`/`then` notation reads as a sequence (`when`/`then`), so a step that is
+merely another independent call — enrolling a *second, unrelated* member;
+recording a *second, unrelated* title — is a fake sequence: it narrates two
+invocations and witnesses nothing. When a concept has a single action and no
+composition to show, witness the invariant the action's guard enforces
+instead: repeat the call with the same key and show the refusal
+(`=> [ error: "duplicateKey" ]`). A set-shaped action with no guard (repeated
+acquisition) may show accumulation, provided the note says that is what it
+shows.
 
 ```
 Operational principle
