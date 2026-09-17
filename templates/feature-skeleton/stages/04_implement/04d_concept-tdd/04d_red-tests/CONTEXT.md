@@ -69,7 +69,7 @@ here.
 ## Outputs
 
 - `output/concept-test-derivation.md` — derivation map plus handoff bundle
-- The derivation map **must** include a `## Test file continuity` section: one row per produced test file, with the file's repo-root-relative (test-source-root-relative) path and its SHA-256, computed right after the red run. The green stage recomputes the hashes (`verify_test_continuity.py`); any drift or missing test file fails the stage, routing the change back through the red stage as an R17 re-entry.
+- The derivation map **must** include a `## Test file continuity` section: one row per produced test file, with the file's path **relative to `test.source.root`** — the test source root that *contains* package directories (e.g. `app/src/test/java`), not a package directory — and its SHA-256, computed right after the red run. The green stage recomputes the hashes (`verify_test_continuity.py`); any drift or missing test file fails the stage, routing the change back through the red stage as an R17 re-entry.
 - (Side effect:) `<Concept><Action>Test.java` (or profile equivalent) per concept action
 
 ## Verify

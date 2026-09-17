@@ -55,11 +55,11 @@ upstream prose, but it may not redesign approved tests.
    `legible-engine/README.md`); the exemplar (`dev/legible/example/login`)
    is a realization pattern only and must not override the feature's
    approved artefacts.
-5. Place concept code where the feature's `_config/package-and-layout.md`
-   directs. Some profiles bucket concepts under
-   `<APP_PACKAGE_ROOT>.concepts.<name>`; the canonical `java-legible` profile
-   uses a flat `<APP_PACKAGE_ROOT>` package (e.g.
-   `dev.legible.example.<feature>`), matching its exemplar. Never place
+5. Place concept code under `APP_PACKAGE_ROOT` as the feature's
+   `_config/package-and-layout.md` directs. **The approved red test's package
+   is authoritative**: the red test is immutable (T2), so the concept class
+   must be in that exact package even when the profile's habitual layout
+   differs — you cannot move the test to match the profile. Never place
    concept classes in `engine`, `syncs`, `infrastructure`, or ad hoc sibling
    packages.
 6. Use the storage mapping from `04a_storage-mapping/output/` when applicable. Do not
@@ -97,10 +97,9 @@ upstream prose, but it may not redesign approved tests.
 - Implementation package/source path matches
   `../../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,
   `APP_SOURCE_ROOT`, `APP_TEST_SOURCE_ROOT`).
-- Concept classes live in the package `_config/package-and-layout.md`
-   declares (flat `<APP_PACKAGE_ROOT>` for `java-legible`; a
-   `.concepts.<name>` bucket for other profiles) and not in `engine`,
-   `infrastructure`, `api`, `syncs`, or ad hoc sibling packages.
+- Concept classes live under `APP_PACKAGE_ROOT` and in the **same package as
+   the approved red test** (which the green stage may not move), and not in
+   `engine`, `infrastructure`, `api`, `syncs`, or ad hoc sibling packages.
 
 ## Gate
 
