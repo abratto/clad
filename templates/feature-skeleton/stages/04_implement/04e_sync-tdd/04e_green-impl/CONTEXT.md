@@ -48,12 +48,11 @@ not redesign approved tests.
 4. Derive behavior from the approved upstream artefacts first: the
    Stage 03 sync specs, the `04b` SPEC slices, the `04c` expected
    authored action chain, and the approved red sync tests.
-5. Place sync code where the feature's `_config/package-and-layout.md`
-   directs: each approved sync becomes one implementation (a
-   `SyncRule.of(...)`). Some profiles bucket
-   syncs under `<APP_PACKAGE_ROOT>.syncs`; the canonical `java-legible`
-   profile uses a flat `<APP_PACKAGE_ROOT>` package (e.g.
-   `dev.legible.example.<feature>`). Do not place syncs in `engine`,
+5. Place sync code under `APP_PACKAGE_ROOT` where the feature's
+   `_config/package-and-layout.md` directs: each approved sync becomes one
+   implementation (a `SyncRule.of(...)`). The **approved red sync test's
+   package is authoritative** (it is immutable), so the wiring class must sit
+   where those tests reference it. Do not place syncs in `engine`,
    `infrastructure`, `concepts`, or ad hoc sibling packages.
 6. Keep sync logic declarative. Do not invent imperative coordinator
    classes, extra executable syncs, or branching business logic. A
