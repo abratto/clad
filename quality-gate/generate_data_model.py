@@ -277,8 +277,13 @@ def main() -> None:
     data_dir = cs.DATA_DIR(feature_root)
 
     # Concept sources: the feature's own proposals shadow the canonical corpus
-    # by concept name (M1 union resolution).
+    # by concept name (M1 union resolution). A per-UC artefact is produced only
+    # for the concepts THIS feature uses (its 01a map) — the union also holds
+    # every other concept in the corpus.
     specs = ap.concept_spec_paths(cs.concept_source_dirs(feature_root))
+    wanted = set(cs.feature_concept_names(feature_root))
+    if wanted:
+        specs = {n: p for n, p in specs.items() if n in wanted}
     if not specs:
         print("No concept directory found.")
         sys.exit(1)

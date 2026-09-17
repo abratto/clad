@@ -119,10 +119,16 @@ def main():
     passed = True
     total_actions_checked = 0
 
-    # Check: Every concept spec has a corresponding SPEC file
-    for concept in sorted(concept_actions):
-        if concept not in spec_actions:
-            print(f"FAIL  {concept}: concept spec exists but no {concept}.spec.md")
+    # Every SPEC must have a corresponding concept spec. The check runs
+    # SPEC-first, not concept-first: the concept sources are the feature's
+    # proposals *plus the whole canonical corpus*, so the union also holds
+    # concepts this feature does not use. That every concept the feature DOES
+    # use has a SPEC is enforced by the 04b file manifest (one SPEC per
+    # responsibility-map concept).
+    for concept in sorted(spec_actions):
+        if concept not in concept_actions:
+            print(f"FAIL  {concept}.spec.md exists but no concept spec was found "
+                  f"for `{concept}`")
             passed = False
             continue
 

@@ -128,6 +128,19 @@ def concept_source_dirs(feature_root: str) -> List[str]:
     return dirs
 
 
+def feature_concept_names(feature_root: str) -> List[str]:
+    """The concepts THIS feature uses, from its Stage-01a responsibility map.
+
+    Empty when the map is absent (legacy / pre-01a), so callers fall back to
+    the whole concept-source union. Feature-scoped per-UC artefacts (SPECs,
+    data models) must be produced only for these concepts — the union of
+    concept-source dirs also contains every OTHER concept in the corpus."""
+    resp = _resp_map(feature_root)
+    if not os.path.isfile(resp):
+        return []
+    return [c for c in sorted(ap.parse_responsibility_map(resp)) if c != "Web"]
+
+
 def _concept_dir_args(feature_root: str) -> List[str]:
     """`--concept-dir <d>` repeated once per concept-source dir, in precedence
     order. The consumer checks merge the dirs, earlier winning on a name clash."""

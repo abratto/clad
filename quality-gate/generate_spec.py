@@ -78,6 +78,9 @@ def main() -> None:
     # Concept sources: the feature's own proposals shadow the canonical corpus
     # by concept name (M1 union resolution).
     specs = ap.concept_spec_paths(cs.concept_source_dirs(feature_root))
+    wanted = set(cs.feature_concept_names(feature_root))
+    if wanted:
+        specs = {n: p for n, p in specs.items() if n in wanted}
     if not specs:
         print("No concept directory found.")
         sys.exit(1)
