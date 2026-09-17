@@ -2,11 +2,11 @@
 """
 verify_action_chain.py — Stage gate: action names flow consistently through
 the full artefact chain: responsibility map → chain table → concept spec →
-sync spec → dependency card → SPEC.
+sync spec → dependency card → contract.
 
 Why this exists:
   An action name can change in one artefact (e.g. a refactor in the chain table)
-  without being updated downstream (concept spec, sync, card, SPEC). This script
+  without being updated downstream (concept spec, sync, card, contract). This script
   cross-references every Concept/action pair across all 6 artefact types and
   reports any that appear in one but not another. The chain tables are the
   reference — every action they invoke must appear everywhere downstream.
@@ -22,7 +22,7 @@ Usage:
     --concept-dir <concept-output/> \
     --sync-dir <sync-output/> \
     --dep-dir <dep-output/> \
-    --spec-dir <spec-output/>
+    --contract-dir <spec-output/>
 """
 
 import argparse
@@ -53,8 +53,8 @@ def main():
                         help="Path to 03_syncs/output/ (spec files)")
     parser.add_argument("--dep-dir", required=True,
                         help="Path to 03a_dependency-review/output/")
-    parser.add_argument("--spec-dir", required=True,
-                        help="Path to 04b_spec/output/")
+    parser.add_argument("--contract-dir", required=True,
+                        help="Path to 04b_contract/output/")
     args = parser.parse_args()
 
     sources = {
@@ -63,7 +63,7 @@ def main():
         "concept specs":       parse_concept_actions_multi(args.concept_dir),
         "sync specs":          parse_sync_actions(args.sync_dir),
         "dep. cards":          parse_dep_card_actions(args.dep_dir),
-        "SPECs":               parse_spec_actions(args.spec_dir),
+        "contracts":               parse_spec_actions(args.contract_dir),
     }
 
     # Filter out Web actions for all sources (Web is bootstrap)

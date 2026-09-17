@@ -72,7 +72,7 @@ actions and one piece of state.
   (`RateLimit`, `Cache`, ...) coordinated by syncs.
 - **No transport docs as domain truth.** Generated OpenAPI / Swagger is
   a transport-facing description of the already-authored boundary, not a
-  substitute for the use case, concept, sync, chain, or SPEC artefacts.
+  substitute for the use case, concept, sync, chain, or contract artefacts.
 
 Transport-facing documentation such as OpenAPI is still useful and may
 be generated directly from the bootstrap boundary. Keep it narrow:

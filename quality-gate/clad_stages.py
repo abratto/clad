@@ -94,9 +94,9 @@ DEP_DIR = _dir("03a_dependency-review")
 DATA_DIR = _dir("03b_data-model")
 
 
-def _spec_dir(feature_root: str) -> str:
+def _contract_dir(feature_root: str) -> str:
     return os.path.join(
-        feature_root, "stages", "04_implement", "04b_spec", "output")
+        feature_root, "stages", "04_implement", "04b_contract", "output")
 
 
 def _concept_corpus_dir(feature_root: str) -> str:
@@ -132,13 +132,20 @@ def feature_concept_names(feature_root: str) -> List[str]:
     """The concepts THIS feature uses, from its Stage-01a responsibility map.
 
     Empty when the map is absent (legacy / pre-01a), so callers fall back to
-    the whole concept-source union. Feature-scoped per-UC artefacts (SPECs,
+    the whole concept-source union. Feature-scoped per-UC artefacts (contracts,
     data models) must be produced only for these concepts — the union of
     concept-source dirs also contains every OTHER concept in the corpus."""
     resp = _resp_map(feature_root)
     if not os.path.isfile(resp):
         return []
     return [c for c in sorted(ap.parse_responsibility_map(resp)) if c != "Web"]
+
+
+def feature_contract_concepts(feature_root: str) -> List[str]:
+    """Concepts this feature must produce a concept contract for (delegates to
+    `artifact_parsers`, the single source of truth shared with the 04b
+    manifest)."""
+    return ap.feature_contract_concepts(feature_root)
 
 
 def feature_model_concepts(feature_root: str) -> List[str]:
@@ -225,11 +232,11 @@ _DATA_MODEL = Check(
     requires=lambda r: [DATA_DIR(r)] + concept_source_dirs(r),
 )
 
-_SPEC_PARITY = Check(
-    name="spec_parity",
-    script="verify_spec_parity.py",
-    build_args=lambda r: _concept_dir_args(r) + ["--spec-dir", _spec_dir(r)],
-    requires=lambda r: concept_source_dirs(r) + [_spec_dir(r)],
+_CONTRACT_PARITY = Check(
+    name="contract_parity",
+    script="verify_contract_parity.py",
+    build_args=lambda r: _concept_dir_args(r) + ["--contract-dir", _contract_dir(r)],
+    requires=lambda r: concept_source_dirs(r) + [_contract_dir(r)],
 )
 
 _OUTCOME_ALIGNMENT = Check(
@@ -237,9 +244,9 @@ _OUTCOME_ALIGNMENT = Check(
     script="verify_outcome_alignment.py",
     build_args=lambda r: [
         "--chain-dir", CHAIN_DIR(r),
-        "--spec-dir", _spec_dir(r),
+        "--contract-dir", _contract_dir(r),
     ],
-    requires=lambda r: [CHAIN_DIR(r), _spec_dir(r)],
+    requires=lambda r: [CHAIN_DIR(r), _contract_dir(r)],
 )
 
 _ACTION_CHAIN = Check(
@@ -251,11 +258,11 @@ _ACTION_CHAIN = Check(
         *_concept_dir_args(r),
         "--sync-dir", SYNC_DIR(r),
         "--dep-dir", DEP_DIR(r),
-        "--spec-dir", _spec_dir(r),
+        "--contract-dir", _contract_dir(r),
     ],
     requires=lambda r: [
         _resp_map(r), CHAIN_DIR(r), *concept_source_dirs(r), SYNC_DIR(r),
-        DEP_DIR(r), _spec_dir(r),
+        DEP_DIR(r), _contract_dir(r),
     ],
 )
 
@@ -330,10 +337,10 @@ _FIELD_ASSERTIONS = Check(
     name="concept_field_assertions",
     script="verify_concept_field_assertions.py",
     build_args=lambda r: [
-        "--spec-dir", _spec_dir(r),
+        "--contract-dir", _contract_dir(r),
         "--test-source-root", _test_source_root(r),
     ],
-    requires=lambda r: [_spec_dir(r), _test_source_root(r)],
+    requires=lambda r: [_contract_dir(r), _test_source_root(r)],
 )
 
 _CUCUMBER_GREEN = Check(
@@ -500,16 +507,16 @@ _CHAIN_MANIFEST = _manifest_check("chain", "01b_chain-table", "01b")
 _CONCEPT_MANIFEST = _manifest_check("concept", "02_concepts", "02")
 _CARD_MANIFEST = _manifest_check("dependency", "03a_dependency-review", "03a")
 _DATA_MODEL_MANIFEST = _manifest_check("data_model", "03b_data-model", "03b")
-_SPEC_MANIFEST = _manifest_check("spec", "04_implement/04b_spec", "04b")
+_CONTRACT_MANIFEST = _manifest_check("spec", "04_implement/04b_contract", "04b")
 
 _PORT_SPEC_04B = Check(
     name="port_spec_contract",
     script="verify_port_spec_contract.py",
     build_args=lambda r: [
         "--port-spec", _port_spec(r),
-        "--spec-dir", _spec_dir(r),
+        "--contract-dir", _contract_dir(r),
     ],
-    requires=lambda r: [_port_spec(r), _spec_dir(r)],
+    requires=lambda r: [_port_spec(r), _contract_dir(r)],
 )
 
 _PORT_SPEC_04C = Check(
@@ -517,10 +524,10 @@ _PORT_SPEC_04C = Check(
     script="verify_port_spec_contract.py",
     build_args=lambda r: [
         "--port-spec", _port_spec(r),
-        "--spec-dir", _spec_dir(r),
+        "--contract-dir", _contract_dir(r),
         "--feature-dir", output_dir(r, "04_implement/04c_flow-tests"),
     ],
-    requires=lambda r: [_port_spec(r), _spec_dir(r)],
+    requires=lambda r: [_port_spec(r), _contract_dir(r)],
 )
 
 _CLOSE_EVIDENCE = Check(
@@ -591,14 +598,14 @@ _CONCEPT_TEST_DERIVATION = Check(
     name="concept_test_derivation",
     script="verify_concept_test_derivation.py",
     build_args=lambda r: [
-        "--spec-dir", _spec_dir(r),
+        "--contract-dir", _contract_dir(r),
         "--derivation", os.path.join(
             output_dir(r, "04_implement/04d_concept-tdd/04d_red-tests"),
             "concept-test-derivation.md"),
         "--test-source-root", _test_source_root(r),
     ],
     requires=lambda r: [
-        _spec_dir(r),
+        _contract_dir(r),
         os.path.join(output_dir(r, "04_implement/04d_concept-tdd/04d_red-tests"),
                      "concept-test-derivation.md"),
         _test_source_root(r),
@@ -708,9 +715,9 @@ STAGES: List[Stage] = [
           checks=[_DATA_MODEL, _DATA_MODEL_MANIFEST]),
     Stage("04a", "Storage mapping", "04_implement/04a_storage-mapping",
           checks=[_RELATIONAL_MAPPING]),
-    Stage("04b", "SPEC", "04_implement/04b_spec",
-          checks=[_SPEC_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN,
-                  _SPEC_MANIFEST, _PORT_SPEC_04B]),
+    Stage("04b", "Concept contract", "04_implement/04b_contract",
+          checks=[_CONTRACT_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN,
+                  _CONTRACT_MANIFEST, _PORT_SPEC_04B]),
     Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3,
           checks=[_FEATURE_IMPL_PATHS, _GHERKIN_DERIVATION, _COLLECTION_COVERAGE,
                   _STEP_DEF_PARITY,

@@ -1,6 +1,6 @@
 ---
 name: clad-quality-gate
-description: Run CLAD quality-gate verification scripts between stages. Use when self-auditing stage outputs against cross-stage consistency rules, file manifests, scenario coverage, SPEC parity, and derivation compliance.
+description: Run CLAD quality-gate verification scripts between stages. Use when self-auditing stage outputs against cross-stage consistency rules, file manifests, scenario coverage, contract parity, and derivation compliance.
 ---
 
 # CLAD Quality Gate
@@ -14,7 +14,7 @@ description: Run CLAD quality-gate verification scripts between stages. Use when
 Self-audit discipline: running the verification scripts between stages
 to catch defects before human gates. Scripts check file manifests, scenario
 coverage, outcome alignment, action chains, sync matrices, data models,
-SPEC parity, Gherkin presence, Gherkin derivation, and concept test
+contract parity, Gherkin presence, Gherkin derivation, and concept test
 derivation.
 
 ## Quick reference
@@ -32,14 +32,14 @@ with `python3`:
 |---|---|
 | `verify_file_manifest.py` | `output/` contains exactly expected files |
 | `verify_scenario_coverage.py` | goal→scenario→chain→sync coverage |
-| `verify_outcome_alignment.py` | chain-table outcomes match SPEC enums |
+| `verify_outcome_alignment.py` | chain-table outcomes match contract enums |
 | `verify_action_chain.py` | action name consistency across artefacts |
 | `verify_sync_matrix.py` | every sync has complete Sync Contract Matrix |
 | `verify_data_model.py` | CSDP structure compliance |
-| `verify_spec_parity.py` | action parity between concepts and SPECs |
+| `verify_contract_parity.py` | action parity between concepts and contracts |
 | `verify_feature_file_presence.py` | `.feature` file exists |
 | `verify_gherkin_derivation.py` | `.feature` derivation rules compliance |
-| `verify_concept_test_derivation.py` | SPEC outcome→test coverage |
+| `verify_concept_test_derivation.py` | contract outcome→test coverage |
 
 An aggregator script runs all applicable checks for the current stage
 in one invocation:

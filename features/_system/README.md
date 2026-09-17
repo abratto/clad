@@ -26,7 +26,8 @@ features/_system/
 ├── README.md                    ← this file
 ├── concepts/                    ← canonical concept corpus (one file per concept)
 │   ├── <Name>.concept.md        ← full anatomy; provenance via `introduced-by`
-│   └── <Name>.data-model.md     ← the concept's canonical CSDP data model
+│   ├── <Name>.data-model.md     ← the concept's canonical CSDP data model
+│   └── <Name>.contract.md       ← the concept's canonical compilation contract
 ├── concepts-catalog.md          ← GENERATED index (do not hand-edit)
 ├── concept-dependence.md        ← reviewed app-level extrinsic dependence graph
 └── stages/

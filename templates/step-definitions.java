@@ -1,7 +1,7 @@
 // Template for Stage 04c step-definition skeletons (outer-red).
 // Derived from: ../01b_chain-table/output/<scenario>-chain.md
 //               ../02_concepts/output/<Name>.concept.md
-//               ../04b_spec/output/<Name>.spec.md
+//               ../04b_contract/output/<Name>.contract.md
 //
 // Each Gherkin Given/When/Then step derives from a use-case precondition, trigger,
 // or postcondition. The method body invokes concept actions via the sync engine.
@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Derived from:
  *   ../01_usecase/output/usecase.md  — scenario structure
  *   ../01b_chain-table/output/       — action chain per scenario
- *   ../04b_spec/output/              — SPEC action signatures and outcome enums
+ *   ../04b_contract/output/              — contract action signatures and outcome enums
  *
  * One step-definition method per chain-table row. The method body
  * invokes the target concept action via the sync engine (not directly)
@@ -45,11 +45,11 @@ import static org.junit.jupiter.api.Assertions.*;
 public class <FeatureName>StepDefinitions {
 
     // -----------------------------------------------------------------------
-    // Helpers — derived from 04b_spec/output/<Name>.spec.md outcome enums
+    // Helpers — derived from 04b_contract/output/<Name>.contract.md outcome enums
     // -----------------------------------------------------------------------
 
     // Outcome enum constants (SCREAMING_SNAKE_CASE)
-    // Copied verbatim from 04b_spec/output/ — do not rename or recase.
+    // Copied verbatim from 04b_contract/output/ — do not rename or recase.
 
     // -----------------------------------------------------------------------
     // Background

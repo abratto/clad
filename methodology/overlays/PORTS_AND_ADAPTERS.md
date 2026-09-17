@@ -79,7 +79,7 @@ adapter behind an existing concept or engine port.
 | Primary or secondary adapter implementation changes while declared contracts and observable semantics stay unchanged | Maintenance route in [`../core/ITERATIVE_CHANGES.md`](../core/ITERATIVE_CHANGES.md) |
 | New inbound transport with the same use-case contract | Stage 00 port specification, then 04b/04c boundary tests |
 | New outbound capability that creates business responsibility or state | Re-enter at 01a responsibility mapping |
-| Port operation, visible response, action outcome, timeout interpretation, retry/idempotency, ordering, or delivery guarantee changes | Re-enter at the earliest owning concept or sync stage; update downstream SPEC and tests |
+| Port operation, visible response, action outcome, timeout interpretation, retry/idempotency, ordering, or delivery guarantee changes | Re-enter at the earliest owning concept or sync stage; update downstream contract and tests |
 | Serialization, SDK, credential, provider endpoint, or transport implementation changes that preserve the declared port contract | Maintenance route plus adapter-boundary tests |
 
 When a change is both a provider replacement and an observable semantic change,

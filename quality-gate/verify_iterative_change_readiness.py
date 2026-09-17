@@ -41,7 +41,7 @@ IMPLEMENTATION_PATTERN = re.compile(r"(^|/)(concepts|syncs)/.*\.(java|kt|scala|t
 REQUIRED_MATRIX_ROWS = (
     "Concept(s)",
     "Sync(s)",
-    "SPEC slices",
+    "Contract slices",
     "Flow tests",
     "Concept tests",
     "Sync tests",

@@ -32,7 +32,7 @@ def main():
                         help="Path to the output/ directory to inspect")
     parser.add_argument("--expected", required=True,
                         help="Comma-separated list of expected filenames "
-                             "(e.g. 'usecase.md' or 'User.spec.md,Session.spec.md')")
+                             "(e.g. 'usecase.md' or 'User.contract.md,Session.contract.md')")
     args = parser.parse_args()
 
     out_dir = args.dir

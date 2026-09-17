@@ -181,9 +181,9 @@ class ParityConstantsSiblingLayoutTests(unittest.TestCase):
             sink_sync = root / "java/src/main/java/com/example/syncs"
             sink_sync.mkdir(parents=True)
             spec_name = "WebRespondForWidgetWhenWebRequestRouted"
-            spec_dir = root / "features/UC-01-widget/stages/03_syncs/output"
-            spec_dir.mkdir(parents=True)
-            write(spec_dir / f"{spec_name}.sync.md",
+            contract_dir = root / "features/UC-01-widget/stages/03_syncs/output"
+            contract_dir.mkdir(parents=True)
+            write(contract_dir / f"{spec_name}.sync.md",
                   "sync " + spec_name + "\n\n## Rule\n\nwhen {\n"
                   "    Web/request: [ x: ?x ] => [ Routed ]\n}\nthen {\n"
                   "    Inventory/lend: [ x: ?x ]\n}\n")
@@ -203,7 +203,7 @@ class ParityConstantsSiblingLayoutTests(unittest.TestCase):
                   "    public static final String NAME = \"Inventory\";\n"
                   "    public static final String LEND = \"lend\";\n}\n")
             result = run(str(QG / "verify_sync_implementation_parity.py"),
-                         "--sync-dir", str(spec_dir),
+                         "--sync-dir", str(contract_dir),
                          "--sync-impl-dir", str(sink_sync),
                          "--strict-trigger")
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

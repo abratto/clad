@@ -141,11 +141,11 @@ control. CLAD is the missing piece:
   action chain consistency ([`verify_action_chain.py`](../quality-gate/verify_action_chain.py)),
   sync contract matrix completeness ([`verify_sync_matrix.py`](../quality-gate/verify_sync_matrix.py)),
   CSDP data-model structure ([`verify_data_model.py`](../quality-gate/verify_data_model.py)),
-  and SPEC parity ([`verify_spec_parity.py`](../quality-gate/verify_spec_parity.py)).
+  and contract parity ([`verify_contract_parity.py`](../quality-gate/verify_contract_parity.py)).
   See [`methodology/implementation/QUALITY_GATE.md`](../methodology/implementation/QUALITY_GATE.md).
 - **Outer-loop BDD tests (Cucumber/Gherkin).** Stage 04c
   derives executable Gherkin `.feature` files and step-definition
-  skeletons from the use case, chain tables, and SPECs, replacing
+  skeletons from the use case, chain tables, and contracts, replacing
   hand-written markdown flow specs with executable specifications
   that go green at the end of 04e. See
   [methodology/architecture/GHERKIN_INTEGRATION.md](../methodology/architecture/GHERKIN_INTEGRATION.md).

@@ -2,14 +2,14 @@
 """
 verify_concept_field_assertions.py - Enforce R14/R16 for Java concept tests.
 
-For each Java concept test class that corresponds to a SPEC action, each
+For each Java concept test class that corresponds to a contract action, each
 @Test method that asserts an outcome must also assert every required field
 from that action's flow-token shape. Optional fields marked with '?' in the
-SPEC are not required for every outcome.
+contract are not required for every outcome.
 
 Usage:
   python3 verify_concept_field_assertions.py \
-    --spec-dir <04b_spec/output/> \
+    --contract-dir <04b_contract/output/> \
     --test-source-root <APP_TEST_SOURCE_ROOT>
 """
 
@@ -36,13 +36,13 @@ def read(path):
         return handle.read()
 
 
-def parse_required_fields(spec_dir):
+def parse_required_fields(contract_dir):
     result = {}
-    for fname in sorted(os.listdir(spec_dir)) if os.path.isdir(spec_dir) else []:
-        if not fname.endswith(".spec.md"):
+    for fname in sorted(os.listdir(contract_dir)) if os.path.isdir(contract_dir) else []:
+        if not fname.endswith(".contract.md"):
             continue
-        concept = fname[:-len(".spec.md")]
-        text = read(os.path.join(spec_dir, fname))
+        concept = fname[:-len(".contract.md")]
+        text = read(os.path.join(contract_dir, fname))
         current_action = None
         for line in text.splitlines():
             action_match = ACTION_RE.match(line.strip())
@@ -202,20 +202,20 @@ def main():
     parser = argparse.ArgumentParser(
         description="Verify Java concept tests assert required completion fields"
     )
-    parser.add_argument("--spec-dir", required=True)
+    parser.add_argument("--contract-dir", required=True)
     parser.add_argument("--test-source-root", required=True)
     args = parser.parse_args()
 
-    if not os.path.isdir(args.spec_dir):
-        print(f"FAIL  SPEC directory not found: {args.spec_dir}")
+    if not os.path.isdir(args.contract_dir):
+        print(f"FAIL  contract directory not found: {args.contract_dir}")
         return 1
     if not os.path.isdir(args.test_source_root):
         print(f"FAIL  test source root not found: {args.test_source_root}")
         return 1
 
-    required_by_action = parse_required_fields(args.spec_dir)
+    required_by_action = parse_required_fields(args.contract_dir)
     if not required_by_action:
-        print("WARN  no required flow-token fields parsed from SPECs")
+        print("WARN  no required flow-token fields parsed from contracts")
         return 0
 
     checked, failures = scan_tests(args.test_source_root, required_by_action)

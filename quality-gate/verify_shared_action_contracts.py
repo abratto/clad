@@ -61,16 +61,16 @@ def _param_names(params: str):
     return names
 
 
-def parse_dir(spec_dir: str, label: str, contracts):
+def parse_dir(concept_dir: str, label: str, contracts):
     """Fold every `*.concept.md` in one directory into `contracts` under
     `label`: (concept, action) -> {label: {'params': set, 'outcomes': set}}."""
-    if not os.path.isdir(spec_dir):
+    if not os.path.isdir(concept_dir):
         return
-    for fname in sorted(os.listdir(spec_dir)):
+    for fname in sorted(os.listdir(concept_dir)):
         if not CONCEPT_FILE.match(fname):
             continue
         concept = CONCEPT_FILE.match(fname).group(1)
-        with open(os.path.join(spec_dir, fname), encoding="utf-8") as fh:
+        with open(os.path.join(concept_dir, fname), encoding="utf-8") as fh:
             text = fh.read()
         # An action may declare several signature blocks (modes) — e.g.
         # `Profiling.view` keyed by userId and by username. Union the param sets
@@ -105,9 +105,9 @@ def parse_specs(features_dir: str, concepts_dir: str):
     for feature in sorted(os.listdir(features_dir)):
         if feature.startswith("UC-00"):
             continue
-        spec_dir = os.path.join(features_dir, feature, "stages", "02_concepts",
+        concept_dir = os.path.join(features_dir, feature, "stages", "02_concepts",
                                 "output")
-        parse_dir(spec_dir, feature, contracts)
+        parse_dir(concept_dir, feature, contracts)
     return contracts
 
 

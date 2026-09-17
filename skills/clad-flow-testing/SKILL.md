@@ -20,8 +20,8 @@ Stage 04c `Inputs` names `TDD.md`, the `.feature`/step-def/flow templates, `FLOW
 ## Process
 
 1. Derive one Gherkin `.feature` per use-case scenario from
-   `01_usecase` + `01b_chain-table` + `04b_spec`.
-2. Derive step-definition skeletons from chain-table rows and SPEC
+   `01_usecase` + `01b_chain-table` + `04b_contract`.
+2. Derive step-definition skeletons from chain-table rows and contract
    outcome enums.
 3. If `port-spec.md` exists, add at least one `@contract` scenario per
    HTTP endpoint. Assert exact JSON paths, constrained field types, and
@@ -34,7 +34,7 @@ Stage 04c `Inputs` names `TDD.md`, the `.feature`/step-def/flow templates, `FLOW
 
 - `.feature` files are derived views — regenerate when the use case
   changes, do not hand-edit.
-- `04b_spec` must exist before `04c` begins.
+- `04b_contract` must exist before `04c` begins.
 - Markdown alone does not complete the stage; stub flow tests must exist.
 - When a port spec exists, `@contract` scenarios are required and must
    use exact JSON path/type/envelope assertions rather than string-contains.

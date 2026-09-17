@@ -76,7 +76,7 @@ see [`TRACEABILITY.md`](TRACEABILITY.md).
    │                                                  │              │
    │  04a_storage-mapping/  data model → profile      │              │
    │                       storage mapping            │              │
-   │  04b_spec/   concept spec → SPEC slice           │              │
+   │  04b_contract/   concept spec → contract slice           │              │
    │  04c_flow-tests/   one outer-red flow test per   │              │
    │                    scenario  ────────────────────┼──┐           │
        │  04d_concept-tdd/  container -> 04d_red-tests,   │  │           │
@@ -148,18 +148,19 @@ consumer need that?**
 | `<Name>.concept.md` | 02 | 03 | Action signatures + outcome enums | `when` and `then` clauses reference these. |
 | `<Name>.concept.md` | 02 | 03a | Action existence + state field declarations | Cards cite action names; concept-state read rows cite state fields. |
 | `<Name>.concept.md` | 02 | 04a | `state` section | The schema is derived from this; one named region per concept (R2). |
-| `<Name>.concept.md` | 02 | 04b | Action signatures + outcome enums + flow-token shape | Mechanically extracted into the SPEC slice. |
+| `<Name>.concept.md` | 02 | 04b | Action signatures + outcome enums + flow-token shape | Mechanically extracted into the contract slice. |
 | `<Name>.concept.md` | 02 | 04d | Operational principle + per-action effect on state | The TDD red tests are derived from these. |
 | `<name>.sync.md` | 03 | 03a | Every `then` call + every `where` clause | Tabulated per concept (cards), with internal-flow vs concept-state source called out. |
 | `<name>.sync.md` | 03 | 04c | Expected coordination chain | Flow test's expected token sequence comes from here. |
 | `<name>.sync.md` | 03 | 04e | `when … where … then` | One inner red→green TDD pass per sync. |
 | `<name>.sync.md` | 03 | 05 | Authorisation surface | The verifier checks every observed call is authorised by either a sync `then` or a use-case scenario trigger. |
 | `<concept>-card.md` | 03a | 03b | concept-state read fields owned by this concept | Drives conceptual data-model coverage (the field must be exposed in this concept's region). |
-| `<concept>-card.md` | 03a | 04b | Full inbound contract for this concept | The SPEC author sees every call this concept will receive. |
+| `<concept>-card.md` | 03a | 04b | Full inbound contract for this concept | The contract author sees every call this concept will receive. |
 | `<concept>-card.md` | 03a | 04d | Inbound action surface | The concept TDD knows what its boundary actually is. |
 | `<concept>-card.md` | 03a | 04e | Set of concepts this sync invokes | The sync TDD knows which concepts to double. |
 | `pattern-d-summary.md` | 03a | 03b | Single cross-cutting list of every concept-state read | One conceptual data-model checklist for the whole feature. |
 | `<concept>-card.md` | 03a | concept-dependence review | Coordination evidence | Evidence for a possible dependence edge; the edge itself is reviewed judgment, recorded in the graph. |
+| `concepts/<Name>.contract.md` | `_system` corpus | 04b, 04c, 04d, 04e | Canonical compilation contract — action signatures, outcome enums, flow-token shape | Promoted beside the spec; an extending feature moves it, a reusing feature binds it. |
 | `concepts/<Name>.data-model.md` | `_system` corpus | 03b, 04a | Canonical conceptual data model | Promoted beside the spec; a reused concept binds it rather than re-deriving a copy. |
 | `concepts/<Name>.concept.md` | `_system` corpus | 01a, 02, 03b, 04b, 04d | Canonical concept anatomy | Resolved for a UC as its own proposals shadowing the corpus (`CONCEPT_DIR` union); promoted on Gate 2 via `./clad promote-concepts`. |
 | `concepts-catalog.md` | `generate_concepts_catalog.py` | 01a | Concept/action index | Generated; answers "does the action already exist?" without opening the full spec. |
@@ -167,7 +168,7 @@ consumer need that?**
 | `shared-triggers.md` | `generate_shared_triggers.py` | 03, 03a | Cross-UC triggers | Generated advisory view of the same `Concept.action` fired by another UC. |
 | `<Name>.data-model.md` | 03b | 04a | Approved fact types and constraints | The storage mapping must realize this model without drift. |
 | `<Name>.storage.md` (or `_NOT_APPLICABLE.md`) | 04a | 04d | Storage shape for the test fixture | The concept TDD builds against this mapping when persistence exists. |
-| `<Name>.spec.md` | 04b | 04c, 04d, 04e | Action signatures the test code compiles against | All inner-loop and outer-loop tests reference SPECs, not prose. |
+| `<Name>.contract.md` | 04b | 04c, 04d, 04e | Action signatures the test code compiles against | All inner-loop and outer-loop tests reference contracts, not prose. |
 | `<feature>.feature` + `<Feature>StepDefinitions.java` | 04c | 04e | The flow test that must go green | When the last sync goes green, the flow test must too. |
 | `<feature>.feature` + runner | 04c | 05 | Expected runtime token chain + Gherkin scenarios | The back-trace evidence comes from running this. |
 | `concept-test-derivation.md` | 04d | 04e | What concept actions are already-green | The sync TDD relies on these as its substrate. |

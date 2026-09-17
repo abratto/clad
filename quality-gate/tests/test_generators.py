@@ -7,7 +7,7 @@ The core assertion types:
   1. `generate_syncs` over a fixture feature reproduces the canonical sync-name
      set (stem equality) and the emitted *.sync.md files pass
      verify_sync_matrix / verify_sync_cycle_graph / verify_sync_overlap.
-  2. `generate_spec` excludes the bootstrap Web concept and emits one SPEC per
+  2. `generate_contract` excludes the bootstrap Web concept and emits one contract per
      business concept.
   3. `generate_sync_cards` emits one card per participating concept and a
      pattern-d-summary.
@@ -24,7 +24,7 @@ import unittest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 QG = REPO_ROOT / "quality-gate"
 GEN_SYNCS = QG / "generate_syncs.py"
-GEN_SPEC = QG / "generate_spec.py"
+GEN_CONTRACT = QG / "generate_contract.py"
 GEN_CARDS = QG / "generate_sync_cards.py"
 GEN_DATA = QG / "generate_data_model.py"
 GEN_FEATURE = QG / "generate_feature_files.py"
@@ -32,7 +32,7 @@ VERIFY_MATRIX = QG / "verify_sync_matrix.py"
 VERIFY_CYCLE = QG / "verify_sync_cycle_graph.py"
 VERIFY_OVERLAP = QG / "verify_sync_overlap.py"
 VERIFY_DATA_MODEL = QG / "verify_data_model.py"
-VERIFY_SPEC_PARITY = QG / "verify_spec_parity.py"
+VERIFY_CONTRACT_PARITY = QG / "verify_contract_parity.py"
 VERIFY_OUTCOME_ALIGNMENT = QG / "verify_outcome_alignment.py"
 VERIFY_ACTION_CHAIN = QG / "verify_action_chain.py"
 
@@ -96,17 +96,17 @@ class GeneratorPropertyTests(unittest.TestCase):
                 r.returncode, 0,
                 f"{script.name} failed post-generation:\n{r.stdout}{r.stderr}")
 
-    def test_generate_spec_excludes_bootstrap_and_covers_concepts(self):
-        spec_dir = self.feature / "stages" / "04_implement" / "04b_spec" / "output"
-        for f in spec_dir.glob("*.spec.md"):
+    def test_generate_contract_excludes_bootstrap_and_covers_concepts(self):
+        contract_dir = self.feature / "stages" / "04_implement" / "04b_contract" / "output"
+        for f in contract_dir.glob("*.contract.md"):
             f.unlink()
-        r = run(GEN_SPEC, "--feature", self.feature, "--write")
+        r = run(GEN_CONTRACT, "--feature", self.feature, "--write")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        specs = sorted(f.name.replace(".spec.md", "") for f in spec_dir.glob("*.spec.md"))
+        specs = sorted(f.name.replace(".contract.md", "") for f in contract_dir.glob("*.contract.md"))
         self.assertEqual(specs, ["PasswordAuth", "Session", "UserNaming"])
         self.assertNotIn("Web", specs)
         # Outcome enums must be SCREAMING_SNAKE_CASE (normalized), not naive .upper().
-        pa = (spec_dir / "PasswordAuth.spec.md").read_text(encoding="utf-8")
+        pa = (contract_dir / "PasswordAuth.contract.md").read_text(encoding="utf-8")
         self.assertIn("`BAD_PASSWORD`", pa)
         self.assertNotIn("`BADPASSWORD`", pa)
 
@@ -201,7 +201,7 @@ class GeneratorPropertyTests(unittest.TestCase):
             (GEN_SYNCS, {}),
             (GEN_CARDS, {}),
             (GEN_DATA, {}),
-            (GEN_SPEC, {}),
+            (GEN_CONTRACT, {}),
             (GEN_FEATURE, {}),
         ]:
             r = run(gen, "--feature", f, "--write")
@@ -213,17 +213,17 @@ class GeneratorPropertyTests(unittest.TestCase):
             (VERIFY_OVERLAP, "--sync-dir", f / "stages/03_syncs/output"),
             (VERIFY_DATA_MODEL, "--data-dir", f / "stages/03b_data-model/output",
              "--concept-dir", f / "stages/02_concepts/output"),
-            (VERIFY_SPEC_PARITY, "--concept-dir", f / "stages/02_concepts/output",
-             "--spec-dir", f / "stages/04_implement/04b_spec/output"),
+            (VERIFY_CONTRACT_PARITY, "--concept-dir", f / "stages/02_concepts/output",
+             "--contract-dir", f / "stages/04_implement/04b_contract/output"),
             (VERIFY_OUTCOME_ALIGNMENT, "--chain-dir", f / "stages/01b_chain-table/output",
-             "--spec-dir", f / "stages/04_implement/04b_spec/output"),
+             "--contract-dir", f / "stages/04_implement/04b_contract/output"),
             (VERIFY_ACTION_CHAIN,
              "--resp-map", f / "stages/01a_responsibility-map/output/responsibility-map.md",
              "--chain-dir", f / "stages/01b_chain-table/output",
              "--concept-dir", f / "stages/02_concepts/output",
              "--sync-dir", f / "stages/03_syncs/output",
              "--dep-dir", f / "stages/03a_dependency-review/output",
-             "--spec-dir", f / "stages/04_implement/04b_spec/output"),
+             "--contract-dir", f / "stages/04_implement/04b_contract/output"),
         ]
         for script, *args in checks:
             r = run(script, *args)

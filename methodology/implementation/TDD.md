@@ -50,7 +50,7 @@ Stage 04 is not complete because the markdown derivation files exist.
 Those files are evidence and review aids. Completion requires the
 sub-stage's executable side effects too:
 
-- `04b`: SPEC slices that later tests compile against.
+- `04b`: Contract slices that later tests compile against.
 - `04c`: per-scenario stub flow tests plus executed compilation proof.
 - `04d`: executable red concept tests, then concept implementation that
    turns them green.
@@ -84,7 +84,7 @@ test cannot pass the gate.
 
 The executable order is `04b -> 04c -> 04d-red -> 04d-green -> 04e-red
 -> 04e-green` (with optional `04a` before them). `04b` is not optional
-when later stages consume SPECs.
+when later stages consume contracts.
 
 Do not collapse these gates:
 
@@ -93,7 +93,7 @@ Do not collapse these gates:
    the Gherkin `.feature` file IS the executable use case.
 - `04d-red`, `04d-green`, `04e-red`, and `04e-green` auto-advance because
    their tests are mechanically derived from already-approved artefacts (04c
-   flow tests, 04b SPECs, chain tables, sync specs). The quality-gate scripts
+   flow tests, 04b contracts, chain tables, sync specs). The quality-gate scripts
    serve as the automated gate between red and green phases.
 - The flow tests enabled at 04e-green must all pass before Stage 05.
 
@@ -123,7 +123,7 @@ upstream stage.
 The red phase is not complete until it produces both:
 
 - a derivation map showing every test's source in approved outer tests
-   and/or SPEC rows
+   and/or contract rows
 - a red-to-green handoff bundle naming the exact files, symbols, and
    command the implementor model must pick up
 
@@ -144,8 +144,8 @@ For each concept action that appears in the flow test's token chain:
 
 1. **Read the flow token entry** for that action. The outcome value (e.g.
    `VALID`, `ACCOUNT_EXISTS`) is one test case.
-2. **Read the SPEC slice** (`04b_spec/output/`) for that concept. Every
-   outcome listed in the SPEC is a required test case, whether or not it
+2. **Read the contract slice** (`04b_contract/output/`) for that concept. Every
+   outcome listed in the contract is a required test case, whether or not it
    appears in the happy-path flow test.
 3. **Ask: what state must exist for this outcome to be reachable?**
    - If none → `preconditions: none`

@@ -69,7 +69,7 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
     def _fixture(self, root, body):
         spec = root / "spec"
         tests = root / "tests/dev/legible/example/widget"
-        write(spec / "Widget.spec.md",
+        write(spec / "Widget.contract.md",
               "# Widget\n\n### `check(userId)`\n"
               "- **Flow token:** `Widget.check { outcome, widgetId }`\n")
         write(tests / "WidgetCheckTest.java",
@@ -85,7 +85,7 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
                 Path(temporary),
                 'var r = c.check(u); assertEquals("OK", r.readOutcome());')
             result = run(str(QG / "verify_concept_field_assertions.py"),
-                         "--spec-dir", str(spec),
+                         "--contract-dir", str(spec),
                          "--test-source-root", str(tests))
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("widgetId", result.stdout)
@@ -97,7 +97,7 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
                 'var r = c.check(u); assertEquals("OK", r.readOutcome()); '
                 'assertEquals("w1", r.get("widgetId"));')
             result = run(str(QG / "verify_concept_field_assertions.py"),
-                         "--spec-dir", str(spec),
+                         "--contract-dir", str(spec),
                          "--test-source-root", str(tests))
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
@@ -110,7 +110,7 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
             root = Path(temporary)
             spec = root / "spec"
             tests = root / "tests/dev/legible/example/widget"
-            write(spec / "Widget.spec.md",
+            write(spec / "Widget.contract.md",
                   "# Widget\n\n### `view(userId)`\n"
                   "- **Flow token:** `Widget.view { outcome, userId, email }`\n\n"
                   "### `view(username)`\n"
@@ -124,7 +124,7 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
                   "assertEquals(\"a@b\", r.get(\"email\")); }\n"
                   "}\n")
             result = run(str(QG / "verify_concept_field_assertions.py"),
-                         "--spec-dir", str(spec),
+                         "--contract-dir", str(spec),
                          "--test-source-root", str(tests))
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
@@ -133,7 +133,7 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
             root = Path(temporary)
             spec = root / "spec"
             tests = root / "tests/dev/legible/example/widget"
-            write(spec / "Widget.spec.md",
+            write(spec / "Widget.contract.md",
                   "# Widget\n\n### `view(userId)`\n"
                   "- **Flow token:** `Widget.view { outcome, userId, email }`\n\n"
                   "### `view(username)`\n"
@@ -145,7 +145,7 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
                   "assertEquals(\"Viewed\", r.readOutcome()); }\n"
                   "}\n")
             result = run(str(QG / "verify_concept_field_assertions.py"),
-                         "--spec-dir", str(spec),
+                         "--contract-dir", str(spec),
                          "--test-source-root", str(tests))
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("userId", result.stdout)

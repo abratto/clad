@@ -17,7 +17,7 @@ two things that play the same structural role.
 | Object-oriented concept | WYSIWID equivalent | Where it lives |
 |---|---|---|
 | Class | Concept | `*.concept.md`, then `<Name>Concept.java` (or profile equivalent) |
-| Method signature | Action signature (name, args, outcome enum) | Concept spec `actions:` section, then `<Name>.spec.md` |
+| Method signature | Action signature (name, args, outcome enum) | Concept spec `actions:` section, then `<Name>.contract.md` |
 | Field / instance variable | State field in concept's named region | Concept spec `state:` section, then data model (`<Name>.data-model.md`), then storage mapping (`<Name>.storage.md`) |
 | Encapsulation (`private`) | One named region per concept (R2); no other concept reads it | Hard rule R2; per-concept named graph (Java/Jena) or schema |
 | Method call between objects | Sync: `then: OtherConcept.action(...)` | One `*.sync.md` per coordination link |
@@ -27,7 +27,7 @@ two things that play the same structural role.
 | Hard-coded literal in a caller | internal flow data — sync constant | `where:` clause |
 | Sequence diagram | Chain table (Stage 01b) — table form is canonical, Mermaid is derived | `<scenario>-chain.md` |
 | CRC card | Per-concept coordination review card (Stage 03a) | `<concept>-card.md` |
-| `interface` / public API | Concept's `actions:` section + outcome enums | Concept spec; `<Name>.spec.md` |
+| `interface` / public API | Concept's `actions:` section + outcome enums | Concept spec; `<Name>.contract.md` |
 | Dependency injection of a service | A sync that wires `Web.request → SomeService.action` | `*.sync.md` |
 | Observer / event bus | The action log (every action emits a flow-token completion event; syncs subscribe via `when:`) | Built into the runtime; not user code |
 | Polymorphism | Multiple syncs matching the same `when:` pattern (each fires independently) | `*.sync.md` files; commutativity required (see SYNCHRONIZATIONS.md) |
@@ -77,7 +77,7 @@ artefact "lives" in CLAD, this is the full map:
 | CRC card (responsibilities + collaborators) | Coordination review card | 03a | output |
 | Conceptual schema | Data model file | 03b | output |
 | Schema / storage realization | Storage mapping file | 04a | output |
-| Public interface (`.h`, `.d.ts`, etc.) | SPEC slice | 04b | output |
+| Public interface (`.h`, `.d.ts`, etc.) | contract slice | 04b | output |
 | Integration test (HTTP-level) | Flow test | 04c | output |
 | Unit test | Concept test | 04d | output |
 | Wiring test (does the framework call the right method?) | Sync test | 04e | output |

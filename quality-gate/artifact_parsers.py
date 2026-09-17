@@ -9,7 +9,7 @@ Single source of truth for reading the canonical artefact formats:
   - concept specs      (02)   -> dict concept -> ConceptSpec
   - sync specs         (03)   -> list of SyncSpec
   - dependency cards   (03a)  -> dict concept -> set of actions
-  - SPECs              (04b)  -> dict (concept, action) -> outcomes
+  - contracts              (04b)  -> dict (concept, action) -> outcomes
   - use case           (01)   -> set of scenario names
   - goals              (00)   -> set of in-scope goal phrases
 
@@ -664,18 +664,18 @@ def parse_dep_card_actions(dep_dir: str) -> Set[str]:
 
 
 # --------------------------------------------------------------------------
-# SPECs (Stage 04b)
+# contracts (Stage 04b)
 # --------------------------------------------------------------------------
 
-def parse_spec_actions(spec_dir: str) -> Set[str]:
+def parse_spec_actions(contract_dir: str) -> Set[str]:
     actions: Set[str] = set()
-    if not os.path.isdir(spec_dir):
+    if not os.path.isdir(contract_dir):
         return actions
-    for fname in sorted(os.listdir(spec_dir)):
-        if not fname.endswith(".spec.md"):
+    for fname in sorted(os.listdir(contract_dir)):
+        if not fname.endswith(".contract.md"):
             continue
-        concept = fname.replace(".spec.md", "")
-        with open(os.path.join(spec_dir, fname)) as f:
+        concept = fname.replace(".contract.md", "")
+        with open(os.path.join(contract_dir, fname)) as f:
             for line in f:
                 m = re.match(r"^###\s+`(\w+)\(", line.strip())
                 if m:
@@ -683,16 +683,16 @@ def parse_spec_actions(spec_dir: str) -> Set[str]:
     return actions
 
 
-def parse_spec_outcomes(spec_dir: str) -> Dict[Tuple[str, str], Set[str]]:
-    """{(concept, action): set(outcome strings)} from SPEC files."""
+def parse_spec_outcomes(contract_dir: str) -> Dict[Tuple[str, str], Set[str]]:
+    """{(concept, action): set(outcome strings)} from contract files."""
     specs: Dict[Tuple[str, str], Set[str]] = {}
-    if not os.path.isdir(spec_dir):
+    if not os.path.isdir(contract_dir):
         return specs
-    for fname in sorted(os.listdir(spec_dir)):
-        if not fname.endswith(".spec.md"):
+    for fname in sorted(os.listdir(contract_dir)):
+        if not fname.endswith(".contract.md"):
             continue
-        concept = fname.replace(".spec.md", "")
-        path = os.path.join(spec_dir, fname)
+        concept = fname.replace(".contract.md", "")
+        path = os.path.join(contract_dir, fname)
         with open(path) as f:
             content = f.read()
         action = None
@@ -948,6 +948,32 @@ def _state_changed(feature_root: str, concept: str, corpus: str) -> bool:
             != parse_concept(canonical).state_lines)
 
 
+def feature_contract_concepts(feature_root: str) -> List[str]:
+    """Concepts this feature must produce a **concept contract** for.
+
+    The canonical contract lives with the canonical concept
+    (`features/_system/concepts/<Name>.contract.md`), so a feature derives one
+    only when it introduces or EXTENDS a concept — an extend adds or changes an
+    action, so the contract moves with it. A `reused` concept binds the
+    canonical contract; a legacy map (no `Origin`) keeps one contract per
+    concept.
+
+    Single source of truth for the 04b file manifest and `generate_contract`.
+    """
+    resp = os.path.join(feature_root, "stages", "01a_responsibility-map",
+                        "output", "responsibility-map.md")
+    if not os.path.isfile(resp):
+        return []
+    out: List[str] = []
+    for concept, entry in sorted(parse_responsibility_map(resp).items()):
+        if concept == "Web":
+            continue
+        origin = (entry.origin or "").strip().lower()
+        if not origin or origin.startswith("new") or origin.startswith("extend"):
+            out.append(concept)
+    return out
+
+
 def expected_stage_outputs(feature_root: str) -> Dict[str, List[str]]:
     """Map canonical stage id -> expected output filenames, derived from the
     feature's approved upstream artefacts (not from the target directory).
@@ -988,7 +1014,7 @@ def expected_stage_outputs(feature_root: str) -> Dict[str, List[str]]:
     model_concepts = feature_model_concepts(feature_root)
     if model_concepts:
         out["03b"] = [c + ".data-model.md" for c in model_concepts]
-        out["04b"] = [c + ".spec.md" for c in concepts]
+        out["04b"] = [c + ".contract.md" for c in feature_contract_concepts(feature_root)]
 
     sync_specs = parse_syncs(_dir("03_syncs")) if os.path.isdir(_dir("03_syncs")) else []
     if sync_specs:

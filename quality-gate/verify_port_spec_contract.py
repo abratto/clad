@@ -11,7 +11,7 @@ If no port-spec.md exists, this check skips.
 Usage:
   python3 verify_port_spec_contract.py \
     --port-spec <features/_system/stages/00_actor-goal/output/port-spec.md> \
-    --spec-dir <04b_spec/output/> \
+    --contract-dir <04b_contract/output/> \
     --feature-dir <04c_flow-tests/output/>
 """
 
@@ -143,18 +143,18 @@ def verify_port_spec(path):
     return failures, [{"Direction": "inbound"}]
 
 
-def verify_specs(spec_dir, require_response_shapes, require_all_specs):
+def verify_specs(contract_dir, require_response_shapes, require_all_specs):
     failures = []
-    if not os.path.isdir(spec_dir):
-        return [f"SPEC directory not found: {spec_dir}"]
+    if not os.path.isdir(contract_dir):
+        return [f"contract directory not found: {contract_dir}"]
 
     spec_files = sorted(
-        os.path.join(spec_dir, name)
-        for name in os.listdir(spec_dir)
-        if name.endswith(".spec.md")
+        os.path.join(contract_dir, name)
+        for name in os.listdir(contract_dir)
+        if name.endswith(".contract.md")
     )
     if not spec_files:
-        return [f"no .spec.md files found in {spec_dir}"]
+        return [f"no .contract.md files found in {contract_dir}"]
 
     specs_with_shapes = []
     for path in spec_files:
@@ -169,7 +169,7 @@ def verify_specs(spec_dir, require_response_shapes, require_all_specs):
 
     if require_response_shapes and not specs_with_shapes:
         failures.append(
-            "no SPEC file contains a concrete '## Response shapes' section"
+            "no contract file contains a concrete '## Response shapes' section"
         )
     return failures
 
@@ -206,12 +206,12 @@ def main():
         description="Verify Stage 04b/04c contract artefacts when port-spec.md exists"
     )
     parser.add_argument("--port-spec", required=True)
-    parser.add_argument("--spec-dir", required=True)
+    parser.add_argument("--contract-dir", required=True)
     parser.add_argument("--feature-dir")
     parser.add_argument(
         "--require-all-specs",
         action="store_true",
-        help="Require every .spec.md file to contain concrete response shapes",
+        help="Require every .contract.md file to contain concrete response shapes",
     )
     args = parser.parse_args()
 
@@ -221,7 +221,7 @@ def main():
 
     failures, entries = verify_port_spec(args.port_spec)
     has_inbound_port = any(entry["Direction"].strip().lower() == "inbound" for entry in entries)
-    failures.extend(verify_specs(args.spec_dir, has_inbound_port, args.require_all_specs))
+    failures.extend(verify_specs(args.contract_dir, has_inbound_port, args.require_all_specs))
     if args.feature_dir and has_inbound_port:
         failures.extend(verify_features(args.feature_dir))
 
@@ -233,7 +233,7 @@ def main():
 
     checked = "directional port spec"
     if has_inbound_port:
-        checked += " + SPEC response shapes"
+        checked += " + contract response shapes"
         if args.feature_dir:
             checked += " + @contract scenarios"
     else:

@@ -265,7 +265,7 @@ That file is authoritative; this section is an index only.
   transport surface; every action emits a flow token.
 - **R6–R9 (process/discipline):** stage outputs written only by the
   owning stage; every running effect traces to a use case; outer-loop
-  tests before implementation; every SPEC outcome maps to a distinct
+  tests before implementation; every contract outcome maps to a distinct
   branch.
 - **R10, R21 (retired):** kept as IDs only, with retirement notes.
 - **R11–R20 (hard-learned implementation):** shared-trigger route

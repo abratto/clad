@@ -102,13 +102,13 @@ def collect_used_by(features_dir: str, concept: str, introducer: str):
     for feat in sorted(os.listdir(features_dir)):
         if feat.startswith("_") or not feat.startswith("UC-"):
             continue
-        spec_dir = os.path.join(features_dir, feat, "stages", "02_concepts", "output")
-        if not os.path.isdir(spec_dir):
+        concept_dir = os.path.join(features_dir, feat, "stages", "02_concepts", "output")
+        if not os.path.isdir(concept_dir):
             continue
-        if os.path.isfile(os.path.join(spec_dir, concept + ".concept.md")):
+        if os.path.isfile(os.path.join(concept_dir, concept + ".concept.md")):
             users.add(feat)
             continue
-        bindings = os.path.join(spec_dir, "concept-bindings.md")
+        bindings = os.path.join(concept_dir, "concept-bindings.md")
         if os.path.isfile(bindings):
             # Parse the bindings TABLE's first column — never a prose search.
             # A loose `\b<Concept>\b` match over the whole file also matches a

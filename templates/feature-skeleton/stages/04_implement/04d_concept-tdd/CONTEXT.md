@@ -31,7 +31,7 @@ tests. One concept, one test fixture, no other concepts in scope (R1).
 | `../../02_concepts/output/concept-bindings.md` | 4 | Which canonical concepts this feature uses |
 | `../../../../../features/_system/concepts/` | 4 | Canonical concept specs (`state`, actions) |
 | `../../02_concepts/output/<Name>.concept.md` | 4 | NEW/EXTEND proposals (not yet promoted) |
-| `../04b_spec/output/` | 4 | SPEC slices to compile against |
+| `../04b_contract/output/` | 4 | Contract slices to compile against |
 | `../04c_flow-tests/output/` | 4 | Pre-condition check + drives child-stage work |
 | `../../../../../methodology/core/ITERATIVE_CHANGES.md` | 3 | Re-entry workflow for post-green concept changes |
 | `../../../_config/build-and-test.md` | 3 | Canonical build/test command inherited by child stages |
@@ -51,8 +51,8 @@ The child stages are executable auto-advance stages. Run them strictly in order:
 
 ## Progress checklist
 
-- [ ] Red tests derived from SPEC outcomes
-- [ ] Every SPEC outcome has a matching test method
+- [ ] Red tests derived from contract outcomes
+- [ ] Every contract outcome has a matching test method
 - [ ] Tests assert field values, not just outcomes (R14/R16)
 - [ ] Green implementation makes all concept tests pass
 - [ ] Self-audit: `./clad verify` passes
@@ -74,7 +74,7 @@ The child stages are executable auto-advance stages. Run them strictly in order:
 ## Gate
 
 Auto-advances through `04d-red`, `04d-green`, then `04e-red`. Concept tests are mechanically derived
-from the approved use case (04c) and SPECs (04b). The red→green handoff
+from the approved use case (04c) and contracts (04b). The red→green handoff
 is automated — `verify_concept_test_derivation.py` is the gate between
 04d-red and 04d-green. No human approval is required at this boundary;
 the design was settled at 04c (Gate 3).

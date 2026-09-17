@@ -1,0 +1,44 @@
+{
+  "stage": "04b",
+  "stage_label": "Concept contract",
+  "feature": "UC-00-login",
+  "checked_at": "2026-09-17T23:50:47.592765+00:00",
+  "git_sha": "dbb114b",
+  "workflow_autonomous": false,
+  "workflow_session_per_stage": false,
+  "output_hash": "7a7063b05b624998648010bd891411b5072442fa764f48767101c60b88e67aaa",
+  "sequence_guard": "iterative diff review",
+  "checks": [
+    {
+      "name": "contract_parity",
+      "script": "verify_contract_parity.py",
+      "status": "pass",
+      "exit": 0
+    },
+    {
+      "name": "outcome_alignment",
+      "script": "verify_outcome_alignment.py",
+      "status": "pass",
+      "exit": 0
+    },
+    {
+      "name": "action_chain",
+      "script": "verify_action_chain.py",
+      "status": "pass",
+      "exit": 0
+    },
+    {
+      "name": "spec_file_manifest",
+      "script": "verify_file_manifest.py",
+      "status": "pass",
+      "exit": 0
+    },
+    {
+      "name": "port_spec_contract",
+      "script": "verify_port_spec_contract.py",
+      "status": "skip",
+      "exit": null
+    }
+  ],
+  "result": "pass"
+}

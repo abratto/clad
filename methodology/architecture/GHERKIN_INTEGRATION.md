@@ -21,7 +21,7 @@ that go green at the end of Stage 04e.
                                      ├──→ 04c: login.feature
   01b_chain-table/output/ ───────────┤         (Gherkin scenarios)
                                      ├──→ 04c: LoginStepDefinitions.java
-  04b_spec/output/*.spec.md ─────────┤         (step-definition skeletons)
+  04b_contract/output/*.contract.md ─────────┤         (step-definition skeletons)
                                      │
   03_syncs/output/*.sync.md ─────────┘
          (response body literals)
@@ -29,7 +29,7 @@ that go green at the end of Stage 04e.
 
 The `.feature` file is a **derived view** — it should be regenerated
 when the use case changes, not hand-edited. Step-definition skeletons
-are derived from chain-table rows and SPEC outcome enums.
+are derived from chain-table rows and contract outcome enums.
 
 ---
 
@@ -199,20 +199,20 @@ Runtime tokens:
 
 ---
 
-## 5. Derivation rules: SPECs → outcome enums
+## 5. Derivation rules: contracts → outcome enums
 
 ### Rule E1 — SCREAMING_SNAKE_CASE
 
 Outcome enum values in step-definition assertions are copied **verbatim**
-from the SPEC slice at `04b_spec/output/<Name>.spec.md`. Each SPEC
+from the contract slice at `04b_contract/output/<Name>.contract.md`. Each contract
 action section lists its `Outcomes (enum):` field. Use those exact
 values.
 
-| SPEC file | Action | Enum values | Used in |
+| contract file | Action | Enum values | Used in |
 |---|---|---|---|
-| `User.spec.md` | `lookupByUsername` | `FOUND`, `NOT_FOUND` | Token chain assertions |
-| `PasswordAuth.spec.md` | `check` | `OK`, `BAD_PASSWORD`, `LOCKED` | Token chain assertions + Given seed logic |
-| `Session.spec.md` | `grant` | `GRANTED` | Token chain assertions |
+| `User.contract.md` | `lookupByUsername` | `FOUND`, `NOT_FOUND` | Token chain assertions |
+| `PasswordAuth.contract.md` | `check` | `OK`, `BAD_PASSWORD`, `LOCKED` | Token chain assertions + Given seed logic |
+| `Session.contract.md` | `grant` | `GRANTED` | Token chain assertions |
 
 ---
 
@@ -227,7 +227,7 @@ values.
 - Every `Then` step traces to an `Expected outcomes:` or `Postconditions:`.
 - Every step-definition method body references a chain-table row's
   `Then` action name.
-- Outcome values are SCREAMING_SNAKE_CASE, matching `04b_spec/output/`.
+- Outcome values are SCREAMING_SNAKE_CASE, matching `04b_contract/output/`.
 - The `.feature` file parses without syntax errors
   (`cucumber --dry-run` or profile equivalent).
 - No Gherkin step exists without a corresponding use-case element.
@@ -305,7 +305,7 @@ When operating at Stage 04c, follow this checklist:
      - Pre-conditions, trigger, expected outcomes, postconditions
      - Extension branches
 □ 3. Read 01b_chain-table/output/*-chain.md → extract action sequence
-□ 4. Read 04b_spec/output/*.spec.md → extract outcome enums
+□ 4. Read 04b_contract/output/*.contract.md → extract outcome enums
 □ 5. Read 03_syncs/output/*.sync.md → extract response body literals
 □ 6. Derive the .feature file using Rules G1–G5
 □ 7. Derive the collection-coverage scenarios using Rule G6 (empty /

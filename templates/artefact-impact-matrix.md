@@ -18,7 +18,7 @@
 | Use case | `features/UC-XX/stages/01_usecase/output/usecase.md` | yes \| no | <what changes> |
 | Concept(s) | `features/_system/concepts/*.concept.md` (corpus) and/or `features/UC-XX/stages/02_concepts/output/*.concept.md` (proposals) | yes \| no | <which concepts, what changes> |
 | Sync(s) | `features/UC-XX/stages/03_syncs/output/*.sync.md` | yes \| no | <which syncs, what changes> |
-| SPEC slices | `features/UC-XX/stages/04_implement/04b_spec/output/*.spec.md` | yes \| no | <which> |
+| Contract slices | `features/UC-XX/stages/04_implement/04b_contract/output/*.contract.md` | yes \| no | <which> |
 | Flow tests | `features/UC-XX/stages/04_implement/04c_flow-tests/output/` | yes \| no | <which> |
 | Concept tests | `features/UC-XX/stages/04_implement/04d_concept-tdd/04d_red-tests/output/` | yes \| no | <which> |
 | Sync tests | `features/UC-XX/stages/04_implement/04e_sync-tdd/04e_red-tests/output/` | yes \| no | <which> |

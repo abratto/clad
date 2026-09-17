@@ -28,7 +28,7 @@ def write(path, text):
 
 def feature(root, *, chain, spec="", coverage=None, closed=False):
     write(root / "stages/01b_chain-table/output/x-chain.md", chain)
-    write(root / "stages/04_implement/04b_spec/output/X.spec.md", spec)
+    write(root / "stages/04_implement/04b_contract/output/X.contract.md", spec)
     write(root / "stages/04_implement/04c_flow-tests/output/stubs.md",
           coverage if coverage is not None else "# stubs\n")
     if closed:

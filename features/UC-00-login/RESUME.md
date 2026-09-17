@@ -9,12 +9,13 @@
 - **Iterative change `system-scope-concepts`:** `approved`
 - **Iterative change `sync-name-grammar-v3`:** `approved`
 - **Iterative change `transport-framing-adapter-owned`:** `approved`
+- **Iterative change `spec-renamed-to-concept-contract`:** `approved`
 - **Gate 1 (Requirements):** `approved`
 - **Gate 1 content hash:** `207734cdae11bcd66866c9f4deabd5358bc65047279ea7e9c6687665882b1661`
 - **Gate 2 (Architecture):** `approved`
 - **Gate 2 content hash:** `6677aa1a751b7ec9bfee81d7b2f214624e805c748f88ef31be531d19183be491`
 - **Gate 3 (Executable spec):** `approved`
-- **Gate 3 content hash:** `ff52054405b413d86919d2f9e1f032cc381209afa04b762621a44f4661757dd7`
+- **Gate 3 content hash:** `d3a55aa9eb899a8f3e2b2a81e598823b833ae2912468f621d77229a9a6392acc`
 - **Corrections at last gate:** `None`
 - **Deferred concepts:** `None`
 - **Next stage:** `None — feature complete`

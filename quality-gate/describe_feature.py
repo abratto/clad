@@ -29,7 +29,7 @@ from typing import Dict, List
 
 import artifact_parsers as ap
 import clad_stages as cs
-from contract import (
+from descriptor import (
     FEATURE_DESCRIPTOR_CAPABILITIES,
     FEATURE_DESCRIPTOR_NAME,
     FEATURE_DESCRIPTOR_VERSION,

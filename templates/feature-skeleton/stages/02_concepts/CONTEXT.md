@@ -144,7 +144,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 - **verify_file_manifest.py:** `output/` contains exactly `concept-bindings.md`
   plus one `.concept.md` per NEW/EXTEND concept.
 - **Cross-artefact action-name parity** (`verify_action_chain.py`) needs the
-  syncs, dependency cards, and SPECs, so it runs at Stage 04b, not here.
+  syncs, dependency cards, and contracts, so it runs at Stage 04b, not here.
 
 ### Semantic checks (human)
 

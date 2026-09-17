@@ -24,7 +24,7 @@ no sync implementation belongs here.
 | Path | Layer | Why |
 |---|---|---|
 | `../../../03_syncs/output/` | 4 | Sync specs |
-| `../../04b_spec/output/` | 4 | SPEC slices for participating actions |
+| `../../04b_contract/output/` | 4 | Contract slices for participating actions |
 | `../../04c_flow-tests/output/` | 4 | Outer expectations that must turn green |
 | `../../04d_concept-tdd/04d_red-tests/output/` | 4 | Approved concept-level test derivation |
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for red evidence |
@@ -38,7 +38,7 @@ no sync implementation belongs here.
 ## Process
 
 1. Derive sync tests from approved Stage 03 sync specs, the relevant
-  SPEC slices, the outer expectations in `04c_flow-tests/output/`, and
+  Contract slices, the outer expectations in `04c_flow-tests/output/`, and
   the expected authored action chain recorded there.
 2. Write the sync test file(s) only under `APP_TEST_SOURCE_ROOT`.
    Do not write or modify sync implementation code in this stage.

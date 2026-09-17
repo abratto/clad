@@ -22,18 +22,18 @@ authorised it.
 
 There are two casings, and they have different owners:
 
-- **SPEC enum (authoritative, `04b_spec/output/`): SCREAMING_SNAKE_CASE.**
+- **contract enum (authoritative, `04b_contract/output/`): SCREAMING_SNAKE_CASE.**
   Examples: `VALID`, `ACCOUNT_EXISTS`, `VALIDATION_FAILED`, `CREATED`,
-  `ROUTED`, `SENT`. Chain tables, SPECs, and derivation maps use this form.
+  `ROUTED`, `SENT`. Chain tables, contracts, and derivation maps use this form.
 - **Runtime token (profile-defined):** the casing the concept action
   actually returns in its completion map. The canonical `java-legible`
   profile uses PascalCase (`Valid`, `Routed`, `Healthy`); other profiles may
-  use the SPEC casing directly.
+  use the contract casing directly.
 
 `verify_outcome_alignment.py` normalises the two (`normalize_outcome`) so a
-PascalCase runtime token and a SCREAMING_SNAKE SPEC enum are compared
-case-insensitively. Do not invent casing: copy SPEC enums from
-`04b_spec/output/`, and copy runtime tokens from the profile's own concepts
+PascalCase runtime token and a SCREAMING_SNAKE contract enum are compared
+case-insensitively. Do not invent casing: copy contract enums from
+`04b_contract/output/`, and copy runtime tokens from the profile's own concepts
 and tests. Consistency is "same token under normalisation", not "identical
 bytes".
 

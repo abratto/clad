@@ -20,6 +20,7 @@ REGISTRY = QUALITY_GATE / "verify_concept_registry.py"
 PROMOTE = QUALITY_GATE / "promote_concepts.py"
 CATALOG = QUALITY_GATE / "generate_concepts_catalog.py"
 GENERATE_DATA_MODEL = QUALITY_GATE / "generate_data_model.py"
+GENERATE_CONTRACT = QUALITY_GATE / "generate_contract.py"
 
 CONCEPT = """concept {name} [UserId]
 introduced-by {introducer}
@@ -291,6 +292,32 @@ class CatalogUsedByTests(unittest.TestCase):
             bar_row = [l for l in r.stdout.splitlines() if l.startswith("| `Bar`")][0]
             self.assertIn("UC-01-a", foo_row)
             self.assertNotIn("UC-01-a", bar_row)
+
+
+    def test_contract_is_not_rederived_for_a_reused_concept(self):
+        """The canonical contract lives with the canonical concept; a feature
+        that only REUSES a concept binds the canonical contract."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature = make_feature(tmp, [("Foo", "reused:UC-00-login")], specs=())
+            corpus = Path(tmp) / "features" / "_system" / "concepts"
+            corpus.mkdir(parents=True)
+            (corpus / "Foo.concept.md").write_text(concept("Foo"), encoding="utf-8")
+
+            r = run(GENERATE_CONTRACT, "--feature", str(feature))
+            self.assertNotIn("Foo.contract.md", r.stdout)
+
+    def test_contract_is_derived_for_an_extend(self):
+        """An EXTEND adds or changes an action, so the contract moves with the
+        concept and the extending feature is the review surface for it."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature = make_feature(tmp, [("Foo", "extends:UC-00-login")],
+                                   specs=("Foo",))
+            corpus = Path(tmp) / "features" / "_system" / "concepts"
+            corpus.mkdir(parents=True)
+            (corpus / "Foo.concept.md").write_text(concept("Foo"), encoding="utf-8")
+
+            r = run(GENERATE_CONTRACT, "--feature", str(feature))
+            self.assertIn("Foo.contract.md", r.stdout)
 
 
 class FeatureScopedGeneratorTests(unittest.TestCase):

@@ -96,7 +96,7 @@ the human before any implementation begins. This is Gate 3 (Executable
 specification) — the last design-stage human gate.
 
 In Stages 04d and 04e, concept tests and sync tests are **mechanically
-derived** from already-approved artefacts (04c flow tests, 04b SPECs,
+derived** from already-approved artefacts (04c flow tests, 04b contracts,
 chain tables, sync specs). They verify implementation fidelity, not
 design. The red→green handoff in 04d and 04e is automated — the
 quality-gate scripts (`verify_concept_test_derivation.py`,
@@ -107,20 +107,20 @@ An agent that writes concept or sync implementation before the
 corresponding red tests exist has violated this rule. The flow test
 (04c) must be approved before any inner loop begins.
 
-## R9. Every SPEC outcome maps to a distinct implementation branch
+## R9. Every contract outcome maps to a distinct implementation branch
 
-In implementation code, each outcome defined in the SPEC must be
-returned by its own distinct code path. Two SPEC outcomes must never
+In implementation code, each outcome defined in the contract must be
+returned by its own distinct code path. Two contract outcomes must never
 be collapsed into one return value (e.g. returning `VALIDATION_FAILED`
-when the SPEC defines `ACCOUNT_EXISTS` as a separate outcome).
+when the contract defines `ACCOUNT_EXISTS` as a separate outcome).
 
 If you find yourself returning one outcome for two different
-conditions, check the SPEC — they are almost certainly distinct
+conditions, check the contract — they are almost certainly distinct
 outcomes that were defined separately for a reason.
 
 **Outcome branching checklist** — verify before claiming green:
 
-- [ ] Each SPEC outcome has its own `if` / `switch` branch — not shared with another outcome
+- [ ] Each contract outcome has its own `if` / `switch` branch — not shared with another outcome
 - [ ] Each branch returns the correct `OutcomeType` enum value
 - [ ] `message` is null on success outcomes, non-null on failure outcomes
 - [ ] `id` fields are non-null on creation success outcomes, null on failure outcomes

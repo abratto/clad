@@ -13,7 +13,7 @@ Why this exists:
   the human already reviews the executable spec.
 
 Rule:
-  A feature whose chain tables / SPECs expose a COLLECTION response (a plural
+  A feature whose chain tables / contracts expose a COLLECTION response (a plural
   envelope key such as `articles`, `comments`, `tags`, `authors`, `following`,
   `flags`, or a `List<...>` completion field) must declare a
   `## Collection coverage` section in a markdown file under
@@ -68,17 +68,17 @@ def collection_signal(feature_root):
     """Return (is_collection_shaped, evidence) for the feature.
 
     A feature is collection-shaped when a chain table names a plural collection
-    envelope key or a SPEC declares a `List<...>` completion field.
+    envelope key or a contract declares a `List<...>` completion field.
     """
     chain_dir = os.path.join(feature_root, "stages", "01b_chain-table", "output")
-    spec_dir = os.path.join(feature_root, "stages",
-                            "04_implement", "04b_spec", "output")
+    contract_dir = os.path.join(feature_root, "stages",
+                            "04_implement", "04b_contract", "output")
 
     blob = ""
     for path in markdown_files(chain_dir):
         blob += read(path)
 
-    for path in markdown_files(spec_dir):
+    for path in markdown_files(contract_dir):
         text = read(path)
         if "List<" in text or "List&lt;" in text:
             return True, "%s declares a List<...> field" % os.path.basename(path)
@@ -87,7 +87,7 @@ def collection_signal(feature_root):
     low = blob.lower()
     for key in COLLECTION_KEYS:
         if re.search(r"(?<![a-z0-9])" + re.escape(key) + r"(?![a-z0-9])", low):
-            return True, "chain/SPEC names the collection key %r" % key
+            return True, "chain/contract names the collection key %r" % key
     return False, ""
 
 

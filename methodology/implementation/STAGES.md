@@ -75,9 +75,9 @@ features/UC-XX-name/
    │   ├── 04a_storage-mapping/ Optional profile mapping
     │   │   ├── CONTEXT.md
     │   │   └── output/
-    │   ├── 04b_spec/            Per-concept SPEC contract slice
+    │   ├── 04b_contract/            Per-concept concept contract
     │   │   ├── CONTEXT.md
-    │   │   └── output/          <Name>.spec.md
+    │   │   └── output/          <Name>.contract.md
     │   ├── 04c_flow-tests/      Outside-loop red: HTTP → flow-token tree
     │   │   ├── CONTEXT.md
     │   │   └── output/
@@ -347,7 +347,7 @@ single source of truth for per-stage instructions:
 | 03a | `stages/03a_dependency-review/CONTEXT.md` | `<concept>-card.md` + `pattern-d-summary.md` | Auto → 03b |
 | 03b | `stages/03b_data-model/CONTEXT.md` | `<Name>.data-model.md` per concept | **Gate 2 (Architecture)** |
 | 04a | `stages/04_implement/04a_storage-mapping/CONTEXT.md` | `<Name>.storage.md` or `_NOT_APPLICABLE.md` | Auto → 04c |
-| 04b | `stages/04_implement/04b_spec/CONTEXT.md` | `<Name>.spec.md` per concept | Auto → 04c |
+| 04b | `stages/04_implement/04b_contract/CONTEXT.md` | `<Name>.contract.md` per concept | Auto → 04c |
 | 04c | `stages/04_implement/04c_flow-tests/CONTEXT.md` | `.feature` files + step definitions | **Gate 3 (Executable spec)** |
 | 04d-red | `stages/04_implement/04d_concept-tdd/04d_red-tests/CONTEXT.md` | `concept-test-derivation.md` | Auto → 04d-green |
 | 04d-green | `stages/04_implement/04d_concept-tdd/04d_green-impl/CONTEXT.md` | `green-evidence.md` | Auto → 04e-red |
@@ -391,7 +391,7 @@ only asked to write what cannot be scripted:
 |---|---|---|
 | 03 (syncs) | `quality-gate/generate_syncs.py` | Pattern D concept-state reads, `then` argument values, `where` sources |
 | 03a (dependency cards) | `quality-gate/generate_sync_cards.py` | filling the `<args>`/`<source>`/`<field>`/`<id>` placeholders verbatim |
-| 04b (SPECs) | `quality-gate/generate_spec.py` | input types + flow-token shape transcription |
+| 04b (contracts) | `quality-gate/generate_contract.py` | input types + flow-token shape transcription |
 | 04e (sync code) | `quality-gate/generate_syncs_java.py` | judgement items only: Pattern D sources, non-literal `then`-argument values; the v2 name and trigger/target are mechanically derived (see `maintenance/sync-dsl-legibility.md`) |
 
 For these stages the stage `CONTEXT.md` instructs: *run the generator first,
@@ -475,7 +475,7 @@ coherent with an earlier stage's output. Examples:
 - Stage 03 verifies: every named scenario in
   `01_usecase/output/usecase.md` is satisfied by at least one sync (or
   is explicitly a `Web`-only failure path).
-- Stage 04d verifies: every action listed in `04b_spec/output/` has at
+- Stage 04d verifies: every action listed in `04b_contract/output/` has at
   least one test row in the test-intent derivation map.
 - Stage 05 verifies: every flow token observed at runtime back-traces
    to a use-case scenario using captured runtime evidence, not only
@@ -483,7 +483,7 @@ coherent with an earlier stage's output. Examples:
 
 The cross-stage check is what gives ICM § 6.2's reversibility
 property teeth: a downstream stage cannot silently drift from
-upstream. The quality-gate scripts under `quality-gate/` automate these cross-stage checks deterministically. Each script validates one contract boundary (SPEC parity, outcome alignment, data-model structure, etc.) and runs between every auto-advance stage.
+upstream. The quality-gate scripts under `quality-gate/` automate these cross-stage checks deterministically. Each script validates one contract boundary (contract parity, outcome alignment, data-model structure, etc.) and runs between every auto-advance stage.
 
 ## Why numbered folders
 

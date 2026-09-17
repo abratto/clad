@@ -1,8 +1,8 @@
-<!-- Template for Stage 04b (04b_spec). Purpose: see methodology/implementation/STAGES.md §"Stage 04b — Spec". -->
+<!-- Template for Stage 04b (04b_contract). Purpose: see methodology/implementation/STAGES.md §"Stage 04b — Spec". -->
 
-# `<ConceptName>` — SPEC
+# `<ConceptName>` — contract
 
-> A SPEC is the contract slice of a concept that the implementation
+> A contract is the contract slice of a concept that the implementation
 > compiles against. It is derived mechanically from
 > `<ConceptName>.concept.md`: action signatures, outcome enums, and
 > flow-token shape — nothing else. No prose principle, no edge-case
