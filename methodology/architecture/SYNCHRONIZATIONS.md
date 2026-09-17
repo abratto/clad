@@ -28,7 +28,7 @@ is scoped to a single causal flow token.
 ## Shape
 
 ```
-sync WhenPasswordAuthCheckOkThenSessionGrantForLogin
+sync GrantWhenCheckOk
 
 when {
     PasswordAuth/check: [ userId: ?user ; password: ?pass ] => [ ok ]
@@ -57,7 +57,7 @@ actions.
 
 | Element | Meaning | Example |
 |---|---|---|
-| `sync <Name>` | Declares a sync rule | `sync WhenPasswordAuthCheckOkThenSessionGrantForLogin` |
+| `sync <Name>` | Declares a sync rule | `sync GrantWhenCheckOk` |
 | `Concept/action:` | Qualifies an action within its concept (slash separator, colon after) | `PasswordAuth/check:` |
 | `[ param: value ; ... ]` | Named argument brackets, semicolon-separated | `[ userId: ?user ; password: ?pass ]` |
 | `=> [ output: ?var ]` | Matches an action's completion output | `=> [ ok ]` or `=> [ userId: ?u ]` |
@@ -66,31 +66,44 @@ actions.
 
 ## Naming
 
-A sync name reads effect-first (grammar v2, see
-`maintenance/sync-dsl-legibility.md`; the pre-v0.6 condition-first form
-survives only in pre-existing frozen artefacts):
+A sync name reads action-first (grammar v3, see
+`maintenance/sync-name-grammar-v3.md`; the v2 `For<Scope>` form and the
+pre-v0.6 condition-first form survive only in historical maintenance records):
 
 ```
-<TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>
+<TargetAction>When<TriggerAction><TriggerCompletion>
 ```
 
 Rules:
 
 - Lead with the **effect** — the `then` side — because that is what a
-  reader of a sync pack or a `causedBySync` back-trace wants first
-  (paper-authors' style: effect, scope, condition — cf. conceptbox's
-  `NotifyWhenReachTen`).
+  reader of a sync pack or a `causedBySync` back-trace wants first.
 - Use `When` as the separator between the effect and its trigger.
 - Use PascalCase for the Stage 03 sync name and `.sync.md` file stem.
-- Derive `TargetConcept`/`TargetAction` from the first `then`
-  signature; `TriggerConcept`/`TriggerAction` from the first `when`.
+- Name by **action**, not by concept. A sync is coordination, not a
+  concept's property — it can involve several concepts — so the concept
+  tokens are dropped by default. `Cataloguing.record` and `Stocking.record`
+  both contribute `Record`.
+- Derive `TargetAction` from the first `then` signature;
+  `TriggerAction` from the first `when`.
 - Derive `TriggerCompletion` from the first completion token on the right
-  side of the `when` arrow. For `[ ok ; userId: ?u ]`, use `Ok`; for
-  `[ error: "notFound" ]`, use `NotFound`; for `[ refused ]`, use
-  `Refused`. Omit it only when the trigger has no completion token.
-- Glue `For<Scope>` to the **effect** side when the same target can occur
-  in multiple routes/flows/scope — route scoping is an effect property,
-  per R15.
+  side of the `when` arrow, by its **base** token only: for
+  `[ ok ; userId: ?u ]`, use `Ok`; for `[ error: "notFound" ]`, use
+  `NotFound`; for `[ refused ]`, use `Refused`. Carried fields are
+  body-visible and never join the name (`Routed`, not `RoutedRefName`).
+- **Collision escalation.** When two different edges in one pack would share
+  a name, the generator adds concept tokens back, in this order, and the
+  parity check accepts every level:
+
+  | Level | Form |
+  |---|---|
+  | 0 | `<TargetAction>When<TriggerAction><Completion>` |
+  | 1 | `<TargetConcept><TargetAction>When<TriggerAction><Completion>` |
+  | 2 | `<TargetAction>When<TriggerConcept><TriggerAction><Completion>` |
+  | 3 | `<TargetConcept><TargetAction>When<TriggerConcept><TriggerAction><Completion>` |
+
+  A payload variant of level 3 (`…<Completion><Payload>`) is the last
+  resort for two outcomes of one action that differ only in payload.
 - The `sync <Name>` header and filename stem must match exactly. Profile
   implementations lower the same stem mechanically; for Java, the class
   name is the same PascalCase stem (and per-rule carrier class if the
@@ -99,7 +112,7 @@ Rules:
 Example:
 
 ```
-sync SessionGrantForLoginWhenPasswordAuthCheckOk
+sync GrantWhenCheckOk
 
 when {
     PasswordAuth/check: [ userId: ?user ; password: ?pass ] => [ ok ; userId: ?user ]
@@ -113,11 +126,11 @@ For a **joined** (multi-`when`) rule the trigger side concatenates every
 conjunct in declared order, separated by `And` after the `WhenJoin` marker:
 
 ```
-<TargetConcept><TargetAction>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2><A2><Out2>…
+<TargetAction>WhenJoin<A1><Out1>And<A2><Out2>…
 ```
 
 ```
-sync WebRespondWhenJoinCatalogListListedAndTaggingTagTagged
+sync RespondWhenJoinListListedAndTagTagged
 
 when {
     a: Catalog/list: [ id: ?id ] => [ Listed ; id: ?id ]
@@ -213,7 +226,7 @@ action, completion, and optional input matcher. The rule fires **once** when
 *every* conjunct has a matching completion in the same flow token.
 
 ```
-sync WebRespondWhenJoinCatalogListAndTaggingTag
+sync RespondWhenJoinListAndTagTag
 
 when {
     list: Catalog/list: [ id: ?id ] => [ Listed ; id: ?id ]

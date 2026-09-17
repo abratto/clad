@@ -50,7 +50,7 @@ Self-audit: run `python3 quality-gate/verify_artefacts.py` before advancing.
 Follow the London School interaction-focused convention for sync unit tests:
 
 - **Class name:** `<SyncName>Test` (e.g.
-   `WhenPasswordAuthCheckOkThenSessionGrantForLoginTest`)
+   `GrantWhenCheckOkTest`)
 - **`@Nested` class:** `When<Trigger>` groups by the trigger outcome
   (e.g. `WhenCheckOk`, `WhenCheckBadPassword`)
 - **Method name:** `should<Trigger><Then>` verifies interactions
@@ -60,7 +60,7 @@ Follow the London School interaction-focused convention for sync unit tests:
 - **Comment blocks:** `// GIVEN` / `// WHEN` / `// THEN`
 
 ```java
-class WhenPasswordAuthCheckOkThenSessionGrantForLoginTest {
+class GrantWhenCheckOkTest {
     @Nested class WhenCheckOk {
         @Test void shouldFireSessionGrant() {
             // GIVEN: a PasswordAuth.check action completed with outcome OK

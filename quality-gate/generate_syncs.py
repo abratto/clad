@@ -59,6 +59,9 @@ class GeneratedSync:
     is_join: bool = False
     conjuncts: List[Tuple[Optional[str], str, str, str]] = field(default_factory=list)
     # ^ (name, concept, action, outcome_raw) in declared conjunct order
+    trigger_outcome_raw: str = ""
+    # ^ the raw trigger outcome (single-trigger rules); needed to re-derive the
+    #   stem at a higher escalation level when two short names collide.
     route: Optional[str] = None
     method: Optional[str] = None
     # ^ when-matcher scope literals for a `Web/request` bootstrap sync (R15);
@@ -136,8 +139,6 @@ def _resolve_when_source(wc, wa, wo, producers, current_row, warnings, fname):
 
 def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], List[str]]:
     chain_dir = cs.CHAIN_DIR(feature_root)
-    scope = ap.feature_scope_from_path(feature_root)
-
     # Concept sources: the feature's own proposals shadow the canonical corpus
     # by concept name (M1 union resolution).
     concepts: Dict[str, ap.ConceptSpec] = {}
@@ -204,16 +205,14 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                 target_concept, target_action = row.then_concept, row.then_action
                 joined = [ap.Conjunct(n, c, a, o)
                           for (n, c, a, o, _rn) in resolved]
-                stem = ap.sync_stem(target_concept, target_action, scope,
-                                    joined, True)
                 when_sig = " \u2227 ".join(
                     (f"{n}: " if n else "")
                     + f"{c}/{a}: [...] => [ {ap.first_completion_token(o)} ]"
                     for (n, c, a, o, _rn) in resolved)
                 first = resolved[0]
                 syncs.append(GeneratedSync(
-                    name=stem,
-                    stem=stem,
+                    name="",
+                    stem="",
                     trigger_concept=first[1],
                     trigger_action=first[2],
                     trigger_completion=completion_with_payload(first[3]),
@@ -229,6 +228,7 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                     cited_scenario=scenario,
                     is_join=True,
                     conjuncts=[(n, c, a, o) for (n, c, a, o, _rn) in resolved],
+                    trigger_outcome_raw=first[3],
                 ))
                 continue
 
@@ -255,18 +255,6 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
             if trigger_concept == "Web" and trigger_action == "request":
                 route, method = root_route, root_method
 
-            # Grammar v2 (effect-first): <Target><Action>[For<Scope>]When<Trigger><Action><Completion>
-            base = (
-                ap.pascal_token(target_concept)
-                + ap.pascal_token(target_action)
-                + ("For" + scope if scope else "")
-                + "When"
-                + ap.pascal_token(trigger_concept)
-                + ap.pascal_token(trigger_action)
-                + completion_with_payload(trigger_outcome_raw)
-            )
-            stem = base
-
             source_row_id = str(prev.row_num)
             target_row_id = str(row.row_num)
 
@@ -291,8 +279,8 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                 binds.append((var, "A", f"Trigger token (`{trigger_concept}/{trigger_action}`)"))
 
             syncs.append(GeneratedSync(
-                name=stem,
-                stem=stem,
+                name="",
+                stem="",
                 trigger_concept=trigger_concept,
                 trigger_action=trigger_action,
                 trigger_completion=trigger_completion,
@@ -308,28 +296,70 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                 cited_scenario=scenario,
                 route=route,
                 method=method,
+                trigger_outcome_raw=trigger_outcome_raw,
             ))
 
     # A sync is defined once, not once per scenario that traverses it. Dedup by
-    # stem, keeping first occurrence (canonical scenario order).
-    seen: Set[str] = set()
-    seen_route: Dict[str, Optional[str]] = {}
+    # EDGE IDENTITY, not by name: grammar-v3 names are concept-free, so two
+    # distinct edges may share a short name until escalation (below), and name
+    # dedup would wrongly collapse them.
+    def _edge_id(g: GeneratedSync):
+        if g.is_join:
+            return ("join", tuple(g.conjuncts),
+                    g.target_concept, g.target_action)
+        return ("single", g.trigger_concept, g.trigger_action,
+                g.trigger_outcome_raw, g.target_concept, g.target_action)
+
+    seen: Dict[tuple, GeneratedSync] = {}
     unique: List[GeneratedSync] = []
     for g in syncs:
-        if g.stem not in seen:
-            seen.add(g.stem)
-            seen_route[g.stem] = g.route
+        key = _edge_id(g)
+        if key not in seen:
+            seen[key] = g
             unique.append(g)
-        elif g.route and seen_route.get(g.stem) and g.route != seen_route[g.stem]:
-            # The stem does not encode the route, so a distinct route-scoped
-            # bootstrap for the same edge collides and is dropped. Encode the
-            # route in the stem is a naming-grammar change; for now surface it
-            # so the author hand-authors the sibling carrier (the UC-09/UC-11
-            # workaround) rather than losing it silently.
+        elif g.route and seen[key].route and g.route != seen[key].route:
+            # Two route-scoped bootstraps for the SAME edge: one carrier per
+            # edge, so the second is dropped. Surface it so the author
+            # hand-authors the sibling carrier rather than losing it silently.
             warnings.append(
-                f"{g.stem}: two route-scoped bootstraps share a stem "
-                f"({seen_route[g.stem]!r} vs {g.route!r}); the second is not "
+                f"route-scoped bootstrap for {g.trigger_concept}/"
+                f"{g.trigger_action}: two routes share an edge "
+                f"({seen[key].route!r} vs {g.route!r}); the second is not "
                 f"emitted — author it by hand with a distinct stem")
+
+    # Grammar v3 (maintenance/sync-name-grammar-v3.md): assign the shortest
+    # stem that is unique within the pack, escalating by adding concept tokens
+    # back only on a genuine collision.
+    used: Set[str] = set()
+    for g in unique:
+        if g.is_join:
+            conjuncts = [ap.Conjunct(n, c, a, o)
+                         for (n, c, a, o) in g.conjuncts]
+        else:
+            conjuncts = [ap.Conjunct(None, g.trigger_concept,
+                                     g.trigger_action, g.trigger_outcome_raw)]
+        # Ladder: level 0..3 (concept tokens added back), then the payload
+        # variant of the fullest form as a last resort (two outcomes of one
+        # action differing only in payload).
+        ladder = ([(lvl, False) for lvl in range(ap.SYNC_STEM_MAX_LEVEL + 1)]
+                  + [(ap.SYNC_STEM_MAX_LEVEL, True)])
+        chosen = None
+        for level, with_payload in ladder:
+            candidate = ap.sync_stem(g.target_concept, g.target_action,
+                                     conjuncts, g.is_join, level, with_payload)
+            if candidate not in used:
+                chosen = candidate
+                break
+        if chosen is None:
+            level, with_payload = ladder[-1]
+            chosen = ap.sync_stem(g.target_concept, g.target_action,
+                                  conjuncts, g.is_join, level, with_payload)
+            warnings.append(
+                f"{chosen}: stem still collides at max escalation; "
+                f"author it by hand with a distinct stem")
+        g.stem = chosen
+        g.name = chosen
+        used.add(chosen)
     return unique, warnings
 
 

@@ -77,11 +77,12 @@ class GeneratorPropertyTests(unittest.TestCase):
         stems = sorted(f.name.replace(".sync.md", "") for f in d.glob("*.sync.md"))
         # UC-00-login has exactly seven syncs.
         self.assertEqual(len(stems), 7, stems)
-        # Effect-first naming grammar v2 (maintenance/sync-dsl-legibility.md).
-        self.assertIn("SessionGrantForLoginWhenPasswordAuthCheckOk", stems)
-        self.assertIn("UserNamingLookupByUsernameForLoginWhenWebRequestRouted", stems)
-        self.assertIn("WebRespondForLoginWhenPasswordAuthCheckLocked", stems)
-        self.assertIn("WebRespondForLoginWhenUserNamingLookupByUsernameRefused", stems)
+        # Action-first naming grammar v3 (maintenance/sync-name-grammar-v3.md):
+        # concept-free by default; the completion is named by its base token.
+        self.assertIn("GrantWhenCheckOk", stems)
+        self.assertIn("LookupByUsernameWhenRequestRouted", stems)
+        self.assertIn("RespondWhenCheckLocked", stems)
+        self.assertIn("RespondWhenLookupByUsernameRefused", stems)
 
     def test_generated_syncs_pass_sync_checks(self):
         d = self.sync_dir()
@@ -263,14 +264,14 @@ class BranchedChainGeneratorTests(unittest.TestCase):
                            for line in r.stdout.splitlines()
                            if "WOULD WRITE" in line)
             self.assertEqual(len(stems), 4, stems)
-            # Effect-first naming grammar v2 (maintenance/sync-dsl-legibility.md).
-            self.assertIn("InventoryLendForLibraryLoansWhenWebRequestRouted", stems)
-            self.assertIn("LedgerRecordForLibraryLoansWhenInventoryLendLent", stems)
-            self.assertIn("WebRespondForLibraryLoansWhenLedgerRecordRecorded", stems)
-            self.assertIn("WebRespondForLibraryLoansWhenInventoryLendUnavailable", stems)
+            # Action-first naming grammar v3 (maintenance/sync-name-grammar-v3.md).
+            self.assertIn("LendWhenRequestRouted", stems)
+            self.assertIn("RecordWhenLendLent", stems)
+            self.assertIn("RespondWhenRecordRecorded", stems)
+            self.assertIn("RespondWhenLendUnavailable", stems)
             # The old positional pairing fabricated this transition across the
             # terminal row 4 -> branch row 5.
-            self.assertNotIn("InventoryLendForLibraryLoansWhenWebRespondSent", stems)
+            self.assertNotIn("RespondWhenRespondSent", stems)
 
 
 if __name__ == "__main__":

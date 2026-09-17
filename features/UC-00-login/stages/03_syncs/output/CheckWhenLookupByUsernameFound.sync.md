@@ -1,4 +1,4 @@
-sync PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound
+sync CheckWhenLookupByUsernameFound
 
 ## Sync Contract Matrix
 

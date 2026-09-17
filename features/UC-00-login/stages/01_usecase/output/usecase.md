@@ -33,9 +33,9 @@ before the account is locked.
      `Found(userId)`.
   3. `Web` invokes `PasswordAuth.check(userId, password)`, which
      returns `Ok`.
-    4. The `SessionGrantForLoginWhenPasswordAuthCheckOk` sync fires, invoking
+    4. The `GrantWhenCheckOk` sync fires, invoking
       `Session.grant(userId)` which returns `Granted(sessionId)`.
-    5. The `WebRespondForLoginWhenSessionGrantGranted` sync fires, returning `200` with
+    5. The `RespondWhenGrantGranted` sync fires, returning `200` with
       `{ sessionToken: sessionId }`.
 - **Expected outcomes:**
   - A new `Session` is opened for the user.
@@ -123,7 +123,7 @@ sequenceDiagram
      `Found(userId)`.
     3. `Web` invokes `PasswordAuth.check(userId, password)`, which
       returns `Locked`.
-    4. The `WebRespondForLoginWhenPasswordAuthCheckLocked` sync fires, returning `401` with the
+    4. The `RespondWhenCheckLocked` sync fires, returning `401` with the
       lockout message.
 - **Expected outcomes:**
   - No session is opened.

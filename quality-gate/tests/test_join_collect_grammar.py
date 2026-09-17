@@ -53,7 +53,7 @@ def chain_body(rows):
     return "\n".join(body) + "\n"
 
 
-JOIN_SYNC = f"""sync WebRespondWhenJoinCatalogListListedAndTaggingTagTagged
+JOIN_SYNC = f"""sync RespondWhenJoinListListedAndTagTagged
 
 ## Sync Contract Matrix
 
@@ -159,16 +159,14 @@ class ChainJoinGenerationTests(unittest.TestCase):
             stems = sorted(
                 p.name.replace(".sync.md", "")
                 for p in (feature / "stages/03_syncs/output").glob("*.sync.md"))
-            self.assertIn(
-                "WebRespondForPubWhenJoinCatalogListListedAndTaggingTagTagged",
-                stems)
+            self.assertIn("RespondWhenJoinListListedAndTagTagged", stems)
 
 
 class SyncJoinParsingTests(unittest.TestCase):
 
     def test_join_spec_parses_and_is_flagged(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "WebRespondWhenJoinCatalogListListedAndTaggingTagTagged.sync.md"
+            path = Path(tmp) / "RespondWhenJoinListListedAndTagTagged.sync.md"
             write(path, JOIN_SYNC)
             spec = ap.parse_sync(str(path))
             self.assertTrue(spec.is_join)
@@ -181,21 +179,18 @@ class SyncJoinParsingTests(unittest.TestCase):
 
     def test_join_naming_rule(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "WebRespondWhenJoinCatalogListListedAndTaggingTagTagged.sync.md"
+            path = Path(tmp) / "RespondWhenJoinListListedAndTagTagged.sync.md"
             write(path, JOIN_SYNC)
             spec = ap.parse_sync(str(path))
             stem = ap.sync_stem(spec.then_targets[0][0], spec.then_targets[0][1],
-                                "Pub", spec.conjuncts, spec.is_join)
-            self.assertEqual(
-                stem,
-                "WebRespondForPubWhenJoinCatalogListListedAndTaggingTagTagged")
+                                spec.conjuncts, spec.is_join)
+            self.assertEqual(stem, "RespondWhenJoinListListedAndTagTagged")
             names = parity.expected_sync_names(str(path), JOIN_SYNC)
-            self.assertIn(
-                "WebRespondWhenJoinCatalogListListedAndTaggingTagTagged", names)
+            self.assertIn("RespondWhenJoinListListedAndTagTagged", names)
 
     def test_collect_where_forms_are_detected(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "WebRespondWhenJoinCatalogListListedAndTaggingTagTagged.sync.md"
+            path = Path(tmp) / "RespondWhenJoinListListedAndTagTagged.sync.md"
             write(path, JOIN_SYNC)
             spec = ap.parse_sync(str(path))
             self.assertEqual(len(spec.collect_forms), 2)
@@ -221,8 +216,8 @@ class SyncJoinParsingTests(unittest.TestCase):
             self.assertEqual((spec.trigger_concept, spec.trigger_action,
                               spec.trigger_outcome), ("PasswordAuth", "check", "ok"))
             self.assertEqual([c.name for c in spec.conjuncts], [None])
-            stem = ap.sync_stem("Session", "grant", "", spec.conjuncts, False)
-            self.assertEqual(stem, "SessionGrantWhenPasswordAuthCheckOk")
+            stem = ap.sync_stem("Session", "grant", spec.conjuncts, False)
+            self.assertEqual(stem, "GrantWhenCheckOk")
 
 
 class JavaJoinEmitterTests(unittest.TestCase):
@@ -231,7 +226,7 @@ class JavaJoinEmitterTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             feature = Path(tmp) / "features/UC-01-pub"
             write(feature / "stages/03_syncs/output/"
-                  "WebRespondWhenJoinCatalogListListedAndTaggingTagTagged.sync.md",
+                  "RespondWhenJoinListListedAndTagTagged.sync.md",
                   JOIN_SYNC)
             out = Path(tmp) / "src"
             emitter = QUALITY_GATE / "generate_syncs_java.py"
@@ -247,7 +242,7 @@ class JoinerAwareVerifierTests(unittest.TestCase):
 
     def test_cycle_graph_edges_include_every_conjunct_source(self):
         with tempfile.TemporaryDirectory() as tmp:
-            write(Path(tmp) / "WebRespondWhenJoinCatalogListListedAndTaggingTagTagged.sync.md",
+            write(Path(tmp) / "RespondWhenJoinListListedAndTagTagged.sync.md",
                   JOIN_SYNC)
             edges = cycle.parse_syncs_edges(tmp)
             sources = {edge[1][:2] for edge in edges}
@@ -255,7 +250,7 @@ class JoinerAwareVerifierTests(unittest.TestCase):
 
     def test_sync_matrix_accepts_joined_rule(self):
         with tempfile.TemporaryDirectory() as tmp:
-            write(Path(tmp) / "WebRespondWhenJoinCatalogListListedAndTaggingTagTagged.sync.md",
+            write(Path(tmp) / "RespondWhenJoinListListedAndTagTagged.sync.md",
                   JOIN_SYNC)
             result = run(VERIFY_MATRIX, "--sync-dir", tmp)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -275,10 +270,9 @@ class JoinNamingAndCoverageTests(unittest.TestCase):
             ap.Conjunct(name="b", concept="Following", action="isFollowing",
                         outcome="Following(flag)"),
         ]
-        stem = ap.sync_stem("Web", "respond", "ReadArticle", conjuncts, True)
+        stem = ap.sync_stem("Web", "respond", conjuncts, True)
         self.assertEqual(
-            stem,
-            "WebRespondForReadArticleWhenJoinCatalogLookupBySlugFoundAndFollowingIsFollowingFollowing")
+            stem, "RespondWhenJoinLookupBySlugFoundAndIsFollowingFollowing")
         self.assertLess(len(stem) + len(".sync.md"), 255)
 
     def test_transition_coverage_flags_a_missing_sync(self):

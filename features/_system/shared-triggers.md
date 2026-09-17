@@ -8,10 +8,10 @@
 
 | Trigger | Outcome | Features | Syncs |
 |---|---|---|---|
-| `PasswordAuth.check` | `badPassword` | UC-00-login | `WebRespondForLoginWhenPasswordAuthCheckBadPassword` |
-| `PasswordAuth.check` | `locked` | UC-00-login | `WebRespondForLoginWhenPasswordAuthCheckLocked` |
-| `PasswordAuth.check` | `ok` | UC-00-login | `SessionGrantForLoginWhenPasswordAuthCheckOk` |
-| `Session.grant` | `granted` | UC-00-login | `WebRespondForLoginWhenSessionGrantGranted` |
-| `UserNaming.lookupByUsername` | `found` | UC-00-login | `PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound` |
-| `UserNaming.lookupByUsername` | `refused` | UC-00-login | `WebRespondForLoginWhenUserNamingLookupByUsernameRefused` |
-| `Web.request` | `routed` | UC-00-login | `UserNamingLookupByUsernameForLoginWhenWebRequestRouted` |
+| `PasswordAuth.check` | `badPassword` | UC-00-login | `RespondWhenCheckBadPassword` |
+| `PasswordAuth.check` | `locked` | UC-00-login | `RespondWhenCheckLocked` |
+| `PasswordAuth.check` | `ok` | UC-00-login | `GrantWhenCheckOk` |
+| `Session.grant` | `granted` | UC-00-login | `RespondWhenGrantGranted` |
+| `UserNaming.lookupByUsername` | `found` | UC-00-login | `CheckWhenLookupByUsernameFound` |
+| `UserNaming.lookupByUsername` | `refused` | UC-00-login | `RespondWhenLookupByUsernameRefused` |
+| `Web.request` | `routed` | UC-00-login | `LookupByUsernameWhenRequestRouted` |

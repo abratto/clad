@@ -51,7 +51,7 @@
 ## Sync rules → sync tests
 
 > For Stage 04e. One test class per sync. Class name: `<SyncName>Test`
-> (e.g. `WhenPasswordAuthCheckOkThenSessionGrantForLoginTest`). Use
+> (e.g. `GrantWhenCheckOkTest`). Use
 > `@Nested` for trigger outcome groups (`WhenCheckOk`). Method names:
 > `should<Trigger><Then>`.
 > Assertions verify the downstream action was scheduled (interaction

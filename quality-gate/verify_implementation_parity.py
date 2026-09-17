@@ -193,12 +193,12 @@ def expected_sync_names(path, text):
     Single-trigger (grammar v2, maintenance/sync-dsl-legibility.md):
       <TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>
     Joined rule (maintenance/engine-declarative-join-collect.md):
-      <TargetConcept><TargetAction>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2>...
+      Grammar v3, action-first: `<TargetAction>WhenJoin<A1><Out1>And<A2><Out2>...`
+      with concept tokens added back at higher escalation levels.
     """
     spec, outcome_full = _spec_trigger_outcome_full(path, text)
     if spec is None or not spec.trigger_concept or not spec.then_targets:
         return []
-    scope = feature_scope_from_path(path)
     then_concept, then_action = spec.then_targets[0]
 
     if spec.is_join and spec.conjuncts:
@@ -212,10 +212,16 @@ def expected_sync_names(path, text):
         conjuncts = [ap.Conjunct(None, spec.trigger_concept,
                                  spec.trigger_action, outcome_full)]
 
-    names = [ap.sync_stem(then_concept, then_action, "", conjuncts, spec.is_join)]
-    if scope:
-        names.append(ap.sync_stem(then_concept, then_action, scope,
-                                  conjuncts, spec.is_join))
+    # Grammar v3: the generator picks the shortest stem unique within its
+    # pack, escalating by adding concept tokens only on a collision, so every
+    # level is a legal mechanical name for this rule.
+    names = [
+        ap.sync_stem(then_concept, then_action, conjuncts, spec.is_join, level)
+        for level in range(ap.SYNC_STEM_MAX_LEVEL + 1)
+    ]
+    names.append(ap.sync_stem(then_concept, then_action, conjuncts,
+                              spec.is_join, ap.SYNC_STEM_MAX_LEVEL,
+                              with_payload=True))
     return names
 
 

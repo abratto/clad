@@ -38,7 +38,7 @@ public final class LoginSyncs {
     /** Row 1→2: when Web/request[routed] → UserNaming.lookupByUsername(username). */
     static SyncRule webRequestRoutedToLookup() {
         return SyncRule.of(
-                "WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin",
+                "LookupByUsernameWhenRequestRouted",
                 "Web", "request", "routed",
                 List.of(new Clause.Bind("?u", new Source.TriggerInput("username"))),
                 List.of(invoke("UserNaming", "lookupByUsername", Map.of("username", ref("?u")))));
@@ -47,7 +47,7 @@ public final class LoginSyncs {
     /** Row 2[Found]→3b: when UserNaming.lookupByUsername[FOUND] → PasswordAuth.check(userId, password). */
     static SyncRule lookupFoundToCheck() {
         return SyncRule.of(
-                "WhenUserNamingLookupByUsernameFoundThenPasswordAuthCheckForLogin",
+                "CheckWhenLookupByUsernameFound",
                 "UserNaming", "lookupByUsername", "FOUND",
                 List.of(
                         new Clause.Bind("?user", new Source.TriggerField("userId")),
@@ -59,7 +59,7 @@ public final class LoginSyncs {
     /** Row 2[refused]→3a: when UserNaming.lookupByUsername[refused] → Web.respond(401, opaque message). */
     static SyncRule lookupRefusedToRespond() {
         return SyncRule.of(
-                "WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin",
+                "RespondWhenLookupByUsernameRefused",
                 "UserNaming", "lookupByUsername", "refused",
                 List.of(),
                 List.of(respond(401, "username or password didn't match", null)));
@@ -68,7 +68,7 @@ public final class LoginSyncs {
     /** Row 3b[OK]→4a: when PasswordAuth.check[OK] → Session.grant(userId). */
     static SyncRule checkOkToGrant() {
         return SyncRule.of(
-                "WhenPasswordAuthCheckOkThenSessionGrantForLogin",
+                "GrantWhenCheckOk",
                 "PasswordAuth", "check", "OK",
                 List.of(new Clause.Bind("?user", new Source.TriggerField("userId"))),
                 List.of(invoke("Session", "grant", Map.of("userId", ref("?user")))));
@@ -77,7 +77,7 @@ public final class LoginSyncs {
     /** Row 3b[BAD_PASSWORD]→4b: respond 401 opaque. */
     static SyncRule checkBadPasswordToRespond() {
         return SyncRule.of(
-                "WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin",
+                "RespondWhenCheckBadPassword",
                 "PasswordAuth", "check", "BAD_PASSWORD",
                 List.of(),
                 List.of(respond(401, "username or password didn't match", null)));
@@ -86,7 +86,7 @@ public final class LoginSyncs {
     /** Row 3b[LOCKED]→4c: respond 401 with the visible lockout message. */
     static SyncRule checkLockedToRespond() {
         return SyncRule.of(
-                "WhenPasswordAuthCheckLockedThenWebRespondForLogin",
+                "RespondWhenCheckLocked",
                 "PasswordAuth", "check", "LOCKED",
                 List.of(),
                 List.of(respond(401, "Too many attempts. Try again in 15 minutes.", null)));
@@ -95,7 +95,7 @@ public final class LoginSyncs {
     /** Row 4a[GRANTED]→5: when Session.grant[GRANTED] → Web.respond(200, sessionToken). */
     static SyncRule grantGrantedToRespond() {
         return SyncRule.of(
-                "WhenSessionGrantGrantedThenWebRespondForLogin",
+                "RespondWhenGrantGranted",
                 "Session", "grant", "GRANTED",
                 List.of(new Clause.Bind("?sid", new Source.TriggerField("sessionId"))),
                 List.of(respond(200, null, "?sid")));

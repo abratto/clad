@@ -1026,31 +1026,63 @@ def completion_with_payload(outcome_raw: str) -> str:
     return name + payload
 
 
-def sync_stem(then_concept: str, then_action: str, scope: str,
-              conjuncts: List["Conjunct"], is_join: bool) -> str:
-    """Mechanical sync stem (grammar v2 / join grammar).
+#: Highest escalation level `sync_stem` produces (see its docstring).
+SYNC_STEM_MAX_LEVEL = 3
 
-    Single-trigger: `<Target><Action>[For<Scope>]When<C><A><Outcome>`.
-    Joined rule:    `<Target><Action>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2>...`
-    in declared conjunct order (deterministic).
+
+def sync_stem(then_concept: str, then_action: str,
+              conjuncts: List["Conjunct"], is_join: bool,
+              level: int = 0, with_payload: bool = False) -> str:
+    """Mechanical sync stem (grammar v3, action-first).
+
+    Level 0 (the default) names the effect and its trigger by ACTION only:
+
+        single trigger: `<TargetAction>When<TriggerAction><Completion>`
+        joined rule:    `<TargetAction>WhenJoin<A1><Out1>And<A2><Out2>...`
+                        (declared conjunct order — deterministic)
+
+    A sync is *coordination*, not a concept's property — it can involve several
+    concepts — so concept tokens are omitted unless needed to disambiguate.
+    `level` adds them back deterministically when two stems would collide
+    within one sync pack:
+
+        1 -> + target concept
+        2 -> + trigger concept
+        3 -> + both
+
+    The completion is named by its BASE token only (`Routed`, not
+    `RoutedRefName`) — the carried fields are body-visible and never needed to
+    read the name. `with_payload=True` is the last-resort disambiguator for two
+    outcomes of one action that differ only in payload
+    (`Released` vs `Released(blankFields)`).
+
+    The pre-v0.6 `For<Scope>` component is gone: it was derived from the
+    feature slug, so every sync in a use case carried the same scope and it
+    could never disambiguate anything.
     """
-    base = (pascal_token(then_concept) + pascal_token(then_action)
-            + ("For" + scope if scope else ""))
+    target = pascal_token(then_action)
+    if level in (1, 3):
+        target = pascal_token(then_concept) + target
     if is_join:
         # Payload-free completions per conjunct: joining every payload would
         # blow past the OS filename limit (NAME_MAX 255) for richer joins,
         # and the completion token is the documented grammar for a conjunct.
-        parts = [
-            pascal_token(c.concept) + pascal_token(c.action)
-            + first_completion_token(c.outcome)
-            for c in conjuncts
-        ]
-        return base + "WhenJoin" + "And".join(parts)
+        parts = []
+        for c in conjuncts:
+            token = pascal_token(c.action) + first_completion_token(c.outcome)
+            if level in (2, 3):
+                token = pascal_token(c.concept) + token
+            parts.append(token)
+        return target + "WhenJoin" + "And".join(parts)
     if not conjuncts:
-        return base + "When"
+        return target + "When"
     c = conjuncts[0]
-    return (base + "When" + pascal_token(c.concept) + pascal_token(c.action)
-            + completion_with_payload(c.outcome))
+    completion = (completion_with_payload(c.outcome) if with_payload
+                  else first_completion_token(c.outcome))
+    trigger = pascal_token(c.action) + completion
+    if level in (2, 3):
+        trigger = pascal_token(c.concept) + trigger
+    return target + "When" + trigger
 
 
 def feature_scope_from_path(path: str) -> str:

@@ -59,8 +59,8 @@ class ImplementationParityFixtures(unittest.TestCase):
             root = Path(temporary)
             features = root / "features"
             syncs = root / "syncs"
-            # Grammar v2 (effect-first, maintenance/sync-dsl-legibility.md).
-            name = "InventoryLendForWidgetWhenWebRequestRouted"
+            # Grammar v3 (action-first, maintenance/sync-name-grammar-v3.md).
+            name = "LendWhenRequestRouted"
             write(features / "UC-01-widget/stages/03_syncs/output" / f"{name}.sync.md",
                   canonical_sync(name))
             write(syncs / f"{name}.java", sync_rule(name))

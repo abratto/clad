@@ -12,16 +12,16 @@ import static dev.legible.engine.SyncRule.ref;
 /**
  * Row 4a[GRANTED]-to-5: when Session.grant[GRANTED] then Web.respond(200, sessionToken).
  *
- * <p>The declarative SyncRule realization of the Stage 03 WhenSessionGrantGrantedThenWebRespondForLogin.sync.md (grammar v2 name: WebRespondForLoginWhenSessionGrantGranted; see maintenance/sync-dsl-legibility.md).
+ * <p>The declarative SyncRule realization of the Stage 03 RespondWhenGrantGranted.sync.md (grammar v2 name: RespondWhenGrantGranted; see maintenance/sync-dsl-legibility.md).
  * Trigger and target tokens are copied verbatim from the approved chain
  * table (literal lock). No imperative branching, no state, no I/O (R3).
  */
-public final class WebRespondForLoginWhenSessionGrantGranted {
+public final class RespondWhenGrantGranted {
 
     public SyncRule rule() {
         return SyncRule.of(
-                // renamed to grammar v2: "WhenSessionGrantGrantedThenWebRespondForLogin" -> "WebRespondForLoginWhenSessionGrantGranted"
-                "WebRespondForLoginWhenSessionGrantGranted",
+                // renamed to grammar v2: "RespondWhenGrantGranted" -> "RespondWhenGrantGranted"
+                "RespondWhenGrantGranted",
                 "Session", "grant", "GRANTED",
                 List.of(new Clause.Bind("?sid", new Source.TriggerField("sessionId"))),
                 List.of(invoke("Web", "respond", Map.of(

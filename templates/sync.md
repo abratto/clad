@@ -63,7 +63,7 @@ A single *unnamed* conjunct keeps the classic form (and naming) unchanged.
 The joined stem is
 `<Target><Action>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2><A2><Out2>…` in
 declared conjunct order — e.g.
-`WebRespondWhenJoinCatalogListListedAndTaggingTagTagged`.
+`RespondWhenJoinListListedAndTagTagged`.
 
 **Aggregation (`collect`).** The declarative analogue of `collectAs` —
 gather a source's values into **one `List` value** (no filters, no JSON, R3):

@@ -1,4 +1,4 @@
-sync WebRespondForLoginWhenPasswordAuthCheckLocked
+sync RespondWhenCheckLocked
 
 ## Sync Contract Matrix
 

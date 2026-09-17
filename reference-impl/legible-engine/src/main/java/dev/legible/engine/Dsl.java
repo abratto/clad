@@ -14,7 +14,7 @@ import java.util.Map;
  * <pre>{&#64;code
  *     import static dev.legible.engine.Dsl.*;
  *
- *     rule("SessionGrantForLoginWhenPasswordAuthCheckOk")
+ *     rule("GrantWhenCheckOk")
  *         .when("PasswordAuth", "check", "OK")
  *         .where(bind("?user", triggerField("userId")))
  *         .then(invoke("Session", "grant", args("userId", ref("?user"))))

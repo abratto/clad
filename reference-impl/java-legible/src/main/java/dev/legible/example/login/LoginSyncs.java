@@ -43,18 +43,18 @@ public final class LoginSyncs {
 
     public static List<SyncRule> all() {
         return List.of(
-                userNamingLookupForLoginWhenWebRequestRouted(),
-                passwordAuthCheckForLoginWhenUserNamingLookupFound(),
-                webRespondForLoginWhenUserNamingLookupRefused(),
-                sessionGrantForLoginWhenPasswordAuthCheckOk(),
-                webRespondForLoginWhenPasswordAuthCheckBadPassword(),
-                webRespondForLoginWhenPasswordAuthCheckLocked(),
-                webRespondForLoginWhenSessionGrantGranted());
+                lookupByUsernameWhenRequestRouted(),
+                checkWhenLookupByUsernameFound(),
+                respondWhenLookupByUsernameRefused(),
+                grantWhenCheckOk(),
+                respondWhenCheckBadPassword(),
+                respondWhenCheckLocked(),
+                respondWhenGrantGranted());
     }
 
     /** Row 1→2: when Web/request[routed] → UserNaming.lookupByUsername(username). */
-    private static SyncRule userNamingLookupForLoginWhenWebRequestRouted() {
-        return rule("UserNamingLookupByUsernameForLoginWhenWebRequestRouted")
+    private static SyncRule lookupByUsernameWhenRequestRouted() {
+        return rule("LookupByUsernameWhenRequestRouted")
             .when(WEB, REQUEST, "routed")
             .matching(Map.of("route", "login"))
             .where(bind("?u", triggerInput("username")))
@@ -63,8 +63,8 @@ public final class LoginSyncs {
     }
 
     /** Row 2[Found]→3b: when UserNaming.lookupByUsername[FOUND] → PasswordAuth.check(userId, password). */
-    private static SyncRule passwordAuthCheckForLoginWhenUserNamingLookupFound() {
-        return rule("PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound")
+    private static SyncRule checkWhenLookupByUsernameFound() {
+        return rule("CheckWhenLookupByUsernameFound")
             .when(USER_NAMING, LOOKUP_BY_USERNAME, "FOUND")
             .where(bind("?user", triggerField("userId")),
                    bind("?p", siblingInput(WEB, REQUEST, "password")))
@@ -74,8 +74,8 @@ public final class LoginSyncs {
     }
 
     /** Row 2[refused]→3a: when UserNaming.lookupByUsername[refused] → Web.respond(401, opaque message). */
-    private static SyncRule webRespondForLoginWhenUserNamingLookupRefused() {
-        return rule("WebRespondForLoginWhenUserNamingLookupByUsernameRefused")
+    private static SyncRule respondWhenLookupByUsernameRefused() {
+        return rule("RespondWhenLookupByUsernameRefused")
             .when(USER_NAMING, LOOKUP_BY_USERNAME, "refused")
             .then(invoke(WEB, RESPOND, args(
                     "status", lit(401),
@@ -84,8 +84,8 @@ public final class LoginSyncs {
     }
 
     /** Row 3b[OK]→4a: when PasswordAuth.check[OK] → Session.grant(userId). */
-    private static SyncRule sessionGrantForLoginWhenPasswordAuthCheckOk() {
-        return rule("SessionGrantForLoginWhenPasswordAuthCheckOk")
+    private static SyncRule grantWhenCheckOk() {
+        return rule("GrantWhenCheckOk")
             .when(PASSWORD_AUTH, CHECK, "OK")
             .where(bind("?user", triggerField("userId")))
             .then(invoke(SESSION, GRANT, args("userId", ref("?user"))))
@@ -93,8 +93,8 @@ public final class LoginSyncs {
     }
 
     /** Row 3b[BAD_PASSWORD]→4b: respond 401 opaque. */
-    private static SyncRule webRespondForLoginWhenPasswordAuthCheckBadPassword() {
-        return rule("WebRespondForLoginWhenPasswordAuthCheckBadPassword")
+    private static SyncRule respondWhenCheckBadPassword() {
+        return rule("RespondWhenCheckBadPassword")
             .when(PASSWORD_AUTH, CHECK, "BAD_PASSWORD")
             .then(invoke(WEB, RESPOND, args(
                     "status", lit(401),
@@ -103,8 +103,8 @@ public final class LoginSyncs {
     }
 
     /** Row 3b[LOCKED]→4c: respond 401 with the visible lockout message. */
-    private static SyncRule webRespondForLoginWhenPasswordAuthCheckLocked() {
-        return rule("WebRespondForLoginWhenPasswordAuthCheckLocked")
+    private static SyncRule respondWhenCheckLocked() {
+        return rule("RespondWhenCheckLocked")
             .when(PASSWORD_AUTH, CHECK, "LOCKED")
             .then(invoke(WEB, RESPOND, args(
                     "status", lit(401),
@@ -113,8 +113,8 @@ public final class LoginSyncs {
     }
 
     /** Row 4a[GRANTED]→5: when Session.grant[GRANTED] → Web.respond(200, sessionToken). */
-    private static SyncRule webRespondForLoginWhenSessionGrantGranted() {
-        return rule("WebRespondForLoginWhenSessionGrantGranted")
+    private static SyncRule respondWhenGrantGranted() {
+        return rule("RespondWhenGrantGranted")
             .when(SESSION, GRANT, "GRANTED")
             .where(bind("?sid", triggerField("sessionId")))
             .then(invoke(WEB, RESPOND, args(

@@ -12,16 +12,16 @@ import static dev.legible.engine.SyncRule.ref;
 /**
  * Row 1-to-2: when Web/request[routed] then UserNaming.lookupByUsername(username).
  *
- * <p>The declarative SyncRule realization of the Stage 03 WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin.sync.md (grammar v2 name: UserNamingLookupByUsernameForLoginWhenWebRequestRouted; see maintenance/sync-dsl-legibility.md).
+ * <p>The declarative SyncRule realization of the Stage 03 LookupByUsernameWhenRequestRouted.sync.md (grammar v2 name: LookupByUsernameWhenRequestRouted; see maintenance/sync-dsl-legibility.md).
  * Trigger and target tokens are copied verbatim from the approved chain
  * table (literal lock). No imperative branching, no state, no I/O (R3).
  */
-public final class UserNamingLookupByUsernameForLoginWhenWebRequestRouted {
+public final class LookupByUsernameWhenRequestRouted {
 
     public SyncRule rule() {
         return SyncRule.of(
-                // renamed to grammar v2: "WhenWebRequestRoutedThenUserNamingLookupByUsernameForLogin" -> "UserNamingLookupByUsernameForLoginWhenWebRequestRouted"
-                "UserNamingLookupByUsernameForLoginWhenWebRequestRouted",
+                // renamed to grammar v2: "LookupByUsernameWhenRequestRouted" -> "LookupByUsernameWhenRequestRouted"
+                "LookupByUsernameWhenRequestRouted",
                 "Web", "request", "routed",
                 List.of(new Clause.Bind("?u", new Source.TriggerInput("username"))),
                 List.of(invoke("UserNaming", "lookupByUsername", Map.of("username", ref("?u")))));

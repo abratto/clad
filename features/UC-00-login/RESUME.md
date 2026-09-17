@@ -7,12 +7,13 @@
 - **Iterative change `fire-after-commit-engine`:** `approved`
 - **Iterative change `sync-name-grammar-v2`:** `approved`
 - **Iterative change `system-scope-concepts`:** `approved`
+- **Iterative change `sync-name-grammar-v3`:** `approved`
 - **Gate 1 (Requirements):** `approved`
-- **Gate 1 content hash:** `0d51415a96f6609c1dff26490d0dceef45d9f15531c30124e37319d3e9c2f370`
+- **Gate 1 content hash:** `207734cdae11bcd66866c9f4deabd5358bc65047279ea7e9c6687665882b1661`
 - **Gate 2 (Architecture):** `approved`
-- **Gate 2 content hash:** `05a4e650a7ef81b835115de60ea0c0c589eb97e5d146c8d66c55ceede196666c`
+- **Gate 2 content hash:** `ecb61fe4eba994c71d49718a8cd10c67dd0e28385634fea9587066e741d16eb4`
 - **Gate 3 (Executable spec):** `approved`
-- **Gate 3 content hash:** `980bb59d42abea4939ef532bbe626d55c278e65b70c0bc6f7e69bd0984383227`
+- **Gate 3 content hash:** `ff52054405b413d86919d2f9e1f032cc381209afa04b762621a44f4661757dd7`
 - **Corrections at last gate:** `None`
 - **Deferred concepts:** `None`
 - **Next stage:** `None — feature complete`
