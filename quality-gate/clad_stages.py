@@ -141,6 +141,15 @@ def feature_concept_names(feature_root: str) -> List[str]:
     return [c for c in sorted(ap.parse_responsibility_map(resp)) if c != "Web"]
 
 
+def feature_model_concepts(feature_root: str) -> List[str]:
+    """Concepts this feature must produce a conceptual data model for.
+
+    Delegates to `artifact_parsers.feature_model_concepts` (single source of
+    truth, shared with the 03b file manifest) with this feature's resolved
+    corpus dir."""
+    return ap.feature_model_concepts(feature_root, _concept_corpus_dir(feature_root))
+
+
 def _concept_dir_args(feature_root: str) -> List[str]:
     """`--concept-dir <d>` repeated once per concept-source dir, in precedence
     order. The consumer checks merge the dirs, earlier winning on a name clash."""

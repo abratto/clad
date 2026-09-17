@@ -25,7 +25,8 @@ Stage 00 is complete is structurally wrong: the UC folders are created
 features/_system/
 ├── README.md                    ← this file
 ├── concepts/                    ← canonical concept corpus (one file per concept)
-│   └── <Name>.concept.md        ← full anatomy; provenance via `introduced-by`
+│   ├── <Name>.concept.md        ← full anatomy; provenance via `introduced-by`
+│   └── <Name>.data-model.md     ← the concept's canonical CSDP data model
 ├── concepts-catalog.md          ← GENERATED index (do not hand-edit)
 ├── concept-dependence.md        ← reviewed app-level extrinsic dependence graph
 └── stages/

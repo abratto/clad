@@ -204,6 +204,28 @@ class PromotionTests(unittest.TestCase):
             import promote_concepts as pc  # noqa: E402
             self.assertEqual(pc.dependence_claims(str(feature)), [])
 
+    def test_promotion_carries_the_conceptual_data_model(self):
+        """The conceptual data model is canonical too: it is promoted beside
+        the spec, so a later reuse binds the canonical model instead of
+        re-deriving a copy that can drift."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature = make_feature(tmp, [("Foo", "new")], specs=("Foo",),
+                                   gate2="approved")
+            model_dir = feature / "stages" / "03b_data-model" / "output"
+            model_dir.mkdir(parents=True)
+            (model_dir / "Foo.data-model.md").write_text("# Foo model\n",
+                                                         encoding="utf-8")
+
+            r = run(PROMOTE, "--feature", str(feature))
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            corpus_model = (Path(tmp) / "features" / "_system" / "concepts"
+                            / "Foo.data-model.md")
+            self.assertTrue(corpus_model.is_file())
+            self.assertEqual("# Foo model\n", corpus_model.read_text(encoding="utf-8"))
+
+            again = run(PROMOTE, "--feature", str(feature))
+            self.assertIn("no-op", again.stdout)
+
     def test_promotes_then_is_idempotent(self):
         with tempfile.TemporaryDirectory() as tmp:
             feature = make_feature(tmp, [("Foo", "new")], specs=("Foo",),
@@ -257,16 +279,42 @@ class FeatureScopedGeneratorTests(unittest.TestCase):
         otherwise it emits an artefact for every corpus concept (observed on
         UC-02, which produced UC-01's MemberEnrolment data model)."""
         with tempfile.TemporaryDirectory() as tmp:
-            feature = make_feature(tmp, [("Foo", "reused:UC-00-login")], specs=())
+            feature = make_feature(tmp, [("Foo", "new")], specs=("Foo",))
             corpus = Path(tmp) / "features" / "_system" / "concepts"
             corpus.mkdir(parents=True)
-            (corpus / "Foo.concept.md").write_text(concept("Foo"), encoding="utf-8")
             (corpus / "Bar.concept.md").write_text(concept("Bar"), encoding="utf-8")
 
             r = run(GENERATE_DATA_MODEL, "--feature", str(feature))
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertIn("Foo.data-model.md", r.stdout)
             self.assertNotIn("Bar.data-model.md", r.stdout)
+
+    def test_data_model_is_not_rederived_for_a_reused_concept(self):
+        """The canonical model lives with the canonical concept; a feature that
+        merely REUSES a concept binds the canonical model instead of deriving a
+        second copy that could drift from the introducer's."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature = make_feature(tmp, [("Foo", "reused:UC-00-login")], specs=())
+            corpus = Path(tmp) / "features" / "_system" / "concepts"
+            corpus.mkdir(parents=True)
+            (corpus / "Foo.concept.md").write_text(concept("Foo"), encoding="utf-8")
+
+            r = run(GENERATE_DATA_MODEL, "--feature", str(feature))
+            self.assertNotIn("Foo.data-model.md", r.stdout)
+
+    def test_data_model_is_not_rederived_for_a_state_preserving_extend(self):
+        """An additive extend that leaves `## State` untouched also binds the
+        canonical model (UC-03's `verify`/`lend` add no state)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature = make_feature(tmp, [("Foo", "extends:UC-00-login")],
+                                   specs=("Foo",))
+            corpus = Path(tmp) / "features" / "_system" / "concepts"
+            corpus.mkdir(parents=True)
+            (corpus / "Foo.concept.md").write_text(concept("Foo"), encoding="utf-8")
+            # the proposal is byte-identical, so its `## State` is unchanged
+
+            r = run(GENERATE_DATA_MODEL, "--feature", str(feature))
+            self.assertNotIn("Foo.data-model.md", r.stdout)
 
 
 class CatalogTests(unittest.TestCase):

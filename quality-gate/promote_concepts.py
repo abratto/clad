@@ -155,11 +155,23 @@ def main():
     if os.path.isfile(receipt) and not args.dry_run:
         with open(receipt, encoding="utf-8") as fh:
             if f"gate hash: `{gate_hash}`" in fh.read():
+                def _model_same(concept: str) -> bool:
+                    """A promoted model (when the feature produced one) matches."""
+                    model = os.path.join(feature_root, "stages", "03b_data-model",
+                                         "output", f"{concept}.data-model.md")
+                    canonical = os.path.join(corpus, f"{concept}.data-model.md")
+                    if not os.path.isfile(model):
+                        return True
+                    return (os.path.isfile(canonical)
+                            and open(canonical, encoding="utf-8").read()
+                            == open(model, encoding="utf-8").read())
+
                 same = all(
                     os.path.isfile(os.path.join(corpus, f"{c}.concept.md"))
                     and open(os.path.join(corpus, f"{c}.concept.md"),
                              encoding="utf-8").read() ==
                     stamp_provenance(open(p, encoding="utf-8").read(), slug)
+                    and _model_same(c)
                     for c, p in proposals.items())
                 if same:
                     print(f"PASS  already promoted at Gate 2 hash `{gate_hash[:12]}…` — no-op")
@@ -183,6 +195,15 @@ def main():
         with open(os.path.join(corpus, f"{concept}.concept.md"), "w",
                   encoding="utf-8") as fh:
             fh.write(text)
+        # The conceptual data model is canonical too: it lives beside the spec
+        # (`features/_system/concepts/<Name>.data-model.md`), so a feature
+        # derives it only when it changes the state and it is promoted with the
+        # spec. A reused concept binds the canonical model — no second copy.
+        model = os.path.join(feature_root, "stages", "03b_data-model", "output",
+                             f"{concept}.data-model.md")
+        if os.path.isfile(model):
+            shutil.copyfile(model, os.path.join(corpus,
+                                                f"{concept}.data-model.md"))
         promoted.append(concept)
 
     # Regenerate the catalog index.

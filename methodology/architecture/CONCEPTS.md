@@ -226,7 +226,9 @@ then   PasswordAuth/verify:      [ userId: u ; password: p ]     => [ error: "lo
 ## Concepts are reusable, system-scope assets
 
 A concept is the unit of reuse, not a per-feature artefact. The canonical spec
-lives once in `features/_system/concepts/<Name>.concept.md`; a use case
+lives once in `features/_system/concepts/<Name>.concept.md`, **with its
+conceptual data model beside it** (`<Name>.data-model.md`) — a feature derives
+a model only when it introduces or changes the concept's state. a use case
 **composes** it (reuse / extend / propose) rather than re-deriving it (hard
 rule **R22**). Reuse is roughly 90% of design — an app is a composition of
 concepts, and only the tricky ones need detailed specification

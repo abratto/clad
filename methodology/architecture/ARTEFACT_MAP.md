@@ -160,6 +160,7 @@ consumer need that?**
 | `<concept>-card.md` | 03a | 04e | Set of concepts this sync invokes | The sync TDD knows which concepts to double. |
 | `pattern-d-summary.md` | 03a | 03b | Single cross-cutting list of every concept-state read | One conceptual data-model checklist for the whole feature. |
 | `<concept>-card.md` | 03a | concept-dependence review | Coordination evidence | Evidence for a possible dependence edge; the edge itself is reviewed judgment, recorded in the graph. |
+| `concepts/<Name>.data-model.md` | `_system` corpus | 03b, 04a | Canonical conceptual data model | Promoted beside the spec; a reused concept binds it rather than re-deriving a copy. |
 | `concepts/<Name>.concept.md` | `_system` corpus | 01a, 02, 03b, 04b, 04d | Canonical concept anatomy | Resolved for a UC as its own proposals shadowing the corpus (`CONCEPT_DIR` union); promoted on Gate 2 via `./clad promote-concepts`. |
 | `concepts-catalog.md` | `generate_concepts_catalog.py` | 01a | Concept/action index | Generated; answers "does the action already exist?" without opening the full spec. |
 | `concept-dependence.md` | reviewed (human) | 01a, 03a, scheduling | App-level extrinsic dependence + valid subsets | Reviewed, not derived. 03a cards are evidence for an edge, never its source. |

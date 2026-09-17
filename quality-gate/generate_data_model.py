@@ -281,8 +281,16 @@ def main() -> None:
     # for the concepts THIS feature uses (its 01a map) — the union also holds
     # every other concept in the corpus.
     specs = ap.concept_spec_paths(cs.concept_source_dirs(feature_root))
-    wanted = set(cs.feature_concept_names(feature_root))
-    if wanted:
+    # The canonical model lives with the canonical concept, so derive one only
+    # for concepts this feature introduces or changes the state of (new /
+    # state-changing extend); a reused concept binds the canonical model. Apply
+    # the rule whenever the feature HAS a responsibility map — an empty result
+    # means "no models", not "no filter" (only a legacy map, which has no
+    # `Origin` column, falls back to one model per concept).
+    resp_map = os.path.join(feature_root, "stages", "01a_responsibility-map",
+                            "output", "responsibility-map.md")
+    if os.path.isfile(resp_map):
+        wanted = set(cs.feature_model_concepts(feature_root))
         specs = {n: p for n, p in specs.items() if n in wanted}
     if not specs:
         print("No concept directory found.")

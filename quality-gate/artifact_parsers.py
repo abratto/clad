@@ -895,6 +895,59 @@ def feature_slug(feature_root: str) -> str:
     return slugify(os.path.basename(feature_root.rstrip("/")).replace("UC-", "", 1))
 
 
+def _default_corpus_dir(feature_root: str) -> str:
+    """`features/_system/concepts`, sibling of the feature folder."""
+    return os.path.join(os.path.dirname(os.path.abspath(feature_root)),
+                        "_system", "concepts")
+
+
+def feature_model_concepts(feature_root: str, corpus_dir: str = "") -> List[str]:
+    """Concepts this feature must produce a **conceptual data model** for.
+
+    The canonical model lives with the canonical concept
+    (`features/_system/concepts/<Name>.data-model.md`), so a feature derives one
+    only when it introduces or CHANGES the concept's state:
+
+      * `new`                                     -> yes
+      * `extends:*` whose `## State` differs from the canonical spec -> yes
+      * `reused`, or an extend leaving state unchanged               -> no
+      * a legacy map with no `Origin` column      -> every concept (pre-Model-B
+        expectation, kept for compatibility).
+
+    Single source of truth for the 03b file manifest and `generate_data_model`.
+    """
+    resp = os.path.join(feature_root, "stages", "01a_responsibility-map",
+                        "output", "responsibility-map.md")
+    if not os.path.isfile(resp):
+        return []
+    entries = parse_responsibility_map(resp)
+    corpus = corpus_dir or _default_corpus_dir(feature_root)
+    out: List[str] = []
+    for concept, entry in sorted(entries.items()):
+        if concept == "Web":
+            continue
+        origin = (entry.origin or "").strip().lower()
+        if not origin or origin.startswith("new"):
+            out.append(concept)
+        elif origin.startswith("extend") and _state_changed(
+                feature_root, concept, corpus):
+            out.append(concept)
+    return out
+
+
+def _state_changed(feature_root: str, concept: str, corpus: str) -> bool:
+    """True when this feature's proposal changes the concept's `## State`."""
+    proposal = os.path.join(feature_root, "stages", "02_concepts", "output",
+                            concept + ".concept.md")
+    canonical = os.path.join(corpus, concept + ".concept.md") if corpus else ""
+    if not os.path.isfile(canonical):
+        return True                      # no canonical spec — state is new
+    if not os.path.isfile(proposal):
+        return False
+    return (parse_concept(proposal).state_lines
+            != parse_concept(canonical).state_lines)
+
+
 def expected_stage_outputs(feature_root: str) -> Dict[str, List[str]]:
     """Map canonical stage id -> expected output filenames, derived from the
     feature's approved upstream artefacts (not from the target directory).
@@ -932,8 +985,9 @@ def expected_stage_outputs(feature_root: str) -> Dict[str, List[str]]:
 
     out["04a"] = ["_NOT_APPLICABLE.md"]
 
-    if concepts:
-        out["03b"] = [c + ".data-model.md" for c in concepts]
+    model_concepts = feature_model_concepts(feature_root)
+    if model_concepts:
+        out["03b"] = [c + ".data-model.md" for c in model_concepts]
         out["04b"] = [c + ".spec.md" for c in concepts]
 
     sync_specs = parse_syncs(_dir("03_syncs")) if os.path.isdir(_dir("03_syncs")) else []
