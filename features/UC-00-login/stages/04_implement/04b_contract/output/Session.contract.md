@@ -1,5 +1,5 @@
-<!-- derived from templates/spec.md -->
-# Session — SPEC
+<!-- derived from templates/contract.md -->
+# Session — contract
 
 ## Actions
 

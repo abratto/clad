@@ -1,8 +1,8 @@
 # Artefact impact matrix — `spec-renamed-to-concept-contract`
 
 > Iterative change to UC-00-login, **presentation only**: the Stage 04b artefact
-> is renamed from SPEC to the **concept contract**
-> (`<Name>.spec.md` → `<Name>.contract.md`, folder `04b_spec/` →
+> is renamed from contract to the **concept contract**
+> (`<Name>.spec.md` → `<Name>.contract.md`, folder `04b_contract/` →
 > `04b_contract/`). See `maintenance/spec-renamed-to-concept-contract.md`.
 > No action, outcome, sync, or flow token changes.
 

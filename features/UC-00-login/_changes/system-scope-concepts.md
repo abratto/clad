@@ -4,7 +4,7 @@
 > system-scope, reusable assets (maintenance change
 > `system-scope-concept-vocabulary`, rule R22). The three concept specs move to
 > the canonical corpus and UC-00 gains a `concept-bindings.md`; the concept
-> *set*, all syncs, SPECs, tests, and runtime behaviour are unchanged. This is
+> *set*, all syncs, contracts, tests, and runtime behaviour are unchanged. This is
 > the worked example's migration to Model B so it teaches the current model.
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
@@ -23,7 +23,7 @@
 | Use case | no | scenarios unchanged |
 | Concept(s) | yes | three specs gain `introduced-by UC-00-login`; promoted copies live in `features/_system/concepts/` |
 | Sync(s) | no | sync content unchanged |
-| SPEC slices | no | still one per concept |
+| Contract slices | no | still one per concept |
 | Flow tests | no | |
 | Concept tests | no | |
 | Sync tests | no | |

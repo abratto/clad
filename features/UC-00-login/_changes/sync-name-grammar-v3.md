@@ -22,7 +22,7 @@
 | Use case | yes (names only) | `usecase.md` cites sync names in its notes |
 | Concept(s) | no | — |
 | Sync(s) | yes | seven file renames + `sync <Name>` headers; rule bodies unchanged |
-| SPEC slices | no | SPEC names are concept actions (unchanged) |
+| Contract slices | no | contract names are concept actions (unchanged) |
 | Flow tests | yes | `login.feature` comments cite the sync files |
 | Concept tests | no | — |
 | Sync tests | yes | 04e derivation / `_IMPL` sync names |

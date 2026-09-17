@@ -1,5 +1,5 @@
-<!-- derived from templates/spec.md -->
-# PasswordAuth — SPEC
+<!-- derived from templates/contract.md -->
+# PasswordAuth — contract
 
 ## Actions
 

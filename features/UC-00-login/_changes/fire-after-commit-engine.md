@@ -20,7 +20,7 @@
 | Use case | no | scenarios + postconditions unchanged |
 | Concept(s) | no | same business concepts (`UserNaming`, `PasswordAuth`, `Session`), same state/actions/outcomes |
 | Sync(s) | yes | `WhenWebHandleRouted…` → `WhenWebRequestRouted…`; `when`/`then` trigger renamed `Web/handle` → `Web/request` |
-| SPEC slices | no | same action signatures + outcome enums |
+| Contract slices | no | same action signatures + outcome enums |
 | Flow tests | yes | `login.feature` + `login-flow-test.md` Web bootstrap references renamed |
 | Concept tests | no | same R14/R16 field-value assertions (outcomes/fields unchanged) |
 | Sync tests | yes | `sync-test-derivation.md` sync names re-derived |

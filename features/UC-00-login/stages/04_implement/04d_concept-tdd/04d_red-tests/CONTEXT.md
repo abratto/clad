@@ -32,7 +32,7 @@ here.
 | `../../../02_concepts/output/concept-bindings.md` | 4 | Which canonical concepts this feature uses |
 | `../../../../../../features/_system/concepts/` | 4 | Canonical concept specs (`state`, actions) |
 | `../../../02_concepts/output/<Name>.concept.md` | 4 | NEW/EXTEND proposals (not yet promoted) |
-| `../../04b_spec/output/` | 4 | SPEC slices to compile against |
+| `../../04b_contract/output/` | 4 | Contract slices to compile against |
 | `../../04c_flow-tests/output/` | 4 | Drives test derivation |
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for red evidence |
 | `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
@@ -46,7 +46,7 @@ here.
 
 1. Derive concept tests from approved outer artefacts. Start with
    `04c_flow-tests/output/`, then add any required action/outcome pairs
-   from `04b_spec/output/` that are not exercised by the flow tests.
+   from `04b_contract/output/` that are not exercised by the flow tests.
 2. Write the concept test file(s) only under `APP_TEST_SOURCE_ROOT`.
    Do not write or modify production implementation code in this stage.
 3. **Test isolation (default profile, `java-legible`):** concept tests
@@ -69,7 +69,7 @@ here.
    outcome, and the next implementation target.
 6. Record the derivation map and the handoff bundle. The automated
   gate (`verify_concept_test_derivation.py`) confirms the tests cover
-  all SPEC outcomes. No human approval is required at this boundary;
+  all contract outcomes. No human approval is required at this boundary;
   the design was settled at 04c (Gate 3).
 
 ## Outputs
@@ -90,11 +90,11 @@ python3 ../../../../../../quality-gate/verify_profile_paths.py \
 python3 ../../../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "concept-test-derivation.md"
 python3 ../../../../../../quality-gate/verify_concept_test_derivation.py \
-  --spec-dir ../../04b_spec/output \
+  --spec-dir ../../04b_contract/output \
   --derivation output/concept-test-derivation.md \
   --test-source-root <APP_TEST_SOURCE_ROOT>
 python3 ../../../../../../quality-gate/verify_concept_field_assertions.py \
-  --spec-dir ../../04b_spec/output \
+  --spec-dir ../../04b_contract/output \
   --test-source-root <APP_TEST_SOURCE_ROOT>
 python3 ../../../../../../quality-gate/verify_test_naming.py \
   --test-source-root <APP_TEST_SOURCE_ROOT> \
@@ -103,11 +103,11 @@ python3 ../../../../../../quality-gate/verify_test_naming.py \
 
 - **verify_file_manifest.py:** `output/` contains exactly
   `concept-test-derivation.md`.
-- **verify_concept_test_derivation.py:** every SPEC outcome has a matching
+- **verify_concept_test_derivation.py:** every contract outcome has a matching
   test row in the derivation map; every named test method exists in the
   Java source; outcome names match verbatim.
 - **verify_concept_field_assertions.py:** Java concept tests that assert
-  an outcome also assert every required completion field from the SPEC
+  an outcome also assert every required completion field from the concept contract
   flow-token shape.
 - **verify_test_naming.py:** every concept test class follows London School
   naming conventions (class: `<Concept><Action>Test`, method prefix: `should`,
@@ -117,7 +117,7 @@ python3 ../../../../../../quality-gate/verify_test_naming.py \
 
 - `output/concept-test-derivation.md` exists.
 - Every test row traces back to an approved `04c` flow test or an
-  approved `04b` SPEC outcome. No test case was invented without one of
+  approved `04b` contract outcome. No test case was invented without one of
   those sources.
 - Every concept test asserts the outcome and the primary completion
   fields downstream syncs consume; no valid-input primary field assertion
@@ -144,11 +144,11 @@ python3 ../../../../../../quality-gate/verify_test_naming.py \
 ## Gate
 
 Auto-advances to 04d-green. Concept tests are mechanically derived
-from approved artefacts (Gate 3 flow tests + 04b SPECs) — they verify
+from approved artefacts (Gate 3 flow tests + 04b contracts) — they verify
 implementation fidelity, not settle design. The
 `verify_concept_test_derivation.py` and `verify_file_manifest.py`
 scripts must pass before advancing. If either fails, the agent stops
-— the derivation does not match the SPEC outcomes or the expected
+— the derivation does not match the concept contract outcomes or the expected
 files are missing.
 
 ## Next stage

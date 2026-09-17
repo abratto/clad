@@ -127,6 +127,6 @@ must pass before advancing.
 
 ## Next stage
 
-→ [`../04b_spec/CONTEXT.md`](../04b_spec/CONTEXT.md) — Per-concept SPEC slice
+→ [`../04b_contract/CONTEXT.md`](../04b_contract/CONTEXT.md) — Per-concept concept contract
 
 The agent proceeds to Stage 04b without a human gate.

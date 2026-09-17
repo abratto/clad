@@ -21,7 +21,7 @@
 | Use case | no | — |
 | Concept(s) | no | — |
 | Sync(s) | yes | 4 specs: `then` signature de-framed (2 lines each) |
-| SPEC slices | no | — |
+| Contract slices | no | — |
 | Flow tests | no | they assert the adapter's framed output, unchanged |
 | Concept tests | no | — |
 | Sync tests | no | — |

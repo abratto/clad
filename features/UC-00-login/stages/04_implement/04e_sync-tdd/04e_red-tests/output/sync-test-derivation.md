@@ -8,7 +8,7 @@
 
 - **Sync specs:** `03_syncs/output/` — 7 sync files
 - **Outer flow:** `04c_flow-tests/output/login.feature` — 4 Gherkin scenarios
-- **SPECs:** `UserNaming.spec.md`, `PasswordAuth.spec.md`, `Session.spec.md`
+- **contracts:** `UserNaming.spec.md`, `PasswordAuth.spec.md`, `Session.spec.md`
 
 ## Sync coverage matrix
 

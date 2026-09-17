@@ -41,7 +41,7 @@ def collect_outcomes(feature_root: str) -> Dict[Tuple[str, str], Set[str]]:
             continue
         for row in ap.parse_chain_table(os.path.join(chain_dir, fname)):
             out.setdefault((row.then_concept, row.then_action), set()).update(
-                row.outcome_bases)
+                ap.normalize_outcome(x) for x in row.outcome_bases)
     return out
 
 
@@ -78,7 +78,11 @@ def render_spec(concept: ap.ConceptSpec, outcomes: Dict[Tuple[str, str], Set[str
         # Normalize PascalCase chain-table outcomes to SCREAMING_SNAKE_CASE so the
         # contract enum matches what verify_outcome_alignment.py expects (BAD_PASSWORD,
         # not BADPASSWORD). Reuses the same normalizer the check uses.
-        enum = ", ".join(f"`{ap.normalize_outcome(x)}`" for x in sorted(o)) or "`<TODO>`"
+        # Normalize before de-duplicating: the chain table says `Opened` and the
+        # concept's flow token says `opened`; both are the `OPENED` enum.
+        enum = ", ".join(
+            f"`{x}`" for x in sorted({ap.normalize_outcome(v) for v in o})
+        ) or "`<TODO>`"
         lines.append(f"### `{action.name}(...) -> <TODO>`")
         lines.append("")
         lines.append("- **Inputs:** `<TODO> — transcribe from concept spec`")

@@ -60,7 +60,7 @@ Every **per-use-case** artefact from Stage 01 onwards lives inside a
 per-UC folder. This folder holds system-scope artefacts only: Stage 00
 output, and the concept vocabulary (`concepts/`, `concepts-catalog.md`,
 `concept-dependence.md`). In particular it does **not** hold per-UC
-syncs, data models, SPECs, or implementation.
+syncs, data models, contracts, or implementation.
 
 ## Cross-reference
 

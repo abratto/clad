@@ -1,5 +1,5 @@
 <!-- derived from templates/spec.md -->
-# UserNaming — SPEC
+# UserNaming — contract
 
 ## Actions
 
