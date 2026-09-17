@@ -221,6 +221,34 @@ class PromotionTests(unittest.TestCase):
             self.assertIn("no-op", second.stdout)
 
 
+class CatalogUsedByTests(unittest.TestCase):
+
+    def test_used_by_parses_the_bindings_table_not_prose(self):
+        """A concept merely mentioned in a bindings file's Notes must not be
+        listed as Used by. Observed when UC-02's bindings said 'MemberEnrolment
+        is not needed here' and the catalog credited UC-02 with using it."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature = make_feature(
+                tmp, [("Foo", "new")], specs=("Foo",),
+                bindings=("# Bindings\n\n| Concept | Origin | Actions used | Proposal |\n"
+                          "|---|---|---|---|\n"
+                          "| `Foo` | `new` | `run` | `Foo.concept.md` |\n\n"
+                          "## Notes\n\n- `Bar` from UC-00 is not needed here.\n"))
+            corpus = Path(tmp) / "features" / "_system" / "concepts"
+            corpus.mkdir(parents=True)
+            (corpus / "Foo.concept.md").write_text(concept("Foo"), encoding="utf-8")
+            (corpus / "Bar.concept.md").write_text(
+                concept("Bar", introducer="UC-00-login"), encoding="utf-8")
+
+            r = run(CATALOG, "--concepts-dir", str(corpus),
+                    "--features-dir", str(Path(tmp) / "features"))
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            foo_row = [l for l in r.stdout.splitlines() if l.startswith("| `Foo`")][0]
+            bar_row = [l for l in r.stdout.splitlines() if l.startswith("| `Bar`")][0]
+            self.assertIn("UC-01-a", foo_row)
+            self.assertNotIn("UC-01-a", bar_row)
+
+
 class FeatureScopedGeneratorTests(unittest.TestCase):
 
     def test_per_uc_generator_emits_only_the_features_concepts(self):

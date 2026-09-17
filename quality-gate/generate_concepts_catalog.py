@@ -110,8 +110,16 @@ def collect_used_by(features_dir: str, concept: str, introducer: str):
             continue
         bindings = os.path.join(spec_dir, "concept-bindings.md")
         if os.path.isfile(bindings):
+            # Parse the bindings TABLE's first column — never a prose search.
+            # A loose `\b<Concept>\b` match over the whole file also matches a
+            # concept merely *mentioned* in the Notes (e.g. "UC-01's
+            # MemberEnrolment is not needed here"), which wrongly listed the
+            # feature under Used by.
             with open(bindings, encoding="utf-8") as fh:
-                if re.search(rf"\b{re.escape(concept)}\b", fh.read()):
+                if any(
+                    line.strip().strip("|").split("|")[0].strip().strip("`").strip() == concept
+                    for line in fh if line.startswith("|")
+                ):
                     users.add(feat)
     return sorted(users)
 
