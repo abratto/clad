@@ -186,6 +186,23 @@ class PromotionTests(unittest.TestCase):
             self.assertFalse((Path(tmp) / "features" / "_system" / "concepts"
                               / "Foo.concept.md").exists())
 
+    def test_dependence_claims_ignores_the_table_header(self):
+        """The Proposals table header must not be read as a claim row (it made
+        promote-concepts report `Concept requires Requires (dependence claim)`)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature = make_feature(tmp, [("Foo", "new")], specs=("Foo",),
+                                   gate2="approved")
+            rm = (feature / "stages/01a_responsibility-map/output"
+                  / "responsibility-map.md")
+            rm.write_text(rm.read_text(encoding="utf-8") + (
+                "\n## Proposals\n\n"
+                "| Concept | Kind | Proposed addition (actions / state) "
+                "| Requires (dependence claim) | Rationale |\n"
+                "|---|---|---|---|---|\n"
+                "| `Foo` | `new` | `run` | — | why |\n"), encoding="utf-8")
+            import promote_concepts as pc  # noqa: E402
+            self.assertEqual(pc.dependence_claims(str(feature)), [])
+
     def test_promotes_then_is_idempotent(self):
         with tempfile.TemporaryDirectory() as tmp:
             feature = make_feature(tmp, [("Foo", "new")], specs=("Foo",),

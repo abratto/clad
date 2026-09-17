@@ -106,6 +106,9 @@ def dependence_claims(feature_root: str):
         cells = [c.strip() for c in line.strip("|").split("|")]
         if len(cells) < 4 or cells[0].startswith("---") or cells[0].startswith("<"):
             continue
+        # Skip the header row (`| Concept | Kind | ... |`).
+        if cells[0].strip("`").strip().lower() == "concept":
+            continue
         concept, _, _, requires = cells[0], cells[1], cells[2], cells[3]
         if requires and requires not in ("—", "-", "n/a"):
             claims.append((concept.strip("`"), requires.strip("`")))
