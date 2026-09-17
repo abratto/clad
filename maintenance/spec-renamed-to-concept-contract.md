@@ -38,6 +38,11 @@ library-lending experiment's UC-03):
 - A feature derives a contract only for a concept it **introduces or extends**
   (an extend moves the action surface); a `reused` concept binds the canonical
   contract. A legacy map with no `Origin` keeps one contract per concept.
+- A contract's outcome enums come from the **concept's own flow tokens**, unioned
+  with the feature's approved chain outcomes — never from the chain alone: a
+  feature that only extends a concept does not invoke its older actions, so a
+  chain-derived enum would silently drop them (UC-03 lost `enrol`'s and
+  `acquire`'s).
 - `port-spec.md` (the external adapter contract) is unaffected; `contract.py`,
   the feature-descriptor identifier module, is renamed `descriptor.py` to
   remove the collision.

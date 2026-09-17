@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 from typing import Dict, List, Set, Tuple
 
@@ -41,6 +42,27 @@ def collect_outcomes(feature_root: str) -> Dict[Tuple[str, str], Set[str]]:
         for row in ap.parse_chain_table(os.path.join(chain_dir, fname)):
             out.setdefault((row.then_concept, row.then_action), set()).update(
                 row.outcome_bases)
+    return out
+
+
+# `flow token: { action: "Concept.action", ..., outcome: "token" }`
+FLOW_TOKEN_OUTCOME = re.compile(
+    r'action:\s*"(\w+)\.(\w+)"[^}\n]*?outcome:\s*"([A-Za-z0-9_]+)"')
+
+
+def collect_concept_outcomes(path: str) -> Dict[Tuple[str, str], Set[str]]:
+    """{(concept, action): {OUTCOME}} from a concept spec's flow tokens.
+
+    The canonical contract's outcome enums come from the CONCEPT, not from one
+    feature's chain tables: a feature that merely extends a concept does not
+    invoke its older actions, so chain-derived enums would silently drop them
+    (UC-03 lost `enrol`'s and `acquire`'s outcomes)."""
+    out: Dict[Tuple[str, str], Set[str]] = {}
+    with open(path, encoding="utf-8") as fh:
+        text = fh.read()
+    for concept, action, outcome in FLOW_TOKEN_OUTCOME.findall(text):
+        out.setdefault((concept, action), set()).add(
+            ap.normalize_outcome(outcome))
     return out
 
 
@@ -101,7 +123,12 @@ def main() -> None:
         if concept.name == "Web":  # bootstrap — no contract
             continue
         out_path = os.path.join(contract_dir, concept.name + ".contract.md")
-        content = render_spec(concept, outcomes)
+        # Canonical enums: the concept's own flow tokens, unioned with this
+        # feature's approved chain outcomes.
+        merged = {k: set(v) for k, v in outcomes.items()}
+        for key, values in collect_concept_outcomes(path).items():
+            merged.setdefault(key, set()).update(values)
+        content = render_spec(concept, merged)
         if args.write:
             os.makedirs(contract_dir, exist_ok=True)
             with open(out_path, "w") as fh:

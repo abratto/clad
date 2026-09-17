@@ -110,6 +110,24 @@ class GeneratorPropertyTests(unittest.TestCase):
         self.assertIn("`BAD_PASSWORD`", pa)
         self.assertNotIn("`BADPASSWORD`", pa)
 
+    def test_contract_enums_come_from_the_concept_not_one_features_chain(self):
+        """A canonical contract keeps every action's outcomes.
+
+        A feature that only *extends* a concept does not invoke its older
+        actions, so an enum derived purely from this feature's chain tables
+        would silently drop them (UC-03 lost `enrol`'s and `acquire`'s)."""
+        sys.path.insert(0, str(QG))
+        import generate_contract as gc
+
+        spec = self.feature / "stages" / "02_concepts" / "output" / "UserNaming.concept.md"
+        got = gc.collect_concept_outcomes(str(spec))
+        # The concept's own flow tokens are the canonical source.
+        self.assertTrue(got, "no flow-token outcomes parsed from the concept spec")
+        for (concept, action), values in got.items():
+            self.assertEqual(concept, "UserNaming")
+            for v in values:
+                self.assertRegex(v, r"^[A-Z][A-Z0-9_]*$")
+
     def test_generate_cards_cover_participating_concepts(self):
         dep_dir = self.feature / "stages" / "03a_dependency-review" / "output"
         r = run(GEN_CARDS, "--feature", self.feature, "--write")
