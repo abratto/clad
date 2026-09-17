@@ -4,7 +4,7 @@ sync RespondWhenGrantGranted
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `4a` | `5` | `Session/grant: [...] => [ granted ; sessionId ]` | `Web/respond: [ status: 200 ; body: { sessionToken: ?sid } ]` | `200` |
+| `4a` | `5` | `Session/grant: [...] => [ granted ; sessionId ]` | `Web/respond: [ status: 200 ; sessionToken: ?sid ]` | `200` |
 
 ## Rule
 
@@ -12,7 +12,7 @@ when {
     Session/grant: [ userId: ?user ] => [ granted ; sessionId: ?sid ]
 }
 then {
-    Web/respond: [ status: 200 ; body: { sessionToken: ?sid } ]
+    Web/respond: [ status: 200 ; sessionToken: ?sid ]
 }
 
 ## Where clause patterns (for Stage 03a audit)

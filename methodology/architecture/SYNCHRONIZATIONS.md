@@ -161,6 +161,22 @@ then {
   `*Coordinator` or `*Orchestrator` class is a design smell that should
   fail review unless it is a thin transport/runtime adapter with an
   explicit waiver.
+- **Shape the transport response.** A `then` passes the **authored
+  result** — the flat domain fields the exit action consumes. Response
+  framing (a `body`/envelope wrapper, and in general the serialization
+  step) is the **primary adapter's** job
+  (see [`../overlays/PORTS_AND_ADAPTERS.md`](../overlays/PORTS_AND_ADAPTERS.md):
+  the adapter "serialize[s] it to the transport's response"). So
+
+  ```
+  Web/respond: [ status: 200 ; sessionToken: ?sid ]      -- authored result
+  Web/respond: [ status: 200 ; body: { sessionToken: ?sid } ]  -- framing: WRONG
+  ```
+
+  `status` is retained in `then` by convention (it is the exit action's
+  response classification, and every chain table and respond spec carries it);
+  the outcome→status mapping is the adapter's concern.
+  Mechanised by `quality-gate/verify_sync_then_shape.py`.
 
 ## How a sync gets its data — the four patterns
 

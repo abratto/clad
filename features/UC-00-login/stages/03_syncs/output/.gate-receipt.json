@@ -2,11 +2,12 @@
   "stage": "03",
   "stage_label": "Syncs",
   "feature": "UC-00-login",
-  "checked_at": "2026-08-27T22:53:12.511125+00:00",
-  "git_sha": "a563e69",
-  "autonomy": "gated",
-  "output_hash": "aa22c7e3770eae0a8b39b867f9df8507727d05dd1fe3a76891f00b22f053805c",
-  "sequence_guard": "PASS  sequence intact through Stage 03 (Syncs)",
+  "checked_at": "2026-09-17T05:42:48.358118+00:00",
+  "git_sha": "1bd4634",
+  "workflow_autonomous": false,
+  "workflow_session_per_stage": false,
+  "output_hash": "41f4e00d6d774185658debb9ee2c2ba3d57300dd001b7814ef1d816ae48f2989",
+  "sequence_guard": "iterative diff review",
   "checks": [
     {
       "name": "scenario_coverage",
@@ -17,6 +18,12 @@
     {
       "name": "sync_matrix",
       "script": "verify_sync_matrix.py",
+      "status": "pass",
+      "exit": 0
+    },
+    {
+      "name": "sync_transition_coverage",
+      "script": "verify_sync_transition_coverage.py",
       "status": "pass",
       "exit": 0
     },
