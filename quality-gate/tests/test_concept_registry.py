@@ -19,6 +19,7 @@ PROPOSALS = QUALITY_GATE / "verify_concept_proposals.py"
 REGISTRY = QUALITY_GATE / "verify_concept_registry.py"
 PROMOTE = QUALITY_GATE / "promote_concepts.py"
 CATALOG = QUALITY_GATE / "generate_concepts_catalog.py"
+GENERATE_DATA_MODEL = QUALITY_GATE / "generate_data_model.py"
 
 CONCEPT = """concept {name} [UserId]
 introduced-by {introducer}
@@ -218,6 +219,26 @@ class PromotionTests(unittest.TestCase):
             second = run(PROMOTE, "--feature", str(feature))
             self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
             self.assertIn("no-op", second.stdout)
+
+
+class FeatureScopedGeneratorTests(unittest.TestCase):
+
+    def test_per_uc_generator_emits_only_the_features_concepts(self):
+        """The M1 union resolver also holds the whole corpus, so a per-UC
+        generator must filter to the concepts the feature's map lists —
+        otherwise it emits an artefact for every corpus concept (observed on
+        UC-02, which produced UC-01's MemberEnrolment data model)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature = make_feature(tmp, [("Foo", "reused:UC-00-login")], specs=())
+            corpus = Path(tmp) / "features" / "_system" / "concepts"
+            corpus.mkdir(parents=True)
+            (corpus / "Foo.concept.md").write_text(concept("Foo"), encoding="utf-8")
+            (corpus / "Bar.concept.md").write_text(concept("Bar"), encoding="utf-8")
+
+            r = run(GENERATE_DATA_MODEL, "--feature", str(feature))
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("Foo.data-model.md", r.stdout)
+            self.assertNotIn("Bar.data-model.md", r.stdout)
 
 
 class CatalogTests(unittest.TestCase):
