@@ -12,6 +12,22 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
 
+**Grammar v3.1: a route-scoped bootstrap sync's name carries its route.**
+Maintenance record `maintenance/route-scoped-sync-names.md`; experiment-found
+(two use cases bootstrapping `MemberEnrolment.verify` on different routes
+produced two identically-named rules, surfaced only at Stage 04e).
+
+- `sync_stem` gains an optional `For<Route>` component, present exactly when the
+  rule has a route matcher: `VerifyForReturnsWhenRequestRouted`. This is *not* a
+  revival of the pre-v0.6 `For<Scope>`, which held the feature slug and could
+  never disambiguate anything — the route is a real discriminator.
+- `generate_syncs.py` now derives the route from the chain's flow root
+  (`Web/request[POST /loans]`), not only from a `route: "…"` form, so a
+  bootstrap's spec carries the matcher and not just its implementation.
+- `verify_shared_triggers_current.py` fails when the cross-UC shared-trigger view
+  is stale — it had been, which is why this was not surfaced at Stage 03a.
+
+
 **Gate scripts: the contract surface is the shadowed union with the corpus, and
 the layout guard runs at 04a.** Both experiment-found (UC-04-return-copy).
 

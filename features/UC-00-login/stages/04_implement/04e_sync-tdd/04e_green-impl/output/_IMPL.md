@@ -3,7 +3,7 @@
 
 Implementation classes exist under `reference-impl/java-micronaut-jena/src/main/java/com/example/app/syncs/`:
 
-- `LookupByUsernameWhenRequestRouted.java`
+- `LookupByUsernameForLoginWhenRequestRouted.java`
 - `CheckWhenLookupByUsernameFound.java`
 - `GrantWhenCheckOk.java`
 - `RespondWhenGrantGranted.java`

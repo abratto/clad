@@ -65,6 +65,11 @@ The joined stem is
 declared conjunct order — e.g.
 `RespondWhenJoinListListedAndTagTagged`.
 
+**Route-scoped bootstraps carry their route.** A rule whose `when` matches a
+`Web/request` route is named `<TargetAction>For<Route>When<TriggerAction><Completion>`
+— `VerifyForReturnsWhenRequestRouted`. Two use cases may bootstrap the same
+target action on different routes, and nothing else in the name separates them.
+
 **Absence (`absent`).** The negative state pattern — keep the frame only if
 the subject has **no** such value (a D&minus; read: it binds nothing):
 

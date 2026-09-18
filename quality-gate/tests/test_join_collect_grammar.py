@@ -196,6 +196,40 @@ class ChainJoinGenerationTests(unittest.TestCase):
             self.assertIn("RespondWhenJoinListListedAndTagTagged", stems)
 
 
+class SyncStemRouteTests(unittest.TestCase):
+    """A route-scoped bootstrap's name carries its route (grammar v3.1).
+
+    Two use cases may bootstrap the same target action on different routes;
+    without the route they produce identically-named rules and `causedBySync`
+    cannot say which fired — maintenance/route-scoped-sync-names.md."""
+
+    @staticmethod
+    def request_routed():
+        return [ap.Conjunct(name=None, concept="Web", action="request",
+                            outcome="Routed")]
+
+    def test_stem_carries_the_route_when_given(self):
+        self.assertEqual(
+            "VerifyForReturnsWhenRequestRouted",
+            ap.sync_stem("MemberEnrolment", "verify", self.request_routed(),
+                         False, route="returns"))
+        self.assertEqual(
+            "VerifyForLoansWhenRequestRouted",
+            ap.sync_stem("MemberEnrolment", "verify", self.request_routed(),
+                         False, route="loans"))
+        self.assertEqual(
+            "VerifyWhenRequestRouted",
+            ap.sync_stem("MemberEnrolment", "verify", self.request_routed(),
+                         False),
+            "no route means no component")
+
+    def test_route_survives_escalation(self):
+        self.assertEqual(
+            "MemberEnrolmentVerifyForLoansWhenWebRequestRouted",
+            ap.sync_stem("MemberEnrolment", "verify", self.request_routed(),
+                         False, level=3, route="loans"))
+
+
 class SyncJoinParsingTests(unittest.TestCase):
 
     def test_join_spec_parses_and_is_flagged(self):

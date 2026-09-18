@@ -3,7 +3,7 @@
 
 | Sync | When-pattern | Expected `then` action | Test name | Status |
 |---|---|---|---|---|
-| LookupByUsernameWhenRequestRouted | `Web.request { outcome: ROUTED }` | `UserNaming.lookupByUsername(username)` | `routed_login_invokes_user_lookup` | green — flow coverage |
+| LookupByUsernameForLoginWhenRequestRouted | `Web.request { outcome: ROUTED }` | `UserNaming.lookupByUsername(username)` | `routed_login_invokes_user_lookup` | green — flow coverage |
 | CheckWhenLookupByUsernameFound | `UserNaming.lookupByUsername { outcome: FOUND }` | `PasswordAuth.check(userId, password)` | `found_user_invokes_password_check` | green — flow coverage |
 | RespondWhenLookupByUsernameRefused | `UserNaming.lookupByUsername { outcome: NOT_FOUND }` | `Web.respond(401, opaqueMessage)` | `unknown_user_returns_opaque_401` | green — flow coverage |
 | GrantWhenCheckOk | `PasswordAuth.check { outcome: OK }` | `Session.grant(userId)` | `ok_check_grants_session` | green — unit + flow coverage |

@@ -54,7 +54,7 @@ public final class LoginSyncs {
 
     /** Row 1→2: when Web/request[routed] → UserNaming.lookupByUsername(username). */
     private static SyncRule lookupByUsernameWhenRequestRouted() {
-        return rule("LookupByUsernameWhenRequestRouted")
+        return rule("LookupByUsernameForLoginWhenRequestRouted")
             .when(WEB, REQUEST, "routed")
             .matching(Map.of("route", "login"))
             .where(bind("?u", triggerInput("username")))

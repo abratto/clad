@@ -17,7 +17,7 @@ public final class LoginSyncRules {
 
     public static List<SyncRule> all() {
         return List.of(
-                new LookupByUsernameWhenRequestRouted().rule(),
+                new LookupByUsernameForLoginWhenRequestRouted().rule(),
                 new CheckWhenLookupByUsernameFound().rule(),
                 new RespondWhenLookupByUsernameRefused().rule(),
                 new GrantWhenCheckOk().rule(),

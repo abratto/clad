@@ -14,7 +14,7 @@
 
 | Sync | Chain table | Flow scenario | Tested by |
 |---|---|---|---|
-| `LookupByUsernameWhenRequestRouted` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `CucumberTest` |
+| `LookupByUsernameForLoginWhenRequestRouted` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `CucumberTest` |
 | `CheckWhenLookupByUsernameFound` | Row 2→3 | successful-login, wrong-pw, lockout | `CucumberTest` |
 | `GrantWhenCheckOk` | Row 3→4 | successful-login | `CucumberTest` |
 | `RespondWhenGrantGranted` | Row 4→5 | successful-login | `CucumberTest` |
@@ -26,10 +26,10 @@
 
 | Scenario | Syncs exercised |
 |---|---|
-| `successful-login` | LookupByUsernameWhenRequestRouted, CheckWhenLookupByUsernameFound, GrantWhenCheckOk, RespondWhenGrantGranted |
-| `wrong-password` | LookupByUsernameWhenRequestRouted, CheckWhenLookupByUsernameFound, RespondWhenCheckBadPassword |
-| `lockout` | LookupByUsernameWhenRequestRouted, CheckWhenLookupByUsernameFound, RespondWhenCheckLocked |
-| `unknown-user` | LookupByUsernameWhenRequestRouted, RespondWhenLookupByUsernameRefused |
+| `successful-login` | LookupByUsernameForLoginWhenRequestRouted, CheckWhenLookupByUsernameFound, GrantWhenCheckOk, RespondWhenGrantGranted |
+| `wrong-password` | LookupByUsernameForLoginWhenRequestRouted, CheckWhenLookupByUsernameFound, RespondWhenCheckBadPassword |
+| `lockout` | LookupByUsernameForLoginWhenRequestRouted, CheckWhenLookupByUsernameFound, RespondWhenCheckLocked |
+| `unknown-user` | LookupByUsernameForLoginWhenRequestRouted, RespondWhenLookupByUsernameRefused |
 
 All 4 Cucumber scenarios pass (0 failures).
 
@@ -59,7 +59,7 @@ exist under `com.example.app.syncs` with matching spec artefacts.
 
 - **Approved red tests:** None — existing tests are flow-level and pass green
 - **Sync package:** `com.example.app.syncs`
-- **Sync classes:** `LookupByUsernameWhenRequestRouted`, `CheckWhenLookupByUsernameFound`,
+- **Sync classes:** `LookupByUsernameForLoginWhenRequestRouted`, `CheckWhenLookupByUsernameFound`,
   `GrantWhenCheckOk`, `RespondWhenGrantGranted`, `RespondWhenCheckBadPassword`,
   `RespondWhenCheckLocked`, `RespondWhenLookupByUsernameRefused`
 - **Test command:** `mvn -f reference-impl/java-micronaut-jena/pom.xml test`

@@ -110,7 +110,7 @@ Row 1 is the root `Web.request` entry; it is not itself a sync.
 
 For each non-root row's derived `When -> Then` transition:
 
-2. **Row 1→2:** When `Web.request[Routed]`, invoke `UserNaming.lookupByUsername` → sync name: `LookupByUsernameWhenRequestRouted`
+2. **Row 1→2:** When `Web.request[Routed]`, invoke `UserNaming.lookupByUsername` → sync name: `LookupByUsernameForLoginWhenRequestRouted`
 3. **Row 2 [Found] → 3b:** When `UserNaming.lookupByUsername[Found(userId)]`, invoke `PasswordAuth.check` → sync: `CheckWhenLookupByUsernameFound`
 4. **Row 2 [Refused] → 3a:** When `UserNaming.lookupByUsername[Refused]`, invoke `Web.respond[401]` → sync: `RespondWhenLookupByUsernameRefused`
 5. **Row 3b [Ok] → 4a:** When `PasswordAuth.check[Ok]`, invoke `Session.grant` → sync: `GrantWhenCheckOk`

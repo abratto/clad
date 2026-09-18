@@ -155,6 +155,23 @@ def main():
         for line in detail.splitlines():
             print(f"        {line}")
 
+    # The cross-UC shared-trigger view is current (feature-independent): it is
+    # the only surface for a duplicate trigger across use cases, and it went
+    # stale once because nothing checked it.
+    code, out, err = run_script("verify_shared_triggers_current.py",
+                                ["--features-dir", str(REPO_ROOT / "features")])
+    detail = (out + err).strip()
+    ok = code == 0
+    mark = "PASS" if ok else "FAIL"
+    print(f"\n  [{mark}] shared_triggers_current")
+    if not ok:
+        all_pass = False
+        for line in detail.splitlines()[:8]:
+            print(f"        {line}")
+    elif detail.strip():
+        for line in detail.splitlines():
+            print(f"        {line}")
+
     # Sync `then` carries the authored result, not the transport frame
     # (feature-independent).
     code, out, err = run_script("verify_sync_then_shape.py",

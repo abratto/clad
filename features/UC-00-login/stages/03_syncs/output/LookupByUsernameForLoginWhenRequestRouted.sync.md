@@ -1,4 +1,4 @@
-sync LookupByUsernameWhenRequestRouted
+sync LookupByUsernameForLoginWhenRequestRouted
 
 ## Sync Contract Matrix
 

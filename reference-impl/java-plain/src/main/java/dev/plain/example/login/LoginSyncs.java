@@ -38,7 +38,7 @@ public final class LoginSyncs {
     /** Row 1→2: when Web/request[routed] → UserNaming.lookupByUsername(username). */
     static SyncRule webRequestRoutedToLookup() {
         return SyncRule.of(
-                "LookupByUsernameWhenRequestRouted",
+                "LookupByUsernameForLoginWhenRequestRouted",
                 "Web", "request", "routed",
                 List.of(new Clause.Bind("?u", new Source.TriggerInput("username"))),
                 List.of(invoke("UserNaming", "lookupByUsername", Map.of("username", ref("?u")))));

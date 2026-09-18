@@ -160,10 +160,19 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
         # matcher. Authors previously added it by hand every UC.
         root_route = root_method = None
         if rows:
-            m = re.search(r'route\s*:\s*"([^"]+)"', rows[0].when or "")
+            root_when = rows[0].when or ""
+            m = re.search(r'route\s*:\s*"([^"]+)"', root_when)
             if m:
                 root_route = m.group(1)
-            m = re.search(r'method\s*:\s*"([^"]+)"', rows[0].when or "")
+            else:
+                # A chain table writes the flow root as `Web/request[POST /loans]`
+                # (method + path), so the route is the resource segment. Without
+                # this the bootstrap got no route matcher at all and two routes
+                # bootstrapping one action produced identical names.
+                m = re.search(r'\b([A-Z]+)\s+/([A-Za-z0-9_-]+)', root_when)
+                if m:
+                    root_method, root_route = m.group(1), m.group(2)
+            m = re.search(r'method\s*:\s*"([^"]+)"', root_when)
             if m:
                 root_method = m.group(1)
 
@@ -346,14 +355,16 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
         chosen = None
         for level, with_payload in ladder:
             candidate = ap.sync_stem(g.target_concept, g.target_action,
-                                     conjuncts, g.is_join, level, with_payload)
+                                     conjuncts, g.is_join, level, with_payload,
+                                     route=getattr(g, "route", ""))
             if candidate not in used:
                 chosen = candidate
                 break
         if chosen is None:
             level, with_payload = ladder[-1]
             chosen = ap.sync_stem(g.target_concept, g.target_action,
-                                  conjuncts, g.is_join, level, with_payload)
+                                  conjuncts, g.is_join, level, with_payload,
+                                  route=getattr(g, "route", ""))
             warnings.append(
                 f"{chosen}: stem still collides at max escalation; "
                 f"author it by hand with a distinct stem")

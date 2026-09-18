@@ -2,31 +2,12 @@
   "stage": "03b",
   "stage_label": "Data model",
   "feature": "UC-00-login",
-  "checked_at": "2026-09-18T01:04:28.321091+00:00",
-  "git_sha": "659e2ac",
+  "checked_at": "2026-09-18T21:17:11.187554+00:00",
+  "git_sha": "e55f752",
   "workflow_autonomous": false,
   "workflow_session_per_stage": false,
   "output_hash": "cf5ff6c88d4dc8129b495ec830a648bffb792d49f45e684152baeec728850ccb",
-  "sequence_guard": "iterative diff review",
-  "checks": [
-    {
-      "name": "data_model",
-      "script": "verify_data_model.py",
-      "status": "pass",
-      "exit": 0
-    },
-    {
-      "name": "data_model_file_manifest",
-      "script": "verify_file_manifest.py",
-      "status": "pass",
-      "exit": 0
-    },
-    {
-      "name": "concept_additivity",
-      "script": "verify_concept_additivity.py",
-      "status": "pass",
-      "exit": 0
-    }
-  ],
-  "result": "pass"
+  "sequence_guard": "FAIL  Gate 1 (Requirements) approval is stale \u2014 the artefacts changed since they were approved (recorded 207734cdae11\u2026 vs current 94560b42aaba\u2026). Re-present Gate 1 for re-approval.",
+  "checks": [],
+  "result": "fail"
 }

@@ -14,4 +14,4 @@
 | `Session.grant` | `granted` | UC-00-login | `RespondWhenGrantGranted` |
 | `UserNaming.lookupByUsername` | `found` | UC-00-login | `CheckWhenLookupByUsernameFound` |
 | `UserNaming.lookupByUsername` | `refused` | UC-00-login | `RespondWhenLookupByUsernameRefused` |
-| `Web.request` | `routed` | UC-00-login | `LookupByUsernameWhenRequestRouted` |
+| `Web.request` | `routed` | UC-00-login | `LookupByUsernameForLoginWhenRequestRouted` |

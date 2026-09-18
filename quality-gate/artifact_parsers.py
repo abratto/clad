@@ -1169,12 +1169,13 @@ SYNC_STEM_MAX_LEVEL = 3
 
 def sync_stem(then_concept: str, then_action: str,
               conjuncts: List["Conjunct"], is_join: bool,
-              level: int = 0, with_payload: bool = False) -> str:
+              level: int = 0, with_payload: bool = False,
+              route: str = "") -> str:
     """Mechanical sync stem (grammar v3, action-first).
 
     Level 0 (the default) names the effect and its trigger by ACTION only:
 
-        single trigger: `<TargetAction>When<TriggerAction><Completion>`
+        single trigger: `<TargetAction>[For<Route>]When<TriggerAction><Completion>`
         joined rule:    `<TargetAction>WhenJoin<A1><Out1>And<A2><Out2>...`
                         (declared conjunct order — deterministic)
 
@@ -1193,13 +1194,25 @@ def sync_stem(then_concept: str, then_action: str,
     outcomes of one action that differ only in payload
     (`Released` vs `Released(blankFields)`).
 
-    The pre-v0.6 `For<Scope>` component is gone: it was derived from the
-    feature slug, so every sync in a use case carried the same scope and it
-    could never disambiguate anything.
+    **`For<Route>`.** A route-scoped bootstrap carries the route it matches:
+    `VerifyForReturnsWhenRequestRouted`. Two use cases may bootstrap the *same*
+    target action on *different* routes (`memberEnrolment.verify` after a borrow
+    request and after a return request), and nothing else in the name separates
+    them — so without the route the app registers two rules with one name and
+    `causedBySync` can no longer say which fired.
+
+    The pre-v0.6 `For<Scope>` component was **not** this: it was derived from the
+    *feature slug*, so every sync in a use case carried the same value and it
+    could never disambiguate anything. That was the right thing to remove; the
+    route is a real discriminator within one app, which the slug never was.
     """
     target = pascal_token(then_action)
     if level in (1, 3):
         target = pascal_token(then_concept) + target
+    if route:
+        # The route is a real discriminator: two use cases may bootstrap the same
+        # target action on different routes.
+        target += "For" + pascal_token(route)
     if is_join:
         # Payload-free completions per conjunct: joining every payload would
         # blow past the OS filename limit (NAME_MAX 255) for richer joins,

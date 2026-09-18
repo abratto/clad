@@ -77,10 +77,12 @@ class GeneratorPropertyTests(unittest.TestCase):
         stems = sorted(f.name.replace(".sync.md", "") for f in d.glob("*.sync.md"))
         # UC-00-login has exactly seven syncs.
         self.assertEqual(len(stems), 7, stems)
-        # Action-first naming grammar v3 (maintenance/sync-name-grammar-v3.md):
-        # concept-free by default; the completion is named by its base token.
+        # Action-first naming grammar v3 (maintenance/sync-name-grammar-v3.md),
+        # plus v3.1's route component for a route-scoped bootstrap
+        # (maintenance/route-scoped-sync-names.md): the chain root is
+        # `Web/request[POST /login]`, so the name carries `ForLogin`.
         self.assertIn("GrantWhenCheckOk", stems)
-        self.assertIn("LookupByUsernameWhenRequestRouted", stems)
+        self.assertIn("LookupByUsernameForLoginWhenRequestRouted", stems)
         self.assertIn("RespondWhenCheckLocked", stems)
         self.assertIn("RespondWhenLookupByUsernameRefused", stems)
 
@@ -283,7 +285,7 @@ class BranchedChainGeneratorTests(unittest.TestCase):
                            if "WOULD WRITE" in line)
             self.assertEqual(len(stems), 4, stems)
             # Action-first naming grammar v3 (maintenance/sync-name-grammar-v3.md).
-            self.assertIn("LendWhenRequestRouted", stems)
+            self.assertIn("LendForLendWhenRequestRouted", stems)
             self.assertIn("RecordWhenLendLent", stems)
             self.assertIn("RespondWhenRecordRecorded", stems)
             self.assertIn("RespondWhenLendUnavailable", stems)

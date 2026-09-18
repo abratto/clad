@@ -2,11 +2,11 @@
   "stage": "01b",
   "stage_label": "Chain table",
   "feature": "UC-00-login",
-  "checked_at": "2026-09-17T04:50:58.065628+00:00",
-  "git_sha": "db29781",
+  "checked_at": "2026-09-18T21:22:00.477263+00:00",
+  "git_sha": "e55f752",
   "workflow_autonomous": false,
   "workflow_session_per_stage": false,
-  "output_hash": "74eb77fc0c90170f9641de51910eb4de1f1acc49b37b12ea36697c582800acc9",
+  "output_hash": "8da0b2cd4e481d6115006a3cb979a751514455ac495dd1140d065f13edc9116b",
   "sequence_guard": "iterative diff review",
   "checks": [
     {

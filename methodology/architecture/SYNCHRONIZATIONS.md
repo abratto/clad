@@ -71,8 +71,18 @@ A sync name reads action-first (grammar v3, see
 pre-v0.6 condition-first form survive only in historical maintenance records):
 
 ```
-<TargetAction>When<TriggerAction><TriggerCompletion>
+<TargetAction>[For<Route>]When<TriggerAction><TriggerCompletion>
 ```
+
+The optional `For<Route>` component is present **exactly when the rule carries a
+route matcher** — a route-scoped bootstrap. Two use cases may bootstrap the same
+target action on different routes (`MemberEnrolment.verify` after a borrow
+request and after a return request), and no other component of the name
+separates them; without it the app registers two rules with one name and
+`causedBySync` can no longer say which fired. The route, not the feature slug:
+the pre-v0.6 `For<Scope>` held the feature slug, so every sync in a use case
+carried the same value and it could never disambiguate anything
+(`maintenance/route-scoped-sync-names.md`).
 
 Rules:
 
