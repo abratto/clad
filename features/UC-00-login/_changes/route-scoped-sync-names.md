@@ -7,7 +7,7 @@
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change category:** `presentation`
 - **Earliest re-entry stage:** `01b`
-- **Status:** `active`
+- **Status:** `closed`
 - **Change summary:** the bootstrap sync is renamed (the chain's notes name it, hence the 01b re-entry) and its spec gains the route
   matcher; references follow (card, derivation map, chain note, Java rule name,
   test class and its file).
