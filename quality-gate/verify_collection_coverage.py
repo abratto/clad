@@ -56,6 +56,16 @@ def read(path):
         return handle.read()
 
 
+def stage_output_present(directory: str) -> bool:
+    """True when a stage directory holds any output file (not just `.gitkeep`)."""
+    if not os.path.isdir(directory):
+        return False
+    return any(
+        not name.startswith(".") and os.path.isfile(os.path.join(directory, name))
+        for name in os.listdir(directory)
+    )
+
+
 def markdown_files(directory):
     if not os.path.isdir(directory):
         return []
@@ -127,7 +137,11 @@ def main():
 
     flow_dir = os.path.join(feature_root, "stages", "04_implement",
                             "04c_flow-tests", "output")
-    if not markdown_files(flow_dir):
+    # Evidence that 04c ran is ANY output file, not only a markdown carrier:
+    # the `## Collection coverage` section is optional in the stage contract, so
+    # keying on markdown meant a feature whose 04c output is only its `.feature`
+    # file was always skipped — the edges this check exists for never ran.
+    if not stage_output_present(flow_dir):
         print("SKIP  no 04c flow-test output yet")
         return 0
 
