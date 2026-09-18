@@ -10,6 +10,21 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [Unreleased]
+
+Methodology: **the Stage 01b chain diagram is required, and its derivation rules
+now cover per-outcome rows and joins.** Maintenance record
+`maintenance/chain-diagram-required-and-joins.md`; experiment-found (a chain
+table was committed with no diagram by reading the template's "optional"
+heading rather than its same-turn rule).
+
+- `templates/chain-table.md`: "Diagram (required)"; rules for rows that share a
+  `When` and a `Then` (they collapse into one arrow; the outcomes reappear as
+  that node's outgoing arrows) and for join rows (draw from the conjunct that
+  completes last, name the rest in the label; no `<<join>>` pseudo-state).
+- The 01b stage contract says the same, and `verify_chain_grammar.py` now fails
+  a chain file with no `stateDiagram-v2` block.
+
 ## [0.8.0] — 2026-09-16
 
 Minor release: **system-scope concept vocabulary (Model B)**. Concepts become

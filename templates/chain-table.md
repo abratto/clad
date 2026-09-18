@@ -88,12 +88,17 @@
 > The `Why this step` column is what the human reviews. If you cannot
 > name a reason, the step probably does not belong.
 
-## Diagram (optional but encouraged)
+## Diagram (required)
 
-> **Diagram type: `stateDiagram-v2` only.** Do NOT use `sequenceDiagram`.
-> The chain table is a finite state machine; `stateDiagram-v2` makes
-> branching and failure paths visible at a glance. See translation rules
-> below. Validate at [mermaid.live](https://mermaid.live) before committing.
+> Every chain file carries one. The gate at Stage 01b covers the table and its
+> diagram together (see the same-turn rule below), and the diagram is what makes
+> branching and failure paths reviewable at a glance — so an omitted diagram is
+> an incomplete artefact, not a stylistic choice.
+>
+> **Diagram type: `stateDiagram-v2` only.** Do NOT use `sequenceDiagram`. The
+> chain table is a finite state machine. See the translation rules below,
+> including how per-outcome rows and joins map. Validate at
+> [mermaid.live](https://mermaid.live) before committing.
 
 ```mermaid
 stateDiagram-v2
@@ -212,15 +217,34 @@ When you change the table, regenerate the diagram. The translation is
 mechanical:
 
 1. Each row's `Then` action becomes a state node (replace `.` with `_` so
-   Mermaid will accept it: `Account_validate`).
-2. Each table row becomes exactly one arrow labelled with that row's
-  triggering outcome token: `[Ok]`, `[AccountExists]`, etc.
-3. The first row's trigger comes from `[*]`; every terminal
+   Mermaid will accept it: `Account_validate`). A terminal `Web.respond` is one
+   node **per response contract** — `Web_respond201`, `Web_respond409` — because
+   two responses that assert different things are two observable results (R9),
+   not one state.
+2. Each table row contributes an arrow labelled with that row's
+   **triggering** outcome token: `[Ok]`, `[AccountExists]`, etc., pointing at
+   the row's `Then`.
+3. **Rows that share a `When` label and a `Then` action collapse into one
+   arrow.** Entering an action is one transition however many outcomes that
+   action may return; the outcomes that distinguish those rows reappear as that
+   node's *outgoing* arrows. A three-way case split (`Ok` / `BadPassword` /
+   `Locked` on the same trigger invoking the same action) is one arrow in and
+   three arrows out. The invariant is that every arrow has a row — **not** that
+   every row has its own arrow. Counting arrows and expecting one per row is the
+   common mistake.
+4. **A join row (`∧`) is drawn from the conjunct that completes last**, with
+   every other conjunct named in the label:
+   `Stocking_shelve --> Web_respond200 : [Shelved after a Returned close]`.
+   A Mermaid arrow has exactly one source, so the label must carry the rest of
+   the join; the condition is then still readable from the diagram alone.
+   Mermaid's `<<join>>` pseudo-state is deliberately **not** used: it adds
+   arrows the table does not have, breaking the table/diagram isomorphism.
+5. The first row's trigger comes from `[*]`; every terminal
    `Web.respond` returns to `[*]`.
-4. Failure branches from the same state appear as additional rows in the
-  table and therefore as additional arrows from that state node, each
-  labelled with its own outcome.
-5. Validate the resulting `stateDiagram-v2` block by pasting it into
+6. Failure branches from the same state appear as additional rows in the
+   table and therefore as additional arrows from that state node, each
+   labelled with its own outcome.
+7. Validate the resulting `stateDiagram-v2` block by pasting it into
    [mermaid.live](https://mermaid.live) before commit. A diagram that
    does not render must not be committed.
 

@@ -44,13 +44,24 @@ def run(script, *args):
     )
 
 
-def chain_body(rows):
+DIAGRAM = """
+## Diagram
+
+```mermaid
+stateDiagram-v2
+    [*] --> Web_request
+    Web_request --> [*]
+```
+"""
+
+
+def chain_body(rows, diagram=DIAGRAM):
     body = ["# Chain table — `join`", "",
             "| # | When | Then | Inputs | Outcome | Why this step |",
             "|---|---|---|---|---|---|"]
     for num, when, then, outcome in rows:
         body.append(f"| {num} | {when} | {then} | `x` | {outcome} | e |")
-    return "\n".join(body) + "\n"
+    return "\n".join(body) + "\n" + (diagram or "")
 
 
 JOIN_SYNC = f"""sync RespondWhenJoinListListedAndTagTagged
@@ -129,6 +140,29 @@ class ChainJoinParsingTests(unittest.TestCase):
             ]))
             result = run(VERIFY_CHAIN, "--chain-dir", tmp)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_grammar_verifier_requires_the_state_diagram(self):
+        """The diagram is part of the 01b artefact, not a nicety.
+
+        The gate covers the table and the diagram together; an omitted diagram
+        is an incomplete artefact (and reading the old "optional" heading
+        instead of the same-turn rule is how one got omitted)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            write(Path(tmp) / "join-chain.md", chain_body([
+                ("1", "`Web/request[POST /publish]`", "`Web.request`", "`Routed`"),
+            ], diagram=None))
+            result = run(VERIFY_CHAIN, "--chain-dir", tmp)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("stateDiagram-v2", result.stdout)
+
+    def test_grammar_verifier_rejects_a_sequence_diagram(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            write(Path(tmp) / "join-chain.md", chain_body([
+                ("1", "`Web/request[POST /publish]`", "`Web.request`", "`Routed`"),
+            ], diagram="\n```mermaid\nsequenceDiagram\n  A->>B: x\n```\n"))
+            result = run(VERIFY_CHAIN, "--chain-dir", tmp)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("stateDiagram-v2", result.stdout)
 
     def test_grammar_verifier_rejects_empty_conjunct(self):
         with tempfile.TemporaryDirectory() as tmp:

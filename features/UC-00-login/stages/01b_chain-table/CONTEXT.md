@@ -57,9 +57,14 @@ row must name those carried fields on the trigger contract itself
 (for example `Web.request[Routed(email, password)]`). Stage 03 may bind
 Pattern A values only from names that 01b has already declared.
 
-Optionally include a Mermaid `stateDiagram-v2` as a derived view. Do not
-use `sequenceDiagram`. The diagram must be mechanically derivable from
-the canonical table: one table row, one arrow.
+Include a Mermaid `stateDiagram-v2` as a derived view — it is required, and
+the gate covers the table and the diagram together (same-turn rule, below).
+Do not use `sequenceDiagram`. The diagram must be mechanically derivable from
+the canonical table: rows that share a `When` label and a `Then` action collapse
+into one arrow (their distinguishing outcomes reappear as that node's outgoing
+arrows), and a join row is drawn from the conjunct that completes last with the
+other conjuncts named in the label. See
+`templates/chain-table.md` §"Diagram (required)".
 
 This stage exists to give the human a single, scenario-shaped review
 surface **before** Stage 03 commits the choreography to declarative

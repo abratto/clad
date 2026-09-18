@@ -341,7 +341,7 @@ single source of truth for per-stage instructions:
 | 00 | `../../features/_system/stages/00_actor-goal/CONTEXT.md` *(system scope)* | `actors.md`, `goals.md`, *(optional)* `port-spec.md` | 00 — system-level |
 | 01 | `stages/01_usecase/CONTEXT.md` | `usecase.md` | Auto → 01b |
 | 01a | `stages/01a_responsibility-map/CONTEXT.md` | `responsibility-map.md` | Auto → 01b |
-| 01b | `stages/01b_chain-table/CONTEXT.md` | `<scenario>-chain.md` per scenario | **Gate 1 (Requirements)** |
+| 01b | `stages/01b_chain-table/CONTEXT.md` | `<scenario>-chain.md` per scenario — the table **and** its `stateDiagram-v2` | **Gate 1 (Requirements)** |
 | 02 | `stages/02_concepts/CONTEXT.md` | `<Name>.concept.md` per business concept | Auto → 03b |
 | 03 | `stages/03_syncs/CONTEXT.md` | `<name>.sync.md` per coordination rule | Auto → 03b |
 | 03a | `stages/03a_dependency-review/CONTEXT.md` | `<concept>-card.md` + `pattern-d-summary.md` | Auto → 03b |
