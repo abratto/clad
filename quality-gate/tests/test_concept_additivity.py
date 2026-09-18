@@ -155,6 +155,22 @@ class AdditivityTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("`DUPLICATE_REF`", result.stdout)
 
+    def test_re_aligned_state_lines_are_not_a_restatement(self):
+        """Adding a longer relation re-flows the comment column.
+
+        Comparing raw text read a re-alignment as dropping every line above it;
+        the column is presentation, not the fact type."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.feature(
+                Path(temporary) / "UC-98-x",
+                proposal_state=["ref:    MemberId -> String",
+                                "name:   MemberId -> String",
+                                "lastSeen: MemberId -> Timestamp"])
+            result = run(str(QG / "verify_concept_additivity.py"),
+                         "--feature", str(root), "--corpus", str(self.corpus(temporary)))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("PASS", result.stdout)
+
     def test_authorised_exception_passes(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = self.feature(

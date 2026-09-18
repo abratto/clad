@@ -61,8 +61,18 @@ def load_exceptions(feature_root):
             stripped = line.strip()
             if not stripped.startswith(("-", "*")):
                 continue
-            allowed.update(re.findall(r"`([^`]+)`", stripped))
+            allowed.update(_normalised(m) for m in re.findall(r"`([^`]+)`", stripped))
     return allowed
+
+
+def _normalised(line: str) -> str:
+    """A state line without its alignment, which is presentation only.
+
+    Canonical state lines are comment-aligned; adding a longer relation name
+    re-flows that column. Comparing raw text would read a re-alignment as a
+    restatement of every line above it, which is not what "not additive" means.
+    """
+    return re.sub(r"\s+", " ", line).strip()
 
 
 def dropped_state_lines(feature_root, corpus, concept):
@@ -72,8 +82,10 @@ def dropped_state_lines(feature_root, corpus, concept):
                             concept + ".concept.md")
     if not os.path.isfile(canonical) or not os.path.isfile(proposal):
         return []
-    before = set(ap.parse_concept(canonical).state_lines)
-    after = set(ap.parse_concept(proposal).state_lines)
+    before = {_normalised(line)
+              for line in ap.parse_concept(canonical).state_lines}
+    after = {_normalised(line)
+             for line in ap.parse_concept(proposal).state_lines}
     return sorted(before - after)
 
 
