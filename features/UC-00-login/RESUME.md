@@ -12,7 +12,7 @@
 - **Iterative change `spec-renamed-to-concept-contract`:** `approved`
 - **Iterative change `proposal-snapshot-headers`:** `approved`
 - **Gate 1 (Requirements):** `approved`
-- **Gate 1 content hash:** `207734cdae11bcd66866c9f4deabd5358bc65047279ea7e9c6687665882b1661`
+- **Gate 1 content hash:** `94560b42aabad5dcd6b31f30b2dee36d7c9e1d46d77ad7bb2e873950503855cc`
 - **Gate 2 (Architecture):** `approved`
 - **Gate 2 content hash:** `4b6c73545a352cc4df694dddd69d939e5fe7e6dfbc52f8d2114434a8c6c76334`
 - **Gate 3 (Executable spec):** `approved`
