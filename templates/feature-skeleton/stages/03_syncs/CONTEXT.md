@@ -112,6 +112,22 @@ order; a single unnamed conjunct keeps the classic form and naming.
 `collect by ?groupKey ( <source> as ?var )` gather values into one `List`
 binding. They are read-only and code-free — not `frames.query/filter/collectAs`.
 
+**Absence (`absent`).** The negative state pattern — keep a frame only if the
+subject has no such value (a D- read; it binds nothing):
+
+```
+where {
+    fanOut ( ?loanId ; "Lending" ; "borrower" ; ?memberId )
+    absent ( "Lending" ; ?loanId ; "returnedAt" )
+    collect ( ?loanId as ?openLoans )
+}
+```
+
+It is not a filter (no computation, no JSON — R3), it fails closed on an unbound
+subject, and an aggregate over a possibly-empty set must use `collectBy`, since a
+`where` that ends with no frames does not fire.
+
+
 The sync file stem and `sync <Name>` header must match the naming rule
 from `SYNCHRONIZATIONS.md`: prefix with `When`, use `Then` between the
 trigger and target sides, and append `For<Scope>` when the same edge can

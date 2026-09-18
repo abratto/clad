@@ -398,6 +398,12 @@ where {
   `?_eachthen`).
 - `scan(Concept, predicate)` reads every value of a predicate across a
   concept's region as one `List`; `distinct`/`collect` wrap any source.
+- `absent ( Concept ; ?subject ; predicate )` is the **negative** state pattern:
+  it keeps a frame only if the subject has no such value, binding nothing. It is
+  how a rule says "the ones that do not have X" — the member's *remaining open*
+  loans, the unshipped orders — which no enumerating source can express. It
+  fails closed on an unbound subject. See
+  `maintenance/engine-absent-state-guard.md`.
 
 This is the declarative analogue of the reference implementation's
 `collectAs`, and is deliberately **not** its imperative

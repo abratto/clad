@@ -577,12 +577,15 @@ def parse_sync(path: str) -> Optional[SyncSpec]:
     has_pattern_d = bool(re.search(r"[A-Za-z]+\s*:\s*\{", where_block))
     pattern_d_concepts = re.findall(r"([A-Za-z][A-Za-z0-9]*)\s*:\s*\{", where_block)
     # DSL-authored concept-state reads and inverse-index reads
-    # (stateRead("Concept", ...) / subjects("Concept", ...) / fanOut(?, "Concept", ...)):
+    # (stateRead("Concept", ...) / subjects("Concept", ...) / fanOut(?, "Concept", ...))
+    # and the negative state pattern (absent(...), a D- read: it consults
+    # state and binds nothing — maintenance/engine-absent-state-guard.md):
     # the where block may use the fluent factories instead of the
     # `Concept: { ... }` prose form; detect both so Pattern-D audits
     # (Stage 03a dependency cards) see the reads.
     for c in re.findall(r"(?:stateRead|subjects)\s*\(\s*\"([A-Za-z][A-Za-z0-9]*)\"", where_block) \
-            + re.findall(r"fanOut\s*\(\s*\"[^\"]*\"\s*,\s*\"([A-Za-z][A-Za-z0-9]*)\"", where_block):
+            + re.findall(r"fanOut\s*\(\s*\"[^\"]*\"\s*,\s*\"([A-Za-z][A-Za-z0-9]*)\"", where_block) \
+            + re.findall(r"absent\s*\(\s*\"?([A-Za-z][A-Za-z0-9]*)\"?", where_block):
         if c not in pattern_d_concepts:
             pattern_d_concepts.append(c)
     has_pattern_d = has_pattern_d or bool(pattern_d_concepts)

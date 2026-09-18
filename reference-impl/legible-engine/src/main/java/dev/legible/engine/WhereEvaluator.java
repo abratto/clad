@@ -209,6 +209,21 @@ public final class WhereEvaluator {
             }
             return out;
         }
+        if (clause instanceof Clause.Absent a) {
+            // Fail closed: an unbound subject means the absence could not be
+            // checked, so the frame cannot pass. See
+            // maintenance/engine-absent-state-guard.md.
+            Object bound = frame.get(a.var());
+            if (bound == null) return List.of();
+            Set<String> values = facts.region(a.concept()).read(String.valueOf(bound), a.predicate());
+            if (a.object() == null) {
+                return values.isEmpty() ? List.of(frame) : List.of();
+            }
+            for (Object expected : resolve(a.object(), frame, inv, comp, conjuncts)) {
+                if (values.contains(String.valueOf(expected))) return List.of();
+            }
+            return List.of(frame);
+        }
         if (clause instanceof Clause.Guard g) {
             Object bound = frame.get(g.var());
             List<Object> expected = resolve(g.expected(), frame, inv, comp, conjuncts);

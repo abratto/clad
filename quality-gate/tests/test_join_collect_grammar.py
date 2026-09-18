@@ -235,6 +235,45 @@ class SyncJoinParsingTests(unittest.TestCase):
             self.assertIn("Tagging", spec.pattern_d_concepts)
             self.assertIn("Article", spec.pattern_d_concepts)
 
+    def test_absent_state_pattern_is_detected_as_a_concept_read(self):
+        """`absent(...)` consults concept state and binds nothing (a D- read).
+
+        It must still appear in `pattern_d_concepts`, so the 03a dependency
+        cards and the pattern summary audit it exactly like a positive read —
+        maintenance/engine-absent-state-guard.md."""
+        body = """sync ShelveWhenCloseReturned
+
+## Sync Contract Matrix
+
+| Source row | Target row | `when` signature | `then` signature | Allowed literals |
+|---|---|---|---|---|
+| `4` | `7` | `Lending/close: [...] => [ Returned ]` | `Stocking/shelve: [ copyId: ?copyId ]` | `<none>` |
+
+## Rule
+
+```
+when {
+    Lending/close: [ ... ] => [ Returned ; ... ]
+}
+where {
+    bind ( when.copyId as ?copyId )
+    fanOut ( ?loanId ; "Lending" ; "borrower" ; ?memberId )
+    absent ( Lending ; ?loanId ; returnedAt )
+    collect ( ?loanId as ?openLoans )
+}
+then {
+    Stocking/shelve: [ copyId: ?copyId ]
+}
+```
+"""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "x.sync.md"
+            write(path, body)
+            spec = ap.parse_sync(str(path))
+        self.assertIn("Lending", spec.pattern_d_concepts)
+        self.assertTrue(spec.has_pattern_d)
+        self.assertIn("collect", " ".join(spec.collect_forms))
+
     def test_single_trigger_sync_is_unchanged(self):
         spec_text = (
             "sync SessionGrantWhenPasswordAuthCheckOk\n\n## Rule\n\n"

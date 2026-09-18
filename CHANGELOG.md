@@ -25,6 +25,18 @@ heading rather than its same-turn rule).
 - The 01b stage contract says the same, and `verify_chain_grammar.py` now fails
   a chain file with no `stateDiagram-v2` block.
 
+## [Unreleased]
+
+Engine: **the `where` clause gains a negative state pattern**, `absent ( Concept ; ?subject ; predicate )` — "the ones that do not have X".
+Maintenance record `maintenance/engine-absent-state-guard.md`; experiment-found
+(UC-04-return-copy could not express "the member's *remaining open* loans": every
+`where` source enumerates state, and `collect` takes no filter).
+
+- `Clause.Absent` + `Dsl.absent(...)` + `WhereEvaluator` support. It binds nothing
+  (a D- concept-state read), fails closed on an unbound subject, and is not a filter.
+- Documented in `SYNC_PATTERNS.md`, `SYNCHRONIZATIONS.md` section Collect, and the 03
+  stage contract; the 03a card parser recognises it as a concept-state read.
+
 ## [0.8.0] — 2026-09-16
 
 Minor release: **system-scope concept vocabulary (Model B)**. Concepts become

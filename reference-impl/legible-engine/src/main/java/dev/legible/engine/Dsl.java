@@ -239,6 +239,22 @@ public final class Dsl {
     // ------------------------------------------------------------------
 
     /** Bind {@code var} from {@code source}; drop the frame if empty. */
+    /**
+     * Keep the frame only if {@code subject} has no value for {@code predicate}.
+     * The negative state pattern (Clause.Absent).
+     */
+    public static Clause absent(String var, String concept, String predicate) {
+        return new Clause.Absent(var, concept, predicate, null);
+    }
+
+    /**
+     * Keep the frame only if {@code subject} has no value for {@code predicate}
+     * equal to {@code object}.
+     */
+    public static Clause absent(String var, String concept, String predicate, Source object) {
+        return new Clause.Absent(var, concept, predicate, object);
+    }
+
     public static Clause bind(String var, Source source) {
         return new Clause.Bind(var, source);
     }

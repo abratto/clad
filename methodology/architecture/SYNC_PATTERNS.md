@@ -120,6 +120,28 @@ where {
   distinction from conceptbox's imperative `frames.query/filter/collectAs`
   (`SYNCHRONIZATIONS.md` §"Collect", R3).
 
+### Absence (negative state pattern)
+
+`absent ( Concept ; ?subject ; predicate )` keeps a frame only if `?subject`
+has **no** value for that predicate; the four-operand form narrows it to a
+value. It is a concept-state read that binds nothing — a **D⁻** read — so it is
+annotated and reviewed exactly like a positive one.
+
+```
+where {
+    fanOut ( ?loanId ; "Lending" ; "borrower" ; ?memberId )   # the member's loans
+    absent ( "Lending" ; ?loanId ; "returnedAt" )             # ... that are still open
+    collect ( ?loanId as ?openLoans )
+}
+```
+
+`absent` is not `filter`: it cannot compute, cannot assemble, and can only
+negate a state pattern (R3). It fails **closed** — an unbound subject drops the
+frame, so a rule never asserts an absence it could not check. A `where` that
+ends with no frames does not fire; that is why an aggregate over a possibly
+empty set must use `collectBy` (empty-safe), not `collect`.
+See `maintenance/engine-absent-state-guard.md`.
+
 ---
 
 ## Why the distinction matters

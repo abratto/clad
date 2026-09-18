@@ -65,6 +65,21 @@ The joined stem is
 declared conjunct order — e.g.
 `RespondWhenJoinListListedAndTagTagged`.
 
+**Absence (`absent`).** The negative state pattern — keep the frame only if
+the subject has **no** such value (a D&minus; read: it binds nothing):
+
+```
+where {
+    fanOut ( ?loanId ; "Lending" ; "borrower" ; ?memberId )
+    absent ( "Lending" ; ?loanId ; "returnedAt" )
+    collect ( ?loanId as ?openLoans )
+}
+```
+
+Not a filter: no computation, no JSON, an absence only (R3). It fails closed on
+an unbound subject, and a `where` that ends with no frames does not fire — so an
+aggregate over a possibly-empty set uses `collectBy`, not `collect`.
+
 **Aggregation (`collect`).** The declarative analogue of `collectAs` —
 gather a source's values into **one `List` value** (no filters, no JSON, R3):
 
