@@ -17,7 +17,7 @@
 |---|---|---|
 | Concept(s) | yes | `User.concept.md` → `UserNaming.concept.md`; `concept User` → `concept UserNaming`; action qualifiers re-derived |
 | Sync(s) | yes | three `WhenUserLookupByUsername…` syncs renamed + `triggeredBy`/`then` re-derived to `UserNaming/lookupByUsername` |
-| Contract slices | yes | `User.spec.md` → `UserNaming.spec.md`; flow-token names re-derived |
+| Contract slices | yes | `User.contract.md` → `UserNaming.contract.md`; flow-token names re-derived |
 | Flow tests | yes | `login-flow-test.md` concept references updated |
 | Concept tests | yes | `UserLookupByUsernameTest` → `UserNamingLookupByUsernameTest` |
 | Sync tests | yes | sync-test-derivation references updated |

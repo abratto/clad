@@ -26,7 +26,7 @@ upstream (Stage 02), not here.
 | `../../02_concepts/output/<Name>.concept.md` | 4 | NEW/EXTEND proposals (not yet promoted) |
 | `../../../../../features/_system/stages/00_actor-goal/output/port-spec.md` | 4 | Required when present; external adapter response-shape contract |
 | Skill: `clad-spec-extraction` | 3 | contract extraction reference (see skills/ directory) |
-| `../../../../../templates/spec.md` | 3 | Output template |
+| `../../../../../templates/contract.md` | 3 | Output template |
 
 ## Process
 

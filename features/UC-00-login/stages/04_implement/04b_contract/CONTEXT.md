@@ -18,7 +18,7 @@ the spec changes.
 
 **Feeds:**
 
-- `<Name>.spec.md` → 04c (flow tests assert contract-level signatures), 04d (concept TDD compiles against contract), 04e (sync TDD references contract action enums).
+- `<Name>.contract.md` → 04c (flow tests assert contract-level signatures), 04d (concept TDD compiles against contract), 04e (sync TDD references contract action enums).
 
 **Agent stance for this stage:** mechanical extraction only. If the
 contract needs an action that isn't in the concept spec, the defect is
@@ -42,10 +42,10 @@ the concept specs + chain tables. First run:
 
 Generated via:
 ```
-python3 ../../../../../quality-gate/generate_spec.py --feature ../../../ --write
+python3 ../../../../../quality-gate/generate_contract.py --feature ../../../ --write
 ```
 
-`generate_spec.py` emits one `<Name>.spec.md` per business concept with the
+`generate_contract.py` emits one `<Name>.contract.md` per business concept with the
 action list and outcome enums collected from the canonical chain tables. It
 leaves `<TODO>` markers for input types and flow-token shape; transcribe those
 from the concept spec — the canonical corpus spec, or this feature's NEW/EXTEND
@@ -75,7 +75,7 @@ error envelope values required by the external contract.
 
 ## Progress checklist
 
-- [ ] One `.spec.md` per concept
+- [ ] One `.contract.md` per concept
 - [ ] Action signatures match concept spec exactly
 - [ ] Outcome enums match chain table
 - [ ] Flow-token shapes declared
@@ -83,7 +83,7 @@ error envelope values required by the external contract.
 - [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
-- `output/<Name>.spec.md` per concept
+- `output/<Name>.contract.md` per concept
 
 ## Verify
 
@@ -92,7 +92,7 @@ error envelope values required by the external contract.
 Run the following before requesting the human gate:
 
 ```
-python3 ../../../../../quality-gate/verify_spec_parity.py \
+python3 ../../../../../quality-gate/verify_contract_parity.py \
   --concept-dir ../../../../../features/_system/concepts \
   --concept-dir ../../02_concepts/output \
   --spec-dir output
@@ -107,13 +107,13 @@ python3 ../../../../../quality-gate/verify_action_chain.py \
   --dep-dir ../../03a_dependency-review/output \
   --spec-dir output
 python3 ../../../../../quality-gate/verify_file_manifest.py \
-  --dir output --expected "<Name>.spec.md,…"  # one per business concept
+  --dir output --expected "<Name>.contract.md,…"  # one per business concept
 python3 ../../../../../quality-gate/verify_port_spec_contract.py \
   --port-spec ../../../../../features/_system/stages/00_actor-goal/output/port-spec.md \
   --spec-dir output
 ```
 
-- **verify_spec_parity.py:** every action name in every concept spec
+- **verify_contract_parity.py:** every action name in every concept spec
   has a matching entry in the corresponding contract file, and vice versa.
 - **verify_outcome_alignment.py:** every chain-table outcome token
   appears in the corresponding contract's outcome enum. This is the first
@@ -122,7 +122,7 @@ python3 ../../../../../quality-gate/verify_port_spec_contract.py \
 - **verify_action_chain.py:** every action flows consistently through
   the responsibility map, chain tables, concept specs, syncs,
   dependency cards, and contracts.
-- **verify_file_manifest.py:** one `.spec.md` file per business concept.
+- **verify_file_manifest.py:** one `.contract.md` file per business concept.
 - **verify_port_spec_contract.py:** skips when no `port-spec.md` exists;
   otherwise checks the port spec is concrete and at least one contract file
   contains response-shape assertions.
@@ -144,7 +144,7 @@ python3 ../../../../../quality-gate/verify_port_spec_contract.py \
 
 ## Gate
 
-Auto-advances (next human gate: Stage 04c). The `verify_spec_parity.py`,
+Auto-advances (next human gate: Stage 04c). The `verify_contract_parity.py`,
 `verify_outcome_alignment.py`, and `verify_action_chain.py` scripts must
 pass before advancing.
 

@@ -7,7 +7,7 @@
 ## Source artefacts
 
 - **Flow tests:** `04c_flow-tests/output/login.feature` — 4 Gherkin scenarios
-- **contracts:** `UserNaming.spec.md`, `PasswordAuth.spec.md`, `Session.spec.md`
+- **contracts:** `UserNaming.contract.md`, `PasswordAuth.contract.md`, `Session.contract.md`
 - **Hard rules:** R1 (no cross-concept imports), R5 (flow token), R9 (distinct outcomes)
 
 ## Coverage matrix

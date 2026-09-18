@@ -1,4 +1,4 @@
-<!-- derived from templates/spec.md -->
+<!-- derived from templates/contract.md -->
 # PasswordAuth — contract
 
 ## Actions

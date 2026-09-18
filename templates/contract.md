@@ -1,4 +1,4 @@
-<!-- Template for Stage 04b (04b_contract). Purpose: see methodology/implementation/STAGES.md §"Stage 04b — Spec". -->
+<!-- Template for Stage 04b (04b_contract). Purpose: see methodology/implementation/STAGES.md §"Stage 04b — Concept contract". -->
 
 # `<ConceptName>` — contract
 
