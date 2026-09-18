@@ -345,7 +345,11 @@ _FIELD_ASSERTIONS = Check(
     name="concept_field_assertions",
     script="verify_concept_field_assertions.py",
     build_args=lambda r: [
+        # The tests under the test root include reused concepts' tests, so this
+        # gate must see the canonical contracts too (R22).
         "--contract-dir", _contract_dir(r),
+        *[arg for d in concept_source_dirs(r)
+          for arg in ("--contract-dir", d)],
         "--test-source-root", _test_source_root(r),
     ],
     requires=lambda r: [_contract_dir(r), _test_source_root(r)],
@@ -729,7 +733,11 @@ STAGES: List[Stage] = [
     Stage("03b", "Data model", "03b_data-model", gate_after=2,
           checks=[_DATA_MODEL, _DATA_MODEL_MANIFEST, _CONCEPT_ADDITIVITY]),
     Stage("04a", "Storage mapping", "04_implement/04a_storage-mapping",
-          checks=[_RELATIONAL_MAPPING]),
+          # profile_paths runs here as well as at 04c: the guard's own advice is
+          # "fill `_config` at Stage 04a before advancing", and until it was
+          # wired here `advance` happily passed 04a with a TBD layout, so the
+          # checks then audited the seed's tree instead of the app's.
+          checks=[_RELATIONAL_MAPPING, _FEATURE_IMPL_PATHS]),
     Stage("04b", "Concept contract", "04_implement/04b_contract",
           checks=[_CONTRACT_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN,
                   _CONTRACT_MANIFEST, _CONCEPT_ADDITIVITY, _PORT_SPEC_04B]),

@@ -12,6 +12,23 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
 
+**Gate scripts: the contract surface is the shadowed union with the corpus, and
+the layout guard runs at 04a.** Both experiment-found (UC-04-return-copy).
+
+- A feature emits a contract only for a concept it introduces or extends; a
+  reused concept binds the canonical contract (R22). `verify_action_chain` and
+  `verify_outcome_alignment` read one directory, so a chain naming a reused
+  action failed them; `verify_concept_field_assertions` resolved the concept from
+  the contracts and therefore *silently skipped* a reused concept's tests — no
+  R14/R16 coverage at all. All three now take `--contract-dir` repeatedly and
+  resolve via `merge_by_concept` / `contract_actions` / `parse_spec_outcomes_multi`
+  (earlier dirs shadow later), wired through `concept_source_dirs`.
+- `verify_profile_paths` is now wired to Stage 04a. Its own advice is "fill
+  `_config` at Stage 04a before advancing", but it only ran at 04c+, so `advance`
+  passed 04a with a `TBD` layout and every later path check audited the seed's
+  tree instead of the app's — twice (UC-03 and UC-04).
+
+
 Methodology: **the Stage 01b chain diagram is required, and its derivation rules
 now cover per-outcome rows and joins.** Maintenance record
 `maintenance/chain-diagram-required-and-joins.md`; experiment-found (a chain

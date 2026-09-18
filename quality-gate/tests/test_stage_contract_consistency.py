@@ -32,6 +32,17 @@ class StageContractConsistencyTests(unittest.TestCase):
         for stage in cs.STAGES:
             self.context_text(stage)
 
+    def test_profile_paths_is_wired_at_04a(self):
+        """The layout guard runs when a feature enters implementation.
+
+        `verify_profile_paths` advises "fill `_config` at Stage 04a before
+        advancing", but it was wired only at 04c/04d, so `advance` passed 04a
+        with a TBD layout and every later path check audited the seed's tree
+        instead of the app's (UC-03 and UC-04 both shipped a TBD layout past
+        04a)."""
+        checks = {check.name for check in cs.stage_by_id("04a").checks}
+        self.assertIn("profile_paths", checks)
+
     def test_wired_checks_are_named_in_the_stage_contract(self):
         missing = []
         for stage in cs.STAGES:

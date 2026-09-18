@@ -90,6 +90,36 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("widgetId", result.stdout)
 
+    def test_reused_concepts_test_is_checked_against_the_corpus(self):
+        """A reused concept has no feature-local contract (R22).
+
+        Its test still lives under the test root, so a gate that resolves the
+        concept from one contract dir silently skips it — no coverage at all for
+        R14/R16 on reused concepts. The contract surface is the shadowed union
+        of the feature's contracts and the corpus."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            feature = root / "feature"
+            corpus = root / "corpus"
+            tests = root / "tests/dev/legible/example/widget"
+            write(corpus / "Widget.contract.md",
+                  "# Widget\n\n### `check(userId)`\n"
+                  "- **Flow token:** `Widget.check { outcome, widgetId }`\n")
+            write(tests / "WidgetCheckTest.java",
+                  "package dev.legible.example.widget;\n"
+                  "class WidgetCheckTest {\n"
+                  "  @Test void shouldReturnWidget() {"
+                  ' var r = c.check(u); assertEquals("OK", r.readOutcome()); }\n'
+                  "}\n")
+            feature.mkdir(parents=True)
+            result = run(str(QG / "verify_concept_field_assertions.py"),
+                         "--contract-dir", str(feature),
+                         "--contract-dir", str(corpus),
+                         "--test-source-root", str(tests))
+            self.assertNotEqual(result.returncode, 0,
+                                "the corpus contract must be seen: " + result.stdout)
+            self.assertIn("widgetId", result.stdout)
+
     def test_flat_concept_test_with_field_passes(self):
         with tempfile.TemporaryDirectory() as temporary:
             spec, tests = self._fixture(

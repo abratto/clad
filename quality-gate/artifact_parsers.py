@@ -686,53 +686,58 @@ def parse_spec_actions(contract_dir: str) -> Set[str]:
     return actions
 
 
+def merge_by_concept(contract_dirs, parse_one):
+    """Merge `parse_one(dir)` across contract dirs, earlier dirs shadowing later.
+
+    A feature emits a contract only for a concept it introduces or extends; a
+    REUSED concept binds the canonical contract in the corpus (R22). Any gate
+    that judges something *outside* the feature's own contracts — a chain, a Java
+    test file — must therefore see this shadowed union, not one directory.
+    """
+    merged, owned = {}, set()
+    for directory in contract_dirs:
+        if not os.path.isdir(directory):
+            continue
+        for key, value in parse_one(directory).items():
+            concept = key[0] if isinstance(key, tuple) else key
+            if concept in owned:
+                continue                      # an earlier dir owns this concept
+            merged[key] = value
+        for fname in sorted(os.listdir(directory)):
+            if fname.endswith(".contract.md"):
+                owned.add(fname.replace(".contract.md", ""))
+    return merged
+
+
+def _actions_by_concept(contract_dir: str):
+    out = {}
+    if not os.path.isdir(contract_dir):
+        return out
+    for fname in sorted(os.listdir(contract_dir)):
+        if not fname.endswith(".contract.md"):
+            continue
+        with open(os.path.join(contract_dir, fname), encoding="utf-8") as handle:
+            text = handle.read()
+        out[fname.replace(".contract.md", "")] = set(
+            re.findall(r"^###\s+`(\w+)\(", text, re.MULTILINE))
+    return out
+
+
+def contract_actions(contract_dirs) -> Set[str]:
+    """`Concept/action` across contract dirs, earlier ones shadowing later."""
+    merged = merge_by_concept(contract_dirs, _actions_by_concept)
+    return {f"{concept}/{action}" for concept, actions in merged.items()
+            for action in actions}
+
+
 def parse_spec_outcomes_multi(contract_dirs):
     """`{(concept, action): outcomes}` across dirs, earlier dirs shadowing later.
 
     The outcome counterpart of :func:`contract_actions`: a reused concept's
     outcomes come from its canonical contract, an extended one's from the
-    feature's own. Both must be visible to a per-feature gate (R22).
+    feature's own.
     """
-    merged = {}
-    owned = set()
-    for directory in contract_dirs:
-        if not os.path.isdir(directory):
-            continue
-        for (concept, action), outcomes in parse_spec_outcomes(directory).items():
-            if concept in owned:
-                continue                      # an earlier dir owns this concept
-            merged[(concept, action)] = outcomes
-        if os.path.isdir(directory):
-            for fname in sorted(os.listdir(directory)):
-                if fname.endswith(".contract.md"):
-                    owned.add(fname.replace(".contract.md", ""))
-    return merged
-
-
-def contract_actions(contract_dirs) -> Set[str]:
-    """`Concept/action` across contract dirs, earlier ones shadowing later.
-
-    A feature emits a contract only for a concept it introduces or extends; a
-    REUSED concept binds the canonical contract in the corpus (R22). So the
-    contract surface a feature is judged against is this shadowed union, not one
-    directory — otherwise every chain that touches a reused concept looks like it
-    names an action no contract has (UC-04: `MemberEnrolment.verify`).
-    """
-    seen: Dict[str, Set[str]] = {}
-    for directory in contract_dirs:
-        if not os.path.isdir(directory):
-            continue
-        for fname in sorted(os.listdir(directory)):
-            if not fname.endswith(".contract.md"):
-                continue
-            concept = fname.replace(".contract.md", "")
-            if concept in seen:
-                continue                      # an earlier dir owns this concept
-            with open(os.path.join(directory, fname), encoding="utf-8") as handle:
-                text = handle.read()
-            seen[concept] = set(re.findall(r"^###\s+`(\w+)\(", text, re.MULTILINE))
-    return {f"{concept}/{action}" for concept, actions in seen.items()
-            for action in actions}
+    return merge_by_concept(contract_dirs, parse_spec_outcomes)
 
 
 def parse_spec_outcomes(contract_dir: str) -> Dict[Tuple[str, str], Set[str]]:

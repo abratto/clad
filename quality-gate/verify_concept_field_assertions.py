@@ -14,6 +14,8 @@ Usage:
 """
 
 import argparse
+
+from artifact_parsers import merge_by_concept  # noqa: E402
 import os
 import re
 import sys
@@ -202,18 +204,18 @@ def main():
     parser = argparse.ArgumentParser(
         description="Verify Java concept tests assert required completion fields"
     )
-    parser.add_argument("--contract-dir", required=True)
+    parser.add_argument(
+        "--contract-dir", required=True, action="append",
+        help="Contract dir; repeatable. Earlier dirs shadow later, so a reused "
+             "concept's tests are checked against its canonical contract (R22)")
     parser.add_argument("--test-source-root", required=True)
     args = parser.parse_args()
 
-    if not os.path.isdir(args.contract_dir):
-        print(f"FAIL  contract directory not found: {args.contract_dir}")
-        return 1
     if not os.path.isdir(args.test_source_root):
         print(f"FAIL  test source root not found: {args.test_source_root}")
         return 1
 
-    required_by_action = parse_required_fields(args.contract_dir)
+    required_by_action = merge_by_concept(args.contract_dir, parse_required_fields)
     if not required_by_action:
         print("WARN  no required flow-token fields parsed from contracts")
         return 0
