@@ -244,9 +244,13 @@ _OUTCOME_ALIGNMENT = Check(
     script="verify_outcome_alignment.py",
     build_args=lambda r: [
         "--chain-dir", CHAIN_DIR(r),
+        # Feature contracts first, then the canonical corpus: a reused concept
+        # has no feature-local contract and is validated against the canonical.
         "--contract-dir", _contract_dir(r),
+        *[arg for d in concept_source_dirs(r)
+          for arg in ("--contract-dir", d)],
     ],
-    requires=lambda r: [CHAIN_DIR(r), _contract_dir(r)],
+    requires=lambda r: [CHAIN_DIR(r), _contract_dir(r), *concept_source_dirs(r)],
 )
 
 _ACTION_CHAIN = Check(
@@ -258,7 +262,11 @@ _ACTION_CHAIN = Check(
         *_concept_dir_args(r),
         "--sync-dir", SYNC_DIR(r),
         "--dep-dir", DEP_DIR(r),
+        # The feature's own contracts first, then the canonical corpus: a reused
+        # concept has no feature-local contract and binds the canonical one.
         "--contract-dir", _contract_dir(r),
+        *[arg for d in concept_source_dirs(r)
+          for arg in ("--contract-dir", d)],
     ],
     requires=lambda r: [
         _resp_map(r), CHAIN_DIR(r), *concept_source_dirs(r), SYNC_DIR(r),

@@ -26,9 +26,12 @@ Usage:
 """
 
 import argparse
+import os
+import re
 import sys
 
 from artifact_parsers import (
+    contract_actions,
     parse_resp_map_actions,
     parse_chain_table_actions,
     parse_concept_actions,
@@ -53,8 +56,12 @@ def main():
                         help="Path to 03_syncs/output/ (spec files)")
     parser.add_argument("--dep-dir", required=True,
                         help="Path to 03a_dependency-review/output/")
-    parser.add_argument("--contract-dir", required=True,
-                        help="Path to 04b_contract/output/")
+    parser.add_argument("--contract-dir", required=True, action="append",
+                        help="Contract dir; repeatable. Earlier dirs shadow later "
+                             "ones by concept name, so a feature's own contract wins "
+                             "over the canonical corpus copy it extends — and a "
+                             "REUSED concept, which has no feature-local contract, is "
+                             "satisfied by the canonical one (Model B / R22).")
     args = parser.parse_args()
 
     sources = {
@@ -63,7 +70,7 @@ def main():
         "concept specs":       parse_concept_actions_multi(args.concept_dir),
         "sync specs":          parse_sync_actions(args.sync_dir),
         "dep. cards":          parse_dep_card_actions(args.dep_dir),
-        "contracts":               parse_spec_actions(args.contract_dir),
+        "contracts":               contract_actions(args.contract_dir),
     }
 
     # Filter out Web actions for all sources (Web is bootstrap)

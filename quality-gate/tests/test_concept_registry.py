@@ -276,6 +276,43 @@ class PromotionTests(unittest.TestCase):
             self.assertEqual(again.returncode, 0, again.stdout + again.stderr)
             self.assertIn("no-op", again.stdout)
 
+    def test_contract_surface_is_shadowed_across_dirs(self):
+        """A reused concept is satisfied by the canonical contract (R22).
+
+        A feature emits a contract only for concepts it introduces or extends,
+        so a per-feature gate that reads one directory sees a chain naming an
+        action no contract has (UC-04: `MemberEnrolment.verify`)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature_contracts = Path(tmp) / "feature"
+            corpus = Path(tmp) / "corpus"
+            for d in (feature_contracts, corpus):
+                d.mkdir(parents=True)
+            (feature_contracts / "Lending.contract.md").write_text(
+                "# Lending — contract\n\n## Actions\n\n"
+                "### `close(memberId, copyId, returnedAt) -> LoanId`\n\n"
+                "- **Outcomes (enum):** `RETURNED`\n", encoding="utf-8")
+            # The corpus holds the reused concept AND a stale Lending: the
+            # feature's own copy must shadow it.
+            (corpus / "MemberEnrolment.contract.md").write_text(
+                "# MemberEnrolment — contract\n\n## Actions\n\n"
+                "### `verify(memberId) -> void`\n\n"
+                "- **Outcomes (enum):** `VERIFIED`\n", encoding="utf-8")
+            (corpus / "Lending.contract.md").write_text(
+                "# Lending — contract\n\n## Actions\n\n"
+                "### `open(copyId, memberId) -> LoanId`\n", encoding="utf-8")
+
+            import artifact_parsers as ap  # noqa: E402
+            surface = ap.contract_actions([str(feature_contracts), str(corpus)])
+            self.assertIn("MemberEnrolment/verify", surface)
+            self.assertIn("Lending/close", surface)
+            self.assertNotIn("Lending/open", surface,
+                             "the feature's contract shadows the stale corpus copy")
+
+            outcomes = ap.parse_spec_outcomes_multi([str(feature_contracts), str(corpus)])
+            self.assertEqual(outcomes[("MemberEnrolment", "verify")], {"VERIFIED"})
+            self.assertEqual(outcomes[("Lending", "close")], {"RETURNED"})
+            self.assertNotIn(("Lending", "open"), outcomes)
+
     def test_dependence_claims_survive_escaped_pipes(self):
         """A Proposals cell can contain `[ ok \\| refused ]`; splitting the row
         on raw `|` mis-aligns the cells, and the claims column lists backticked

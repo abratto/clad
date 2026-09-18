@@ -23,7 +23,8 @@ import os
 import re
 import sys
 
-from artifact_parsers import parse_chain_table, parse_spec_outcomes
+from artifact_parsers import (contract_actions, parse_chain_table,
+                              parse_spec_outcomes, parse_spec_outcomes_multi)
 
 
 def parse_chain_outcomes(chain_dir):
@@ -67,12 +68,14 @@ def main():
         description="Verify chain-table outcomes align with contract outcome enums")
     parser.add_argument("--chain-dir", required=True,
                         help="Path to 01b_chain-table/output/")
-    parser.add_argument("--contract-dir", required=True,
-                        help="Path to 04b_contract/output/")
+    parser.add_argument("--contract-dir", required=True, action="append",
+                        help="Contract dir; repeatable. Earlier dirs shadow later "
+                             "ones by concept name, so a reused concept is validated "
+                             "against its canonical contract (R22).")
     args = parser.parse_args()
 
     chain_rows = parse_chain_outcomes(args.chain_dir)
-    spec_outcomes = parse_spec_outcomes(args.contract_dir)
+    spec_outcomes = parse_spec_outcomes_multi(args.contract_dir)
 
     if not chain_rows:
         print("WARN  no chain rows found — check --chain-dir")
