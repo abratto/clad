@@ -108,6 +108,8 @@ python3 ../../../../../quality-gate/verify_action_chain.py \
   --spec-dir output
 python3 ../../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<Name>.contract.md,…"  # one per business concept
+python3 ../../../../../quality-gate/verify_concept_additivity.py \
+  --feature ../../../
 python3 ../../../../../quality-gate/verify_port_spec_contract.py \
   --port-spec ../../../../../features/_system/stages/00_actor-goal/output/port-spec.md \
   --spec-dir output
@@ -123,6 +125,11 @@ python3 ../../../../../quality-gate/verify_port_spec_contract.py \
   the responsibility map, chain tables, concept specs, syncs,
   dependency cards, and contracts.
 - **verify_file_manifest.py:** one `.contract.md` file per business concept.
+- **verify_concept_additivity.py:** an extended corpus concept's contract is
+  **additive only** — every canonical action, and every canonical outcome of a
+  surviving action, must still be listed. Same escape hatch as Stage 03b:
+  `_config/additivity-exceptions.md`, one authorised line per bullet.
+
 - **verify_port_spec_contract.py:** skips when no `port-spec.md` exists;
   otherwise checks the port spec is concrete and at least one contract file
   contains response-shape assertions.

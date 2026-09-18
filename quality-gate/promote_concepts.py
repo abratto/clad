@@ -44,6 +44,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
 import clad_stages as cs  # noqa: E402
 
+INTRODUCED_RE = re.compile(r"^introduced-by\s+(.+)$", re.MULTILINE)
+EXTENDED_RE = re.compile(r"^extended-by\s+(.+)$", re.MULTILINE)
+
 GATE2_STATUS = re.compile(r"^- \*\*Gate 2 \([^)]*\):\*\*\s+`(\w+)`", re.MULTILINE)
 GATE2_HASH = re.compile(r"^- \*\*Gate 2 content hash:\*\*\s+`([0-9a-f]+)`", re.MULTILINE)
 
@@ -61,16 +64,100 @@ def feature_slug(feature_root: str) -> str:
     return os.path.basename(os.path.abspath(feature_root))
 
 
-def stamp_provenance(text: str, slug: str) -> str:
-    """Ensure the proposal carries `introduced-by <slug>`."""
-    if re.search(r"^introduced-by\s+", text, re.MULTILINE):
-        return text
-    lines = text.split("\n")
-    for i, line in enumerate(lines):
-        if line.strip().startswith("concept "):
-            lines.insert(i + 1, f"introduced-by {slug}")
-            return "\n".join(lines)
-    return f"introduced-by {slug}\n{text}"
+class OutOfOrderPromotion(RuntimeError):
+    """A feature older than the concept's current canonical tried to promote."""
+
+
+def provenance_scope(text: str):
+    """`(introducer, promoter)` for a canonical concept spec.
+
+    The first promoter is `introduced-by`; each later one is appended to
+    `extended-by`. The last entry of that list is the feature the canonical
+    entry currently came from — the concept's own promotion order.
+    """
+    intro = INTRODUCED_RE.search(text)
+    extenders = EXTENDED_RE.search(text)
+    introducer = intro.group(1).strip() if intro else ""
+    history = [s.strip() for s in extenders.group(1).split(",")] if extenders else []
+    promoter = history[-1] if history else introducer
+    return introducer, promoter
+
+
+def _with_history(text: str, history) -> str:
+    """Write the promotion history into the text, replacing any stale copy."""
+    line = "extended-by " + ", ".join(history)
+    own = EXTENDED_RE.search(text)
+    if own:
+        return text[:own.start()] + line + text[own.end():]
+    own_intro = INTRODUCED_RE.search(text)
+    return text[:own_intro.end()] + "\n" + line + text[own_intro.end():]
+
+
+def stamp_provenance(text: str, slug: str, canonical_text: str = "") -> str:
+    """Record `slug` as the concept's promoter, append-only.
+
+    The promotion history is a property of the CANONICAL entry, not of the
+    proposal that arrives for it — a proposal is a frozen snapshot with no
+    memory of who came after it. So the history is read from the canonical
+    entry and written back into the text being promoted.
+
+    A concept is written whole, so re-promoting an OLDER feature over a newer
+    canonical entry would silently roll the corpus back — that is exactly how a
+    superseded proposal once replaced the canonical `MemberEnrolment` spec and
+    dropped the `verify` action. Only the concept's current source may write.
+    """
+    intro = INTRODUCED_RE.search(text) or INTRODUCED_RE.search(canonical_text)
+    if intro is None:
+        lines = text.split("\n")
+        for i, line in enumerate(lines):
+            if line.strip().startswith("concept "):
+                lines.insert(i + 1, f"introduced-by {slug}")
+                return "\n".join(lines)
+        return f"introduced-by {slug}\n{text}"
+
+    introducer = intro.group(1).strip()
+    if INTRODUCED_RE.search(text) is None:
+        text = text[:intro.end()] + text[intro.end():]
+    # History comes from the canonical when it has one, otherwise this text is
+    # the first promotion and the introducer owns it.
+    source = canonical_text if EXTENDED_RE.search(canonical_text) else text
+    ext = EXTENDED_RE.search(source)
+    history = [s.strip() for s in ext.group(1).split(",")] if ext else []
+    current = history[-1] if history else introducer
+
+    if slug == current:
+        # Idempotent re-promotion by the concept's current source — but still
+        # re-emit the history, which lives on the canonical, not on the frozen
+        # proposal text.
+        return _with_history(text, history) if history else text
+    if slug == introducer or slug in history:
+        raise OutOfOrderPromotion(
+            f"`{slug}` has already promoted this concept, and `{current}` is its "
+            f"current canonical source. Promoting `{slug}` now would roll the "
+            f"corpus back to an older proposal.")
+
+    history.append(slug)
+    return _with_history(text, history)
+
+
+LEADING_COMMENT_RE = re.compile(r"\A<!--.*?-->\n", re.DOTALL)
+
+
+def canonical_companion(text: str, concept: str, introducer: str,
+                        promoter: str) -> str:
+    """The canonical form of a promoted model/contract.
+
+    The generator's proposal-snapshot header is replaced by one that says what
+    the file is and where its concept currently stands, so a reader of the
+    corpus (or of a feature copy) can tell the two apart at a glance. The
+    provenance recorded is the CONCEPT's — a companion is derived from the
+    concept, and the concept is what moves between use cases.
+    """
+    header = (f"<!-- canonical — derived from concept {concept}: "
+              f"introduced-by {introducer}, current source {promoter} -->\n")
+    if LEADING_COMMENT_RE.match(text):
+        return LEADING_COMMENT_RE.sub(header, text, count=1)
+    return header + text
 
 
 def proposals_for(feature_root: str):
@@ -170,37 +257,67 @@ def main():
     receipt_dir = os.path.join(corpus, "_promotions")
     receipt = os.path.join(receipt_dir, f"{slug}.md")
 
-    # Idempotency: same gate hash already promoted AND corpus copies match.
+    def expected_canonical(concept, proposal_path):
+        """The corpus text this promotion would write.
+
+        `(spec, {suffix: text})` — the spec gains the promoter history, and each
+        companion artefact (model, contract) carries the canonical header. A
+        companion this feature did not re-derive is re-stamped anyway: the
+        CONCEPT moved, so the canonical companion must name its new source, and
+        its body is untouched.
+        """
+        canonical_path = os.path.join(corpus, f"{concept}.concept.md")
+        existing = ""
+        if os.path.isfile(canonical_path):
+            with open(canonical_path, encoding="utf-8") as fh:
+                existing = fh.read()
+        with open(proposal_path, encoding="utf-8") as fh:
+            spec = stamp_provenance(fh.read(), slug, existing)
+        introducer, promoter = provenance_scope(spec)
+        companions = {}
+        for rel, suffix in (("03b_data-model", "data-model.md"),
+                            ("04_implement/04b_contract", "contract.md")):
+            produced = os.path.join(feature_root, "stages", rel, "output",
+                                    f"{concept}.{suffix}")
+            canonical = os.path.join(corpus, f"{concept}.{suffix}")
+            source = produced if os.path.isfile(produced) else canonical
+            if not os.path.isfile(source):
+                continue
+            with open(source, encoding="utf-8") as fh:
+                companions[suffix] = canonical_companion(
+                    fh.read(), concept, introducer, promoter)
+        return spec, companions
+
+    # Refusal is per concept: a feature that extends several concepts may be the
+    # current source of some and an older source of others. Read-only refusals
+    # are skipped (never silently rolled back), and reported at the end.
+    planned, refused = {}, []
+    for concept, path in sorted(proposals.items()):
+        try:
+            planned[concept] = expected_canonical(concept, path)
+        except OutOfOrderPromotion as refusal:
+            refused.append((concept, str(refusal)))
+
+    # Idempotency: same gate hash already promoted AND the corpus matches.
     if os.path.isfile(receipt) and not args.dry_run:
         with open(receipt, encoding="utf-8") as fh:
             if f"gate hash: `{gate_hash}`" in fh.read():
-                def _canonical_same(concept: str) -> bool:
-                    """Every promoted companion artefact (model, contract) that
-                    the feature produced matches its canonical copy."""
-                    companions = (
-                        ("03b_data-model", "data-model.md"),
-                        ("04_implement/04b_contract", "contract.md"),
-                    )
-                    for rel, suffix in companions:
-                        produced = os.path.join(feature_root, "stages", rel,
-                                                "output", f"{concept}.{suffix}")
-                        if not os.path.isfile(produced):
-                            continue
-                        canonical = os.path.join(corpus, f"{concept}.{suffix}")
-                        if not (os.path.isfile(canonical)
-                                and open(canonical, encoding="utf-8").read()
-                                == open(produced, encoding="utf-8").read()):
+                def _same(concept) -> bool:
+                    spec, companions = planned[concept]
+                    path = os.path.join(corpus, f"{concept}.concept.md")
+                    if not (os.path.isfile(path)
+                            and open(path, encoding="utf-8").read() == spec):
+                        return False
+                    for suffix, text in companions.items():
+                        companion = os.path.join(corpus, f"{concept}.{suffix}")
+                        if not (os.path.isfile(companion)
+                                and open(companion, encoding="utf-8").read() == text):
                             return False
                     return True
 
-                same = all(
-                    os.path.isfile(os.path.join(corpus, f"{c}.concept.md"))
-                    and open(os.path.join(corpus, f"{c}.concept.md"),
-                             encoding="utf-8").read() ==
-                    stamp_provenance(open(p, encoding="utf-8").read(), slug)
-                    and _canonical_same(c)
-                    for c, p in proposals.items())
-                if same:
+                # `planned` is empty when every concept was refused as
+                # out-of-order — that is not a no-op, it is a refusal.
+                if planned and all(_same(c) for c in planned):
                     print(f"PASS  already promoted at Gate 2 hash `{gate_hash[:12]}…` — no-op")
                     return 0
 
@@ -216,30 +333,18 @@ def main():
     os.makedirs(corpus, exist_ok=True)
     os.makedirs(receipt_dir, exist_ok=True)
     promoted = []
-    for concept, path in sorted(proposals.items()):
-        with open(path, encoding="utf-8") as fh:
-            text = stamp_provenance(fh.read(), slug)
+    for concept in sorted(planned):
+        spec, companions = planned[concept]
         with open(os.path.join(corpus, f"{concept}.concept.md"), "w",
                   encoding="utf-8") as fh:
-            fh.write(text)
-        # The conceptual data model is canonical too: it lives beside the spec
-        # (`features/_system/concepts/<Name>.data-model.md`), so a feature
-        # derives it only when it changes the state and it is promoted with the
-        # spec. A reused concept binds the canonical model — no second copy.
-        model = os.path.join(feature_root, "stages", "03b_data-model", "output",
-                             f"{concept}.data-model.md")
-        if os.path.isfile(model):
-            shutil.copyfile(model, os.path.join(corpus,
-                                                f"{concept}.data-model.md"))
-        # The concept contract is canonical too (04b's output), promoted beside
-        # the spec and model. An extend moves the contract with the concept, so
-        # the extending feature's contract is the new canonical one.
-        contract = os.path.join(feature_root, "stages", "04_implement",
-                                "04b_contract", "output",
-                                f"{concept}.contract.md")
-        if os.path.isfile(contract):
-            shutil.copyfile(contract, os.path.join(corpus,
-                                                   f"{concept}.contract.md"))
+            fh.write(spec)
+        # The conceptual data model and the concept contract are canonical too:
+        # they live beside the spec, promoted with it. A reused concept binds
+        # the canonical artefact rather than deriving a second copy.
+        for suffix, text in companions.items():
+            with open(os.path.join(corpus, f"{concept}.{suffix}"), "w",
+                      encoding="utf-8") as fh:
+                fh.write(text)
         promoted.append(concept)
 
     # Regenerate the catalog index.
@@ -262,6 +367,11 @@ def main():
 
     print(f"PASS  promoted {len(promoted)} concept(s) into the corpus: "
           f"{', '.join(promoted)}")
+    for concept, reason in refused:
+        print(f"WARN  skipped `{concept}` — {reason}")
+        print("      The corpus must not move backwards. Promote the feature "
+              "that currently owns the concept, or record an R20 maintenance "
+              "change before re-promoting this one.")
     if claims:
         print("      Dependence claims to merge into concept-dependence.md "
               "(reviewed artefact):")

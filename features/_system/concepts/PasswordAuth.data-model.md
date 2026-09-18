@@ -1,3 +1,4 @@
+<!-- canonical — derived from concept PasswordAuth: introduced-by UC-00-login, current source UC-00-login -->
 # PasswordAuth — conceptual data model
 
 ## Step 1 — Familiar examples and elementary facts

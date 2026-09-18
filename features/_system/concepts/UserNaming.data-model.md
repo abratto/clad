@@ -1,3 +1,4 @@
+<!-- canonical — derived from concept UserNaming: introduced-by UC-00-login, current source UC-00-login -->
 # UserNaming — conceptual data model
 
 ## Step 1 — Familiar examples and elementary facts

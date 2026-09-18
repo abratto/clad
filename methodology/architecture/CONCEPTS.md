@@ -236,6 +236,35 @@ rule **R22**). Reuse is roughly 90% of design — an app is a composition of
 concepts, and only the tricky ones need detailed specification
 (Jackson, *The Essence of Software*).
 
+### Proposal snapshots vs the canonical entry
+
+A feature that introduces or extends a concept keeps a copy under its own
+`stages/` — the proposal it was approved with. That copy is a **proposal
+snapshot**, bound to its own Gate 2; it is *not* the current truth, and it is
+supposed to go stale. The canonical entry is the only current answer, because a
+concept is written whole on every promotion.
+
+So the two artefacts say which they are:
+
+- canonical — `<!-- canonical — derived from concept <Name>: introduced-by
+  <UC-A>, current source <UC-C> -->` on the model and contract, with
+  `introduced-by` / `extended-by <UC-B>, <UC-C>` in the spec header;
+- snapshot — `<!-- proposal snapshot — …; canonical <kind>:
+  features/_system/concepts/<Name>… -->`.
+
+Two consequences follow, and both are mechanised:
+
+- **Order.** Promotion replaces the whole entry, so only the concept's current
+  source may promote it; re-promoting an earlier use case would roll the corpus
+  back. The `extended-by` list *is* the order.
+- **Additivity.** An extend may add fact types, constraints, actions and
+  outcomes, but not drop or restate them. A deliberate removal is listed, with
+  a reason, in the feature's `_config/additivity-exceptions.md`.
+
+`quality-gate/verify_concept_additivity.py` enforces the second at Gate 2 and
+Gate 3; `quality-gate/verify_concept_corpus_current.py` enforces the first
+against the `_promotions/` receipts.
+
 ### Concept criteria
 
 A good concept is:

@@ -138,6 +138,23 @@ def main():
         for line in detail.splitlines():
             print(f"        {line}")
 
+    # The canonical concept corpus is current and self-consistent
+    # (feature-independent): every Gate-2-approved proposal is on the canonical
+    # entry's promotion history, and the companions agree with it.
+    code, out, err = run_script("verify_concept_corpus_current.py",
+                                ["--features-dir", str(REPO_ROOT / "features")])
+    detail = (out + err).strip()
+    ok = code == 0
+    mark = "PASS" if ok else "FAIL"
+    print(f"\n  [{mark}] concept_corpus_current")
+    if not ok:
+        all_pass = False
+        for line in detail.splitlines()[:8]:
+            print(f"        {line}")
+    elif detail.strip():
+        for line in detail.splitlines():
+            print(f"        {line}")
+
     # Sync `then` carries the authored result, not the transport frame
     # (feature-independent).
     code, out, err = run_script("verify_sync_then_shape.py",

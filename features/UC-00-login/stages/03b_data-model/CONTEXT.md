@@ -95,6 +95,8 @@ python3 ../../../../quality-gate/verify_data_model.py \
   --concept-dir ../02_concepts/output   # proposals shadow canonical by name
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<Name>.data-model.md,…"  # one per concept
+python3 ../../../../quality-gate/verify_concept_additivity.py \
+  --feature ../..
 ```
 
 - **verify_data_model.py:** validates all 7 CSDP steps present, all
@@ -102,6 +104,14 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   no storage-leakage patterns, and no cross-concept entity type
   references.
 - **verify_file_manifest.py:** one `.data-model.md` file per concept.
+- **verify_concept_additivity.py:** an extended corpus concept is
+  **additive only** — every canonical `## State` line must survive in this
+  feature's proposal. A lost or restated line fails unless it is listed, with a
+  reason, in `_config/additivity-exceptions.md`. Closes the only guarantee the
+  promotion machinery does not give you: `_state_changed` is a *difference*
+  test, so a removal and an addition look alike, and promotion copies either
+  over the canonical entry.
+
 
 ### Semantic checks (human)
 

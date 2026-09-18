@@ -1,4 +1,4 @@
-<!-- derived from templates/contract.md -->
+<!-- proposal snapshot — derived from templates/contract.md; canonical contract: features/_system/concepts/PasswordAuth.contract.md -->
 # PasswordAuth — contract
 
 ## Actions

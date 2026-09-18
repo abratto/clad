@@ -285,12 +285,32 @@ Re-deriving a concept per use case is the cross-feature drift this rule exists
 to prevent (observed in the Conduit rebuild: six divergent
 `Session.concept.md` across six use cases, surfaced only at Stage 04).
 
+Promotion replaces the canonical entry **whole**, which fixes two further
+obligations:
+
+- **Order.** The canonical spec records its history — `introduced-by <UC-A>`
+  plus `extended-by <UC-B>, …`, append-only — and only the entry's current
+  source may promote it. Re-promoting an earlier use case would roll the corpus
+  back to a superseded proposal; the command refuses per concept and says why.
+- **Additivity.** An `extends` proposal keeps every canonical `## State` line
+  and every canonical contract action and outcome. A deliberate removal is
+  authorised by listing the exact dropped line, with a reason, in the feature's
+  `_config/additivity-exceptions.md` — visible and bounded, not silent.
+
+A feature's own copies are **proposal snapshots** (its Gate 2 audit trail), not
+current truth: the canonical model and contract carry a `canonical — derived
+from concept …` header, and the snapshots say so too. File-equality between the
+two is *not* the invariant — from the second extending use case onward an
+earlier snapshot is supposed to differ.
+
 This does **not** weaken R1. Independence is precisely what makes concepts
 reusable; coordination remains syncs-only, and no concept names another
 concept's state.
 
-Mechanised by `quality-gate/verify_concept_proposals.py` and
-`quality-gate/verify_concept_registry.py`; the corpus criteria by
+Mechanised by `quality-gate/verify_concept_proposals.py`,
+`quality-gate/verify_concept_registry.py`,
+`quality-gate/verify_concept_additivity.py` and
+`quality-gate/verify_concept_corpus_current.py`; the corpus criteria by
 `quality-gate/verify_concept_criteria.py`.
 
 ---

@@ -684,6 +684,13 @@ _CONCEPT_PROPOSALS = Check(
     requires=lambda r: [_resp_map(r), output_dir(r, "02_concepts")],
 )
 
+_CONCEPT_ADDITIVITY = Check(
+    name="concept_additivity",
+    script="verify_concept_additivity.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [_resp_map(r)] + concept_source_dirs(r),
+)
+
 _RELATIONAL_MAPPING = Check(
     name="relational_mapping",
     script="verify_relational_mapping.py",
@@ -712,12 +719,12 @@ STAGES: List[Stage] = [
     Stage("03a", "Dependency review", "03a_dependency-review",
           checks=[_CARD_MANIFEST]),
     Stage("03b", "Data model", "03b_data-model", gate_after=2,
-          checks=[_DATA_MODEL, _DATA_MODEL_MANIFEST]),
+          checks=[_DATA_MODEL, _DATA_MODEL_MANIFEST, _CONCEPT_ADDITIVITY]),
     Stage("04a", "Storage mapping", "04_implement/04a_storage-mapping",
           checks=[_RELATIONAL_MAPPING]),
     Stage("04b", "Concept contract", "04_implement/04b_contract",
           checks=[_CONTRACT_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN,
-                  _CONTRACT_MANIFEST, _PORT_SPEC_04B]),
+                  _CONTRACT_MANIFEST, _CONCEPT_ADDITIVITY, _PORT_SPEC_04B]),
     Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3,
           checks=[_FEATURE_IMPL_PATHS, _GHERKIN_DERIVATION, _COLLECTION_COVERAGE,
                   _STEP_DEF_PARITY,

@@ -1,4 +1,4 @@
-<!-- derived from templates/contract.md -->
+<!-- canonical — derived from concept UserNaming: introduced-by UC-00-login, current source UC-00-login -->
 # UserNaming — contract
 
 ## Actions

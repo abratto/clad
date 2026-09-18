@@ -66,8 +66,9 @@ def resp_map(rows):
     return "\n".join(lines)
 
 
-def make_feature(tmp, rows, specs=(), gate2=None, bindings=None):
-    feature = Path(tmp) / "features" / "UC-01-a"
+def make_feature(tmp, rows, specs=(), gate2=None, bindings=None,
+                 name="UC-01-a", gate2_hash=None):
+    feature = Path(tmp) / "features" / name
     out = feature / "stages" / "01a_responsibility-map" / "output"
     out.mkdir(parents=True, exist_ok=True)
     (out / "responsibility-map.md").write_text(resp_map(rows), encoding="utf-8")
@@ -82,7 +83,8 @@ def make_feature(tmp, rows, specs=(), gate2=None, bindings=None):
     if gate2 is not None:
         (feature / "RESUME.md").write_text(
             f"# RESUME\n\n- **Gate 2 (Architecture):** `{gate2}`\n"
-            f"- **Gate 2 content hash:** `{'a' * 64}`\n", encoding="utf-8")
+            f"- **Gate 2 content hash:** `{gate2_hash or 'a' * 64}`\n",
+            encoding="utf-8")
     return feature
 
 
@@ -222,9 +224,56 @@ class PromotionTests(unittest.TestCase):
             corpus_model = (Path(tmp) / "features" / "_system" / "concepts"
                             / "Foo.data-model.md")
             self.assertTrue(corpus_model.is_file())
-            self.assertEqual("# Foo model\n", corpus_model.read_text(encoding="utf-8"))
+            text = corpus_model.read_text(encoding="utf-8")
+            # The canonical copy says what it is and which proposal it came
+            # from — the feature copy is the snapshot.
+            self.assertIn("<!-- canonical — derived from concept Foo: "
+                          "introduced-by UC-01-a, current source UC-01-a", text)
+            self.assertTrue(text.endswith("# Foo model\n"))
 
             again = run(PROMOTE, "--feature", str(feature))
+            self.assertIn("no-op", again.stdout)
+
+    def test_second_promoter_is_appended_and_out_of_order_is_refused(self):
+        """The canonical spec carries its promotion order, and an older
+        feature cannot roll it back.
+
+        A concept is written whole, so re-promoting the introducing feature
+        after an extending feature would replace the canonical entry with the
+        older proposal — the bug that once dropped `MemberEnrolment.verify`."""
+        with tempfile.TemporaryDirectory() as tmp:
+            intro = make_feature(tmp, [("Foo", "new")], specs=("Foo",),
+                                 gate2="approved")
+            first = run(PROMOTE, "--feature", str(intro))
+            self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+
+            extender = make_feature(tmp, [("Foo", "extends:UC-01-a")],
+                                    specs=("Foo",), gate2="approved",
+                                    name="UC-02-b", gate2_hash="b" * 64)
+            second = run(PROMOTE, "--feature", str(extender))
+            self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
+
+            canonical = (Path(tmp) / "features" / "_system" / "concepts"
+                         / "Foo.concept.md")
+            self.assertIn("extended-by UC-02-b", canonical.read_text(encoding="utf-8"))
+
+            again = run(PROMOTE, "--feature", str(intro))
+            self.assertEqual(again.returncode, 0, again.stdout + again.stderr)
+            self.assertIn("WARN  skipped `Foo`", again.stdout)
+            # and the refusal left the newer canonical entry alone
+            self.assertIn("extended-by UC-02-b", canonical.read_text(encoding="utf-8"))
+
+    def test_re_promoting_the_current_promoter_is_idempotent(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            intro = make_feature(tmp, [("Foo", "new")], specs=("Foo",),
+                                 gate2="approved")
+            run(PROMOTE, "--feature", str(intro))
+            extender = make_feature(tmp, [("Foo", "extends:UC-01-a")],
+                                    specs=("Foo",), gate2="approved",
+                                    name="UC-02-b", gate2_hash="b" * 64)
+            run(PROMOTE, "--feature", str(extender))
+            again = run(PROMOTE, "--feature", str(extender))
+            self.assertEqual(again.returncode, 0, again.stdout + again.stderr)
             self.assertIn("no-op", again.stdout)
 
     def test_dependence_claims_survive_escaped_pipes(self):
