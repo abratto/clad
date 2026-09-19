@@ -386,6 +386,28 @@ sync whose `where` produces multiple bindings (e.g. one per tag) would
 fire the `then` clause once for each binding, which would produce a
 response per tag instead of one response per article.
 
+### Flow pinning
+
+Every **non-bootstrap** rule names its flow root as the first conjunct, with the
+route matcher:
+
+```
+when {
+    requested: Web/request: [ route: "returns" ] => [ Routed ; ... ]
+    closed:    Lending/close: [ ... ] => [ Returned ; ... ]
+}
+```
+
+A flow token scopes a match to one flow, but *within* a flow any rule whose `when`
+matches fires — so two use cases that share a completion (`MemberEnrolment.verify`
+serves both a borrow and a return) would each fire the other's rule. Naming the
+request is how the paper's `RegistrationError` and every ConceptBox rule keep a
+rule in its own flow (`maintenance/sync-flow-pinning.md`).
+
+The pin is **not** a name component: it is in every non-bootstrap rule, so it
+discriminates nothing — the same reason the pre-v0.6 `For<Scope>` was removed, and
+the opposite of the route, which *is* a component for bootstraps.
+
 ### Collect (declarative aggregation)
 
 `collect` gathers the values a declarative source yields into **one `List`

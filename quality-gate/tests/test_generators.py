@@ -130,6 +130,40 @@ class GeneratorPropertyTests(unittest.TestCase):
             for v in values:
                 self.assertRegex(v, r"^[A-Z][A-Z0-9_]*$")
 
+    def test_every_non_bootstrap_rule_pins_its_flow_root(self):
+        """The flow pin (maintenance/sync-flow-pinning.md).
+
+        A flow token scopes a match to one flow, but within a flow any rule whose
+        `when` matches fires — so two use cases sharing a completion fire each
+        other's rules. Every non-bootstrap rule therefore names its flow root
+        first, with its route matcher, and the pin is NOT a name component (it is
+        in every such rule, so it discriminates nothing)."""
+        sync_dir = self.sync_dir()
+        for f in sync_dir.glob("*.sync.md"):
+            f.unlink()
+        r = run(GEN_SYNCS, "--feature", self.feature, "--write")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+        pinned = 0
+        for path in sorted(sync_dir.glob("*.sync.md")):
+            text = path.read_text(encoding="utf-8")
+            if "WhenRequestRouted" in path.name:
+                # The bootstrap IS the flow root: it has no pin to carry.
+                self.assertNotIn("requested: Web/request:", text, path.name)
+                continue
+            self.assertIn("requested: Web/request:", text,
+                          f"{path.name} must pin its flow root")
+            pinned += 1
+        self.assertGreater(pinned, 0, "no non-bootstrap rules to check")
+
+    def test_the_pin_is_not_a_name_component(self):
+        """A pinned rule is named by its trigger, not as a join."""
+        sync_dir = self.sync_dir()
+        stems = {f.name.replace(".sync.md", "") for f in sync_dir.glob("*.sync.md")}
+        self.assertIn("CheckWhenLookupByUsernameFound", stems)
+        self.assertFalse([s for s in stems if "JoinRequestRouted" in s],
+                         "the uniform pin must not appear in any name")
+
     def test_generate_cards_cover_participating_concepts(self):
         dep_dir = self.feature / "stages" / "03a_dependency-review" / "output"
         r = run(GEN_CARDS, "--feature", self.feature, "--write")

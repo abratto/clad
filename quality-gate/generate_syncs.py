@@ -63,6 +63,13 @@ class GeneratedSync:
     # ^ the raw trigger outcome (single-trigger rules); needed to re-derive the
     #   stem at a higher escalation level when two short names collide.
     route: Optional[str] = None
+    # The flow pin (maintenance/sync-flow-pinning.md): every non-bootstrap rule
+    # names its flow root first, with the route matcher, so it can only fire in
+    # its own flow. The pin is excluded from the stem — it is in every such rule,
+    # so it discriminates nothing — while the route on a *bootstrap* is a
+    # component, because only some rules have one.
+    flow_route: Optional[str] = None
+    flow_method: Optional[str] = None
     method: Optional[str] = None
     # ^ when-matcher scope literals for a `Web/request` bootstrap sync (R15);
     #   rendered into the generated `.sync.md` so the author need not add them.
@@ -238,6 +245,8 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                     is_join=True,
                     conjuncts=[(n, c, a, o) for (n, c, a, o, _rn) in resolved],
                     trigger_outcome_raw=first[3],
+                    flow_route=root_route,
+                    flow_method=root_method,
                 ))
                 continue
 
@@ -304,6 +313,8 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                 pattern_d_notes=pattern_d_notes,
                 cited_scenario=scenario,
                 route=route,
+                flow_route=root_route,
+                flow_method=root_method,
                 method=method,
                 trigger_outcome_raw=trigger_outcome_raw,
             ))
@@ -318,6 +329,26 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                     g.target_concept, g.target_action)
         return ("single", g.trigger_concept, g.trigger_action,
                 g.trigger_outcome_raw, g.target_concept, g.target_action)
+
+    # The flow pin: every non-bootstrap rule names its flow root first, with the
+    # route matcher, so two use cases sharing a completion cannot fire each
+    # other's rules. See maintenance/sync-flow-pinning.md.
+    for g in syncs:
+        if g.trigger_concept == "Web" and g.trigger_action == "request":
+            continue                       # the bootstrap IS the flow root
+        if not g.conjuncts:
+            # A single-trigger rule carries its trigger in the trigger_* fields,
+            # not in `conjuncts`; pinning makes it a join, so the trigger becomes
+            # its second conjunct.
+            g.conjuncts = [(None, g.trigger_concept, g.trigger_action,
+                            g.trigger_completion)]
+        g.is_join = True
+        g.conjuncts = [("requested", "Web", "request", "routed")] + list(g.conjuncts)
+        scope = f'route: "{g.flow_route}"' if g.flow_route else "..."
+        if g.flow_method:
+            scope += f' ; method: "{g.flow_method}"'
+        g.when_sig = (f"requested: Web/request: [ {scope} ] => [ Routed ]"
+                      + " \u2227 " + g.when_sig)
 
     seen: Dict[tuple, GeneratedSync] = {}
     unique: List[GeneratedSync] = []
@@ -353,9 +384,16 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
         ladder = ([(lvl, False) for lvl in range(ap.SYNC_STEM_MAX_LEVEL + 1)]
                   + [(ap.SYNC_STEM_MAX_LEVEL, True)])
         chosen = None
+        # The pin is in every non-bootstrap rule and so names nothing.
+        stem_conjuncts = (conjuncts[1:]
+                          if conjuncts and conjuncts[0].name == "requested"
+                          else conjuncts)
+        # The name is about what discriminates this rule from its neighbours: a
+        # pinned single-trigger rule is named by its trigger, not as a join.
+        stem_is_join = len(stem_conjuncts) > 1
         for level, with_payload in ladder:
             candidate = ap.sync_stem(g.target_concept, g.target_action,
-                                     conjuncts, g.is_join, level, with_payload,
+                                     stem_conjuncts, stem_is_join, level, with_payload,
                                      route=getattr(g, "route", ""))
             if candidate not in used:
                 chosen = candidate
@@ -363,7 +401,7 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
         if chosen is None:
             level, with_payload = ladder[-1]
             chosen = ap.sync_stem(g.target_concept, g.target_action,
-                                  conjuncts, g.is_join, level, with_payload,
+                                  stem_conjuncts, stem_is_join, level, with_payload,
                                   route=getattr(g, "route", ""))
             warnings.append(
                 f"{chosen}: stem still collides at max escalation; "
@@ -389,8 +427,16 @@ def render_sync(g: GeneratedSync) -> str:
     lines.append("```")
     lines.append("when {")
     if g.is_join and g.conjuncts:
-        for name, concept, action, outcome_raw in g.conjuncts:
+        for index, (name, concept, action, outcome_raw) in enumerate(g.conjuncts):
             prefix = f"{name}: " if name else ""
+            if index == 0 and g.flow_route:
+                scope = f'route: "{g.flow_route}"'
+                if g.flow_method:
+                    scope += f' ; method: "{g.flow_method}"'
+                lines.append(
+                    f"    {prefix}{concept}/{action}: [ {scope} ] => "
+                    f"[ {ap.first_completion_token(outcome_raw)} ; ... ]")
+                continue
             lines.append(
                 f"    {prefix}{concept}/{action}: [ ... ] => "
                 f"[ {ap.first_completion_token(outcome_raw)} ; ... ]")

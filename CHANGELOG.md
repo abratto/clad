@@ -12,6 +12,19 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
 
+**Flow pinning: every non-bootstrap sync names its flow root.** Maintenance
+record `maintenance/sync-flow-pinning.md`; experiment-found (UC-04: UC-03's lend
+fired in the return flow, and UC-04's close fired in the borrow flow).
+
+- The generator pins every non-bootstrap rule — `requested: Web/request:
+  [ route: "returns" ] => [ Routed ]` as its first conjunct — which is the
+  paper's `RegistrationError` idiom (§5.3, "other web requests may be in process
+  at the same time") and ConceptBox's universal practice ("Multiple When Clauses:
+  Handling Request Flow").
+- The pin is **not** a name component: it is in every non-bootstrap rule, so it
+  discriminates nothing — unlike the route on a bootstrap, which does.
+
+
 **Grammar v3.1: a route-scoped bootstrap sync's name carries its route.**
 Maintenance record `maintenance/route-scoped-sync-names.md`; experiment-found
 (two use cases bootstrapping `MemberEnrolment.verify` on different routes
