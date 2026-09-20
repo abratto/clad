@@ -45,8 +45,8 @@ _DSL_RULE_HEAD = re.compile(
 # CONSTANTS the DSL prefers — a rule whose own trigger is a conjunct (which is
 # what a flow pin makes it) is written with constants.
 _CONJ_HEAD = re.compile(
-    r'conj\(\s*"(\w+)"\s*,\s*("?)([A-Za-z_][\w.]*)\2\s*,\s*("?)([A-Za-z_][\w.]*)\4'
-    r'\s*,\s*("?)([A-Za-z_0-9]\w*)\6\s*\)')
+    r'\.when\(\s*conj\(\s*"(\w+)"\s*,\s*("?)([A-Za-z_][\w.]*)\2\s*,'
+    r'\s*("?)([A-Za-z_][\w.]*)\4\s*,\s*("?)([A-Za-z_0-9]\w*)\6\s*\)')
 _SYNC_RULE_INVOKE = re.compile(
     r'invoke\(\s*("?)([A-Za-z_]\w*)\1\s*,\s*("?)([A-Za-z_]\w*)\3')
 
@@ -141,13 +141,16 @@ def collect_java_syncs(sync_impl_dir):
                 m_dsl = _DSL_RULE_HEAD.search(body)
                 if m_of:
                     concept, action, outcome_raw = m_of.group(2), m_of.group(3), m_of.group(4)
+                elif m_dsl:
+                    # The classic primary first: a pinned rule's PRIMARY is its own
+                    # trigger, and only a real join has a `conj(...)` primary.
+                    concept, action = m_dsl.group(3), m_dsl.group(4)
+                    outcome_raw = m_dsl.group(5)
                 elif m_join:
                     concept = m_join.group(3)
                     action = m_join.group(5)
                     outcome_raw = m_join.group(7)
-                elif m_dsl:
-                    concept, action = m_dsl.group(3), m_dsl.group(4)
-                    outcome_raw = m_dsl.group(5)
+
                 outcome = symbols.get(outcome_raw, outcome_raw) if outcome_raw else ""
                 rules[name] = {
                     "symbols": {k: v for k, v in symbols.items()},
