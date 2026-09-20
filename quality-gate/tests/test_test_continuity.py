@@ -55,6 +55,23 @@ class TestContinuityTests(unittest.TestCase):
         self.assertIn("R17 re-entry", r.stdout)
         self.assertIn("never edit red tests from the green stage", r.stdout)
 
+    def test_package_inclusive_root_fails_and_names_the_resolved_path(self):
+        """`test.source.root` is the TEST SOURCE ROOT (it contains package
+        directories), never a package directory. A package-inclusive value made
+        every row resolve to a non-existent path and reported only 'missing';
+        the failure must name the resolved path and the root's meaning."""
+        import hashlib
+        digest = hashlib.sha256(self.test_file.read_bytes()).hexdigest()
+        m = self._map_with(
+            f"| `dev/example/concepts/PasswordAuthVerifyTest.java` | `{digest}` |\n")
+        package_dir = self.src / "dev/example/concepts"
+        r = run("--derivation", str(m),
+                "--test-source-root", str(package_dir), cwd=self.root)
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("missing:", r.stdout)
+        self.assertIn("resolved to", r.stdout)
+        self.assertIn("TEST SOURCE ROOT", r.stdout)
+
     def test_skip_when_section_absent(self):
         m = self.root / "concept-test-derivation.md"
         m.write_text("# Derivation map\n\nno continuity section\n",

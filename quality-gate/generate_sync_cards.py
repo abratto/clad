@@ -99,7 +99,10 @@ def main() -> None:
                          "`02_concepts/output/Web.concept.md` by contract; see "
                          "`methodology/architecture/WEB_CONCEPT.md`.")
         else:
-            lines.append(f"- Every `Action` row exists in `../../02_concepts/output/{concept}.concept.md`.")
+            lines.append(
+                f"- Every `Action` row exists in the canonical concept spec "
+                f"(`../../../../_system/concepts/{concept}.concept.md`), or in this "
+                f"feature's Stage-02 proposal where one exists.")
         lines.append("- Every `Sync` named here exists in `../../03_syncs/output/`.")
         lines.append("")
         lines.append("**Do you agree with this card? Any corrections before I continue?**")

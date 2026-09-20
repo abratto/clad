@@ -123,6 +123,88 @@ def main():
         for line in detail.splitlines():
             print(f"        {line}")
 
+    # Project-level concept registry (feature-independent).
+    code, out, err = run_script("verify_concept_registry.py",
+                                ["--features-dir", str(REPO_ROOT / "features")])
+    detail = (out + err).strip()
+    ok = code == 0
+    mark = "PASS" if ok else "FAIL"
+    print(f"\n  [{mark}] concept_registry")
+    if not ok:
+        all_pass = False
+        for line in detail.splitlines()[:8]:
+            print(f"        {line}")
+    elif detail.strip():
+        for line in detail.splitlines():
+            print(f"        {line}")
+
+    # Every non-bootstrap sync pins its flow root (feature-independent): a flow
+    # token scopes a match to one flow, but within a flow any matching rule
+    # fires, so two use cases sharing a completion fire each other's rules.
+    code, out, err = run_script("verify_sync_flow_pin.py",
+                                ["--features-dir", str(REPO_ROOT / "features")])
+    detail = (out + err).strip()
+    ok = code == 0
+    mark = "PASS" if ok else "FAIL"
+    print(f"\n  [{mark}] sync_flow_pin")
+    if not ok:
+        all_pass = False
+        for line in detail.splitlines()[:8]:
+            print(f"        {line}")
+    elif detail.strip():
+        for line in detail.splitlines():
+            print(f"        {line}")
+
+    # The canonical concept corpus is current and self-consistent
+    # (feature-independent): every Gate-2-approved proposal is on the canonical
+    # entry's promotion history, and the companions agree with it.
+    code, out, err = run_script("verify_concept_corpus_current.py",
+                                ["--features-dir", str(REPO_ROOT / "features")])
+    detail = (out + err).strip()
+    ok = code == 0
+    mark = "PASS" if ok else "FAIL"
+    print(f"\n  [{mark}] concept_corpus_current")
+    if not ok:
+        all_pass = False
+        for line in detail.splitlines()[:8]:
+            print(f"        {line}")
+    elif detail.strip():
+        for line in detail.splitlines():
+            print(f"        {line}")
+
+    # The cross-UC shared-trigger view is current (feature-independent): it is
+    # the only surface for a duplicate trigger across use cases, and it went
+    # stale once because nothing checked it.
+    code, out, err = run_script("verify_shared_triggers_current.py",
+                                ["--features-dir", str(REPO_ROOT / "features")])
+    detail = (out + err).strip()
+    ok = code == 0
+    mark = "PASS" if ok else "FAIL"
+    print(f"\n  [{mark}] shared_triggers_current")
+    if not ok:
+        all_pass = False
+        for line in detail.splitlines()[:8]:
+            print(f"        {line}")
+    elif detail.strip():
+        for line in detail.splitlines():
+            print(f"        {line}")
+
+    # Sync `then` carries the authored result, not the transport frame
+    # (feature-independent).
+    code, out, err = run_script("verify_sync_then_shape.py",
+                                ["--features-dir", str(REPO_ROOT / "features")])
+    detail = (out + err).strip()
+    ok = code == 0
+    mark = "PASS" if ok else "FAIL"
+    print(f"\n  [{mark}] sync_then_shape")
+    if not ok:
+        all_pass = False
+        for line in detail.splitlines()[:8]:
+            print(f"        {line}")
+    elif detail.strip():
+        for line in detail.splitlines():
+            print(f"        {line}")
+
     for name, root in discover_features():
         any_features = True
         stage = _current_stage(root)

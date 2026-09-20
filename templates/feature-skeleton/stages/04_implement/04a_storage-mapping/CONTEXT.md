@@ -87,7 +87,9 @@ package names as examples only.
 Run the following before requesting the human gate:
 
 ```
-python3 ../../../../../quality-gate/verify_relational_mapping.py \
+python3 ../../../../../python3 ../../../../../quality-gate/verify_profile_paths.py \
+  --feature ../../../
+quality-gate/verify_relational_mapping.py \
   --storage-dir output
 python3 ../../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<Name>.storage.md,…"  # one per concept, or _NOT_APPLICABLE.md
@@ -98,6 +100,12 @@ python3 ../../../../../quality-gate/verify_file_manifest.py \
   the profile is not relational or `_NOT_APPLICABLE.md` is used.
 - **verify_file_manifest.py:** `output/` contains exactly one
   `.storage.md` per concept or a single `_NOT_APPLICABLE.md`.
+- **verify_profile_paths.py:** the effective `test.source.root` /
+  `concept.impl.dir` / `sync.impl.dir` resolve inside this feature's declared
+  `_config/package-and-layout.md` roots, and that file is **no longer `TBD`**.
+  This runs at 04a, not only at 04c, so a feature cannot advance into
+  implementation while its layout is still a template — a TBD layout silently
+  makes every later path check audit the seed's tree instead of this app's.
 
 ### Semantic checks (human)
 
@@ -120,6 +128,6 @@ must pass before advancing.
 
 ## Next stage
 
-→ [`../04b_spec/CONTEXT.md`](../04b_spec/CONTEXT.md) — Per-concept SPEC slice
+→ [`../04b_contract/CONTEXT.md`](../04b_contract/CONTEXT.md) — Per-concept contract slice
 
 The agent proceeds to Stage 04b without a human gate.

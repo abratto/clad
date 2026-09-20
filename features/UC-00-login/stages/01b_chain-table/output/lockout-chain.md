@@ -41,4 +41,4 @@ stateDiagram-v2
   `wrong-password` chain). The `lockout` chain shows what happens on
   the *next* attempt, once the counter is already at threshold.
 - The lockout branch is represented directly by the `Locked` outcome on
-  `PasswordAuth.check` plus the `WebRespondForLoginWhenPasswordAuthCheckLocked` sync.
+  `PasswordAuth.check` plus the `RespondWhenCheckLocked` sync.

@@ -1,0 +1,32 @@
+sync RespondWhenCheckBadPassword
+
+## Sync Contract Matrix
+
+| Source row | Target row | `when` signature | `then` signature | Allowed literals |
+|---|---|---|---|---|
+| `3b` | `4b` | `PasswordAuth/check: [...] => [ badPassword ] ∧ requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ]` | `Web/respond: [ status: 401 ; message: "username or password didn't match" ]` | `401`, `"username or password didn't match"` |
+
+## Rule
+
+when {
+    PasswordAuth/check: [ userId: ?user ; password: ?p ] => [ badPassword ]
+    requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ; ... ]
+}
+then {
+    Web/respond: [ status: 401 ; message: "username or password didn't match" ]
+}
+
+## Where clause patterns (for Stage 03a audit)
+
+| Binding | Pattern | Source |
+|---|---|---|
+| `401` | C | Sync constant |
+| `"username or password didn't match"` | C | Sync constant |
+
+## Cites
+
+- `../01_usecase/output/usecase.md` — scenario `wrong-password`
+
+## Notes
+
+- The response literal is intentionally identical to `RespondWhenLookupByUsernameRefused` to preserve the no-enumeration property.

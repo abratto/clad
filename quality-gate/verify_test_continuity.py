@@ -105,7 +105,7 @@ def main() -> int:
                 os.path.join(args.test_source_root, rel)))
         path = os.path.normpath(path)
         if not os.path.isfile(path):
-            missing.append(rel)
+            missing.append(f"{rel}  (resolved to {path})")
             continue
         if sha256_of(path) != digest:
             drifted.append(rel)
@@ -117,6 +117,10 @@ def main() -> int:
               f"since the red receipt")
         for f in failures:
             print(f"      {f}")
+        print(f"      Derivation-map paths are relative to `test.source.root` "
+              f"= {args.test_source_root} — the TEST SOURCE ROOT that contains "
+              f"package directories (e.g. `app/src/test/java`), not a package "
+              f"directory itself.")
         print("      Route the change through the owning red stage "
               "(04d-red/04e-red) as an R17 re-entry — never edit red "
               "tests from the green stage.")

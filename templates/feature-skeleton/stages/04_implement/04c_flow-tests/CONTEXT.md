@@ -34,7 +34,7 @@ Read `methodology/implementation/TDD.md` before writing anything.
 | `../../01_usecase/output/usecase.md` | 4 | Scenarios to test |
 | `../../01b_chain-table/output/` | 4 | Action chain per scenario — step-definition derivation |
 | `../../03_syncs/output/` | 4 | Expected coordination |
-| `../04b_spec/output/` | 4 | Action signatures and outcome values |
+| `../04b_contract/output/` | 4 | Action signatures and outcome values |
 | `../../../../../features/_system/stages/00_actor-goal/output/port-spec.md` | 4 | Required when present; external adapter contract for `@contract` scenarios |
 | `../../../_config/build-and-test.md` | 3 | Canonical build/test command for compilation evidence |
 | `../../../_config/package-and-layout.md` | 3 | Canonical test-source root and package layout |
@@ -70,7 +70,7 @@ derived status codes/token chains.
    postcondition.
 2. **Derive** a step-definition class skeleton from
    `../../01b_chain-table/output/` (action chain per scenario) and
-   `../04b_spec/output/` (action signatures, outcome enums) using the
+   `../04b_contract/output/` (action signatures, outcome enums) using the
    template at `../../../../../templates/step-definitions.java`.
    One method per chain-table row. `@Disabled` the skeleton so the tests
    start red.
@@ -109,7 +109,7 @@ derived status codes/token chains.
   `@failure-path` intent scenarios. Outbound entries are covered by their
   named adapter-boundary tests, not synthetic HTTP scenarios.
 8. **Collection coverage (required when the response carries a collection).**
-   If any chain table or SPEC exposes a collection response — a plural envelope
+   If any chain table or contract exposes a collection response — a plural envelope
    key such as `articles`, `comments`, `tags`, `authors`, `following`, `flags`,
    or a `List<...>` completion field — the feature must also exercise the
    cardinality edges that flow tests otherwise miss: an **empty** collection, a
@@ -126,7 +126,7 @@ derived status codes/token chains.
    retrofit).
 
 **Token chain rules (read `FLOW_TOKENS.md` in full before writing):**
-- Outcome values MUST be SCREAMING_SNAKE_CASE, copied from the SPEC slice.
+- Outcome values MUST be SCREAMING_SNAKE_CASE, copied from the contract slice.
 - Token count = number of rows in the chain table — no phantom intermediate tokens.
 - Passwords and secrets MUST NOT appear in any token payload.
 
@@ -180,7 +180,7 @@ python3 ../../../../../quality-gate/verify_step_definition_derivation.py \
   --glue-dir <APP_TEST_SOURCE_ROOT>/<APP_PACKAGE_ROOT_PATH>/steps/
 python3 ../../../../../quality-gate/verify_port_spec_contract.py \
   --port-spec ../../../../../features/_system/stages/00_actor-goal/output/port-spec.md \
-  --spec-dir ../04b_spec/output \
+  --contract-dir ../04b_contract/output \
   --feature-dir output
 python3 ../../../../../quality-gate/verify_collection_coverage.py \
   --feature ../../../
@@ -202,9 +202,9 @@ python3 ../../../../../quality-gate/verify_collection_coverage.py \
   step definitions, `advance.py` reports these two checks as `skip` — the
   profile's own flow test is the outer red instead.
 - **verify_port_spec_contract.py:** skips when no `port-spec.md` exists;
-  otherwise checks response-shape SPEC output and `@contract` scenarios
+  otherwise checks response-shape contract output and `@contract` scenarios
   are present.
-- **verify_collection_coverage.py:** when the feature's chain tables or SPECs
+- **verify_collection_coverage.py:** when the feature's chain tables or contracts
   expose a collection response, `output/` must carry a `## Collection coverage`
   section naming the empty, multi-item, and repeated-key (`n/a` allowed with a
   reason) fixtures. Skips non-collection features and features already closed
@@ -233,7 +233,7 @@ python3 ../../../../../quality-gate/verify_collection_coverage.py \
 - Every step-definition method maps to a chain-table row (by matching
   the action name in its body).
 - Outcome values in step-definition assertions are SCREAMING_SNAKE_CASE,
-  copied from `04b_spec/output/`.
+  copied from `04b_contract/output/`.
 - Step-definition classes are `@Disabled` or the Cucumber runner is
   configured to skip them.
 - The `.feature` file parses without syntax errors (validate with

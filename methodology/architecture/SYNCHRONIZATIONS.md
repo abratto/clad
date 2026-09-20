@@ -28,7 +28,7 @@ is scoped to a single causal flow token.
 ## Shape
 
 ```
-sync WhenPasswordAuthCheckOkThenSessionGrantForLogin
+sync GrantWhenCheckOk
 
 when {
     PasswordAuth/check: [ userId: ?user ; password: ?pass ] => [ ok ]
@@ -49,7 +49,7 @@ Three clauses, written as `{ }` blocks:
 A sync **fires only on a completion**, never mid-action. It cannot
 observe a concept's state directly (except via the `where` clause's
 explicit `Concept: { ... }` syntax — a concept-state read — appears in
-the 03a dependency review audit). It cannot call back into the concept
+the 03a coordination review audit). It cannot call back into the concept
 whose action triggered it without going through that concept's public
 actions.
 
@@ -57,7 +57,7 @@ actions.
 
 | Element | Meaning | Example |
 |---|---|---|
-| `sync <Name>` | Declares a sync rule | `sync WhenPasswordAuthCheckOkThenSessionGrantForLogin` |
+| `sync <Name>` | Declares a sync rule | `sync GrantWhenCheckOk` |
 | `Concept/action:` | Qualifies an action within its concept (slash separator, colon after) | `PasswordAuth/check:` |
 | `[ param: value ; ... ]` | Named argument brackets, semicolon-separated | `[ userId: ?user ; password: ?pass ]` |
 | `=> [ output: ?var ]` | Matches an action's completion output | `=> [ ok ]` or `=> [ userId: ?u ]` |
@@ -66,31 +66,54 @@ actions.
 
 ## Naming
 
-A sync name reads effect-first (grammar v2, see
-`maintenance/sync-dsl-legibility.md`; the pre-v0.6 condition-first form
-survives only in pre-existing frozen artefacts):
+A sync name reads action-first (grammar v3, see
+`maintenance/sync-name-grammar-v3.md`; the v2 `For<Scope>` form and the
+pre-v0.6 condition-first form survive only in historical maintenance records):
 
 ```
-<TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>
+<TargetAction>[For<Route>]When<TriggerAction><TriggerCompletion>
 ```
+
+The optional `For<Route>` component is present **exactly when the rule carries a
+route matcher** — a route-scoped bootstrap. Two use cases may bootstrap the same
+target action on different routes (`MemberEnrolment.verify` after a borrow
+request and after a return request), and no other component of the name
+separates them; without it the app registers two rules with one name and
+`causedBySync` can no longer say which fired. The route, not the feature slug:
+the pre-v0.6 `For<Scope>` held the feature slug, so every sync in a use case
+carried the same value and it could never disambiguate anything
+(`maintenance/route-scoped-sync-names.md`).
 
 Rules:
 
 - Lead with the **effect** — the `then` side — because that is what a
-  reader of a sync pack or a `causedBySync` back-trace wants first
-  (paper-authors' style: effect, scope, condition — cf. conceptbox's
-  `NotifyWhenReachTen`).
+  reader of a sync pack or a `causedBySync` back-trace wants first.
 - Use `When` as the separator between the effect and its trigger.
 - Use PascalCase for the Stage 03 sync name and `.sync.md` file stem.
-- Derive `TargetConcept`/`TargetAction` from the first `then`
-  signature; `TriggerConcept`/`TriggerAction` from the first `when`.
+- Name by **action**, not by concept. A sync is coordination, not a
+  concept's property — it can involve several concepts — so the concept
+  tokens are dropped by default. `Cataloguing.record` and `Stocking.record`
+  both contribute `Record`.
+- Derive `TargetAction` from the first `then` signature;
+  `TriggerAction` from the first `when`.
 - Derive `TriggerCompletion` from the first completion token on the right
-  side of the `when` arrow. For `[ ok ; userId: ?u ]`, use `Ok`; for
-  `[ error: "notFound" ]`, use `NotFound`; for `[ refused ]`, use
-  `Refused`. Omit it only when the trigger has no completion token.
-- Glue `For<Scope>` to the **effect** side when the same target can occur
-  in multiple routes/flows/scope — route scoping is an effect property,
-  per R15.
+  side of the `when` arrow, by its **base** token only: for
+  `[ ok ; userId: ?u ]`, use `Ok`; for `[ error: "notFound" ]`, use
+  `NotFound`; for `[ refused ]`, use `Refused`. Carried fields are
+  body-visible and never join the name (`Routed`, not `RoutedRefName`).
+- **Collision escalation.** When two different edges in one pack would share
+  a name, the generator adds concept tokens back, in this order, and the
+  parity check accepts every level:
+
+  | Level | Form |
+  |---|---|
+  | 0 | `<TargetAction>When<TriggerAction><Completion>` |
+  | 1 | `<TargetConcept><TargetAction>When<TriggerAction><Completion>` |
+  | 2 | `<TargetAction>When<TriggerConcept><TriggerAction><Completion>` |
+  | 3 | `<TargetConcept><TargetAction>When<TriggerConcept><TriggerAction><Completion>` |
+
+  A payload variant of level 3 (`…<Completion><Payload>`) is the last
+  resort for two outcomes of one action that differ only in payload.
 - The `sync <Name>` header and filename stem must match exactly. Profile
   implementations lower the same stem mechanically; for Java, the class
   name is the same PascalCase stem (and per-rule carrier class if the
@@ -99,7 +122,7 @@ Rules:
 Example:
 
 ```
-sync SessionGrantForLoginWhenPasswordAuthCheckOk
+sync GrantWhenCheckOk
 
 when {
     PasswordAuth/check: [ userId: ?user ; password: ?pass ] => [ ok ; userId: ?user ]
@@ -113,11 +136,11 @@ For a **joined** (multi-`when`) rule the trigger side concatenates every
 conjunct in declared order, separated by `And` after the `WhenJoin` marker:
 
 ```
-<TargetConcept><TargetAction>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2><A2><Out2>…
+<TargetAction>WhenJoin<A1><Out1>And<A2><Out2>…
 ```
 
 ```
-sync WebRespondWhenJoinCatalogListListedAndTaggingTagTagged
+sync RespondWhenJoinListListedAndTagTagged
 
 when {
     a: Catalog/list: [ id: ?id ] => [ Listed ; id: ?id ]
@@ -148,6 +171,22 @@ then {
   `*Coordinator` or `*Orchestrator` class is a design smell that should
   fail review unless it is a thin transport/runtime adapter with an
   explicit waiver.
+- **Shape the transport response.** A `then` passes the **authored
+  result** — the flat domain fields the exit action consumes. Response
+  framing (a `body`/envelope wrapper, and in general the serialization
+  step) is the **primary adapter's** job
+  (see [`../overlays/PORTS_AND_ADAPTERS.md`](../overlays/PORTS_AND_ADAPTERS.md):
+  the adapter "serialize[s] it to the transport's response"). So
+
+  ```
+  Web/respond: [ status: 200 ; sessionToken: ?sid ]      -- authored result
+  Web/respond: [ status: 200 ; body: { sessionToken: ?sid } ]  -- framing: WRONG
+  ```
+
+  `status` is retained in `then` by convention (it is the exit action's
+  response classification, and every chain table and respond spec carries it);
+  the outcome→status mapping is the adapter's concern.
+  Mechanised by `quality-gate/verify_sync_then_shape.py`.
 
 ## How a sync gets its data — the four patterns
 
@@ -170,7 +209,7 @@ The full pattern catalogue, with worked examples, anti-patterns, and
 03a audit guidance, is in [`SYNC_PATTERNS.md`](SYNC_PATTERNS.md).
 In the sync's source file, patterns are documented in a "Where clause
 patterns" table (see the [`templates/sync.md`](../../templates/sync.md)).
-Stage 03a's dependency review scans this table for concept-state read rows.
+Stage 03a's coordination review scans this table for concept-state read rows.
 
 ## Input matching in the when clause
 
@@ -213,7 +252,7 @@ action, completion, and optional input matcher. The rule fires **once** when
 *every* conjunct has a matching completion in the same flow token.
 
 ```
-sync WebRespondWhenJoinCatalogListAndTaggingTag
+sync RespondWhenJoinListAndTagTag
 
 when {
     list: Catalog/list: [ id: ?id ] => [ Listed ; id: ?id ]
@@ -320,7 +359,7 @@ Profile: { ?profile bio: ?bio ; image: ?image }
 ```
 
 Reads fields from named concept regions. This is a concept-state read — every such
-read is recorded in the Stage 03a dependency review. The syntax mirrors
+read is recorded in the Stage 03a coordination review. The syntax mirrors
 relation patterns: a subject variable, a semicolon-separated list
 of property bindings, and a dot (`.`) to terminate.
 
@@ -347,6 +386,36 @@ sync whose `where` produces multiple bindings (e.g. one per tag) would
 fire the `then` clause once for each binding, which would produce a
 response per tag instead of one response per article.
 
+### Flow pinning
+
+Every **non-bootstrap** rule names its flow root as its **last** conjunct, with
+the route matcher:
+
+```
+when {
+    closed:    Lending/close: [ ... ] => [ Returned ; ... ]
+    requested: Web/request: [ route: "returns" ] => [ Routed ; ... ]
+}
+```
+
+The pin is **last**, not first. The engine calls a rule's `where` evaluator with
+its **primary** (first) conjunct as the trigger, and `triggerField` /
+`triggerInput` resolve against that primary; a pin placed first would bind those
+sources to the `Web/request` completion instead of the domain action the rule is
+about, so the rule fires with blank arguments. The paper lists the request first
+and ConceptBox's `actions([...])` is order-agnostic; their reading order is not
+transferable (`maintenance/sync-flow-pinning.md` §Review finding).
+
+A flow token scopes a match to one flow, but *within* a flow any rule whose `when`
+matches fires — so two use cases that share a completion (`MemberEnrolment.verify`
+serves both a borrow and a return) would each fire the other's rule. Naming the
+request is how the paper's `RegistrationError` and every ConceptBox rule keep a
+rule in its own flow (`maintenance/sync-flow-pinning.md`).
+
+The pin is **not** a name component: it is in every non-bootstrap rule, so it
+discriminates nothing — the same reason the pre-v0.6 `For<Scope>` was removed, and
+the opposite of the route, which *is* a component for bootstraps.
+
 ### Collect (declarative aggregation)
 
 `collect` gathers the values a declarative source yields into **one `List`
@@ -369,6 +438,12 @@ where {
   `?_eachthen`).
 - `scan(Concept, predicate)` reads every value of a predicate across a
   concept's region as one `List`; `distinct`/`collect` wrap any source.
+- `absent ( Concept ; ?subject ; predicate )` is the **negative** state pattern:
+  it keeps a frame only if the subject has no such value, binding nothing. It is
+  how a rule says "the ones that do not have X" — the member's *remaining open*
+  loans, the unshipped orders — which no enumerating source can express. It
+  fails closed on an unbound subject. See
+  `maintenance/engine-absent-state-guard.md`.
 
 This is the declarative analogue of the reference implementation's
 `collectAs`, and is deliberately **not** its imperative

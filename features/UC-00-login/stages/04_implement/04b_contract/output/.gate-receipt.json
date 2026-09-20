@@ -1,0 +1,50 @@
+{
+  "stage": "04b",
+  "stage_label": "Concept contract",
+  "feature": "UC-00-login",
+  "checked_at": "2026-09-18T01:04:28.639489+00:00",
+  "git_sha": "659e2ac",
+  "workflow_autonomous": false,
+  "workflow_session_per_stage": false,
+  "output_hash": "6a45a89dda079d0a688b86f4ef29aadd49a91324150c516e6847cc626775bd0d",
+  "sequence_guard": "PASS  sequence intact through Stage 04b (Concept contract)",
+  "checks": [
+    {
+      "name": "contract_parity",
+      "script": "verify_contract_parity.py",
+      "status": "pass",
+      "exit": 0
+    },
+    {
+      "name": "outcome_alignment",
+      "script": "verify_outcome_alignment.py",
+      "status": "pass",
+      "exit": 0
+    },
+    {
+      "name": "action_chain",
+      "script": "verify_action_chain.py",
+      "status": "pass",
+      "exit": 0
+    },
+    {
+      "name": "spec_file_manifest",
+      "script": "verify_file_manifest.py",
+      "status": "pass",
+      "exit": 0
+    },
+    {
+      "name": "concept_additivity",
+      "script": "verify_concept_additivity.py",
+      "status": "pass",
+      "exit": 0
+    },
+    {
+      "name": "port_spec_contract",
+      "script": "verify_port_spec_contract.py",
+      "status": "skip",
+      "exit": null
+    }
+  ],
+  "result": "pass"
+}

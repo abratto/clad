@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
-"""Verify the lossless, one-branch grammar of Stage 01b chain tables."""
+"""Verify the lossless, one-branch grammar of Stage 01b chain tables.
+
+Two things the stage contract makes mandatory:
+
+  * every row carries exactly one explicit outcome token and exactly one `Then`
+    action (so the table cannot smuggle several branches into one line, which is
+    what keeps Stage 03's syncs derivable from it);
+  * the chain file carries its `stateDiagram-v2` view. The gate at 01b covers
+    the table and the diagram together, and the diagram is what makes the
+    branching reviewable — an omitted diagram is an incomplete artefact. (13 of
+    13 chain files in this repo had one; the one omission came from reading the
+    template's old "optional" heading rather than its same-turn rule.)"""
 
 import argparse
 import os
@@ -11,6 +22,9 @@ from artifact_parsers import AND, parse_chain_table
 # Mirrors parse_chain_table's Then regex (leading backtick required, suffix
 # optional) so a legal classic cell is never miscounted.
 _THEN_REF_RE = re.compile(r"`([A-Za-z]+)\.([A-Za-z]+)(\[[^\]]*\])?")
+
+# A fenced ```mermaid block whose first statement is `stateDiagram-v2`.
+_DIAGRAM_RE = re.compile(r"```mermaid[ \t]*\n[ \t]*stateDiagram-v2\b")
 
 
 def main():
@@ -26,6 +40,11 @@ def main():
             or filename.endswith("-all-scenarios-chain.md")):
             continue
         path = os.path.join(args.chain_dir, filename)
+        with open(path, encoding="utf-8") as handle:
+            if not _DIAGRAM_RE.search(handle.read()):
+                failures.append(
+                    f"{filename}: no ```mermaid stateDiagram-v2 block — the "
+                    "diagram is required and the gate covers it with the table")
         for row in parse_chain_table(path):
             checked += 1
             if len(row.outcome_tokens) != 1:
@@ -60,7 +79,8 @@ def main():
         for failure in failures:
             print(f"FAIL  {failure}")
         sys.exit(1)
-    print(f"PASS  {checked} chain-table rows use one explicit outcome token")
+    print(f"PASS  {checked} chain-table rows use one explicit outcome token; "
+          "every chain file carries its stateDiagram-v2")
 
 
 if __name__ == "__main__":

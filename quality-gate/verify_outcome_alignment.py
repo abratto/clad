@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """
-verify_outcome_alignment.py — Stage gate: chain-table outcomes match SPEC enums.
+verify_outcome_alignment.py — Stage gate: chain-table outcomes match contract enums.
 
 Why this exists:
   The most common form of CLAD contract drift is an outcome name changing between
-  the chain table (e.g. "Found") and the SPEC (e.g. "FOUND"). An LLM can miss
+  the chain table (e.g. "Found") and the contract (e.g. "FOUND"). An LLM can miss
   this because both look similar to a human reader. This script normalises both
   sides (PascalCase → SCREAMING_SNAKE_CASE) and compares character-by-character.
 
 Checks:
   For each chain-table row, the Outcome value (base name, stripped of payload)
-  must appear in the corresponding SPEC's outcome enum for that action.
+  must appear in the corresponding contract's outcome enum for that action.
 
 Usage:
   python3 verify_outcome_alignment.py \
     --chain-dir <chain-output/> \
-    --spec-dir <spec-output/>
+    --contract-dir <spec-output/>
 """
 
 import argparse
@@ -23,7 +23,8 @@ import os
 import re
 import sys
 
-from artifact_parsers import parse_chain_table, parse_spec_outcomes
+from artifact_parsers import (contract_actions, parse_chain_table,
+                              parse_spec_outcomes, parse_spec_outcomes_multi)
 
 
 def parse_chain_outcomes(chain_dir):
@@ -64,22 +65,24 @@ def normalize(name):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Verify chain-table outcomes align with SPEC outcome enums")
+        description="Verify chain-table outcomes align with contract outcome enums")
     parser.add_argument("--chain-dir", required=True,
                         help="Path to 01b_chain-table/output/")
-    parser.add_argument("--spec-dir", required=True,
-                        help="Path to 04b_spec/output/")
+    parser.add_argument("--contract-dir", required=True, action="append",
+                        help="Contract dir; repeatable. Earlier dirs shadow later "
+                             "ones by concept name, so a reused concept is validated "
+                             "against its canonical contract (R22).")
     args = parser.parse_args()
 
     chain_rows = parse_chain_outcomes(args.chain_dir)
-    spec_outcomes = parse_spec_outcomes(args.spec_dir)
+    spec_outcomes = parse_spec_outcomes_multi(args.contract_dir)
 
     if not chain_rows:
         print("WARN  no chain rows found — check --chain-dir")
         sys.exit(0)
 
     if not spec_outcomes:
-        print("FAIL  no SPEC outcomes parsed — check --spec-dir")
+        print("FAIL  no contract outcomes parsed — check --contract-dir")
         sys.exit(1)
 
     passed = True
@@ -92,7 +95,7 @@ def main():
 
         key = (concept, action)
         if key not in spec_outcomes:
-            print(f"FAIL  {concept}.{action}: action not found in SPECs "
+            print(f"FAIL  {concept}.{action}: action not found in contracts "
                   f"(known: {sorted(spec_outcomes.keys())})")
             passed = False
             continue
@@ -102,14 +105,14 @@ def main():
 
         if outcome_norm not in {normalize(e) for e in expected}:
             print(f"FAIL  {concept}.{action}: outcome '{outcome_base}' "
-                  f"(normalized: '{outcome_norm}') not in SPEC outcomes "
+                  f"(normalized: '{outcome_norm}') not in contract outcomes "
                   f"{sorted(expected)}")
             passed = False
         else:
             checked += 1
 
     if passed:
-        print(f"PASS  {checked} chain-table outcomes aligned with SPEC enums")
+        print(f"PASS  {checked} chain-table outcomes aligned with contract enums")
         sys.exit(0)
     else:
         sys.exit(1)

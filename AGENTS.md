@@ -50,8 +50,9 @@ read these files directly instead: `AGENTS.md` §1–3, `CONTEXT.md`,
 3. **One stage, one job.** Do not run two stages in one turn. Do not
    anticipate the next stage's work in the current stage's output.
 4. **No cross-concept references.** Code under `reference-impl/` and concept
-   specs under `features/UC-*/stages/02_concepts/output/` must never
-   reference another concept's state directly. Coordination happens only
+   specs (the canonical corpus `features/_system/concepts/`, plus any
+   per-feature proposal under `features/UC-*/stages/02_concepts/output/`) must
+   never reference another concept's state directly. Coordination happens only
    in syncs (stage `03_syncs/`).
 5. **Edit the source, not the output, when a pattern repeats.** If you would
    make the same correction in three runs, the fix belongs in a
@@ -164,6 +165,14 @@ reference and are not repeated here. The three essentials to remember:
 - **System scope:** Stage 00 runs once per brief at
   `features/_system/stages/00_actor-goal/`, producing `actors.md`,
   `goals.md`, and optional `port-spec.md`.
+- **Concept vocabulary (system scope):** concepts are canonical assets under
+  `features/_system/concepts/<Name>.concept.md`, indexed by the generated
+  `concepts-catalog.md`, with a reviewed app-level dependence graph
+  (`concept-dependence.md`). A use case **reuses** a canonical concept (emits
+  `concept-bindings.md`, no spec copy), **proposes an extension**, or
+  **proposes a new** concept; proposals are promoted into the corpus only on
+  Gate 2 approval via `./clad promote-concepts`. Do not re-derive a concept
+  per use case.
 - **Per-UC scope:** Stages 01–05 run once per in-scope goal, each in
   `features/UC-XX-<slug>/`. One folder per confirmed in-scope goal.
 - **Gates:** Gate 1 (Requirements) at 01b, Gate 2 (Architecture) at 03b,
@@ -256,7 +265,7 @@ That file is authoritative; this section is an index only.
   transport surface; every action emits a flow token.
 - **R6–R9 (process/discipline):** stage outputs written only by the
   owning stage; every running effect traces to a use case; outer-loop
-  tests before implementation; every SPEC outcome maps to a distinct
+  tests before implementation; every contract outcome maps to a distinct
   branch.
 - **R10, R21 (retired):** kept as IDs only, with retirement notes.
 - **R11–R20 (hard-learned implementation):** shared-trigger route

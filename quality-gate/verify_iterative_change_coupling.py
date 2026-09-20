@@ -27,6 +27,10 @@ from pathlib import Path
 CONCEPT_IMPL_RE = re.compile(r"(^|/)concepts/([^/]+)/([^/]+)\.(java|kt|scala)$")
 SYNC_IMPL_RE = re.compile(r"(^|/)syncs/([^/]+)\.(java|kt|scala)$")
 CONCEPT_SPEC_RE = re.compile(r"^features/UC-[^/]+/stages/02_concepts/output/([^/]+)\.concept\.md$")
+# The canonical corpus spec (maintenance change `system-scope-concept-vocabulary`)
+# also satisfies concept/spec coupling, so an implementation change paired with a
+# corpus spec edit is accepted.
+CORPUS_SPEC_RE = re.compile(r"^features/_system/concepts/([^/]+)\.concept\.md$")
 SYNC_SPEC_RE = re.compile(r"^features/UC-[^/]+/stages/03_syncs/output/([^/]+)\.sync\.md$")
 
 # A diff line is a "presentation-only" line if it declares a package or import.
@@ -115,7 +119,11 @@ def changed_sync_impls(paths, import_only_filter=None):
 
 
 def changed_concept_specs(paths):
-    return {match.group(1) for path in paths if (match := CONCEPT_SPEC_RE.match(path))}
+    return {
+        match.group(1)
+        for path in paths
+        if (match := (CONCEPT_SPEC_RE.match(path) or CORPUS_SPEC_RE.match(path)))
+    }
 
 
 def changed_sync_specs(paths):

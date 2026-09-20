@@ -30,9 +30,11 @@ upstream prose, but it may not redesign approved tests.
 
 | Path | Layer | Why |
 |---|---|---|
-| `../../../02_concepts/output/` | 4 | Concept specs |
+| `../../../02_concepts/output/concept-bindings.md` | 4 | Which canonical concepts this feature uses |
+| `../../../../../../features/_system/concepts/` | 4 | Canonical concept specs (`state`, actions) |
+| `../../../02_concepts/output/<Name>.concept.md` | 4 | NEW/EXTEND proposals (not yet promoted) |
 | `../../04a_storage-mapping/output/` | 4 | Storage mapping when a persistent profile applies |
-| `../../04b_spec/output/` | 4 | SPEC slices to preserve outcome distinctions |
+| `../../04b_contract/output/` | 4 | Contract slices to preserve outcome distinctions |
 | `../04d_red-tests/output/` | 4 | Approved red tests and handoff bundle |
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for green evidence |
 | `../../../../_config/package-and-layout.md` | 3 | Canonical package/source-root settings |
@@ -52,7 +54,7 @@ upstream prose, but it may not redesign approved tests.
    wrong or incomplete, stop and send the work back to `04d-red` or the
    earliest invalid upstream stage.
 4. Derive behavior from the approved upstream artefacts first: the
-   Stage 02 concept spec, the `04b` SPEC slice, the `04a` storage
+   Stage 02 concept spec, the `04b` concept contract, the `04a` storage
    mapping when applicable, and the approved red tests. For the default
    profile (`java-legible`), a concept is a `Concept` implementation whose
    state lives in its own `Region` and whose actions are map→map (see
@@ -96,7 +98,7 @@ upstream prose, but it may not redesign approved tests.
   contract and did not reinterpret earlier artefacts against them.
 - No cross-concept imports.
 - Every public concept action emits a flow token.
-- Distinct SPEC outcomes remain distinct in code paths; no approved
+- Distinct contract outcomes remain distinct in code paths; no approved
   outcomes were collapsed.
 - Implementation package/source path matches
   `../../../../_config/package-and-layout.md` (`APP_PACKAGE_ROOT`,

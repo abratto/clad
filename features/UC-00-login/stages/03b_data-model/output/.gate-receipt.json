@@ -2,18 +2,12 @@
   "stage": "03b",
   "stage_label": "Data model",
   "feature": "UC-00-login",
-  "checked_at": "2026-08-27T22:53:12.742590+00:00",
-  "git_sha": "a563e69",
-  "autonomy": "gated",
-  "output_hash": "44d992bc8a4da45dec703c475670a508fb1e21b6f5cf028bc80f4e76121d8692",
-  "sequence_guard": "PASS  sequence intact through Stage 03b (Data model)",
-  "checks": [
-    {
-      "name": "data_model",
-      "script": "verify_data_model.py",
-      "status": "pass",
-      "exit": 0
-    }
-  ],
-  "result": "pass"
+  "checked_at": "2026-09-18T21:17:11.187554+00:00",
+  "git_sha": "e55f752",
+  "workflow_autonomous": false,
+  "workflow_session_per_stage": false,
+  "output_hash": "cf5ff6c88d4dc8129b495ec830a648bffb792d49f45e684152baeec728850ccb",
+  "sequence_guard": "FAIL  Gate 1 (Requirements) approval is stale \u2014 the artefacts changed since they were approved (recorded 207734cdae11\u2026 vs current 94560b42aaba\u2026). Re-present Gate 1 for re-approval.",
+  "checks": [],
+  "result": "fail"
 }

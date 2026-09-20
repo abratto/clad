@@ -4,7 +4,7 @@ verify_gherkin_derivation.py — Stage gate: Gherkin artefacts match upstream de
 
 Why this exists:
   Gherkin .feature files and step-definition classes are mechanically derived
-  from upstream CLAD artefacts (usecase.md, chain tables, SPECs, syncs). An LLM
+  from upstream CLAD artefacts (usecase.md, chain tables, contracts, syncs). An LLM
   can introduce scenarios without a use-case basis, omit Given/When/Then steps,
   use wrong status codes, or use non-standard outcome values. This script checks
   the derivation mechanically per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1.

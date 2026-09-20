@@ -19,7 +19,9 @@ Syncs are the only place where two concepts come into contact.
 ## Files
 
 The stage `CONTEXT.md` `Inputs` names the loading order: `01b` chain
-tables, `02` concept specs, `SYNCHRONIZATIONS.md`, `SYNC_PATTERNS.md`,
+tables, `concept-bindings.md` + the canonical concept specs
+(`features/_system/concepts/`) and any `02` proposals,
+`features/_system/shared-triggers.md`, `SYNCHRONIZATIONS.md`, `SYNC_PATTERNS.md`,
 `templates/sync.md`. The one additional reference worth having open is
 `methodology/architecture/FLOW_TOKENS.md` (token structure/payload rules).
 

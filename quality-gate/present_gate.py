@@ -20,7 +20,7 @@ import clad_stages as cs  # noqa: E402
 GATE_DESCRIPTIONS = {
     1: "Use case, responsibility map, chain tables",
     2: "Concept specs, syncs, dependency review, data model",
-    3: "Storage mapping, SPEC, flow tests (.feature)",
+    3: "Storage mapping, Concept contract, flow tests (.feature)",
 }
 
 

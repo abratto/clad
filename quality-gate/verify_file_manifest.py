@@ -12,8 +12,11 @@ Why this exists:
 Usage:
   python3 verify_file_manifest.py --dir <output-dir> --expected <file1,file2,...>
 
-Exits 0 if every expected file exists and no unexpected file is present
-(ignoring .gitkeep). Exits 1 with a report of mismatches.
+Exits 0 if every expected file exists and no unexpected file is present.
+Ignored by construction: `.gitkeep` (a placeholder) and
+`*-all-scenarios-chain.md` (a documented NON-canonical derived view the
+generators already skip — see `features/UC-00-login/README.md`).
+Exits 1 with a report of mismatches.
 """
 
 import argparse
@@ -29,7 +32,7 @@ def main():
                         help="Path to the output/ directory to inspect")
     parser.add_argument("--expected", required=True,
                         help="Comma-separated list of expected filenames "
-                             "(e.g. 'usecase.md' or 'User.spec.md,Session.spec.md')")
+                             "(e.g. 'usecase.md' or 'User.contract.md,Session.contract.md')")
     args = parser.parse_args()
 
     out_dir = args.dir
@@ -39,7 +42,10 @@ def main():
         print(f"FAIL  directory not found: {out_dir}")
         sys.exit(1)
 
-    actual = {f for f in os.listdir(out_dir) if not f.startswith(".")}
+    actual = {
+        f for f in os.listdir(out_dir)
+        if not f.startswith(".") and not f.endswith("-all-scenarios-chain.md")
+    }
 
     missing = expected - actual
     extra = actual - expected

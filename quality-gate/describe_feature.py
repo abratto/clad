@@ -29,7 +29,7 @@ from typing import Dict, List
 
 import artifact_parsers as ap
 import clad_stages as cs
-from contract import (
+from descriptor import (
     FEATURE_DESCRIPTOR_CAPABILITIES,
     FEATURE_DESCRIPTOR_NAME,
     FEATURE_DESCRIPTOR_VERSION,
@@ -37,21 +37,18 @@ from contract import (
 
 
 def concepts(feature_root: str) -> List[Dict]:
-    concept_dir = cs.CONCEPT_DIR(feature_root)
     out = []
-    if os.path.isdir(concept_dir):
-        for fname in sorted(os.listdir(concept_dir)):
-            if not fname.endswith(".concept.md"):
-                continue
-            c = ap.parse_concept(os.path.join(concept_dir, fname))
-            if c.name == "Web":
-                continue
-            rels = ap.parse_state_relations(c.state_lines)
-            out.append({
-                "name": c.name,
-                "actions": [a.name for a in c.actions],
-                "fields": [r.field for r in rels],
-            })
+    for name, path in sorted(
+            ap.concept_spec_paths(cs.concept_source_dirs(feature_root)).items()):
+        c = ap.parse_concept(path)
+        if c.name == "Web":
+            continue
+        rels = ap.parse_state_relations(c.state_lines)
+        out.append({
+            "name": c.name,
+            "actions": [a.name for a in c.actions],
+            "fields": [r.field for r in rels],
+        })
     return out
 
 

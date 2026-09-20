@@ -55,6 +55,9 @@ def _class_name_of(text):
     return match.group(1) if match else None
 
 
+_KNOWN_SCOPES = ('concepts', 'syncs')
+
+
 def find_java_files(root, package_names):
     """Return `(path, scope_hint)` for test files to check.
 
@@ -75,8 +78,16 @@ def find_java_files(root, package_names):
             if not fname.endswith('Test.java') or fname.endswith('Base.java'):
                 continue
             full = os.path.join(dirpath, fname)
-            if any(os.sep + pkg + os.sep in full for pkg in package_names):
-                files.append((full, None))
+            # A file inside a known package dir is governed by that dir: include
+            # it only when that dir is in scope. Without this, a file under
+            # `syncs/` fell through to the class-shape heuristic below and was
+            # classified as a concept test — sync names are action-first since
+            # the sync-name grammar change, so they no longer start with `When`.
+            dir_scope = next((p for p in _KNOWN_SCOPES
+                              if os.sep + p + os.sep in full), None)
+            if dir_scope is not None:
+                if dir_scope in package_names:
+                    files.append((full, None))
                 continue
             try:
                 with open(full, encoding='utf-8') as handle:

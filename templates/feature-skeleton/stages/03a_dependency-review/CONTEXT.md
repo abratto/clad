@@ -1,19 +1,30 @@
-# Stage 03a — Per-concept dependency review
+# Stage 03a — Coordination review (sync coupling)
 
 ## Why this stage exists
 
-The **last cross-concept sanity check before code**. 03a makes every
-inbound call and every Pattern D read visible per concept on a single
-card, so the human can catch coupling defects (action-name mismatches,
-the same field reconstructed two different ways across flows, an
-orphan Pattern D read with no owner) before they ossify into Java
-imports at Stage 04. Pattern D is the **only legal cross-concept read**
-per [`SYNC_PATTERNS.md`](../../../../methodology/architecture/SYNC_PATTERNS.md);
+The **last cross-concept sanity check before code** — the per-UC
+**coordination review**. 03a makes every inbound call and every Pattern D
+read visible per concept on a single card, so the human can catch coupling
+defects (action-name mismatches, the same field reconstructed two different
+ways across flows, an orphan Pattern D read with no owner) before they ossify
+into Java imports at Stage 04. Pattern D is the **only legal cross-concept
+read** per [`SYNC_PATTERNS.md`](../../../../methodology/architecture/SYNC_PATTERNS.md);
 03a is where that legality is audited.
+
+**Naming (do not confuse the two).** This stage is a *coordination* review of
+one feature's sync coupling. It is **not** the app-level concept-dependence
+graph (`features/_system/concept-dependence.md`), which records *extrinsic*
+dependence — which concepts this app requires together — and is a reviewed
+system-scope artefact, not a per-UC audit. The term "concept dependence" is
+reserved for that graph. **The 03a cards are EVIDENCE for a possible dependence
+edge, never its source**: a strong cross-UC coordination pattern may justify an
+edge, but the edge is a purpose judgment, made in the graph.
+
+This stage does **not** emit the dependence graph.
 
 **Feeds:**
 
-- `<concept>-card.md` → 03b (Pattern D fields drive conceptual data-model coverage), 04b (per-concept SPEC author sees the full inbound contract), 04d (concept TDD knows its inbound surface), 04e (sync TDD knows which concepts it must double).
+- `<concept>-card.md` → 03b (Pattern D fields drive conceptual data-model coverage), 04b (per-concept contract author sees the full inbound contract), 04d (concept TDD knows its inbound surface), 04e (sync TDD knows which concepts it must double).
 - `pattern-d-summary.md` → 03b (single cross-cutting checklist for conceptual data-model design).
 
 **Agent stance for this stage:** this stage produces **no new design**.
@@ -25,11 +36,14 @@ If a card needs an action that doesn't exist yet, you are mid-violation
 | Path | Layer | Why |
 |---|---|---|
 | `../03_syncs/output/` | 4 | Every `then` invocation and every `where` clause to be tabulated |
+| `../../../../features/_system/shared-triggers.md` | 4 | Cross-UC shared-trigger view (advisory) — triggers other use cases already fire |
 | `../01b_chain-table/output/` | 4 | The flows the syncs implement |
 | `../01_usecase/output/usecase.md` | 4 | Scenario names for the concept coverage matrix |
 | `../01a_responsibility-map/output/responsibility-map.md` | 4 | The set of concepts to produce a card for |
-| `../02_concepts/output/` | 4 | Action and field names to cite |
-| Skill: `clad-dependency-review` | 3 | Dependency review reference (see skills/ directory) |
+| `../02_concepts/output/concept-bindings.md` | 4 | Which canonical concepts this feature uses |
+| `../../../../features/_system/concepts/` | 4 | Action and field names to cite (canonical specs) |
+| `../02_concepts/output/<Name>.concept.md` | 4 | NEW/EXTEND proposals (not yet promoted) |
+| Skill: `clad-dependency-review` | 3 | Coordination review reference (see skills/ directory) |
 | `../../../../methodology/architecture/SYNC_PATTERNS.md` | 3 | The four patterns (A/B/C/D) and the rule that D is the only legal cross-concept read |
 | `../../../../templates/dependency-review-card.md` | 3 | Per-concept card template |
 | `../../../../templates/pattern-d-summary.md` | 3 | Cross-flow Pattern D summary template |
@@ -51,6 +65,13 @@ sync names, concepts, and actions exactly from `03_syncs/output/`. It leaves
 fill from the approved sync text. Fill ONLY those placeholders verbatim; do not
 add or remove rows unless a defect is found — and if one is, reopen Stage 03 or
 earlier rather than editing the card.
+
+**Cross-UC shared triggers.** Consult `features/_system/shared-triggers.md`
+(generated) before treating a trigger as feature-local: another use case may
+already fire a sync on the same `Concept.action` completion. A shared trigger
+with divergent routing is the cross-UC coordination defect to surface here. It
+may also justify a concept-dependence edge — but that edge is recorded in the
+reviewed graph, not on this card.
 
 For each concept that appears in any chain table or sync:
 
@@ -190,8 +211,8 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
    Stage 03 sync file exactly.
 - **Route-filter completeness:** every sync whose trigger action is
    produced by more than one named route records the routes, the route
-   filter status, and any route-agnostic justification in a dependency
-   card.
+   filter status, and any route-agnostic justification in a
+   coordination-review card.
 - **Escalation discipline:** any mismatch found in 03a is surfaced as a
    defect in Stage 03 or earlier; 03a does not repair or reinterpret it.
 

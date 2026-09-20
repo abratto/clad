@@ -9,7 +9,7 @@ Single source of truth for reading the canonical artefact formats:
   - concept specs      (02)   -> dict concept -> ConceptSpec
   - sync specs         (03)   -> list of SyncSpec
   - dependency cards   (03a)  -> dict concept -> set of actions
-  - SPECs              (04b)  -> dict (concept, action) -> outcomes
+  - contracts              (04b)  -> dict (concept, action) -> outcomes
   - use case           (01)   -> set of scenario names
   - goals              (00)   -> set of in-scope goal phrases
 
@@ -238,14 +238,41 @@ class ResponsibilityMapEntry:
     owned_state: str
     owned_actions: List[str]
     notes: str
+    origin: str = ""
+
+
+# Column header fragments -> the field they supply. The Concepts table was
+# extended (maintenance change `system-scope-concept-vocabulary`) with an
+# `Origin` column; older maps have no such column. Resolve columns by header,
+# never by position, so both shapes parse.
+_RESP_COLUMN_MAP = (
+    ("Concept", "concept"),
+    ("Origin", "origin"),
+    ("Owned state", "owned_state"),
+    ("Owned actions", "owned_actions"),
+    ("Notes", "notes"),
+)
+
+
+def _resp_columns(header_parts: List[str]) -> Dict[int, str]:
+    columns: Dict[int, str] = {}
+    for idx, cell in enumerate(header_parts):
+        label = cell.strip()
+        for fragment, field in _RESP_COLUMN_MAP:
+            if label.startswith(fragment):
+                columns[idx] = field
+                break
+    return columns
 
 
 def parse_responsibility_map(path: str) -> Dict[str, ResponsibilityMapEntry]:
     entries: Dict[str, ResponsibilityMapEntry] = {}
     with open(path) as f:
+        columns: Dict[int, str] = {}
         in_table = False
         for line in f:
-            if line.strip().startswith("| Concept | Owned state"):
+            if line.lstrip().startswith("| Concept |") and "Owned state" in line:
+                columns = _resp_columns(_split_row(line))
                 in_table = True
                 continue
             if in_table:
@@ -255,17 +282,21 @@ def parse_responsibility_map(path: str) -> Dict[str, ResponsibilityMapEntry]:
                     in_table = False
                     continue
                 parts = _split_row(line)
-                if len(parts) >= 4:
-                    concept = parts[1].strip("`")
-                    owned_state = parts[2]
-                    owned_actions = re.findall(r"`([^`]+)`", parts[3])
-                    notes = parts[4] if len(parts) > 4 else ""
-                    entries[concept] = ResponsibilityMapEntry(
-                        concept=concept,
-                        owned_state=owned_state,
-                        owned_actions=owned_actions,
-                        notes=notes,
-                    )
+                fields: Dict[str, str] = {}
+                for idx, field in columns.items():
+                    if idx < len(parts):
+                        fields[field] = parts[idx]
+                concept = fields.get("concept", "").strip("`").strip()
+                if not concept:
+                    continue
+                entries[concept] = ResponsibilityMapEntry(
+                    concept=concept,
+                    owned_state=fields.get("owned_state", ""),
+                    owned_actions=re.findall(r"`([^`]+)`",
+                                             fields.get("owned_actions", "")),
+                    notes=fields.get("notes", ""),
+                    origin=fields.get("origin", "").strip("`").strip(),
+                )
     return entries
 
 
@@ -339,6 +370,25 @@ def parse_concept(path: str) -> ConceptSpec:
                        state_lines=state_lines, actions=deduped)
 
 
+def concept_spec_paths(concept_dirs: List[str]) -> Dict[str, str]:
+    """Map concept name -> spec path across one or more concept dirs.
+
+    Earlier dirs shadow later ones by concept name, so a feature's own Stage-02
+    proposal (NEW/EXTEND) shadows the canonical corpus spec of the same name.
+    Non-existent dirs are ignored.
+    """
+    out: Dict[str, str] = {}
+    for directory in concept_dirs:
+        if not os.path.isdir(directory):
+            continue
+        for fname in sorted(os.listdir(directory)):
+            if not fname.endswith(".concept.md"):
+                continue
+            out.setdefault(fname[: -len(".concept.md")],
+                           os.path.join(directory, fname))
+    return out
+
+
 def parse_concept_actions(concept_dir: str) -> Set[str]:
     """Set of Concept/action from concept spec files."""
     actions: Set[str] = set()
@@ -349,6 +399,17 @@ def parse_concept_actions(concept_dir: str) -> Set[str]:
             continue
         concept = fname.replace(".concept.md", "")
         for a in parse_concept(os.path.join(concept_dir, fname)).actions:
+            actions.add(f"{concept}/{a.name}")
+    return actions
+
+
+def parse_concept_actions_multi(concept_dirs: List[str]) -> Set[str]:
+    """Set of Concept/action merged across one or more concept dirs.
+
+    Earlier dirs shadow later ones by concept name (see concept_spec_paths)."""
+    actions: Set[str] = set()
+    for concept, path in concept_spec_paths(concept_dirs).items():
+        for a in parse_concept(path).actions:
             actions.add(f"{concept}/{a.name}")
     return actions
 
@@ -516,12 +577,15 @@ def parse_sync(path: str) -> Optional[SyncSpec]:
     has_pattern_d = bool(re.search(r"[A-Za-z]+\s*:\s*\{", where_block))
     pattern_d_concepts = re.findall(r"([A-Za-z][A-Za-z0-9]*)\s*:\s*\{", where_block)
     # DSL-authored concept-state reads and inverse-index reads
-    # (stateRead("Concept", ...) / subjects("Concept", ...) / fanOut(?, "Concept", ...)):
+    # (stateRead("Concept", ...) / subjects("Concept", ...) / fanOut(?, "Concept", ...))
+    # and the negative state pattern (absent(...), a D- read: it consults
+    # state and binds nothing — maintenance/engine-absent-state-guard.md):
     # the where block may use the fluent factories instead of the
     # `Concept: { ... }` prose form; detect both so Pattern-D audits
     # (Stage 03a dependency cards) see the reads.
     for c in re.findall(r"(?:stateRead|subjects)\s*\(\s*\"([A-Za-z][A-Za-z0-9]*)\"", where_block) \
-            + re.findall(r"fanOut\s*\(\s*\"[^\"]*\"\s*,\s*\"([A-Za-z][A-Za-z0-9]*)\"", where_block):
+            + re.findall(r"fanOut\s*\(\s*\"[^\"]*\"\s*,\s*\"([A-Za-z][A-Za-z0-9]*)\"", where_block) \
+            + re.findall(r"absent\s*\(\s*\"?([A-Za-z][A-Za-z0-9]*)\"?", where_block):
         if c not in pattern_d_concepts:
             pattern_d_concepts.append(c)
     has_pattern_d = has_pattern_d or bool(pattern_d_concepts)
@@ -603,18 +667,18 @@ def parse_dep_card_actions(dep_dir: str) -> Set[str]:
 
 
 # --------------------------------------------------------------------------
-# SPECs (Stage 04b)
+# contracts (Stage 04b)
 # --------------------------------------------------------------------------
 
-def parse_spec_actions(spec_dir: str) -> Set[str]:
+def parse_spec_actions(contract_dir: str) -> Set[str]:
     actions: Set[str] = set()
-    if not os.path.isdir(spec_dir):
+    if not os.path.isdir(contract_dir):
         return actions
-    for fname in sorted(os.listdir(spec_dir)):
-        if not fname.endswith(".spec.md"):
+    for fname in sorted(os.listdir(contract_dir)):
+        if not fname.endswith(".contract.md"):
             continue
-        concept = fname.replace(".spec.md", "")
-        with open(os.path.join(spec_dir, fname)) as f:
+        concept = fname.replace(".contract.md", "")
+        with open(os.path.join(contract_dir, fname)) as f:
             for line in f:
                 m = re.match(r"^###\s+`(\w+)\(", line.strip())
                 if m:
@@ -622,16 +686,70 @@ def parse_spec_actions(spec_dir: str) -> Set[str]:
     return actions
 
 
-def parse_spec_outcomes(spec_dir: str) -> Dict[Tuple[str, str], Set[str]]:
-    """{(concept, action): set(outcome strings)} from SPEC files."""
-    specs: Dict[Tuple[str, str], Set[str]] = {}
-    if not os.path.isdir(spec_dir):
-        return specs
-    for fname in sorted(os.listdir(spec_dir)):
-        if not fname.endswith(".spec.md"):
+def merge_by_concept(contract_dirs, parse_one):
+    """Merge `parse_one(dir)` across contract dirs, earlier dirs shadowing later.
+
+    A feature emits a contract only for a concept it introduces or extends; a
+    REUSED concept binds the canonical contract in the corpus (R22). Any gate
+    that judges something *outside* the feature's own contracts — a chain, a Java
+    test file — must therefore see this shadowed union, not one directory.
+    """
+    merged, owned = {}, set()
+    for directory in contract_dirs:
+        if not os.path.isdir(directory):
             continue
-        concept = fname.replace(".spec.md", "")
-        path = os.path.join(spec_dir, fname)
+        for key, value in parse_one(directory).items():
+            concept = key[0] if isinstance(key, tuple) else key
+            if concept in owned:
+                continue                      # an earlier dir owns this concept
+            merged[key] = value
+        for fname in sorted(os.listdir(directory)):
+            if fname.endswith(".contract.md"):
+                owned.add(fname.replace(".contract.md", ""))
+    return merged
+
+
+def _actions_by_concept(contract_dir: str):
+    out = {}
+    if not os.path.isdir(contract_dir):
+        return out
+    for fname in sorted(os.listdir(contract_dir)):
+        if not fname.endswith(".contract.md"):
+            continue
+        with open(os.path.join(contract_dir, fname), encoding="utf-8") as handle:
+            text = handle.read()
+        out[fname.replace(".contract.md", "")] = set(
+            re.findall(r"^###\s+`(\w+)\(", text, re.MULTILINE))
+    return out
+
+
+def contract_actions(contract_dirs) -> Set[str]:
+    """`Concept/action` across contract dirs, earlier ones shadowing later."""
+    merged = merge_by_concept(contract_dirs, _actions_by_concept)
+    return {f"{concept}/{action}" for concept, actions in merged.items()
+            for action in actions}
+
+
+def parse_spec_outcomes_multi(contract_dirs):
+    """`{(concept, action): outcomes}` across dirs, earlier dirs shadowing later.
+
+    The outcome counterpart of :func:`contract_actions`: a reused concept's
+    outcomes come from its canonical contract, an extended one's from the
+    feature's own.
+    """
+    return merge_by_concept(contract_dirs, parse_spec_outcomes)
+
+
+def parse_spec_outcomes(contract_dir: str) -> Dict[Tuple[str, str], Set[str]]:
+    """{(concept, action): set(outcome strings)} from contract files."""
+    specs: Dict[Tuple[str, str], Set[str]] = {}
+    if not os.path.isdir(contract_dir):
+        return specs
+    for fname in sorted(os.listdir(contract_dir)):
+        if not fname.endswith(".contract.md"):
+            continue
+        concept = fname.replace(".contract.md", "")
+        path = os.path.join(contract_dir, fname)
         with open(path) as f:
             content = f.read()
         action = None
@@ -834,6 +952,85 @@ def feature_slug(feature_root: str) -> str:
     return slugify(os.path.basename(feature_root.rstrip("/")).replace("UC-", "", 1))
 
 
+def _default_corpus_dir(feature_root: str) -> str:
+    """`features/_system/concepts`, sibling of the feature folder."""
+    return os.path.join(os.path.dirname(os.path.abspath(feature_root)),
+                        "_system", "concepts")
+
+
+def feature_model_concepts(feature_root: str, corpus_dir: str = "") -> List[str]:
+    """Concepts this feature must produce a **conceptual data model** for.
+
+    The canonical model lives with the canonical concept
+    (`features/_system/concepts/<Name>.data-model.md`), so a feature derives one
+    only when it introduces or CHANGES the concept's state:
+
+      * `new`                                     -> yes
+      * `extends:*` whose `## State` differs from the canonical spec -> yes
+      * `reused`, or an extend leaving state unchanged               -> no
+      * a legacy map with no `Origin` column      -> every concept (pre-Model-B
+        expectation, kept for compatibility).
+
+    Single source of truth for the 03b file manifest and `generate_data_model`.
+    """
+    resp = os.path.join(feature_root, "stages", "01a_responsibility-map",
+                        "output", "responsibility-map.md")
+    if not os.path.isfile(resp):
+        return []
+    entries = parse_responsibility_map(resp)
+    corpus = corpus_dir or _default_corpus_dir(feature_root)
+    out: List[str] = []
+    for concept, entry in sorted(entries.items()):
+        if concept == "Web":
+            continue
+        origin = (entry.origin or "").strip().lower()
+        if not origin or origin.startswith("new"):
+            out.append(concept)
+        elif origin.startswith("extend") and _state_changed(
+                feature_root, concept, corpus):
+            out.append(concept)
+    return out
+
+
+def _state_changed(feature_root: str, concept: str, corpus: str) -> bool:
+    """True when this feature's proposal changes the concept's `## State`."""
+    proposal = os.path.join(feature_root, "stages", "02_concepts", "output",
+                            concept + ".concept.md")
+    canonical = os.path.join(corpus, concept + ".concept.md") if corpus else ""
+    if not os.path.isfile(canonical):
+        return True                      # no canonical spec — state is new
+    if not os.path.isfile(proposal):
+        return False
+    return (parse_concept(proposal).state_lines
+            != parse_concept(canonical).state_lines)
+
+
+def feature_contract_concepts(feature_root: str) -> List[str]:
+    """Concepts this feature must produce a **concept contract** for.
+
+    The canonical contract lives with the canonical concept
+    (`features/_system/concepts/<Name>.contract.md`), so a feature derives one
+    only when it introduces or EXTENDS a concept — an extend adds or changes an
+    action, so the contract moves with it. A `reused` concept binds the
+    canonical contract; a legacy map (no `Origin`) keeps one contract per
+    concept.
+
+    Single source of truth for the 04b file manifest and `generate_contract`.
+    """
+    resp = os.path.join(feature_root, "stages", "01a_responsibility-map",
+                        "output", "responsibility-map.md")
+    if not os.path.isfile(resp):
+        return []
+    out: List[str] = []
+    for concept, entry in sorted(parse_responsibility_map(resp).items()):
+        if concept == "Web":
+            continue
+        origin = (entry.origin or "").strip().lower()
+        if not origin or origin.startswith("new") or origin.startswith("extend"):
+            out.append(concept)
+    return out
+
+
 def expected_stage_outputs(feature_root: str) -> Dict[str, List[str]]:
     """Map canonical stage id -> expected output filenames, derived from the
     feature's approved upstream artefacts (not from the target directory).
@@ -854,15 +1051,27 @@ def expected_stage_outputs(feature_root: str) -> Dict[str, List[str]]:
                             "responsibility-map.md")
     concepts: List[str] = []
     if os.path.isfile(resp_map):
-        concepts = [c for c in sorted(parse_responsibility_map(resp_map))
-                    if c != "Web"]
-        out["02"] = [c + ".concept.md" for c in concepts]
+        entries = parse_responsibility_map(resp_map)
+        concepts = [c for c in sorted(entries) if c != "Web"]
+        if any(entries[c].origin for c in concepts):
+            # Model B map: Stage 02 always emits bindings, plus a proposal for
+            # every NEW/EXTEND concept. REUSE rows bind only (no spec copy).
+            proposals = [
+                c for c in concepts
+                if entries[c].origin.lower().startswith(("new", "extend"))
+            ]
+            out["02"] = ["concept-bindings.md"] + [
+                c + ".concept.md" for c in proposals]
+        else:
+            # Legacy map without an Origin column: one spec per concept.
+            out["02"] = [c + ".concept.md" for c in concepts]
 
     out["04a"] = ["_NOT_APPLICABLE.md"]
 
-    if concepts:
-        out["03b"] = [c + ".data-model.md" for c in concepts]
-        out["04b"] = [c + ".spec.md" for c in concepts]
+    model_concepts = feature_model_concepts(feature_root)
+    if model_concepts:
+        out["03b"] = [c + ".data-model.md" for c in model_concepts]
+        out["04b"] = [c + ".contract.md" for c in feature_contract_concepts(feature_root)]
 
     sync_specs = parse_syncs(_dir("03_syncs")) if os.path.isdir(_dir("03_syncs")) else []
     if sync_specs:
@@ -954,31 +1163,76 @@ def completion_with_payload(outcome_raw: str) -> str:
     return name + payload
 
 
-def sync_stem(then_concept: str, then_action: str, scope: str,
-              conjuncts: List["Conjunct"], is_join: bool) -> str:
-    """Mechanical sync stem (grammar v2 / join grammar).
+#: Highest escalation level `sync_stem` produces (see its docstring).
+SYNC_STEM_MAX_LEVEL = 3
 
-    Single-trigger: `<Target><Action>[For<Scope>]When<C><A><Outcome>`.
-    Joined rule:    `<Target><Action>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2>...`
-    in declared conjunct order (deterministic).
+
+def sync_stem(then_concept: str, then_action: str,
+              conjuncts: List["Conjunct"], is_join: bool,
+              level: int = 0, with_payload: bool = False,
+              route: str = "") -> str:
+    """Mechanical sync stem (grammar v3, action-first).
+
+    Level 0 (the default) names the effect and its trigger by ACTION only:
+
+        single trigger: `<TargetAction>[For<Route>]When<TriggerAction><Completion>`
+        joined rule:    `<TargetAction>WhenJoin<A1><Out1>And<A2><Out2>...`
+                        (declared conjunct order — deterministic)
+
+    A sync is *coordination*, not a concept's property — it can involve several
+    concepts — so concept tokens are omitted unless needed to disambiguate.
+    `level` adds them back deterministically when two stems would collide
+    within one sync pack:
+
+        1 -> + target concept
+        2 -> + trigger concept
+        3 -> + both
+
+    The completion is named by its BASE token only (`Routed`, not
+    `RoutedRefName`) — the carried fields are body-visible and never needed to
+    read the name. `with_payload=True` is the last-resort disambiguator for two
+    outcomes of one action that differ only in payload
+    (`Released` vs `Released(blankFields)`).
+
+    **`For<Route>`.** A route-scoped bootstrap carries the route it matches:
+    `VerifyForReturnsWhenRequestRouted`. Two use cases may bootstrap the *same*
+    target action on *different* routes (`memberEnrolment.verify` after a borrow
+    request and after a return request), and nothing else in the name separates
+    them — so without the route the app registers two rules with one name and
+    `causedBySync` can no longer say which fired.
+
+    The pre-v0.6 `For<Scope>` component was **not** this: it was derived from the
+    *feature slug*, so every sync in a use case carried the same value and it
+    could never disambiguate anything. That was the right thing to remove; the
+    route is a real discriminator within one app, which the slug never was.
     """
-    base = (pascal_token(then_concept) + pascal_token(then_action)
-            + ("For" + scope if scope else ""))
+    target = pascal_token(then_action)
+    if level in (1, 3):
+        target = pascal_token(then_concept) + target
+    if route:
+        # The route is a real discriminator: two use cases may bootstrap the same
+        # target action on different routes.
+        target += "For" + pascal_token(route)
     if is_join:
         # Payload-free completions per conjunct: joining every payload would
         # blow past the OS filename limit (NAME_MAX 255) for richer joins,
         # and the completion token is the documented grammar for a conjunct.
-        parts = [
-            pascal_token(c.concept) + pascal_token(c.action)
-            + first_completion_token(c.outcome)
-            for c in conjuncts
-        ]
-        return base + "WhenJoin" + "And".join(parts)
+        parts = []
+        for c in conjuncts:
+            token = pascal_token(c.action) + first_completion_token(c.outcome)
+            if level in (2, 3):
+                token = pascal_token(c.concept) + token
+            parts.append(token)
+        return target + "WhenJoin" + "And".join(parts)
     if not conjuncts:
-        return base + "When"
+        return target + "When"
     c = conjuncts[0]
-    return (base + "When" + pascal_token(c.concept) + pascal_token(c.action)
-            + completion_with_payload(c.outcome))
+    completion = (completion_with_payload(c.outcome) if with_payload
+                  else first_completion_token(c.outcome))
+    trigger = pascal_token(c.action) + completion
+    if level in (2, 3):
+        trigger = pascal_token(c.concept) + trigger
+    return target + "When" + trigger
 
 
 def feature_scope_from_path(path: str) -> str:

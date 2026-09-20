@@ -22,7 +22,9 @@ the sync just says *"when outcome X fires → then call Y."*
 | Path | Layer | Why |
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Scenarios to satisfy |
-| `../02_concepts/output/` | 4 | Concepts available to coordinate |
+| `../02_concepts/output/concept-bindings.md` | 4 | Which canonical concepts this feature uses, and the actions it binds |
+| `../../../../features/_system/concepts/` | 4 | The canonical concept specs (`state`, actions) — source of truth for signatures |
+| `../02_concepts/output/<Name>.concept.md` | 4 | NEW/EXTEND proposals (not yet promoted) — same anatomy |
 | `../01b_chain-table/output/` | 4 | The action chain each sync formalises |
 | Skill: `clad-sync-design` | 3 | Sync design reference (see skills/ directory) |
 | `../../../../methodology/architecture/SYNCHRONIZATIONS.md` | 3 | Sync semantics |
@@ -66,6 +68,14 @@ between 01b and 02, stop and reopen Stage 02 before writing any sync
 file. Stage 03 derives coordination from approved contracts; it does not
 repair contract drift.
 
+**Shared triggers across features.** When a per-project cross-UC
+shared-trigger view exists (generated over every feature's `03_syncs/output/`),
+consult it before introducing a new trigger: another feature may already fire a
+sync on the same `Concept.action` completion. Reuse or reconcile it
+deliberately — a duplicated trigger with divergent routing is exactly the
+cross-feature drift this view surfaces. Stage 03a's coordination review consumes
+the same view.
+
 For each transition, write one rule-shaped
 `When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>].sync.md`:
 - `when:` the outcome that fires (e.g. `Account.validate(...) -> Valid`)
@@ -101,6 +111,22 @@ order; a single unnamed conjunct keeps the classic form and naming.
 `collect ( <source> as ?var )`, `collect distinct ( … )`, and
 `collect by ?groupKey ( <source> as ?var )` gather values into one `List`
 binding. They are read-only and code-free — not `frames.query/filter/collectAs`.
+
+**Absence (`absent`).** The negative state pattern — keep a frame only if the
+subject has no such value (a D- read; it binds nothing):
+
+```
+where {
+    fanOut ( ?loanId ; "Lending" ; "borrower" ; ?memberId )
+    absent ( "Lending" ; ?loanId ; "returnedAt" )
+    collect ( ?loanId as ?openLoans )
+}
+```
+
+It is not a filter (no computation, no JSON — R3), it fails closed on an unbound
+subject, and an aggregate over a possibly-empty set must use `collectBy`, since a
+`where` that ends with no frames does not fire.
+
 
 The sync file stem and `sync <Name>` header must match the naming rule
 from `SYNCHRONIZATIONS.md`: prefix with `When`, use `Then` between the

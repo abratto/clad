@@ -17,12 +17,12 @@ public final class LoginSyncRules {
 
     public static List<SyncRule> all() {
         return List.of(
-                new UserNamingLookupByUsernameForLoginWhenWebRequestRouted().rule(),
-                new PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound().rule(),
-                new WebRespondForLoginWhenUserNamingLookupByUsernameRefused().rule(),
-                new SessionGrantForLoginWhenPasswordAuthCheckOk().rule(),
-                new WebRespondForLoginWhenPasswordAuthCheckBadPassword().rule(),
-                new WebRespondForLoginWhenPasswordAuthCheckLocked().rule(),
-                new WebRespondForLoginWhenSessionGrantGranted().rule());
+                new LookupByUsernameForLoginWhenRequestRouted().rule(),
+                new CheckWhenLookupByUsernameFound().rule(),
+                new RespondWhenLookupByUsernameRefused().rule(),
+                new GrantWhenCheckOk().rule(),
+                new RespondWhenCheckBadPassword().rule(),
+                new RespondWhenCheckLocked().rule(),
+                new RespondWhenGrantGranted().rule());
     }
 }

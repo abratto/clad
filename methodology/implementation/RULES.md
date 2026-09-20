@@ -21,7 +21,8 @@ In code (under `reference-impl/`):
   one for the purpose of cross-talk).
 - No shared mutable singletons.
 
-In specs (under `features/UC-XX/stages/02_concepts/output/`):
+In specs (the canonical corpus `features/_system/concepts/`, plus any
+per-feature proposal under `features/UC-XX/stages/02_concepts/output/`):
 
 - A concept spec may not name another concept's state field.
 - A concept spec may name *types* that are passed in as opaque
@@ -95,7 +96,7 @@ the human before any implementation begins. This is Gate 3 (Executable
 specification) — the last design-stage human gate.
 
 In Stages 04d and 04e, concept tests and sync tests are **mechanically
-derived** from already-approved artefacts (04c flow tests, 04b SPECs,
+derived** from already-approved artefacts (04c flow tests, 04b contracts,
 chain tables, sync specs). They verify implementation fidelity, not
 design. The red→green handoff in 04d and 04e is automated — the
 quality-gate scripts (`verify_concept_test_derivation.py`,
@@ -106,20 +107,20 @@ An agent that writes concept or sync implementation before the
 corresponding red tests exist has violated this rule. The flow test
 (04c) must be approved before any inner loop begins.
 
-## R9. Every SPEC outcome maps to a distinct implementation branch
+## R9. Every contract outcome maps to a distinct implementation branch
 
-In implementation code, each outcome defined in the SPEC must be
-returned by its own distinct code path. Two SPEC outcomes must never
+In implementation code, each outcome defined in the contract must be
+returned by its own distinct code path. Two contract outcomes must never
 be collapsed into one return value (e.g. returning `VALIDATION_FAILED`
-when the SPEC defines `ACCOUNT_EXISTS` as a separate outcome).
+when the contract defines `ACCOUNT_EXISTS` as a separate outcome).
 
 If you find yourself returning one outcome for two different
-conditions, check the SPEC — they are almost certainly distinct
+conditions, check the contract — they are almost certainly distinct
 outcomes that were defined separately for a reason.
 
 **Outcome branching checklist** — verify before claiming green:
 
-- [ ] Each SPEC outcome has its own `if` / `switch` branch — not shared with another outcome
+- [ ] Each contract outcome has its own `if` / `switch` branch — not shared with another outcome
 - [ ] Each branch returns the correct `OutcomeType` enum value
 - [ ] `message` is null on success outcomes, non-null on failure outcomes
 - [ ] `id` fields are non-null on creation success outcomes, null on failure outcomes
@@ -187,7 +188,7 @@ matches trigger input values directly
 implementation's `when X (param: value)` shape. A `where`-clause `Guard`
 remains legal for scoping the when-matcher cannot express (comparisons
 against non-literal operands). Stage 03a records the route analysis in the
-dependency review cards.
+coordination review cards.
 
 A sync that fires on a shared trigger with no when-matcher and no guard,
 and no explicit route-agnostic justification, is a defect.
@@ -207,7 +208,8 @@ every primary completion field that downstream syncs read.
 `methodology/core/ITERATIVE_CHANGES.md` is binding. Before modifying any
 file under:
 
-- `features/UC-*/stages/02_concepts/output/` (concept specs)
+- `features/_system/concepts/` (canonical concept corpus)
+- `features/UC-*/stages/02_concepts/output/` (concept proposals)
 - `features/UC-*/stages/03_syncs/output/` (sync specs)
 - any profile's implementation source for concepts or syncs
   (e.g. `reference-impl/java-legible/src/main/java/dev/legible/example/.../`)
@@ -269,6 +271,47 @@ Mechanised by `quality-gate/verify_maintenance_change_readiness.py`.
 > action log is a structured append-only record store, and there is no
 > SPARQL to construct. The strict-vs-lenient parser hazard this rule
 > guarded against no longer exists.
+
+## R22. A concept is defined once, in the canonical corpus
+
+A concept's spec lives in exactly one place:
+`features/_system/concepts/<Name>.concept.md`. A use case **binds** to a
+canonical concept (emits `concept-bindings.md`, no spec copy), **proposes an
+extension** (an additive `extends` proposal), or **proposes a new** concept.
+Proposals enter the corpus only on Gate 2 approval, via
+`./clad promote-concepts` — never by hand, never silently.
+
+Re-deriving a concept per use case is the cross-feature drift this rule exists
+to prevent (observed in the Conduit rebuild: six divergent
+`Session.concept.md` across six use cases, surfaced only at Stage 04).
+
+Promotion replaces the canonical entry **whole**, which fixes two further
+obligations:
+
+- **Order.** The canonical spec records its history — `introduced-by <UC-A>`
+  plus `extended-by <UC-B>, …`, append-only — and only the entry's current
+  source may promote it. Re-promoting an earlier use case would roll the corpus
+  back to a superseded proposal; the command refuses per concept and says why.
+- **Additivity.** An `extends` proposal keeps every canonical `## State` line
+  and every canonical contract action and outcome. A deliberate removal is
+  authorised by listing the exact dropped line, with a reason, in the feature's
+  `_config/additivity-exceptions.md` — visible and bounded, not silent.
+
+A feature's own copies are **proposal snapshots** (its Gate 2 audit trail), not
+current truth: the canonical model and contract carry a `canonical — derived
+from concept …` header, and the snapshots say so too. File-equality between the
+two is *not* the invariant — from the second extending use case onward an
+earlier snapshot is supposed to differ.
+
+This does **not** weaken R1. Independence is precisely what makes concepts
+reusable; coordination remains syncs-only, and no concept names another
+concept's state.
+
+Mechanised by `quality-gate/verify_concept_proposals.py`,
+`quality-gate/verify_concept_registry.py`,
+`quality-gate/verify_concept_additivity.py` and
+`quality-gate/verify_concept_corpus_current.py`; the corpus criteria by
+`quality-gate/verify_concept_criteria.py`.
 
 ---
 

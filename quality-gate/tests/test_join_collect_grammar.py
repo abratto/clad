@@ -44,16 +44,27 @@ def run(script, *args):
     )
 
 
-def chain_body(rows):
+DIAGRAM = """
+## Diagram
+
+```mermaid
+stateDiagram-v2
+    [*] --> Web_request
+    Web_request --> [*]
+```
+"""
+
+
+def chain_body(rows, diagram=DIAGRAM):
     body = ["# Chain table — `join`", "",
             "| # | When | Then | Inputs | Outcome | Why this step |",
             "|---|---|---|---|---|---|"]
     for num, when, then, outcome in rows:
         body.append(f"| {num} | {when} | {then} | `x` | {outcome} | e |")
-    return "\n".join(body) + "\n"
+    return "\n".join(body) + "\n" + (diagram or "")
 
 
-JOIN_SYNC = f"""sync WebRespondWhenJoinCatalogListListedAndTaggingTagTagged
+JOIN_SYNC = f"""sync RespondWhenJoinListListedAndTagTagged
 
 ## Sync Contract Matrix
 
@@ -130,6 +141,29 @@ class ChainJoinParsingTests(unittest.TestCase):
             result = run(VERIFY_CHAIN, "--chain-dir", tmp)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_grammar_verifier_requires_the_state_diagram(self):
+        """The diagram is part of the 01b artefact, not a nicety.
+
+        The gate covers the table and the diagram together; an omitted diagram
+        is an incomplete artefact (and reading the old "optional" heading
+        instead of the same-turn rule is how one got omitted)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            write(Path(tmp) / "join-chain.md", chain_body([
+                ("1", "`Web/request[POST /publish]`", "`Web.request`", "`Routed`"),
+            ], diagram=None))
+            result = run(VERIFY_CHAIN, "--chain-dir", tmp)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("stateDiagram-v2", result.stdout)
+
+    def test_grammar_verifier_rejects_a_sequence_diagram(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            write(Path(tmp) / "join-chain.md", chain_body([
+                ("1", "`Web/request[POST /publish]`", "`Web.request`", "`Routed`"),
+            ], diagram="\n```mermaid\nsequenceDiagram\n  A->>B: x\n```\n"))
+            result = run(VERIFY_CHAIN, "--chain-dir", tmp)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("stateDiagram-v2", result.stdout)
+
     def test_grammar_verifier_rejects_empty_conjunct(self):
         with tempfile.TemporaryDirectory() as tmp:
             write(Path(tmp) / "bad-chain.md", chain_body([
@@ -159,16 +193,48 @@ class ChainJoinGenerationTests(unittest.TestCase):
             stems = sorted(
                 p.name.replace(".sync.md", "")
                 for p in (feature / "stages/03_syncs/output").glob("*.sync.md"))
-            self.assertIn(
-                "WebRespondForPubWhenJoinCatalogListListedAndTaggingTagTagged",
-                stems)
+            self.assertIn("RespondWhenJoinListListedAndTagTagged", stems)
+
+
+class SyncStemRouteTests(unittest.TestCase):
+    """A route-scoped bootstrap's name carries its route (grammar v3.1).
+
+    Two use cases may bootstrap the same target action on different routes;
+    without the route they produce identically-named rules and `causedBySync`
+    cannot say which fired — maintenance/route-scoped-sync-names.md."""
+
+    @staticmethod
+    def request_routed():
+        return [ap.Conjunct(name=None, concept="Web", action="request",
+                            outcome="Routed")]
+
+    def test_stem_carries_the_route_when_given(self):
+        self.assertEqual(
+            "VerifyForReturnsWhenRequestRouted",
+            ap.sync_stem("MemberEnrolment", "verify", self.request_routed(),
+                         False, route="returns"))
+        self.assertEqual(
+            "VerifyForLoansWhenRequestRouted",
+            ap.sync_stem("MemberEnrolment", "verify", self.request_routed(),
+                         False, route="loans"))
+        self.assertEqual(
+            "VerifyWhenRequestRouted",
+            ap.sync_stem("MemberEnrolment", "verify", self.request_routed(),
+                         False),
+            "no route means no component")
+
+    def test_route_survives_escalation(self):
+        self.assertEqual(
+            "MemberEnrolmentVerifyForLoansWhenWebRequestRouted",
+            ap.sync_stem("MemberEnrolment", "verify", self.request_routed(),
+                         False, level=3, route="loans"))
 
 
 class SyncJoinParsingTests(unittest.TestCase):
 
     def test_join_spec_parses_and_is_flagged(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "WebRespondWhenJoinCatalogListListedAndTaggingTagTagged.sync.md"
+            path = Path(tmp) / "RespondWhenJoinListListedAndTagTagged.sync.md"
             write(path, JOIN_SYNC)
             spec = ap.parse_sync(str(path))
             self.assertTrue(spec.is_join)
@@ -181,21 +247,18 @@ class SyncJoinParsingTests(unittest.TestCase):
 
     def test_join_naming_rule(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "WebRespondWhenJoinCatalogListListedAndTaggingTagTagged.sync.md"
+            path = Path(tmp) / "RespondWhenJoinListListedAndTagTagged.sync.md"
             write(path, JOIN_SYNC)
             spec = ap.parse_sync(str(path))
             stem = ap.sync_stem(spec.then_targets[0][0], spec.then_targets[0][1],
-                                "Pub", spec.conjuncts, spec.is_join)
-            self.assertEqual(
-                stem,
-                "WebRespondForPubWhenJoinCatalogListListedAndTaggingTagTagged")
+                                spec.conjuncts, spec.is_join)
+            self.assertEqual(stem, "RespondWhenJoinListListedAndTagTagged")
             names = parity.expected_sync_names(str(path), JOIN_SYNC)
-            self.assertIn(
-                "WebRespondWhenJoinCatalogListListedAndTaggingTagTagged", names)
+            self.assertIn("RespondWhenJoinListListedAndTagTagged", names)
 
     def test_collect_where_forms_are_detected(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "WebRespondWhenJoinCatalogListListedAndTaggingTagTagged.sync.md"
+            path = Path(tmp) / "RespondWhenJoinListListedAndTagTagged.sync.md"
             write(path, JOIN_SYNC)
             spec = ap.parse_sync(str(path))
             self.assertEqual(len(spec.collect_forms), 2)
@@ -205,6 +268,45 @@ class SyncJoinParsingTests(unittest.TestCase):
             # A collect over a `Concept: { ... }` source is still Pattern D.
             self.assertIn("Tagging", spec.pattern_d_concepts)
             self.assertIn("Article", spec.pattern_d_concepts)
+
+    def test_absent_state_pattern_is_detected_as_a_concept_read(self):
+        """`absent(...)` consults concept state and binds nothing (a D- read).
+
+        It must still appear in `pattern_d_concepts`, so the 03a dependency
+        cards and the pattern summary audit it exactly like a positive read —
+        maintenance/engine-absent-state-guard.md."""
+        body = """sync ShelveWhenCloseReturned
+
+## Sync Contract Matrix
+
+| Source row | Target row | `when` signature | `then` signature | Allowed literals |
+|---|---|---|---|---|
+| `4` | `7` | `Lending/close: [...] => [ Returned ]` | `Stocking/shelve: [ copyId: ?copyId ]` | `<none>` |
+
+## Rule
+
+```
+when {
+    Lending/close: [ ... ] => [ Returned ; ... ]
+}
+where {
+    bind ( when.copyId as ?copyId )
+    fanOut ( ?loanId ; "Lending" ; "borrower" ; ?memberId )
+    absent ( Lending ; ?loanId ; returnedAt )
+    collect ( ?loanId as ?openLoans )
+}
+then {
+    Stocking/shelve: [ copyId: ?copyId ]
+}
+```
+"""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "x.sync.md"
+            write(path, body)
+            spec = ap.parse_sync(str(path))
+        self.assertIn("Lending", spec.pattern_d_concepts)
+        self.assertTrue(spec.has_pattern_d)
+        self.assertIn("collect", " ".join(spec.collect_forms))
 
     def test_single_trigger_sync_is_unchanged(self):
         spec_text = (
@@ -221,8 +323,8 @@ class SyncJoinParsingTests(unittest.TestCase):
             self.assertEqual((spec.trigger_concept, spec.trigger_action,
                               spec.trigger_outcome), ("PasswordAuth", "check", "ok"))
             self.assertEqual([c.name for c in spec.conjuncts], [None])
-            stem = ap.sync_stem("Session", "grant", "", spec.conjuncts, False)
-            self.assertEqual(stem, "SessionGrantWhenPasswordAuthCheckOk")
+            stem = ap.sync_stem("Session", "grant", spec.conjuncts, False)
+            self.assertEqual(stem, "GrantWhenCheckOk")
 
 
 class JavaJoinEmitterTests(unittest.TestCase):
@@ -231,7 +333,7 @@ class JavaJoinEmitterTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             feature = Path(tmp) / "features/UC-01-pub"
             write(feature / "stages/03_syncs/output/"
-                  "WebRespondWhenJoinCatalogListListedAndTaggingTagTagged.sync.md",
+                  "RespondWhenJoinListListedAndTagTagged.sync.md",
                   JOIN_SYNC)
             out = Path(tmp) / "src"
             emitter = QUALITY_GATE / "generate_syncs_java.py"
@@ -247,7 +349,7 @@ class JoinerAwareVerifierTests(unittest.TestCase):
 
     def test_cycle_graph_edges_include_every_conjunct_source(self):
         with tempfile.TemporaryDirectory() as tmp:
-            write(Path(tmp) / "WebRespondWhenJoinCatalogListListedAndTaggingTagTagged.sync.md",
+            write(Path(tmp) / "RespondWhenJoinListListedAndTagTagged.sync.md",
                   JOIN_SYNC)
             edges = cycle.parse_syncs_edges(tmp)
             sources = {edge[1][:2] for edge in edges}
@@ -255,7 +357,7 @@ class JoinerAwareVerifierTests(unittest.TestCase):
 
     def test_sync_matrix_accepts_joined_rule(self):
         with tempfile.TemporaryDirectory() as tmp:
-            write(Path(tmp) / "WebRespondWhenJoinCatalogListListedAndTaggingTagTagged.sync.md",
+            write(Path(tmp) / "RespondWhenJoinListListedAndTagTagged.sync.md",
                   JOIN_SYNC)
             result = run(VERIFY_MATRIX, "--sync-dir", tmp)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -275,10 +377,9 @@ class JoinNamingAndCoverageTests(unittest.TestCase):
             ap.Conjunct(name="b", concept="Following", action="isFollowing",
                         outcome="Following(flag)"),
         ]
-        stem = ap.sync_stem("Web", "respond", "ReadArticle", conjuncts, True)
+        stem = ap.sync_stem("Web", "respond", conjuncts, True)
         self.assertEqual(
-            stem,
-            "WebRespondForReadArticleWhenJoinCatalogLookupBySlugFoundAndFollowingIsFollowingFollowing")
+            stem, "RespondWhenJoinLookupBySlugFoundAndIsFollowingFollowing")
         self.assertLess(len(stem) + len(".sync.md"), 255)
 
     def test_transition_coverage_flags_a_missing_sync(self):

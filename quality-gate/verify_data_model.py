@@ -30,6 +30,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import artifact_parsers as ap  # noqa: E402
+
 
 # All required sub-section headings across the 7 CSDP steps
 REQUIRED_SUBSECTIONS = [
@@ -152,17 +155,16 @@ def check_data_model(path):
     return failures
 
 
-def check_cross_concept_refs(data_dir, concept_dir):
+def check_cross_concept_refs(data_dir, concept_dirs):
     """Check no entity/value types from one concept appear as entity types
-    in another concept's data model."""
+    in another concept's data model.
+
+    `concept_dirs` is a list of concept-spec dirs; they are merged with earlier
+    dirs shadowing later ones by concept name."""
     failures = []
 
-    # Build set of concept names
-    concept_names = set()
-    if os.path.isdir(concept_dir):
-        for fname in os.listdir(concept_dir):
-            if fname.endswith(".concept.md"):
-                concept_names.add(fname.replace(".concept.md", ""))
+    # Build set of concept names across every concept source
+    concept_names = set(ap.concept_spec_paths(concept_dirs))
 
     # For each data model file, extract entity type names and check they
     # don't belong to another concept
@@ -210,12 +212,13 @@ def main():
         description="Validate conceptual data model CSDP structure")
     parser.add_argument("--data-dir", required=True,
                         help="Path to 03b_data-model/output/")
-    parser.add_argument("--concept-dir", required=True,
-                        help="Path to 02_concepts/output/ (for entity name cross-ref)")
+    parser.add_argument("--concept-dir", required=True, action="append",
+                        help="Concept-spec dir for entity-name cross-ref; "
+                             "repeatable. Earlier dirs shadow later ones.")
     args = parser.parse_args()
 
     data_dir = args.data_dir
-    concept_dir = args.concept_dir
+    concept_dirs = args.concept_dir
 
     if not os.path.isdir(data_dir):
         print(f"FAIL  data model directory not found: {data_dir}")
@@ -243,7 +246,7 @@ def main():
             total_failures += 1
 
     # Cross-concept entity reference check
-    cross_failures = check_cross_concept_refs(data_dir, concept_dir)
+    cross_failures = check_cross_concept_refs(data_dir, concept_dirs)
     for msg in cross_failures:
         print(f"FAIL  {msg}")
         total_failures += 1

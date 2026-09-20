@@ -1,0 +1,32 @@
+package com.example.app.syncs;
+
+import dev.legible.engine.Clause;
+import dev.legible.engine.Source;
+import dev.legible.engine.SyncRule;
+import java.util.List;
+import java.util.Map;
+import static dev.legible.engine.SyncRule.invoke;
+import static dev.legible.engine.SyncRule.lit;
+import static dev.legible.engine.SyncRule.ref;
+
+/**
+ * Row 2[FOUND]-to-3b: when UserNaming.lookupByUsername[FOUND] then PasswordAuth.check(userId, password).
+ *
+ * <p>The declarative SyncRule realization of the Stage 03 CheckWhenLookupByUsernameFound.sync.md (grammar v2 name: CheckWhenLookupByUsernameFound; see maintenance/sync-dsl-legibility.md).
+ * Trigger and target tokens are copied verbatim from the approved chain
+ * table (literal lock). No imperative branching, no state, no I/O (R3).
+ */
+public final class CheckWhenLookupByUsernameFound {
+
+    public SyncRule rule() {
+        return SyncRule.of(
+                // renamed to grammar v2: "CheckWhenLookupByUsernameFound" -> "CheckWhenLookupByUsernameFound"
+                "CheckWhenLookupByUsernameFound",
+                "UserNaming", "lookupByUsername", "FOUND",
+                List.of(
+                        new Clause.Bind("?user", new Source.TriggerField("userId")),
+                        new Clause.Bind("?p", new Source.SiblingInput("Web", "request", "password"))),
+                List.of(invoke("PasswordAuth", "check",
+                        Map.of("userId", ref("?user"), "password", ref("?p")))));
+    }
+}

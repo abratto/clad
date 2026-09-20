@@ -1,17 +1,25 @@
 ---
 name: clad-dependency-review
-description: Perform a per-concept dependency review during CLAD Stage 03a. Use when auditing cross-concept coupling, producing dependency review cards, and consolidating concept-state reads before Stage 04 implementation.
+description: Perform the per-UC coordination review during CLAD Stage 03a. Use when auditing cross-concept coupling, producing coordination-review cards, and consolidating concept-state reads before Stage 04 implementation.
 ---
 
-# CLAD Dependency Review (Stage 03a)
+# CLAD Coordination Review (Stage 03a)
 
-> **Role:** required stage guidance for Stage 03a. The stage `CONTEXT.md` `Inputs` table is authoritative for *which files to load*; load those exactly. This skill adds working process only and must not cause you to reload documents the contract already named.
+> **Role:** required stage guidance for Stage 03a — the per-UC **coordination
+> review** (the skill name and `03a_dependency-review/` folder are unchanged;
+> only the description is). The stage `CONTEXT.md` `Inputs` table is
+> authoritative for *which files to load*; load those exactly. This skill adds
+> working process only.
 
 ## What this skill covers
 
 Producing one `<concept>-card.md` per concept and a `pattern-d-summary.md`.
 This is the last cross-concept sanity check before code — making every
 inbound call and every concept-state read visible per concept.
+
+The cards are **evidence** for the app-level concept-dependence graph
+(`features/_system/concept-dependence.md`), never its source. This stage does
+not emit that graph; the graph is a reviewed system-scope artefact.
 
 ## Files
 
@@ -22,7 +30,9 @@ Stage 03a `Inputs` names `SYNC_PATTERNS.md`, the card/summary templates, and the
 1. Produce one card per concept in the responsibility map.
 2. Section 1: list every sync whose `then` calls an action on this concept.
 3. Section 2: list every concept-state read of this concept by other concepts.
-4. Shared trigger analysis: for each sync, determine whether its trigger
+4. Shared trigger analysis: consult the cross-UC shared-trigger view
+    (`features/_system/shared-triggers.md`, generated) as well as this
+    feature's syncs. For each sync, determine whether its trigger
     action can be produced by more than one named flow/route. If yes,
     record in the relevant `*-card.md`:
     - Which routes produce this trigger

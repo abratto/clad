@@ -7,6 +7,7 @@
 #   ./clad approve 1     — approve gate 1 for the active feature
 #   ./clad approve-iter <name> — approve iterative change
 #   ./clad approve-maintenance <name> <design|evidence> — approve maintenance gate
+#   ./clad promote-concepts — promote approved proposals into the concept corpus
 #   ./clad verify        — run verify_artefacts.py
 #   ./clad next          — show what stage comes next
 #   ./clad stages        — show all stages and their status
@@ -30,27 +31,36 @@ else
 fi
 
 resume_mtime() {
-    stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || echo 0
+    # GNU stat first, then BSD/macOS: on GNU coreutils `stat -f` is filesystem
+    # status and exits 0 (it does not fail over to -c), so `-f %m` must not be
+    # tried first or the mtime becomes a multi-line filesystem dump.
+    stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null || echo 0
 }
 
 active_feature() {
-    # Highest priority: features with uncommitted iterative change records.
-    # Ignore the `.gitkeep` placeholder and any non-markdown file, so merely
-    # creating a feature folder does not outrank real in-progress work.
-    for d in "$FEATURES_DIR"/UC-*/; do
-        [ -d "$d" ] || continue
-        [ -d "$d/_changes" ] || continue
-        if [ -n "$(git -C "$PROJECT_ROOT" status --porcelain -- "$d/_changes" 2>/dev/null \
-                   | grep -E '\.md$' | grep -v '\.gitkeep' || true)" ]; then
-            basename "$d"
-            return 0
+    # An explicit override always wins: a multi-feature repo can be ambiguous,
+    # and a gate approval must never target a guessed feature.
+    if [ -n "${CLAD_FEATURE:-}" ]; then
+        if [ ! -d "$FEATURES_DIR/$CLAD_FEATURE" ]; then
+            echo "CLAD_FEATURE='$CLAD_FEATURE' is not a feature under $FEATURES_DIR" >&2
+            exit 1
         fi
-    done
-    # Next: the most recently modified feature that is actually in progress
-    # (RESUME names a concrete stage that is neither TBD nor complete).
-    local best="" best_m=0 d resume stage m
+        echo "$CLAD_FEATURE"
+        return 0
+    fi
+
+    # Only features that are actually in progress are candidates. A feature
+    # whose RESUME is TBD or feature-complete must never outrank a live one —
+    # a completed worked example carrying uncommitted _changes/ is not itself
+    # in progress.
+    local d b resume stage m
+    local only_change="" n_change=0
+    local n_progress=0 best_progress="" best_progress_m=0 progress_ties=0
+    local progress_list=""
+
     for d in "$FEATURES_DIR"/UC-*/; do
         [ -d "$d" ] || continue
+        b=$(basename "$d")
         resume="$d/RESUME.md"
         [ -f "$resume" ] || continue
         stage=$(grep -m1 'Current stage' "$resume" 2>/dev/null | sed 's/.*`\(.*\)`.*/\1/')
@@ -58,14 +68,48 @@ active_feature() {
         case "$stage" in
             TBD|None*|*"feature complete"*) continue;;
         esac
+        n_progress=$((n_progress + 1))
+        progress_list="${progress_list}  ${b}
+"
         m=$(resume_mtime "$resume")
-        if [ "${m:-0}" -gt "${best_m:-0}" ]; then
-            best_m="$m"; best="$(basename "$d")"
+        if [ "${m:-0}" -gt "${best_progress_m:-0}" ]; then
+            best_progress_m="${m:-0}"; best_progress="$b"; progress_ties=1
+        elif [ "${m:-0}" -eq "${best_progress_m:-0}" ]; then
+            progress_ties=$((progress_ties + 1))
+        fi
+        # Uncommitted _changes/ mark a live iterative change; more than one is
+        # ambiguous, so refuse rather than guess the gate target.
+        if [ -d "$d/_changes" ] && [ -n "$(git -C "$PROJECT_ROOT" status --porcelain -- "$d/_changes" 2>/dev/null \
+                   | grep -E '\.md$' | grep -v '\.gitkeep' || true)" ]; then
+            n_change=$((n_change + 1))
+            [ -z "$only_change" ] && only_change="$b"
         fi
     done
-    if [ -n "$best" ]; then echo "$best"; return 0; fi
-    # Then: the most recently modified feature that is not complete (covers a
-    # freshly created, not-yet-started feature whose Current stage is TBD).
+
+    if [ "$n_change" -gt 1 ]; then
+        echo "Ambiguous active feature: several in-progress features have uncommitted _changes/:" >&2
+        printf '%s' "$progress_list" >&2
+        echo "Re-run with CLAD_FEATURE=<name>, or pass the feature explicitly." >&2
+        exit 1
+    fi
+    if [ "$n_change" -eq 1 ]; then
+        echo "$only_change"
+        return 0
+    fi
+
+    if [ "$n_progress" -gt 1 ] && [ "$progress_ties" -gt 1 ]; then
+        echo "Ambiguous active feature: several are in progress with equally recent RESUME.md:" >&2
+        printf '%s' "$progress_list" >&2
+        echo "Re-run with CLAD_FEATURE=<name>, or pass the feature explicitly." >&2
+        exit 1
+    fi
+    if [ "$n_progress" -ge 1 ] && [ -n "$best_progress" ]; then
+        echo "$best_progress"
+        return 0
+    fi
+
+    # Fallback: the most recently modified feature that is not complete (covers
+    # a freshly created, not-yet-started feature whose Current stage is TBD).
     local best2="" best2_m=0
     for d in "$FEATURES_DIR"/UC-*/; do
         [ -d "$d" ] || continue
@@ -120,6 +164,20 @@ cmd_approve_maintenance() {
         exit 1
     fi
     python3 "$QG/approve_maintenance_change.py" --change "maintenance/$name.md" --gate "$gate"
+}
+
+cmd_promote_concepts() {
+    # Promotion WRITES the canonical corpus, so it must never guess: the active-
+    # feature heuristic is for read commands. Running it for a superseded feature
+    # overwrites newer corpus content with that feature's older proposal.
+    local feat="${1:-${CLAD_FEATURE:-}}"
+    if [ -z "$feat" ]; then
+        echo "promote-concepts needs an explicit feature: ./clad promote-concepts <name>" >&2
+        echo "  (or set CLAD_FEATURE=<name>). It writes the corpus, so it will not guess." >&2
+        exit 1
+    fi
+    shift || true
+    python3 "$QG/promote_concepts.py" --feature "features/$feat" "$@"
 }
 
 cmd_verify() {
@@ -196,6 +254,9 @@ CLAD CLI — lightweight wrapper for quality-gate scripts.
   ./clad approve-iter <name>       Approve an iterative change
     ./clad approve-maintenance <name> <design|evidence>
                                                                         Approve a maintenance change gate
+  ./clad promote-concepts <feature>  Promote approved NEW/EXTEND concept
+                                       proposals into the canonical corpus
+                                       (after Gate 2 approval)
   ./clad verify                    Run verify_artefacts.py (artefact gate)
   ./clad next                      Show current stage and next steps
   ./clad stages [<feature>]        Show all stages and completion status
@@ -204,7 +265,15 @@ CLAD CLI — lightweight wrapper for quality-gate scripts.
   ./clad help                      Show this help
 
 All commands auto-discover the active feature from RESUME.md.
-No need to type feature paths.
+No need to type feature paths — but only a feature that is actually
+in progress is a candidate, and when discovery is ambiguous (several
+in-progress features carry uncommitted _changes/) the command stops
+instead of guessing:
+
+  CLAD_FEATURE=UC-02-catalogue-title ./clad approve 2
+
+Use CLAD_FEATURE (or the explicit <feature> argument where a command
+takes one) whenever more than one feature is in flight.
 HELP
 }
 
@@ -214,6 +283,7 @@ case "${1:-help}" in
     approve)     shift; cmd_approve "$@";;
     approve-iter) shift; cmd_approve_iter "$@";;
     approve-maintenance) shift; cmd_approve_maintenance "$@";;
+    promote-concepts) shift; cmd_promote_concepts "$@";;
     verify)      shift; cmd_verify "$@";;
     next)        cmd_next;;
     stages)      cmd_stages "${2:-}";;

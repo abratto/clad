@@ -193,12 +193,12 @@ def expected_sync_names(path, text):
     Single-trigger (grammar v2, maintenance/sync-dsl-legibility.md):
       <TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>
     Joined rule (maintenance/engine-declarative-join-collect.md):
-      <TargetConcept><TargetAction>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2>...
+      Grammar v3, action-first: `<TargetAction>WhenJoin<A1><Out1>And<A2><Out2>...`
+      with concept tokens added back at higher escalation levels.
     """
     spec, outcome_full = _spec_trigger_outcome_full(path, text)
     if spec is None or not spec.trigger_concept or not spec.then_targets:
         return []
-    scope = feature_scope_from_path(path)
     then_concept, then_action = spec.then_targets[0]
 
     if spec.is_join and spec.conjuncts:
@@ -212,10 +212,29 @@ def expected_sync_names(path, text):
         conjuncts = [ap.Conjunct(None, spec.trigger_concept,
                                  spec.trigger_action, outcome_full)]
 
-    names = [ap.sync_stem(then_concept, then_action, "", conjuncts, spec.is_join)]
-    if scope:
-        names.append(ap.sync_stem(then_concept, then_action, scope,
-                                  conjuncts, spec.is_join))
+    # The flow pin (maintenance/sync-flow-pinning.md) is in every non-bootstrap
+    # rule, so it is not a name component: a pinned single-trigger rule keeps its
+    # trigger-only name while its `when` carries two conjuncts. The generator
+    # excludes it, so this must too.
+    stem_conjuncts = [c for c in conjuncts if c.name != "requested"]
+    stem_is_join = len(stem_conjuncts) > 1
+    # `For<Route>` is a component of a BOOTSTRAP's name only. A pinned rule
+    # carries its route in the pin, and the pin is excluded from the name.
+    pinned = any(c.name == "requested" for c in conjuncts)
+    route_match = re.search(r'route\s*:\s*"([^"]+)"', text)
+    stem_route = "" if pinned else (route_match.group(1) if route_match else "")
+
+    # Grammar v3: the generator picks the shortest stem unique within its
+    # pack, escalating by adding concept tokens only on a collision, so every
+    # level is a legal mechanical name for this rule.
+    names = [
+        ap.sync_stem(then_concept, then_action, stem_conjuncts, stem_is_join, level,
+                     route=stem_route)
+        for level in range(ap.SYNC_STEM_MAX_LEVEL + 1)
+    ]
+    names.append(ap.sync_stem(then_concept, then_action, stem_conjuncts,
+                              stem_is_join, ap.SYNC_STEM_MAX_LEVEL,
+                              with_payload=True, route=stem_route))
     return names
 
 
@@ -326,6 +345,15 @@ def check_concepts(concept_impl_dir, features_dir):
         return failures
 
     spec_stems = collect_spec_stems(features_dir, "02_concepts/output", ".concept.md")
+    # Canonical corpus specs (Model B). setdefault: a feature's own proposal
+    # under 02_concepts/output shadows the corpus spec of the same name.
+    corpus_dir = os.path.join(features_dir, "_system", "concepts")
+    if os.path.isdir(corpus_dir):
+        for filename in sorted(os.listdir(corpus_dir)):
+            if filename.endswith(".concept.md"):
+                spec_stems.setdefault(
+                    filename[: -len(".concept.md")].lower(),
+                    os.path.join(corpus_dir, filename))
     for path, class_name in collect_concept_class_names(concept_impl_dir):
         stripped = strip_concept_suffix(class_name)
         if stripped in BOOTSTRAP_CONCEPTS:

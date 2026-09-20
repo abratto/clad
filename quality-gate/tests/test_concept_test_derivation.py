@@ -21,18 +21,18 @@ SCRIPT = REPO_ROOT / "quality-gate" / "verify_concept_test_derivation.py"
 
 class ConceptTestDerivationTests(unittest.TestCase):
 
-    def _run(self, spec_dir, derivation, test_root):
+    def _run(self, contract_dir, derivation, test_root):
         return subprocess.run(
             [sys.executable, str(SCRIPT),
-             "--spec-dir", str(spec_dir),
+             "--contract-dir", str(contract_dir),
              "--derivation", str(derivation),
              "--test-source-root", str(test_root)],
             cwd=REPO_ROOT, capture_output=True, text=True,
         )
 
-    def _spec(self, spec_dir):
-        spec_dir.mkdir(parents=True, exist_ok=True)
-        (spec_dir / "Widget.spec.md").write_text(
+    def _spec(self, contract_dir):
+        contract_dir.mkdir(parents=True, exist_ok=True)
+        (contract_dir / "Widget.contract.md").write_text(
             "# Widget\n\n### `check(userId)`\n"
             "- **Outcomes (enum):** `OK`, `BAD`\n",
             encoding="utf-8",
@@ -52,10 +52,10 @@ class ConceptTestDerivationTests(unittest.TestCase):
     def test_template_format_with_nested_column(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            spec_dir = root / "spec"
+            contract_dir = root / "spec"
             derivation = root / "concept-test-derivation.md"
             test_root = root / "tests"
-            self._spec(spec_dir)
+            self._spec(contract_dir)
             self._java(test_root)
             derivation.write_text(
                 "# Derivation\n\n"
@@ -65,19 +65,19 @@ class ConceptTestDerivationTests(unittest.TestCase):
                 "|---|---|---|---|---|---|\n"
                 "| 1 | `WhenOk` | `shouldReturnOk()` | `OK` | Flow: `x` | none |\n"
                 "| 2 | `WhenBad` | `shouldReturnBad()` | `BAD` | "
-                "Spec: `Widget.spec.md:4` | none |\n",
+                "Spec: `Widget.contract.md:4` | none |\n",
                 encoding="utf-8",
             )
-            result = self._run(spec_dir, derivation, test_root)
+            result = self._run(contract_dir, derivation, test_root)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_legacy_format_without_nested_column(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            spec_dir = root / "spec"
+            contract_dir = root / "spec"
             derivation = root / "concept-test-derivation.md"
             test_root = root / "tests"
-            self._spec(spec_dir)
+            self._spec(contract_dir)
             self._java(test_root)
             derivation.write_text(
                 "# Derivation\n\n"
@@ -85,19 +85,19 @@ class ConceptTestDerivationTests(unittest.TestCase):
                 "| # | Test method | Outcome | Source | Preconditions |\n"
                 "|---|---|---|---|---|\n"
                 "| 1 | `shouldReturnOk()` | `OK` | Flow: `x` | none |\n"
-                "| 2 | `shouldReturnBad()` | `BAD` | Spec: `Widget.spec.md:4` | none |\n",
+                "| 2 | `shouldReturnBad()` | `BAD` | Spec: `Widget.contract.md:4` | none |\n",
                 encoding="utf-8",
             )
-            result = self._run(spec_dir, derivation, test_root)
+            result = self._run(contract_dir, derivation, test_root)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_missing_outcome_row_fails(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            spec_dir = root / "spec"
+            contract_dir = root / "spec"
             derivation = root / "concept-test-derivation.md"
             test_root = root / "tests"
-            self._spec(spec_dir)
+            self._spec(contract_dir)
             self._java(test_root)
             derivation.write_text(
                 "# Derivation\n\n"
@@ -108,7 +108,7 @@ class ConceptTestDerivationTests(unittest.TestCase):
                 "| 1 | `WhenOk` | `shouldReturnOk()` | `OK` | Flow: `x` | none |\n",
                 encoding="utf-8",
             )
-            result = self._run(spec_dir, derivation, test_root)
+            result = self._run(contract_dir, derivation, test_root)
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("BAD", result.stdout)
 

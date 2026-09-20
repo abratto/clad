@@ -19,7 +19,7 @@ tests and the outer flow tests from `04c` are green.
 ## Files
 
 The stage `CONTEXT.md` `Inputs` names the loading set: `03` sync specs,
-`04b` SPECs, `04c` flow tests, `_config/build-and-test.md`,
+`04b` contracts, `04c` flow tests, `_config/build-and-test.md`,
 `_config/package-and-layout.md`, `TDD.md`, `RULES.md`,
 `templates/sync-summary.md`, `templates/test-intent-derivation-map.md`.
 Profile reference docs are loaded only when that profile is selected.
@@ -50,7 +50,7 @@ Self-audit: run `python3 quality-gate/verify_artefacts.py` before advancing.
 Follow the London School interaction-focused convention for sync unit tests:
 
 - **Class name:** `<SyncName>Test` (e.g.
-   `WhenPasswordAuthCheckOkThenSessionGrantForLoginTest`)
+   `GrantWhenCheckOkTest`)
 - **`@Nested` class:** `When<Trigger>` groups by the trigger outcome
   (e.g. `WhenCheckOk`, `WhenCheckBadPassword`)
 - **Method name:** `should<Trigger><Then>` verifies interactions
@@ -60,7 +60,7 @@ Follow the London School interaction-focused convention for sync unit tests:
 - **Comment blocks:** `// GIVEN` / `// WHEN` / `// THEN`
 
 ```java
-class WhenPasswordAuthCheckOkThenSessionGrantForLoginTest {
+class GrantWhenCheckOkTest {
     @Nested class WhenCheckOk {
         @Test void shouldFireSessionGrant() {
             // GIVEN: a PasswordAuth.check action completed with outcome OK

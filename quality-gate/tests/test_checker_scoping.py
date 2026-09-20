@@ -69,7 +69,7 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
     def _fixture(self, root, body):
         spec = root / "spec"
         tests = root / "tests/dev/legible/example/widget"
-        write(spec / "Widget.spec.md",
+        write(spec / "Widget.contract.md",
               "# Widget\n\n### `check(userId)`\n"
               "- **Flow token:** `Widget.check { outcome, widgetId }`\n")
         write(tests / "WidgetCheckTest.java",
@@ -85,9 +85,39 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
                 Path(temporary),
                 'var r = c.check(u); assertEquals("OK", r.readOutcome());')
             result = run(str(QG / "verify_concept_field_assertions.py"),
-                         "--spec-dir", str(spec),
+                         "--contract-dir", str(spec),
                          "--test-source-root", str(tests))
             self.assertNotEqual(result.returncode, 0)
+            self.assertIn("widgetId", result.stdout)
+
+    def test_reused_concepts_test_is_checked_against_the_corpus(self):
+        """A reused concept has no feature-local contract (R22).
+
+        Its test still lives under the test root, so a gate that resolves the
+        concept from one contract dir silently skips it — no coverage at all for
+        R14/R16 on reused concepts. The contract surface is the shadowed union
+        of the feature's contracts and the corpus."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            feature = root / "feature"
+            corpus = root / "corpus"
+            tests = root / "tests/dev/legible/example/widget"
+            write(corpus / "Widget.contract.md",
+                  "# Widget\n\n### `check(userId)`\n"
+                  "- **Flow token:** `Widget.check { outcome, widgetId }`\n")
+            write(tests / "WidgetCheckTest.java",
+                  "package dev.legible.example.widget;\n"
+                  "class WidgetCheckTest {\n"
+                  "  @Test void shouldReturnWidget() {"
+                  ' var r = c.check(u); assertEquals("OK", r.readOutcome()); }\n'
+                  "}\n")
+            feature.mkdir(parents=True)
+            result = run(str(QG / "verify_concept_field_assertions.py"),
+                         "--contract-dir", str(feature),
+                         "--contract-dir", str(corpus),
+                         "--test-source-root", str(tests))
+            self.assertNotEqual(result.returncode, 0,
+                                "the corpus contract must be seen: " + result.stdout)
             self.assertIn("widgetId", result.stdout)
 
     def test_flat_concept_test_with_field_passes(self):
@@ -97,7 +127,7 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
                 'var r = c.check(u); assertEquals("OK", r.readOutcome()); '
                 'assertEquals("w1", r.get("widgetId"));')
             result = run(str(QG / "verify_concept_field_assertions.py"),
-                         "--spec-dir", str(spec),
+                         "--contract-dir", str(spec),
                          "--test-source-root", str(tests))
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
@@ -110,7 +140,7 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
             root = Path(temporary)
             spec = root / "spec"
             tests = root / "tests/dev/legible/example/widget"
-            write(spec / "Widget.spec.md",
+            write(spec / "Widget.contract.md",
                   "# Widget\n\n### `view(userId)`\n"
                   "- **Flow token:** `Widget.view { outcome, userId, email }`\n\n"
                   "### `view(username)`\n"
@@ -124,7 +154,7 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
                   "assertEquals(\"a@b\", r.get(\"email\")); }\n"
                   "}\n")
             result = run(str(QG / "verify_concept_field_assertions.py"),
-                         "--spec-dir", str(spec),
+                         "--contract-dir", str(spec),
                          "--test-source-root", str(tests))
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
@@ -133,7 +163,7 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
             root = Path(temporary)
             spec = root / "spec"
             tests = root / "tests/dev/legible/example/widget"
-            write(spec / "Widget.spec.md",
+            write(spec / "Widget.contract.md",
                   "# Widget\n\n### `view(userId)`\n"
                   "- **Flow token:** `Widget.view { outcome, userId, email }`\n\n"
                   "### `view(username)`\n"
@@ -145,7 +175,7 @@ class ConceptFieldAssertionFlatTests(unittest.TestCase):
                   "assertEquals(\"Viewed\", r.readOutcome()); }\n"
                   "}\n")
             result = run(str(QG / "verify_concept_field_assertions.py"),
-                         "--spec-dir", str(spec),
+                         "--contract-dir", str(spec),
                          "--test-source-root", str(tests))
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("userId", result.stdout)

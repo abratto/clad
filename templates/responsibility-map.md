@@ -37,16 +37,49 @@
 
 ## Concepts
 
-| Concept | Owned state (one line) | Owned actions | Notes |
-|---|---|---|---|
-| `Web` | route table | `request`, `respond` | Bootstrap concept — see `methodology/architecture/WEB_CONCEPT.md`. Replace with `Grpc`, `Stream`, `Cli`, etc. if this feature's transport is not HTTP. |
-| `<Name>` | `<field>: <Type>`, `<field>: <Type>` | `<actionName>`, `<actionName>` | <e.g. "no persistence in v1"> |
-| `<Name>` | … | … | |
+> **Consult the system vocabulary BEFORE deriving.** Read
+> `features/_system/concepts-catalog.md` (the generated index — does the
+> action I need already exist?) and `features/_system/concept-dependence.md`
+> (the app-level extrinsic graph). Classify each concept's `Origin`:
+>
+> - `reused:UC-XX` — the concept and the actions needed already exist
+>   canonically. Bind only; do NOT re-author the spec.
+> - `extends:UC-XX` — the concept exists but the needed action/state does
+>   not. Record a proposal below.
+> - `new` — otherwise. Record a proposal below.
+>
+> `UC-XX` is the `introduced-by` provenance from the catalog. When the
+> catalog and dependence graph do not yet exist (a project's first feature),
+> every row is `new`.
+
+| Concept | Origin | Owned state (one line) | Owned actions | Notes |
+|---|---|---|---|---|
+| `Web` | `new` | route table | `request`, `respond` | Bootstrap concept — see `methodology/architecture/WEB_CONCEPT.md`. Replace with `Grpc`, `Stream`, `Cli`, etc. if this feature's transport is not HTTP. |
+| `<Name>` | `new` \| `reused:UC-XX` \| `extends:UC-XX` | `<field>: <Type>`, `<field>: <Type>` | `<actionName>`, `<actionName>` | <e.g. "no persistence in v1"> |
+| `<Name>` | … | … | … | |
 
 > **Bootstrap concept rule:** every feature must have exactly one
 > bootstrap concept row — the concept that owns the transport boundary
 > (entry point + exit point). For HTTP this is `Web`. Remove this
 > comment block once the row is confirmed.
+
+## Proposals
+
+> One row for every concept whose Origin is `new` or `extends:UC-XX`.
+> `reused:UC-XX` rows have NO row here — they bind to the canonical spec
+> unchanged. Stage 02 authors each proposal to full anatomy in this
+> feature's output; on gate approval it is promoted into the corpus with
+> `./clad promote-concepts`. If a proposed `extends` would give the concept
+> a second purpose, split it into a `new` concept instead.
+
+| Concept | Kind | Proposed addition (actions / state) | Requires (dependence claim) | Rationale |
+|---|---|---|---|---|
+| `<Name>` | `new` \| `extends:UC-XX` | `<actionName>`, `<field>: <Type>` | `<ConceptName>` (or `—`) | <why the vocabulary must grow> |
+
+> **Dependence claims are proposals, not edits.** `Requires` records what
+> this concept would need present in *this app* (an extrinsic dependence —
+> see `concept-dependence.md`). It is reviewed with the proposal at this
+> feature's gate; the app-level graph is updated only through promotion.
 
 ## Coverage check
 

@@ -17,7 +17,7 @@
 |---|---|---|
 | Concept(s) | yes | `User.concept.md` → `UserNaming.concept.md`; `concept User` → `concept UserNaming`; action qualifiers re-derived |
 | Sync(s) | yes | three `WhenUserLookupByUsername…` syncs renamed + `triggeredBy`/`then` re-derived to `UserNaming/lookupByUsername` |
-| SPEC slices | yes | `User.spec.md` → `UserNaming.spec.md`; flow-token names re-derived |
+| Contract slices | yes | `User.contract.md` → `UserNaming.contract.md`; flow-token names re-derived |
 | Flow tests | yes | `login-flow-test.md` concept references updated |
 | Concept tests | yes | `UserLookupByUsernameTest` → `UserNamingLookupByUsernameTest` |
 | Sync tests | yes | sync-test-derivation references updated |
@@ -32,7 +32,7 @@
 5. 03a — dependency cards: rename `UserNaming-card.md`
 6. 03b — data model: rename file + header
 7. 04a — storage mapping: rename region/table
-8. 04b — SPEC slices: rename file + header
+8. 04b — Contract slices: rename file + header
 9. 04c — flow tests: update references
 10. 04d/04e — concept/sync tests: rename classes
 11. 05 — verification trace: update references

@@ -34,8 +34,8 @@
 > expected outcome from a fresh instance without seeding prior state
 > is a defect in the test, not the implementation.
 >
-> **Coverage rule:** every outcome defined in the SPEC slice
-> (`04b_spec/output/`) must appear as at least one row, whether or not
+> **Coverage rule:** every outcome defined in the contract slice
+> (`04b_contract/output/`) must appear as at least one row, whether or not
 > it is exercised by a flow test. Quote the spec line if the outcome
 > does not appear in any flow test — this confirms it is spec-defined
 > and not invented.
@@ -51,7 +51,7 @@
 ## Sync rules → sync tests
 
 > For Stage 04e. One test class per sync. Class name: `<SyncName>Test`
-> (e.g. `WhenPasswordAuthCheckOkThenSessionGrantForLoginTest`). Use
+> (e.g. `GrantWhenCheckOkTest`). Use
 > `@Nested` for trigger outcome groups (`WhenCheckOk`). Method names:
 > `should<Trigger><Then>`.
 > Assertions verify the downstream action was scheduled (interaction

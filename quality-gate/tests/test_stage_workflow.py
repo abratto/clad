@@ -356,7 +356,9 @@ class GateApprovalAutonomyTests(unittest.TestCase):
             (output / "login-chain.md").write_text(
                 "| When | Then | Inputs | Outcome | Why |\n"
                 "|---|---|---|---|---|\n"
-                "| `Web.request[Routed]` | `Web.handle` | `routed` | `Ok` | entry |\n",
+                "| `Web.request[Routed]` | `Web.handle` | `routed` | `Ok` | entry |\n"
+                "\n```mermaid\nstateDiagram-v2\n"
+                "    [*] --> Web_request\n    Web_request --> [*]\n```\n",
                 encoding="utf-8",
             )
 

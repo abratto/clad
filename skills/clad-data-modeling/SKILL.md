@@ -1,6 +1,6 @@
 ---
 name: clad-data-modeling
-description: Produce conceptual data models during CLAD Stage 03b. Use when applying the CSDP 7-step procedure to derive profile-neutral data models from concept specs and dependency review cards.
+description: Produce conceptual data models during CLAD Stage 03b. Use when applying the CSDP 7-step procedure to derive profile-neutral data models from concept specs and coordination review cards.
 ---
 
 # CLAD Data Modeling (Stage 03b)

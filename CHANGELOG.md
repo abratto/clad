@@ -10,6 +10,199 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.8.0] — 2026-09-20
+
+Minor release: **system-scope concept vocabulary (Model B)**, the contract and
+grammar changes that composing concepts across use cases first forced, and the
+engine/gate hardening those surfaced. Concepts become canonical, system-scope,
+reusable assets that use cases *compose* — reuse, extend, or propose — instead
+of re-deriving per feature. Every item below is experiment-found and carries a
+`maintenance/` record.
+
+### Added
+
+**Flow pinning: every non-bootstrap sync names its flow root.** Maintenance
+record `maintenance/sync-flow-pinning.md`; experiment-found (UC-04: UC-03's lend
+fired in the return flow, and UC-04's close fired in the borrow flow).
+
+- The generator pins every non-bootstrap rule — `requested: Web/request:
+  [ route: "returns" ] => [ Routed ]` as its **last** conjunct — which is the
+  paper's `RegistrationError` idiom (§5.3, "other web requests may be in process
+  at the same time") and ConceptBox's universal practice ("Multiple When Clauses:
+  Handling Request Flow"). It is last, not first: the engine binds
+  `triggerField`/`triggerInput` to the rule's primary (first) conjunct, so a pin
+  before the domain trigger blanks the rule's arguments.
+- The pin is **not** a name component: it is in every non-bootstrap rule, so it
+  discriminates nothing — unlike the route on a bootstrap, which does.
+- `verify_sync_flow_pin.py` enforces the shape it names: the flow root must be
+  the last conjunct, exactly one per rule, and its route must match the route the
+  feature's Stage 01b chain roots (a pin-first or route-drifted spec now fails).
+
+
+**Grammar v3.1: a route-scoped bootstrap sync's name carries its route.**
+Maintenance record `maintenance/route-scoped-sync-names.md`; experiment-found
+(two use cases bootstrapping `MemberEnrolment.verify` on different routes
+produced two identically-named rules, surfaced only at Stage 04e).
+
+- `sync_stem` gains an optional `For<Route>` component, present exactly when the
+  rule has a route matcher: `VerifyForReturnsWhenRequestRouted`. This is *not* a
+  revival of the pre-v0.6 `For<Scope>`, which held the feature slug and could
+  never disambiguate anything — the route is a real discriminator.
+- `generate_syncs.py` now derives the route from the chain's flow root
+  (`Web/request[POST /loans]`), not only from a `route: "…"` form, so a
+  bootstrap's spec carries the matcher and not just its implementation.
+- `verify_shared_triggers_current.py` fails when the cross-UC shared-trigger view
+  is stale — it had been, which is why this was not surfaced at Stage 03a.
+
+
+**Gate scripts: the contract surface is the shadowed union with the corpus, and
+the layout guard runs at 04a.** Both experiment-found (UC-04-return-copy).
+
+- A feature emits a contract only for a concept it introduces or extends; a
+  reused concept binds the canonical contract (R22). `verify_action_chain` and
+  `verify_outcome_alignment` read one directory, so a chain naming a reused
+  action failed them; `verify_concept_field_assertions` resolved the concept from
+  the contracts and therefore *silently skipped* a reused concept's tests — no
+  R14/R16 coverage at all. All three now take `--contract-dir` repeatedly and
+  resolve via `merge_by_concept` / `contract_actions` / `parse_spec_outcomes_multi`
+  (earlier dirs shadow later), wired through `concept_source_dirs`.
+- `verify_profile_paths` is now wired to Stage 04a. Its own advice is "fill
+  `_config` at Stage 04a before advancing", but it only ran at 04c+, so `advance`
+  passed 04a with a `TBD` layout and every later path check audited the seed's
+  tree instead of the app's — twice (UC-03 and UC-04).
+
+
+Methodology: **the Stage 01b chain diagram is required, and its derivation rules
+now cover per-outcome rows and joins.** Maintenance record
+`maintenance/chain-diagram-required-and-joins.md`; experiment-found (a chain
+table was committed with no diagram by reading the template's "optional"
+heading rather than its same-turn rule).
+
+- `templates/chain-table.md`: "Diagram (required)"; rules for rows that share a
+  `When` and a `Then` (they collapse into one arrow; the outcomes reappear as
+  that node's outgoing arrows) and for join rows (draw from the conjunct that
+  completes last, name the rest in the label; no `<<join>>` pseudo-state).
+- The 01b stage contract says the same, and `verify_chain_grammar.py` now fails
+  a chain file with no `stateDiagram-v2` block.
+
+**Engine: the `where` clause gains a negative state pattern**, `absent ( Concept ; ?subject ; predicate )` — "the ones that do not have X".
+Maintenance record `maintenance/engine-absent-state-guard.md`; experiment-found
+(UC-04-return-copy could not express "the member's *remaining open* loans": every
+`where` source enumerates state, and `collect` takes no filter).
+
+- `Clause.Absent` + `Dsl.absent(...)` + `WhereEvaluator` support. It binds nothing
+  (a D- concept-state read), fails closed on an unbound subject, and is not a filter.
+- Documented in `SYNC_PATTERNS.md`, `SYNCHRONIZATIONS.md` section Collect, and the 03
+  stage contract; the 03a card parser recognises it as a concept-state read.
+
+- **Concept data model and contract are canonical.** Maintenance records
+  `maintenance/concept-owned-data-model.md` and
+  `maintenance/spec-renamed-to-concept-contract.md` (the rename itself is under
+  *Changed*). The corpus holds three artefacts per concept —
+  `<Name>.concept.md`, `<Name>.data-model.md`, `<Name>.contract.md` — and a
+  feature derives one only when it introduces the concept or changes its state;
+  a reused concept binds the canonical artefacts.
+- **Concept provenance and additivity.** Maintenance record
+  `maintenance/concept-provenance-and-additivity.md`. Canonical artefacts record
+  their `introduced-by` / `extended-by` history, feature copies are stamped as
+  proposal snapshots, promotion cannot move a concept backwards (only the
+  concept's current source may promote it, with a reason), and
+  `verify_concept_additivity.py` refuses a dropped or restated canonical state
+  line or contract outcome (a deliberate, bounded removal is listed in
+  `_config/additivity-exceptions.md`).
+- **Canonical concept corpus** — `features/_system/concepts/<Name>.concept.md`,
+  seeded from the `UC-00-login` worked example with `introduced-by` provenance.
+- **Generated catalog index** — `features/_system/concepts-catalog.md`
+  (`Concept | Purpose | Type params | Actions | Introduced by | Used by | Notes`)
+  via `quality-gate/generate_concepts_catalog.py`, so Stage 01a can answer
+  "does the action already exist?" without opening the full spec.
+- **App-level dependence graph** — `features/_system/concept-dependence.md`,
+  the reviewed *extrinsic* dependence graph (distinct from R1's absent
+  intrinsic dependence), plus valid subsets and topological levels.
+- **Cross-UC shared-trigger view** — `features/_system/shared-triggers.md` via
+  `quality-gate/generate_shared_triggers.py` (advisory).
+- **Criteria gate** — `quality-gate/verify_concept_criteria.py` (mechanical
+  subset) plus a human criteria checklist in the Stage 02 contract.
+- **`./clad promote-concepts`** — `quality-gate/promote_concepts.py`; promotes
+  an approved feature's NEW/EXTEND proposals into the corpus. Gated on Gate 2
+  approval, idempotent, receipted, refuses a frozen tree, never silent.
+- **Proposal and registry gates** — `quality-gate/verify_concept_proposals.py`
+  (NEW/EXTEND rows ⇔ `<Name>.concept.md` proposals) and
+  `quality-gate/verify_concept_registry.py` (one introducer; no reused concept
+  redefined; approved proposals promoted; catalog completeness).
+- **Rule R22** — a concept is defined once, in the canonical corpus.
+
+### Changed
+
+- **Sync-name grammar v3.** Maintenance record
+  `maintenance/sync-name-grammar-v3.md`. Names are action-first and
+  concept-free — `<TargetAction>When<TriggerAction><Completion>` — with a
+  deterministic escalation that adds concept tokens back only on a genuine
+  collision. The old `For<Scope>` (the feature slug) is gone: it was identical
+  inside a pack, so it could not disambiguate anything.
+- **`SPEC` is renamed to the concept contract, and is canonical.** Maintenance
+  record `maintenance/spec-renamed-to-concept-contract.md`. The artefact
+  `<Name>.spec.md` → `<Name>.contract.md`, the stage folder `04b_spec/` →
+  `04b_contract/`, the stage label, the generator and parity script, and the
+  prose. An extending feature moves it; a reusing feature binds the canonical
+  one (before, each feature carried a divergent per-UC copy).
+- **A sync `then` carries the authored result, not the transport frame.**
+  Maintenance record `maintenance/transport-framing-adapter-owned.md`. The
+  transport envelope (status, body nesting) is the primary adapter's
+  serialization step; a nested-map `then` argument is a boundary violation and
+  has been flattened out of the shipped specs.
+- **Concept resolution is a union (M1).** `clad_stages.concept_source_dirs()`
+  returns `[<feature>/02_concepts/output, features/_system/concepts]` — a
+  feature's proposal shadows the corpus spec of the same name. The four
+  concept-reading checks take a repeatable `--concept-dir`. A feature with no
+  corpus behaves exactly as before (legacy fallback).
+- **Stage 02** now always emits `concept-bindings.md` plus a proposal per
+  NEW/EXTEND concept; the file manifest is derived from the responsibility
+  map's new `Origin` column.
+- **Stage 01a** gains an `Origin` column (`new` | `reused:UC-XX` |
+  `extends:UC-XX`) and a *Proposals* section.
+- **Stage 03a** is re-described as the per-UC **coordination review** (folder
+  and artefact names unchanged); its cards are evidence for a dependence edge,
+  never its source.
+- **`verify_shared_action_contracts.py`** now compares each feature's proposal
+  against the canonical corpus (drift = a proposal diverging from the corpus),
+  keeping the legacy cross-feature comparison for pre-Model-B features.
+- **R17 coverage** — editing a canonical corpus concept is now
+  iterative-change-scoped (`verify_iterative_change_readiness.py`,
+  `verify_iterative_change_coupling.py`).
+- Stage 03b/04b/04d contracts resolve concept state from the corpus, not a
+  per-UC copy.
+
+### Fixed
+
+- **The empty-safe aggregate carried the wrong frame.** Maintenance record
+  `maintenance/engine-empty-safe-aggregate.md`; experiment-found UC-04. When
+  `absent` filtered a non-empty fan-out to nothing, the aggregate seeded a blank
+  frame, so a rule answered `200` with a correct `openLoans: []` and **nulls** for
+  every earlier binding. It now carries the frame from **before the fan-out
+  chain** (ConceptBox's `const originalFrame = frames[0]`).
+- **Parity checks learned the pin's shapes.** `verify_sync_implementation_parity`
+  reads a rule's mechanical name without the flow pin (keeping the bootstrap
+  route), and `--strict-trigger` reads the rule's **primary** conjunct, not its
+  pin.
+
+### Upgrade notes
+
+- **Renames.** `<Name>.spec.md` → `<Name>.contract.md`; stage folder `04b_spec/`
+  → `04b_contract/`. Update local references and any tooling that names them.
+- **Sync names change.** Grammar v3 renames every sync (action-first,
+  concept-free); grammar v3.1 adds `For<Route>` to route-scoped bootstraps.
+  Re-run `generate_syncs.py --write` at Stage 03; a sync rename invalidates
+  Gate 2, and the Java rule names move with the specs.
+- **Flow pinning.** Every non-bootstrap `*.sync.md` gains its flow root as the
+  **last** `when` conjunct (the domain trigger stays primary). This changes specs
+  and their Java rules, so each feature re-approves Gate 2 before it advances.
+- **Concepts are canonical.** A project's corpus starts empty and is not
+  inherited from the worked example; a reused concept binds the corpus's
+  artefacts, and an extension reaches the corpus only through
+  `./clad promote-concepts` on Gate-2 approval.
+- **`absent` is additive.** Existing `where` clauses are unaffected.
+
 ## [0.7.1] — 2026-09-16
 
 Patch release: two follow-ups from the same **13-use-case Conduit rebuild**,

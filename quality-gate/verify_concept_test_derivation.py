@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
 """
-verify_concept_test_derivation.py — Stage gate: concept test derivation matches SPEC outcomes.
+verify_concept_test_derivation.py — Stage gate: concept test derivation matches contract outcomes.
 
 Why this exists:
-  Concept tests (Stage 04d-red) are derived mechanically from SPEC outcome enums
-  (04b_spec) and outer flow tests (04c). An LLM can omit an outcome, rename it,
+  Concept tests (Stage 04d-red) are derived mechanically from contract outcome enums
+  (04b_contract) and outer flow tests (04c). An LLM can omit an outcome, rename it,
   or write tests without updating the derivation map. This script checks that
-  every SPEC outcome has a corresponding test row in the derivation map and
+  every contract outcome has a corresponding test row in the derivation map and
   that every named test class/method exists in the Java source.
 
 Checks:
-  1. Every SPEC outcome enum for every concept action has a matching row
+  1. Every contract outcome enum for every concept action has a matching row
      in concept-test-derivation.md
   2. Every test method named in the derivation map exists in the corresponding
      Java test class
   3. No test method in the derivation map references an outcome not defined
-     in the SPEC
+     in the contract
 
 Usage:
   python3 verify_concept_test_derivation.py \
-    --spec-dir <04b_spec/output/> \
+    --contract-dir <04b_contract/output/> \
     --derivation <concept-test-derivation.md> \
     --test-source-root <APP_TEST_SOURCE_ROOT>
 """
@@ -32,9 +32,9 @@ import sys
 import artifact_parsers as ap
 
 
-def parse_spec_outcomes(spec_dir):
-    """Shared SPEC-outcome parser (artifact_parsers)."""
-    return ap.parse_spec_outcomes(spec_dir)
+def parse_spec_outcomes(contract_dir):
+    """Shared contract-outcome parser (artifact_parsers)."""
+    return ap.parse_spec_outcomes(contract_dir)
 
 
 def parse_derivation(derivation_path):
@@ -70,9 +70,9 @@ def find_java_test_method(test_file, method_name):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Verify concept test derivation against SPEC outcomes")
-    parser.add_argument("--spec-dir", required=True,
-                        help="Path to 04b_spec/output/")
+        description="Verify concept test derivation against contract outcomes")
+    parser.add_argument("--contract-dir", required=True,
+                        help="Path to 04b_contract/output/")
     parser.add_argument("--derivation", required=True,
                         help="Path to concept-test-derivation.md")
     parser.add_argument("--test-source-root", required=True,
@@ -81,8 +81,8 @@ def main():
 
     passed = True
 
-    if not os.path.isdir(args.spec_dir):
-        print(f"FAIL  SPEC directory not found: {args.spec_dir}")
+    if not os.path.isdir(args.contract_dir):
+        print(f"FAIL  contract directory not found: {args.contract_dir}")
         sys.exit(1)
     if not os.path.isfile(args.derivation):
         print(f"FAIL  derivation file not found: {args.derivation}")
@@ -91,10 +91,10 @@ def main():
         print(f"FAIL  test source root not found: {args.test_source_root}")
         sys.exit(1)
 
-    # 1. Parse SPEC outcomes
-    spec_outcomes = parse_spec_outcomes(args.spec_dir)
+    # 1. Parse contract outcomes
+    spec_outcomes = parse_spec_outcomes(args.contract_dir)
     if not spec_outcomes:
-        print("FAIL  no SPEC outcomes parsed — check --spec-dir")
+        print("FAIL  no contract outcomes parsed — check --contract-dir")
         sys.exit(1)
 
     # 2. Parse derivation map
@@ -111,7 +111,7 @@ def main():
         derived_outcomes.setdefault(key, set()).add(outcome)
         derived_methods.setdefault(test_class, []).append((test_method, outcome))
 
-    # 3. Cross-reference: every SPEC outcome has a derivation row
+    # 3. Cross-reference: every contract outcome has a derivation row
     for (concept, action), spec_outs in sorted(spec_outcomes.items()):
         key = (concept, action)
         derived_outs = derived_outcomes.get(key, set())
@@ -119,13 +119,13 @@ def main():
         extra = derived_outs - spec_outs
 
         for outcome in sorted(missing):
-            print(f"FAIL  {concept}.{action}: SPEC outcome '{outcome}' "
+            print(f"FAIL  {concept}.{action}: contract outcome '{outcome}' "
                   f"has no test row in derivation map")
             passed = False
 
         for outcome in sorted(extra):
             print(f"WARN  {concept}.{action}: derivation maps outcome "
-                  f"'{outcome}' but it is not in SPEC outcomes "
+                  f"'{outcome}' but it is not in contract outcomes "
                   f"{sorted(spec_outs)}")
             # WARN not FAIL — derivation may cover cross-feature outcomes
 
@@ -149,7 +149,7 @@ def main():
     action_count = len(spec_outcomes)
 
     if passed:
-        print(f"PASS  {spec_count} SPEC outcomes → {derived_count} derivation "
+        print(f"PASS  {spec_count} contract outcomes → {derived_count} derivation "
               f"rows across {action_count} actions; all Java test methods exist")
         sys.exit(0)
     else:

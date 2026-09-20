@@ -84,15 +84,86 @@ def _dir(rel: str) -> Callable[[str], str]:
 
 # Convenience references to the per-stage output directories.
 CHAIN_DIR = _dir("01b_chain-table")
+# Deprecated for concept-spec resolution: prefer `concept_source_dirs()` — the
+# effective concept source is the UNION of this feature's proposals and the
+# canonical corpus (maintenance change `system-scope-concept-vocabulary`, M1).
+# Kept for backward compatibility with derived repos and older scripts.
 CONCEPT_DIR = _dir("02_concepts")
 SYNC_DIR = _dir("03_syncs")
 DEP_DIR = _dir("03a_dependency-review")
 DATA_DIR = _dir("03b_data-model")
 
 
-def _spec_dir(feature_root: str) -> str:
+def _contract_dir(feature_root: str) -> str:
     return os.path.join(
-        feature_root, "stages", "04_implement", "04b_spec", "output")
+        feature_root, "stages", "04_implement", "04b_contract", "output")
+
+
+def _concept_corpus_dir(feature_root: str) -> str:
+    """The system-scope concept corpus (maintenance change
+    `system-scope-concept-vocabulary`, decision D2).
+
+    Resolved through the repo-root-relative `concepts.dir` property, defaulting
+    to `features/_system/concepts`. Returns '' when the property points nowhere
+    and the default directory does not exist (a legacy feature)."""
+    corpus = _prop_path(feature_root, "concepts.dir")
+    if corpus:
+        return corpus
+    default = os.path.join(_repo_root(feature_root), "features", "_system",
+                           "concepts")
+    return default if os.path.isdir(default) else ""
+
+
+def concept_source_dirs(feature_root: str) -> List[str]:
+    """Ordered concept-spec source dirs for a feature (decision D5 / M1).
+
+    A feature's own Stage-02 output (its NEW/EXTEND proposals) shadows the
+    canonical corpus by concept name, so it is listed FIRST. When no corpus
+    exists (legacy / pre-Model-B feature) the result is just the feature's own
+    `02_concepts/output`, which is exactly the old behaviour."""
+    dirs = [output_dir(feature_root, "02_concepts")]
+    corpus = _concept_corpus_dir(feature_root)
+    if corpus:
+        dirs.append(corpus)
+    return dirs
+
+
+def feature_concept_names(feature_root: str) -> List[str]:
+    """The concepts THIS feature uses, from its Stage-01a responsibility map.
+
+    Empty when the map is absent (legacy / pre-01a), so callers fall back to
+    the whole concept-source union. Feature-scoped per-UC artefacts (contracts,
+    data models) must be produced only for these concepts — the union of
+    concept-source dirs also contains every OTHER concept in the corpus."""
+    resp = _resp_map(feature_root)
+    if not os.path.isfile(resp):
+        return []
+    return [c for c in sorted(ap.parse_responsibility_map(resp)) if c != "Web"]
+
+
+def feature_contract_concepts(feature_root: str) -> List[str]:
+    """Concepts this feature must produce a concept contract for (delegates to
+    `artifact_parsers`, the single source of truth shared with the 04b
+    manifest)."""
+    return ap.feature_contract_concepts(feature_root)
+
+
+def feature_model_concepts(feature_root: str) -> List[str]:
+    """Concepts this feature must produce a conceptual data model for.
+
+    Delegates to `artifact_parsers.feature_model_concepts` (single source of
+    truth, shared with the 03b file manifest) with this feature's resolved
+    corpus dir."""
+    return ap.feature_model_concepts(feature_root, _concept_corpus_dir(feature_root))
+
+
+def _concept_dir_args(feature_root: str) -> List[str]:
+    """`--concept-dir <d>` repeated once per concept-source dir, in precedence
+    order. The consumer checks merge the dirs, earlier winning on a name clash."""
+    args: List[str] = []
+    for directory in concept_source_dirs(feature_root):
+        args += ["--concept-dir", directory]
+    return args
 
 
 # --------------------------------------------------------------------------
@@ -157,21 +228,15 @@ _SYNC_MATRIX = Check(
 _DATA_MODEL = Check(
     name="data_model",
     script="verify_data_model.py",
-    build_args=lambda r: [
-        "--data-dir", DATA_DIR(r),
-        "--concept-dir", CONCEPT_DIR(r),
-    ],
-    requires=lambda r: [DATA_DIR(r), CONCEPT_DIR(r)],
+    build_args=lambda r: ["--data-dir", DATA_DIR(r)] + _concept_dir_args(r),
+    requires=lambda r: [DATA_DIR(r)] + concept_source_dirs(r),
 )
 
-_SPEC_PARITY = Check(
-    name="spec_parity",
-    script="verify_spec_parity.py",
-    build_args=lambda r: [
-        "--concept-dir", CONCEPT_DIR(r),
-        "--spec-dir", _spec_dir(r),
-    ],
-    requires=lambda r: [CONCEPT_DIR(r), _spec_dir(r)],
+_CONTRACT_PARITY = Check(
+    name="contract_parity",
+    script="verify_contract_parity.py",
+    build_args=lambda r: _concept_dir_args(r) + ["--contract-dir", _contract_dir(r)],
+    requires=lambda r: concept_source_dirs(r) + [_contract_dir(r)],
 )
 
 _OUTCOME_ALIGNMENT = Check(
@@ -179,9 +244,13 @@ _OUTCOME_ALIGNMENT = Check(
     script="verify_outcome_alignment.py",
     build_args=lambda r: [
         "--chain-dir", CHAIN_DIR(r),
-        "--spec-dir", _spec_dir(r),
+        # Feature contracts first, then the canonical corpus: a reused concept
+        # has no feature-local contract and is validated against the canonical.
+        "--contract-dir", _contract_dir(r),
+        *[arg for d in concept_source_dirs(r)
+          for arg in ("--contract-dir", d)],
     ],
-    requires=lambda r: [CHAIN_DIR(r), _spec_dir(r)],
+    requires=lambda r: [CHAIN_DIR(r), _contract_dir(r), *concept_source_dirs(r)],
 )
 
 _ACTION_CHAIN = Check(
@@ -190,14 +259,18 @@ _ACTION_CHAIN = Check(
     build_args=lambda r: [
         "--resp-map", _resp_map(r),
         "--chain-dir", CHAIN_DIR(r),
-        "--concept-dir", CONCEPT_DIR(r),
+        *_concept_dir_args(r),
         "--sync-dir", SYNC_DIR(r),
         "--dep-dir", DEP_DIR(r),
-        "--spec-dir", _spec_dir(r),
+        # The feature's own contracts first, then the canonical corpus: a reused
+        # concept has no feature-local contract and binds the canonical one.
+        "--contract-dir", _contract_dir(r),
+        *[arg for d in concept_source_dirs(r)
+          for arg in ("--contract-dir", d)],
     ],
     requires=lambda r: [
-        _resp_map(r), CHAIN_DIR(r), CONCEPT_DIR(r), SYNC_DIR(r), DEP_DIR(r),
-        _spec_dir(r),
+        _resp_map(r), CHAIN_DIR(r), *concept_source_dirs(r), SYNC_DIR(r),
+        DEP_DIR(r), _contract_dir(r),
     ],
 )
 
@@ -272,10 +345,14 @@ _FIELD_ASSERTIONS = Check(
     name="concept_field_assertions",
     script="verify_concept_field_assertions.py",
     build_args=lambda r: [
-        "--spec-dir", _spec_dir(r),
+        # The tests under the test root include reused concepts' tests, so this
+        # gate must see the canonical contracts too (R22).
+        "--contract-dir", _contract_dir(r),
+        *[arg for d in concept_source_dirs(r)
+          for arg in ("--contract-dir", d)],
         "--test-source-root", _test_source_root(r),
     ],
-    requires=lambda r: [_spec_dir(r), _test_source_root(r)],
+    requires=lambda r: [_contract_dir(r), _test_source_root(r)],
 )
 
 _CUCUMBER_GREEN = Check(
@@ -442,16 +519,16 @@ _CHAIN_MANIFEST = _manifest_check("chain", "01b_chain-table", "01b")
 _CONCEPT_MANIFEST = _manifest_check("concept", "02_concepts", "02")
 _CARD_MANIFEST = _manifest_check("dependency", "03a_dependency-review", "03a")
 _DATA_MODEL_MANIFEST = _manifest_check("data_model", "03b_data-model", "03b")
-_SPEC_MANIFEST = _manifest_check("spec", "04_implement/04b_spec", "04b")
+_CONTRACT_MANIFEST = _manifest_check("spec", "04_implement/04b_contract", "04b")
 
 _PORT_SPEC_04B = Check(
     name="port_spec_contract",
     script="verify_port_spec_contract.py",
     build_args=lambda r: [
         "--port-spec", _port_spec(r),
-        "--spec-dir", _spec_dir(r),
+        "--contract-dir", _contract_dir(r),
     ],
-    requires=lambda r: [_port_spec(r), _spec_dir(r)],
+    requires=lambda r: [_port_spec(r), _contract_dir(r)],
 )
 
 _PORT_SPEC_04C = Check(
@@ -459,10 +536,10 @@ _PORT_SPEC_04C = Check(
     script="verify_port_spec_contract.py",
     build_args=lambda r: [
         "--port-spec", _port_spec(r),
-        "--spec-dir", _spec_dir(r),
+        "--contract-dir", _contract_dir(r),
         "--feature-dir", output_dir(r, "04_implement/04c_flow-tests"),
     ],
-    requires=lambda r: [_port_spec(r), _spec_dir(r)],
+    requires=lambda r: [_port_spec(r), _contract_dir(r)],
 )
 
 _CLOSE_EVIDENCE = Check(
@@ -533,14 +610,14 @@ _CONCEPT_TEST_DERIVATION = Check(
     name="concept_test_derivation",
     script="verify_concept_test_derivation.py",
     build_args=lambda r: [
-        "--spec-dir", _spec_dir(r),
+        "--contract-dir", _contract_dir(r),
         "--derivation", os.path.join(
             output_dir(r, "04_implement/04d_concept-tdd/04d_red-tests"),
             "concept-test-derivation.md"),
         "--test-source-root", _test_source_root(r),
     ],
     requires=lambda r: [
-        _spec_dir(r),
+        _contract_dir(r),
         os.path.join(output_dir(r, "04_implement/04d_concept-tdd/04d_red-tests"),
                      "concept-test-derivation.md"),
         _test_source_root(r),
@@ -601,8 +678,29 @@ _CHAIN_GRAMMAR = Check(
 _CONCEPT_STATE_RELATIONAL = Check(
     name="concept_state_relational",
     script="verify_concept_state_relational.py",
-    build_args=lambda r: ["--concept-dir", CONCEPT_DIR(r)],
-    requires=lambda r: [CONCEPT_DIR(r)],
+    build_args=lambda r: _concept_dir_args(r),
+    requires=lambda r: concept_source_dirs(r),
+)
+
+_CONCEPT_CRITERIA = Check(
+    name="concept_criteria",
+    script="verify_concept_criteria.py",
+    build_args=lambda r: _concept_dir_args(r),
+    requires=lambda r: concept_source_dirs(r),
+)
+
+_CONCEPT_PROPOSALS = Check(
+    name="concept_proposals",
+    script="verify_concept_proposals.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [_resp_map(r), output_dir(r, "02_concepts")],
+)
+
+_CONCEPT_ADDITIVITY = Check(
+    name="concept_additivity",
+    script="verify_concept_additivity.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [_resp_map(r)] + concept_source_dirs(r),
 )
 
 _RELATIONAL_MAPPING = Check(
@@ -625,19 +723,24 @@ STAGES: List[Stage] = [
         Stage("01b", "Chain table", "01b_chain-table", gate_after=1,
             checks=[_CHAIN_GRAMMAR, _CHAIN_MANIFEST]),
     Stage("02", "Concept specs", "02_concepts",
-          checks=[_CONCEPT_STATE_RELATIONAL, _CONCEPT_MANIFEST]),
+          checks=[_CONCEPT_STATE_RELATIONAL, _CONCEPT_CRITERIA,
+                  _CONCEPT_PROPOSALS, _CONCEPT_MANIFEST]),
     Stage("03", "Syncs", "03_syncs", checks=[_SCENARIO_COVERAGE, _SYNC_MATRIX,
           _SYNC_TRANSITION_COVERAGE,
           _SYNC_CYCLE_GRAPH, _SYNC_OVERLAP]),
     Stage("03a", "Dependency review", "03a_dependency-review",
           checks=[_CARD_MANIFEST]),
     Stage("03b", "Data model", "03b_data-model", gate_after=2,
-          checks=[_DATA_MODEL, _DATA_MODEL_MANIFEST]),
+          checks=[_DATA_MODEL, _DATA_MODEL_MANIFEST, _CONCEPT_ADDITIVITY]),
     Stage("04a", "Storage mapping", "04_implement/04a_storage-mapping",
-          checks=[_RELATIONAL_MAPPING]),
-    Stage("04b", "SPEC", "04_implement/04b_spec",
-          checks=[_SPEC_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN,
-                  _SPEC_MANIFEST, _PORT_SPEC_04B]),
+          # profile_paths runs here as well as at 04c: the guard's own advice is
+          # "fill `_config` at Stage 04a before advancing", and until it was
+          # wired here `advance` happily passed 04a with a TBD layout, so the
+          # checks then audited the seed's tree instead of the app's.
+          checks=[_RELATIONAL_MAPPING, _FEATURE_IMPL_PATHS]),
+    Stage("04b", "Concept contract", "04_implement/04b_contract",
+          checks=[_CONTRACT_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN,
+                  _CONTRACT_MANIFEST, _CONCEPT_ADDITIVITY, _PORT_SPEC_04B]),
     Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3,
           checks=[_FEATURE_IMPL_PATHS, _GHERKIN_DERIVATION, _COLLECTION_COVERAGE,
                   _STEP_DEF_PARITY,

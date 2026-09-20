@@ -40,6 +40,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import artifact_parsers as ap  # noqa: E402
+
 
 # The stateless marker from templates/concept.md.
 STATELESS_RE = re.compile(r"\*None\.\*\s+\w+\s+is stateless\.", re.IGNORECASE)
@@ -143,32 +146,32 @@ def check_concept(path):
 def main():
     parser = argparse.ArgumentParser(
         description="Validate concept state uses relational set notation")
-    parser.add_argument("--concept-dir", required=True,
-                        help="Path to 02_concepts/output/")
+    parser.add_argument("--concept-dir", required=True, action="append",
+                        help="Concept-spec dir; repeatable. Earlier dirs shadow "
+                             "later ones by concept name (a feature's proposal "
+                             "shadows the canonical corpus spec).")
     args = parser.parse_args()
 
-    concept_dir = args.concept_dir
-    if not os.path.isdir(concept_dir):
-        print(f"FAIL  concept directory not found: {concept_dir}")
+    missing = [d for d in args.concept_dir if not os.path.isdir(d)]
+    if missing:
+        print(f"FAIL  concept directory not found: {missing[0]}")
         sys.exit(1)
 
-    files = sorted(f for f in os.listdir(concept_dir)
-                   if f.endswith(".concept.md"))
-    if not files:
-        # A feature may legitimately introduce no new concepts (it reuses an
-        # earlier feature's concepts via a `_REUSES_*.md` marker). Nothing to
-        # validate — skip, don't fail.
+    specs = ap.concept_spec_paths(args.concept_dir)
+    if not specs:
+        # A feature may legitimately introduce no new concepts (every concept
+        # reused from the canonical corpus). Nothing to validate — skip.
         print("SKIP  no .concept.md files in this feature (reuse or N/A)")
         sys.exit(0)
 
     total = 0
-    for fname in files:
-        for msg in check_concept(os.path.join(concept_dir, fname)):
-            print(f"FAIL  {fname}: {msg}")
+    for path in sorted(specs.values()):
+        for msg in check_concept(path):
+            print(f"FAIL  {os.path.basename(path)}: {msg}")
             total += 1
 
     if total == 0:
-        print(f"PASS  {len(files)} concept(s) use relational state notation")
+        print(f"PASS  {len(specs)} concept(s) use relational state notation")
         sys.exit(0)
     sys.exit(1)
 

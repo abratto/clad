@@ -11,6 +11,12 @@ Two things Stage 05 promises that no other check enforces:
      `*IntegrationTest` / `*ContractTest` / `*IT`). A missing one is a real
      gap, but there is no reliable profile-agnostic definition of "the
      adapter test", so this check warns rather than blocks.
+  3. A closed feature's RESUME no longer advertises a live stage. The
+     `./clad` active-feature heuristic treats any RESUME whose `Current stage`
+     names a stage as in progress, so a feature left at `Stage 04c — …` after
+     closing can outrank a genuinely live one — and a command that writes (for
+     example promotion, which replaces corpus entries) can then target the
+     stale feature and overwrite newer content with its older proposal.
 
 Exit is always 0 — this is a review aid, not a gate.
 """
@@ -63,6 +69,20 @@ def find_enabled_adapter_test(test_root):
     return None, disabled_seen
 
 
+CURRENT_STAGE_RE = re.compile(r"^\s*-\s*\*\*Current stage:\*\*\s*`([^`]*)`", re.M)
+CLOSED_STAGE_RE = re.compile(r"^\s*(?:None|TBD)\b|feature complete", re.I)
+
+
+def read_current_stage(feature_root):
+    """The value of RESUME.md's `Current stage` line, or None."""
+    path = os.path.join(feature_root, "RESUME.md")
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8", errors="replace") as handle:
+        match = CURRENT_STAGE_RE.search(handle.read())
+    return match.group(1).strip() if match else None
+
+
 def main():
     parser = argparse.ArgumentParser(description="Stage 05 close-evidence warnings")
     parser.add_argument("--feature-root", required=True)
@@ -93,6 +113,16 @@ def main():
             warnings.append(
                 "adapter surface declared but no enabled flow/integration test "
                 f"found under {args.test_source_root or '<unset>'}{note}.")
+
+    # A closed feature (trace.md written) must not still advertise a live stage.
+    if os.path.isfile(canonical):
+        stage = read_current_stage(feature_root)
+        if stage and not CLOSED_STAGE_RE.search(stage):
+            warnings.append(
+                f"RESUME.md still says 'Current stage: {stage}' although the "
+                "feature is closed; set it to 'None — feature complete' so the "
+                "active-feature heuristic cannot pick this feature over a live "
+                "one (a write command may otherwise target it).")
 
     for warning in warnings:
         print(f"WARN  {warning}")

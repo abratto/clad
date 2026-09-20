@@ -35,8 +35,21 @@ public final class WhereEvaluator {
                                               Conjuncts conjuncts) {
         List<Map<String, Object>> frames = new ArrayList<>();
         frames.add(new LinkedHashMap<>());
+        // The frame set from BEFORE the fan-out chain: an empty-safe aggregate
+        // must carry those bindings forward, not start from nothing and not
+        // carry the fan-out's own variable — which is the value the filtering
+        // clauses just excluded (UC-04: a member returning their last copy got
+        // `openLoans: [the loan just returned]` and nulls for the loan's own
+        // fields). This is ConceptBox's `const originalFrame = frames[0]`.
+        List<Map<String, Object>> carried = null;
         for (Clause clause : rule.where) {
+            if (carried == null && frames.size() > 0
+                    && (clause instanceof Clause.FanOut
+                        || clause instanceof Clause.Absent)) {
+                carried = new ArrayList<>(frames);
+            }
             if (frames.isEmpty() && clause instanceof Clause.CollectBy) {
+                if (carried == null) carried = new ArrayList<>(List.of(new LinkedHashMap<>()));
                 // Empty-safe frame-set aggregate: an aggregate over ZERO frames
                 // still emits one frame carrying the empty list — a zero-item
                 // collection is a value, not an absence. Without this a
@@ -44,7 +57,7 @@ public final class WhereEvaluator {
                 // aggregate (and any downstream join) never runs (conduit
                 // rebuild experiment UC-07: an article with no comments must
                 // still answer 200 {"comments": []}).
-                frames.add(new LinkedHashMap<>());
+                frames.add(new LinkedHashMap<>(carried.get(carried.size() - 1)));
             }
             if (clause instanceof Clause.CollectBy cb) {
                 frames = collectBy(frames, cb, inv, comp, conjuncts);
@@ -208,6 +221,21 @@ public final class WhereEvaluator {
                 }
             }
             return out;
+        }
+        if (clause instanceof Clause.Absent a) {
+            // Fail closed: an unbound subject means the absence could not be
+            // checked, so the frame cannot pass. See
+            // maintenance/engine-absent-state-guard.md.
+            Object bound = frame.get(a.var());
+            if (bound == null) return List.of();
+            Set<String> values = facts.region(a.concept()).read(String.valueOf(bound), a.predicate());
+            if (a.object() == null) {
+                return values.isEmpty() ? List.of(frame) : List.of();
+            }
+            for (Object expected : resolve(a.object(), frame, inv, comp, conjuncts)) {
+                if (values.contains(String.valueOf(expected))) return List.of();
+            }
+            return List.of(frame);
         }
         if (clause instanceof Clause.Guard g) {
             Object bound = frame.get(g.var());

@@ -1,6 +1,6 @@
 ---
 name: clad-concept-tdd
-description: Execute concept-level TDD during CLAD Stage 04d. Use when deriving red concept tests from approved flow tests and SPECs, then implementing green concept classes that make those tests pass. Follows London School inner-loop discipline.
+description: Execute concept-level TDD during CLAD Stage 04d. Use when deriving red concept tests from approved flow tests and contracts, then implementing green concept classes that make those tests pass. Follows London School inner-loop discipline.
 ---
 
 # CLAD Concept TDD (Stage 04d)
@@ -18,8 +18,9 @@ executable concept unit tests from approved outer artefacts, and
 
 ## Files
 
-The stage `CONTEXT.md` `Inputs` names the loading set: `02` concept specs,
-`04b` SPECs, `04c` flow tests, `_config/build-and-test.md`,
+The stage `CONTEXT.md` `Inputs` names the loading set: the canonical concept
+specs (`features/_system/concepts/`), this feature's `02` proposals and
+`concept-bindings.md`, `04b` contracts, `04c` flow tests, `_config/build-and-test.md`,
 `_config/package-and-layout.md`, `TDD.md`, `RULES.md`,
 `templates/test-intent-derivation-map.md`. Profile reference docs
 (`reference-impl/<profile>/`) are loaded only when that profile is
@@ -28,7 +29,7 @@ selected.
 ## Process
 
 1. **04d-red**: Derive concept tests from approved `04c` flow tests
-   and `04b` SPECs. Write test files under `APP_TEST_SOURCE_ROOT`.
+   and `04b` contracts. Write test files under `APP_TEST_SOURCE_ROOT`.
    Run red — compilation succeeds, tests fail behaviorally.
    Record the derivation map and handoff bundle.
 2. **04d-green**: Read the approved red tests. Extract exact packages,
@@ -68,7 +69,7 @@ a field-value test will catch the null immediately.
    field values that downstream syncs consume.
 - No cross-concept imports (R1).
 - Every public action emits a flow token (R5).
-- Distinct SPEC outcomes remain distinct in code paths (R9).
+- Distinct contract outcomes remain distinct in code paths (R9).
 - Do not substitute an in-memory store for the configured storage layer.
 - Use the exact package/source-root from `_config/package-and-layout.md`.
 

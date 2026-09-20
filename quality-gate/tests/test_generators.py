@@ -7,7 +7,7 @@ The core assertion types:
   1. `generate_syncs` over a fixture feature reproduces the canonical sync-name
      set (stem equality) and the emitted *.sync.md files pass
      verify_sync_matrix / verify_sync_cycle_graph / verify_sync_overlap.
-  2. `generate_spec` excludes the bootstrap Web concept and emits one SPEC per
+  2. `generate_contract` excludes the bootstrap Web concept and emits one contract per
      business concept.
   3. `generate_sync_cards` emits one card per participating concept and a
      pattern-d-summary.
@@ -24,7 +24,7 @@ import unittest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 QG = REPO_ROOT / "quality-gate"
 GEN_SYNCS = QG / "generate_syncs.py"
-GEN_SPEC = QG / "generate_spec.py"
+GEN_CONTRACT = QG / "generate_contract.py"
 GEN_CARDS = QG / "generate_sync_cards.py"
 GEN_DATA = QG / "generate_data_model.py"
 GEN_FEATURE = QG / "generate_feature_files.py"
@@ -32,7 +32,7 @@ VERIFY_MATRIX = QG / "verify_sync_matrix.py"
 VERIFY_CYCLE = QG / "verify_sync_cycle_graph.py"
 VERIFY_OVERLAP = QG / "verify_sync_overlap.py"
 VERIFY_DATA_MODEL = QG / "verify_data_model.py"
-VERIFY_SPEC_PARITY = QG / "verify_spec_parity.py"
+VERIFY_CONTRACT_PARITY = QG / "verify_contract_parity.py"
 VERIFY_OUTCOME_ALIGNMENT = QG / "verify_outcome_alignment.py"
 VERIFY_ACTION_CHAIN = QG / "verify_action_chain.py"
 
@@ -77,11 +77,14 @@ class GeneratorPropertyTests(unittest.TestCase):
         stems = sorted(f.name.replace(".sync.md", "") for f in d.glob("*.sync.md"))
         # UC-00-login has exactly seven syncs.
         self.assertEqual(len(stems), 7, stems)
-        # Effect-first naming grammar v2 (maintenance/sync-dsl-legibility.md).
-        self.assertIn("SessionGrantForLoginWhenPasswordAuthCheckOk", stems)
-        self.assertIn("UserNamingLookupByUsernameForLoginWhenWebRequestRouted", stems)
-        self.assertIn("WebRespondForLoginWhenPasswordAuthCheckLocked", stems)
-        self.assertIn("WebRespondForLoginWhenUserNamingLookupByUsernameRefused", stems)
+        # Action-first naming grammar v3 (maintenance/sync-name-grammar-v3.md),
+        # plus v3.1's route component for a route-scoped bootstrap
+        # (maintenance/route-scoped-sync-names.md): the chain root is
+        # `Web/request[POST /login]`, so the name carries `ForLogin`.
+        self.assertIn("GrantWhenCheckOk", stems)
+        self.assertIn("LookupByUsernameForLoginWhenRequestRouted", stems)
+        self.assertIn("RespondWhenCheckLocked", stems)
+        self.assertIn("RespondWhenLookupByUsernameRefused", stems)
 
     def test_generated_syncs_pass_sync_checks(self):
         d = self.sync_dir()
@@ -95,19 +98,71 @@ class GeneratorPropertyTests(unittest.TestCase):
                 r.returncode, 0,
                 f"{script.name} failed post-generation:\n{r.stdout}{r.stderr}")
 
-    def test_generate_spec_excludes_bootstrap_and_covers_concepts(self):
-        spec_dir = self.feature / "stages" / "04_implement" / "04b_spec" / "output"
-        for f in spec_dir.glob("*.spec.md"):
+    def test_generate_contract_excludes_bootstrap_and_covers_concepts(self):
+        contract_dir = self.feature / "stages" / "04_implement" / "04b_contract" / "output"
+        for f in contract_dir.glob("*.contract.md"):
             f.unlink()
-        r = run(GEN_SPEC, "--feature", self.feature, "--write")
+        r = run(GEN_CONTRACT, "--feature", self.feature, "--write")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        specs = sorted(f.name.replace(".spec.md", "") for f in spec_dir.glob("*.spec.md"))
+        specs = sorted(f.name.replace(".contract.md", "") for f in contract_dir.glob("*.contract.md"))
         self.assertEqual(specs, ["PasswordAuth", "Session", "UserNaming"])
         self.assertNotIn("Web", specs)
         # Outcome enums must be SCREAMING_SNAKE_CASE (normalized), not naive .upper().
-        pa = (spec_dir / "PasswordAuth.spec.md").read_text(encoding="utf-8")
+        pa = (contract_dir / "PasswordAuth.contract.md").read_text(encoding="utf-8")
         self.assertIn("`BAD_PASSWORD`", pa)
         self.assertNotIn("`BADPASSWORD`", pa)
+
+    def test_contract_enums_come_from_the_concept_not_one_features_chain(self):
+        """A canonical contract keeps every action's outcomes.
+
+        A feature that only *extends* a concept does not invoke its older
+        actions, so an enum derived purely from this feature's chain tables
+        would silently drop them (UC-03 lost `enrol`'s and `acquire`'s)."""
+        sys.path.insert(0, str(QG))
+        import generate_contract as gc
+
+        spec = self.feature / "stages" / "02_concepts" / "output" / "UserNaming.concept.md"
+        got = gc.collect_concept_outcomes(str(spec))
+        # The concept's own flow tokens are the canonical source.
+        self.assertTrue(got, "no flow-token outcomes parsed from the concept spec")
+        for (concept, action), values in got.items():
+            self.assertEqual(concept, "UserNaming")
+            for v in values:
+                self.assertRegex(v, r"^[A-Z][A-Z0-9_]*$")
+
+    def test_every_non_bootstrap_rule_pins_its_flow_root(self):
+        """The flow pin (maintenance/sync-flow-pinning.md).
+
+        A flow token scopes a match to one flow, but within a flow any rule whose
+        `when` matches fires — so two use cases sharing a completion fire each
+        other's rules. Every non-bootstrap rule therefore names its flow root
+        first, with its route matcher, and the pin is NOT a name component (it is
+        in every such rule, so it discriminates nothing)."""
+        sync_dir = self.sync_dir()
+        for f in sync_dir.glob("*.sync.md"):
+            f.unlink()
+        r = run(GEN_SYNCS, "--feature", self.feature, "--write")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+        pinned = 0
+        for path in sorted(sync_dir.glob("*.sync.md")):
+            text = path.read_text(encoding="utf-8")
+            if "WhenRequestRouted" in path.name:
+                # The bootstrap IS the flow root: it has no pin to carry.
+                self.assertNotIn("requested: Web/request:", text, path.name)
+                continue
+            self.assertIn("requested: Web/request:", text,
+                          f"{path.name} must pin its flow root")
+            pinned += 1
+        self.assertGreater(pinned, 0, "no non-bootstrap rules to check")
+
+    def test_the_pin_is_not_a_name_component(self):
+        """A pinned rule is named by its trigger, not as a join."""
+        sync_dir = self.sync_dir()
+        stems = {f.name.replace(".sync.md", "") for f in sync_dir.glob("*.sync.md")}
+        self.assertIn("CheckWhenLookupByUsernameFound", stems)
+        self.assertFalse([s for s in stems if "JoinRequestRouted" in s],
+                         "the uniform pin must not appear in any name")
 
     def test_generate_cards_cover_participating_concepts(self):
         dep_dir = self.feature / "stages" / "03a_dependency-review" / "output"
@@ -200,7 +255,7 @@ class GeneratorPropertyTests(unittest.TestCase):
             (GEN_SYNCS, {}),
             (GEN_CARDS, {}),
             (GEN_DATA, {}),
-            (GEN_SPEC, {}),
+            (GEN_CONTRACT, {}),
             (GEN_FEATURE, {}),
         ]:
             r = run(gen, "--feature", f, "--write")
@@ -212,17 +267,17 @@ class GeneratorPropertyTests(unittest.TestCase):
             (VERIFY_OVERLAP, "--sync-dir", f / "stages/03_syncs/output"),
             (VERIFY_DATA_MODEL, "--data-dir", f / "stages/03b_data-model/output",
              "--concept-dir", f / "stages/02_concepts/output"),
-            (VERIFY_SPEC_PARITY, "--concept-dir", f / "stages/02_concepts/output",
-             "--spec-dir", f / "stages/04_implement/04b_spec/output"),
+            (VERIFY_CONTRACT_PARITY, "--concept-dir", f / "stages/02_concepts/output",
+             "--contract-dir", f / "stages/04_implement/04b_contract/output"),
             (VERIFY_OUTCOME_ALIGNMENT, "--chain-dir", f / "stages/01b_chain-table/output",
-             "--spec-dir", f / "stages/04_implement/04b_spec/output"),
+             "--contract-dir", f / "stages/04_implement/04b_contract/output"),
             (VERIFY_ACTION_CHAIN,
              "--resp-map", f / "stages/01a_responsibility-map/output/responsibility-map.md",
              "--chain-dir", f / "stages/01b_chain-table/output",
              "--concept-dir", f / "stages/02_concepts/output",
              "--sync-dir", f / "stages/03_syncs/output",
              "--dep-dir", f / "stages/03a_dependency-review/output",
-             "--spec-dir", f / "stages/04_implement/04b_spec/output"),
+             "--contract-dir", f / "stages/04_implement/04b_contract/output"),
         ]
         for script, *args in checks:
             r = run(script, *args)
@@ -263,14 +318,14 @@ class BranchedChainGeneratorTests(unittest.TestCase):
                            for line in r.stdout.splitlines()
                            if "WOULD WRITE" in line)
             self.assertEqual(len(stems), 4, stems)
-            # Effect-first naming grammar v2 (maintenance/sync-dsl-legibility.md).
-            self.assertIn("InventoryLendForLibraryLoansWhenWebRequestRouted", stems)
-            self.assertIn("LedgerRecordForLibraryLoansWhenInventoryLendLent", stems)
-            self.assertIn("WebRespondForLibraryLoansWhenLedgerRecordRecorded", stems)
-            self.assertIn("WebRespondForLibraryLoansWhenInventoryLendUnavailable", stems)
+            # Action-first naming grammar v3 (maintenance/sync-name-grammar-v3.md).
+            self.assertIn("LendForLendWhenRequestRouted", stems)
+            self.assertIn("RecordWhenLendLent", stems)
+            self.assertIn("RespondWhenRecordRecorded", stems)
+            self.assertIn("RespondWhenLendUnavailable", stems)
             # The old positional pairing fabricated this transition across the
             # terminal row 4 -> branch row 5.
-            self.assertNotIn("InventoryLendForLibraryLoansWhenWebRespondSent", stems)
+            self.assertNotIn("RespondWhenRespondSent", stems)
 
 
 if __name__ == "__main__":

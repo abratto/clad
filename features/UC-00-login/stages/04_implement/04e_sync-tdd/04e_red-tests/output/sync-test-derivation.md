@@ -8,28 +8,28 @@
 
 - **Sync specs:** `03_syncs/output/` — 7 sync files
 - **Outer flow:** `04c_flow-tests/output/login.feature` — 4 Gherkin scenarios
-- **SPECs:** `UserNaming.spec.md`, `PasswordAuth.spec.md`, `Session.spec.md`
+- **contracts:** `UserNaming.contract.md`, `PasswordAuth.contract.md`, `Session.contract.md`
 
 ## Sync coverage matrix
 
 | Sync | Chain table | Flow scenario | Tested by |
 |---|---|---|---|
-| `UserNamingLookupByUsernameForLoginWhenWebRequestRouted` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `CucumberTest` |
-| `PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound` | Row 2→3 | successful-login, wrong-pw, lockout | `CucumberTest` |
-| `SessionGrantForLoginWhenPasswordAuthCheckOk` | Row 3→4 | successful-login | `CucumberTest` |
-| `WebRespondForLoginWhenSessionGrantGranted` | Row 4→5 | successful-login | `CucumberTest` |
-| `WebRespondForLoginWhenPasswordAuthCheckBadPassword` | Row 3a | wrong-password | `CucumberTest` |
-| `WebRespondForLoginWhenPasswordAuthCheckLocked` | Row 3b | lockout | `CucumberTest` |
-| `WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin` | Row 2a | unknown-user | `CucumberTest` |
+| `LookupByUsernameForLoginWhenRequestRouted` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `CucumberTest` |
+| `CheckWhenLookupByUsernameFound` | Row 2→3 | successful-login, wrong-pw, lockout | `CucumberTest` |
+| `GrantWhenCheckOk` | Row 3→4 | successful-login | `CucumberTest` |
+| `RespondWhenGrantGranted` | Row 4→5 | successful-login | `CucumberTest` |
+| `RespondWhenCheckBadPassword` | Row 3a | wrong-password | `CucumberTest` |
+| `RespondWhenCheckLocked` | Row 3b | lockout | `CucumberTest` |
+| `RespondWhenLookupByUsernameRefused` | Row 2a | unknown-user | `CucumberTest` |
 
 ## Gherkin scenario coverage
 
 | Scenario | Syncs exercised |
 |---|---|
-| `successful-login` | UserNamingLookupByUsernameForLoginWhenWebRequestRouted, PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound, SessionGrantForLoginWhenPasswordAuthCheckOk, WebRespondForLoginWhenSessionGrantGranted |
-| `wrong-password` | UserNamingLookupByUsernameForLoginWhenWebRequestRouted, PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound, WebRespondForLoginWhenPasswordAuthCheckBadPassword |
-| `lockout` | UserNamingLookupByUsernameForLoginWhenWebRequestRouted, PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound, WebRespondForLoginWhenPasswordAuthCheckLocked |
-| `unknown-user` | UserNamingLookupByUsernameForLoginWhenWebRequestRouted, WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin |
+| `successful-login` | LookupByUsernameForLoginWhenRequestRouted, CheckWhenLookupByUsernameFound, GrantWhenCheckOk, RespondWhenGrantGranted |
+| `wrong-password` | LookupByUsernameForLoginWhenRequestRouted, CheckWhenLookupByUsernameFound, RespondWhenCheckBadPassword |
+| `lockout` | LookupByUsernameForLoginWhenRequestRouted, CheckWhenLookupByUsernameFound, RespondWhenCheckLocked |
+| `unknown-user` | LookupByUsernameForLoginWhenRequestRouted, RespondWhenLookupByUsernameRefused |
 
 All 4 Cucumber scenarios pass (0 failures).
 
@@ -50,7 +50,7 @@ All 4 Cucumber scenarios pass (0 failures).
 
 The reference implementation tests syncs through flow-level integration
 tests (CucumberTest) and a dedicated unit test for
-`SessionGrantForLoginWhenPasswordAuthCheckOk`. All sync implementations
+`GrantWhenCheckOk`. All sync implementations
 exist under `com.example.app.syncs` with matching spec artefacts.
 
 ---
@@ -59,9 +59,9 @@ exist under `com.example.app.syncs` with matching spec artefacts.
 
 - **Approved red tests:** None — existing tests are flow-level and pass green
 - **Sync package:** `com.example.app.syncs`
-- **Sync classes:** `UserNamingLookupByUsernameForLoginWhenWebRequestRouted`, `PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound`,
-  `SessionGrantForLoginWhenPasswordAuthCheckOk`, `WebRespondForLoginWhenSessionGrantGranted`, `WebRespondForLoginWhenPasswordAuthCheckBadPassword`,
-  `WebRespondForLoginWhenPasswordAuthCheckLocked`, `WhenUserNamingLookupByUsernameNotFoundThenWebRespondForLogin`
+- **Sync classes:** `LookupByUsernameForLoginWhenRequestRouted`, `CheckWhenLookupByUsernameFound`,
+  `GrantWhenCheckOk`, `RespondWhenGrantGranted`, `RespondWhenCheckBadPassword`,
+  `RespondWhenCheckLocked`, `RespondWhenLookupByUsernameRefused`
 - **Test command:** `mvn -f reference-impl/java-micronaut-jena/pom.xml test`
 - **Expected red outcome:** N/A — existing tests are green
 - **Next implementation target:** Stage 05 verification

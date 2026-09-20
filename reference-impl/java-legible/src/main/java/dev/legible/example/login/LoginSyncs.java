@@ -7,6 +7,7 @@ import java.util.Map;
 
 import static dev.legible.engine.Dsl.args;
 import static dev.legible.engine.Dsl.bind;
+import static dev.legible.engine.Dsl.conj;
 import static dev.legible.engine.Dsl.invoke;
 import static dev.legible.engine.Dsl.lit;
 import static dev.legible.engine.Dsl.ref;
@@ -43,18 +44,18 @@ public final class LoginSyncs {
 
     public static List<SyncRule> all() {
         return List.of(
-                userNamingLookupForLoginWhenWebRequestRouted(),
-                passwordAuthCheckForLoginWhenUserNamingLookupFound(),
-                webRespondForLoginWhenUserNamingLookupRefused(),
-                sessionGrantForLoginWhenPasswordAuthCheckOk(),
-                webRespondForLoginWhenPasswordAuthCheckBadPassword(),
-                webRespondForLoginWhenPasswordAuthCheckLocked(),
-                webRespondForLoginWhenSessionGrantGranted());
+                lookupByUsernameWhenRequestRouted(),
+                checkWhenLookupByUsernameFound(),
+                respondWhenLookupByUsernameRefused(),
+                grantWhenCheckOk(),
+                respondWhenCheckBadPassword(),
+                respondWhenCheckLocked(),
+                respondWhenGrantGranted());
     }
 
     /** Row 1→2: when Web/request[routed] → UserNaming.lookupByUsername(username). */
-    private static SyncRule userNamingLookupForLoginWhenWebRequestRouted() {
-        return rule("UserNamingLookupByUsernameForLoginWhenWebRequestRouted")
+    private static SyncRule lookupByUsernameWhenRequestRouted() {
+        return rule("LookupByUsernameForLoginWhenRequestRouted")
             .when(WEB, REQUEST, "routed")
             .matching(Map.of("route", "login"))
             .where(bind("?u", triggerInput("username")))
@@ -63,9 +64,10 @@ public final class LoginSyncs {
     }
 
     /** Row 2[Found]→3b: when UserNaming.lookupByUsername[FOUND] → PasswordAuth.check(userId, password). */
-    private static SyncRule passwordAuthCheckForLoginWhenUserNamingLookupFound() {
-        return rule("PasswordAuthCheckForLoginWhenUserNamingLookupByUsernameFound")
-            .when(USER_NAMING, LOOKUP_BY_USERNAME, "FOUND")
+    private static SyncRule checkWhenLookupByUsernameFound() {
+        return rule("CheckWhenLookupByUsernameFound")
+            .when(conj("trigger", USER_NAMING, LOOKUP_BY_USERNAME, "FOUND"))
+            .and(conj("requested", WEB, REQUEST, "routed").matching(Map.of("route", "login")))
             .where(bind("?user", triggerField("userId")),
                    bind("?p", siblingInput(WEB, REQUEST, "password")))
             .then(invoke(PASSWORD_AUTH, CHECK,
@@ -74,9 +76,10 @@ public final class LoginSyncs {
     }
 
     /** Row 2[refused]→3a: when UserNaming.lookupByUsername[refused] → Web.respond(401, opaque message). */
-    private static SyncRule webRespondForLoginWhenUserNamingLookupRefused() {
-        return rule("WebRespondForLoginWhenUserNamingLookupByUsernameRefused")
-            .when(USER_NAMING, LOOKUP_BY_USERNAME, "refused")
+    private static SyncRule respondWhenLookupByUsernameRefused() {
+        return rule("RespondWhenLookupByUsernameRefused")
+            .when(conj("trigger", USER_NAMING, LOOKUP_BY_USERNAME, "refused"))
+            .and(conj("requested", WEB, REQUEST, "routed").matching(Map.of("route", "login")))
             .then(invoke(WEB, RESPOND, args(
                     "status", lit(401),
                     "message", lit("username or password didn't match"))))
@@ -84,18 +87,20 @@ public final class LoginSyncs {
     }
 
     /** Row 3b[OK]→4a: when PasswordAuth.check[OK] → Session.grant(userId). */
-    private static SyncRule sessionGrantForLoginWhenPasswordAuthCheckOk() {
-        return rule("SessionGrantForLoginWhenPasswordAuthCheckOk")
-            .when(PASSWORD_AUTH, CHECK, "OK")
+    private static SyncRule grantWhenCheckOk() {
+        return rule("GrantWhenCheckOk")
+            .when(conj("trigger", PASSWORD_AUTH, CHECK, "OK"))
+            .and(conj("requested", WEB, REQUEST, "routed").matching(Map.of("route", "login")))
             .where(bind("?user", triggerField("userId")))
             .then(invoke(SESSION, GRANT, args("userId", ref("?user"))))
             .build();
     }
 
     /** Row 3b[BAD_PASSWORD]→4b: respond 401 opaque. */
-    private static SyncRule webRespondForLoginWhenPasswordAuthCheckBadPassword() {
-        return rule("WebRespondForLoginWhenPasswordAuthCheckBadPassword")
-            .when(PASSWORD_AUTH, CHECK, "BAD_PASSWORD")
+    private static SyncRule respondWhenCheckBadPassword() {
+        return rule("RespondWhenCheckBadPassword")
+            .when(conj("trigger", PASSWORD_AUTH, CHECK, "BAD_PASSWORD"))
+            .and(conj("requested", WEB, REQUEST, "routed").matching(Map.of("route", "login")))
             .then(invoke(WEB, RESPOND, args(
                     "status", lit(401),
                     "message", lit("username or password didn't match"))))
@@ -103,9 +108,10 @@ public final class LoginSyncs {
     }
 
     /** Row 3b[LOCKED]→4c: respond 401 with the visible lockout message. */
-    private static SyncRule webRespondForLoginWhenPasswordAuthCheckLocked() {
-        return rule("WebRespondForLoginWhenPasswordAuthCheckLocked")
-            .when(PASSWORD_AUTH, CHECK, "LOCKED")
+    private static SyncRule respondWhenCheckLocked() {
+        return rule("RespondWhenCheckLocked")
+            .when(conj("trigger", PASSWORD_AUTH, CHECK, "LOCKED"))
+            .and(conj("requested", WEB, REQUEST, "routed").matching(Map.of("route", "login")))
             .then(invoke(WEB, RESPOND, args(
                     "status", lit(401),
                     "message", lit("Too many attempts. Try again in 15 minutes."))))
@@ -113,9 +119,10 @@ public final class LoginSyncs {
     }
 
     /** Row 4a[GRANTED]→5: when Session.grant[GRANTED] → Web.respond(200, sessionToken). */
-    private static SyncRule webRespondForLoginWhenSessionGrantGranted() {
-        return rule("WebRespondForLoginWhenSessionGrantGranted")
-            .when(SESSION, GRANT, "GRANTED")
+    private static SyncRule respondWhenGrantGranted() {
+        return rule("RespondWhenGrantGranted")
+            .when(conj("trigger", SESSION, GRANT, "GRANTED"))
+            .and(conj("requested", WEB, REQUEST, "routed").matching(Map.of("route", "login")))
             .where(bind("?sid", triggerField("sessionId")))
             .then(invoke(WEB, RESPOND, args(
                     "status", lit(200),

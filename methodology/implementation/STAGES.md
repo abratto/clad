@@ -8,6 +8,7 @@ before you open any `CONTEXT.md`:
 | Scope | Stage | Folder | Created when |
 |---|---|---|---|
 | **System-level** (once per project brief) | 00 | `features/_system/stages/00_actor-goal/` | Exists in the repo; use as-is |
+| **System-level** (concept vocabulary, grows by promotion) | — | `features/_system/concepts/` (+ `concepts-catalog.md`, `concept-dependence.md`, `shared-triggers.md`) | Seeded from the first feature; grows as features propose concepts and promote them |
 | **Per-UC** (once per in-scope goal) | 01–05 | `features/UC-XX-<slug>/stages/NN_*/` | Created after Stage 00 gate, one folder per confirmed in-scope goal |
 
 **The order is non-negotiable:**
@@ -19,8 +20,12 @@ before you open any `CONTEXT.md`:
    folder for **each** in-scope goal (UC numbers from 01).
 4. Run Stages 01–05 inside each UC folder, one goal at a time.
 
-`features/_system/` never grows beyond Stage 00 output. Every stage
-from 01 onwards lives inside a per-UC folder.
+`features/_system/` holds system-scope artefacts only: Stage 00 output and the
+**concept vocabulary** (`concepts/`, `concepts-catalog.md`,
+`concept-dependence.md`, `shared-triggers.md`). Concepts are canonical,
+system-scope assets; use cases **compose** them (reuse / extend / propose)
+rather than re-deriving them. Every stage from 01 onwards lives inside a per-UC
+folder.
 
 ---
 
@@ -70,9 +75,9 @@ features/UC-XX-name/
    │   ├── 04a_storage-mapping/ Optional profile mapping
     │   │   ├── CONTEXT.md
     │   │   └── output/
-    │   ├── 04b_spec/            Per-concept SPEC contract slice
+    │   ├── 04b_contract/            Per-concept concept contract
     │   │   ├── CONTEXT.md
-    │   │   └── output/          <Name>.spec.md
+    │   │   └── output/          <Name>.contract.md
     │   ├── 04c_flow-tests/      Outside-loop red: HTTP → flow-token tree
     │   │   ├── CONTEXT.md
     │   │   └── output/
@@ -336,13 +341,13 @@ single source of truth for per-stage instructions:
 | 00 | `../../features/_system/stages/00_actor-goal/CONTEXT.md` *(system scope)* | `actors.md`, `goals.md`, *(optional)* `port-spec.md` | 00 — system-level |
 | 01 | `stages/01_usecase/CONTEXT.md` | `usecase.md` | Auto → 01b |
 | 01a | `stages/01a_responsibility-map/CONTEXT.md` | `responsibility-map.md` | Auto → 01b |
-| 01b | `stages/01b_chain-table/CONTEXT.md` | `<scenario>-chain.md` per scenario | **Gate 1 (Requirements)** |
+| 01b | `stages/01b_chain-table/CONTEXT.md` | `<scenario>-chain.md` per scenario — the table **and** its `stateDiagram-v2` | **Gate 1 (Requirements)** |
 | 02 | `stages/02_concepts/CONTEXT.md` | `<Name>.concept.md` per business concept | Auto → 03b |
 | 03 | `stages/03_syncs/CONTEXT.md` | `<name>.sync.md` per coordination rule | Auto → 03b |
 | 03a | `stages/03a_dependency-review/CONTEXT.md` | `<concept>-card.md` + `pattern-d-summary.md` | Auto → 03b |
 | 03b | `stages/03b_data-model/CONTEXT.md` | `<Name>.data-model.md` per concept | **Gate 2 (Architecture)** |
 | 04a | `stages/04_implement/04a_storage-mapping/CONTEXT.md` | `<Name>.storage.md` or `_NOT_APPLICABLE.md` | Auto → 04c |
-| 04b | `stages/04_implement/04b_spec/CONTEXT.md` | `<Name>.spec.md` per concept | Auto → 04c |
+| 04b | `stages/04_implement/04b_contract/CONTEXT.md` | `<Name>.contract.md` per concept | Auto → 04c |
 | 04c | `stages/04_implement/04c_flow-tests/CONTEXT.md` | `.feature` files + step definitions | **Gate 3 (Executable spec)** |
 | 04d-red | `stages/04_implement/04d_concept-tdd/04d_red-tests/CONTEXT.md` | `concept-test-derivation.md` | Auto → 04d-green |
 | 04d-green | `stages/04_implement/04d_concept-tdd/04d_green-impl/CONTEXT.md` | `green-evidence.md` | Auto → 04e-red |
@@ -386,7 +391,7 @@ only asked to write what cannot be scripted:
 |---|---|---|
 | 03 (syncs) | `quality-gate/generate_syncs.py` | Pattern D concept-state reads, `then` argument values, `where` sources |
 | 03a (dependency cards) | `quality-gate/generate_sync_cards.py` | filling the `<args>`/`<source>`/`<field>`/`<id>` placeholders verbatim |
-| 04b (SPECs) | `quality-gate/generate_spec.py` | input types + flow-token shape transcription |
+| 04b (contracts) | `quality-gate/generate_contract.py` | input types + flow-token shape transcription |
 | 04e (sync code) | `quality-gate/generate_syncs_java.py` | judgement items only: Pattern D sources, non-literal `then`-argument values; the v2 name and trigger/target are mechanically derived (see `maintenance/sync-dsl-legibility.md`) |
 
 For these stages the stage `CONTEXT.md` instructs: *run the generator first,
@@ -433,8 +438,12 @@ These rules apply to individual stages and do not appear in the
   Frozen pre-v0.6 artefacts keep the old condition-first `When…Then…` names
   as historical evidence. See
   [`../architecture/SYNCHRONIZATIONS.md`](../architecture/SYNCHRONIZATIONS.md) §"Naming".
-- **Stage 03a** is an audit stage — it copies tokens exactly, produces
-  no new design, and surfaces drift back to the owning stage.
+- **Stage 03a** is the per-UC **coordination review** — an audit stage that
+  copies tokens exactly, produces no new design, and surfaces sync-coupling
+  drift back to the owning stage. Its cards are *evidence* for a
+  concept-dependence edge, never its source; the app-level **concept
+  dependence graph** (`features/_system/concept-dependence.md`) is a separate,
+  reviewed system-scope artefact, and 03a never emits it.
 - **Stage 04 implements the outside-in TDD double-loop:** 04c is the
   outer red test (a flow), 04d and 04e are the inner red→green TDD on
   concepts and syncs.
@@ -466,7 +475,7 @@ coherent with an earlier stage's output. Examples:
 - Stage 03 verifies: every named scenario in
   `01_usecase/output/usecase.md` is satisfied by at least one sync (or
   is explicitly a `Web`-only failure path).
-- Stage 04d verifies: every action listed in `04b_spec/output/` has at
+- Stage 04d verifies: every action listed in `04b_contract/output/` has at
   least one test row in the test-intent derivation map.
 - Stage 05 verifies: every flow token observed at runtime back-traces
    to a use-case scenario using captured runtime evidence, not only
@@ -474,7 +483,7 @@ coherent with an earlier stage's output. Examples:
 
 The cross-stage check is what gives ICM § 6.2's reversibility
 property teeth: a downstream stage cannot silently drift from
-upstream. The quality-gate scripts under `quality-gate/` automate these cross-stage checks deterministically. Each script validates one contract boundary (SPEC parity, outcome alignment, data-model structure, etc.) and runs between every auto-advance stage.
+upstream. The quality-gate scripts under `quality-gate/` automate these cross-stage checks deterministically. Each script validates one contract boundary (contract parity, outcome alignment, data-model structure, etc.) and runs between every auto-advance stage.
 
 ## Why numbered folders
 

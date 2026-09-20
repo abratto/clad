@@ -26,7 +26,7 @@ not redesign approved tests.
 | Path | Layer | Why |
 |---|---|---|
 | `../../../03_syncs/output/` | 4 | Sync specs |
-| `../../04b_spec/output/` | 4 | SPEC slices for participating actions |
+| `../../04b_contract/output/` | 4 | Contract slices for participating actions |
 | `../../04c_flow-tests/output/` | 4 | Outer flow tests that must now go green |
 | `../04e_red-tests/output/` | 4 | Approved red sync tests and handoff bundle |
 | `../../../../_config/build-and-test.md` | 3 | Canonical build/test command for green evidence |
@@ -46,14 +46,13 @@ not redesign approved tests.
    Do not redesign the tests during this stage. If they appear wrong,
    stop and send the work back to `04e-red` or Stage 03.
 4. Derive behavior from the approved upstream artefacts first: the
-   Stage 03 sync specs, the `04b` SPEC slices, the `04c` expected
+   Stage 03 sync specs, the `04b` Contract slices, the `04c` expected
    authored action chain, and the approved red sync tests.
-5. Place sync code where the feature's `_config/package-and-layout.md`
-   directs: each approved sync becomes one implementation (a
-   `SyncRule.of(...)`). Some profiles bucket
-   syncs under `<APP_PACKAGE_ROOT>.syncs`; the canonical `java-legible`
-   profile uses a flat `<APP_PACKAGE_ROOT>` package (e.g.
-   `dev.legible.example.<feature>`). Do not place syncs in `engine`,
+5. Place sync code under `APP_PACKAGE_ROOT` where the feature's
+   `_config/package-and-layout.md` directs: each approved sync becomes one
+   implementation (a `SyncRule.of(...)`). The **approved red sync test's
+   package is authoritative** (it is immutable), so the wiring class must sit
+   where those tests reference it. Do not place syncs in `engine`,
    `infrastructure`, `concepts`, or ad hoc sibling packages.
 6. Keep sync logic declarative. Do not invent imperative coordinator
    classes, extra executable syncs, or branching business logic. A

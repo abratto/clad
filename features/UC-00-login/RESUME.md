@@ -2,18 +2,23 @@
 
 - **Feature:** `UC-00-login`
 - **Branch:** `feat/UC-00-login`
-- **Last completed stage:** `Stage 05 — Verify`
+- **Last completed stage:** `Stage 04b — Concept contract`
 - **Iterative change `rename-user-to-usernaming`:** `approved`
 - **Iterative change `fire-after-commit-engine`:** `approved`
 - **Iterative change `sync-name-grammar-v2`:** `approved`
+- **Iterative change `system-scope-concepts`:** `approved`
+- **Iterative change `sync-name-grammar-v3`:** `approved`
+- **Iterative change `transport-framing-adapter-owned`:** `approved`
+- **Iterative change `spec-renamed-to-concept-contract`:** `approved`
+- **Iterative change `proposal-snapshot-headers`:** `approved`
 - **Gate 1 (Requirements):** `approved`
-- **Gate 1 content hash:** `c77d968d729bba309d709286622b48f6b0295bcc14a58b6936300340000ee243`
+- **Gate 1 content hash:** `94560b42aabad5dcd6b31f30b2dee36d7c9e1d46d77ad7bb2e873950503855cc`
 - **Gate 2 (Architecture):** `approved`
-- **Gate 2 content hash:** `77f0dfcdfd2110148a1b2a5e494daf000bee0928d54b4410a688d03c9dc200ad`
+- **Gate 2 content hash:** `4f31f386d08064745050b8548eee4fef82ce2efbb931d12d5a63490f499fbf31`
 - **Gate 3 (Executable spec):** `approved`
-- **Gate 3 content hash:** `980bb59d42abea4939ef532bbe626d55c278e65b70c0bc6f7e69bd0984383227`
+- **Gate 3 content hash:** `3012f2204e6dc4895f16f1b29e60e695756bc3542a2349dbbe2568443e08fb5f`
 - **Corrections at last gate:** `None`
 - **Deferred concepts:** `None`
-- **Next stage:** `None — feature complete`
+- **Next stage:** `Stage 04c — Flow tests`
 - **Next task:** `None — feature complete`
-- **Notes:** Worked example complete. Read for orientation; do not copy its stage `output/` artefacts into new features.
+- **Notes:** Worked example complete. Read for orientation; do not copy its stage `output/` artefacts into new features. Migrated to system-scope concepts (see `_changes/system-scope-concepts.md`).

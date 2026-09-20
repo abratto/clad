@@ -53,11 +53,13 @@ jobs:
           python-version: '3.11'
       - name: Artefact pipeline gate
         run: python3 quality-gate/verify_artefacts.py
+      - name: Install test dependencies
+        run: python3 -m pip install pytest
       - name: Quality-gate regression tests
         run: python3 -m pytest quality-gate/tests -q
 
   java-verify:
-    name: Java reference profile (canonical java-legible)
+    name: Java reference profile (mvn verify)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -67,9 +69,10 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
-      # Canonical profile module + its reactor deps. The durable profiles
-      # (legible-storage, java-micronaut-postgres) add Docker/Testcontainers;
-      # run the full reactor `mvn -B -ntp test -f reference-impl/pom.xml` in a
-      # Docker-capable job when validating those.
-      - name: mvn test (java-legible)
-        run: mvn -B -ntp test -f reference-impl/pom.xml -pl java-legible -am
+      # Canonical profile module + its reactor deps, matching DELIVERY.md's
+      # "mvn verify" check. The durable profiles (legible-storage,
+      # java-micronaut-postgres) add Docker/Testcontainers; run the full reactor
+      # `mvn -B -ntp verify -f reference-impl/pom.xml` in a Docker-capable job
+      # when validating those.
+      - name: mvn verify (java-legible)
+        run: mvn -B -ntp verify -f reference-impl/pom.xml -pl java-legible -am

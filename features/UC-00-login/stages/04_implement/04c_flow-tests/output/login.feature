@@ -44,7 +44,7 @@ Feature: Login
   # Expected token chain (from 02b_chain-table/output/wrong-password-chain.md):
   #   Web/request[POST /login] → Web.request → UserNaming.lookupByUsername[Found]
   #   → PasswordAuth.check[BadPassword] → Web.respond[401]
-  # Response literal from 03_syncs/output/WhenPasswordAuthCheckBadPasswordThenWebRespondForLogin.sync.md:
+  # Response literal from 03_syncs/output/RespondWhenCheckBadPassword.sync.md:
   #   body={ message: "username or password didn't match" }
   @wrong-password @failure-path
   Scenario: Wrong password
@@ -58,7 +58,7 @@ Feature: Login
   # Expected token chain (from 02b_chain-table/output/unknown-user-chain.md):
   #   Web/request[POST /login] → Web.request → UserNaming.lookupByUsername[Refused]
   #   → Web.respond[401]
-  # Response literal from 03_syncs/output/WhenUserNamingLookupByUsernameRefusedThenWebRespondForLogin.sync.md:
+  # Response literal from 03_syncs/output/RespondWhenLookupByUsernameRefused.sync.md:
   #   body={ message: "username or password didn't match" }
   # Postconditions — Failure: "No state is modified in any concept."
   @unknown-user @failure-path @no-state-change
@@ -73,7 +73,7 @@ Feature: Login
   # Expected token chain (from 02b_chain-table/output/lockout-chain.md):
   #   Web/request[POST /login] → Web.request → UserNaming.lookupByUsername[Found]
   #   → PasswordAuth.check[Locked] → Web.respond[401]
-  # Response literal from 03_syncs/output/WhenPasswordAuthCheckLockedThenWebRespondForLogin.sync.md:
+  # Response literal from 03_syncs/output/RespondWhenCheckLocked.sync.md:
   #   body={ message: "Too many attempts. Try again in 15 minutes." }
   @lockout @failure-path
   Scenario: Account is locked

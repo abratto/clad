@@ -1,9 +1,9 @@
-<!-- Template for Stage 03a (03a_dependency-review). One file per concept. Purpose: see methodology/implementation/STAGES.md §"Stage 03a" and methodology/architecture/SYNC_PATTERNS.md. -->
+<!-- Template for Stage 03a (03a_dependency-review), the per-UC COORDINATION REVIEW. One file per concept. Purpose: see methodology/implementation/STAGES.md §"Stage 03a" and methodology/architecture/SYNC_PATTERNS.md. This card is EVIDENCE for a concept-dependence edge, never its source; the app-level graph is features/_system/concept-dependence.md. -->
 
-# Dependency review — `<ConceptName>`
+# Coordination review — `<ConceptName>`
 
-> Per-concept dependency card. One file per concept that appears in
-> any chain table. The card answers two questions:
+> Per-concept **coordination** card (Stage 03a). One file per concept that
+> appears in any chain table. The card answers two questions:
 >
 > 1. **Inbound calls** — which actions on this concept are invoked by
 >    syncs, from which flows, with which data, and from what source?

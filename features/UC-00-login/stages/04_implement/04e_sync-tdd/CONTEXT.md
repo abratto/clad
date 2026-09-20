@@ -37,7 +37,7 @@ turns the outer flow tests green.
 | Path | Layer | Why |
 |---|---|---|
 | `../../03_syncs/output/` | 4 | Sync specs |
-| `../04b_spec/output/` | 4 | SPEC slices for the actions involved |
+| `../04b_contract/output/` | 4 | Contract slices for the actions involved |
 | `../04c_flow-tests/output/` | 4 | Outer flow expectations that must go green at the end |
 | `../../../../../methodology/core/ITERATIVE_CHANGES.md` | 3 | Re-entry workflow for post-green sync changes |
 | `../../../_config/build-and-test.md` | 3 | Canonical build/test command inherited by child stages |

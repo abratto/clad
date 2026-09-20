@@ -28,18 +28,24 @@ Together they form the complete traceability chain.
 | 00 | `goals.md` | Human brief, `actors.md` | (system boundary) | Human review; `verify_scenario_coverage.py` checks goal→scenario coverage | — |
 | 01 | `usecase.md` | `goals.md`, `actors.md` | Cockburn use case — trigger, actors, scenarios, postconditions | `verify_scenario_coverage.py` checks every goal has a scenario; human review at Gate 1 | — |
 | 01a | `responsibility-map.md` | `usecase.md` | Concept discovery — which concepts exist, what state they track, what actions they expose | `verify_file_manifest.py` | — |
-| 01b | `<scenario>-chain.md` | `usecase.md`, `responsibility-map.md` | Action choreography — the predicted runtime sequence of actions and outcomes | `verify_outcome_alignment.py` checks outcomes match SPEC; `verify_step_definition_derivation.py` checks chain actions appear in step defs | — |
+| 01b | `<scenario>-chain.md` | `usecase.md`, `responsibility-map.md` | Action choreography — the predicted runtime sequence of actions and outcomes | `verify_outcome_alignment.py` checks outcomes match contract; `verify_step_definition_derivation.py` checks chain actions appear in step defs | — |
 | 02 | `<Name>.concept.md` | `usecase.md`, `responsibility-map.md`, `<scenario>-chain.md` | Concept state machine — state (Alloy-like relations), actions (case-split outcomes, pre/post), operational principle (witness trace) | `verify_outcome_alignment.py`; 04d tests assert post-conditions as field values (R14); 05 back-traces flow tokens against operational principle | `state` → `<Name>Concept` relations in its own `Region`; `actions` → `execute(action, input)` returning an `outcome` + fields; `operational principle` → `<Name>ConceptTest.java` |
+| `_system` | `concepts/<Name>.contract.md` | the proposer that introduced or last extended the concept; `promote-concepts` on Gate 2 | Canonical compilation contract — the machine-checkable action surface 04c/04d/04e compile against | `verify_contract_parity.py`; `verify_outcome_alignment.py` | Compiled against by tests |
+| `_system` | `concepts/<Name>.data-model.md` | the proposer that introduced or last changed the state; `promote-concepts` on Gate 2 | Canonical conceptual data model — the CSDP model of the canonical state | `verify_data_model.py` (shape); reviewed at the proposing UC's gate | `Region` relation schema |
+| `_system` | `concepts/<Name>.concept.md` | first proposer (`introduced-by`); `promote-concepts` on Gate 2 | Canonical concept spec — the system-scope vocabulary a use case composes (R22) | `verify_concept_criteria.py` (corpus criteria); `verify_concept_state_relational.py`; `verify_concept_registry.py` (one introducer) | `<Name>Concept` (shared across features) |
+| `_system` | `concepts-catalog.md` | `concepts/*.concept.md` (generated) | Reuse index — Concept / Purpose / Type params / Actions / Introduced by / Used by | `generate_concepts_catalog.py` determinism; `verify_concept_registry.py` catalog completeness | — |
+| `_system` | `concept-dependence.md` | reviewed (human); 03a cards are evidence only | App-level extrinsic dependence + valid subsets (Parnas *uses* relation) | Human review at corpus acceptance | scheduling graph (topological levels) |
+| `_system` | `shared-triggers.md` | every feature's `03_syncs/output/*.sync.md` (generated) | Cross-UC shared-trigger view (advisory) | `generate_shared_triggers.py` determinism | — |
 | 03 | `<name>.sync.md` | `<scenario>-chain.md`, `<Name>.concept.md` | Declarative sync — "when ConceptA.completes → then ConceptB.action" | `verify_sync_matrix.py` checks contract matrix completeness; `verify_sync_route_filters.py` checks shared-trigger route scoping (R11); `verify_sync_declarative.py` catches imperative branching (R3) | `SyncRule` — a declarative `when`/`where`/`then` rule evaluated by `WhereEvaluator` |
-| 03a | `<concept>-card.md` | `<name>.sync.md` (all syncs, read-only) | Dependency review — inbound calls + concept-state reads per concept | `verify_sync_route_filters.py`; human review at Gate 2 | — |
-| 03a | `pattern-d-summary.md` | `<concept>-card.md` (all cards) | Dependency review — complete cross-concept coupling surface (concept-state reads only) | Human review; empty list is a valid (and common) result | — |
+| 03a | `<concept>-card.md` | `<name>.sync.md` (all syncs, read-only) | Coordination review — inbound calls + concept-state reads per concept; evidence (not source) for the app-level dependence graph | `verify_sync_route_filters.py`; human review at Gate 2 | — |
+| 03a | `pattern-d-summary.md` | `<concept>-card.md` (all cards) | Coordination review — complete cross-concept coupling surface (concept-state reads only) | Human review; empty list is a valid (and common) result | — |
 | 03b | `<Name>.data-model.md` | `<Name>.concept.md`, `<concept>-card.md`, `pattern-d-summary.md` | Conceptual data model — CSDP fact types and constraints per concept | `verify_data_model.py` checks all 7 CSDP steps present | `Region` relation schema |
 | 04a | `<Name>.storage.md` | `<Name>.data-model.md` | Storage mapping — CSDP facts → profile-specific schema | Profile-specific | `Region` relation schema (in-memory canonical); Jena graph or SQL table per concept (profile `FactStore` implementations) |
-| 04b | `<Name>.spec.md` | `<Name>.concept.md` | SPEC slice — action signatures, outcome enums, flow-token shape (stripped of prose) | `verify_spec_parity.py` checks action parity with concept specs; `verify_outcome_alignment.py` checks outcomes match chain tables | Compiled-against by 04d/04e tests |
+| 04b | `<Name>.contract.md` | `<Name>.concept.md` | contract slice — action signatures, outcome enums, flow-token shape (stripped of prose) | `verify_contract_parity.py` checks action parity with concept specs; `verify_outcome_alignment.py` checks outcomes match chain tables | Compiled-against by 04d/04e tests |
 | 04b | `spec.md` §Response shapes | `port-spec.md` inbound entry (when present) | Inbound port contract — exact transport paths/types/error envelopes | `verify_port_spec_contract.py` when an inbound entry exists | `@Contract` Cucumber scenarios in 04c |
 | 04c | `<feature>.feature` | `usecase.md` (scenarios), `<scenario>-chain.md` | BDD outer-red test — one Gherkin scenario per use-case scenario, derived from chain table | `verify_gherkin_derivation.py` checks derivation rules G1–G5; `verify_step_definition_parity.py` catches empty stubs; `verify_cucumber_green.py` (at 04e) enforces all-green | Cucumber runner + `<Feature>StepDefinitions.java` |
-| 04d-red | `<Name>ConceptTest.java` + derivation map | `<Name>.spec.md`, `<Name>.concept.md` (operational principle) | Concept test derivation (red) | `verify_concept_test_derivation.py` checks every SPEC outcome has a test; `verify_concept_field_assertions.py` checks field assertions (R14/R16) | Handoff to 04d-green |
-| 04d-green | `<Name>Concept.java` + green evidence | `<Name>.concept.md`, `<Name>.spec.md`, `<Name>ConceptTest.java` | Concept implementation — state machine as `Concept.execute` returning an `outcome` + fields | Concept tests pass; `verify_action_log_isolation.py` checks infrastructure doesn't bypass the engine (R4) | Invoked by `SyncEngine` |
+| 04d-red | `<Name>ConceptTest.java` + derivation map | `<Name>.contract.md`, `<Name>.concept.md` (operational principle) | Concept test derivation (red) | `verify_concept_test_derivation.py` checks every contract outcome has a test; `verify_concept_field_assertions.py` checks field assertions (R14/R16) | Handoff to 04d-green |
+| 04d-green | `<Name>Concept.java` + green evidence | `<Name>.concept.md`, `<Name>.contract.md`, `<Name>ConceptTest.java` | Concept implementation — state machine as `Concept.execute` returning an `outcome` + fields | Concept tests pass; `verify_action_log_isolation.py` checks infrastructure doesn't bypass the engine (R4) | Invoked by `SyncEngine` |
 | 04e-red | `<SyncName>Test.java` + derivation map | `<name>.sync.md`, `<concept>-card.md` | Sync test derivation (red) | Sync tests fail for behavioural reasons | Handoff to 04e-green |
 | 04e-green | `<SyncName>` (`SyncRule`) + green evidence | `<name>.sync.md`, `<SyncName>Test.java` | Sync implementation — declarative `SyncRule` `when`/`where`/`then` | `verify_implementation_parity.py` checks spec/code pairing; `verify_sync_implementation_parity.py` checks every Stage 03 sync has a `SyncRule` | Registered with `SyncEngine` |
 | 04e | Primary adapter | `<scenario>-chain.md` (transport entries), `<name>.sync.md` (respond syncs) | Bootstrap concept adapter — translates transport → engine → transport (normalize input, `rootAction()`, `awaitResponse()`, translate output) | `verify_action_log_isolation.py` catches raw ActionLog access (R4); ArchUnit catches concept imports | `WebController.java`, `AuthController.java`, or profile equivalent |
@@ -95,7 +101,7 @@ flowchart TD
 
     subgraph S04["Stage 04 · implementation"]
         STORAGE["Name.storage.md<br/><i>(04a)</i>"]
-        SPEC["Name.spec.md<br/><i>(04b)</i>"]
+        contract["Name.contract.md<br/><i>(04b)</i>"]
         FEATURE["feature.feature<br/><i>(04c)</i>"]
         CONCEPTTEST["NameConceptTest.java<br/><i>(04d red)</i>"]
         CONCEPTIMPL["NameConcept.java<br/><i>(04d green)</i>"]
@@ -134,16 +140,16 @@ flowchart TD
 
     DATAMODEL --> STORAGE
 
-    CONCEPT --> SPEC
-    PORT -.-> SPEC
+    CONCEPT --> contract
+    PORT -.-> contract
 
     USECASE --> FEATURE
     CHAIN --> FEATURE
 
-    SPEC --> CONCEPTTEST
+    contract --> CONCEPTTEST
     CONCEPT -.-> CONCEPTTEST
     CONCEPTTEST --> CONCEPTIMPL
-    SPEC --> CONCEPTIMPL
+    contract --> CONCEPTIMPL
 
     SYNC --> SYNCTEST
     CARD --> SYNCTEST

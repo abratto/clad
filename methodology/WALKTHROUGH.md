@@ -235,7 +235,9 @@ mention `UserNaming`'s state; it works with opaque `UserId`.
 `Web` does **not** get a `.concept.md` — see
 [`methodology/architecture/WEB_CONCEPT.md`](architecture/WEB_CONCEPT.md).
 
-**Outputs written:**
+**Outputs written:** the feature's `concept-bindings.md`, plus a proposal for
+each NEW concept. The proposals become the canonical corpus specs (introduced
+by UC-00-login) on Gate 2 approval:
 
 - [`UserNaming.concept.md`](../features/UC-00-login/stages/02_concepts/output/UserNaming.concept.md)
 - [`PasswordAuth.concept.md`](../features/UC-00-login/stages/02_concepts/output/PasswordAuth.concept.md)
@@ -256,7 +258,7 @@ mention `UserNaming`'s state; it works with opaque `UserId`.
 **Inputs opened:**
 
 - `../01_usecase/output/usecase.md` — scenarios to satisfy.
-- `../02_concepts/output/` — concepts to coordinate.
+- `concept-bindings.md` + the canonical concept specs (`features/_system/concepts/`) and any `02` proposals — concepts to coordinate.
 - `../01b_chain-table/output/` — the action chain each sync formalises.
 - [`methodology/architecture/SYNCHRONIZATIONS.md`](architecture/SYNCHRONIZATIONS.md), [`SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md), [`RULES.md`](implementation/RULES.md), [`templates/sync.md`](../templates/sync.md).
 
@@ -267,8 +269,8 @@ branching, no state, no I/O. Every `where` clause labels its pattern
 
 For UC-00 the agent writes:
 
-- [`SessionGrantForLoginWhenPasswordAuthCheckOk.sync.md`](../features/UC-00-login/stages/03_syncs/output/SessionGrantForLoginWhenPasswordAuthCheckOk.sync.md) — `when PasswordAuth.check(userId, password) -> Ok` then `Session.grant(userId)` then `Web.respond(200, { sessionToken })`. The `where: B: sessionId = result_of(Session.grant).sessionId` is **Pattern B** (flow-sibling); see [`SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md).
-- [`WebRespondForLoginWhenPasswordAuthCheckLocked.sync.md`](../features/UC-00-login/stages/03_syncs/output/WebRespondForLoginWhenPasswordAuthCheckLocked.sync.md) — lockout response path.
+- [`GrantWhenCheckOk.sync.md`](../features/UC-00-login/stages/03_syncs/output/GrantWhenCheckOk.sync.md) — `when PasswordAuth.check(userId, password) -> Ok` then `Session.grant(userId)` then `Web.respond(200, { sessionToken })`. The `where: B: sessionId = result_of(Session.grant).sessionId` is **Pattern B** (flow-sibling); see [`SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md).
+- [`RespondWhenCheckLocked.sync.md`](../features/UC-00-login/stages/03_syncs/output/RespondWhenCheckLocked.sync.md) — lockout response path.
 
 The unhappy paths (`wrong-password`, `unknown-user`, `lockout`) are also
 syncs. Stage 03 remains the single declarative coordination surface for
@@ -282,7 +284,7 @@ both success and failure responses.
 
 ---
 
-## Turn 8 — Stage 03a (Dependency review)
+## Turn 8 — Stage 03a (Coordination review)
 
 **CONTEXT loaded:** [`features/UC-00-login/stages/03a_dependency-review/CONTEXT.md`](../features/UC-00-login/stages/03a_dependency-review/CONTEXT.md)
 
@@ -291,7 +293,7 @@ both success and failure responses.
 - `../03_syncs/output/` — every `then` invocation, every `where` clause.
 - `../01b_chain-table/output/` — the flows.
 - `../01a_responsibility-map/output/responsibility-map.md` — concept set.
-- `../02_concepts/output/` — action and field names to cite.
+- `concept-bindings.md` + the canonical concept specs (`features/_system/concepts/`) and any `02` proposals — action and field names to cite.
 - [`methodology/architecture/SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md).
 - [`templates/dependency-review-card.md`](../templates/dependency-review-card.md), [`templates/pattern-d-summary.md`](../templates/pattern-d-summary.md).
 
@@ -331,7 +333,7 @@ with its own `CONTEXT.md`. For UC-00 in this round:
 
 - **03b (Data model):** the conceptual state model is written before implementation. CONTEXT loaded: [`../features/UC-00-login/stages/03b_data-model/CONTEXT.md`](../features/UC-00-login/stages/03b_data-model/CONTEXT.md).
 - **04a (Storage mapping):** the in-memory profile triggers `_NOT_APPLICABLE.md`. CONTEXT loaded: [`04a_storage-mapping/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04a_storage-mapping/CONTEXT.md).
-- **04b (SPEC):** mechanically extract action signatures and outcome enums per concept. CONTEXT loaded: [`04b_spec/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04b_spec/CONTEXT.md).
+- **04b (contract):** mechanically extract action signatures and outcome enums per concept. CONTEXT loaded: [`04b_contract/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04b_contract/CONTEXT.md).
 - **04c (Flow tests, outer red):** a Gherkin `.feature` file, step-definition skeleton, Cucumber runner, and `@Disabled` stub flow tests per use case. CONTEXT loaded: [`04c_flow-tests/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04c_flow-tests/CONTEXT.md).
 - **04d (Concept TDD router):** structural handoff point for concept red/green. Open [`04d_concept-tdd/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04d_concept-tdd/CONTEXT.md), then run [`04d_red-tests/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04d_concept-tdd/04d_red-tests/CONTEXT.md) to derive red concept tests (automated gate: `verify_concept_test_derivation.py`), followed by [`04d_green-impl/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04d_concept-tdd/04d_green-impl/CONTEXT.md) to implement them.
 - **04e (Sync TDD router):** structural handoff point for sync red/green. Open [`04e_sync-tdd/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04e_sync-tdd/CONTEXT.md), then run [`04e_red-tests/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04e_sync-tdd/04e_red-tests/CONTEXT.md) to derive red sync tests (automated gate: `verify_sync_matrix.py`), followed by [`04e_green-impl/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04e_sync-tdd/04e_green-impl/CONTEXT.md) to implement them and turn the `04c` flow tests green.

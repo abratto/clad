@@ -17,7 +17,7 @@ structural red/green child stages.
 test per use-case scenario (`04c`). The inner loop is per-concept
 (`04d-red` -> `04d-green`) and per-sync (`04e-red` -> `04e-green`).
 `04a` and `04b` prepare the ground (profile mapping and per-concept
-SPEC slice). Order matters: profile mapping before tests when a
+concept contract). Order matters: profile mapping before tests when a
 persistent store exists, tests before code, concept code before sync
 code, sync code is what turns the outer flow test green.
 
@@ -38,7 +38,9 @@ sub-stage.
 | Path | Layer | Why |
 |---|---|---|
 | `../03b_data-model/output/` | 4 | Approved conceptual data models |
-| `../02_concepts/output/` | 4 | Concept specs |
+| `../02_concepts/output/concept-bindings.md` | 4 | Which canonical concepts this feature uses |
+| `../../../../features/_system/concepts/` | 4 | Canonical concept specs (`state`, actions) |
+| `../02_concepts/output/<Name>.concept.md` | 4 | NEW/EXTEND proposals (not yet promoted) |
 | `../03_syncs/output/` | 4 | Sync specs |
 | `../../../../methodology/core/ITERATIVE_CHANGES.md` | 3 | Re-entry workflow for post-green changes |
 | `../../../../templates/artefact-impact-matrix.md` | 3 | Required `_changes/` worksheet for iterative changes |
@@ -55,8 +57,8 @@ stop and tell the human which earlier sub-stage must be completed first.
 | # | Sub-stage | Pre-condition before starting |
 |---|---|---|
 | 1 | [`04a_storage-mapping/`](04a_storage-mapping/CONTEXT.md) — optional profile mapping | `03b_data-model/output/` is non-empty |
-| 2 | [`04b_spec/`](04b_spec/CONTEXT.md) — per-concept SPEC slice | `04a_storage-mapping/output/` exists (or `_NOT_APPLICABLE.md` present) |
-| 3 | [`04c_flow-tests/`](04c_flow-tests/CONTEXT.md) — outer red (flow tests) | `04b_spec/output/` is non-empty |
+| 2 | [`04b_contract/`](04b_contract/CONTEXT.md) — per-concept concept contract | `04a_storage-mapping/output/` exists (or `_NOT_APPLICABLE.md` present) |
+| 3 | [`04c_flow-tests/`](04c_flow-tests/CONTEXT.md) — outer red (flow tests) | `04b_contract/output/` is non-empty |
 | 4 | [`04d_red-tests/`](04d_concept-tdd/04d_red-tests/CONTEXT.md) then [`04d_green-impl/`](04d_concept-tdd/04d_green-impl/CONTEXT.md) | `04c_flow-tests/output/` is non-empty and Gate 3 is approved |
 | 5 | [`04e_red-tests/`](04e_sync-tdd/04e_red-tests/CONTEXT.md) then [`04e_green-impl/`](04e_sync-tdd/04e_green-impl/CONTEXT.md) | All concept tests from `04d_green` are green |
 
@@ -112,7 +114,7 @@ Auto-advances (next human gate: Stage 04c). Sub-stages 04a and 04b auto-advance.
 human reviews the Gherkin `.feature` files as the executable form of
 the use case.** After 04c is approved, sub-
 stages 04d and 04e auto-advance because their tests are mechanically
-derived from already-approved artefacts (SPECs, chain tables, sync
+derived from already-approved artefacts (contracts, chain tables, sync
 specs). The inner loops verify implementation fidelity; the design
 was settled at 04c.
 
@@ -121,7 +123,7 @@ was settled at 04c.
 -> [`04a_storage-mapping/CONTEXT.md`](04a_storage-mapping/CONTEXT.md) — Storage mapping
 
 For in-memory profiles, skip 04a and go straight to
-[`04b_spec/CONTEXT.md`](04b_spec/CONTEXT.md). Mark 04a with a
+[`04b_contract/CONTEXT.md`](04b_contract/CONTEXT.md). Mark 04a with a
 `_NOT_APPLICABLE.md` note in its `output/`.
 
 The agent proceeds without a human gate.

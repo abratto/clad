@@ -17,13 +17,13 @@ def write(path, content):
     path.write_text(content, encoding="utf-8")
 
 
-def run(port_spec, spec_dir, feature_dir):
+def run(port_spec, contract_dir, feature_dir):
     return subprocess.run(
         [
             sys.executable,
             str(PORT_SPEC_CONTRACT),
             "--port-spec", str(port_spec),
-            "--spec-dir", str(spec_dir),
+            "--contract-dir", str(contract_dir),
             "--feature-dir", str(feature_dir),
         ],
         cwd=REPO_ROOT,
@@ -58,17 +58,17 @@ class PortSpecContractFixtures(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         root = Path(temporary.name)
         port_spec_path = root / "port-spec.md"
-        spec_dir = root / "specs"
+        contract_dir = root / "specs"
         feature_dir = root / "features"
         write(port_spec_path, port_spec(entries))
-        write(spec_dir / "Notification.spec.md", spec_body)
+        write(contract_dir / "Notification.contract.md", spec_body)
         write(feature_dir / "notification.feature", feature_body)
-        return port_spec_path, spec_dir, feature_dir
+        return port_spec_path, contract_dir, feature_dir
 
     def test_inbound_port_requires_and_accepts_response_shape_evidence(self):
-        port_spec_path, spec_dir, feature_dir = self.fixture(
+        port_spec_path, contract_dir, feature_dir = self.fixture(
             "| Login API | inbound | HTTP REST | Web | `openapi/login.yaml` | JSON response envelope | `specs/login.hurl` |",
-            """# Notification -- SPEC
+            """# Notification -- contract
 
 ## Response shapes
 
@@ -87,29 +87,29 @@ Feature: Login API
 """,
         )
 
-        result = run(port_spec_path, spec_dir, feature_dir)
+        result = run(port_spec_path, contract_dir, feature_dir)
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_outbound_port_requires_adapter_evidence_not_http_contract_evidence(self):
-        port_spec_path, spec_dir, feature_dir = self.fixture(
+        port_spec_path, contract_dir, feature_dir = self.fixture(
             "| Welcome email | outbound | provider SDK | Notification | `provider/send-api.md` | idempotency key forwarded | `NotificationMailAdapterTest.java` |",
-            "# Notification -- SPEC\n\n## Actions\n\n### sendWelcomeEmail(...) -> OutcomeRef\n",
+            "# Notification -- contract\n\n## Actions\n\n### sendWelcomeEmail(...) -> OutcomeRef\n",
             "Feature: Welcome email\n\n  Scenario: Send a welcome email\n    Then the message is accepted\n",
         )
 
-        result = run(port_spec_path, spec_dir, feature_dir)
+        result = run(port_spec_path, contract_dir, feature_dir)
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_missing_port_entry_evidence_and_inbound_shapes_fail(self):
-        port_spec_path, spec_dir, feature_dir = self.fixture(
+        port_spec_path, contract_dir, feature_dir = self.fixture(
             "| Login API | inbound | HTTP REST | Web | `openapi/login.yaml` | JSON response envelope |  |",
-            "# Notification -- SPEC\n\n## Actions\n\n### login(...) -> OutcomeRef\n",
+            "# Notification -- contract\n\n## Actions\n\n### login(...) -> OutcomeRef\n",
             "Feature: Login API\n",
         )
 
-        result = run(port_spec_path, spec_dir, feature_dir)
+        result = run(port_spec_path, contract_dir, feature_dir)
 
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Contract tests", result.stdout)

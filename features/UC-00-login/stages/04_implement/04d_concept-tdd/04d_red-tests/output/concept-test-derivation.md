@@ -1,13 +1,13 @@
 --- template: templates/test-intent-derivation-map.md ---
 # Concept Test Derivation Map — UC-00-login
 
-> Stage 04d-red handoff to 04d-green. Documents test coverage for all SPEC
+> Stage 04d-red handoff to 04d-green. Documents test coverage for all contract
 > outcomes plus the red-to-green handoff bundle.
 
 ## Source artefacts
 
 - **Flow tests:** `04c_flow-tests/output/login.feature` — 4 Gherkin scenarios
-- **SPECs:** `UserNaming.spec.md`, `PasswordAuth.spec.md`, `Session.spec.md`
+- **contracts:** `UserNaming.contract.md`, `PasswordAuth.contract.md`, `Session.contract.md`
 - **Hard rules:** R1 (no cross-concept imports), R5 (flow token), R9 (distinct outcomes)
 
 ## Coverage matrix
@@ -40,7 +40,7 @@
 
 ## Summary
 
-- **Total SPEC outcomes:** 11
+- **Total contract outcomes:** 11
 - **Covered by flow tests:** 6 (all login-scenario outcomes)
 - **Uncovered:** 5 (`register`/REGISTERED, `register`/USERNAME_TAKEN, `setCredential`/STORED, `lookup`/FOUND, `lookup`/UNKNOWN)
 - **Architecture compliance:** Verified — `LegibleArchitectureRulesTest` passes R1–R5

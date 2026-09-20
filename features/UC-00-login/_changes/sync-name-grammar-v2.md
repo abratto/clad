@@ -21,7 +21,7 @@
 | Use case | no (cites unchanged; sync names are not modelled) |
 | Concept(s) | no |
 | Sync(s) | yes | file stems + `sync <Name>` headers + Willy body unchanged otherwise |
-| SPEC slices | no | SPEC names are concept actions (unchanged) |
+| Contract slices | no | contract names are concept actions (unchanged) |
 | Flow tests | no |
 | Concept tests | no |
 | Sync tests | yes | derivation-map sync names re-derived |

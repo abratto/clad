@@ -28,7 +28,7 @@ def write(path, text):
 
 def feature(root, *, chain, spec="", coverage=None, closed=False):
     write(root / "stages/01b_chain-table/output/x-chain.md", chain)
-    write(root / "stages/04_implement/04b_spec/output/X.spec.md", spec)
+    write(root / "stages/04_implement/04b_contract/output/X.contract.md", spec)
     write(root / "stages/04_implement/04c_flow-tests/output/stubs.md",
           coverage if coverage is not None else "# stubs\n")
     if closed:
@@ -110,6 +110,22 @@ class CollectionCoverageTests(unittest.TestCase):
             result = run(str(QG / "verify_collection_coverage.py"), "--feature", str(root))
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("FAIL", result.stdout)
+
+
+    def test_feature_only_output_is_not_silently_skipped(self):
+        """A `.feature`-only 04c output must still be checked.
+
+        The `## Collection coverage` carrier is optional in the stage contract,
+        so keying "did 04c run?" on markdown made this check a no-op for the
+        common case — the cardinality edges it exists for never ran."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = feature(Path(temporary) / "UC-97-x", chain=COLLECTION_CHAIN)
+            flow_dir = root / "stages/04_implement/04c_flow-tests/output"
+            (flow_dir / "stubs.md").unlink()
+            write(flow_dir / "x.feature", "@x\nFeature: X\n")
+            result = run(str(QG / "verify_collection_coverage.py"), "--feature", str(root))
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("Collection coverage", result.stdout)
 
 
 if __name__ == "__main__":

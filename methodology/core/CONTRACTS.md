@@ -9,7 +9,7 @@ definition, off-discipline.
 | Contract | Lives in | Authorises |
 |---|---|---|
 | **Use case** | `features/UC-XX/stages/01_usecase/output/usecase.md` | Everything inside the feature |
-| **Concept spec** | `features/UC-XX/stages/02_concepts/output/*.concept.md` | The state machine that becomes a concept implementation |
+| **Concept spec** | canonical corpus `features/_system/concepts/*.concept.md` (+ this feature's proposals in `features/UC-XX/stages/02_concepts/output/*.concept.md`) | The state machine that becomes a concept implementation; reused across features, promoted on Gate 2 (R22) |
 | **Sync spec** | `features/UC-XX/stages/03_syncs/output/*.sync.md` | A coordination rule between concepts |
 | **Stage `CONTEXT.md`** | `features/UC-XX/stages/NN_*/CONTEXT.md` | What the agent does in that stage |
 | **Port contract** | `features/_system/stages/00_actor-goal/output/port-spec.md`, an API schema, or equivalent | The imposed shape and observable semantics of an inbound or outbound boundary |

@@ -91,6 +91,15 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
    piece of work (typically the next feature, the next iterative
    change, or "no follow-up planned"). The next session's first read
    should land on it.
+4. **Close the RESUME.** Set `RESUME.md`'s `Current stage` line to
+   `None — feature complete` (and its status accordingly). The
+   `./clad` active-feature heuristic treats a RESUME that names any
+   stage as in progress, so a feature left at `Stage 04c — …` can
+   outrank a genuinely live one — and a command that writes (promotion
+   replaces corpus entries) can then target the stale feature and
+   overwrite newer content with its older proposal.
+   `verify_close_evidence.py` warns when a closed feature still
+   advertises a live stage.
 
 
 ## Progress checklist

@@ -67,18 +67,19 @@ not relax the *intent*.
      single instance's field list.
    - **Automated (Stage 04b):** Run
      `quality-gate/verify_outcome_alignment.py` to check every
-     chain-table outcome matches a SPEC outcome enum. This runs at 04b
-     because the SPECs it compares against do not exist before then.
+     chain-table outcome matches a contract outcome enum. This runs at 04b
+     because the contracts it compares against do not exist before then.
    - **Automated (Stage 04b):** Run
      `quality-gate/verify_action_chain.py` to check action names flow
      consistently from responsibility map through chain tables, concept
-     specs, syncs, cards, and SPECs.
+     specs, syncs, cards, and contracts.
    - **Automated:** Run `quality-gate/verify_file_manifest.py`
      for each stage's `output/` directory.
    - **Semantic (human):** Verify no bootstrap concept file
      (`Web.concept.md`, etc.) appears in `02_concepts/output/`
      without an explicit deviation. Verify concept boundaries are
-     coherent.
+     coherent. Verify proposals correspond to the responsibility map's
+     NEW/EXTEND rows (REUSE rows bind, never re-author — R22).
 9. **Stage 03 sync contract checks (automated + semantic).**
    When a diff touches `features/UC-*/stages/03_syncs/`:
    - **Automated:** Run `quality-gate/verify_sync_matrix.py`
@@ -106,8 +107,8 @@ not relax the *intent*.
      When a diff touches `features/UC-*/stages/04_implement/`:
      - **Automated:** Run `quality-gate/verify_feature_file_presence.py`
        as a pre-flight before any 04c work.
-     - **Automated:** Run `quality-gate/verify_spec_parity.py`
-       to check every concept spec action has a matching SPEC entry.
+     - **Automated:** Run `quality-gate/verify_contract_parity.py`
+       to check every concept spec action has a matching contract entry.
      - **Automated:** Run `quality-gate/verify_port_spec_contract.py`
        when `port-spec.md` exists to check complete directional entries, plus
          Stage 04b response shapes and Stage 04c `@contract` scenarios for
@@ -115,7 +116,7 @@ not relax the *intent*.
      - **Automated:** For the Gherkin track, run
        `quality-gate/verify_gherkin_derivation.py` to validate derivation.
      - **Automated:** Run `quality-gate/verify_concept_test_derivation.py`
-       to check every SPEC outcome has a matching concept test.
+       to check every contract outcome has a matching concept test.
      - **Automated:** For Java concept tests, run
        `quality-gate/verify_concept_field_assertions.py` to confirm tests
        assert required completion field values, not only outcome tokens.
@@ -154,8 +155,9 @@ not relax the *intent*.
       require trigger/fires metadata to match the contract's `when`/`then`
       signatures.
     - **Semantic (human):** Verify the diff also contains updates to the
-      relevant `stages/02_concepts/output/` or `stages/03_syncs/output/`
-      artefacts. A Java-only diff with no artefact update is a hard-rule
+      relevant `_system/concepts/` (or `stages/02_concepts/output/` proposals)
+      or `stages/03_syncs/output/` artefacts. A Java-only diff with no
+      artefact update is a hard-rule
       (R17) violation even if the parity script passes (e.g. the spec
       file exists but its content no longer matches the code).
 13. **Platform maintenance governance.** When a diff touches engine/runtime
@@ -208,8 +210,8 @@ consistency checks across the CLAD artefact chain:
 | `verify_profile_paths.py` | 04c–04e | Profile-path integrity: configured `test.source.root`/impl dirs resolve inside the feature's declared `package-and-layout.md` roots (blocks); warns on seed `reference-impl/` pointers when the layout declares elsewhere |
 | `verify_scenario_coverage.py` | 01, 01b, 03 | Goal → scenario → chain → sync coverage |
 | `verify_concept_state_relational.py` | 02 | Concept `## State` is a relation over a set of individuals, not one instance's field list |
-| `verify_outcome_alignment.py` | 04b | Chain-table outcomes match SPEC enums |
-| `verify_action_chain.py` | 04b | Action names consistent across responsibility map, chain tables, concept specs, syncs, cards, and SPECs |
+| `verify_outcome_alignment.py` | 04b | Chain-table outcomes match contract enums |
+| `verify_action_chain.py` | 04b | Action names consistent across responsibility map, chain tables, concept specs, syncs, cards, and contracts |
 | `verify_sync_matrix.py` | 03 | Every sync has a complete Sync Contract Matrix |
 | `verify_sync_cycle_graph.py` | 03 | Detects design-time cross-concept sync cycles (A→B→A). Excludes Web (bootstrap) and self-references (A→A). Accepts `--advisory` flag for refactoring analysis on existing projects |
 | `verify_sync_overlap.py` | 03 | Detects sync pairs sharing 2+ concepts. Lock-order aware: conflicting order = deadlock risk (blocking), same order = safe (advisory). Accepts `--advisory` flag to downgrade all findings to warnings |
@@ -219,7 +221,7 @@ consistency checks across the CLAD artefact chain:
 | `verify_action_log_isolation.py` | 04e-green | The action log is transient execution state, isolated from durable concept regions |
 | `verify_data_model.py` | 03b | CSDP structure, storage-leakage prevention |
 | `verify_relational_mapping.py` | 04a | Relational storage mappings honour Rmap and R2 (no cross-concept foreign key); skips for non-relational profiles |
-| `verify_spec_parity.py` | 04b | Action name parity between concept specs and SPECs |
+| `verify_contract_parity.py` | 04b | Action name parity between concept specs and contracts |
 | `verify_port_spec_contract.py` | 04b, 04c | When `port-spec.md` exists, directional entries are complete; inbound entries have response shapes and `@contract` scenarios |
 | `verify_iterative_change_readiness.py` | 04+ | Iterative concept/sync spec or implementation changes have a structured `_changes/` classification and artefact-impact matrix |
 | `verify_iterative_change_coupling.py` | 04+ | Concept/sync implementation changes are committed with their matching Stage 02/03 artefacts |
@@ -229,8 +231,8 @@ consistency checks across the CLAD artefact chain:
 | `verify_feature_file_presence.py` | 04c | Pre-flight: `.feature` file exists in output + Cucumber discovery path |
 | `verify_close_evidence.py` | 05 | Advisory: canonical `trace.md` present (warns on legacy name); enabled adapter integration test exists when an adapter surface is declared |
 | `verify_gherkin_derivation.py` | 04c | `.feature` file derivation per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1 |
-| `verify_concept_test_derivation.py` | 04d | Every SPEC outcome has a matching concept test row and Java method |
-| `verify_concept_field_assertions.py` | 04d | Java concept tests assert required completion fields from SPEC flow-token shapes |
+| `verify_concept_test_derivation.py` | 04d | Every contract outcome has a matching concept test row and Java method |
+| `verify_concept_field_assertions.py` | 04d | Java concept tests assert required completion fields from contract flow-token shapes |
 | `verify_step_definition_parity.py` | 04c | Every Gherkin step has a matching step-definition method with a non-empty body — catches empty stubs |
 | `verify_step_definition_derivation.py` | 04c | Every chain-table business action name appears in at least one step-definition method body — catches methods that don't exercise the chain-table actions they were derived from |
 | `verify_cucumber_green.py` | 04e-green | Runs the test command and confirms all Cucumber scenarios pass (fails on undefined, pending, skipped, or failing scenarios) |

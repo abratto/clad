@@ -13,7 +13,7 @@ Why this exists:
   the human already reviews the executable spec.
 
 Rule:
-  A feature whose chain tables / SPECs expose a COLLECTION response (a plural
+  A feature whose chain tables / contracts expose a COLLECTION response (a plural
   envelope key such as `articles`, `comments`, `tags`, `authors`, `following`,
   `flags`, or a `List<...>` completion field) must declare a
   `## Collection coverage` section in a markdown file under
@@ -56,6 +56,16 @@ def read(path):
         return handle.read()
 
 
+def stage_output_present(directory: str) -> bool:
+    """True when a stage directory holds any output file (not just `.gitkeep`)."""
+    if not os.path.isdir(directory):
+        return False
+    return any(
+        not name.startswith(".") and os.path.isfile(os.path.join(directory, name))
+        for name in os.listdir(directory)
+    )
+
+
 def markdown_files(directory):
     if not os.path.isdir(directory):
         return []
@@ -68,17 +78,17 @@ def collection_signal(feature_root):
     """Return (is_collection_shaped, evidence) for the feature.
 
     A feature is collection-shaped when a chain table names a plural collection
-    envelope key or a SPEC declares a `List<...>` completion field.
+    envelope key or a contract declares a `List<...>` completion field.
     """
     chain_dir = os.path.join(feature_root, "stages", "01b_chain-table", "output")
-    spec_dir = os.path.join(feature_root, "stages",
-                            "04_implement", "04b_spec", "output")
+    contract_dir = os.path.join(feature_root, "stages",
+                            "04_implement", "04b_contract", "output")
 
     blob = ""
     for path in markdown_files(chain_dir):
         blob += read(path)
 
-    for path in markdown_files(spec_dir):
+    for path in markdown_files(contract_dir):
         text = read(path)
         if "List<" in text or "List&lt;" in text:
             return True, "%s declares a List<...> field" % os.path.basename(path)
@@ -87,7 +97,7 @@ def collection_signal(feature_root):
     low = blob.lower()
     for key in COLLECTION_KEYS:
         if re.search(r"(?<![a-z0-9])" + re.escape(key) + r"(?![a-z0-9])", low):
-            return True, "chain/SPEC names the collection key %r" % key
+            return True, "chain/contract names the collection key %r" % key
     return False, ""
 
 
@@ -127,7 +137,11 @@ def main():
 
     flow_dir = os.path.join(feature_root, "stages", "04_implement",
                             "04c_flow-tests", "output")
-    if not markdown_files(flow_dir):
+    # Evidence that 04c ran is ANY output file, not only a markdown carrier:
+    # the `## Collection coverage` section is optional in the stage contract, so
+    # keying on markdown meant a feature whose 04c output is only its `.feature`
+    # file was always skipped — the edges this check exists for never ran.
+    if not stage_output_present(flow_dir):
         print("SKIP  no 04c flow-test output yet")
         return 0
 
