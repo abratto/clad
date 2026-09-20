@@ -4,12 +4,13 @@ sync CheckWhenLookupByUsernameFound
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `2` | `3b` | `UserNaming/lookupByUsername: [...] => [ found ; userId ]` | `PasswordAuth/check: [ userId: ?user ; password: ?pass ]` | `<none>` |
+| `2` | `3b` | `UserNaming/lookupByUsername: [...] => [ found ; userId ] ∧ requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ]` | `PasswordAuth/check: [ userId: ?user ; password: ?pass ]` | `<none>` |
 
 ## Rule
 
 when {
     UserNaming/lookupByUsername: [ username: ?u ] => [ found ; userId: ?user ]
+    requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ; ... ]
 }
 then {
     PasswordAuth/check: [ userId: ?user ; password: ?p ]

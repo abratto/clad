@@ -339,16 +339,22 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
         if not g.conjuncts:
             # A single-trigger rule carries its trigger in the trigger_* fields,
             # not in `conjuncts`; pinning makes it a join, so the trigger becomes
-            # its second conjunct.
+            # its first conjunct.
             g.conjuncts = [(None, g.trigger_concept, g.trigger_action,
                             g.trigger_completion)]
         g.is_join = True
-        g.conjuncts = [("requested", "Web", "request", "routed")] + list(g.conjuncts)
+        # The pin goes LAST. CLAD's engine dispatches a joined rule on its
+        # PRIMARY (first) conjunct's completion, so a pin placed first would fire
+        # the rule before its own trigger had completed — and never re-evaluate.
+        # ConceptBox's `actions([...])` is order-agnostic; its reading order is
+        # not transferable (maintenance/sync-flow-pinning.md).
+        g.conjuncts = list(g.conjuncts) + [("requested", "Web", "request", "routed")]
         scope = f'route: "{g.flow_route}"' if g.flow_route else "..."
         if g.flow_method:
             scope += f' ; method: "{g.flow_method}"'
-        g.when_sig = (f"requested: Web/request: [ {scope} ] => [ Routed ]"
-                      + " \u2227 " + g.when_sig)
+        g.when_sig = (g.when_sig
+                      + " \u2227 "
+                      + f"requested: Web/request: [ {scope} ] => [ Routed ]")
 
     seen: Dict[tuple, GeneratedSync] = {}
     unique: List[GeneratedSync] = []
@@ -385,8 +391,8 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                   + [(ap.SYNC_STEM_MAX_LEVEL, True)])
         chosen = None
         # The pin is in every non-bootstrap rule and so names nothing.
-        stem_conjuncts = (conjuncts[1:]
-                          if conjuncts and conjuncts[0].name == "requested"
+        stem_conjuncts = (conjuncts[:-1]
+                          if conjuncts and conjuncts[-1].name == "requested"
                           else conjuncts)
         # The name is about what discriminates this rule from its neighbours: a
         # pinned single-trigger rule is named by its trigger, not as a join.
@@ -429,7 +435,7 @@ def render_sync(g: GeneratedSync) -> str:
     if g.is_join and g.conjuncts:
         for index, (name, concept, action, outcome_raw) in enumerate(g.conjuncts):
             prefix = f"{name}: " if name else ""
-            if index == 0 and g.flow_route:
+            if index == len(g.conjuncts) - 1 and g.flow_route:
                 scope = f'route: "{g.flow_route}"'
                 if g.flow_method:
                     scope += f' ; method: "{g.flow_method}"'

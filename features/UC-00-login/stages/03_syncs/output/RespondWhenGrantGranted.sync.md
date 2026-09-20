@@ -4,12 +4,13 @@ sync RespondWhenGrantGranted
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `4a` | `5` | `Session/grant: [...] => [ granted ; sessionId ]` | `Web/respond: [ status: 200 ; sessionToken: ?sid ]` | `200` |
+| `4a` | `5` | `Session/grant: [...] => [ granted ; sessionId ] ∧ requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ]` | `Web/respond: [ status: 200 ; sessionToken: ?sid ]` | `200` |
 
 ## Rule
 
 when {
     Session/grant: [ userId: ?user ] => [ granted ; sessionId: ?sid ]
+    requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ; ... ]
 }
 then {
     Web/respond: [ status: 200 ; sessionToken: ?sid ]

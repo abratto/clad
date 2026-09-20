@@ -9,7 +9,7 @@ sync LookupByUsernameForLoginWhenRequestRouted
 ## Rule
 
 when {
-    Web/request: [ method: "POST /login" ; username: ?u ; password: ?p ] => [ routed ]
+    Web/request: [ route: "login" ; method: "POST" ; username: ?u ; password: ?p ] => [ routed ]
 }
 then {
     UserNaming/lookupByUsername: [ username: ?u ]

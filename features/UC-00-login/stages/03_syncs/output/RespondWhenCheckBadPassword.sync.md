@@ -4,12 +4,13 @@ sync RespondWhenCheckBadPassword
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `3b` | `4b` | `PasswordAuth/check: [...] => [ badPassword ]` | `Web/respond: [ status: 401 ; message: "username or password didn't match" ]` | `401`, `"username or password didn't match"` |
+| `3b` | `4b` | `PasswordAuth/check: [...] => [ badPassword ] ∧ requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ]` | `Web/respond: [ status: 401 ; message: "username or password didn't match" ]` | `401`, `"username or password didn't match"` |
 
 ## Rule
 
 when {
     PasswordAuth/check: [ userId: ?user ; password: ?p ] => [ badPassword ]
+    requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ; ... ]
 }
 then {
     Web/respond: [ status: 401 ; message: "username or password didn't match" ]

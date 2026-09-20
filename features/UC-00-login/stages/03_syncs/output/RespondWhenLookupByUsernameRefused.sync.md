@@ -4,12 +4,13 @@ sync RespondWhenLookupByUsernameRefused
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `2` | `3a` | `UserNaming/lookupByUsername: [...] => [ refused ]` | `Web/respond: [ status: 401 ; message: "username or password didn't match" ]` | `401`, `"username or password didn't match"` |
+| `2` | `3a` | `UserNaming/lookupByUsername: [...] => [ refused ] ∧ requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ]` | `Web/respond: [ status: 401 ; message: "username or password didn't match" ]` | `401`, `"username or password didn't match"` |
 
 ## Rule
 
 when {
     UserNaming/lookupByUsername: [ username: ?u ] => [ refused ]
+    requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ; ... ]
 }
 then {
     Web/respond: [ status: 401 ; message: "username or password didn't match" ]

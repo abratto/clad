@@ -50,10 +50,15 @@ conjunct matcher plus joins). What is missing is that the lowering drops the pin
 
 ## Rule
 
-- **Every non-bootstrap rule pins its flow.** The flow root is the rule's FIRST
+- **Every non-bootstrap rule pins its flow.** The flow root is the rule's **LAST**
   conjunct, carrying the route matcher:
-  `when { requested: Web/request: [ route: "returns" ] => [ Routed ; ... ] ; … }`.
-  It is first because it is the flow's origin, matching the sources' examples.
+  `when { … ; requested: Web/request: [ route: "returns" ] => [ Routed ] }`.
+  **Last, not first** — and this is the one place the sources' shape does *not*
+  transfer. The paper lists the request first and ConceptBox's `actions([...])` is
+  order-agnostic, but CLAD's engine dispatches a joined rule on its **primary
+  (first) conjunct's** completion: with the pin first the rule fires before its
+  own trigger has completed and never re-evaluates, so it never fires at all. The
+  rule's own trigger therefore stays primary, and the pin follows it.
 - **The pin is not a name component.** It appears in every non-bootstrap rule, so
   it carries no discriminating information — `CloseWhenVerifyVerified` keeps its
   name while its `when` gains a conjunct. This is the same reasoning that removed
@@ -112,6 +117,10 @@ To be recorded before commit.
 
 - Behaviour-preserving by construction: adding a conjunct can only *narrow* when a
   rule fires, and it narrows it to the flow it was written for.
+- **The pin's position was found the hard way.** With the pin first, the
+  experiment went to 9 errors and 5 failures (rules that never fired); with it
+  last, to 3 failures. That difference is the engine's dispatch rule, recorded
+  above so the next author does not repeat it.
 - Validated on UC-04 before mass application: every non-bootstrap rule gained
   `requested: Web/request: [ route: "returns" ; method: "POST" ] => [ Routed ]`,
   every rule kept its name, and the two real joins kept theirs (`…WhenJoin…`).

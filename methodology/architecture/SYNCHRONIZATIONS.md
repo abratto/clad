@@ -393,10 +393,16 @@ route matcher:
 
 ```
 when {
-    requested: Web/request: [ route: "returns" ] => [ Routed ; ... ]
     closed:    Lending/close: [ ... ] => [ Returned ; ... ]
+    requested: Web/request: [ route: "returns" ] => [ Routed ; ... ]
 }
 ```
+
+The pin is **last**, not first. CLAD's engine dispatches a joined rule on its
+**primary** (first) conjunct's completion, so a pin placed first would fire the
+rule before its own trigger had completed — and never re-evaluate. The paper lists
+the request first and ConceptBox's `actions([...])` is order-agnostic; their
+reading order is not transferable.
 
 A flow token scopes a match to one flow, but *within* a flow any rule whose `when`
 matches fires — so two use cases that share a completion (`MemberEnrolment.verify`

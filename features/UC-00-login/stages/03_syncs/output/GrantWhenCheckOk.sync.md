@@ -4,12 +4,13 @@ sync GrantWhenCheckOk
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `3b` | `4a` | `PasswordAuth/check: [...] => [ ok ; userId ]` | `Session/grant: [ userId: ?user ]` | `<none>` |
+| `3b` | `4a` | `PasswordAuth/check: [...] => [ ok ; userId ] ∧ requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ]` | `Session/grant: [ userId: ?user ]` | `<none>` |
 
 ## Rule
 
 when {
     PasswordAuth/check: [ userId: ?user ; password: ?p ] => [ ok ; userId: ?user ]
+    requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ; ... ]
 }
 then {
     Session/grant: [ userId: ?user ]

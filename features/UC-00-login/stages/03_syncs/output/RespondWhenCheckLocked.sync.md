@@ -4,12 +4,13 @@ sync RespondWhenCheckLocked
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `3b` | `4c` | `PasswordAuth/check: [...] => [ locked ]` | `Web/respond: [ status: 401 ; message: "Too many attempts. Try again in 15 minutes." ]` | `401`, `"Too many attempts. Try again in 15 minutes."` |
+| `3b` | `4c` | `PasswordAuth/check: [...] => [ locked ] ∧ requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ]` | `Web/respond: [ status: 401 ; message: "Too many attempts. Try again in 15 minutes." ]` | `401`, `"Too many attempts. Try again in 15 minutes."` |
 
 ## Rule
 
 when {
     PasswordAuth/check: [ userId: ?user ; password: ?p ] => [ locked ]
+    requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ; ... ]
 }
 then {
     Web/respond: [ status: 401 ; message: "Too many attempts. Try again in 15 minutes." ]
