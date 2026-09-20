@@ -31,7 +31,10 @@ else
 fi
 
 resume_mtime() {
-    stat -f %m "$1" 2>/dev/null || stat -c %Y "$1" 2>/dev/null || echo 0
+    # GNU stat first, then BSD/macOS: on GNU coreutils `stat -f` is filesystem
+    # status and exits 0 (it does not fail over to -c), so `-f %m` must not be
+    # tried first or the mtime becomes a multi-line filesystem dump.
+    stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null || echo 0
 }
 
 active_feature() {
