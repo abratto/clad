@@ -70,9 +70,6 @@ heading rather than its same-turn rule).
   completes last, name the rest in the label; no `<<join>>` pseudo-state).
 - The 01b stage contract says the same, and `verify_chain_grammar.py` now fails
   a chain file with no `stateDiagram-v2` block.
-
-## [Unreleased]
-
 Engine: **the `where` clause gains a negative state pattern**, `absent ( Concept ; ?subject ; predicate )` — "the ones that do not have X".
 Maintenance record `maintenance/engine-absent-state-guard.md`; experiment-found
 (UC-04-return-copy could not express "the member's *remaining open* loans": every
