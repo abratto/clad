@@ -76,6 +76,16 @@ feature's Gate 2 via `./clad promote-concepts` — never by hand. Editing the
 generated `concepts-catalog.md` is never the change; edit the spec and
 regenerate.
 
+**A stage's own uncommitted output is not an iterative change.** The readiness
+guard (`verify_iterative_change_readiness.py`) fires on a modified concept/sync
+spec, but it distinguishes *new stage work* from *an edit of a gated artefact*:
+if every touched concept/sync artefact belongs to a stage whose covering gate is
+**not yet approved**, the stage is simply being authored and no `_changes/`
+record is required — so `advance → commit → verify` is not needed. Once the gate
+is approved, editing that artefact is an iterative change and does need one.
+Corpus concepts, implementation code, and any path with no feature-stage mapping
+are never exempt.
+
 **Rule of thumb.** Find the *earliest* stage whose `output/` is no
 longer accurate after the change. Re-enter there. Re-running an
 earlier stage when its output is still accurate is over-production

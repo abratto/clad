@@ -9,6 +9,13 @@ Why this exists:
   deterministic: if the diff touches iterative-change scope, a structured
   change artefact must exist and be complete.
 
+  A stage's own uncommitted output is not an iterative change. When every
+  touched concept/sync artefact belongs to a feature stage whose covering gate
+  is not yet approved, this passes without a `_changes/` record — so the normal
+  `advance → commit → verify` order is not required. An edit after the gate is
+  approved, or to an artefact with no feature-stage mapping (a corpus concept,
+  implementation code), is still iterative-change scope and needs the record.
+
 Usage:
   python3 quality-gate/verify_iterative_change_readiness.py \
     --feature features/UC-00-login \
@@ -24,6 +31,9 @@ import os
 import re
 import subprocess
 import sys
+
+import clad_stages as cs
+from verify_stage_sequence import gate_approved
 
 
 CATEGORIES = {"presentation", "behavioural", "behavioral", "structural"}
@@ -75,6 +85,50 @@ def in_iterative_scope(path):
 
 def in_implementation_scope(path):
     return IMPLEMENTATION_PATTERN.search(path) is not None
+
+
+def stage_id_of(path):
+    """The feature stage folder an artefact lives in (`.../stages/03_syncs/…` → `03`)."""
+    match = re.search(r"/stages/(\d+[a-z]?)_", path)
+    return match.group(1) if match else None
+
+
+def covering_gate(stage_id):
+    """The human gate that approves a stage's output, or None."""
+    for gate, stages in cs.GATE_STAGES.items():
+        if stage_id in stages:
+            return gate
+    return None
+
+
+def resume_text(feature_root):
+    path = os.path.join(feature_root, "RESUME.md")
+    if not os.path.isfile(path):
+        return ""
+    with open(path, encoding="utf-8") as handle:
+        return handle.read()
+
+
+def is_new_stage_work(path, feature_root):
+    """True when `path` is the feature's own uncommitted stage output.
+
+    A stage artefact whose covering gate is **not yet approved** is the stage
+    being authored, not an iterative change to a gated artefact, so it needs no
+    `_changes/` record. Editing it after its gate is approved (or changing an
+    artefact with no feature-stage mapping — corpus concepts, implementation
+    code) is still iterative-change scope. Conservative by construction: an
+    unreadable RESUME or an unmapped stage is never exempt.
+    """
+    if not feature_root:
+        return False
+    stage_id = stage_id_of(path)
+    gate = covering_gate(stage_id) if stage_id else None
+    if gate is None:
+        return False
+    text = resume_text(feature_root)
+    if not text:
+        return False
+    return not gate_approved(text, gate)
 
 
 def field_value(text, label):
@@ -186,7 +240,6 @@ def validate_change_file(path, implementation_touched):
     # outputs, skip advance.py, and commit — bypassing human gate review.
     reentry_stage = field_value(text, "Earliest re-entry stage")
     if reentry_stage:
-        import clad_stages as cs
         feature_root = os.path.dirname(os.path.dirname(path))
         stage = cs.stage_by_id(reentry_stage)
         if stage:
@@ -219,6 +272,17 @@ def main():
     implementation_touched = any(in_implementation_scope(path) for path in touched_scope)
     if not touched_scope:
         print("PASS  no iterative concept/sync spec or implementation changes detected")
+        sys.exit(0)
+
+    # An uncommitted concept/sync artefact whose stage gate is not yet approved
+    # is the feature's own new stage output — the normal `advance` path, not an
+    # iterative change to a gated artefact — so it does not need a _changes/
+    # record. Only when some touched artefact is already gated (or unmapped) do
+    # we require one.
+    if all(is_new_stage_work(path, args.feature) for path in touched_scope):
+        print("PASS  uncommitted concept/sync artefacts are this feature's own "
+              "stage output (their gate is not yet approved); no iterative-change "
+              "record required")
         sys.exit(0)
 
     change_file, failures = select_change_file(args.feature, args.change_file)
