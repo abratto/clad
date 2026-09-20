@@ -53,6 +53,8 @@ jobs:
           python-version: '3.11'
       - name: Artefact pipeline gate
         run: python3 quality-gate/verify_artefacts.py
+      - name: Install test dependencies
+        run: python3 -m pip install pytest
       - name: Quality-gate regression tests
         run: python3 -m pytest quality-gate/tests -q
 
