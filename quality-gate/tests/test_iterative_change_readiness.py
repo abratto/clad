@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Regression coverage for iterative-change record selection."""
 
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -12,6 +13,12 @@ QUALITY_GATE = REPO_ROOT / "quality-gate"
 sys.path.insert(0, str(QUALITY_GATE))
 
 import verify_iterative_change_readiness as readiness  # noqa: E402
+
+
+def run(*args):
+    return subprocess.run(
+        [sys.executable, str(QUALITY_GATE / "verify_iterative_change_readiness.py"), *args],
+        cwd=REPO_ROOT, capture_output=True, text=True)
 
 
 class IterativeChangeReadinessTests(unittest.TestCase):
@@ -81,6 +88,76 @@ class IterativeChangeReadinessTests(unittest.TestCase):
             "features/UC-01-a/stages/02_concepts/output/C.concept.md"))
         self.assertFalse(readiness.in_iterative_scope(
             "features/_system/concepts-catalog.md"))
+
+
+class NewStageWorkExemptionTests(unittest.TestCase):
+    """An uncommitted stage artefact whose gate is not yet approved is the
+    feature's own output, not an edit of a gated artefact, so `advance →
+    commit → verify` is not required (Item 3, readiness-guard ordering)."""
+
+    def _feature(self, root, resume):
+        feature = root / "UC-01-a"
+        (feature / "stages/03_syncs/output").mkdir(parents=True)
+        (feature / "stages/02_concepts/output").mkdir(parents=True)
+        if resume is not None:
+            (feature / "RESUME.md").write_text(resume, encoding="utf-8")
+        return feature
+
+    def test_ungated_stage_artefact_is_new_stage_work(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self._feature(Path(temporary),
+                                    "# RESUME\n\n- **Gate 1 (Requirements):** `approved`\n")
+            path = "features/UC-01-a/stages/03_syncs/output/X.sync.md"
+            self.assertTrue(readiness.is_new_stage_work(path, str(feature)))
+
+    def test_gated_stage_artefact_is_not_new_stage_work(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self._feature(
+                Path(temporary),
+                "# RESUME\n\n- **Gate 2 (Architecture):** `approved`\n")
+            path = "features/UC-01-a/stages/03_syncs/output/X.sync.md"
+            self.assertFalse(readiness.is_new_stage_work(path, str(feature)))
+
+    def test_corpus_and_unmapped_paths_are_never_exempt(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self._feature(Path(temporary), "# RESUME\n")
+            self.assertFalse(readiness.is_new_stage_work(
+                "features/_system/concepts/C.concept.md", str(feature)))
+            self.assertFalse(readiness.is_new_stage_work(
+                "app/src/main/java/x/syncs/Y.java", str(feature)))
+
+    def test_missing_resume_is_not_exempt(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self._feature(Path(temporary), None)
+            path = "features/UC-01-a/stages/03_syncs/output/X.sync.md"
+            self.assertFalse(readiness.is_new_stage_work(path, str(feature)))
+
+    def test_cli_exempts_ungated_stage_output_without_a_record(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self._feature(Path(temporary),
+                                    "# RESUME\n\n- **Gate 1 (Requirements):** `approved`\n")
+            changed = Path(temporary) / "changed.txt"
+            changed.write_text(
+                "features/UC-01-a/stages/03_syncs/output/X.sync.md\n",
+                encoding="utf-8")
+            result = run("--feature", str(feature),
+                         "--changed-files-file", str(changed))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("own stage output", result.stdout)
+
+    def test_cli_still_requires_a_record_for_a_gated_edit(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self._feature(
+                Path(temporary),
+                "# RESUME\n\n- **Gate 2 (Architecture):** `approved`\n")
+            changed = Path(temporary) / "changed.txt"
+            changed.write_text(
+                "features/UC-01-a/stages/03_syncs/output/X.sync.md\n",
+                encoding="utf-8")
+            result = run("--feature", str(feature),
+                         "--changed-files-file", str(changed))
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("no active", result.stdout)
 
 
 if __name__ == "__main__":

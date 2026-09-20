@@ -10,6 +10,16 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [Unreleased]
+
+**Iterative-change readiness distinguishes new stage work from gated edits.**
+`verify_iterative_change_readiness.py` no longer demands a `_changes/` record for
+a stage's own uncommitted concept/sync output: if every touched artefact belongs
+to a stage whose covering gate is not yet approved, the stage is simply being
+authored, so the `advance → commit → verify` order is not required. An edit after
+the gate is approved — or to a corpus concept or implementation class — still
+requires one. See `methodology/core/ITERATIVE_CHANGES.md` §2.
+
 ## [0.8.0] — 2026-09-20
 
 Minor release: **system-scope concept vocabulary (Model B)**, the contract and
