@@ -18,10 +18,17 @@ Why this exists:
 Checks (per feature):
   * A bootstrap — a rule whose `when` is a single `Web/request` completion — IS
     the flow root, so it carries no pin.
-  * Every other rule's `when` names the flow root as a conjunct, with its route
-    matcher (`requested: Web/request: [ route: "returns" ] => [ Routed ]`).
-    The route is required: without it a rule cannot tell one route's flow from
-    another's, which is the defect this guards.
+  * Every other rule's `when` names the flow root as its **last** conjunct, with
+    its route matcher (`requested: Web/request: [ route: "returns" ] => [ Routed ]`).
+    It must be last: the engine calls the `where` evaluator with the rule's
+    primary (first) conjunct as the trigger, so a pin placed before the domain
+    trigger would bind `triggerField`/`triggerInput` to the request completion
+    instead of the action the rule is about.
+  * The route is required, and — when the feature's Stage 01b chains are present
+    (the canonical source of the pin, `generate_syncs.py` derives it from row 1)
+    — it must equal a route those chains actually root. A drifted route is the
+    silent failure this caught: without a route a rule cannot tell one route's
+    flow from another's, and with the wrong one it can never fire in its own.
 
 Usage:
   python3 verify_sync_flow_pin.py --features-dir features
@@ -33,6 +40,8 @@ import argparse
 import os
 import re
 import sys
+
+import artifact_parsers as ap
 
 
 WHEN_BLOCK = re.compile(r"when\s*\{(.*?)\}", re.DOTALL)
@@ -53,9 +62,36 @@ def sync_files(features_dir):
                 yield name, os.path.join(out, fname)
 
 
+def route_of(when_cell):
+    """The flow-root route a chain row declares (`route: "x"` or `POST /x`)."""
+    match = re.search(r'route\s*:\s*"([^"]+)"', when_cell or "")
+    if match:
+        return match.group(1)
+    match = re.search(r"\b([A-Z]+)\s+/([A-Za-z0-9_-]+)", when_cell or "")
+    return match.group(2) if match else None
+
+
+def chain_routes(features_dir, feature):
+    """The routes the feature's Stage 01b chain tables root (row 1), if any."""
+    chain_dir = os.path.join(features_dir, feature, "stages", "01b_chain-table", "output")
+    if not os.path.isdir(chain_dir):
+        return set()
+    routes = set()
+    for fname in sorted(os.listdir(chain_dir)):
+        if not fname.endswith("-chain.md") or fname.endswith("-all-scenarios-chain.md"):
+            continue
+        rows = ap.parse_chain_table(os.path.join(chain_dir, fname))
+        if not rows:
+            continue
+        route = route_of(rows[0].when)
+        if route:
+            routes.add(route)
+    return routes
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Every non-bootstrap sync pins its flow root")
+        description="Every non-bootstrap sync pins its flow root last")
     parser.add_argument("--features-dir", default="features")
     args = parser.parse_args()
 
@@ -66,6 +102,7 @@ def main() -> int:
 
     failures = []
     pinned = bootstraps = 0
+    known_routes = {}
     for feature, path in sync_files(features_dir):
         with open(path, encoding="utf-8") as handle:
             text = handle.read()
@@ -73,8 +110,10 @@ def main() -> int:
         if not block:
             continue
         when = block.group(1)
-        roots = FLOW_ROOT.findall(when)
-        conjuncts = CONJUNCT.findall(when)
+        lines = when.splitlines()
+        conjuncts = [i for i, line in enumerate(lines)
+                     if CONJUNCT.match(line)]
+        roots = [i for i, line in enumerate(lines) if FLOW_ROOT.search(line)]
         name = os.path.basename(path)
 
         # A lone `Web/request` conjunct IS the flow root: the bootstrap.
@@ -88,11 +127,36 @@ def main() -> int:
                 "cannot be told apart from another use case's rule on the same "
                 "completion")
             continue
-        if not ROUTE.search(roots[0]):
+        if len(roots) > 1:
+            failures.append(
+                f"{feature}/{name}: `when` names more than one flow root — a rule "
+                "belongs to exactly one flow; a rule that must fire in two flows "
+                "is two rules")
+            continue
+        root = roots[0]
+        if not conjuncts or root != conjuncts[-1]:
+            failures.append(
+                f"{feature}/{name}: the flow root is not the LAST conjunct — the "
+                "engine binds `triggerField`/`triggerInput` to the primary (first) "
+                "conjunct, so a pin before the domain trigger blanks the rule's "
+                "arguments")
+            continue
+        match = ROUTE.search(lines[root])
+        if not match:
             failures.append(
                 f"{feature}/{name}: pins the flow root without its route — two "
                 "routes bootstrapping one action would still be one flow to this "
                 "rule")
+            continue
+        route = match.group(1)
+        if feature not in known_routes:
+            known_routes[feature] = chain_routes(features_dir, feature)
+        routes = known_routes[feature]
+        if routes and route not in routes:
+            failures.append(
+                f"{feature}/{name}: pins route {route!r}, but the feature's chain "
+                f"tables root {sorted(routes)} — the generator derives the pin "
+                "from row 1, so this rule has drifted from its chain")
             continue
         pinned += 1
 
@@ -104,7 +168,7 @@ def main() -> int:
             print(f"  ... and {len(failures) - 12} more")
         return 1
 
-    print(f"PASS  {pinned} non-bootstrap sync(s) pin their flow root; "
+    print(f"PASS  {pinned} non-bootstrap sync(s) pin their flow root last; "
           f"{bootstraps} bootstrap(s) are the flow root")
     return 0
 

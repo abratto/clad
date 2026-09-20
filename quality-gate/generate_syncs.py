@@ -64,7 +64,7 @@ class GeneratedSync:
     #   stem at a higher escalation level when two short names collide.
     route: Optional[str] = None
     # The flow pin (maintenance/sync-flow-pinning.md): every non-bootstrap rule
-    # names its flow root first, with the route matcher, so it can only fire in
+    # names its flow root last, with the route matcher, so it can only fire in
     # its own flow. The pin is excluded from the stem — it is in every such rule,
     # so it discriminates nothing — while the route on a *bootstrap* is a
     # component, because only some rules have one.
@@ -330,7 +330,7 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
         return ("single", g.trigger_concept, g.trigger_action,
                 g.trigger_outcome_raw, g.target_concept, g.target_action)
 
-    # The flow pin: every non-bootstrap rule names its flow root first, with the
+    # The flow pin: every non-bootstrap rule names its flow root last, with the
     # route matcher, so two use cases sharing a completion cannot fire each
     # other's rules. See maintenance/sync-flow-pinning.md.
     for g in syncs:
@@ -343,11 +343,13 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
             g.conjuncts = [(None, g.trigger_concept, g.trigger_action,
                             g.trigger_completion)]
         g.is_join = True
-        # The pin goes LAST. CLAD's engine dispatches a joined rule on its
-        # PRIMARY (first) conjunct's completion, so a pin placed first would fire
-        # the rule before its own trigger had completed — and never re-evaluate.
+        # The pin goes LAST. The engine calls a rule's `where` evaluator with its
+        # PRIMARY (first) conjunct as the trigger, and `triggerField` /
+        # `triggerInput` resolve against that primary. A pin placed first would
+        # bind those sources to the Web/request completion instead of the domain
+        # action the rule is about, so the rule would fire with blank arguments.
         # ConceptBox's `actions([...])` is order-agnostic; its reading order is
-        # not transferable (maintenance/sync-flow-pinning.md).
+        # not transferable (maintenance/sync-flow-pinning.md §Review finding).
         g.conjuncts = list(g.conjuncts) + [("requested", "Web", "request", "routed")]
         scope = f'route: "{g.flow_route}"' if g.flow_route else "..."
         if g.flow_method:

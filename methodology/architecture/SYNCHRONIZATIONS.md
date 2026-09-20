@@ -388,8 +388,8 @@ response per tag instead of one response per article.
 
 ### Flow pinning
 
-Every **non-bootstrap** rule names its flow root as the first conjunct, with the
-route matcher:
+Every **non-bootstrap** rule names its flow root as its **last** conjunct, with
+the route matcher:
 
 ```
 when {
@@ -398,11 +398,13 @@ when {
 }
 ```
 
-The pin is **last**, not first. CLAD's engine dispatches a joined rule on its
-**primary** (first) conjunct's completion, so a pin placed first would fire the
-rule before its own trigger had completed — and never re-evaluate. The paper lists
-the request first and ConceptBox's `actions([...])` is order-agnostic; their
-reading order is not transferable.
+The pin is **last**, not first. The engine calls a rule's `where` evaluator with
+its **primary** (first) conjunct as the trigger, and `triggerField` /
+`triggerInput` resolve against that primary; a pin placed first would bind those
+sources to the `Web/request` completion instead of the domain action the rule is
+about, so the rule fires with blank arguments. The paper lists the request first
+and ConceptBox's `actions([...])` is order-agnostic; their reading order is not
+transferable (`maintenance/sync-flow-pinning.md` §Review finding).
 
 A flow token scopes a match to one flow, but *within* a flow any rule whose `when`
 matches fires — so two use cases that share a completion (`MemberEnrolment.verify`

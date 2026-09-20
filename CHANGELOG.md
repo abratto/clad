@@ -17,12 +17,17 @@ record `maintenance/sync-flow-pinning.md`; experiment-found (UC-04: UC-03's lend
 fired in the return flow, and UC-04's close fired in the borrow flow).
 
 - The generator pins every non-bootstrap rule — `requested: Web/request:
-  [ route: "returns" ] => [ Routed ]` as its first conjunct — which is the
+  [ route: "returns" ] => [ Routed ]` as its **last** conjunct — which is the
   paper's `RegistrationError` idiom (§5.3, "other web requests may be in process
   at the same time") and ConceptBox's universal practice ("Multiple When Clauses:
-  Handling Request Flow").
+  Handling Request Flow"). It is last, not first: the engine binds
+  `triggerField`/`triggerInput` to the rule's primary (first) conjunct, so a pin
+  before the domain trigger blanks the rule's arguments.
 - The pin is **not** a name component: it is in every non-bootstrap rule, so it
   discriminates nothing — unlike the route on a bootstrap, which does.
+- `verify_sync_flow_pin.py` enforces the shape it names: the flow root must be
+  the last conjunct, exactly one per rule, and its route must match the route the
+  feature's Stage 01b chain roots (a pin-first or route-drifted spec now fails).
 
 
 **Grammar v3.1: a route-scoped bootstrap sync's name carries its route.**

@@ -70,6 +70,24 @@ declared conjunct order — e.g.
 — `VerifyForReturnsWhenRequestRouted`. Two use cases may bootstrap the same
 target action on different routes, and nothing else in the name separates them.
 
+**Every non-bootstrap rule pins its flow (last).** A rule whose `when` is not a
+lone `Web/request` names its flow root — `Web/request` with its route — as its
+**last** conjunct, so it can only fire in its own flow:
+
+```
+when {
+    closed: Lending/close: [ ... ] => [ Returned ; ... ]
+    requested: Web/request: [ route: "returns" ] => [ Routed ; ... ]
+}
+```
+
+Last, not first: the engine evaluates a rule's `where` with its primary (first)
+conjunct, and `triggerField`/`triggerInput` read the completion/input of that
+primary — a pin first would bind them to the request, not the domain trigger.
+The pin is not part of the name (it is in every rule, so it discriminates
+nothing); a rule that must fire in two flows is two rules. The route must match
+the one the chain's row 1 roots. See `maintenance/sync-flow-pinning.md`.
+
 **Absence (`absent`).** The negative state pattern — keep the frame only if
 the subject has **no** such value (a D&minus; read: it binds nothing):
 

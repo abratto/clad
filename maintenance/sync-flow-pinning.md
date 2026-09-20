@@ -7,7 +7,7 @@
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
 - **Evidence gate:** `approved`
-- **Change summary:** Every non-bootstrap sync names its **flow root** as the first `when` conjunct — `Web/request[routed]` with its route matcher. Nothing about outcomes, statuses, bodies or ordering changes: the same rules fire, on the same flows, in the same order.
+- **Change summary:** Every non-bootstrap sync names its **flow root** as its last `when` conjunct — `Web/request[routed]` with its route matcher. Nothing about outcomes, statuses, bodies or ordering changes: the same rules fire, on the same flows, in the same order.
 
 ## Why
 
@@ -55,10 +55,16 @@ conjunct matcher plus joins). What is missing is that the lowering drops the pin
   `when { … ; requested: Web/request: [ route: "returns" ] => [ Routed ] }`.
   **Last, not first** — and this is the one place the sources' shape does *not*
   transfer. The paper lists the request first and ConceptBox's `actions([...])` is
-  order-agnostic, but CLAD's engine dispatches a joined rule on its **primary
-  (first) conjunct's** completion: with the pin first the rule fires before its
-  own trigger has completed and never re-evaluates, so it never fires at all. The
-  rule's own trigger therefore stays primary, and the pin follows it.
+  order-agnostic, but CLAD's engine evaluates a rule's `where` against its
+  **primary (first) conjunct**: `WhereEvaluator` receives the primary invocation
+  and completion, and `triggerField`/`triggerInput` read from those
+  (`SyncEngine.processInvocation` → `evaluate(rule, primaryInv, primaryComp, …)`).
+  The generated rules read the domain trigger with `triggerField`/`triggerInput`,
+  so with the pin first those sources bind to the `Web/request` completion —
+  which does not carry the domain fields — and the rule fires with blank
+  arguments. The rule's own trigger therefore stays primary, and the pin follows
+  it. (See §Review finding: the earlier "never re-evaluates" explanation was
+  wrong; the engine re-checks every conjunct's completion.)
 - **The pin is not a name component.** It appears in every non-bootstrap rule, so
   it carries no discriminating information — `CloseWhenVerifyVerified` keeps its
   name while its `when` gains a conjunct. This is the same reasoning that removed
@@ -96,31 +102,44 @@ conjunct matcher plus joins). What is missing is that the lowering drops the pin
 |---|---|---|---|---|
 | Every non-bootstrap rule gains the pin | unit | `test_generators.py::…test_every_non_bootstrap_rule_pins_its_flow_root` | pass | — |
 | The pin is absent from the stem | unit | `…test_the_pin_is_not_a_name_component` | pass | — |
-| A rule without its flow root fails | unit | `verify_sync_flow_pin.py` | pending | checker not written yet |
-| Pinned specs still match their Java rules | integration | `verify_sync_implementation_parity.py` per feature | pending | application to the features in progress |
-| UC-03's lend no longer fires in the return flow | acceptance | experiment `RespondWhenCloseNotOnLoanTest` + the joins | pending | red today: `expected: <copy is not on loan to this member> but was: <copy is not on the shelf>` |
-| Whole gate suite | unit | `pytest quality-gate/tests -q` | pass | 177 -> 179 |
-| The pinned shape is what the generator emits | integration | dry run over UC-04's chain: pin with matcher, names unchanged | pass | see Notes |
+| A rule without its flow root fails | unit | `verify_sync_flow_pin.py`; `test_sync_flow_pin.py::…test_unpinned_rule_fails` | pass | — |
+| The pin must be the **last** conjunct | unit | `test_sync_flow_pin.py::…test_pin_before_the_domain_trigger_fails`, `…test_pin_in_the_middle_fails` | pass | — |
+| More than one flow root fails | unit | `test_sync_flow_pin.py::…test_two_flow_roots_fail` | pass | — |
+| The pinned route matches the chain's row 1 | unit | `test_sync_flow_pin.py::…test_pin_matching_the_chain_route_passes`, `…test_pin_drifted_from_the_chain_route_fails` | pass | — |
+| Both repos' specs satisfy the narrowed checker | integration | `verify_sync_flow_pin.py` over each `features/` | pass | clad 6+1, experiment 25+5 |
+| Pinned specs still match their Java rules | integration | `verify_sync_implementation_parity.py` per feature | pass | app suite green (experiment, 60) |
+| UC-03's lend no longer fires in the return flow | acceptance | experiment `RespondWhenCloseNotOnLoanTest` + the joins | pass | green since the pin landed |
+| Whole gate suite | unit | `pytest quality-gate/tests -q` | pass | 177 → 179 → 187 |
 
 ## Gates
 
 ### Design gate
 
-Approved in-conversation: option (a), uniformly, per the sources' idiom — with the
-pin first and excluded from the name.
+Approved in-conversation: option (a), uniformly, per the sources' idiom — the pin
+excluded from the name. The **position** was the one deviation forced during
+implementation: approved as the sources' "request first", then corrected to
+**last** when pin-first blanked the rules' arguments (see §Review finding). The
+design intent — scope every rule to its own flow, leave the name alone — is
+unchanged.
 
 ### Evidence gate
 
-To be recorded before commit.
+Cleared. The narrowed `verify_sync_flow_pin.py` (pin must be last; route must
+match the chain's row 1) passes over both repos' features (clad 6 pinned + 1
+bootstrap; experiment 25 pinned + 5 bootstraps), the gate suite is green at 187,
+and the experiment's app suite (60) is green. The Item 4 review finding below is
+the written confirmation the design gate asked for before merge.
 
 ## Notes
 
 - Behaviour-preserving by construction: adding a conjunct can only *narrow* when a
   rule fires, and it narrows it to the flow it was written for.
 - **The pin's position was found the hard way.** With the pin first, the
-  experiment went to 9 errors and 5 failures (rules that never fired); with it
-  last, to 3 failures. That difference is the engine's dispatch rule, recorded
-  above so the next author does not repeat it.
+  experiment went to 9 errors and 5 failures — the rules fired, but with blank
+  arguments (their `triggerField`/`triggerInput` bound to the request, not the
+  domain trigger); with the pin last, to 3 failures. That difference is the
+  primary-conjunct binding rule, recorded above so the next author does not
+  repeat it.
 - Validated on UC-04 before mass application: every non-bootstrap rule gained
   `requested: Web/request: [ route: "returns" ; method: "POST" ] => [ Routed ]`,
   every rule kept its name, and the two real joins kept theirs (`…WhenJoin…`).
@@ -128,3 +147,60 @@ To be recorded before commit.
   why the design gate is separate from the implementation. Unlike the naming
   change, names do **not** change, so the churn is the specs' `when` blocks, the
   Java conjuncts, and the gate re-approvals.
+
+## Review finding (Item 4)
+
+The pin rule is the largest semantic change of the Model B experiment, so it was
+re-reviewed before merge. Verdict: **the rule holds**, but its statement and its
+mechanical enforcement had drifted from it. Corrected here and in the sources.
+
+**The mechanism was misdescribed.** The rule originally said the engine
+"dispatches a joined rule on its primary conjunct's completion, so a pin first
+fires before its own trigger has completed and never re-evaluates." That is not
+what the engine does: `buildTriggerIndex` files *every* conjunct and
+`processInvocation` re-checks a rule on any conjunct's completion
+(`SyncEngine.java:79-92, 266-269`), so a pin-first rule does fire — just wrongly.
+`WhereEvaluator` is called with the primary conjunct as the trigger
+(`SyncEngine.java:270-278`), and `triggerField`/`triggerInput` read its
+completion/input (`WhereEvaluator.java:94-100`); with the pin first those sources
+bind to the `Web/request` completion and the rule's arguments come out blank —
+the experiment's 9 errors / 5 failures. Position still matters; the reason did
+not.
+
+**Four surfaces disagreed with the rule**, all now corrected:
+
+1. `SYNCHRONIZATIONS.md` said "first conjunct" in its opening line and "last, not
+   first" two paragraphs later; `generate_syncs.py` repeated "first". Both now
+   say last, with the binding mechanism.
+2. `verify_sync_flow_pin.py` accepted the pin anywhere and never compared its
+   route to the chain — a pin-first or route-drifted spec passed. It now requires
+   the pin to be the last conjunct, exactly one flow root, and the route to match
+   a route the feature's Stage 01b chains root (with regression tests).
+3. `templates/sync.md` documented joins, `absent`, `collect`, and route-scoped
+   bootstraps but not the pin; the rule is now stated there.
+4. This record's design gate said "pin first" and its test matrix still called the
+   checker "pending"; both corrected.
+
+**The four edge probes asked for:**
+
+- *One rule, two flows.* Holds: the pin is a **scope**, not a filter, and a rule
+  needed in two flows is two rules. One latent trap remains — `generate_syncs.py`
+  `_edge_id` (line 326) ignores the pin, so two identical edges differing only by
+  flow in a *single* feature would collapse silently. Not reachable today (one
+  route per feature: every scenario in a feature shares row 1's route); flagged
+  for a future multi-route feature.
+- *A flow with more than one `Web/request`.* Not expressible under the current
+  rule: `flow_route` is single-valued and derived from row 1 only
+  (`generate_syncs.py:168-184`). The checker now rejects two roots; the grammar's
+  one-flow-root-per-chain assumption should be stated if multi-request flows are
+  ever wanted.
+- *Shared trigger and shared target.* Correctness holds. The runtime emission
+  guard is `(primary actionId, rule name)` (`SyncEngine.java:273`), so the two
+  same-named `RespondWhenVerifyRefused` rules (routes `loans` / `returns`) never
+  collide — only their traceability (`causedBySync`) is ambiguous, which is the
+  separate naming item 2b.
+- *Validate the pin against the chain.* Done: the checker now derives the
+  feature's chain routes and rejects a spec whose pinned route is not among them.
+
+No narrowing of the *behavioural* rule was needed; the narrowing is in its
+enforcement and documentation.
