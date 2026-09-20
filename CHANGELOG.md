@@ -10,7 +10,16 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
-## [Unreleased]
+## [0.8.0] — 2026-09-20
+
+Minor release: **system-scope concept vocabulary (Model B)**, the contract and
+grammar changes that composing concepts across use cases first forced, and the
+engine/gate hardening those surfaced. Concepts become canonical, system-scope,
+reusable assets that use cases *compose* — reuse, extend, or propose — instead
+of re-deriving per feature. Every item below is experiment-found and carries a
+`maintenance/` record.
+
+### Added
 
 **Flow pinning: every non-bootstrap sync names its flow root.** Maintenance
 record `maintenance/sync-flow-pinning.md`; experiment-found (UC-04: UC-03's lend
@@ -75,7 +84,8 @@ heading rather than its same-turn rule).
   completes last, name the rest in the label; no `<<join>>` pseudo-state).
 - The 01b stage contract says the same, and `verify_chain_grammar.py` now fails
   a chain file with no `stateDiagram-v2` block.
-Engine: **the `where` clause gains a negative state pattern**, `absent ( Concept ; ?subject ; predicate )` — "the ones that do not have X".
+
+**Engine: the `where` clause gains a negative state pattern**, `absent ( Concept ; ?subject ; predicate )` — "the ones that do not have X".
 Maintenance record `maintenance/engine-absent-state-guard.md`; experiment-found
 (UC-04-return-copy could not express "the member's *remaining open* loans": every
 `where` source enumerates state, and `collect` takes no filter).
@@ -85,17 +95,21 @@ Maintenance record `maintenance/engine-absent-state-guard.md`; experiment-found
 - Documented in `SYNC_PATTERNS.md`, `SYNCHRONIZATIONS.md` section Collect, and the 03
   stage contract; the 03a card parser recognises it as a concept-state read.
 
-## [0.8.0] — 2026-09-16
-
-Minor release: **system-scope concept vocabulary (Model B)**. Concepts become
-canonical, system-scope, reusable assets that use cases *compose* — reuse,
-extend, or propose — instead of re-deriving per feature. Maintenance record
-`maintenance/system-scope-concept-vocabulary.md`; experiment-found (the Conduit
-rebuild re-derived `Session.concept.md` in six use cases with six divergent
-hashes, surfaced only at Stage 04).
-
-### Added
-
+- **Concept data model and contract are canonical.** Maintenance records
+  `maintenance/concept-owned-data-model.md` and
+  `maintenance/spec-renamed-to-concept-contract.md` (the rename itself is under
+  *Changed*). The corpus holds three artefacts per concept —
+  `<Name>.concept.md`, `<Name>.data-model.md`, `<Name>.contract.md` — and a
+  feature derives one only when it introduces the concept or changes its state;
+  a reused concept binds the canonical artefacts.
+- **Concept provenance and additivity.** Maintenance record
+  `maintenance/concept-provenance-and-additivity.md`. Canonical artefacts record
+  their `introduced-by` / `extended-by` history, feature copies are stamped as
+  proposal snapshots, promotion cannot move a concept backwards (only the
+  concept's current source may promote it, with a reason), and
+  `verify_concept_additivity.py` refuses a dropped or restated canonical state
+  line or contract outcome (a deliberate, bounded removal is listed in
+  `_config/additivity-exceptions.md`).
 - **Canonical concept corpus** — `features/_system/concepts/<Name>.concept.md`,
   seeded from the `UC-00-login` worked example with `introduced-by` provenance.
 - **Generated catalog index** — `features/_system/concepts-catalog.md`
@@ -120,6 +134,23 @@ hashes, surfaced only at Stage 04).
 
 ### Changed
 
+- **Sync-name grammar v3.** Maintenance record
+  `maintenance/sync-name-grammar-v3.md`. Names are action-first and
+  concept-free — `<TargetAction>When<TriggerAction><Completion>` — with a
+  deterministic escalation that adds concept tokens back only on a genuine
+  collision. The old `For<Scope>` (the feature slug) is gone: it was identical
+  inside a pack, so it could not disambiguate anything.
+- **`SPEC` is renamed to the concept contract, and is canonical.** Maintenance
+  record `maintenance/spec-renamed-to-concept-contract.md`. The artefact
+  `<Name>.spec.md` → `<Name>.contract.md`, the stage folder `04b_spec/` →
+  `04b_contract/`, the stage label, the generator and parity script, and the
+  prose. An extending feature moves it; a reusing feature binds the canonical
+  one (before, each feature carried a divergent per-UC copy).
+- **A sync `then` carries the authored result, not the transport frame.**
+  Maintenance record `maintenance/transport-framing-adapter-owned.md`. The
+  transport envelope (status, body nesting) is the primary adapter's
+  serialization step; a nested-map `then` argument is a boundary violation and
+  has been flattened out of the shipped specs.
 - **Concept resolution is a union (M1).** `clad_stages.concept_source_dirs()`
   returns `[<feature>/02_concepts/output, features/_system/concepts]` — a
   feature's proposal shadows the corpus spec of the same name. The four
@@ -141,6 +172,36 @@ hashes, surfaced only at Stage 04).
   `verify_iterative_change_coupling.py`).
 - Stage 03b/04b/04d contracts resolve concept state from the corpus, not a
   per-UC copy.
+
+### Fixed
+
+- **The empty-safe aggregate carried the wrong frame.** Maintenance record
+  `maintenance/engine-empty-safe-aggregate.md`; experiment-found UC-04. When
+  `absent` filtered a non-empty fan-out to nothing, the aggregate seeded a blank
+  frame, so a rule answered `200` with a correct `openLoans: []` and **nulls** for
+  every earlier binding. It now carries the frame from **before the fan-out
+  chain** (ConceptBox's `const originalFrame = frames[0]`).
+- **Parity checks learned the pin's shapes.** `verify_sync_implementation_parity`
+  reads a rule's mechanical name without the flow pin (keeping the bootstrap
+  route), and `--strict-trigger` reads the rule's **primary** conjunct, not its
+  pin.
+
+### Upgrade notes
+
+- **Renames.** `<Name>.spec.md` → `<Name>.contract.md`; stage folder `04b_spec/`
+  → `04b_contract/`. Update local references and any tooling that names them.
+- **Sync names change.** Grammar v3 renames every sync (action-first,
+  concept-free); grammar v3.1 adds `For<Route>` to route-scoped bootstraps.
+  Re-run `generate_syncs.py --write` at Stage 03; a sync rename invalidates
+  Gate 2, and the Java rule names move with the specs.
+- **Flow pinning.** Every non-bootstrap `*.sync.md` gains its flow root as the
+  **last** `when` conjunct (the domain trigger stays primary). This changes specs
+  and their Java rules, so each feature re-approves Gate 2 before it advances.
+- **Concepts are canonical.** A project's corpus starts empty and is not
+  inherited from the worked example; a reused concept binds the corpus's
+  artefacts, and an extension reaches the corpus only through
+  `./clad promote-concepts` on Gate-2 approval.
+- **`absent` is additive.** Existing `where` clauses are unaffected.
 
 ## [0.7.1] — 2026-09-16
 
