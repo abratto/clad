@@ -212,16 +212,29 @@ def expected_sync_names(path, text):
         conjuncts = [ap.Conjunct(None, spec.trigger_concept,
                                  spec.trigger_action, outcome_full)]
 
+    # The flow pin (maintenance/sync-flow-pinning.md) is in every non-bootstrap
+    # rule, so it is not a name component: a pinned single-trigger rule keeps its
+    # trigger-only name while its `when` carries two conjuncts. The generator
+    # excludes it, so this must too.
+    stem_conjuncts = [c for c in conjuncts if c.name != "requested"]
+    stem_is_join = len(stem_conjuncts) > 1
+    # `For<Route>` is a component of a BOOTSTRAP's name only. A pinned rule
+    # carries its route in the pin, and the pin is excluded from the name.
+    pinned = any(c.name == "requested" for c in conjuncts)
+    route_match = re.search(r'route\s*:\s*"([^"]+)"', text)
+    stem_route = "" if pinned else (route_match.group(1) if route_match else "")
+
     # Grammar v3: the generator picks the shortest stem unique within its
     # pack, escalating by adding concept tokens only on a collision, so every
     # level is a legal mechanical name for this rule.
     names = [
-        ap.sync_stem(then_concept, then_action, conjuncts, spec.is_join, level)
+        ap.sync_stem(then_concept, then_action, stem_conjuncts, stem_is_join, level,
+                     route=stem_route)
         for level in range(ap.SYNC_STEM_MAX_LEVEL + 1)
     ]
-    names.append(ap.sync_stem(then_concept, then_action, conjuncts,
-                              spec.is_join, ap.SYNC_STEM_MAX_LEVEL,
-                              with_payload=True))
+    names.append(ap.sync_stem(then_concept, then_action, stem_conjuncts,
+                              stem_is_join, ap.SYNC_STEM_MAX_LEVEL,
+                              with_payload=True, route=stem_route))
     return names
 
 
