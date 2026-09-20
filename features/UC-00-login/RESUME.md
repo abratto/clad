@@ -14,7 +14,7 @@
 - **Gate 1 (Requirements):** `approved`
 - **Gate 1 content hash:** `94560b42aabad5dcd6b31f30b2dee36d7c9e1d46d77ad7bb2e873950503855cc`
 - **Gate 2 (Architecture):** `approved`
-- **Gate 2 content hash:** `4b6c73545a352cc4df694dddd69d939e5fe7e6dfbc52f8d2114434a8c6c76334`
+- **Gate 2 content hash:** `4f31f386d08064745050b8548eee4fef82ce2efbb931d12d5a63490f499fbf31`
 - **Gate 3 (Executable spec):** `approved`
 - **Gate 3 content hash:** `3012f2204e6dc4895f16f1b29e60e695756bc3542a2349dbbe2568443e08fb5f`
 - **Corrections at last gate:** `None`
