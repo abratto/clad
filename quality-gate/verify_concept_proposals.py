@@ -19,6 +19,10 @@ Checks (per feature):
   * Every proposal in `02_concepts/output/` is a `new` / `extends:UC-XX` row
     in the responsibility map (a `reused` row must not carry a spec file).
   * Every `Origin` value is one of `new`, `reused[:...]`, `extends[:...]`.
+  * While the feature's Gate 2 is still open, every proposal carries the
+    `proposal snapshot` header (from `templates/concept.md`) so a reader can
+    tell the feature copy from the canonical corpus copy. Approved (frozen)
+    features are grandfathered.
 
 A responsibility map with no Origin column (pre-Model-B) is skipped.
 
@@ -34,6 +38,18 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
+import verify_stage_sequence as vss  # noqa: E402
+
+PROPOSAL_STAMP = "proposal snapshot"
+
+
+def gate_2_open(feature_root):
+    """True while Gate 2 is not approved (unknown RESUME = enforce)."""
+    resume = os.path.join(feature_root, "RESUME.md")
+    if not os.path.isfile(resume):
+        return True
+    with open(resume, encoding="utf-8") as handle:
+        return not vss.gate_approved(handle.read(), 2)
 
 
 def main():
@@ -72,7 +88,17 @@ def main():
     expected = {c for c, o in origins.items()
                 if o.startswith("new") or o.startswith("extend")}
     reuse = {c for c, o in origins.items() if o.startswith("reused")}
-    present = set(ap.concept_spec_paths([concept_out]))
+    present_paths = ap.concept_spec_paths([concept_out])
+    present = set(present_paths)
+
+    if gate_2_open(feature_root):
+        for concept, path in sorted(present_paths.items()):
+            with open(path, encoding="utf-8") as handle:
+                if PROPOSAL_STAMP not in handle.read():
+                    failures.append(
+                        f"{concept}: proposal is missing the `{PROPOSAL_STAMP}` "
+                        f"header — author it from templates/concept.md; the "
+                        f"canonical corpus copy is the authoritative one")
 
     for concept in sorted(expected - present):
         failures.append(

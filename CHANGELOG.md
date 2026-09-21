@@ -12,6 +12,15 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
 
+**Concept proposals carry a proposal-snapshot stamp at authoring time.**
+`templates/concept.md` now stamps `<!-- proposal snapshot — …; canonical spec:
+… -->`, so a hand-authored Stage-02 proposal says which copy is authoritative,
+like the generated data model and contract already did.
+`verify_concept_proposals.py` requires it while Gate 2 is open (approved
+features are grandfathered), and promotion drops it from the canonical spec so
+the corpus never claims to be a proposal. See `CONCEPTS.md` §"Proposal snapshots
+vs the canonical entry".
+
 **Iterative-change readiness distinguishes new stage work from gated edits.**
 `verify_iterative_change_readiness.py` no longer demands a `_changes/` record for
 a stage's own uncommitted concept/sync output: if every touched artefact belongs

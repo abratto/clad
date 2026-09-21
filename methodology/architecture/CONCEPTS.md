@@ -250,7 +250,11 @@ So the two artefacts say which they are:
   <UC-A>, current source <UC-C> -->` on the model and contract, with
   `introduced-by` / `extended-by <UC-B>, <UC-C>` in the spec header;
 - snapshot — `<!-- proposal snapshot — …; canonical <kind>:
-  features/_system/concepts/<Name>… -->`.
+  features/_system/concepts/<Name>… -->` on the model and contract (the
+  generators stamp it), and on the concept spec itself (stamped by
+  `templates/concept.md`, so a hand-authored proposal carries it too). Promotion
+  drops it from the canonical spec, which is identified by its location and its
+  `introduced-by` / `extended-by` header rather than by a snapshot marker.
 
 Two consequences follow, and both are mechanised:
 
@@ -263,7 +267,9 @@ Two consequences follow, and both are mechanised:
 
 `quality-gate/verify_concept_additivity.py` enforces the second at Gate 2 and
 Gate 3; `quality-gate/verify_concept_corpus_current.py` enforces the first
-against the `_promotions/` receipts.
+against the `_promotions/` receipts; and `verify_concept_proposals.py` requires
+the snapshot header on a feature's concept proposals while its Gate 2 is still
+open (approved features are grandfathered).
 
 ### Concept criteria
 
