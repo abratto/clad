@@ -160,6 +160,20 @@ def canonical_companion(text: str, concept: str, introducer: str,
     return header + text
 
 
+def canonical_spec(text: str) -> str:
+    """The canonical form of a promoted concept spec.
+
+    A proposal's leading `<!-- proposal snapshot — … -->` header is
+    feature-local: the canonical spec is identified by its location and its
+    `introduced-by` / `extended-by` provenance, so the header is dropped rather
+    than copied into the corpus (which would leave the canonical entry claiming
+    to be a proposal).
+    """
+    if LEADING_COMMENT_RE.match(text):
+        return LEADING_COMMENT_RE.sub("", text, count=1).lstrip("\n")
+    return text
+
+
 def proposals_for(feature_root: str):
     """(concept -> path) for the feature's NEW/EXTEND proposals."""
     resp_map = os.path.join(feature_root, "stages", "01a_responsibility-map",
@@ -273,6 +287,7 @@ def main():
                 existing = fh.read()
         with open(proposal_path, encoding="utf-8") as fh:
             spec = stamp_provenance(fh.read(), slug, existing)
+        spec = canonical_spec(spec)
         introducer, promoter = provenance_scope(spec)
         companions = {}
         for rel, suffix in (("03b_data-model", "data-model.md"),

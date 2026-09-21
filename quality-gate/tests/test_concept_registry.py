@@ -22,7 +22,9 @@ CATALOG = QUALITY_GATE / "generate_concepts_catalog.py"
 GENERATE_DATA_MODEL = QUALITY_GATE / "generate_data_model.py"
 GENERATE_CONTRACT = QUALITY_GATE / "generate_contract.py"
 
-CONCEPT = """concept {name} [UserId]
+CONCEPT = """<!-- proposal snapshot — derived from templates/concept.md; canonical spec: features/_system/concepts/{name}.concept.md -->
+
+concept {name} [UserId]
 introduced-by {introducer}
 purpose
     to {name-lower}
@@ -233,6 +235,21 @@ class PromotionTests(unittest.TestCase):
 
             again = run(PROMOTE, "--feature", str(feature))
             self.assertIn("no-op", again.stdout)
+
+    def test_promotion_drops_the_proposal_snapshot_header(self):
+        """A proposal's `<!-- proposal snapshot … -->` header is feature-local;
+        the canonical spec is identified by its location and provenance, so the
+        corpus copy must not claim to be a proposal."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature = make_feature(tmp, [("Foo", "new")], specs=("Foo",),
+                                   gate2="approved")
+            r = run(PROMOTE, "--feature", str(feature))
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            spec = (Path(tmp) / "features" / "_system" / "concepts"
+                    / "Foo.concept.md").read_text(encoding="utf-8")
+            self.assertNotIn("proposal snapshot", spec)
+            self.assertIn("introduced-by UC-01-a", spec)
+            self.assertTrue(spec.startswith("concept Foo"), spec[:80])
 
     def test_second_promoter_is_appended_and_out_of_order_is_refused(self):
         """The canonical spec carries its promotion order, and an older

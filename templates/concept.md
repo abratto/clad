@@ -1,3 +1,5 @@
+<!-- proposal snapshot — derived from templates/concept.md; canonical spec: features/_system/concepts/<ConceptName>.concept.md -->
+
 <!-- Template for Stage 02 (02_concepts). Purpose & authoring rules: methodology/architecture/CONCEPTS.md and the stage 02 CONTEXT "Process" section. This file is the output shape only.
 
 Naming: name the capability (gerund/noun phrase — `Authentication`,
@@ -12,8 +14,10 @@ if one is missing, reopen Stage 01b.
 Provenance: `introduced-by <UC-XX-slug>` records the feature that first
 introduced the concept. In a UC's Stage-02 output this is a PROPOSAL
 (promoted to the corpus on gate approval); in the canonical corpus at
-features/_system/concepts/ it is the provenance of record. Do not edit
-it by hand in the corpus — promotion writes it. -->
+features/_system/concepts/ it is the provenance of record. Keep the
+`<!-- proposal snapshot — …; canonical spec: … -->` header above so a reader
+always knows which copy is authoritative. Do not edit provenance by hand in
+the corpus — promotion writes it. -->
 
 concept <ConceptName> [<TypeParams>]
 introduced-by <UC-XX-slug>

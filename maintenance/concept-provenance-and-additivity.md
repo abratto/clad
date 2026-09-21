@@ -112,3 +112,10 @@ To be recorded before commit.
 - `UC-00-*` is skipped as the reserved worked example — in a derived repository
   its concepts belong to the seed's corpus, not to that app's — and the
   bootstrap concept `Web` is skipped because it is not a corpus concept.
+- **Follow-up (post-0.8.0):** the *concept* proposal now carries a
+  `<!-- proposal snapshot — … -->` header at authoring time
+  (`templates/concept.md`), so a hand-authored proposal is labelled like the
+  generated model and contract. `verify_concept_proposals.py` requires it while
+  Gate 2 is open (approved features are grandfathered), and
+  `promote_concepts.canonical_spec` drops it so the canonical spec never claims
+  to be a proposal.
