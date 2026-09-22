@@ -2,7 +2,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md` §"Platform maintenance changes" and R20
 - **Change class:** `platform`
-- **Status:** `active`
+- **Status:** `closed`
 - **Affected profile(s):** `reference-impl/legible-engine` (new `where` clause), `reference-impl/java-legible` (inherits), `reference-impl/java-micronaut-postgres` (inherits), `reference-impl/java-plain` (inherits)
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`

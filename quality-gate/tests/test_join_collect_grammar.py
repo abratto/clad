@@ -193,7 +193,7 @@ class ChainJoinGenerationTests(unittest.TestCase):
             stems = sorted(
                 p.name.replace(".sync.md", "")
                 for p in (feature / "stages/03_syncs/output").glob("*.sync.md"))
-            self.assertIn("RespondWhenJoinListListedAndTagTagged", stems)
+            self.assertIn("RespondForPublishWhenJoinListListedAndTagTagged", stems)
 
 
 class SyncStemRouteTests(unittest.TestCase):

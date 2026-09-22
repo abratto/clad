@@ -12,11 +12,11 @@
 - **Iterative change `spec-renamed-to-concept-contract`:** `approved`
 - **Iterative change `proposal-snapshot-headers`:** `approved`
 - **Gate 1 (Requirements):** `approved`
-- **Gate 1 content hash:** `94560b42aabad5dcd6b31f30b2dee36d7c9e1d46d77ad7bb2e873950503855cc`
+- **Gate 1 content hash:** `2297b79e007e09c660cb7dcc9fdb98e63cb146e43ed290df9e40c19f34894515`
 - **Gate 2 (Architecture):** `approved`
-- **Gate 2 content hash:** `4f31f386d08064745050b8548eee4fef82ce2efbb931d12d5a63490f499fbf31`
+- **Gate 2 content hash:** `624ecad3820abc4346d1f70c1b7e12b7e0ed785067d0f1e07fa57d8b75ff4772`
 - **Gate 3 (Executable spec):** `approved`
-- **Gate 3 content hash:** `3012f2204e6dc4895f16f1b29e60e695756bc3542a2349dbbe2568443e08fb5f`
+- **Gate 3 content hash:** `4eee3b9a793dd6f818f13cb6e4c3477cec12e4539796cba3ebac06267590921d`
 - **Corrections at last gate:** `None`
 - **Deferred concepts:** `None`
 - **Next stage:** `Stage 04c — Flow tests`

@@ -4,10 +4,10 @@
 
 | Action | Flow (sync) | Data received | Pattern | Source |
 |---|---|---|---|---|
-| `respond` | `RespondWhenLookupByUsernameRefused` (`unknown-user`) | `status: 401`, `body: { message: "username or password didn't match" }` | C | Both literal — pattern C constants baked into the sync |
-| `respond` | `RespondWhenCheckBadPassword` (`wrong-password`) | `status: 401`, `body: { message: "username or password didn't match" }` | C | Both literal — pattern C constants baked into the sync |
-| `respond` | `RespondWhenCheckLocked` (`lockout`) | `status: 401`, `body: { message: "Too many attempts. Try again in 15 minutes." }` | C | Both literal — pattern C constants baked into the sync |
-| `respond` | `RespondWhenGrantGranted` (`successful-login`) | `status: 200`, `body: { sessionToken: ?sid }` | C + B | C: `200` literal; B: `?sid` from `Session/grant` completion (same flow) |
+| `respond` | `RespondForLoginWhenLookupByUsernameRefused` (`unknown-user`) | `status: 401`, `body: { message: "username or password didn't match" }` | C | Both literal — pattern C constants baked into the sync |
+| `respond` | `RespondForLoginWhenCheckBadPassword` (`wrong-password`) | `status: 401`, `body: { message: "username or password didn't match" }` | C | Both literal — pattern C constants baked into the sync |
+| `respond` | `RespondForLoginWhenCheckLocked` (`lockout`) | `status: 401`, `body: { message: "Too many attempts. Try again in 15 minutes." }` | C | Both literal — pattern C constants baked into the sync |
+| `respond` | `RespondForLoginWhenGrantGranted` (`successful-login`) | `status: 200`, `body: { sessionToken: ?sid }` | C + B | C: `200` literal; B: `?sid` from `Session/grant` completion (same flow) |
 
 > `Web/request` is the trigger of every flow, never a `then` target;
 > it does not appear in this section.

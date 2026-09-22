@@ -15,21 +15,21 @@
 | Sync | Chain table | Flow scenario | Tested by |
 |---|---|---|---|
 | `LookupByUsernameForLoginWhenRequestRouted` | Row 1→2 | successful-login, wrong-pw, lockout, unknown-user | `CucumberTest` |
-| `CheckWhenLookupByUsernameFound` | Row 2→3 | successful-login, wrong-pw, lockout | `CucumberTest` |
-| `GrantWhenCheckOk` | Row 3→4 | successful-login | `CucumberTest` |
-| `RespondWhenGrantGranted` | Row 4→5 | successful-login | `CucumberTest` |
-| `RespondWhenCheckBadPassword` | Row 3a | wrong-password | `CucumberTest` |
-| `RespondWhenCheckLocked` | Row 3b | lockout | `CucumberTest` |
-| `RespondWhenLookupByUsernameRefused` | Row 2a | unknown-user | `CucumberTest` |
+| `CheckForLoginWhenLookupByUsernameFound` | Row 2→3 | successful-login, wrong-pw, lockout | `CucumberTest` |
+| `GrantForLoginWhenCheckOk` | Row 3→4 | successful-login | `CucumberTest` |
+| `RespondForLoginWhenGrantGranted` | Row 4→5 | successful-login | `CucumberTest` |
+| `RespondForLoginWhenCheckBadPassword` | Row 3a | wrong-password | `CucumberTest` |
+| `RespondForLoginWhenCheckLocked` | Row 3b | lockout | `CucumberTest` |
+| `RespondForLoginWhenLookupByUsernameRefused` | Row 2a | unknown-user | `CucumberTest` |
 
 ## Gherkin scenario coverage
 
 | Scenario | Syncs exercised |
 |---|---|
-| `successful-login` | LookupByUsernameForLoginWhenRequestRouted, CheckWhenLookupByUsernameFound, GrantWhenCheckOk, RespondWhenGrantGranted |
-| `wrong-password` | LookupByUsernameForLoginWhenRequestRouted, CheckWhenLookupByUsernameFound, RespondWhenCheckBadPassword |
-| `lockout` | LookupByUsernameForLoginWhenRequestRouted, CheckWhenLookupByUsernameFound, RespondWhenCheckLocked |
-| `unknown-user` | LookupByUsernameForLoginWhenRequestRouted, RespondWhenLookupByUsernameRefused |
+| `successful-login` | LookupByUsernameForLoginWhenRequestRouted, CheckForLoginWhenLookupByUsernameFound, GrantForLoginWhenCheckOk, RespondForLoginWhenGrantGranted |
+| `wrong-password` | LookupByUsernameForLoginWhenRequestRouted, CheckForLoginWhenLookupByUsernameFound, RespondForLoginWhenCheckBadPassword |
+| `lockout` | LookupByUsernameForLoginWhenRequestRouted, CheckForLoginWhenLookupByUsernameFound, RespondForLoginWhenCheckLocked |
+| `unknown-user` | LookupByUsernameForLoginWhenRequestRouted, RespondForLoginWhenLookupByUsernameRefused |
 
 All 4 Cucumber scenarios pass (0 failures).
 
@@ -50,7 +50,7 @@ All 4 Cucumber scenarios pass (0 failures).
 
 The reference implementation tests syncs through flow-level integration
 tests (CucumberTest) and a dedicated unit test for
-`GrantWhenCheckOk`. All sync implementations
+`GrantForLoginWhenCheckOk`. All sync implementations
 exist under `com.example.app.syncs` with matching spec artefacts.
 
 ---
@@ -59,9 +59,9 @@ exist under `com.example.app.syncs` with matching spec artefacts.
 
 - **Approved red tests:** None — existing tests are flow-level and pass green
 - **Sync package:** `com.example.app.syncs`
-- **Sync classes:** `LookupByUsernameForLoginWhenRequestRouted`, `CheckWhenLookupByUsernameFound`,
-  `GrantWhenCheckOk`, `RespondWhenGrantGranted`, `RespondWhenCheckBadPassword`,
-  `RespondWhenCheckLocked`, `RespondWhenLookupByUsernameRefused`
+- **Sync classes:** `LookupByUsernameForLoginWhenRequestRouted`, `CheckForLoginWhenLookupByUsernameFound`,
+  `GrantForLoginWhenCheckOk`, `RespondForLoginWhenGrantGranted`, `RespondForLoginWhenCheckBadPassword`,
+  `RespondForLoginWhenCheckLocked`, `RespondForLoginWhenLookupByUsernameRefused`
 - **Test command:** `mvn -f reference-impl/java-micronaut-jena/pom.xml test`
 - **Expected red outcome:** N/A — existing tests are green
 - **Next implementation target:** Stage 05 verification

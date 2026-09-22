@@ -402,7 +402,7 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
         for level, with_payload in ladder:
             candidate = ap.sync_stem(g.target_concept, g.target_action,
                                      stem_conjuncts, stem_is_join, level, with_payload,
-                                     route=getattr(g, "route", ""))
+                                     route=g.flow_route or "")
             if candidate not in used:
                 chosen = candidate
                 break
@@ -410,7 +410,7 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
             level, with_payload = ladder[-1]
             chosen = ap.sync_stem(g.target_concept, g.target_action,
                                   stem_conjuncts, stem_is_join, level, with_payload,
-                                  route=getattr(g, "route", ""))
+                                  route=g.flow_route or "")
             warnings.append(
                 f"{chosen}: stem still collides at max escalation; "
                 f"author it by hand with a distinct stem")

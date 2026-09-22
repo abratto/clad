@@ -4,12 +4,12 @@
 
 | Action | Flow (sync) | Data received | Pattern | Source |
 |---|---|---|---|---|
-| `grant` | `GrantWhenCheckOk` (`successful-login`) | `userId` | B | `PasswordAuth/check` completion `?user` |
+| `grant` | `GrantForLoginWhenCheckOk` (`successful-login`) | `userId` | B | `PasswordAuth/check` completion `?user` |
 
 ## Section 2 — Named-region reads by others (inbound Pattern D)
 
 None — no other concept's sync reads `Session`'s named region. The
-`sessionId` returned by `grant` is consumed by `RespondWhenGrantGranted`
+`sessionId` returned by `grant` is consumed by `RespondForLoginWhenGrantGranted`
 (Pattern B — flow-sibling output of `Session/grant`) and so is not a
 Pattern D read against `Session`'s state.
 
@@ -22,7 +22,7 @@ Pattern D read against `Session`'s state.
 ## Cross-checks
 
 - `grant` is declared in `../../02_concepts/output/Session.concept.md`.
-- The sync `GrantWhenCheckOk` exists under `../../03_syncs/output/`.
+- The sync `GrantForLoginWhenCheckOk` exists under `../../03_syncs/output/`.
 
 ---
 

@@ -2,7 +2,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `active`
+- **Status:** `closed`
 - **Affected profile(s):** all profiles (the generator, the sync grammar, the stage contract, every feature's non-bootstrap sync specs, and the reference examples)
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`

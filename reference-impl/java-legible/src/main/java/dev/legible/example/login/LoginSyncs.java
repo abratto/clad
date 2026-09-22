@@ -65,7 +65,7 @@ public final class LoginSyncs {
 
     /** Row 2[Found]→3b: when UserNaming.lookupByUsername[FOUND] → PasswordAuth.check(userId, password). */
     private static SyncRule checkWhenLookupByUsernameFound() {
-        return rule("CheckWhenLookupByUsernameFound")
+        return rule("CheckForLoginWhenLookupByUsernameFound")
             .when(conj("trigger", USER_NAMING, LOOKUP_BY_USERNAME, "FOUND"))
             .and(conj("requested", WEB, REQUEST, "routed").matching(Map.of("route", "login")))
             .where(bind("?user", triggerField("userId")),
@@ -77,7 +77,7 @@ public final class LoginSyncs {
 
     /** Row 2[refused]→3a: when UserNaming.lookupByUsername[refused] → Web.respond(401, opaque message). */
     private static SyncRule respondWhenLookupByUsernameRefused() {
-        return rule("RespondWhenLookupByUsernameRefused")
+        return rule("RespondForLoginWhenLookupByUsernameRefused")
             .when(conj("trigger", USER_NAMING, LOOKUP_BY_USERNAME, "refused"))
             .and(conj("requested", WEB, REQUEST, "routed").matching(Map.of("route", "login")))
             .then(invoke(WEB, RESPOND, args(
@@ -88,7 +88,7 @@ public final class LoginSyncs {
 
     /** Row 3b[OK]→4a: when PasswordAuth.check[OK] → Session.grant(userId). */
     private static SyncRule grantWhenCheckOk() {
-        return rule("GrantWhenCheckOk")
+        return rule("GrantForLoginWhenCheckOk")
             .when(conj("trigger", PASSWORD_AUTH, CHECK, "OK"))
             .and(conj("requested", WEB, REQUEST, "routed").matching(Map.of("route", "login")))
             .where(bind("?user", triggerField("userId")))
@@ -98,7 +98,7 @@ public final class LoginSyncs {
 
     /** Row 3b[BAD_PASSWORD]→4b: respond 401 opaque. */
     private static SyncRule respondWhenCheckBadPassword() {
-        return rule("RespondWhenCheckBadPassword")
+        return rule("RespondForLoginWhenCheckBadPassword")
             .when(conj("trigger", PASSWORD_AUTH, CHECK, "BAD_PASSWORD"))
             .and(conj("requested", WEB, REQUEST, "routed").matching(Map.of("route", "login")))
             .then(invoke(WEB, RESPOND, args(
@@ -109,7 +109,7 @@ public final class LoginSyncs {
 
     /** Row 3b[LOCKED]→4c: respond 401 with the visible lockout message. */
     private static SyncRule respondWhenCheckLocked() {
-        return rule("RespondWhenCheckLocked")
+        return rule("RespondForLoginWhenCheckLocked")
             .when(conj("trigger", PASSWORD_AUTH, CHECK, "LOCKED"))
             .and(conj("requested", WEB, REQUEST, "routed").matching(Map.of("route", "login")))
             .then(invoke(WEB, RESPOND, args(
@@ -120,7 +120,7 @@ public final class LoginSyncs {
 
     /** Row 4a[GRANTED]→5: when Session.grant[GRANTED] → Web.respond(200, sessionToken). */
     private static SyncRule respondWhenGrantGranted() {
-        return rule("RespondWhenGrantGranted")
+        return rule("RespondForLoginWhenGrantGranted")
             .when(conj("trigger", SESSION, GRANT, "GRANTED"))
             .and(conj("requested", WEB, REQUEST, "routed").matching(Map.of("route", "login")))
             .where(bind("?sid", triggerField("sessionId")))

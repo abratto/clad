@@ -18,11 +18,11 @@ public final class LoginSyncRules {
     public static List<SyncRule> all() {
         return List.of(
                 new LookupByUsernameForLoginWhenRequestRouted().rule(),
-                new CheckWhenLookupByUsernameFound().rule(),
-                new RespondWhenLookupByUsernameRefused().rule(),
-                new GrantWhenCheckOk().rule(),
-                new RespondWhenCheckBadPassword().rule(),
-                new RespondWhenCheckLocked().rule(),
-                new RespondWhenGrantGranted().rule());
+                new CheckForLoginWhenLookupByUsernameFound().rule(),
+                new RespondForLoginWhenLookupByUsernameRefused().rule(),
+                new GrantForLoginWhenCheckOk().rule(),
+                new RespondForLoginWhenCheckBadPassword().rule(),
+                new RespondForLoginWhenCheckLocked().rule(),
+                new RespondForLoginWhenGrantGranted().rule());
     }
 }
