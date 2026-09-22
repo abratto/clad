@@ -4,16 +4,14 @@ verify_sync_route_filters.py — R11: route scoping on shared-trigger syncs.
 
 A sync that fires on a business-concept action (not the `Web` bootstrap) and
 writes `Web/respond` can collide with another route that produces the same
-trigger. This check warns (never blocks) when two or more `SyncRule.of` rules share a trigger
-and none carries a route guard (`?route`) or a `when`-clause input matcher
-(`Map.of("route", lit(...))` — R15 matcher form)
-share the same `(concept, action, outcome)` trigger and none carries a `?route`
-guard — positive evidence of the R11 hazard.
+trigger. This check warns (never blocks) when two or more sync rules share the
+same `(concept, action, outcome)` trigger and write `Web/respond`, and none
+carries a route matcher — a `?route` guard or a `when`-clause input matcher
+(`Map.of("route", lit(...))`, the R15 matcher form).
 
 Canonical-profile enforcement is advisory by design: the shipped examples have
 no cross-route collision, and a blocking rule needs an engine
-route-propagation decision. The legacy `SyncTrigger`/SPARQL profile was
-retired (see `reference-impl/LEGACY.md`).
+route-propagation decision.
 
 Usage:
   python3 verify_sync_route_filters.py --sync-impl-dir <path>

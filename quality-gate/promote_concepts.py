@@ -43,12 +43,10 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
 import clad_stages as cs  # noqa: E402
+from verify_stage_sequence import gate_hash_recorded, gate_status  # noqa: E402
 
 INTRODUCED_RE = re.compile(r"^introduced-by\s+(.+)$", re.MULTILINE)
 EXTENDED_RE = re.compile(r"^extended-by\s+(.+)$", re.MULTILINE)
-
-GATE2_STATUS = re.compile(r"^- \*\*Gate 2 \([^)]*\):\*\*\s+`(\w+)`", re.MULTILINE)
-GATE2_HASH = re.compile(r"^- \*\*Gate 2 content hash:\*\*\s+`([0-9a-f]+)`", re.MULTILINE)
 
 
 def repo_root(feature_root: str) -> str:
@@ -252,13 +250,11 @@ def main():
 
     with open(resume, encoding="utf-8") as fh:
         resume_text = fh.read()
-    status = GATE2_STATUS.search(resume_text)
-    if not status or status.group(1) != "approved":
+    if gate_status(resume_text, 2) != "approved":
         print("FAIL  Gate 2 (Architecture) is not approved — promotion refused.")
         print("      Approve Gate 2 first (./clad approve 2).")
         return 1
-    gate_hash = GATE2_HASH.search(resume_text)
-    gate_hash = gate_hash.group(1) if gate_hash else "unknown"
+    gate_hash = gate_hash_recorded(resume_text, 2) or "unknown"
 
     proposals = proposals_for(feature_root)
     claims = dependence_claims(feature_root)
