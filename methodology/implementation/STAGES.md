@@ -433,8 +433,8 @@ These rules apply to individual stages and do not appear in the
 - **Stage 01b chain tables** are the canonical resolver for
   action/outcome disputes. If a sync spec disagrees with a chain table,
   the table wins.
-- **Stage 03 sync names** follow the effect-first grammar (v0.6+):
-  `<TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>`.
+- **Stage 03 sync names** follow the effect-first grammar (v3):
+  `<TargetAction>[For<Route>]When<TriggerAction><TriggerCompletion>`.
   Frozen pre-v0.6 artefacts keep the old condition-first `When…Then…` names
   as historical evidence. See
   [`../architecture/SYNCHRONIZATIONS.md`](../architecture/SYNCHRONIZATIONS.md) §"Naming".

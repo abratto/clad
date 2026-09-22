@@ -280,7 +280,7 @@ then {
   (Pattern A). See [`SYNC_PATTERNS.md`](SYNC_PATTERNS.md).
 - A single *unnamed* conjunct keeps the classic one-trigger form and naming.
 - The joined name is
-  `<Target><Action>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2><A2><Out2>…`
+  `<TargetAction>[For<Route>]WhenJoin<C1><A1><Out1>And<C2><A2><Out2>…`
   in declared conjunct order (deterministic).
 - `generate_syncs.py` derives the joined skeleton and stem from the chain
   table's composite `When`. A rule may also be **hand-authored** with the

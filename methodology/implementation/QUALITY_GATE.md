@@ -144,8 +144,8 @@ not relax the *intent*.
       changed packages, and `--features-dir features/`. The check fails
       if any implementation class lacks a corresponding spec artefact,
       or if any sync spec/class/runtime name does not mechanically follow
-      the `When<Trigger>Then<Target>[For<Scope>]` naming grammar derived
-      from the Stage 03 sync rule.
+      the `<TargetAction>[For<Route>]When<TriggerAction><TriggerCompletion>`
+      naming grammar derived from the Stage 03 sync rule.
     - **Automated:** Run `quality-gate/verify_sync_implementation_parity.py`
       with `--sync-impl-dir` pointing at the changed sync package and either
       `--sync-dir` for the active feature or `--features-dir features/` for a

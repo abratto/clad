@@ -84,7 +84,7 @@ cross-feature drift this view surfaces. Stage 03a's coordination review consumes
 the same view.
 
 For each transition, write one rule-shaped
-`When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>].sync.md`:
+`<TargetAction>[For<Route>]When<TriggerAction><TriggerCompletion>.sync.md`:
 - `when:` the outcome that fires (e.g. `Account.validate(...) -> Valid`)
 - `where:` data-routing only — field-path references and sync constants.
   No function calls, no arithmetic, no I/O. If you need a computation,
@@ -111,7 +111,7 @@ For each transition, write one rule-shaped
 conjuncts `name: Concept/action: [ … ] => [ Outcome ; … ]`; it fires once
 when every conjunct completed in the same flow. Bind conjunct values as
 `name.field` / `name.param`. Its stem is
-`<Target><Action>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2>…` in declared
+`<TargetAction>[For<Route>]WhenJoin<C1><A1><Out1>And<C2>…` in declared
 order; a single unnamed conjunct keeps the classic form and naming.
 
 **Aggregation (`collect`).** The declarative `where` forms
@@ -136,10 +136,11 @@ subject, and an aggregate over a possibly-empty set must use `collectBy`, since 
 
 
 The sync file stem and `sync <Name>` header must match the naming rule
-from `SYNCHRONIZATIONS.md`: prefix with `When`, use `Then` between the
-trigger and target sides, and append `For<Scope>` when the same edge can
-occur in multiple routes, flows, or use cases. Joined rules use the
-`WhenJoin…And…` form (see above).
+from `SYNCHRONIZATIONS.md` (grammar v3, action-first and concept-free): the
+effect first — `<TargetAction>` — then `For<Route>` when the rule carries a
+route matcher (a route-scoped bootstrap, or a pinned rule), then `When` and the
+trigger's action + completion. Joined rules use the `WhenJoin…And…` form (see
+above).
 
 Syncs are declarative — no imperative branching, no state, no I/O.
 Every sync's `Cites` section names the use-case scenario it satisfies.
@@ -206,7 +207,7 @@ python3 ../../../../quality-gate/verify_sync_transition_coverage.py \
   number of transitions in the chain table(s) for this feature (each
   chain-table row-to-row arrow = one sync).
 - **Sync naming:** every filename stem and `sync <Name>` header follows
-  `When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>]`.
+  `<TargetAction>[For<Route>]When<TriggerAction><TriggerCompletion>` (grammar v3).
 - **Where-clause discipline:** no `where` line contains a function call,
   arithmetic expression, or I/O operation. Every line is a field-path
   reference (`when.field`, `result_of(<#N>).field`) or a sync constant
