@@ -226,6 +226,7 @@ consistency checks across the CLAD artefact chain:
 | `verify_iterative_change_readiness.py` | 04+ | Iterative concept/sync spec or implementation changes have a structured `_changes/` classification and artefact-impact matrix |
 | `verify_iterative_change_coupling.py` | 04+ | Concept/sync implementation changes are committed with their matching Stage 02/03 artefacts |
 | `verify_maintenance_change_readiness.py` | Maintenance | Engine/profile/deployment changes have an active maintenance record and cleared design/evidence gates |
+| `verify_governance_hygiene.py` | Any | Advisory: warns on stale `active` records — more than one active `maintenance/` record, more than one active `_changes/` record under a feature, or any active `_changes/` record on a `feature complete` feature |
 | `verify_implementation_parity.py` | 04+ | Implementation concept/sync classes have corresponding stage artefact specs; sync names lower mechanically from Stage 03 rules |
 | `verify_sync_implementation_parity.py` | 04e | Stage 03 sync contracts have a matching `SyncRule.of` implementation; with `--strict-trigger`, trigger and primary `then` target must match |
 | `verify_feature_file_presence.py` | 04c | Pre-flight: `.feature` file exists in output + Cucumber discovery path |
@@ -242,6 +243,35 @@ report. Profile-agnostic scripts are invoked by `advance.py` via
 `clad_stages.py`; profile-specific scripts (including the Cucumber and
 step-definition checks) are invoked from the relevant stage's `## Verify`
 section.
+
+#### Checker shape-awareness (corpus union, flow pin, route-scoped names)
+
+Every checker that reads a concept spec, contract, or sync spec must know the
+three shapes the system-scope/grammar work introduced. A checker that fails on
+a *new* shape is usually the checker, not the artefact — fix the checker, with
+a test:
+
+- **Corpus union.** A concept's spec/contract lives either in the feature's
+  `02_concepts/output/` (a proposal) or in `features/_system/concepts/` (the
+  canonical corpus); a feature's proposal shadows the corpus by name. A
+  concept/contract reader must resolve the union — via
+  `clad_stages.concept_source_dirs()` and a repeatable `--concept-dir` /
+  `--contract-dir` — not read one directory. `verify_concept_additivity`,
+  `verify_concept_registry`, `verify_concept_proposals`,
+  `verify_iterative_change_coupling`, `verify_file_manifest`, and
+  `verify_links` are exempt: they read both sides deliberately, are generic, or
+  do not resolve concepts. The registry test
+  `quality-gate/tests/test_checker_shape_awareness.py` enforces this list.
+- **Flow pin.** A non-bootstrap sync's `when` carries a `requested:
+  Web/request: …` conjunct as its **last** conjunct. It is not a name
+  component; a name-deriving checker must exclude it (`sync_stem` does). See
+  `maintenance/sync-flow-pinning.md`.
+- **Route-scoped names.** A route-scoped bootstrap's name, and now every pinned
+  rule's name, carries `For<Route>` (`VerifyForReturnsWhenRequestRouted`). A
+  name-deriving checker must include the route for both. See
+  `maintenance/route-scoped-sync-names.md` and
+  `maintenance/route-scoped-pinned-names.md`;
+  `quality-gate/tests/test_checker_shapes.py` locks the behaviour.
 
 ### Axiomatic analysis — running on existing projects
 

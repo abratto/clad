@@ -2,11 +2,11 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `active`
+- **Status:** `closed`
 - **Affected profile(s):** all profiles (the generator, the stem grammar, `verify_implementation_parity`, the stage contract, and every feature's non-bootstrap sync names)
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
-- **Evidence gate:** `pending`
+- **Evidence gate:** `approved`
 - **Change summary:** Every **pinned** (non-bootstrap) sync's name now carries its flow route, exactly as a route-scoped bootstrap already does: `<TargetAction>For<Route>When<TriggerAction><Completion>` (and `…For<Route>WhenJoin…` for a joined rule). Nothing behavioural changes — the same rules fire on the same routes with the same outcomes — but two use cases can no longer register two differently-scoped pinned rules under one name.
 
 ## Why
@@ -72,7 +72,7 @@ generator cannot decide it deterministically. The uniform rule is derivable.
 | The parity checker derives the route-scoped name | unit | `test_checker_shapes.py::…test_pin_route_scopes_the_name_but_the_pin_conjunct_does_not` | pass | — |
 | Whole gate suite | unit | `pytest quality-gate/tests -q` | pass | 202 |
 | The worked example regenerates to the new names | integration | `generate_syncs.py --feature features/UC-00-login` | pass | — |
-| The reactor builds | integration | `mvn -B -ntp test -f reference-impl/pom.xml` | pending | — |
+| The reactor builds | integration | `mvn -B -ntp test -f reference-impl/pom.xml` | pass | BUILD SUCCESS (7 modules) |
 
 ## Gates
 
@@ -84,7 +84,7 @@ collision-dependent rule was rejected as non-derivable.
 
 ### Evidence gate
 
-To be recorded before commit.
+Cleared: gate suite 202 (macOS + Linux), reactor BUILD SUCCESS, worked example regenerates to the new names.
 
 ## Notes
 

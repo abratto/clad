@@ -12,6 +12,24 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
 
+**Experiment learnings applied.** Four hardening changes from the library-lending
+experiment:
+
+- **Checker shape-awareness is now an invariant.** Every checker that reads a
+  concept/contract/sync spec must resolve the corpus union and know the flow pin
+  and route-scoped names; `quality-gate/tests/test_checker_shape_awareness.py`
+  is a registry that fails when a new checker ignores them, and the rule is
+  written in `QUALITY_GATE.md`.
+- **R23 — a request-level refusal is decided before the first state write in the
+  flow** (no partial state on a refusal). The rule, a Stage 01b chain-table
+  semantic check, and the AGENTS index are added.
+- **The R22 promotion-order escape hatch is documented:** when a feature owns an
+  action but is not the concept's current source, route the corpus edit through
+  the R20 maintenance route (`CONCEPTS.md`, `ITERATIVE_CHANGES.md`).
+- **`verify_governance_hygiene.py`** (advisory) warns on stale `active` records —
+  more than one active `maintenance/` or `_changes/` record, or an active
+  `_changes/` record on a `feature complete` feature.
+
 **`absent` is exercised under every durable store.** The negative state pattern
 resolves through `Region.read`, but only the in-memory engine tested it. The
 shared storage contract (`StorageContractTest`, run against `PostgresFactStore`

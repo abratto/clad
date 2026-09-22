@@ -274,6 +274,10 @@ That file is authoritative; this section is an index only.
   route-scope verification (R15); Stage 04d completion-field assertions
   (R16); iterative-change re-entry (R17); mandatory quality gate at
   commit (R18); `test.command` only (R19); maintenance governance (R20).
+- **R22 (concept vocabulary):** a concept is defined once, in the
+  canonical corpus.
+- **R23 (design discipline):** a request-level refusal is decided before
+  the first state write in the flow (no partial state on a refusal).
 
 Quality-gate scripts enforce R1–R5, R14–R20 mechanically — do not relax
 any of them. If a rule appears to conflict with a request, **stop and ask**.
