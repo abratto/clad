@@ -20,3 +20,7 @@ scratch/
 
 # Legacy Roo local config
 .roo-clad-config
+
+# Python bytecode caches
+__pycache__/
+*.pyc
