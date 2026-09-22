@@ -8,6 +8,7 @@ into `advance.py` that the stage contract never names, a stage with no
 contract file, a missing script, or a gate/label mismatch.
 """
 
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -53,6 +54,47 @@ class StageContractConsistencyTests(unittest.TestCase):
                                    f"(check '{check.name}') is wired into "
                                    f"clad_stages.py but not named in "
                                    f"{stage.context_dir}/CONTEXT.md")
+        self.assertEqual(missing, [], "\n".join(missing))
+
+    def _automated_commands(self, text):
+        """Script names inside the stage contract's Automated-checks code
+        blocks (the runnable commands, not the prose that explains them)."""
+        match = re.search(r"### Automated checks(.*?)(?=^###|^## |\Z)",
+                          text, re.S | re.M)
+        if not match:
+            return set()
+        scripts = set()
+        for block in re.findall(r"```(.*?)```", match.group(1), re.S):
+            scripts |= set(re.findall(r"verify_\w+\.py", block))
+        return scripts
+
+    def _project_level_scripts(self):
+        """Checks run project-wide (verify_artefacts.py / the pre-commit hook),
+        which any stage contract may legitimately name."""
+        scripts = set(re.findall(
+            r"verify_\w+\.py", (QUALITY_GATE / "verify_artefacts.py").read_text()))
+        hook = REPO_ROOT / ".githooks" / "pre-commit"
+        if hook.is_file():
+            scripts |= set(re.findall(r"verify_\w+\.py", hook.read_text()))
+        scripts.add("verify_stage_sequence.py")
+        return scripts
+
+    def test_contracts_do_not_claim_unwired_automated_checks(self):
+        """The reverse direction: a contract's Automated-checks command block
+        must name only checks this stage runs (or project-level checks).
+
+        This is the drift that let `verify_test_naming.py` and
+        `verify_file_manifest.py` sit in stage contracts as "automated" while
+        `clad_stages.py` never ran them."""
+        project = self._project_level_scripts()
+        missing = []
+        for stage in cs.STAGES:
+            wired = {check.script for check in stage.checks}
+            for script in sorted(self._automated_commands(self.context_text(stage))):
+                if script not in wired and script not in project:
+                    missing.append(
+                        f"Stage {stage.id}: contract runs {script} but "
+                        f"clad_stages.py does not wire it for this stage")
         self.assertEqual(missing, [], "\n".join(missing))
 
     def test_every_check_script_exists(self):

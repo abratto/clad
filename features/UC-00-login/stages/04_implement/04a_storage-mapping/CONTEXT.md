@@ -98,15 +98,14 @@ python3 ../../../../../python3 ../../../../../quality-gate/verify_profile_paths.
   --feature ../../../
 quality-gate/verify_relational_mapping.py \
   --storage-dir output
-python3 ../../../../../quality-gate/verify_file_manifest.py \
-  --dir output --expected "<Name>.storage.md,…"  # one per concept, or _NOT_APPLICABLE.md
 ```
 
 - **verify_relational_mapping.py:** for relational profiles, the mapping
   honours Rmap (no foreign key crosses a concept boundary). Skips when
-  the profile is not relational or `_NOT_APPLICABLE.md` is used.
-- **verify_file_manifest.py:** `output/` contains exactly one
-  `.storage.md` per concept or a single `_NOT_APPLICABLE.md`.
+  the profile is not relational or `_NOT_APPLICABLE.md` is used. It is the
+  manifest check for this stage — either the per-concept `.storage.md` files
+  or a single `_NOT_APPLICABLE.md` — so there is no separate
+  `verify_file_manifest.py` invocation.
 - **verify_profile_paths.py:** the effective `test.source.root` /
   `concept.impl.dir` / `sync.impl.dir` resolve inside this feature's declared
   `_config/package-and-layout.md` roots, and that file is **no longer `TBD`**.
@@ -130,8 +129,8 @@ python3 ../../../../../quality-gate/verify_file_manifest.py \
 
 ## Gate
 
-Auto-advances (next human gate: Stage 04c). The `verify_file_manifest.py` script
-must pass before advancing.
+Auto-advances (next human gate: Stage 04c). The `verify_relational_mapping.py`
+and `verify_profile_paths.py` scripts must pass before advancing.
 
 ## Next stage
 

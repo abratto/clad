@@ -155,8 +155,6 @@ python3 ../../../../../quality-gate/verify_feature_file_presence.py \
 ```
 python3 ../../../../../quality-gate/verify_profile_paths.py \
   --feature ../../../
-python3 ../../../../../quality-gate/verify_file_manifest.py \
-  --dir output --expected "<feature-name>.feature,…"  # one .feature file per use case
 python3 ../../../../../quality-gate/verify_gherkin_derivation.py \
   --usecase ../../01_usecase/output/usecase.md \
   --feature <relevant>.feature \
@@ -177,8 +175,6 @@ python3 ../../../../../quality-gate/verify_port_spec_contract.py \
   `concept.impl.dir` / `sync.impl.dir` resolve inside the feature's
   declared `_config/package-and-layout.md` roots. Blocks on a wrong-tree
   mismatch, warns on a seed `reference-impl/` pointer.
-- **verify_file_manifest.py:** `output/` contains exactly the expected
-  `.feature` file(s).
 - **verify_gherkin_derivation.py:** every use-case scenario has a
   matching Gherkin Scenario, every Scenario has Given/When/Then,
   response status codes match sync spec `then` clauses (per

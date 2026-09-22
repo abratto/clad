@@ -198,9 +198,9 @@ Two invariants hold at every combination:
    structural-integrity floor, not a quality preference.
 2. **Auto-approved gates are auditable.** They are written as
    `auto-approved` (never `approved`) in `RESUME.md` and the receipt, so a
-   reviewer can always tell which gates a human never actually saw.
-   `verify_gate_approval.py` (the stricter CI-side check) still requires a
-   literal `approved`, so a CI profile can reject auto-approved gates.
+   reviewer can always tell which gates a human never actually saw. A
+   stricter CI profile can still reject them by requiring a literal
+   `approved`.
 
 The agent must **never** raise either setting itself. They are set by the
 human in `clad.properties` or by an explicit in-conversation instruction.
@@ -316,8 +316,7 @@ only what is specific to that stage.
   prints this stage as `NEXT STAGE`. Do not open a stage `advance` has not
   named.
 - **The pre-condition is enforced, not prose.** The stage-order and
-  gate-approval checks that used to appear as a per-stage pre-condition
-  command (`verify_gate_approval.py` / `verify_stage_sequence.py`) are run by
+  gate-approval checks (`verify_stage_sequence.py`) are run by
   `advance.py`'s guard; you do not run them by hand.
 - **Auto-advance** stages move on once their deterministic checks pass.
   **Gate** stages make `advance.py` stop (exit `10`) and present the artefact

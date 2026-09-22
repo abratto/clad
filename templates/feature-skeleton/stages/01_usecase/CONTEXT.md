@@ -80,17 +80,12 @@ Run the following before requesting the human gate:
 ```
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "usecase.md"
-python3 ../../../../quality-gate/verify_scenario_coverage.py \
-  --goals ../../../_system/stages/00_actor-goal/output/goals.md \
-  --usecase output/usecase.md \
-  --chain-dir ../01b_chain-table/output \
-  --sync-dir ../03_syncs/output
 ```
 
 - **verify_file_manifest.py:** `output/` contains exactly `usecase.md`.
-- **verify_scenario_coverage.py:** every in-scope goal maps to a
-  scenario heading; chain file and sync citation warnings are expected
-  at this stage and do not block the gate.
+- **Goal → scenario → chain → sync coverage** is checked at Stage 03
+  (`verify_scenario_coverage.py`); at Stage 01 the chain and syncs do not
+  exist yet, so it is not run here.
 
 ### Semantic checks (human)
 

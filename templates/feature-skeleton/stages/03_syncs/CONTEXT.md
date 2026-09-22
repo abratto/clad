@@ -174,8 +174,6 @@ python3 ../../../../quality-gate/verify_sync_cycle_graph.py \
   --sync-dir output
 python3 ../../../../quality-gate/verify_sync_overlap.py \
   --sync-dir output
-python3 ../../../../quality-gate/verify_file_manifest.py \
-  --dir output --expected "<name>.sync.md,…"  # one per coordination rule
 python3 ../../../../quality-gate/verify_sync_transition_coverage.py \
   --feature ../..
 ```
@@ -188,10 +186,11 @@ python3 ../../../../quality-gate/verify_sync_transition_coverage.py \
   `Web` (bootstrap) and self-references are excluded.
 - **verify_sync_overlap.py:** no two syncs share 2+ concepts with
   conflicting lock order (deadlock risk). Same-order overlaps warn.
-- **verify_file_manifest.py:** `output/` matches the expected sync list.
 - **verify_sync_transition_coverage.py:** every chain-table transition is
   lowered to a sync file (destroys the "missing carrier" blind spot; a
-  shortfall blocks the stage).
+  shortfall blocks the stage). This is the file-manifest check for this
+  stage — one sync per transition — so there is no separate
+  `verify_file_manifest.py` invocation.
 
 ### Semantic checks (human)
 
