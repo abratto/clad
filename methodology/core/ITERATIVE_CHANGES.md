@@ -76,6 +76,14 @@ feature's Gate 2 via `./clad promote-concepts` — never by hand. Editing the
 generated `concepts-catalog.md` is never the change; edit the spec and
 regenerate.
 
+**When the feature is not the concept's current source.** Only a concept's
+current source may promote it (R22 order). A feature that owns an *action* on a
+concept a later feature has since extended cannot promote its change —
+`promote-concepts` refuses by design (a frozen proposal has no memory of what
+came after it). Route that corpus edit through the **R20 maintenance route**
+(§7), or have the concept's current source re-derive and promote the change. Do
+not force the promotion.
+
 **A stage's own uncommitted output is not an iterative change.** The readiness
 guard (`verify_iterative_change_readiness.py`) fires on a modified concept/sync
 spec, but it distinguishes *new stage work* from *an edit of a gated artefact*:

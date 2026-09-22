@@ -261,6 +261,13 @@ Two consequences follow, and both are mechanised:
 - **Order.** Promotion replaces the whole entry, so only the concept's current
   source may promote it; re-promoting an earlier use case would roll the corpus
   back. The `extended-by` list *is* the order.
+- **A feature that owns an action but is no longer the concept's current
+  source** — an earlier use case whose action a later use case's extend left
+  behind — **cannot promote it**: `promote-concepts` refuses by design, because
+  a frozen proposal has no memory of what came after it. Route that corpus edit
+  through the **R20 maintenance route** (`maintenance/<change-name>.md`), which
+  edits the canonical entry deliberately and reviewably, or have the concept's
+  current source re-derive and promote the change. Do not force the promotion.
 - **Additivity.** An extend may add fact types, constraints, actions and
   outcomes, but not drop or restate them. A deliberate removal is listed, with
   a reason, in the feature's `_config/additivity-exceptions.md`.

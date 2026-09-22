@@ -172,6 +172,19 @@ def main():
         for line in detail.splitlines():
             print(f"        {line}")
 
+    # Governance records do not go stale (advisory, project-level): a finished
+    # change whose record was never `closed` is invisible to the readiness
+    # guards until the next change trips over it.
+    code, out, err = run_script("verify_governance_hygiene.py",
+                                ["--features-dir", str(REPO_ROOT / "features"),
+                                 "--maintenance-dir", str(REPO_ROOT / "maintenance")])
+    detail = (out + err).strip()
+    mark = "WARN" if detail.startswith("WARN") else "PASS"
+    print(f"\n  [{mark}] governance_hygiene")
+    if detail:
+        for line in detail.splitlines()[:10]:
+            print(f"        {line}")
+
     # The cross-UC shared-trigger view is current (feature-independent): it is
     # the only surface for a duplicate trigger across use cases, and it went
     # stale once because nothing checked it.

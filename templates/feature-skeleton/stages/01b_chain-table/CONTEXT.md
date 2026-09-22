@@ -136,6 +136,13 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   in the derived diagram, the table already contains multiple rows.
   Do not combine distinct `Web.respond[...]` contracts or distinct next
   actions into one canonical row.
+- **Refusal before any write (R23).** A refusal that depends only on the
+  request — a malformed field, an out-of-range count — must be decided by a
+  **pure guard action** *before* the first action in the flow that writes
+  concept state, with the writing action gated on the guard's `ok` outcome. A
+  refusal whose trigger is a writing action that runs after an earlier write
+  leaves permanent partial state (the engine has no rollback). See
+  `methodology/implementation/RULES.md` R23.
 
 ## Gate instruction — this stage ends a human gate
 

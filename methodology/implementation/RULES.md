@@ -313,6 +313,34 @@ Mechanised by `quality-gate/verify_concept_proposals.py`,
 `quality-gate/verify_concept_corpus_current.py`; the corpus criteria by
 `quality-gate/verify_concept_criteria.py`.
 
+## R23. A request-level refusal MUST be decided before the first state write
+
+A refusal that depends only on the request — a malformed field, a missing
+required value, an out-of-range count — MUST be decided **before any action in
+the flow writes concept state**. The engine is fire-after-commit with no
+rollback (`methodology/architecture/ENGINE.md` §"no transaction and no
+rollback"), so a refusal that runs *after* an earlier writing step leaves that
+write committed: a permanent partial state the caller reads as a failed
+request, and a corrected retry then trips a "duplicate" guard on what the
+failed attempt left behind.
+
+This is a **design defect at Stage 01b/02, not an implementation bug.** The
+validation belongs to a **pure guard action** on the concept that owns the
+field — it decides `ok`/`refused` and writes nothing — invoked before the first
+writing action, with the writing action gated on the guard's `ok` outcome. A
+validation that runs after a write is a defect even when its own concept writes
+nothing.
+
+Observed in the library-lending experiment (UC-02): `Stocking.acquire` refused a
+negative count *after* `Cataloguing.record` had minted the title, so a refused
+catalogue left a title behind and a corrected resubmit hit `duplicateIsbn`. The
+fix moved the check to a pure `Stocking.checkCount` invoked first, gating
+`record`.
+
+Reviewed at Stage 01b (the chain — a guard action precedes the writing action)
+and Stage 02 (the guard action's anatomy); the guard's concept test asserts it
+writes no state.
+
 ---
 
 Six of these rules — R1, R3, R8, R9, R14, and R15 — fail most often by

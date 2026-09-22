@@ -9,7 +9,7 @@
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change category:** `behavioural`
 - **Earliest re-entry stage:** `03`
-- **Status:** `active`
+- **Status:** `closed`
 - **Change summary:** each non-bootstrap sync spec's `when` block and contract
   matrix gain the pinned flow root; the Java rule gains the matching conjunct.
 
