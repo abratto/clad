@@ -4,12 +4,12 @@
 Implementation classes exist under `reference-impl/java-micronaut-jena/src/main/java/com/example/app/syncs/`:
 
 - `LookupByUsernameForLoginWhenRequestRouted.java`
-- `CheckWhenLookupByUsernameFound.java`
-- `GrantWhenCheckOk.java`
-- `RespondWhenGrantGranted.java`
-- `RespondWhenCheckBadPassword.java`
-- `RespondWhenCheckLocked.java`
-- `RespondWhenLookupByUsernameRefused.java`
+- `CheckForLoginWhenLookupByUsernameFound.java`
+- `GrantForLoginWhenCheckOk.java`
+- `RespondForLoginWhenGrantGranted.java`
+- `RespondForLoginWhenCheckBadPassword.java`
+- `RespondForLoginWhenCheckLocked.java`
+- `RespondForLoginWhenLookupByUsernameRefused.java`
 
 ## Verification
 

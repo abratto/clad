@@ -12,6 +12,16 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
 
+**Pinned sync names carry their route.** Maintenance record
+`maintenance/route-scoped-pinned-names.md`. Every non-bootstrap sync's name now
+gains `For<Route>` — `<TargetAction>For<Route>When<TriggerAction><Completion>`,
+matching the bootstrap rule shipped in `route-scoped-sync-names`. Two use cases
+that pin the same trigger and target on different routes (UC-03's and UC-04's
+`RespondWhenVerifyRefused`) no longer share a name, so `causedBySync` can say
+which fired. The pin *conjunct* is still not a name component; its route is.
+**Upgrade:** re-derive Stage 03 and re-approve Gate 2 per feature; the Java rule
+names move with the specs.
+
 **Concept proposals carry a proposal-snapshot stamp at authoring time.**
 `templates/concept.md` now stamps `<!-- proposal snapshot — …; canonical spec:
 … -->`, so a hand-authored Stage-02 proposal says which copy is authoritative,

@@ -78,13 +78,13 @@ class GeneratorPropertyTests(unittest.TestCase):
         # UC-00-login has exactly seven syncs.
         self.assertEqual(len(stems), 7, stems)
         # Action-first naming grammar v3 (maintenance/sync-name-grammar-v3.md),
-        # plus v3.1's route component for a route-scoped bootstrap
-        # (maintenance/route-scoped-sync-names.md): the chain root is
-        # `Web/request[POST /login]`, so the name carries `ForLogin`.
-        self.assertIn("GrantWhenCheckOk", stems)
+        # plus v3.1's route component for route-scoped bootstraps AND pinned
+        # rules (maintenance/route-scoped-sync-names.md): the chain root is
+        # `Web/request[POST /login]`, so every rule in the pack carries `ForLogin`.
+        self.assertIn("GrantForLoginWhenCheckOk", stems)
         self.assertIn("LookupByUsernameForLoginWhenRequestRouted", stems)
-        self.assertIn("RespondWhenCheckLocked", stems)
-        self.assertIn("RespondWhenLookupByUsernameRefused", stems)
+        self.assertIn("RespondForLoginWhenCheckLocked", stems)
+        self.assertIn("RespondForLoginWhenLookupByUsernameRefused", stems)
 
     def test_generated_syncs_pass_sync_checks(self):
         d = self.sync_dir()
@@ -156,13 +156,18 @@ class GeneratorPropertyTests(unittest.TestCase):
             pinned += 1
         self.assertGreater(pinned, 0, "no non-bootstrap rules to check")
 
-    def test_the_pin_is_not_a_name_component(self):
-        """A pinned rule is named by its trigger, not as a join."""
+    def test_the_pin_route_scopes_a_pinned_rules_name(self):
+        """A pinned rule's route is a name component; the pin conjunct is not.
+
+        Two use cases may pin the same trigger+target on different routes, so
+        the route is what lets `causedBySync` say which fired
+        (maintenance/route-scoped-sync-names.md). The uniform `requested`
+        conjunct itself still never appears."""
         sync_dir = self.sync_dir()
         stems = {f.name.replace(".sync.md", "") for f in sync_dir.glob("*.sync.md")}
-        self.assertIn("CheckWhenLookupByUsernameFound", stems)
+        self.assertIn("CheckForLoginWhenLookupByUsernameFound", stems)
         self.assertFalse([s for s in stems if "JoinRequestRouted" in s],
-                         "the uniform pin must not appear in any name")
+                         "the uniform pin conjunct must not appear in any name")
 
     def test_generate_cards_cover_participating_concepts(self):
         dep_dir = self.feature / "stages" / "03a_dependency-review" / "output"
@@ -318,11 +323,12 @@ class BranchedChainGeneratorTests(unittest.TestCase):
                            for line in r.stdout.splitlines()
                            if "WOULD WRITE" in line)
             self.assertEqual(len(stems), 4, stems)
-            # Action-first naming grammar v3 (maintenance/sync-name-grammar-v3.md).
+            # Action-first naming grammar v3 (maintenance/sync-name-grammar-v3.md),
+            # plus the route component for pinned rules.
             self.assertIn("LendForLendWhenRequestRouted", stems)
-            self.assertIn("RecordWhenLendLent", stems)
-            self.assertIn("RespondWhenRecordRecorded", stems)
-            self.assertIn("RespondWhenLendUnavailable", stems)
+            self.assertIn("RecordForLendWhenLendLent", stems)
+            self.assertIn("RespondForLendWhenRecordRecorded", stems)
+            self.assertIn("RespondForLendWhenLendUnavailable", stems)
             # The old positional pairing fabricated this transition across the
             # terminal row 4 -> branch row 5.
             self.assertNotIn("RespondWhenRespondSent", stems)

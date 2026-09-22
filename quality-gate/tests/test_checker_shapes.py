@@ -28,7 +28,7 @@ sys.path.insert(0, str(QUALITY_GATE))
 import verify_implementation_parity as parity  # noqa: E402
 
 
-PINNED_SYNC = """sync CloseWhenVerifyVerified
+PINNED_SYNC = """sync CloseForReturnsWhenVerifyVerified
 
 ## Sync Contract Matrix
 
@@ -78,13 +78,15 @@ class MechanicalNameShapeTests(unittest.TestCase):
         path.write_text(text, encoding="utf-8")
         return path
 
-    def test_pin_is_not_a_name_component(self):
+    def test_pin_route_scopes_the_name_but_the_pin_conjunct_does_not(self):
+        """A pinned rule's name carries `For<Route>`; the `requested` conjunct
+        itself never appears (maintenance/route-scoped-sync-names.md)."""
         with tempfile.TemporaryDirectory() as tmp:
-            path = self._write(Path(tmp), "CloseWhenVerifyVerified", PINNED_SYNC)
+            path = self._write(Path(tmp), "CloseForReturnsWhenVerifyVerified",
+                               PINNED_SYNC)
             names = parity.expected_sync_names(str(path), PINNED_SYNC)
-            self.assertIn("CloseWhenVerifyVerified", names)
+            self.assertIn("CloseForReturnsWhenVerifyVerified", names)
             self.assertTrue(all("Requested" not in name for name in names), names)
-            self.assertTrue(all("ForReturns" not in name for name in names), names)
 
     def test_route_scoped_bootstrap_name_carries_the_route(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -1,4 +1,4 @@
-sync RespondWhenLookupByUsernameRefused
+sync RespondForLoginWhenLookupByUsernameRefused
 
 ## Sync Contract Matrix
 
@@ -29,4 +29,4 @@ then {
 
 ## Notes
 
-- The response literal is intentionally identical to `RespondWhenCheckBadPassword` to preserve the no-enumeration property.
+- The response literal is intentionally identical to `RespondForLoginWhenCheckBadPassword` to preserve the no-enumeration property.

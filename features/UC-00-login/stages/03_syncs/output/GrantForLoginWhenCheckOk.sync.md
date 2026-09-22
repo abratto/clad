@@ -1,4 +1,4 @@
-sync GrantWhenCheckOk
+sync GrantForLoginWhenCheckOk
 
 ## Sync Contract Matrix
 

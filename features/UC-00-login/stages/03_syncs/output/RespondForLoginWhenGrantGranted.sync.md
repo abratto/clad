@@ -1,4 +1,4 @@
-sync RespondWhenGrantGranted
+sync RespondForLoginWhenGrantGranted
 
 ## Sync Contract Matrix
 

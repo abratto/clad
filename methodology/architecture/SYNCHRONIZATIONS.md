@@ -28,7 +28,7 @@ is scoped to a single causal flow token.
 ## Shape
 
 ```
-sync GrantWhenCheckOk
+sync GrantForLoginWhenCheckOk
 
 when {
     PasswordAuth/check: [ userId: ?user ; password: ?pass ] => [ ok ]
@@ -57,7 +57,7 @@ actions.
 
 | Element | Meaning | Example |
 |---|---|---|
-| `sync <Name>` | Declares a sync rule | `sync GrantWhenCheckOk` |
+| `sync <Name>` | Declares a sync rule | `sync GrantForLoginWhenCheckOk` |
 | `Concept/action:` | Qualifies an action within its concept (slash separator, colon after) | `PasswordAuth/check:` |
 | `[ param: value ; ... ]` | Named argument brackets, semicolon-separated | `[ userId: ?user ; password: ?pass ]` |
 | `=> [ output: ?var ]` | Matches an action's completion output | `=> [ ok ]` or `=> [ userId: ?u ]` |
@@ -74,15 +74,18 @@ pre-v0.6 condition-first form survive only in historical maintenance records):
 <TargetAction>[For<Route>]When<TriggerAction><TriggerCompletion>
 ```
 
-The optional `For<Route>` component is present **exactly when the rule carries a
-route matcher** — a route-scoped bootstrap. Two use cases may bootstrap the same
-target action on different routes (`MemberEnrolment.verify` after a borrow
-request and after a return request), and no other component of the name
-separates them; without it the app registers two rules with one name and
-`causedBySync` can no longer say which fired. The route, not the feature slug:
-the pre-v0.6 `For<Scope>` held the feature slug, so every sync in a use case
-carried the same value and it could never disambiguate anything
-(`maintenance/route-scoped-sync-names.md`).
+The `For<Route>` component is present **exactly when the rule carries a route
+matcher** — a route-scoped bootstrap, or a pinned rule (every non-bootstrap rule
+carries the pin's route matcher). Two use cases may bootstrap the same target
+action on different routes (`MemberEnrolment.verify` after a borrow request and
+after a return request), and two use cases may pin the same trigger+target on
+different routes (UC-03's and UC-04's `RespondWhenVerifyRefused`); no other
+component of the name separates them, so without the route the app registers two
+rules with one name and `causedBySync` can no longer say which fired. The route,
+not the feature slug: the pre-v0.6 `For<Scope>` held the feature slug, so every
+sync in a use case carried the same value and it could never disambiguate
+anything (`maintenance/route-scoped-sync-names.md`,
+`maintenance/route-scoped-pinned-names.md`).
 
 Rules:
 
@@ -122,7 +125,7 @@ Rules:
 Example:
 
 ```
-sync GrantWhenCheckOk
+sync GrantForLoginWhenCheckOk
 
 when {
     PasswordAuth/check: [ userId: ?user ; password: ?pass ] => [ ok ; userId: ?user ]
@@ -412,9 +415,11 @@ serves both a borrow and a return) would each fire the other's rule. Naming the
 request is how the paper's `RegistrationError` and every ConceptBox rule keep a
 rule in its own flow (`maintenance/sync-flow-pinning.md`).
 
-The pin is **not** a name component: it is in every non-bootstrap rule, so it
-discriminates nothing — the same reason the pre-v0.6 `For<Scope>` was removed, and
-the opposite of the route, which *is* a component for bootstraps.
+The pin's **conjunct** is not a name component: it is in every non-bootstrap
+rule, so it discriminates nothing. Its **route** is: a pinned rule's name carries
+`For<Route>` too, so two use cases that pin the same trigger and target on
+different routes register distinct names and `causedBySync` can say which fired
+(`maintenance/route-scoped-pinned-names.md`).
 
 ### Collect (declarative aggregation)
 

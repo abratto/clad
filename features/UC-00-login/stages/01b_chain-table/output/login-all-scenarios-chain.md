@@ -111,9 +111,9 @@ Row 1 is the root `Web.request` entry; it is not itself a sync.
 For each non-root row's derived `When -> Then` transition:
 
 2. **Row 1→2:** When `Web.request[Routed]`, invoke `UserNaming.lookupByUsername` → sync name: `LookupByUsernameForLoginWhenRequestRouted`
-3. **Row 2 [Found] → 3b:** When `UserNaming.lookupByUsername[Found(userId)]`, invoke `PasswordAuth.check` → sync: `CheckWhenLookupByUsernameFound`
-4. **Row 2 [Refused] → 3a:** When `UserNaming.lookupByUsername[Refused]`, invoke `Web.respond[401]` → sync: `RespondWhenLookupByUsernameRefused`
-5. **Row 3b [Ok] → 4a:** When `PasswordAuth.check[Ok]`, invoke `Session.grant` → sync: `GrantWhenCheckOk`
-6. **Row 3b [BadPassword] → 4b:** When `PasswordAuth.check[BadPassword]`, invoke `Web.respond[401]` → sync: `RespondWhenCheckBadPassword`
-7. **Row 3b [Locked] → 4c:** When `PasswordAuth.check[Locked]`, invoke `Web.respond[401]` → sync: `RespondWhenCheckLocked`
-8. **Row 4a [Granted] → 5:** When `Session.grant[Granted(sessionId)]`, invoke `Web.respond[200]` → sync: `RespondWhenGrantGranted`
+3. **Row 2 [Found] → 3b:** When `UserNaming.lookupByUsername[Found(userId)]`, invoke `PasswordAuth.check` → sync: `CheckForLoginWhenLookupByUsernameFound`
+4. **Row 2 [Refused] → 3a:** When `UserNaming.lookupByUsername[Refused]`, invoke `Web.respond[401]` → sync: `RespondForLoginWhenLookupByUsernameRefused`
+5. **Row 3b [Ok] → 4a:** When `PasswordAuth.check[Ok]`, invoke `Session.grant` → sync: `GrantForLoginWhenCheckOk`
+6. **Row 3b [BadPassword] → 4b:** When `PasswordAuth.check[BadPassword]`, invoke `Web.respond[401]` → sync: `RespondForLoginWhenCheckBadPassword`
+7. **Row 3b [Locked] → 4c:** When `PasswordAuth.check[Locked]`, invoke `Web.respond[401]` → sync: `RespondForLoginWhenCheckLocked`
+8. **Row 4a [Granted] → 5:** When `Session.grant[Granted(sessionId)]`, invoke `Web.respond[200]` → sync: `RespondForLoginWhenGrantGranted`

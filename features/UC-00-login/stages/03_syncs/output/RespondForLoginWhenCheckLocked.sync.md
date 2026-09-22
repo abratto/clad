@@ -1,4 +1,4 @@
-sync RespondWhenCheckLocked
+sync RespondForLoginWhenCheckLocked
 
 ## Sync Contract Matrix
 

@@ -10,22 +10,22 @@ import static dev.legible.engine.SyncRule.lit;
 import static dev.legible.engine.SyncRule.ref;
 
 /**
- * Row 2[refused]-to-3a: when UserNaming.lookupByUsername[refused] then Web.respond(401, opaque message).
+ * Row 3b[LOCKED]-to-4c: respond 401 with the visible lockout message.
  *
- * <p>The declarative SyncRule realization of the Stage 03 RespondWhenLookupByUsernameRefused.sync.md (grammar v2 name: RespondWhenLookupByUsernameRefused; see maintenance/sync-dsl-legibility.md).
+ * <p>The declarative SyncRule realization of the Stage 03 RespondForLoginWhenCheckLocked.sync.md (grammar v2 name: RespondForLoginWhenCheckLocked; see maintenance/sync-dsl-legibility.md).
  * Trigger and target tokens are copied verbatim from the approved chain
  * table (literal lock). No imperative branching, no state, no I/O (R3).
  */
-public final class RespondWhenLookupByUsernameRefused {
+public final class RespondForLoginWhenCheckLocked {
 
     public SyncRule rule() {
         return SyncRule.of(
-                // renamed to grammar v2: "RespondWhenLookupByUsernameRefused" -> "RespondWhenLookupByUsernameRefused"
-                "RespondWhenLookupByUsernameRefused",
-                "UserNaming", "lookupByUsername", "refused",
+                // renamed to grammar v2: "RespondForLoginWhenCheckLocked" -> "RespondForLoginWhenCheckLocked"
+                "RespondForLoginWhenCheckLocked",
+                "PasswordAuth", "check", "LOCKED",
                 List.of(),
                 List.of(invoke("Web", "respond", Map.of(
                         "status", lit(401),
-                        "message", lit("username or password didn't match")))));
+                        "message", lit("Too many attempts. Try again in 15 minutes.")))));
     }
 }
