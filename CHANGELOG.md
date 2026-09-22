@@ -12,6 +12,15 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
 
+**`absent` is exercised under every durable store.** The negative state pattern
+resolves through `Region.read`, but only the in-memory engine tested it. The
+shared storage contract (`StorageContractTest`, run against `PostgresFactStore`
+and `JenaFactStore`) and `RmapPostgresFactStoreTest` now assert that an optional
+predicate with no value reads empty — the substrate `absent` needs — so a store
+that materialised an optional role as a `NULL`-valued fact (rather than no fact)
+would be caught. (`V1__login_rmap.sql` explains why mandatory roles are not
+emitted as `NOT NULL`.)
+
 **Pinned sync names carry their route.** Maintenance record
 `maintenance/route-scoped-pinned-names.md`. Every non-bootstrap sync's name now
 gains `For<Route>` — `<TargetAction>For<Route>When<TriggerAction><Completion>`,

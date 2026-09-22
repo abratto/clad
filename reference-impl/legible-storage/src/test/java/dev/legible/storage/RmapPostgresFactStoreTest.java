@@ -1,5 +1,6 @@
 package dev.legible.storage;
 
+import dev.legible.engine.Region;
 import dev.legible.example.login.LoginApp;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import java.sql.Statement;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -140,6 +142,26 @@ class RmapPostgresFactStoreTest {
                 "failed_attempts must be persisted as the typed integer 5");
         assertNotNull(queryOne("SELECT locked_until FROM password_auth WHERE user_id = ?", userId),
                 "locked_until must be persisted as a timestamp");
+    }
+
+    @Test
+    void optionalPredicateReadsEmptyUntilTheLockIsSet() throws Exception {
+        // `lockedUntil` is optional on PasswordAuth. The negative state pattern
+        // (`absent`) is resolved by `Region.read` returning empty, so the typed
+        // R-map store must return empty while no lock is set — not a
+        // NULL-valued fact — and a value once the flow sets one.
+        app.seedUser("alice", "secret");
+        String userId = queryOne("SELECT user_id FROM password_auth LIMIT 1");
+        Region passwordAuth = store.region("PasswordAuth");
+
+        assertTrue(passwordAuth.read(userId, "lockedUntil").isEmpty(),
+                "before lockout, lockedUntil is absent (reads empty)");
+
+        for (int i = 0; i < 5; i++) {
+            app.login("alice", "wrong");
+        }
+        assertFalse(passwordAuth.read(userId, "lockedUntil").isEmpty(),
+                "after lockout, lockedUntil is present");
     }
 
     private String queryOne(String sql, String... params) throws Exception {

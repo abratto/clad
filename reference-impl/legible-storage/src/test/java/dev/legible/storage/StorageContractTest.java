@@ -78,6 +78,29 @@ abstract class StorageContractTest {
         assertEquals(Set.of("vb"), store.region("B").read("s", "p"));
     }
 
+    /**
+     * The negative state pattern's substrate. `absent(Concept ; subject ;
+     * predicate)` is resolved by `Region.read` returning empty — so a durable
+     * store must return empty for an optional predicate with no fact (a loan
+     * with no `returnedAt`), and the value once one is written. A store that
+     * materialised an optional role as a `NULL`-valued fact (rather than no
+     * fact) would make `absent` fail closed against the wrong state.
+     */
+    @Test
+    void absentPredicateReadsEmptyUntilWritten() {
+        Region r = store.region("Lending");
+        r.write("loan1", "borrower", "m1");
+
+        assertTrue(r.read("loan1", "returnedAt").isEmpty(),
+                "an optional predicate with no fact must read empty (absent)");
+        assertEquals(Set.of("m1"), r.read("loan1", "borrower"),
+                "the mandatory fact is unaffected");
+
+        r.write("loan1", "returnedAt", "2026-01-01T00:00:00Z");
+        assertEquals(Set.of("2026-01-01T00:00:00Z"), r.read("loan1", "returnedAt"),
+                "once written, the optional fact is present");
+    }
+
     // ------------------------------------------------------------------
     // Login parity (identical outcomes and field values across backends)
     // ------------------------------------------------------------------
