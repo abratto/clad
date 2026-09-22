@@ -90,11 +90,11 @@ python3 ../../../../../../quality-gate/verify_profile_paths.py \
 python3 ../../../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "concept-test-derivation.md"
 python3 ../../../../../../quality-gate/verify_concept_test_derivation.py \
-  --spec-dir ../../04b_contract/output \
+  --contract-dir ../../04b_contract/output \
   --derivation output/concept-test-derivation.md \
   --test-source-root <APP_TEST_SOURCE_ROOT>
 python3 ../../../../../../quality-gate/verify_concept_field_assertions.py \
-  --spec-dir ../../04b_contract/output \
+  --contract-dir ../../04b_contract/output \
   --test-source-root <APP_TEST_SOURCE_ROOT>
 python3 ../../../../../../quality-gate/verify_test_naming.py \
   --test-source-root <APP_TEST_SOURCE_ROOT> \

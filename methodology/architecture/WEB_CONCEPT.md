@@ -184,6 +184,11 @@ entry action and ends with its exit action. The middle rows are
 business concepts. This makes the transport boundary *visible* in the
 choreography rather than ambient.
 
+> The diagram below is a **mental model of the bootstrap boundary**, not a
+> CLAD artefact — the canonical stage diagram is the Stage 01b chain's
+> `stateDiagram-v2` (a `sequenceDiagram` there is rejected by
+> `verify_chain_grammar.py`).
+
 ```mermaid
 sequenceDiagram
     participant Client
@@ -249,7 +254,7 @@ violation with a sync.
 
 ## Profile reference
 
-The Java/Micronaut/Jena profile implements `Web` as a single
+The canonical Java profile (`java-legible`) implements `Web` as a single
 `WebController` class. Other profiles (Node/Express, Python/FastAPI,
 Go/net-http, ...) implement the same two actions over their respective
 frameworks. A gRPC profile would implement `Grpc` as a single

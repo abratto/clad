@@ -9,7 +9,7 @@ named actions.
 
 ## Anatomy
 
-Every concept spec has five sections.
+Every concept spec has four sections.
 
 ### 1. Concept header
 

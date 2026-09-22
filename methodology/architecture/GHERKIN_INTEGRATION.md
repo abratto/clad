@@ -182,7 +182,9 @@ These rules are documented in the template at
 The `@Then("the runtime token chain matches:")` step asserts the
 sequence of emitted flow tokens equals the chain-table row sequence.
 Each token's `action` and `outcome` fields must match a chain-table
-row's `Then` action name and `Outcome` value (SCREAMING_SNAKE_CASE).
+row's `Then` action name and `Outcome` value (normalised for comparison —
+the contract enum is SCREAMING_SNAKE_CASE, the runtime token is
+profile-defined; see [`FLOW_TOKENS.md`](FLOW_TOKENS.md)).
 
 ```
 Chain-table row 2: Web.request[Routed] → User.lookupByUsername → Found(userId)

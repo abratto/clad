@@ -52,7 +52,7 @@ from the concept spec — the canonical corpus spec, or this feature's NEW/EXTEN
 proposal where one exists. Do not add actions, outcomes, or fields the concept
 spec and chain tables did not declare.
 
-Derive the concept contract contract slice **mechanically** from each concept
+Derive the concept contract **mechanically** from each concept
 spec: action signatures, outcome enums, flow-token shape. No prose
 principle, no edge-case discussion — those stay in the concept spec.
 The implementation in `04d` and `04e` compiles against these contracts.
@@ -95,9 +95,9 @@ Run the following before requesting the human gate:
 python3 ../../../../../quality-gate/verify_contract_parity.py \
   --concept-dir ../../../../../features/_system/concepts \
   --concept-dir ../../02_concepts/output \
-  --spec-dir output
+  --contract-dir output
 python3 ../../../../../quality-gate/verify_outcome_alignment.py \
-  --chain-dir ../../01b_chain-table/output --spec-dir output
+  --chain-dir ../../01b_chain-table/output --contract-dir output
 python3 ../../../../../quality-gate/verify_action_chain.py \
   --resp-map ../../01a_responsibility-map/output/responsibility-map.md \
   --chain-dir ../../01b_chain-table/output \
@@ -105,14 +105,14 @@ python3 ../../../../../quality-gate/verify_action_chain.py \
   --concept-dir ../../02_concepts/output \
   --sync-dir ../../03_syncs/output \
   --dep-dir ../../03a_dependency-review/output \
-  --spec-dir output
+  --contract-dir output
 python3 ../../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<Name>.contract.md,…"  # one per business concept
 python3 ../../../../../quality-gate/verify_concept_additivity.py \
   --feature ../../../
 python3 ../../../../../quality-gate/verify_port_spec_contract.py \
   --port-spec ../../../../../features/_system/stages/00_actor-goal/output/port-spec.md \
-  --spec-dir output
+  --contract-dir output
 ```
 
 - **verify_contract_parity.py:** every action name in every concept spec

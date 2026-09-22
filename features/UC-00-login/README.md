@@ -18,10 +18,10 @@ login flow tests end-to-end.
 ## Contract vs example
 
 The **canonical stage contract is the template**, not this folder. UC-00's
-`stages/**/CONTEXT.md` files are now kept in sync with
-[`templates/feature-skeleton/`](../../templates/feature-skeleton/) so an
-agent reading the example sees the same contract it will execute for new
-work. UC-00's `stages/**/output/` is **historical and frozen**: each gate
+`stages/**/CONTEXT.md` files were copied from
+[`templates/feature-skeleton/`](../../templates/feature-skeleton/) at a point
+in time and may lag it; the template is authoritative for new work. UC-00's
+`stages/**/output/` is **historical and frozen**: each gate
 approval is bound to a content hash of its stage outputs (see
 `RESUME.md`), so those artefacts are not rewritten to match later contract
 edits. Known historical deviations, preserved for illustration only:

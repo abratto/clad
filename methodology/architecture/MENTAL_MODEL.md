@@ -19,7 +19,7 @@ two things that play the same structural role.
 | Class | Concept | `*.concept.md`, then `<Name>Concept.java` (or profile equivalent) |
 | Method signature | Action signature (name, args, outcome enum) | Concept spec `actions:` section, then `<Name>.contract.md` |
 | Field / instance variable | State field in concept's named region | Concept spec `state:` section, then data model (`<Name>.data-model.md`), then storage mapping (`<Name>.storage.md`) |
-| Encapsulation (`private`) | One named region per concept (R2); no other concept reads it | Hard rule R2; per-concept named graph (Java/Jena) or schema |
+| Encapsulation (`private`) | One named region per concept (R2); no other concept reads it | Hard rule R2; per-concept named region (in-memory `Region`; SQL schema in the durable Postgres profile) |
 | Method call between objects | Sync: `then: OtherConcept.action(...)` | One `*.sync.md` per coordination link |
 | `someOther.getFoo()` (field access on another object) | **concept-state read** — sync `where:` reads another concept's named region | `where:` clause in sync; row in 03a coordination review |
 | Return value used by caller | internal flow data — flow-sibling output joined by flow-token id | `where:` clause; row in chain table |

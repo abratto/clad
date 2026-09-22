@@ -24,7 +24,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SCAN_DIRS = (REPO_ROOT / "templates", REPO_ROOT / "methodology")
 
 # Archival/evolution documents that legitimately narrate the old grammar.
-HISTORICAL_FILES = {"SYNC_ENGINE_EVOLUTION.md"}
+# (Empty: even the evolution doc now marks its v2 mention as historical, so the
+# historical-marker exemption covers it.)
+HISTORICAL_FILES = set()
 
 # The retired tokens.
 STALE = (

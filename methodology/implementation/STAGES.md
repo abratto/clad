@@ -501,5 +501,5 @@ reviewing at the gate?" Read top to bottom for a single feature.
 |---|---|---|---|---|
 | **1 (Requirements)** | 01 → 01a → 01b | Project brief (Stage 00) | usecase.md, responsibility-map.md, chain-table.md | Actors/goals correct? Scenarios cover all flows? Concept boundaries right? Action chains plausible? |
 | **2 (Architecture)** | 02 → 03 → 03a → 03b | Approved requirements | concept.md, sync.md, dep-cards, data-model.md | Concept state machines cover the chains? Sync coordination declarative? Concept-state reads intentional? Data model complete? |
-| **3 (Executable spec)** | 04a → 04b → 04c | Approved architecture | storage.md, spec.md, .feature files | Tests capture the right scenarios and inputs? |
+| **3 (Executable spec)** | 04a → 04b → 04c | Approved architecture | storage.md, `<Name>.contract.md`, .feature files | Tests capture the right scenarios and inputs? |
 | **Auto (Delivery)** | 04d-red → 04d-green → 04e-red → 04e-green → 05 | (nothing — all upstream artefacts approved) | concept code, sync code, test code, trace.md, smoke.md, tracking.md | (none — script-checked: `mvn test` passes, quality-gate scripts pass) |

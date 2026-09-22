@@ -30,11 +30,9 @@ state notation (`field: SubjectType -> FieldType`), `concept <Name>
 [TypeParams]` header with `purpose` section, `sync <Name>` header with
 `when { }` / `where { }` / `then { }` block syntax, `Concept/action:`
 namespace qualifiers, `?variable` binding, and `bind()` / `OPTIONAL` /
-`?_eachthen` in `where` clauses. Three controlled divergences are
+`?_eachthen` in `where` clauses. Two controlled divergences are
 documented in [`../architecture/CONCEPTS.md`](../architecture/CONCEPTS.md)
-(multiplicity annotations, qualified operational principles) and
-[`../architecture/WEB_CONCEPT.md`](../architecture/WEB_CONCEPT.md)
-(Web entry action is `handle` not `request`).
+(multiplicity annotations, qualified operational principles).
 
 ## Alloy — relational state and operational principle notation
 
@@ -113,8 +111,9 @@ should consult Jarrar's papers directly.
 
 Alan Potosnak. **Tastetag** (private project, 2025–2026).
 
-This starter distils prose, examples, and the Java/Micronaut/Jena
-reference implementation that originated in the Tastetag project. The
+This starter distils prose, examples, and the Java reference
+implementation (the Jena profile is retired) that originated in the Tastetag
+project. The
 Alloy-style notation used in concept specs was first developed and
 battle-tested there before being formalised in this starter. The
 starter is re-licensed under Apache-2.0 with the author's
