@@ -73,6 +73,36 @@ class StageContractConsistencyTests(unittest.TestCase):
                             f"{rel}: contains walk-on phrasing '{bad}'")
         self.assertEqual(offenders, [], "\n".join(offenders))
 
+    def test_gate_placement_docs_match_gate_stages(self):
+        """Gate placement (1→01b, 2→03b, 3→04c) is prose in three docs and
+        machine data in `GATE_STAGES`. Assert the prose names the same marker
+        stage so the two cannot drift."""
+        markers = {}
+        for gate in cs.GATE_STAGES:
+            marker = [s.id for s in cs.STAGES if s.gate_after == gate]
+            self.assertEqual(len(marker), 1,
+                             f"gate {gate} must have exactly one marker stage")
+            markers[gate] = marker[0]
+        self.assertEqual(markers, {1: "01b", 2: "03b", 3: "04c"})
+
+        agents = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        handover = (REPO_ROOT / "methodology" / "implementation" /
+                    "HANDOVER.md").read_text(encoding="utf-8")
+        stages = (REPO_ROOT / "methodology" / "implementation" /
+                  "STAGES.md").read_text(encoding="utf-8")
+
+        for gate, marker in markers.items():
+            label = cs.GATE_LABELS[gate]
+            self.assertIn(f"Gate {gate} ({label}) at {marker}", agents,
+                          f"AGENTS.md §3 does not place Gate {gate} at {marker}")
+            self.assertIn(f"Gate {gate} (after {marker})", handover,
+                          f"HANDOVER.md does not place Gate {gate} after {marker}")
+            row = next((ln for ln in stages.splitlines()
+                        if f"**Gate {gate} ({label})**" in ln), None)
+            self.assertIsNotNone(row, f"STAGES.md has no Gate {gate} row")
+            self.assertIn(f"| {marker} |", row,
+                          f"STAGES.md places Gate {gate} on the wrong stage row")
+
     def test_profile_paths_is_wired_at_04a(self):
         """The layout guard runs when a feature enters implementation.
 
