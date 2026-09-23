@@ -10,7 +10,7 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
-## [Unreleased]
+## [0.9.0] — 2026-09-23
 
 **CLAD cleanup from a full process + script audit.** Seven focused changes from
 a read-only review of the methodology and all gate scripts.
