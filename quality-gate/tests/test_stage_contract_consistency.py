@@ -33,6 +33,25 @@ class StageContractConsistencyTests(unittest.TestCase):
         for stage in cs.STAGES:
             self.context_text(stage)
 
+    def test_canonical_stage00_outputs_resolve_at_system_scope(self):
+        """Stage-00 actors/goals are canonical system-scope assets.
+
+        They live at `features/_system/stages/00_actor-goal/output/`, never
+        inside a UC folder. When they are misplaced, the `scenario_coverage`
+        and `port_spec_contract` checks resolve no input and silently skip —
+        UC-00 shipped that way once. Guard the resolver's target, not just the
+        presence of a file."""
+        feature = REPO_ROOT / "features" / "UC-00-login"
+        expected = (REPO_ROOT / "features" / "_system" / "stages"
+                    / "00_actor-goal" / "output")
+        goals = Path(cs._goals(str(feature)))
+        self.assertEqual(goals.parent, expected)
+        self.assertTrue((goals.parent / "actors.md").is_file(),
+                        f"missing system-scope actors.md under {goals.parent}")
+        self.assertTrue(goals.is_file(),
+                        f"missing system-scope goals.md: {goals}")
+        self.assertEqual(Path(cs._port_spec(str(feature))).parent, expected)
+
     def test_profile_paths_is_wired_at_04a(self):
         """The layout guard runs when a feature enters implementation.
 

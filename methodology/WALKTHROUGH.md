@@ -35,16 +35,13 @@ inline.
 ## Turn 0 — the human's brief
 
 > **Single-goal edge-case note.** UC-00-login is a deliberately minimal
-> example: one actor, one in-scope goal. In a real multi-goal system,
-> Stage 00 runs once at system scope inside
-> `features/_system/stages/00_actor-goal/`, and each in-scope goal from
-> `goals.md` then becomes its own `features/UC-XX-<slug>/` folder at
-> Stage 01. Here, because there is only one goal, the Stage 00 output
-> (actors + goal) and the single UC folder happen to coincide — so
-> `UC-00-login/stages/00_actor-goal/` doubles as both. Do **not** use
-> this co-location as a template for new work. See
+> example: one actor, one in-scope goal. Stage 00 runs once at system
+> scope inside `features/_system/stages/00_actor-goal/`, and each in-scope
+> goal from `goals.md` then becomes its own `features/UC-XX-<slug>/`
+> folder at Stage 01. Here, because there is only one goal, that single
+> UC folder consumes the one system-scope goal directly. See
 > [`../methodology/implementation/STAGES.md`](implementation/STAGES.md)
-> §"Scope: system-level vs per-UC" for the correct multi-UC structure.
+> §"Scope: system-level vs per-UC" for the multi-UC structure.
 
 > **Human:** *"I want to add login. Username and password. On success
 > they get a session token. On failure, the error message must not
@@ -63,7 +60,7 @@ postconditions. The agent's job at Stage 00 is to turn it into one.
 
 ## Turn 1 — Stage 00 (Actor / Goal), proposal + clarifying questions
 
-**CONTEXT loaded:** [`features/UC-00-login/stages/00_actor-goal/CONTEXT.md`](../features/UC-00-login/stages/00_actor-goal/CONTEXT.md)
+**CONTEXT loaded:** [`features/_system/stages/00_actor-goal/CONTEXT.md`](../features/_system/stages/00_actor-goal/CONTEXT.md)
 
 **Inputs opened (per that CONTEXT):**
 
@@ -107,8 +104,8 @@ human's answers.
 
 **Outputs written:**
 
-- [`features/UC-00-login/stages/00_actor-goal/output/actors.md`](../features/UC-00-login/stages/00_actor-goal/output/actors.md) — one row, `EndUser`.
-- [`features/UC-00-login/stages/00_actor-goal/output/goals.md`](../features/UC-00-login/stages/00_actor-goal/output/goals.md) — three in-scope goals; six out-of-scope items.
+- [`features/_system/stages/00_actor-goal/output/actors.md`](../features/_system/stages/00_actor-goal/output/actors.md) — one row, `EndUser`.
+- [`features/_system/stages/00_actor-goal/output/goals.md`](../features/_system/stages/00_actor-goal/output/goals.md) — three in-scope goals; six out-of-scope items.
 
 **Gate question (canonical):** *"Do you agree with this step? Any
 corrections before I continue?"*
@@ -126,8 +123,8 @@ corrections before I continue?"*
 
 **Inputs opened:**
 
-- `../00_actor-goal/output/actors.md` — for the *Actors* section.
-- `../00_actor-goal/output/goals.md` — every in-scope goal becomes ≥1 scenario.
+- `../../../_system/stages/00_actor-goal/output/actors.md` — for the *Actors* section.
+- `../../../_system/stages/00_actor-goal/output/goals.md` — every in-scope goal becomes ≥1 scenario.
 - [`methodology/core/CLAD.md`](core/CLAD.md) — methodology.
 - [`templates/usecase.md`](../templates/usecase.md) — Brief / Casual / **Fully Dressed** template.
 
@@ -159,7 +156,7 @@ to other use cases* (Registration, Logout, Password reset).
 **Inputs opened:**
 
 - `../01_usecase/output/usecase.md` — scenarios to cover.
-- `../00_actor-goal/output/actors.md` — for the cross-stage check.
+- `../../../_system/stages/00_actor-goal/output/actors.md` — for the cross-stage check.
 - [`methodology/architecture/CONCEPTS.md`](architecture/CONCEPTS.md) — what counts as a concept.
 - [`methodology/implementation/RULES.md`](implementation/RULES.md) — R1.
 - [`templates/responsibility-map.md`](../templates/responsibility-map.md).
@@ -223,7 +220,7 @@ diagram. First row is always `Web.request`; last row is always
 - `../01_usecase/output/usecase.md`.
 - `../01a_responsibility-map/output/responsibility-map.md` — agreed concept set.
 - `../01b_chain-table/output/` — agreed action choreography (action names, outcomes).
-- `../00_actor-goal/output/actors.md` — for cross-stage check.
+- `../../../_system/stages/00_actor-goal/output/actors.md` — for cross-stage check.
 - [`methodology/architecture/CONCEPTS.md`](architecture/CONCEPTS.md), [`RULES.md`](implementation/RULES.md), [`templates/concept.md`](../templates/concept.md).
 
 **Agent action:** one `<Name>.concept.md` per row of the
