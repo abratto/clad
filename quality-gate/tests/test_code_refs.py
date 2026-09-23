@@ -58,5 +58,30 @@ class CodeRefTests(unittest.TestCase):
             self.assertIn("PASS", result.stdout)
 
 
+    def test_closed_maintenance_record_refs_are_exempt(self):
+        """A closed maintenance record is the historical engineering log: the
+        code it cites may since have been retired, which is not a doc defect."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maintenance").mkdir()
+            (root / "maintenance/old.md").write_text(
+                "- **Status:** `closed`\n\nSee `engine/Gone.java`.\n",
+                encoding="utf-8")
+            result = run("--root", str(root), "--dirs", "maintenance")
+            self.assertEqual(result.returncode, 0, "advisory must not block")
+            self.assertNotIn("WARN", result.stdout)
+
+    def test_active_maintenance_record_refs_are_checked(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "maintenance").mkdir()
+            (root / "maintenance/live.md").write_text(
+                "- **Status:** `active`\n\nSee `engine/Gone.java`.\n",
+                encoding="utf-8")
+            result = run("--root", str(root), "--dirs", "maintenance")
+            self.assertEqual(result.returncode, 0, "advisory must not block")
+            self.assertIn("WARN", result.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

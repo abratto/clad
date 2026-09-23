@@ -95,7 +95,7 @@
 
 | Test file (test-source-root-relative) | SHA-256 at red |
 |---|---|
-| `dev/conduit/app/concepts/passwordauth/PasswordAuthVerifyTest.java` | `<64-hex-sha256>` |
+| `dev/<app>/concepts/<concept>/<Concept><Action>Test.java` | `<64-hex-sha256>` |
 
 > If the produced test files have no diffable source location (or the
 > red stage produced none), omit this section entirely: the continuity
