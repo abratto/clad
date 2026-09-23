@@ -12,6 +12,43 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
 
+**CLAD cleanup from a full process + script audit.** Seven focused changes from
+a read-only review of the methodology and all gate scripts.
+
+- **Sync-name grammar v3 everywhere.** Live authoring surfaces still showed the
+  retired `For<Scope>` / condition-first form; corrected in `templates/` and
+  `methodology/`, with `test_no_stale_sync_grammar.py` failing if it returns.
+- **Gate wiring gaps closed.** Stage contracts listed checks as "automated" that
+  `advance.py` never ran: `verify_test_naming.py` and `verify_file_manifest.py`
+  are now wired at 04d-red/04e-red, the misplaced
+  `verify_scenario_coverage`/`verify_sync_matrix` claims (Stage 03) corrected,
+  and `test_stage_contract_consistency.py` now checks **both** directions
+  (wired⇄named).
+- **`verify_gate_approval.py` retired** — `verify_stage_sequence.py` had absorbed
+  its logic and nothing invoked it. **Upgrade:** call
+  `verify_stage_sequence.py --through <stage>` instead.
+- **Factual corrections** across the methodology: the Web entry action is
+  `request`, not `handle`; the four A/B/C/D data-flow patterns *group into* two
+  categories (they do not "replace" them); runtime-token casing is
+  profile-defined; the retired Jena profile is no longer framed as live;
+  `spec.md` → `<Name>.contract.md`; the malformed `ARTEFACT_MAP` diagram redrawn.
+- **Dead configuration removed** — the unread legacy engine keys
+  (`engine.dataset.*`, `engine.dispatch.timeout.*`, `engine.archive.*`) and the
+  never-read `stages.usecase.require-sequence-diagram` are gone; gate-status
+  parsing is consolidated on `verify_stage_sequence.gate_status`.
+- **Mechanism claims must cite their code.** `verify_mechanism_citations.py`
+  (blocking) requires an active platform record's `## Mechanism` section — and
+  the `SYNCHRONIZATIONS.md` §Naming / §Flow pinning sections — to cite the code
+  path each claim rests on; `verify_code_refs.py` (advisory) keeps citations
+  resolving. The flow-pin record's wrong explanation would have been caught by
+  its citation.
+- **Rename tail caught, and renamed in one step.**
+  `verify_reference_integrity.py` (blocking) fails a dangling
+  `<Name>.sync.md`/`.concept.md`/`.contract.md`/`.data-model.md` reference or an
+  orphan Java `rule("…")`; `./clad rename-sync <Old> <New>` renames a sync and
+  its whole tail (spec, doc refs, Java rule/class/test) and prints the Gate 2
+  re-approval.
+
 **Experiment learnings applied.** Four hardening changes from the library-lending
 experiment:
 
