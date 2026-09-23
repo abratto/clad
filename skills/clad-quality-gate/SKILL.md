@@ -7,7 +7,7 @@ description: Run CLAD quality-gate verification scripts between stages. Use when
 
 > **Role:** aggregator for the self-audit scripts between stages. The
 > stage `CONTEXT.md` `## Verify` section is authoritative for the exact
-> commands; this skill is the script reference.
+> commands; this skill is the pointer, not a script list.
 
 ## What this skill covers
 
@@ -17,39 +17,27 @@ coverage, outcome alignment, action chains, sync matrices, data models,
 contract parity, Gherkin presence, Gherkin derivation, and concept test
 derivation.
 
-## Quick reference
+## Where to look
 
-Run the stage `CONTEXT.md` `## Verify` list; for the one-shot single-pass
-check, `methodology/implementation/QUALITY_GATE.md` documents the scripts
-below.
+Do not work from a hand-copied script list — it drifts. Use the sources, in
+this order:
 
-## Scripts
+1. **The current stage's `CONTEXT.md` `## Verify` section** — the authoritative
+   commands for *this* stage. Run every item.
+2. **[`quality-gate/INDEX.md`](../../quality-gate/INDEX.md)** — the generated,
+   always-current map of every gate script: what it checks, when it runs
+   (stage / project-level / pre-commit), and whether it is a gate or advisory.
+   Regenerate with `python3 quality-gate/generate_gate_index.py`.
+3. **The one-shot check** — an aggregator that runs every applicable check for
+   every feature in one invocation:
 
-All scripts live in `quality-gate/` at the repo root and are run
-with `python3`:
+   ```
+   python3 quality-gate/verify_artefacts.py
+   ```
 
-| Script | Checks |
-|---|---|
-| `verify_file_manifest.py` | `output/` contains exactly expected files |
-| `verify_scenario_coverage.py` | goal→scenario→chain→sync coverage |
-| `verify_outcome_alignment.py` | chain-table outcomes match contract enums |
-| `verify_action_chain.py` | action name consistency across artefacts |
-| `verify_sync_matrix.py` | every sync has complete Sync Contract Matrix |
-| `verify_data_model.py` | CSDP structure compliance |
-| `verify_contract_parity.py` | action parity between concepts and contracts |
-| `verify_feature_file_presence.py` | `.feature` file exists |
-| `verify_gherkin_derivation.py` | `.feature` derivation rules compliance |
-| `verify_concept_test_derivation.py` | contract outcome→test coverage |
-
-An aggregator script runs all applicable checks for the current stage
-in one invocation:
-
-```
-python3 quality-gate/verify_artefacts.py
-```
-
-This is the same gate that `test.command` runs before any profile
-tests. Prefer it at the end of every stage for a single-pass check.
+   This is the same gate `test.command` runs before the profile tests. Prefer it
+   at the end of every stage for a single-pass check (`./clad verify` is the
+   same thing).
 
 ## Process
 

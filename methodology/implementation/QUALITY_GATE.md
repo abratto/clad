@@ -201,7 +201,13 @@ also runs the Docker-backed durable modules; run it in a Docker-capable CI.)
 
 The repo ships a set of profile-agnostic verification scripts under
 [`quality-gate/`](../../quality-gate/) that automate cross-stage
-consistency checks across the CLAD artefact chain:
+consistency checks across the CLAD artefact chain.
+
+> **Generated index.** [`quality-gate/INDEX.md`](../../quality-gate/INDEX.md) is
+> the always-current map of every gate script — what it checks, when it runs
+> (stage / project-level / pre-commit), and whether it is a gate or advisory —
+> generated from `clad_stages.py` by `quality-gate/generate_gate_index.py`. The
+> table below is a curated subset; consult INDEX.md for the full surface.
 
 | Script | Stage(s) | What it checks |
 |---|---|---|
