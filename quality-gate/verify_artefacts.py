@@ -213,6 +213,20 @@ def main():
         for line in detail.splitlines()[:8]:
             print(f"        {line}")
 
+    # A rename leaves no dangling reference (feature-independent): the cards,
+    # derivation maps, traces, README, and Java rules cite artefacts by name.
+    code, out, err = run_script("verify_reference_integrity.py",
+                                ["--features-dir", str(REPO_ROOT / "features")])
+    detail = (out + err).strip()
+    ok = code == 0
+    print(f"\n  [{'PASS' if ok else 'FAIL'}] reference_integrity")
+    if not ok:
+        all_pass = False
+        for line in detail.splitlines()[:8]:
+            print(f"        {line}")
+    elif detail:
+        print(f"        {detail}")
+
     # The cross-UC shared-trigger view is current (feature-independent): it is
     # the only surface for a duplicate trigger across use cases, and it went
     # stale once because nothing checked it.

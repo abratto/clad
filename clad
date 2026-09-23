@@ -184,6 +184,20 @@ cmd_verify() {
     python3 "$QG/verify_artefacts.py" "$@"
 }
 
+cmd_rename_sync() {
+    local from="${1:-}" to="${2:-}"
+    if [ -z "$from" ] || [ -z "$to" ]; then
+        echo "Usage: ./clad rename-sync <OldName> <NewName> [--write]" >&2
+        exit 1
+    fi
+    shift 2
+    local feat
+    feat=$(active_feature)
+    [ -z "$feat" ] && { echo "No active feature found."; exit 1; }
+    python3 "$QG/rename_sync.py" --feature "features/$feat" \
+        --from "$from" --to "$to" "$@"
+}
+
 cmd_next() {
     local feat
     feat=$(active_feature)
@@ -258,6 +272,8 @@ CLAD CLI — lightweight wrapper for quality-gate scripts.
                                        proposals into the canonical corpus
                                        (after Gate 2 approval)
   ./clad verify                    Run verify_artefacts.py (artefact gate)
+  ./clad rename-sync <Old> <New>   Rename a sync and its tail (dry run by
+                                   default; pass --write to apply)
   ./clad next                      Show current stage and next steps
   ./clad stages [<feature>]        Show all stages and completion status
   ./clad checklists                Show task checklists for the current stage
@@ -284,6 +300,7 @@ case "${1:-help}" in
     approve-iter) shift; cmd_approve_iter "$@";;
     approve-maintenance) shift; cmd_approve_maintenance "$@";;
     promote-concepts) shift; cmd_promote_concepts "$@";;
+    rename-sync) shift; cmd_rename_sync "$@";;
     verify)      shift; cmd_verify "$@";;
     next)        cmd_next;;
     stages)      cmd_stages "${2:-}";;
