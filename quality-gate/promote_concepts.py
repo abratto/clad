@@ -58,8 +58,83 @@ def corpus_dir(feature_root: str) -> str:
     return os.path.join(repo_root(feature_root), value)
 
 
+def catalog_out_path(corpus: str) -> str:
+    """The generated catalog's path — a sibling of the corpus directory."""
+    return os.path.join(os.path.dirname(corpus.rstrip(os.sep)), "concepts-catalog.md")
+
+
+def _catalog_text(corpus: str, feature_root: str) -> str:
+    """The catalog content this promotion would write, via the real generator."""
+    import generate_concepts_catalog as gcc
+    return gcc.render(corpus, os.path.join(repo_root(feature_root), "features"))
+
+
 def feature_slug(feature_root: str) -> str:
     return os.path.basename(os.path.abspath(feature_root))
+
+
+class AtomicWriteFailed(RuntimeError):
+    """A staged write failed; the corpus has been rolled back."""
+
+
+def atomic_write_set(writes):
+    """Write a set of files all-or-nothing.
+
+    `writes` is `{path: text}`. Each path's new content is staged to a sibling
+    temp file, the current contents of every path are backed up in memory, and
+    then each temp file is `os.replace`d into place (atomic per file on POSIX).
+    If staging or any swap fails, every path is restored from its backup (or
+    removed when it did not exist before) and `AtomicWriteFailed` is raised, so a
+    partial promotion is never visible to a concurrent reader.
+
+    Returns a `finalize()` callable for the caller's post-swap step (e.g. catalog
+    regeneration): if it raises, the same rollback runs and returns nothing.
+    """
+    backups = {}
+    temps = {}
+    try:
+        for path in writes:
+            existed = os.path.isfile(path)
+            backups[path] = (existed,
+                             open(path, encoding="utf-8").read() if existed else None)
+        for path, text in writes.items():
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            tmp = f"{path}.{os.getpid()}.tmp"
+            temps[path] = tmp
+            with open(tmp, "w", encoding="utf-8") as fh:
+                fh.write(text)
+        for path, tmp in temps.items():
+            os.replace(tmp, path)
+    except Exception as exc:  # noqa: BLE001 — roll back on anything
+        _rollback(backups, temps)
+        raise AtomicWriteFailed(str(exc)) from exc
+
+    def finalize(step):
+        try:
+            return step()
+        except Exception as exc:  # noqa: BLE001
+            _rollback(backups, temps)
+            raise AtomicWriteFailed(str(exc)) from exc
+
+    return finalize
+
+
+def _rollback(backups, temps):
+    for path, (existed, old) in backups.items():
+        try:
+            if existed:
+                with open(path, "w", encoding="utf-8") as fh:
+                    fh.write(old)
+            elif os.path.isfile(path):
+                os.remove(path)
+        except OSError:
+            pass
+    for tmp in temps.values():
+        try:
+            if os.path.isfile(tmp):
+                os.remove(tmp)
+        except OSError:
+            pass
 
 
 class OutOfOrderPromotion(RuntimeError):
@@ -344,37 +419,43 @@ def main():
     os.makedirs(corpus, exist_ok=True)
     os.makedirs(receipt_dir, exist_ok=True)
     promoted = []
+    writes = {}
     for concept in sorted(planned):
         spec, companions = planned[concept]
-        with open(os.path.join(corpus, f"{concept}.concept.md"), "w",
-                  encoding="utf-8") as fh:
-            fh.write(spec)
+        writes[os.path.join(corpus, f"{concept}.concept.md")] = spec
         # The conceptual data model and the concept contract are canonical too:
         # they live beside the spec, promoted with it. A reused concept binds
         # the canonical artefact rather than deriving a second copy.
         for suffix, text in companions.items():
-            with open(os.path.join(corpus, f"{concept}.{suffix}"), "w",
-                      encoding="utf-8") as fh:
-                fh.write(text)
+            writes[os.path.join(corpus, f"{concept}.{suffix}")] = text
         promoted.append(concept)
 
-    # Regenerate the catalog index.
-    subprocess.run([sys.executable,
-                    os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                 "generate_concepts_catalog.py"),
-                    "--concepts-dir", corpus,
-                    "--features-dir", os.path.join(repo_root(feature_root), "features"),
-                    "--write"], check=True)
+    # The catalog index and the receipt are part of the same transaction: a
+    # failure anywhere (a concept write, the catalog regeneration, the receipt)
+    # rolls the whole set back, so the corpus is never half-written. Rendering
+    # the catalog is itself an input to the write set, so a render failure
+    # aborts before any write.
+    try:
+        writes[catalog_out_path(corpus)] = _catalog_text(corpus, feature_root)
+    except Exception as exc:  # noqa: BLE001
+        print(f"FAIL  promotion aborted before writing — the corpus is unchanged: {exc}")
+        return 1
 
-    with open(receipt, "w", encoding="utf-8") as fh:
-        fh.write(f"# Promotion receipt — `{slug}`\n\n")
-        fh.write(f"- gate hash: `{gate_hash}`\n")
-        fh.write(f"- promoted concepts: {', '.join(f'`{c}`' for c in promoted)}\n")
-        if claims:
-            fh.write("- dependence claims (merge into `concept-dependence.md`, "
-                     "which is reviewed, not generated):\n")
-            for concept, requires in claims:
-                fh.write(f"  - `{concept}` requires `{requires}`\n")
+    receipt_text = [f"# Promotion receipt — `{slug}`\n\n",
+                    f"- gate hash: `{gate_hash}`\n",
+                    f"- promoted concepts: {', '.join(f'`{c}`' for c in promoted)}\n"]
+    if claims:
+        receipt_text.append("- dependence claims (merge into `concept-dependence.md`, "
+                            "which is reviewed, not generated):\n")
+        for concept, requires in claims:
+            receipt_text.append(f"  - `{concept}` requires `{requires}`\n")
+    writes[receipt] = "".join(receipt_text)
+
+    try:
+        atomic_write_set(writes)
+    except AtomicWriteFailed as exc:
+        print(f"FAIL  promotion aborted and rolled back — the corpus is unchanged: {exc}")
+        return 1
 
     print(f"PASS  promoted {len(promoted)} concept(s) into the corpus: "
           f"{', '.join(promoted)}")

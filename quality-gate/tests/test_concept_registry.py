@@ -369,6 +369,100 @@ class PromotionTests(unittest.TestCase):
             self.assertIn("no-op", second.stdout)
 
 
+class PromotionAtomicityTests(unittest.TestCase):
+    """Promotion is all-or-nothing (maintenance/promote-atomic.md): a crash
+    between writes must leave the system-scope corpus byte-identical."""
+
+    def test_atomic_write_set_rolls_back_on_swap_failure(self):
+        import promote_concepts as pc  # noqa: E402
+
+        with tempfile.TemporaryDirectory() as tmp:
+            a = Path(tmp) / "a.md"
+            b = Path(tmp) / "b.md"
+            a.write_text("old-a\n", encoding="utf-8")
+            (Path(tmp) / "c.md").write_text("old-c\n", encoding="utf-8")
+
+            # A write set where one target is a directory, so os.replace onto it
+            # fails mid-swap after a.md was already replaced.
+            blocker = Path(tmp) / "bdir"
+            blocker.mkdir()
+            with self.assertRaises(pc.AtomicWriteFailed):
+                pc.atomic_write_set({
+                    str(a): "new-a\n",
+                    str(blocker): "new-b\n",
+                })
+
+            self.assertEqual(a.read_text(encoding="utf-8"), "old-a\n",
+                             "a.md must be rolled back after a later swap failed")
+            # No temp files left behind.
+            self.assertEqual(list(Path(tmp).glob("*.tmp")), [])
+
+    def test_atomic_write_set_removes_a_newly_created_target_on_failure(self):
+        import promote_concepts as pc  # noqa: E402
+
+        with tempfile.TemporaryDirectory() as tmp:
+            fresh = Path(tmp) / "fresh.md"
+            blocker = Path(tmp) / "adir"
+            blocker.mkdir()
+            with self.assertRaises(pc.AtomicWriteFailed):
+                pc.atomic_write_set({
+                    str(fresh): "new\n",
+                    str(blocker): "x\n",
+                })
+            self.assertFalse(fresh.exists(),
+                             "a file that did not exist before must not survive a failed set")
+
+    def test_failure_injection_leaves_the_corpus_unchanged(self):
+        """End-to-end: if the catalog step fails, the concept writes roll back."""
+        import promote_concepts as pc  # noqa: E402
+        from unittest import mock
+
+        with tempfile.TemporaryDirectory() as tmp:
+            feature = make_feature(tmp, [("Foo", "new")], specs=("Foo",),
+                                   gate2="approved")
+            corpus = Path(tmp) / "features" / "_system" / "concepts"
+            corpus.mkdir(parents=True)
+            (corpus / "Existing.concept.md").write_text(
+                concept("Existing"), encoding="utf-8")
+            catalog = Path(tmp) / "features" / "_system" / "concepts-catalog.md"
+            catalog.write_text("ORIGINAL CATALOG\n", encoding="utf-8")
+            before = {p.name: p.read_text(encoding="utf-8")
+                      for p in corpus.glob("*.md")}
+            before_catalog = catalog.read_text(encoding="utf-8")
+
+            with mock.patch.object(pc, "_catalog_text",
+                                   side_effect=RuntimeError("disk full")), \
+                 mock.patch.object(sys, "argv",
+                                   ["promote_concepts.py", "--feature", str(feature)]):
+                rc = pc.main()
+
+            self.assertEqual(rc, 1, "a failed promotion must exit non-zero")
+            self.assertEqual(catalog.read_text(encoding="utf-8"), before_catalog)
+            after = {p.name: p.read_text(encoding="utf-8")
+                     for p in corpus.glob("*.md")}
+            self.assertEqual(after, before,
+                             "the corpus must be unchanged after a failed promotion")
+            self.assertFalse((corpus / "Foo.concept.md").exists())
+
+    def test_successful_promotion_is_complete(self):
+        """The atomic path still writes spec + companions + catalog + receipt."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature = make_feature(tmp, [("Foo", "new")], specs=("Foo",),
+                                   gate2="approved")
+            model_dir = feature / "stages" / "03b_data-model" / "output"
+            model_dir.mkdir(parents=True)
+            (model_dir / "Foo.data-model.md").write_text("# Foo model\n",
+                                                         encoding="utf-8")
+            r = run(PROMOTE, "--feature", str(feature))
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            base = Path(tmp) / "features" / "_system"
+            self.assertTrue((base / "concepts" / "Foo.concept.md").is_file())
+            self.assertTrue((base / "concepts" / "Foo.data-model.md").is_file())
+            self.assertTrue((base / "concepts-catalog.md").is_file())
+            self.assertTrue((base / "concepts" / "_promotions"
+                             / "UC-01-a.md").is_file())
+
+
 class CatalogUsedByTests(unittest.TestCase):
 
     def test_used_by_parses_the_bindings_table_not_prose(self):
