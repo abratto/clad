@@ -10,6 +10,34 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.10.0] — 2026-09-23
+
+**Workflow-consistency fixes.** A follow-up pass on the stage contracts, the
+worked example, and the quality-gate documentation.
+
+- **Stage-00 outputs are canonical at system scope.** UC-00's seed-time
+  `features/UC-00-login/stages/00_actor-goal/` is gone; `actors.md`/`goals.md`
+  live only at `features/_system/stages/00_actor-goal/output/`. The misplaced
+  copy made `verify_scenario_coverage` resolve no goals and silently skip. All
+  pointers updated; a regression test pins the resolver's target.
+- **Stage contracts advance through the CLI.** Every skeleton and UC-00 stage
+  contract replaced its `## Next stage` link-and-proceed block with the
+  `## Advancing` section (AGENTS.md §2 principles 12–13). Drift guard added.
+- **UC-00 RESUME reformatted** to the skeleton format the `clad` CLI parses;
+  gate approval + content-hash lines preserved byte-for-byte.
+- **Quality-gate docs match the wired gate** — all 15 previously undocumented
+  `verify_*.py` checks added to `QUALITY_GATE.md`.
+- **`verify_code_refs.py` exempts closed maintenance records** (historical log;
+  mirrors `verify_links.py` skipping `maintenance/`). `draft`/`active` records
+  still checked. Removes the permanent WARN noise.
+- **Gate-placement guard** — a test asserts AGENTS.md §3, STAGES.md, and
+  HANDOVER.md agree with `clad_stages.GATE_STAGES` (1→01b, 2→03b, 3→04c).
+- **Housekeeping** — AGENTS.md §4a duplicate removed; stale session prompts
+  deleted.
+
+**Upgrade notes:** none required. The `## Advancing` template wording is the
+only contract-visible change; existing features are unaffected.
+
 ## [0.9.0] — 2026-09-23
 
 **CLAD cleanup from a full process + script audit.** Seven focused changes from
