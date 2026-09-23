@@ -9,6 +9,11 @@
 - **Evidence gate:** `approved` (test matrix below)
 - **Change summary:** The `when`-clause input matcher gains an **absent** semantic: `Dsl.ABSENT` as a matcher value requires the matched trigger-input key to be ABSENT, the negation of the R15 value matcher (key present, equal value). Invocation-presence gating for partial-update fan-outs (conduit rebuild experiment UC-03, first feature to need it) is thereby expressible declaratively — the `OPTIONAL` where clause expresses positive presence only, and literal maps cannot carry a null sentinel (`Map.copyOf` rejects nulls), so no existing surface expressed it.
 
+## Mechanism
+
+`SyncEngine.patternMatches` treats `Dsl.ABSENT` as "the key is missing or null"
+(reference-impl/legible-engine/src/main/java/dev/legible/engine/SyncEngine.java:152).
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

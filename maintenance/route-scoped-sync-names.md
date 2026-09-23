@@ -59,6 +59,13 @@ fixed together, because the name's route comes from the same parse.
   no route, and the two features derive the same rule. A shared implementation
   registers it once.
 
+## Mechanism
+
+`generate_syncs.py` reads the route from the chain's row 1
+(`quality-gate/generate_syncs.py:168`) and passes it to
+`artifact_parsers.sync_stem`, which appends `For<Route>`
+(`quality-gate/artifact_parsers.py#sync_stem`).
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

@@ -52,7 +52,7 @@ the need for transactions, and also allows much finer granularity"
   with `?_eachthen` grouping ('frames model', matching the paper's
   `Frames`/`collectAs` intent while keeping `where` code-free).
 
-`reference-impl/clad-engine/` retains the retiring machinery;
+`reference-impl/clad-engine/` was removed along with the retiring machinery;
 `maintenance/fire-after-commit-engine.md` records the change itself.
 
 ## 3. Paper-faithful when-matching
@@ -91,12 +91,14 @@ interpreter):
   plus static `bind`/`guard`/`optional`/`fanOut`/`uuid`/`stateRead`/`args`
   factories so hand-written rules read like the spec's `when → where → then`
   and use concept/action constants instead of positional strings.
-- **Effect-first naming grammar v2, strict green-only**:
-  `<TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>`
+- **Effect-first naming grammar v2, strict green-only (historical —
+  superseded by v3, action-first and concept-free):**
+  `<TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>` (historical v2)
   — matching the paper-authors' own naming style (conceptbox's
   `NotifyWhenReachTen`). Pre-v0.6 condition-first names survive only as
   frozen historical artefacts (`UC-00` outputs renamed mechanically via
-  `_changes/sync-name-grammar-v2.md`, gates re-recorded).
+  `_changes/sync-name-grammar-v2.md`, gates re-recorded). See
+  `maintenance/sync-name-grammar-v3.md` for the current grammar.
 
 ## 5. Declarative join + collect (v0.6+)
 

@@ -5,10 +5,9 @@ feature.
 
 Why this exists:
   The per-feature workflow is an ordered pipeline (01 -> 01a -> 01b -> ...).
-  `verify_gate_approval.py` guards the three *human* gate transitions. This
-  script generalises that idea to *every* transition: it makes skipping a
-  stage a hard, detectable error rather than something only a human might
-  notice in review.
+  This script guards *every* transition, including the three *human* gate
+  transitions: it makes skipping a stage a hard, detectable error rather
+  than something only a human might notice in review.
 
 It checks three invariants for a feature:
 
@@ -18,8 +17,7 @@ It checks three invariants for a feature:
 
   2. Gates honoured. For every human gate whose stage lies before the
      furthest populated stage, the corresponding gate must be marked
-     `approved` in the feature's RESUME.md (same check as
-     verify_gate_approval.py).
+     `approved` in the feature's RESUME.md.
 
   3. Receipts current (optional, --require-receipts). Every populated stage
      up to the target must carry a `.gate-receipt.json` whose recorded
@@ -49,9 +47,7 @@ import clad_stages as cs
 
 # A gate counts as cleared for sequencing if a human approved it or if the
 # configured autonomy level auto-approved it. The distinction is preserved in
-# the RESUME.md text so a reviewer can see which gates a human never inspected;
-# stricter checks (e.g. verify_gate_approval.py) may still require a literal
-# human `approved`.
+# the RESUME.md text so a reviewer can see which gates a human never inspected.
 APPROVED_STATES = {"approved", "auto-approved"}
 LEGACY_PARENT_EVIDENCE = {
     "04d": ("concept-tdd.md", "concept-test-derivation.md"),

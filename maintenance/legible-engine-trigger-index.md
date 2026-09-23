@@ -24,6 +24,11 @@ should live. The change introduces a `Map<String, List<SyncRule>>` index keyed
 actually matches — O(matching rules) per completion. Matching semantics, firing
 order, and exactly-once dedup are unchanged.
 
+## Mechanism
+
+`SyncEngine.buildTriggerIndex` files every conjunct under `concept/action` and
+`concept/action/outcome` (reference-impl/legible-engine/src/main/java/dev/legible/engine/SyncEngine.java:79).
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

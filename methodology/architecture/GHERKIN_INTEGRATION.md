@@ -182,7 +182,9 @@ These rules are documented in the template at
 The `@Then("the runtime token chain matches:")` step asserts the
 sequence of emitted flow tokens equals the chain-table row sequence.
 Each token's `action` and `outcome` fields must match a chain-table
-row's `Then` action name and `Outcome` value (SCREAMING_SNAKE_CASE).
+row's `Then` action name and `Outcome` value (normalised for comparison —
+the contract enum is SCREAMING_SNAKE_CASE, the runtime token is
+profile-defined; see [`FLOW_TOKENS.md`](FLOW_TOKENS.md)).
 
 ```
 Chain-table row 2: Web.request[Routed] → User.lookupByUsername → Found(userId)
@@ -304,11 +306,11 @@ When operating at Stage 04c, follow this checklist:
      - Named scenarios (### Scenario: <name>)
      - Pre-conditions, trigger, expected outcomes, postconditions
      - Extension branches
-□ 3. Read 01b_chain-table/output/*-chain.md → extract action sequence
-□ 4. Read 04b_contract/output/*.contract.md → extract outcome enums
-□ 5. Read 03_syncs/output/*.sync.md → extract response body literals
-□ 6. Derive the .feature file using Rules G1–G5
-□ 7. Derive the collection-coverage scenarios using Rule G6 (empty /
+□ 2. Read 01b_chain-table/output/*-chain.md → extract action sequence
+□ 3. Read 04b_contract/output/*.contract.md → extract outcome enums
+□ 4. Read 03_syncs/output/*.sync.md → extract response body literals
+□ 5. Derive the .feature file using Rules G1–G5
+□ 6. Derive the collection-coverage scenarios using Rule G6 (empty /
      multi-item / repeated-key) and record the "## Collection coverage"
      section in flow-test-stubs.md
 □ 8. Derive the step-definition class using Rules S1–S3 and E1

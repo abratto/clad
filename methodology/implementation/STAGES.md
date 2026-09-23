@@ -198,9 +198,9 @@ Two invariants hold at every combination:
    structural-integrity floor, not a quality preference.
 2. **Auto-approved gates are auditable.** They are written as
    `auto-approved` (never `approved`) in `RESUME.md` and the receipt, so a
-   reviewer can always tell which gates a human never actually saw.
-   `verify_gate_approval.py` (the stricter CI-side check) still requires a
-   literal `approved`, so a CI profile can reject auto-approved gates.
+   reviewer can always tell which gates a human never actually saw. A
+   stricter CI profile can still reject them by requiring a literal
+   `approved`.
 
 The agent must **never** raise either setting itself. They are set by the
 human in `clad.properties` or by an explicit in-conversation instruction.
@@ -316,8 +316,7 @@ only what is specific to that stage.
   prints this stage as `NEXT STAGE`. Do not open a stage `advance` has not
   named.
 - **The pre-condition is enforced, not prose.** The stage-order and
-  gate-approval checks that used to appear as a per-stage pre-condition
-  command (`verify_gate_approval.py` / `verify_stage_sequence.py`) are run by
+  gate-approval checks (`verify_stage_sequence.py`) are run by
   `advance.py`'s guard; you do not run them by hand.
 - **Auto-advance** stages move on once their deterministic checks pass.
   **Gate** stages make `advance.py` stop (exit `10`) and present the artefact
@@ -344,7 +343,7 @@ single source of truth for per-stage instructions:
 | 01b | `stages/01b_chain-table/CONTEXT.md` | `<scenario>-chain.md` per scenario — the table **and** its `stateDiagram-v2` | **Gate 1 (Requirements)** |
 | 02 | `stages/02_concepts/CONTEXT.md` | `<Name>.concept.md` per business concept | Auto → 03b |
 | 03 | `stages/03_syncs/CONTEXT.md` | `<name>.sync.md` per coordination rule | Auto → 03b |
-| 03a | `stages/03a_dependency-review/CONTEXT.md` | `<concept>-card.md` + `pattern-d-summary.md` | Auto → 03b |
+| 03a | `stages/03a_dependency-review/CONTEXT.md` | `<concept>-card.md` + `pattern-d-summary.md` + `concept-matrix.md` | Auto → 03b |
 | 03b | `stages/03b_data-model/CONTEXT.md` | `<Name>.data-model.md` per concept | **Gate 2 (Architecture)** |
 | 04a | `stages/04_implement/04a_storage-mapping/CONTEXT.md` | `<Name>.storage.md` or `_NOT_APPLICABLE.md` | Auto → 04c |
 | 04b | `stages/04_implement/04b_contract/CONTEXT.md` | `<Name>.contract.md` per concept | Auto → 04c |
@@ -433,8 +432,8 @@ These rules apply to individual stages and do not appear in the
 - **Stage 01b chain tables** are the canonical resolver for
   action/outcome disputes. If a sync spec disagrees with a chain table,
   the table wins.
-- **Stage 03 sync names** follow the effect-first grammar (v0.6+):
-  `<TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>`.
+- **Stage 03 sync names** follow the effect-first grammar (v3):
+  `<TargetAction>[For<Route>]When<TriggerAction><TriggerCompletion>`.
   Frozen pre-v0.6 artefacts keep the old condition-first `When…Then…` names
   as historical evidence. See
   [`../architecture/SYNCHRONIZATIONS.md`](../architecture/SYNCHRONIZATIONS.md) §"Naming".
@@ -502,5 +501,5 @@ reviewing at the gate?" Read top to bottom for a single feature.
 |---|---|---|---|---|
 | **1 (Requirements)** | 01 → 01a → 01b | Project brief (Stage 00) | usecase.md, responsibility-map.md, chain-table.md | Actors/goals correct? Scenarios cover all flows? Concept boundaries right? Action chains plausible? |
 | **2 (Architecture)** | 02 → 03 → 03a → 03b | Approved requirements | concept.md, sync.md, dep-cards, data-model.md | Concept state machines cover the chains? Sync coordination declarative? Concept-state reads intentional? Data model complete? |
-| **3 (Executable spec)** | 04a → 04b → 04c | Approved architecture | storage.md, spec.md, .feature files | Tests capture the right scenarios and inputs? |
+| **3 (Executable spec)** | 04a → 04b → 04c | Approved architecture | storage.md, `<Name>.contract.md`, .feature files | Tests capture the right scenarios and inputs? |
 | **Auto (Delivery)** | 04d-red → 04d-green → 04e-red → 04e-green → 05 | (nothing — all upstream artefacts approved) | concept code, sync code, test code, trace.md, smoke.md, tracking.md | (none — script-checked: `mvn test` passes, quality-gate scripts pass) |

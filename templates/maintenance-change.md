@@ -11,6 +11,20 @@
 - **Evidence gate:** `<pending | approved>`
 - **Change summary:** `<one sentence>`
 
+## Mechanism
+
+For a semantic change (one that touches an engine/profile code path), state
+**how** the change works, not just what it does — and cite the code path each
+claim rests on: `path/to/File.java:LINE` or `File#symbol`. A mechanism claim
+with no citation is how a wrong explanation survives into the next author's
+head (the flow-pin record claimed the engine "never re-evaluates"; it does —
+`reference-impl/legible-engine/src/main/java/dev/legible/engine/SyncEngine.java:266`).
+The citation is what would have caught it. Omit this section only for a change
+with no engine/profile behaviour (e.g. a pure documentation or configuration
+rename).
+
+- <claim> — `<file>:<line>` or `<File>#<symbol>`.
+
 ## Contract impact
 
 State whether each invariant is preserved, deliberately changed, or not

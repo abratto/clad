@@ -6,8 +6,7 @@ import java.util.Optional;
 
 /**
  * A bounded, in-memory ring of recently completed flows for debug inspection.
- * Mirrors {@code engine.archive.buffer.size} in the Jena profile; a capacity of
- * 0 disables retention.
+ * A capacity of 0 disables retention.
  */
 public final class FlowArchiveBuffer {
 

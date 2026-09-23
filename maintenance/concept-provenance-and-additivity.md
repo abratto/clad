@@ -52,6 +52,12 @@ made three things invisible:
   history of every concept it proposed, with a `_promotions/<slug>.md` receipt;
   the canonical companions name the same current source as the spec.
 
+## Mechanism
+
+`promote_concepts.stamp_provenance` appends the promoter to the canonical
+history and refuses a feature already on it
+(`quality-gate/promote_concepts.py#stamp_provenance`).
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

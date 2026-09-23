@@ -42,6 +42,14 @@ generator cannot decide it deterministically. The uniform rule is derivable.
   already passed their route); `verify_implementation_parity.expected_sync_names`
   reads the route from the spec for pinned rules too.
 
+## Mechanism
+
+`generate_syncs.derive_syncs_for_feature` passes the rule's flow route
+(`flow_route`, read from row 1) to `sync_stem` for every rule, and
+`verify_implementation_parity.expected_sync_names` reads the route from the spec
+(`quality-gate/generate_syncs.py#derive_syncs_for_feature`,
+`quality-gate/verify_implementation_parity.py#expected_sync_names`).
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

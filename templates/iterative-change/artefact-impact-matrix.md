@@ -16,11 +16,11 @@ This change is governed by `methodology/core/ITERATIVE_CHANGES.md`.
 | Artefact | Touched? | How |
 |---|---|---|
 | Concept(s) | `yes` / `no` | <e.g. "added `hostFirm` field to `User.concept.md`"> |
-| Sync(s) | `yes` / `no` | <e.g. "new `WhenUserLookupByUsernameFoundThenInterceptForSpillover.sync.md`"> |
+| Sync(s) | `yes` / `no` | <e.g. "new `InterceptForProfileWhenLookupByUsernameFound.sync.md`"> |
 | Contract slices | `yes` / `no` | <e.g. "regenerated `User.contract.md`"> |
 | Flow tests | `yes` / `no` | <e.g. "added `spillover.feature` scenario"> |
 | Concept tests | `yes` / `no` | <e.g. "added `UserLookupTest.shouldReturnHostFirm`"> |
-| Sync tests | `yes` / `no` | <e.g. "added `WhenUserLookup...InterceptTest`"> |
+| Sync tests | `yes` / `no` | <e.g. "added `InterceptForProfileWhenLookupByUsernameFoundTest`"> |
 | Production code | `yes` / `no` | <e.g. "`UserConcept.java` updated; new `SpilloverSync.java`"> |
 
 ## Re-derivation order

@@ -395,6 +395,29 @@ _TEST_CONTINUITY_04E = Check(
         "sync-test-derivation.md"), _test_source_root(r)],
 )
 
+# London School test naming, split by scope: concept tests are written at
+# 04d-red, sync tests at 04e-red. The contracts claimed this was automated but
+# it was wired nowhere.
+_TEST_NAMING_04D = Check(
+    name="test_naming",
+    script="verify_test_naming.py",
+    build_args=lambda r: [
+        "--test-source-root", _test_source_root(r),
+        "--scope", "concepts",
+    ],
+    requires=lambda r: [_test_source_root(r)],
+)
+
+_TEST_NAMING_04E = Check(
+    name="test_naming",
+    script="verify_test_naming.py",
+    build_args=lambda r: [
+        "--test-source-root", _test_source_root(r),
+        "--scope", "syncs",
+    ],
+    requires=lambda r: [_test_source_root(r)],
+)
+
 _SYNC_DECLARATIVE = Check(
     name="sync_declarative",
     script="verify_sync_declarative.py",
@@ -519,7 +542,13 @@ _CHAIN_MANIFEST = _manifest_check("chain", "01b_chain-table", "01b")
 _CONCEPT_MANIFEST = _manifest_check("concept", "02_concepts", "02")
 _CARD_MANIFEST = _manifest_check("dependency", "03a_dependency-review", "03a")
 _DATA_MODEL_MANIFEST = _manifest_check("data_model", "03b_data-model", "03b")
-_CONTRACT_MANIFEST = _manifest_check("spec", "04_implement/04b_contract", "04b")
+_CONTRACT_MANIFEST = _manifest_check("contract", "04_implement/04b_contract", "04b")
+# The red stages have a single canonical output each; their contracts claimed a
+# manifest check that was never wired.
+_CONCEPT_TDD_RED_MANIFEST = _manifest_check(
+    "concept_tdd_red", "04_implement/04d_concept-tdd/04d_red-tests", "04d-red")
+_SYNC_TDD_RED_MANIFEST = _manifest_check(
+    "sync_tdd_red", "04_implement/04e_sync-tdd/04e_red-tests", "04e-red")
 
 _PORT_SPEC_04B = Check(
     name="port_spec_contract",
@@ -746,11 +775,12 @@ STAGES: List[Stage] = [
                   _STEP_DEF_PARITY,
                   _STEP_DEF_DERIVATION, _FEATURE_FILE_PRESENCE, _PORT_SPEC_04C]),
         Stage("04d-red", "Concept TDD red", "04_implement/04d_concept-tdd/04d_red-tests",
-            checks=[_FEATURE_IMPL_PATHS, _CONCEPT_TEST_DERIVATION, _FIELD_ASSERTIONS]),
+            checks=[_FEATURE_IMPL_PATHS, _CONCEPT_TEST_DERIVATION, _FIELD_ASSERTIONS,
+                    _TEST_NAMING_04D, _CONCEPT_TDD_RED_MANIFEST]),
         Stage("04d-green", "Concept TDD green", "04_implement/04d_concept-tdd/04d_green-impl",
             checks=[_FEATURE_IMPL_PATHS, _FIELD_ASSERTIONS, _TEST_CONTINUITY_04D]),
         Stage("04e-red", "Sync TDD red", "04_implement/04e_sync-tdd/04e_red-tests",
-            checks=[_FEATURE_IMPL_PATHS]),
+            checks=[_FEATURE_IMPL_PATHS, _TEST_NAMING_04E, _SYNC_TDD_RED_MANIFEST]),
         Stage("04e-green", "Sync TDD green", "04_implement/04e_sync-tdd/04e_green-impl",
             checks=[_IMPL_PARITY, _SYNC_IMPL_PARITY, _SYNC_ROUTE_FILTERS,
                 _SYNC_DECLARATIVE, _ACTION_LOG_ISOLATION, _CUCUMBER_GREEN,

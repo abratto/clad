@@ -119,8 +119,9 @@ python3 ../../../../../../quality-gate/verify_test_naming.py \
 ## Gate
 
 Auto-advances to 04e-green. Sync tests are mechanically derived from
-approved chain tables and sync specs. The `verify_sync_matrix.py` and
-`verify_scenario_coverage.py` scripts must pass before advancing.
+approved chain tables and sync specs. The stage's `verify_test_naming.py`
+(sync scope) and `verify_file_manifest.py` checks must pass before
+advancing; the Stage 03 pack was already validated at Gate 2.
 
 ## Next stage
 

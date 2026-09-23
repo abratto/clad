@@ -310,12 +310,14 @@ class GateApprovalAutonomyTests(unittest.TestCase):
             output.mkdir(parents=True, exist_ok=True)
             (output / "evidence.md").write_text(stage.id, encoding="utf-8")
 
-    def _gate_approval(self, feature, gates):
+    def _sequence(self, feature, through):
+        """The stage-order + gate-approval guard (absorbed the old
+        verify_gate_approval.py)."""
         return subprocess.run(
             [
                 sys.executable,
-                str(QUALITY_GATE / "verify_gate_approval.py"),
-                "--feature", str(feature), "--required-gates", gates,
+                str(QUALITY_GATE / "verify_stage_sequence.py"),
+                "--feature", str(feature), "--through", through,
             ],
             cwd=REPO_ROOT, capture_output=True, text=True,
         )
@@ -332,9 +334,10 @@ class GateApprovalAutonomyTests(unittest.TestCase):
             )
             self._populate_all(feature)
 
-            result = self._gate_approval(feature, "1,2,3")
+            result = self._sequence(feature, "04c")
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn("auto-approved", result.stdout)
+            self.assertIn("auto-approved",
+                          (feature / "RESUME.md").read_text(encoding="utf-8"))
 
     def test_autonomous_advance_records_auto_approved_and_unblocks_precondition(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -376,7 +379,7 @@ class GateApprovalAutonomyTests(unittest.TestCase):
             self.assertIn("auto-approved", (feature / "RESUME.md").read_text(
                 encoding="utf-8"))
 
-            precondition = self._gate_approval(feature, "1")
+            precondition = self._sequence(feature, "01b")
             self.assertEqual(precondition.returncode, 0,
                              precondition.stdout + precondition.stderr)
 

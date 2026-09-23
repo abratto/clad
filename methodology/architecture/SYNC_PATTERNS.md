@@ -5,18 +5,18 @@ next action usually needs **arguments** the completion event did not
 carry. The question this file answers is: *where can a sync legally get
 those arguments from?*
 
-There are exactly **two** categories, and only one crosses concept
-boundaries:
+The four data-flow patterns (**A/B/C/D**, defined in
+[`SYNCHRONIZATIONS.md`](SYNCHRONIZATIONS.md) §"Where-clause patterns") group
+into **two categories**, and only one crosses concept boundaries:
 
 | Category | Description | Crosses concept boundary? |
 |---|---|---|
 | **Internal flow data** | Data from the trigger event, a sibling action's output, or a literal constant. All bound through the shared flow token — no other concept is read. | No |
 | **Concept-state read** | A read against another concept's named persistence region (graph, table, collection). The only legal cross-concept data access. | Yes |
 
-This replaces the earlier A/B/C/D labelling. Patterns A (flow-token join),
-B (flow-sibling join), and C (sync constant) are all *internal flow data*
-and are not flagged for coordination review. Only concept-state reads
-(formerly Pattern D) require explicit annotation and appear in the
+Patterns A (flow-token join), B (flow-sibling join), and C (sync constant) are
+all *internal flow data* and are not flagged for coordination review. Only
+concept-state reads (Pattern D) require explicit annotation and appear in the
 Stage 03a coordination review.
 
 ---
@@ -156,7 +156,7 @@ concept, the crossing is real and gets additional review.*
 
 ### Concept-state reads are visible at review time
 
-Every concept-state read (formerly Pattern D) appears as:
+Every concept-state read (Pattern D) appears as:
 - A row in the sync's `where` clause
 - A row in Section 2 of the concept's 03a coordination review card
 - A row in `pattern-d-summary.md` for the feature

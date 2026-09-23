@@ -51,10 +51,9 @@ into Stage 01b. If a failure branch shares the same trigger and user
 goal, keep it as an extension under that top-level scenario rather than
 creating a second top-level scenario with a success-only name.
 
-Check `../../../../clad.properties` for `stages.usecase.require-sequence-diagram`.
-If set to `true` (the default): **a Mermaid `sequenceDiagram` is
-required** inside each scenario as a derived, human-facing interaction
-sketch. If set to `false`, the diagram is optional.
+A Mermaid `sequenceDiagram` interaction sketch is **optional** — a derived,
+human-facing view of the scenario. The canonical, machine-checked diagram is
+the Stage 01b chain's `stateDiagram-v2`.
 
 If present, the diagram must stay actor/system-only and must not
 introduce concept discovery, sync design, provenance, or state claims
@@ -87,17 +86,12 @@ Run the following before requesting the human gate:
 ```
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "usecase.md"
-python3 ../../../../quality-gate/verify_scenario_coverage.py \
-  --goals ../../../_system/stages/00_actor-goal/output/goals.md \
-  --usecase output/usecase.md \
-  --chain-dir ../01b_chain-table/output \
-  --sync-dir ../03_syncs/output
 ```
 
 - **verify_file_manifest.py:** `output/` contains exactly `usecase.md`.
-- **verify_scenario_coverage.py:** every in-scope goal maps to a
-  scenario heading; chain file and sync citation warnings are expected
-  at this stage and do not block the gate.
+- **Goal → scenario → chain → sync coverage** is checked at Stage 03
+  (`verify_scenario_coverage.py`); at Stage 01 the chain and syncs do not
+  exist yet, so it is not run here.
 
 ### Semantic checks (human)
 
@@ -106,11 +100,10 @@ python3 ../../../../quality-gate/verify_scenario_coverage.py \
   **and** both `Postconditions — Success` and `Postconditions — Failure`
   sub-sections (the Failure section may say "no state is modified" but
   must be present).
-- **If `stages.usecase.require-sequence-diagram=true`:** every scenario
-  has a Mermaid `sequenceDiagram` interaction sketch.
-- The diagram is consistent with the prose scenario and remains
-  explanatory only; it introduces no concept names, sync names, or
-  extra steps absent from the prose.
+- The optional `sequenceDiagram` interaction sketch, when present, is
+  consistent with the prose scenario and remains explanatory only; it
+  introduces no concept names, sync names, or extra steps absent from the
+  prose.
 - `Trigger` is present unless the scenario is a straightforward
   actor-initiated flow.
 - Out-of-scope section is non-empty.

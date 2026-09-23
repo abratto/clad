@@ -11,7 +11,8 @@ This file answers four questions for every CLAD artefact:
    proves this artefact is faithful to its upstream source and the
    architecture.
 4. **Where does it live in running code?** — the runtime counterpart in
-   a typical profile (Java/Micronaut/Jena shown; the mapping generalizes).
+   a typical profile (Java/Micronaut shown — the Jena profile is retired;
+   the mapping generalizes).
 
 Use this alongside [`ARTEFACT_MAP.md`](ARTEFACT_MAP.md) (detailed producer→consumer
 edges with the specific data each consumer reads) and
@@ -40,9 +41,9 @@ Together they form the complete traceability chain.
 | 03a | `<concept>-card.md` | `<name>.sync.md` (all syncs, read-only) | Coordination review — inbound calls + concept-state reads per concept; evidence (not source) for the app-level dependence graph | `verify_sync_route_filters.py`; human review at Gate 2 | — |
 | 03a | `pattern-d-summary.md` | `<concept>-card.md` (all cards) | Coordination review — complete cross-concept coupling surface (concept-state reads only) | Human review; empty list is a valid (and common) result | — |
 | 03b | `<Name>.data-model.md` | `<Name>.concept.md`, `<concept>-card.md`, `pattern-d-summary.md` | Conceptual data model — CSDP fact types and constraints per concept | `verify_data_model.py` checks all 7 CSDP steps present | `Region` relation schema |
-| 04a | `<Name>.storage.md` | `<Name>.data-model.md` | Storage mapping — CSDP facts → profile-specific schema | Profile-specific | `Region` relation schema (in-memory canonical); Jena graph or SQL table per concept (profile `FactStore` implementations) |
+| 04a | `<Name>.storage.md` | `<Name>.data-model.md` | Storage mapping — CSDP facts → profile-specific schema | Profile-specific | `Region` relation schema (in-memory canonical); SQL table per concept in the durable Postgres R-map profile (the Jena profile is retired) |
 | 04b | `<Name>.contract.md` | `<Name>.concept.md` | contract slice — action signatures, outcome enums, flow-token shape (stripped of prose) | `verify_contract_parity.py` checks action parity with concept specs; `verify_outcome_alignment.py` checks outcomes match chain tables | Compiled-against by 04d/04e tests |
-| 04b | `spec.md` §Response shapes | `port-spec.md` inbound entry (when present) | Inbound port contract — exact transport paths/types/error envelopes | `verify_port_spec_contract.py` when an inbound entry exists | `@Contract` Cucumber scenarios in 04c |
+| 04b | `contract.md` §Response shapes | `port-spec.md` inbound entry (when present) | Inbound port contract — exact transport paths/types/error envelopes | `verify_port_spec_contract.py` when an inbound entry exists | `@Contract` Cucumber scenarios in 04c |
 | 04c | `<feature>.feature` | `usecase.md` (scenarios), `<scenario>-chain.md` | BDD outer-red test — one Gherkin scenario per use-case scenario, derived from chain table | `verify_gherkin_derivation.py` checks derivation rules G1–G5; `verify_step_definition_parity.py` catches empty stubs; `verify_cucumber_green.py` (at 04e) enforces all-green | Cucumber runner + `<Feature>StepDefinitions.java` |
 | 04d-red | `<Name>ConceptTest.java` + derivation map | `<Name>.contract.md`, `<Name>.concept.md` (operational principle) | Concept test derivation (red) | `verify_concept_test_derivation.py` checks every contract outcome has a test; `verify_concept_field_assertions.py` checks field assertions (R14/R16) | Handoff to 04d-green |
 | 04d-green | `<Name>Concept.java` + green evidence | `<Name>.concept.md`, `<Name>.contract.md`, `<Name>ConceptTest.java` | Concept implementation — state machine as `Concept.execute` returning an `outcome` + fields | Concept tests pass; `verify_action_log_isolation.py` checks infrastructure doesn't bypass the engine (R4) | Invoked by `SyncEngine` |

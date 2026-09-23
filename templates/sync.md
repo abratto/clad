@@ -1,6 +1,6 @@
 <!-- Template for Stage 03 (03_syncs). Purpose & authoring rules: the stage 03 CONTEXT "Process" section and methodology/architecture/SYNCHRONIZATIONS.md §"Naming". This file is the output shape only. -->
 
-sync When<TriggerConcept><TriggerAction><TriggerCompletion>Then<TargetConcept><TargetAction>[For<Scope>]
+sync <TargetAction>[For<Route>]When<TriggerAction><TriggerCompletion>
 
 > Sync template. Declarative only — no branching, no state, no I/O.
 
@@ -61,7 +61,7 @@ then {
 
 A single *unnamed* conjunct keeps the classic form (and naming) unchanged.
 The joined stem is
-`<Target><Action>[For<Scope>]WhenJoin<C1><A1><Out1>And<C2><A2><Out2>…` in
+`<TargetAction>[For<Route>]WhenJoin<C1><A1><Out1>And<C2><A2><Out2>…` in
 declared conjunct order — e.g.
 `RespondWhenJoinListListedAndTagTagged`.
 
@@ -84,9 +84,12 @@ when {
 Last, not first: the engine evaluates a rule's `where` with its primary (first)
 conjunct, and `triggerField`/`triggerInput` read the completion/input of that
 primary — a pin first would bind them to the request, not the domain trigger.
-The pin is not part of the name (it is in every rule, so it discriminates
-nothing); a rule that must fire in two flows is two rules. The route must match
-the one the chain's row 1 roots. See `maintenance/sync-flow-pinning.md`.
+The pin **conjunct** is not part of the name (it is in every rule, so it
+discriminates nothing); a rule that must fire in two flows is two rules. Its
+**route is** a name component: a pinned rule's name carries `For<Route>` too, so
+two use cases that pin the same trigger and target on different routes register
+distinct names. See `maintenance/sync-flow-pinning.md` and
+`maintenance/route-scoped-pinned-names.md`.
 
 **Absence (`absent`).** The negative state pattern — keep the frame only if
 the subject has **no** such value (a D&minus; read: it binds nothing):

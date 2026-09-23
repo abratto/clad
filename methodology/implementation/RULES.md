@@ -7,7 +7,7 @@ rather than relax the rule.
 
 > **This file is the authoritative text.** `AGENTS.md` §"Hard rules"
 > carries only a compact index and defers here. R1–R9 are the nine
-> original rules; R10–R21 are hard-learned additions. R10 and R21 are
+> original rules; R10–R23 are hard-learned additions. R10 and R21 are
 > retired — their IDs are kept only so an audit that greps for them
 > finds the retirement note, not a live obligation.
 
@@ -318,8 +318,8 @@ Mechanised by `quality-gate/verify_concept_proposals.py`,
 A refusal that depends only on the request — a malformed field, a missing
 required value, an out-of-range count — MUST be decided **before any action in
 the flow writes concept state**. The engine is fire-after-commit with no
-rollback (`methodology/architecture/ENGINE.md` §"no transaction and no
-rollback"), so a refusal that runs *after* an earlier writing step leaves that
+rollback (`methodology/architecture/ENGINE.md` §"What the engine does"), so a
+refusal that runs *after* an earlier writing step leaves that
 write committed: a permanent partial state the caller reads as a failed
 request, and a corrected retry then trips a "duplicate" guard on what the
 failed attempt left behind.

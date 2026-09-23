@@ -33,6 +33,12 @@ proved the point: if the two must be identical, there should be one.
 - A map with no `Origin` column (pre-Model-B) keeps the old expectation: one
   model per concept.
 
+## Mechanism
+
+`generate_data_model` derives a model only for a concept the feature introduces
+or whose `## State` differs from the canonical, so a reused concept binds the
+corpus model (`quality-gate/generate_data_model.py`).
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

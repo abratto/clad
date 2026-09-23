@@ -82,7 +82,7 @@ not redesign approved tests.
   are green, and flow tests are green.
 - Advance runs these checks for this stage; all must pass:
   `verify_implementation_parity.py` (every sync class has a Stage 03 spec
-  and follows the `When<Trigger>Then<Target>[For<Scope>]` grammar),
+  and follows the `<TargetAction>[For<Route>]When<TriggerAction><TriggerCompletion>` grammar),
   `verify_sync_implementation_parity.py` (every Stage 03 sync has a
   matching declarative implementation), `verify_sync_route_filters.py`
   (R11 route filters on shared-trigger syncs), `verify_sync_declarative.py`

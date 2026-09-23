@@ -2,8 +2,8 @@
 
 # `<ConceptName>` — contract
 
-> A contract is the contract slice of a concept that the implementation
-> compiles against. It is derived mechanically from
+> The concept contract is the compilation-facing slice of a concept that
+> the implementation compiles against. It is derived mechanically from
 > `<ConceptName>.concept.md`: action signatures, outcome enums, and
 > flow-token shape — nothing else. No prose principle, no edge-case
 > discussion; that lives in the concept spec.

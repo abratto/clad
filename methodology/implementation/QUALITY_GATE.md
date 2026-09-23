@@ -144,8 +144,8 @@ not relax the *intent*.
       changed packages, and `--features-dir features/`. The check fails
       if any implementation class lacks a corresponding spec artefact,
       or if any sync spec/class/runtime name does not mechanically follow
-      the `When<Trigger>Then<Target>[For<Scope>]` naming grammar derived
-      from the Stage 03 sync rule.
+      the `<TargetAction>[For<Route>]When<TriggerAction><TriggerCompletion>`
+      naming grammar derived from the Stage 03 sync rule.
     - **Automated:** Run `quality-gate/verify_sync_implementation_parity.py`
       with `--sync-impl-dir` pointing at the changed sync package and either
       `--sync-dir` for the active feature or `--features-dir features/` for a
@@ -227,6 +227,9 @@ consistency checks across the CLAD artefact chain:
 | `verify_iterative_change_coupling.py` | 04+ | Concept/sync implementation changes are committed with their matching Stage 02/03 artefacts |
 | `verify_maintenance_change_readiness.py` | Maintenance | Engine/profile/deployment changes have an active maintenance record and cleared design/evidence gates |
 | `verify_governance_hygiene.py` | Any | Advisory: warns on stale `active` records — more than one active `maintenance/` record, more than one active `_changes/` record under a feature, or any active `_changes/` record on a `feature complete` feature |
+| `verify_mechanism_citations.py` | Maintenance, architecture | A semantic change's `## Mechanism` section (active platform records) and the `SYNCHRONIZATIONS.md` §Naming / §Flow pinning sections must cite the code path each claim rests on (`file.java:LINE` / `File#symbol`) — the flow-pin record's wrong explanation would have been caught by its citation |
+| `verify_code_refs.py` | Any | Advisory: every path-qualified or `file:LINE` backticked code reference in `methodology/`, `maintenance/`, `templates/` resolves to a real file, and the line is within it |
+| `verify_reference_integrity.py` | Any | A backticked `<Name>.sync.md` / `.concept.md` / `.contract.md` / `.data-model.md` reference resolves to a real artefact (`_changes/` history and bootstrap concepts exempt); with `--sync-impl-dir`, every Java `rule("…")` matches a real sync stem |
 | `verify_implementation_parity.py` | 04+ | Implementation concept/sync classes have corresponding stage artefact specs; sync names lower mechanically from Stage 03 rules |
 | `verify_sync_implementation_parity.py` | 04e | Stage 03 sync contracts have a matching `SyncRule.of` implementation; with `--strict-trigger`, trigger and primary `then` target must match |
 | `verify_feature_file_presence.py` | 04c | Pre-flight: `.feature` file exists in output + Cucumber discovery path |
@@ -272,6 +275,18 @@ a test:
   `maintenance/route-scoped-sync-names.md` and
   `maintenance/route-scoped-pinned-names.md`;
   `quality-gate/tests/test_checker_shapes.py` locks the behaviour.
+
+#### Mechanism claims cite their code
+
+A maintenance record for a semantic change carries a `## Mechanism` section, and
+each causal claim in it cites the code path it rests on (`file.java:LINE` or
+`File#symbol`). A mechanism claim with no citation is how a wrong explanation
+survives — the flow-pin record claimed the engine "never re-evaluates"; it does
+(`SyncEngine.java:266`), and the citation would have caught it.
+`verify_mechanism_citations.py` enforces this for active platform records and
+for `SYNCHRONIZATIONS.md` §Naming / §Flow pinning; `verify_code_refs.py`
+(advisory) keeps every path-qualified or `file:LINE` citation resolving. The
+`templates/maintenance-change.md` record ships the section.
 
 ### Axiomatic analysis — running on existing projects
 

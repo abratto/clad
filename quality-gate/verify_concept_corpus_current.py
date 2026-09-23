@@ -39,9 +39,9 @@ import re
 import sys
 
 import artifact_parsers as ap
+from verify_stage_sequence import gate_status
 
 
-GATE2_STATUS = re.compile(r"^- \*\*Gate 2 \([^)]*\):\*\*\s+`(\w+)`", re.MULTILINE)
 INTRODUCED_RE = re.compile(r"^introduced-by\s+(.+)$", re.MULTILINE)
 EXTENDED_RE = re.compile(r"^extended-by\s+(.+)$", re.MULTILINE)
 COMPANION_RE = re.compile(
@@ -88,8 +88,7 @@ def proposing_features(features_dir):
         status = ""
         if os.path.isfile(resume):
             with open(resume, encoding="utf-8", errors="replace") as handle:
-                match = GATE2_STATUS.search(handle.read())
-            status = match.group(1) if match else ""
+                status = gate_status(handle.read(), 2) or ""
         if status != "approved":
             continue
         for concept, entry in sorted(ap.parse_responsibility_map(resp).items()):

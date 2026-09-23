@@ -45,7 +45,7 @@ from the concept spec — the canonical corpus spec, or this feature's NEW/EXTEN
 proposal where one exists. Do not add actions, outcomes, or fields the concept
 spec and chain tables did not declare.
 
-Derive the contract contract slice **mechanically** from each concept
+Derive the concept contract **mechanically** from each concept
 spec: action signatures, outcome enums, flow-token shape. No prose
 principle, no edge-case discussion — those stay in the concept spec.
 The implementation in `04d` and `04e` compiles against these contracts.
