@@ -306,11 +306,11 @@ When operating at Stage 04c, follow this checklist:
      - Named scenarios (### Scenario: <name>)
      - Pre-conditions, trigger, expected outcomes, postconditions
      - Extension branches
-□ 3. Read 01b_chain-table/output/*-chain.md → extract action sequence
-□ 4. Read 04b_contract/output/*.contract.md → extract outcome enums
-□ 5. Read 03_syncs/output/*.sync.md → extract response body literals
-□ 6. Derive the .feature file using Rules G1–G5
-□ 7. Derive the collection-coverage scenarios using Rule G6 (empty /
+□ 2. Read 01b_chain-table/output/*-chain.md → extract action sequence
+□ 3. Read 04b_contract/output/*.contract.md → extract outcome enums
+□ 4. Read 03_syncs/output/*.sync.md → extract response body literals
+□ 5. Derive the .feature file using Rules G1–G5
+□ 6. Derive the collection-coverage scenarios using Rule G6 (empty /
      multi-item / repeated-key) and record the "## Collection coverage"
      section in flow-test-stubs.md
 □ 8. Derive the step-definition class using Rules S1–S3 and E1

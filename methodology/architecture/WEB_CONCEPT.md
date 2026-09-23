@@ -121,7 +121,7 @@ The basic pattern:
 ```
 sync FormatArticleResponse
 when {
-    Web/format: [ type: "article" ; article: ?article ; request: ?request ] => []
+    Web/format: [ type: "article" ; article: ?article ; request: ?request ] => [ Formatted ]
 }
 where {
     Article: { ?article title: ?title ; body: ?body ; slug: ?slug ; author: ?author }

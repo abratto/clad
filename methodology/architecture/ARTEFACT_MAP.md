@@ -31,67 +31,66 @@ see [`TRACEABILITY.md`](TRACEABILITY.md).
        │ (in-scope actor + goal list)
        ▼
 ┌──────────────────────┐
-│ 01_usecase/          │   usecase.md   ◄────────────────────────────┐
-└──────┬───────────────┘                                             │
-       │ (named scenarios + Postconditions)                          │
-       ├──────────────────────────────┐                              │
-       ▼                              ▼                              │
-┌──────────────────────┐   ┌──────────────────────┐                  │
-│ 01a_responsibility-  │   │ 01b_chain-table/     │                  │
-│   map/               │   │ <scenario>-chain.md  │                  │
-│ responsibility-      │   │ (one per scenario)   │                  │
-│   map.md             │   └──────┬───────────────┘                  │
-└──────┬───────────────┘          │ (canonical action names +        │
-       │ (concept set + state +   │  outcome enums)                  │
-       │  action names)           │                                  │
-       └────────────┬─────────────┘                                  │
-                    ▼                                                │
-        ┌──────────────────────┐                                     │
-        │ 02_concepts/         │   <Name>.concept.md (one per row    │
-        │                      │     in the responsibility map)      │
-        └──────┬───────────────┘                                     │
-               │ (state, actions, outcomes, flow-token shape, R1)    │
-               ├───────────────────┐                                 │
-               ▼                   ▼                                 │
-   ┌──────────────────────┐ ┌──────────────────────┐                 │
-   │ 03_syncs/            │ │ (used directly by)   │                 │
-   │ <name>.sync.md       │ │   04a, 04b, 04d      │                 │
-   │ when … where … then  │ └──────────────────────┘                 │
-   └──────┬───────────────┘                                          │
-          │ (every then-call + every where-clause)   │
-          ▼                                                          │
-   ┌──────────────────────┐                                          │
-   │ 03a_dependency-      │   <concept>-card.md + pattern-d-         │
-   │   review/            │     summary.md                           │
-   └──────┬───────────────┘                                          │
-          │ (cross-concept coupling surface; concept-state reads)   │
-          ▼                                                          │
-   ┌──────────────────────┐                                          │
-   │ 03b_data-model/      │   <Name>.data-model.md                   │
-   └──────┬───────────────┘                                          │
-          │ (conceptual facts + constraints per concept)             │
-          ▼                                                          │
-   ┌──────────────────────────────────────────────────┐              │
-       │ 04_implement/  (container → executable stages)   │              │
-   │                                                  │              │
-   │  04a_storage-mapping/  data model → profile      │              │
-   │                       storage mapping            │              │
-   │  04b_contract/   concept spec → contract slice           │              │
-   │  04c_flow-tests/   one outer-red flow test per   │              │
-   │                    scenario  ────────────────────┼──┐           │
-       │  04d_concept-tdd/  container -> 04d_red-tests,   │  │           │
-       │                    04d_green-impl                │  │           │
-       │  04e_sync-tdd/     container -> 04e_red-tests,   │  │           │
-       │                    04e_green-impl; outer flow    │  │           │
-       │                    tests go GREEN ───────────────┼──┘           │
-   └──────┬───────────────────────────────────────────┘              │
-          │ (compilable artefact + green test suite)                 │
-          ▼                                                          │
-   ┌──────────────────────┐                                          │
-   │ 05_verify/           │   trace.md (back-trace of every          │
-   │                      │     observed flow token to a scenario)   │
-   │                      │   findings.md (defects route upstream) ──┘
-   │                      │   smoke.md, tracking.md (closure)
+│ 01_usecase/          │   usecase.md
+└──────┬───────────────┘
+       │ (named scenarios + Postconditions)
+       ├──────────────────────────────┐
+       ▼                              ▼
+┌──────────────────────┐   ┌──────────────────────┐
+│ 01a_responsibility-  │   │ 01b_chain-table/     │
+│   map/               │   │ <scenario>-chain.md  │
+│ responsibility-      │   │ (one per scenario)   │
+│   map.md             │   └──────┬───────────────┘
+└──────┬───────────────┘          │ (canonical action
+       │ (concept set + state +   │  names + outcomes)
+       │  action names)           │
+       └────────────┬─────────────┘
+                    ▼
+        ┌──────────────────────┐
+        │ 02_concepts/         │   <Name>.concept.md (one per
+        │                      │     responsibility-map row)
+        └──────┬───────────────┘
+               │ (state, actions, outcomes, flow-token shape, R1)
+               ├───────────────────┐
+               ▼                   ▼
+   ┌──────────────────────┐ ┌──────────────────────┐
+   │ 03_syncs/            │ │ (used directly by)   │
+   │ <name>.sync.md       │ │   04a, 04b, 04d      │
+   │ when … where … then  │ └──────────────────────┘
+   └──────┬───────────────┘
+          │ (every then-call + every where-clause)
+          ▼
+   ┌──────────────────────┐
+   │ 03a_dependency-      │   <concept>-card.md +
+   │   review/            │     pattern-d-summary.md
+   └──────┬───────────────┘
+          │ (cross-concept coupling surface; concept-state reads)
+          ▼
+   ┌──────────────────────┐
+   │ 03b_data-model/      │   <Name>.data-model.md
+   └──────┬───────────────┘
+          │ (conceptual facts + constraints per concept)
+          ▼
+   ┌────────────────────────────────────────────────┐
+   │ 04_implement/  (container → executable stages) │
+   │                                                │
+   │  04a_storage-mapping/  data model → profile    │
+   │                        storage mapping         │
+   │  04b_contract/         concept spec → contract │
+   │                        slice                   │
+   │  04c_flow-tests/       one outer-red flow test │
+   │                        per scenario            │
+   │  04d_concept-tdd/      → 04d_red-tests,        │
+   │                        04d_green-impl          │
+   │  04e_sync-tdd/         → 04e_red-tests,        │
+   │                        04e_green-impl; outer   │
+   │                        flow tests go GREEN     │
+   └──────┬─────────────────────────────────────────┘
+          │ (compilable artefact + green test suite)
+          ▼
+   ┌──────────────────────┐
+   │ 05_verify/           │   trace.md, findings.md,
+   │                      │   smoke.md, tracking.md
    └──────┬───────────────┘
           │
           ▼

@@ -94,7 +94,7 @@ package names as examples only.
 Run the following before requesting the human gate:
 
 ```
-python3 ../../../../../python3 ../../../../../quality-gate/verify_profile_paths.py \
+python3 ../../../../../quality-gate/verify_profile_paths.py \
   --feature ../../../
 quality-gate/verify_relational_mapping.py \
   --storage-dir output

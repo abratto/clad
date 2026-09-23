@@ -118,8 +118,10 @@ stateDiagram-v2
 
 - Every concept that appears in the table is also a row in
   `../01a_responsibility-map/output/responsibility-map.md`.
-- Every `Then` action that appears in the table is listed in the
-  corresponding `<Name>.concept.md` (Stage 02) once that file exists.
+- Every `Then` action that appears in the table is declared in the concept's
+  spec — the feature's Stage 02 proposal if the concept is `new`/`extends`,
+  else the canonical corpus `features/_system/concepts/<Name>.concept.md`
+  (Model B: a reused concept has no feature-local `.concept.md`).
 - The trigger and the final response match the scenario's *Trigger*
   and *Expected outcomes* in `../01_usecase/output/usecase.md`.
 

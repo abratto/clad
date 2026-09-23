@@ -400,7 +400,7 @@ do things. Syncs connect things.
 
 ```
 ✅ Concept: Article — creates, reads, updates, deletes articles
-✅ Sync: when Article/create[CREATED] → Notification/notify { to: ?user }
+✅ Sync: when Article/create => [ Created ] then Notification/notify [ to: ?user ]
 ❌ Concept: ArticleCreationNotifier (this is just a sync)
 ```
 

@@ -343,7 +343,7 @@ single source of truth for per-stage instructions:
 | 01b | `stages/01b_chain-table/CONTEXT.md` | `<scenario>-chain.md` per scenario — the table **and** its `stateDiagram-v2` | **Gate 1 (Requirements)** |
 | 02 | `stages/02_concepts/CONTEXT.md` | `<Name>.concept.md` per business concept | Auto → 03b |
 | 03 | `stages/03_syncs/CONTEXT.md` | `<name>.sync.md` per coordination rule | Auto → 03b |
-| 03a | `stages/03a_dependency-review/CONTEXT.md` | `<concept>-card.md` + `pattern-d-summary.md` | Auto → 03b |
+| 03a | `stages/03a_dependency-review/CONTEXT.md` | `<concept>-card.md` + `pattern-d-summary.md` + `concept-matrix.md` | Auto → 03b |
 | 03b | `stages/03b_data-model/CONTEXT.md` | `<Name>.data-model.md` per concept | **Gate 2 (Architecture)** |
 | 04a | `stages/04_implement/04a_storage-mapping/CONTEXT.md` | `<Name>.storage.md` or `_NOT_APPLICABLE.md` | Auto → 04c |
 | 04b | `stages/04_implement/04b_contract/CONTEXT.md` | `<Name>.contract.md` per concept | Auto → 04c |
