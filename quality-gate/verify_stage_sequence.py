@@ -44,6 +44,7 @@ import re
 import sys
 
 import clad_stages as cs
+import artifact_parsers as ap
 
 # A gate counts as cleared for sequencing if a human approved it or if the
 # configured autonomy level auto-approved it. The distinction is preserved in
@@ -154,9 +155,7 @@ def stage_has_evidence(feature_root: str, stage_id: str) -> bool:
 def gate_status(resume_text: str, gate_num: int) -> str | None:
     """Return the recorded status token for a gate, or None if not found."""
     label = cs.GATE_LABELS.get(gate_num, f"Gate {gate_num}")
-    pattern = rf"^- \*\*Gate {gate_num} \({re.escape(label)}\):\*\*\s+`([\w-]+)`"
-    m = re.search(pattern, resume_text, re.MULTILINE)
-    return m.group(1) if m else None
+    return ap.parse_gate_status(resume_text, gate_num, label)
 
 
 def gate_approved(resume_text: str, gate_num: int) -> bool:

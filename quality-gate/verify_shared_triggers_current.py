@@ -25,6 +25,13 @@ import sys
 import generate_shared_triggers as gst
 
 
+def _normalise(text):
+    """Compare on logical content: normalise line endings and strip trailing
+    whitespace per line, so a benign generator formatting change (EOL, trailing
+    spaces) does not report false staleness."""
+    return [line.rstrip() for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n")]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="The cross-UC shared-trigger view is up to date")
@@ -41,7 +48,7 @@ def main() -> int:
         current = handle.read()
     fresh = gst.render(features)
 
-    if current.strip() != fresh.strip():
+    if _normalise(current) != _normalise(fresh):
         print("FAIL  features/_system/shared-triggers.md is stale — it no "
               "longer matches the sync packs it indexes")
         print("      run: python3 quality-gate/generate_shared_triggers.py --write")

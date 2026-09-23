@@ -50,6 +50,14 @@ def parse_chain_outcomes(chain_dir):
     return rows
 
 
+def _chain_row_files(chain_dir):
+    """The chain files the check would read, whether or not they yield rows."""
+    if not os.path.isdir(chain_dir):
+        return []
+    return [f for f in sorted(os.listdir(chain_dir))
+            if f.endswith("-chain.md") and not f.endswith("-all-scenarios-chain.md")]
+
+
 def normalize(name):
     """Normalize outcome names for comparison.
     Converts PascalCase to SCREAMING_SNAKE_CASE, then uppercases.
@@ -78,8 +86,17 @@ def main():
     spec_outcomes = parse_spec_outcomes_multi(args.contract_dir)
 
     if not chain_rows:
-        print("WARN  no chain rows found — check --chain-dir")
-        sys.exit(0)
+        # Distinguish absence from defect: no chain dir (or no chain files) is a
+        # legitimate skip when this stage's inputs are not present yet, but a
+        # populated chain dir that parses to zero comparable rows means every
+        # row was a terminal respond row — a chain table with no sync triggers.
+        if not _chain_row_files(args.chain_dir):
+            print(f"SKIP  no chain-table files found under {args.chain_dir}")
+            sys.exit(0)
+        print("FAIL  chain-table file(s) present but no comparable rows parsed — "
+              "every row was a terminal respond row, so no sync-trigger outcome "
+              "could be aligned. Fix the chain table (or --chain-dir).")
+        sys.exit(1)
 
     if not spec_outcomes:
         print("FAIL  no contract outcomes parsed — check --contract-dir")

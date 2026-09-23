@@ -53,7 +53,13 @@ def main():
     scenarios = parse_scenario_names(args.usecase)
 
     if not os.path.isdir(args.chain_dir):
-        print(f"WARN  chain directory not found: {args.chain_dir} — skipping chain and sync checks")
+        if scenarios:
+            # Scenarios exist but their chain files cannot be checked — that is a
+            # defect (every scenario is unverified), not an absence to skip.
+            print(f"FAIL  chain directory not found: {args.chain_dir} — "
+                  f"{len(scenarios)} scenario(s) have no verifiable chain files")
+            sys.exit(1)
+        print(f"SKIP  chain directory not found: {args.chain_dir} — no scenarios to check")
         chain_files = []
         cited = set()
     else:

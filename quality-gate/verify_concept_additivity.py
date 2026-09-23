@@ -90,15 +90,25 @@ def dropped_state_lines(feature_root, corpus, concept):
 
 
 def dropped_contract_terms(feature_root, corpus, concept):
-    """Canonical actions and outcomes the proposal's contract no longer carries."""
+    """Canonical actions and outcomes the proposal's contract no longer carries.
+
+    Distinguishes absence from defect: a canonical contract that does not exist
+    yet is nothing to protect, but a canonical contract that exists while the
+    proposal's `04b_contract` carries nothing for the concept is a dropped
+    contract — a defect, not a skip. Return the sentinel `MISSING_PROPOSAL_CONTRACT`
+    marker via the second element of the tuple in that case.
+    """
     contract_dir = os.path.join(feature_root, "stages", "04_implement",
                                 "04b_contract", "output")
     before = {(c, a): o for (c, a), o in ap.parse_spec_outcomes(corpus).items()
               if c == concept}
+    if not before:
+        return []
     after = {(c, a): o for (c, a), o in ap.parse_spec_outcomes(contract_dir).items()
              if c == concept}
-    if not before or not after:
-        return []
+    if not after:
+        # Canonical contract exists, proposal produced none for this concept.
+        return ["<entire contract missing>"]
     dropped = []
     for (c, action), outcomes in sorted(before.items()):
         if (c, action) not in after:
@@ -149,10 +159,17 @@ def main():
         terms = [t for t in dropped_contract_terms(feature_root, corpus, concept)
                  if t not in allowed]
         if terms:
-            failures.append(
-                f"{concept}: the proposal's contract drops canonical "
-                f"term(s) — this is not additive:")
-            failures.extend(f"  - {t}" for t in terms)
+            if terms == ["<entire contract missing>"]:
+                failures.append(
+                    f"{concept}: the canonical contract exists but the proposal's "
+                    f"04b_contract holds no outcomes for it — a dropped contract "
+                    f"is not additive. Derive the concept contract, or authorise "
+                    f"the removal in {EXCEPTION_FILE}.")
+            else:
+                failures.append(
+                    f"{concept}: the proposal's contract drops canonical "
+                    f"term(s) — this is not additive:")
+                failures.extend(f"  - {t}" for t in terms)
 
     if not checked:
         print("SKIP  no extended concept has a canonical entry yet")
