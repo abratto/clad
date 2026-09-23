@@ -185,14 +185,14 @@ the human inspects the results at their convenience.
 Any verify-stage finding in trace.md sends the loop back to whichever
 stage owns the defect; closure does not run until findings are clear.
 
-## Next stage
+## Advancing
 
-**This is the final stage.** When verification passes, the feature is
-complete.
-
-To start the next feature, run system-scope Stage 00 at
-[`features/_system/stages/00_actor-goal/CONTEXT.md`](../../../../features/_system/stages/00_actor-goal/CONTEXT.md).
-After that gate passes, copy
-[`templates/feature-skeleton/`](../../../../templates/feature-skeleton/)
-to `features/UC-XX-<slug>/` and begin at
-`stages/01_usecase/CONTEXT.md`.
+> **This is the final stage.** When verification passes, the feature is
+> complete. `advance.py` auto-closes the loop; there is no next stage.
+>
+> To start the next feature, run system-scope Stage 00 at
+> [`features/_system/stages/00_actor-goal/CONTEXT.md`](../../../../features/_system/stages/00_actor-goal/CONTEXT.md).
+> After that gate passes, copy
+> [`templates/feature-skeleton/`](../../../../templates/feature-skeleton/)
+> to `features/UC-XX-<slug>/` and begin at
+> `stages/01_usecase/CONTEXT.md`.

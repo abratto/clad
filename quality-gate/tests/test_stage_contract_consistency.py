@@ -52,6 +52,27 @@ class StageContractConsistencyTests(unittest.TestCase):
                         f"missing system-scope goals.md: {goals}")
         self.assertEqual(Path(cs._port_spec(str(feature))).parent, expected)
 
+    def test_stage_contracts_advance_through_the_cli_not_by_walking_on(self):
+        """A stage contract must never instruct the agent to open the next
+        stage's `CONTEXT.md` itself: transitions are gate-driven
+        (`./clad advance`, AGENTS.md §2 principles 12-13). The old
+        `## Next stage` link-and-proceed phrasing contradicted that rule and
+        was the most agent-confusing drift in the repo."""
+        roots = [SKELETON, REPO_ROOT / "features" / "UC-00-login"]
+        offenders = []
+        for root in roots:
+            for cf in sorted(root.rglob("stages/**/CONTEXT.md")):
+                text = cf.read_text(encoding="utf-8")
+                rel = cf.relative_to(REPO_ROOT)
+                if "## Advancing" not in text:
+                    offenders.append(f"{rel}: missing '## Advancing'")
+                for bad in ("## Next stage", "proceeds to Stage",
+                            "proceeds without a human gate"):
+                    if bad in text:
+                        offenders.append(
+                            f"{rel}: contains walk-on phrasing '{bad}'")
+        self.assertEqual(offenders, [], "\n".join(offenders))
+
     def test_profile_paths_is_wired_at_04a(self):
         """The layout guard runs when a feature enters implementation.
 

@@ -143,8 +143,21 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 Auto-advances (next human gate: Stage 01b). Same self-audit rule. The
 `verify_file_manifest.py` script must pass before advancing.
 
-## Next stage
+## Advancing
 
-→ [`../01b_chain-table/CONTEXT.md`](../01b_chain-table/CONTEXT.md) — Chain tables (one per scenario)
-
-The agent proceeds to Stage 01b without a human gate.
+> Do not open the next stage's `CONTEXT.md` yourself. After this stage's
+> `output/` is written, end your turn by running the gate-driven advance
+> command, which runs this stage's checks, enforces stage ordering, and
+> tells you the next step:
+>
+> ```
+> ./clad advance
+> ```
+>
+> (Long form: `python3 quality-gate/advance.py --feature features/UC-XX-<slug>`.)
+> The CLI wrapper auto-discovers the feature from `RESUME.md`.
+>
+> Treat its output as your next instruction. It advances you, stops you
+> at a human gate, or returns you to this stage with the defects to fix.
+> See AGENTS.md §2 principle 12 and
+> `methodology/implementation/STAGES.md` §"Gate-driven advance".
