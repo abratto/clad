@@ -206,13 +206,25 @@ consistency checks across the CLAD artefact chain:
 | Script | Stage(s) | What it checks |
 |---|---|---|
 | `verify_stage_sequence.py` | Any | No stage was skipped (contiguous prefix), and each cleared human gate is recorded as approved in `RESUME.md` |
+| `verify_links.py` | Any | Relative markdown cross-reference links in AGENTS.md, CONTEXT.md, `methodology/`, `templates/`, `skills/` resolve to real files |
 | `verify_file_manifest.py` | Any | `output/` contains exactly the expected files |
 | `verify_profile_paths.py` | 04c–04e | Profile-path integrity: configured `test.source.root`/impl dirs resolve inside the feature's declared `package-and-layout.md` roots (blocks); warns on seed `reference-impl/` pointers when the layout declares elsewhere |
 | `verify_scenario_coverage.py` | 01, 01b, 03 | Goal → scenario → chain → sync coverage |
+| `verify_chain_grammar.py` | 01b | Every chain-table row has exactly one outcome token and one `Then` action, and the file carries its `stateDiagram-v2` view |
+| `verify_sync_transition_coverage.py` | 03 | Every chain-table invocation edge has a corresponding sync file |
 | `verify_concept_state_relational.py` | 02 | Concept `## State` is a relation over a set of individuals, not one instance's field list |
+| `verify_concept_criteria.py` | 02 | Mechanical concept criteria: operational principle present, no external types (R1), type parameters declared |
+| `verify_concept_proposals.py` | 02 | The proposal set matches the responsibility map's NEW/EXTEND rows exactly (a REUSE must not re-author a spec) |
+| `verify_concept_registry.py` | 02 (project) | One introducer per concept, no redefinition, promote-on-approval, catalog completeness |
+| `verify_concept_additivity.py` | 02 (project) | An `extends:*` proposal keeps every canonical state line, action, and outcome (additive-only) |
+| `verify_concept_corpus_current.py` | 02 (project) | The canonical corpus is not behind: promotion history and companions agree |
+| `verify_shared_action_contracts.py` | 02 (project) | A concept action/outcome vocabulary shared across features does not drift |
 | `verify_outcome_alignment.py` | 04b | Chain-table outcomes match contract enums |
 | `verify_action_chain.py` | 04b | Action names consistent across responsibility map, chain tables, concept specs, syncs, cards, and contracts |
 | `verify_sync_matrix.py` | 03 | Every sync has a complete Sync Contract Matrix |
+| `verify_sync_flow_pin.py` | 03 | Every non-bootstrap sync names its flow root as the last `when` conjunct; a bootstrap is the flow root |
+| `verify_sync_then_shape.py` | 03 | A sync `then` argument list is flat — it carries the authored result, not a transport frame |
+| `verify_shared_triggers_current.py` | 03 (project) | The generated cross-UC shared-trigger view is current |
 | `verify_sync_cycle_graph.py` | 03 | Detects design-time cross-concept sync cycles (A→B→A). Excludes Web (bootstrap) and self-references (A→A). Accepts `--advisory` flag for refactoring analysis on existing projects |
 | `verify_sync_overlap.py` | 03 | Detects sync pairs sharing 2+ concepts. Lock-order aware: conflicting order = deadlock risk (blocking), same order = safe (advisory). Accepts `--advisory` flag to downgrade all findings to warnings |
 | `verify_concept_matrix.py` | 03 | Builds FR×DP matrix from use-case scenarios × concepts. Flags God Objects (>75% scenario coverage), duplication (identical patterns), and entanglement (shared scenarios). Always advisory (exit 0) — patterns need human judgment |
@@ -223,6 +235,7 @@ consistency checks across the CLAD artefact chain:
 | `verify_relational_mapping.py` | 04a | Relational storage mappings honour Rmap and R2 (no cross-concept foreign key); skips for non-relational profiles |
 | `verify_contract_parity.py` | 04b | Action name parity between concept specs and contracts |
 | `verify_port_spec_contract.py` | 04b, 04c | When `port-spec.md` exists, directional entries are complete; inbound entries have response shapes and `@contract` scenarios |
+| `verify_collection_coverage.py` | 04c | A collection response declares empty, multi-item, and repeated-key fixtures |
 | `verify_iterative_change_readiness.py` | 04+ | Iterative concept/sync spec or implementation changes have a structured `_changes/` classification and artefact-impact matrix |
 | `verify_iterative_change_coupling.py` | 04+ | Concept/sync implementation changes are committed with their matching Stage 02/03 artefacts |
 | `verify_maintenance_change_readiness.py` | Maintenance | Engine/profile/deployment changes have an active maintenance record and cleared design/evidence gates |
@@ -236,6 +249,8 @@ consistency checks across the CLAD artefact chain:
 | `verify_close_evidence.py` | 05 | Advisory: canonical `trace.md` present (warns on legacy name); enabled adapter integration test exists when an adapter surface is declared |
 | `verify_gherkin_derivation.py` | 04c | `.feature` file derivation per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1 |
 | `verify_concept_test_derivation.py` | 04d | Every contract outcome has a matching concept test row and Java method |
+| `verify_test_naming.py` | 04d-red, 04e-red | London School naming per scope: class/method naming, `@Nested`, GIVEN/WHEN/THEN |
+| `verify_test_continuity.py` | 04d-green, 04e-green | Red-stage test files are unchanged: the SHA-256 recorded in the red derivation map still matches |
 | `verify_concept_field_assertions.py` | 04d | Java concept tests assert required completion fields from contract flow-token shapes |
 | `verify_step_definition_parity.py` | 04c | Every Gherkin step has a matching step-definition method with a non-empty body — catches empty stubs |
 | `verify_step_definition_derivation.py` | 04c | Every chain-table business action name appears in at least one step-definition method body — catches methods that don't exercise the chain-table actions they were derived from |
