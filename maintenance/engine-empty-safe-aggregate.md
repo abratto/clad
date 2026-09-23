@@ -13,6 +13,12 @@
 
 The conduit rebuild experiment's UC-07 (`View Comments`) required an article with **no comments** to answer `200 {"comments": []}`. The declarative shape — `fanOut` over the thread's comments, then `collectBy` to gather the thread's author ids — produced **zero frames** when the thread was empty, and `WhereEvaluator.evaluate` returned early on the empty set **before** the `CollectBy` clause ran, so the enrichment syncs never fired and the join never completed: the empty-thread response was **unreachable**. Every design-time gate (parity, route filters, cycle/overlap, declarative, transition coverage) passed; only Stage-05 runtime back-trace caught it (the gates verify structure, not cardinality).
 
+## Mechanism
+
+`WhereEvaluator.evaluate` snapshots the frame set *before* the fan-out chain
+(reference-impl/legible-engine/src/main/java/dev/legible/engine/WhereEvaluator.java:49) and the frame-set aggregate carries it forward
+(reference-impl/legible-engine/src/main/java/dev/legible/engine/WhereEvaluator.java:52).
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

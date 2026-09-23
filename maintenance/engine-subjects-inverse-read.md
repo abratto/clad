@@ -13,6 +13,11 @@
 
 CLAD **deliberately declines** conceptbox's imperative `frames.query/filter/collectAs` — `SYNCHRONIZATIONS.md` §"How syncs fan out — the Frames model" (the `where` clause is a declarative bind/filter phase only; rich lookups go through `FanOut` + state reads) and `SYNC_ENGINE_EVOLUTION.md` §3 + standing comparison (in-`where` imperative filters / JSON assembly = *deliberate divergence, R3*; concept query actions as `where` sources = *deferred non-goal*). This change is **not** that: it adds no filters, no aggregation expressions, and no imperative query surface — only a code-free index lookup that returns a collection where `StateRead` returns scalars. It is the natural dual of a source already in the model, and mirrors the storage SPI method `Region.subjects` that `Clause.FanOut` already uses (where `FanOut` yields one frame per subject; `Subjects` yields the set itself when a single downstream invocation needs the membership as a whole). The declined imperative behaviour remains declined.
 
+## Mechanism
+
+`Source.Subjects` resolves an inverse read through the concept's region
+(reference-impl/legible-engine/src/main/java/dev/legible/engine/WhereEvaluator.java:136).
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

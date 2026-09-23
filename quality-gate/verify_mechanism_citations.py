@@ -13,8 +13,9 @@ Why this exists:
 
 Checks:
   * `maintenance/*.md` with `Change class` platform|mixed and `Status` active
-    MUST carry a `## Mechanism` section with at least one code citation
-    (a closed record is grandfathered, and warns).
+    MUST carry a `## Mechanism` section with at least one code citation. Closed
+    records are not checked: the requirement is forward-only, and the template
+    guarantees a record carries the section before it can be closed.
   * `SYNCHRONIZATIONS.md` `## Naming` and `### Flow pinning` MUST each cite at
     least one code path — they are the load-bearing mechanism sections.
 
@@ -68,7 +69,7 @@ def main() -> int:
         "--sync-doc", default="methodology/architecture/SYNCHRONIZATIONS.md")
     args = parser.parse_args()
 
-    failures, closed_missing = [], 0
+    failures = []
 
     if os.path.isdir(args.maintenance_dir):
         for name in sorted(os.listdir(args.maintenance_dir)):
@@ -79,18 +80,13 @@ def main() -> int:
                 text = handle.read()
             if field(text, "Change class").lower() not in PLATFORM_CLASSES:
                 continue
-            body = section_body(text, "## Mechanism")
-            cited = bool(CITATION.search(body))
-            status = field(text, "Status").lower()
-            if cited:
-                continue
-            if status == "active":
+            if field(text, "Status").lower() != "active":
+                continue  # forward-only: closed records predate the rule
+            if not CITATION.search(section_body(text, "## Mechanism")):
                 failures.append(
                     f"{path}: active platform change has no `## Mechanism` "
                     f"section citing a code path (`file.java:LINE` / "
                     f"`File#symbol`)")
-            else:
-                closed_missing += 1
 
     if os.path.isfile(args.sync_doc):
         with open(args.sync_doc, encoding="utf-8") as handle:
@@ -101,9 +97,6 @@ def main() -> int:
                     f"{args.sync_doc} {heading}: no code-path citation — a "
                     f"mechanism claim here must point at the code it rests on")
 
-    if closed_missing:
-        print(f"WARN  {closed_missing} closed platform record(s) predate the "
-              f"`## Mechanism` requirement (grandfathered)")
     if failures:
         print(f"FAIL  {len(failures)} mechanism claim(s) without a citation:")
         for failure in failures:

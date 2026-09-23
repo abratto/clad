@@ -17,6 +17,12 @@
 
 Both are parseable, gate-checkable, and keep the `when`/`where`/`then` records mechanically auditable.
 
+## Mechanism
+
+`SyncEngine.matchConjuncts` requires every trigger to be present in the flow
+(reference-impl/legible-engine/src/main/java/dev/legible/engine/SyncEngine.java:132); `WhereEvaluator.collectBy` gathers values per group
+(reference-impl/legible-engine/src/main/java/dev/legible/engine/WhereEvaluator.java:182).
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

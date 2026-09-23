@@ -45,6 +45,11 @@ to teach the DSL to reproduce it (which would entrench the leak).
   status* mapping in the adapter is recorded as a separate future decision.
 - A nested map in a `then` signature is a defect.
 
+## Mechanism
+
+`verify_sync_then_shape` refuses a nested-map `then` argument, keeping the
+transport envelope in the adapter (`quality-gate/verify_sync_then_shape.py`).
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

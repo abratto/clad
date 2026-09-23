@@ -61,6 +61,12 @@ unique within the pack**, and the parity check accepts every level:
 The `For<Scope>` component is removed entirely (it never disambiguated). The
 `sync <Name>` header, filename stem, and Java class name stay identical.
 
+## Mechanism
+
+`artifact_parsers.sync_stem` builds the action-first, concept-free stem and the
+`For<Route>` component; `generate_syncs.py` adds concept tokens back only on a
+collision (`quality-gate/artifact_parsers.py#sync_stem`).
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

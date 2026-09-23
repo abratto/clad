@@ -35,6 +35,12 @@ fan-out, Pattern D reads, `OPTIONAL`, `?_eachthen` aggregation, `bind(uuid())`,
 route scoping, replay, archival, and concurrency — and measured ~100× lower
 latency than the Jena profile. This change lands that prototype formally.
 
+## Mechanism
+
+`SyncEngine.processInvocation` appends the completion to the flow log **before**
+evaluating any sync (reference-impl/legible-engine/src/main/java/dev/legible/engine/SyncEngine.java:261); the drain loop then evaluates
+matching rules (reference-impl/legible-engine/src/main/java/dev/legible/engine/SyncEngine.java:242).
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

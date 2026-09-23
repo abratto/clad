@@ -75,6 +75,15 @@ conjunct matcher plus joins). What is missing is that the lowering drops the pin
 - **Mechanised.** `verify_sync_flow_pin.py` fails a non-bootstrap rule whose
   `when` does not name its flow root.
 
+## Mechanism
+
+`SyncEngine.processInvocation` hands a rule's **primary** (first) conjunct to
+`WhereEvaluator` (reference-impl/legible-engine/src/main/java/dev/legible/engine/SyncEngine.java:270), and `triggerField`/`triggerInput`
+resolve against it (reference-impl/legible-engine/src/main/java/dev/legible/engine/WhereEvaluator.java:98); a conjunct's own
+completion/input is a separate source (`WhereEvaluator.java:107`). That is why
+the pin is last: a pin first would make the `Web/request` completion the primary
+and blank the domain fields.
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

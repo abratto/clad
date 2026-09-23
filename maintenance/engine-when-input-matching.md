@@ -17,6 +17,11 @@
 - **Evidence gate:** `approved`
 - **Change summary:** Close the last meaningful parity delta with the paper-authors' own sync implementation (MIT 61040 conceptbox, `design/background/implementing-synchronizations.md`): `SyncRule` gains an optional **input-pattern matcher** on the `when` trigger — `when Web/request (route: "profile") : routed` — so route/value discrimination moves from hand-written `Guard` clauses in `where` into the trigger token itself. The 10 `?route` guards across the four stocked example features migrate to matchers. `Guard` remains legal (R15) for comparisons a when-matcher cannot express (non-literal operands). Deltas against the conceptbox model that CLAD **declines to adopt** are recorded below with rationale.
 
+## Mechanism
+
+A conjunct's input matcher is applied in `SyncEngine.candidateEntries` via
+`patternMatches` (reference-impl/legible-engine/src/main/java/dev/legible/engine/SyncEngine.java:152).
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

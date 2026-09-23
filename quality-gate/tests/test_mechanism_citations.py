@@ -82,7 +82,8 @@ class MechanismCitationTests(unittest.TestCase):
             result = self._run(root)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
-    def test_closed_record_is_grandfathered(self):
+    def test_closed_record_is_not_checked(self):
+        """Forward-only: a closed record predates the rule and is ignored."""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             write(root / "maintenance/x.md",
@@ -90,7 +91,7 @@ class MechanismCitationTests(unittest.TestCase):
             write(root / "sync.md", SYNC_DOC.format(cite="`F.java:1`"))
             result = self._run(root)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertIn("grandfathered", result.stdout)
+            self.assertNotIn("WARN", result.stdout)
 
     def test_sync_doc_section_without_citation_fails(self):
         with tempfile.TemporaryDirectory() as tmp:

@@ -76,6 +76,12 @@ state).
   and `/api/dev/stuck` surfaces the stopped flow.
 - No arithmetic, no JSON assembly, no arbitrary code — R3 is unchanged.
 
+## Mechanism
+
+`Clause.Absent` is applied in `WhereEvaluator.apply` — it reads the concept's
+region and keeps the frame only when the subject has no value
+(reference-impl/legible-engine/src/main/java/dev/legible/engine/WhereEvaluator.java:225).
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

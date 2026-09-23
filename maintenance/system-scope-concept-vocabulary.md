@@ -45,6 +45,12 @@ Resolved sub-decisions: S1 dependence graph is a separate system-scope artefact 
 4. **RESUME `## Gate snapshot` is machine-owned** (`8f04cbd`): Phase 6b must re-approve via `approve-iter` (change record) **and** `approve <N>` (gate status + new content hash), never by hand-editing hash lines. The hash covers a gate block's `output/` dirs only (`verify_stage_sequence.py:211`), so re-approve only gates whose outputs actually moved.
 5. **R17 trigger coverage:** `verify_iterative_change_readiness.py` `ITERATIVE_PATTERNS` match only `features/UC-*/stages/02_concepts/output/*.concept.md`; the corpus path must be added (or corpus writes explicitly routed through the gated `promote-concepts`) so canonical-concept edits cannot bypass the guard.
 
+## Mechanism
+
+`clad_stages.concept_source_dirs` returns the feature's proposals first, then the
+canonical corpus, so a proposal shadows the corpus
+(`quality-gate/clad_stages.py#concept_source_dirs`).
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |

@@ -17,6 +17,12 @@
 - **Evidence gate:** `approved`
 - **Change summary:** (A) fluent Java DSL (`Dsl.rule(...).when(...).matching(...).where(...).then(...).build()` + static `Clause`/`Source` factories and per-feature concept/action constants) so hand-written syncs read like the spec's `when → where → then` and remain directly debuggable Java (SPARQL-era property); (B) sync-name grammar v2, effect-first strict green-only: `When…Then…` → `<TargetConcept><TargetAction>[For<Scope>]When<TriggerConcept><TriggerAction><TriggerCompletion>` (paper-authors' own naming style, cf. conceptbox `NotifyWhenReachTen`); (3) `generate_syncs_java.py` — mechanical spec→code lowering emitting the DSL in both profile shapes with TODO markers only for judgement items. Deliberate non-adoption: `.sync.md`-as-runtime-data (Option 4) — the Legible goal is that the executed data is directly human-readable, debuggable *Java* (the SPARQL-era "no gap by readable code" property); the spec artefact/verification pairing remains the audit surface, so an interpreter would insert a hidden translation layer between spec and execution.
 
+## Mechanism
+
+`Dsl.RuleBuilder` (reference-impl/legible-engine/src/main/java/dev/legible/engine/Dsl.java:77) builds the `SyncRule`s that
+`SyncEngine.buildTriggerIndex` files (reference-impl/legible-engine/src/main/java/dev/legible/engine/SyncEngine.java:79) — the sugar lowers
+to the same trigger index the engine drains.
+
 ## Contract impact
 
 | Invariant | Status | Evidence or re-entry |
