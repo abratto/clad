@@ -12,6 +12,10 @@ Why this exists:
 Advisory (exit 0 always): a `file.java:LINE` out of range, or a `.java`/`.py`
 token that resolves to no file in the repo, prints a WARN. A path that resolves
 by basename but not by the written path is accepted (docs often elide the dir).
+A `closed` `maintenance/` record is historical (the code it cites may have been
+retired since), so its references are exempt — mirroring `verify_links.py`,
+which skips `maintenance/` for the same reason. A `draft`/`active` record is
+still checked.
 
 Usage:
   python3 verify_code_refs.py --dirs methodology maintenance templates
@@ -28,6 +32,21 @@ import sys
 REF = re.compile(r"`([\w./-]+\.(?:java|py|kt|scala|ts|js))(?::(\d+)|#[\w.]+)?`")
 SKIP_DIRS = {".git", "node_modules", "target", "__pycache__", "scratch",
              ".venv", "dist", "build"}
+STATUS_RE = re.compile(r"^- \*\*Status:\*\* `?([^`\n]+)`?\s*$", re.MULTILINE)
+
+
+def is_closed_maintenance_record(root, path, text):
+    """True for a `maintenance/<name>.md` record whose Status is `closed`.
+
+    Closed records are the historical engineering log; their citations point at
+    the code as it was when the change landed, and a later retirement is not a
+    doc defect."""
+    rel = os.path.relpath(path, root)
+    if rel.split(os.sep)[0] != "maintenance":
+        return False
+    match = STATUS_RE.search(text)
+    return bool(match) and match.group(1).strip().lower() == "closed"
+
 
 
 def repo_index(root):
@@ -64,6 +83,8 @@ def main() -> int:
                 path = os.path.join(dirpath, name)
                 with open(path, encoding="utf-8", errors="replace") as handle:
                     text = handle.read()
+                if is_closed_maintenance_record(root, path, text):
+                    continue
                 for match in REF.finditer(text):
                     ref, line = match.group(1), match.group(2)
                     # A bare filename with no line is usually an illustrative

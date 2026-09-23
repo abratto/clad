@@ -6,7 +6,7 @@ are documentation, templates, and worked examples, not application code.
 ## Ground rules
 
 1. **Every change is led by a contract.** If you are adding a feature, start
-   at Stage 00 (`features/UC-XX/stages/00_actor-goal/`) and walk the stages
+   at Stage 00 (`features/_system/stages/00_actor-goal/`) and walk the stages
    in order; the use case is the Stage 01 artefact, not the starting point.
    If you are adding methodology content, open an issue describing what gap
    you are filling before writing prose.

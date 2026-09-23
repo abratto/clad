@@ -208,13 +208,7 @@ self-documenting: each key's meaning, values, and profile-specific
 notes are written inline in that file. Read `clad.properties` rather
 than guessing a key. Resolution order (lower wins):
 
-1. `features/UC-XX/_config/<key>.md` — per-feature override. Value bodies resolve **from the repo root** (e.g. `app/src/test/java`), never from the feature folder. The override is script-enforced for path-setting keys: a key file whose body is the value (e.g. `_config/test.source.root.md`) overrides the root default in every quality-gate check that reads configuration. Derived repos can therefore re-bind `sync.impl.dir` / `concept.impl.dir` / `test.source.root` per feature without editing root `clad.properties` (an R20 maintenance-routed surface). 
-   script-enforced for path-setting keys: a key file whose body is the
-   value (e.g. `_config/test.source.root.md`) overrides the root default
-   in every quality-gate check that reads configuration. Derived repos
-   can therefore re-bind `sync.impl.dir` / `concept.impl.dir` /
-   `test.source.root` per feature without editing root `clad.properties`
-   (an R20 maintenance-routed surface).
+1. `features/UC-XX/_config/<key>.md` — per-feature override. Value bodies resolve **from the repo root** (e.g. `app/src/test/java`), never from the feature folder. The override is script-enforced for path-setting keys: a key file whose body is the value (e.g. `_config/test.source.root.md`) overrides the root default in every quality-gate check that reads configuration. Derived repos can therefore re-bind `sync.impl.dir` / `concept.impl.dir` / `test.source.root` per feature without editing root `clad.properties` (an R20 maintenance-routed surface).
 2. `clad.properties` (repo root) — project-wide default
 3. Stage-level `CONTEXT.md` — stage-specific override (when documented)
 

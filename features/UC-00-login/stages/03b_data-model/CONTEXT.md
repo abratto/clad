@@ -144,9 +144,21 @@ Only after the human explicitly says "approved", run the approval command
 is the **Architecture** gate; Stages 04a and 04b auto-advance, and the next
 human gate is **Gate 3 (Executable spec)** at Stage 04c.
 
-## Next stage
+## Advancing
 
-→ [`../04_implement/CONTEXT.md`](../04_implement/CONTEXT.md) — Implement (router)
-
-Do NOT open this file until `advance.py` prints it as the NEXT STAGE, which
-happens only after the human approves Gate 2.
+> Do not open the next stage's `CONTEXT.md` yourself. After this stage's
+> `output/` is written, end your turn by running the gate-driven advance
+> command, which runs this stage's checks, enforces stage ordering, and
+> tells you the next step:
+>
+> ```
+> ./clad advance
+> ```
+>
+> (Long form: `python3 quality-gate/advance.py --feature features/UC-XX-<slug>`.)
+> The CLI wrapper auto-discovers the feature from `RESUME.md`.
+>
+> Treat its output as your next instruction. It advances you, stops you
+> at a human gate, or returns you to this stage with the defects to fix.
+> See AGENTS.md §2 principle 12 and
+> `methodology/implementation/STAGES.md` §"Gate-driven advance".

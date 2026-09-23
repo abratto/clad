@@ -33,6 +33,76 @@ class StageContractConsistencyTests(unittest.TestCase):
         for stage in cs.STAGES:
             self.context_text(stage)
 
+    def test_canonical_stage00_outputs_resolve_at_system_scope(self):
+        """Stage-00 actors/goals are canonical system-scope assets.
+
+        They live at `features/_system/stages/00_actor-goal/output/`, never
+        inside a UC folder. When they are misplaced, the `scenario_coverage`
+        and `port_spec_contract` checks resolve no input and silently skip —
+        UC-00 shipped that way once. Guard the resolver's target, not just the
+        presence of a file."""
+        feature = REPO_ROOT / "features" / "UC-00-login"
+        expected = (REPO_ROOT / "features" / "_system" / "stages"
+                    / "00_actor-goal" / "output")
+        goals = Path(cs._goals(str(feature)))
+        self.assertEqual(goals.parent, expected)
+        self.assertTrue((goals.parent / "actors.md").is_file(),
+                        f"missing system-scope actors.md under {goals.parent}")
+        self.assertTrue(goals.is_file(),
+                        f"missing system-scope goals.md: {goals}")
+        self.assertEqual(Path(cs._port_spec(str(feature))).parent, expected)
+
+    def test_stage_contracts_advance_through_the_cli_not_by_walking_on(self):
+        """A stage contract must never instruct the agent to open the next
+        stage's `CONTEXT.md` itself: transitions are gate-driven
+        (`./clad advance`, AGENTS.md §2 principles 12-13). The old
+        `## Next stage` link-and-proceed phrasing contradicted that rule and
+        was the most agent-confusing drift in the repo."""
+        roots = [SKELETON, REPO_ROOT / "features" / "UC-00-login"]
+        offenders = []
+        for root in roots:
+            for cf in sorted(root.rglob("stages/**/CONTEXT.md")):
+                text = cf.read_text(encoding="utf-8")
+                rel = cf.relative_to(REPO_ROOT)
+                if "## Advancing" not in text:
+                    offenders.append(f"{rel}: missing '## Advancing'")
+                for bad in ("## Next stage", "proceeds to Stage",
+                            "proceeds without a human gate"):
+                    if bad in text:
+                        offenders.append(
+                            f"{rel}: contains walk-on phrasing '{bad}'")
+        self.assertEqual(offenders, [], "\n".join(offenders))
+
+    def test_gate_placement_docs_match_gate_stages(self):
+        """Gate placement (1→01b, 2→03b, 3→04c) is prose in three docs and
+        machine data in `GATE_STAGES`. Assert the prose names the same marker
+        stage so the two cannot drift."""
+        markers = {}
+        for gate in cs.GATE_STAGES:
+            marker = [s.id for s in cs.STAGES if s.gate_after == gate]
+            self.assertEqual(len(marker), 1,
+                             f"gate {gate} must have exactly one marker stage")
+            markers[gate] = marker[0]
+        self.assertEqual(markers, {1: "01b", 2: "03b", 3: "04c"})
+
+        agents = (REPO_ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        handover = (REPO_ROOT / "methodology" / "implementation" /
+                    "HANDOVER.md").read_text(encoding="utf-8")
+        stages = (REPO_ROOT / "methodology" / "implementation" /
+                  "STAGES.md").read_text(encoding="utf-8")
+
+        for gate, marker in markers.items():
+            label = cs.GATE_LABELS[gate]
+            self.assertIn(f"Gate {gate} ({label}) at {marker}", agents,
+                          f"AGENTS.md §3 does not place Gate {gate} at {marker}")
+            self.assertIn(f"Gate {gate} (after {marker})", handover,
+                          f"HANDOVER.md does not place Gate {gate} after {marker}")
+            row = next((ln for ln in stages.splitlines()
+                        if f"**Gate {gate} ({label})**" in ln), None)
+            self.assertIsNotNone(row, f"STAGES.md has no Gate {gate} row")
+            self.assertIn(f"| {marker} |", row,
+                          f"STAGES.md places Gate {gate} on the wrong stage row")
+
     def test_profile_paths_is_wired_at_04a(self):
         """The layout guard runs when a feature enters implementation.
 
