@@ -185,6 +185,34 @@ def main():
         for line in detail.splitlines()[:10]:
             print(f"        {line}")
 
+    # A mechanism claim cites the code it rests on (the flow-pin record's wrong
+    # explanation would have been caught by its citation). Blocking for active
+    # platform records and the load-bearing SYNCHRONIZATIONS sections.
+    code, out, err = run_script("verify_mechanism_citations.py",
+                                ["--maintenance-dir", str(REPO_ROOT / "maintenance"),
+                                 "--sync-doc", str(REPO_ROOT / "methodology/architecture/SYNCHRONIZATIONS.md")])
+    detail = (out + err).strip()
+    ok = code == 0
+    print(f"\n  [{'PASS' if ok else 'FAIL'}] mechanism_citations")
+    if not ok:
+        all_pass = False
+        for line in detail.splitlines()[:8]:
+            print(f"        {line}")
+    elif detail and not detail.startswith("PASS"):
+        for line in detail.splitlines()[:4]:
+            print(f"        {line}")
+
+    # Backticked code references resolve (advisory): a rename must not leave a
+    # citation pointing at nothing.
+    code, out, err = run_script("verify_code_refs.py",
+                                ["--dirs", "methodology", "maintenance", "templates"])
+    detail = (out + err).strip()
+    mark = "WARN" if detail.startswith("WARN") else "PASS"
+    print(f"\n  [{mark}] code_refs")
+    if detail:
+        for line in detail.splitlines()[:8]:
+            print(f"        {line}")
+
     # The cross-UC shared-trigger view is current (feature-independent): it is
     # the only surface for a duplicate trigger across use cases, and it went
     # stale once because nothing checked it.

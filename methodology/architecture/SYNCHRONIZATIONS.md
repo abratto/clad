@@ -85,7 +85,9 @@ rules with one name and `causedBySync` can no longer say which fired. The route,
 not the feature slug: the pre-v0.6 `For<Scope>` held the feature slug, so every
 sync in a use case carried the same value and it could never disambiguate
 anything (`maintenance/route-scoped-sync-names.md`,
-`maintenance/route-scoped-pinned-names.md`).
+`maintenance/route-scoped-pinned-names.md`). The stem is computed mechanically
+by `quality-gate/artifact_parsers.py#sync_stem`, and the generator's route input
+is read from the chain's row 1 in `quality-gate/generate_syncs.py:168`.
 
 Rules:
 
@@ -407,7 +409,10 @@ its **primary** (first) conjunct as the trigger, and `triggerField` /
 sources to the `Web/request` completion instead of the domain action the rule is
 about, so the rule fires with blank arguments. The paper lists the request first
 and ConceptBox's `actions([...])` is order-agnostic; their reading order is not
-transferable (`maintenance/sync-flow-pinning.md` §Review finding).
+transferable (`maintenance/sync-flow-pinning.md` §Review finding). The mechanism
+is `SyncEngine.processInvocation` handing the primary conjunct to
+`WhereEvaluator` (`reference-impl/legible-engine/src/main/java/dev/legible/engine/SyncEngine.java:270`,
+`.../WhereEvaluator.java:94`).
 
 A flow token scopes a match to one flow, but *within* a flow any rule whose `when`
 matches fires — so two use cases that share a completion (`MemberEnrolment.verify`

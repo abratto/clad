@@ -27,7 +27,7 @@ The command emits JSON with this envelope:
 }
 ```
 
-The capability set is defined in `quality-gate/contract.py`; the list above is
+The capability set is defined in `quality-gate/descriptor.py`; the list above is
 the current version-1 set, not an example. A consumer must reject a required
 capability it does not understand.
 
