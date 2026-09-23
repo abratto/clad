@@ -482,6 +482,7 @@ class SyncSpec:
     conjuncts: List[Conjunct] = field(default_factory=list)
     is_join: bool = False
     collect_forms: List[str] = field(default_factory=list)
+    record_collect_forms: List[str] = field(default_factory=list)
 
 
 def extract_block(text: str, keyword: str) -> str:
@@ -530,6 +531,13 @@ def _first_completion_token(right: str) -> str:
 #   collect by ?groupKey ( <source> as ?var )
 _COLLECT_RE = re.compile(
     r"\bcollect\b\s*(distinct\b\s*)?(?:by\s+\?\w+\s*)?\([^)]*\)")
+
+# Record-form collect (maintenance/engine-record-collect.md): a binding subset
+# per frame — `collect ( ?a ?b as ?rows )` / `collect by ?key ( ?a ?b as ?rows )`.
+# Two or more variables before `as`; one variable is the value-collect form.
+_RECORD_COLLECT_RE = re.compile(
+    r"\bcollect\b\s*(?:distinct\b\s*)?(?:by\s+\?\w+\s*)?"
+    r"\(\s*\?\w+(?:\s+\?\w+)+ as\s+\?\w+\s*\)")
 
 
 def parse_sync(path: str) -> Optional[SyncSpec]:
@@ -591,6 +599,9 @@ def parse_sync(path: str) -> Optional[SyncSpec]:
     has_pattern_d = has_pattern_d or bool(pattern_d_concepts)
     # Declarative collect forms (collect / collect distinct / collect by).
     collect_forms = [m.group(0).strip() for m in _COLLECT_RE.finditer(where_block)]
+    # Record-form collect (a binding subset per frame).
+    record_collect_forms = [m.group(0).strip()
+                            for m in _RECORD_COLLECT_RE.finditer(where_block)]
     # Route literal signature (R15): matched literal constraints the when/where
     # blocks apply to the trigger/targets (e.g. `check = "entry"`,
     # `cause = "stale"`). Value-side literals only; ?var binds excluded.
@@ -618,6 +629,7 @@ def parse_sync(path: str) -> Optional[SyncSpec]:
         conjuncts=conjuncts,
         is_join=is_join,
         collect_forms=collect_forms,
+        record_collect_forms=record_collect_forms,
     )
 
 

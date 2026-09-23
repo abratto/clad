@@ -120,6 +120,13 @@ where {
   distinction from conceptbox's imperative `frames.query/filter/collectAs`
   (`SYNCHRONIZATIONS.md` §"Collect", R3).
 
+**Record form.** When one list must carry several correlated bindings per frame,
+`collect ( ?a ?b as ?rows )` gathers a binding subset — one record per frame,
+grouped by the non-collected bindings (`collect by ?key ( ?a ?b as ?rows )` to
+group by a named key). Records keep frame order, so the correlation survives by
+position. Grouping/projection only (R3); see
+`maintenance/engine-record-collect.md`.
+
 ### Absence (negative state pattern)
 
 `absent ( Concept ; ?subject ; predicate )` keeps a frame only if `?subject`

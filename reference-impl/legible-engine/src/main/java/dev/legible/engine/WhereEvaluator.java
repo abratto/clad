@@ -48,7 +48,9 @@ public final class WhereEvaluator {
                         || clause instanceof Clause.Absent)) {
                 carried = new ArrayList<>(frames);
             }
-            if (frames.isEmpty() && clause instanceof Clause.CollectBy) {
+            if (frames.isEmpty()
+                    && (clause instanceof Clause.CollectBy
+                        || clause instanceof Clause.RecordCollect)) {
                 if (carried == null) carried = new ArrayList<>(List.of(new LinkedHashMap<>()));
                 // Empty-safe frame-set aggregate: an aggregate over ZERO frames
                 // still emits one frame carrying the empty list — a zero-item
@@ -61,6 +63,8 @@ public final class WhereEvaluator {
             }
             if (clause instanceof Clause.CollectBy cb) {
                 frames = collectBy(frames, cb, inv, comp, conjuncts);
+            } else if (clause instanceof Clause.RecordCollect rc) {
+                frames = recordCollect(frames, rc);
             } else {
                 List<Map<String, Object>> next = new ArrayList<>();
                 for (Map<String, Object> frame : frames) {
@@ -203,6 +207,65 @@ public final class WhereEvaluator {
             out.add(nf);
         }
         return out;
+    }
+
+    /**
+     * Record-form collect (maintenance/engine-record-collect.md): gather the
+     * selected {@code vars} from every frame into one record per frame, grouped
+     * by {@code groupKey} (null = the frame's non-collected bindings), and bind
+     * {@code rc.var()} to that list per group. Records are kept in frame order —
+     * sorting would break the inter-variable correlation the form exists to
+     * preserve. Grouping/projection only; no filter or computation (R3).
+     *
+     * <p>A frame contributes a record only when at least one collected var is
+     * bound, so the empty-safe synthetic frame (added when the frame set is
+     * empty) yields an empty list rather than a record of nulls.
+     */
+    private List<Map<String, Object>> recordCollect(List<Map<String, Object>> frames,
+                                                    Clause.RecordCollect rc) {
+        Map<Object, Map<String, Object>> base = new LinkedHashMap<>();
+        Map<Object, List<Object>> gathered = new LinkedHashMap<>();
+        for (Map<String, Object> frame : frames) {
+            Object key = rc.groupKey() != null
+                    ? frame.get(rc.groupKey())
+                    : nonCollected(frame, rc.vars());
+            base.computeIfAbsent(key, k -> nonCollected(frame, rc.vars()));
+            if (!anyBound(frame, rc.vars())) {
+                continue;
+            }
+            Map<String, Object> record = new LinkedHashMap<>();
+            for (String v : rc.vars()) {
+                record.put(v, frame.get(v));
+            }
+            gathered.computeIfAbsent(key, k -> new ArrayList<>()).add(record);
+        }
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Map.Entry<Object, Map<String, Object>> e : base.entrySet()) {
+            Map<String, Object> nf = new LinkedHashMap<>(e.getValue());
+            nf.put(rc.var(), new ArrayList<>(gathered.getOrDefault(e.getKey(), List.of())));
+            out.add(nf);
+        }
+        return out;
+    }
+
+    /** A frame's bindings minus {@code vars}: the record form's grouping key and surviving frame. */
+    private static Map<String, Object> nonCollected(Map<String, Object> frame, List<String> vars) {
+        Map<String, Object> out = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> e : frame.entrySet()) {
+            if (!vars.contains(e.getKey())) {
+                out.put(e.getKey(), e.getValue());
+            }
+        }
+        return out;
+    }
+
+    private static boolean anyBound(Map<String, Object> frame, List<String> vars) {
+        for (String v : vars) {
+            if (frame.get(v) != null) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private List<Map<String, Object>> apply(Clause clause, Map<String, Object> frame,
