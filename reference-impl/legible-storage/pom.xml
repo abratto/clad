@@ -16,18 +16,13 @@
   <packaging>jar</packaging>
 
   <name>legible-storage</name>
-  <description>Jena and Postgres FactStore implementations of the fire-after-commit engine's storage SPI.</description>
+  <description>Postgres FactStore implementations of the fire-after-commit engine's storage SPI.</description>
 
   <dependencies>
     <dependency>
       <groupId>com.example.clad</groupId>
       <artifactId>legible-engine</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.jena</groupId>
-      <artifactId>jena-arq</artifactId>
-      <version>${jena.version}</version>
     </dependency>
     <dependency>
       <groupId>org.postgresql</groupId>

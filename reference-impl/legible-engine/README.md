@@ -26,7 +26,7 @@ runtime for concepts and syncs (`dev.legible.engine`).
 
 | Component | Role |
 |---|---|
-| `FactStore` / `Region` | Storage SPI; one region per concept. `InMemoryFactStore` is canonical; `JenaFactStore`/`PostgresFactStore` live in `legible-storage`. |
+| `FactStore` / `Region` | Storage SPI; one region per concept. `InMemoryFactStore` is canonical; Postgres backends live in `legible-storage`. |
 | `ActionLog` / `InMemoryActionLog` | Append-only invocation+completion records. |
 | `Concept` | The concept abstraction (map→map actions). |
 | `SyncRule` / `Clause` / `Source` / `ThenInvocation` | The declarative `when/where/then` model. |

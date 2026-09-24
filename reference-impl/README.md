@@ -31,13 +31,12 @@ the canonical runtime is the **fire-after-commit engine**:
   (Fly.io deploy). Re-lowered from the legacy transactional engine — see
   `maintenance/reference-profiles-fire-after-commit.md`.
 - [`legible-storage/`](legible-storage/) — the `PostgresFactStore`
-  (generic fact relation), `RmapPostgresFactStore` (typed table per concept),
-  and a `JenaFactStore` triplestore example. These show the engine is
-  storage-agnostic: the same `Concept`/`SyncRule` code runs on in-memory,
-  Postgres, and Jena with identical outcomes. **CLAD ships in-memory and
-  Postgres as supported backends**; the Jena store is an illustrative
-  implementation of the SPI, not a maintained profile — wire your own if you
-  want RDF/SPARQL persistence.
+  (generic fact relation) and `RmapPostgresFactStore` (typed table per
+  concept). These show the engine is storage-agnostic: the same
+  `Concept`/`SyncRule` code runs on in-memory or Postgres with identical
+  outcomes. **CLAD ships in-memory and Postgres as supported backends**; any
+  other backend — including an RDF/SPARQL triplestore — is a `FactStore`
+  implementation you provide against the SPI.
 
 ## Retired: legacy transactional engine
 

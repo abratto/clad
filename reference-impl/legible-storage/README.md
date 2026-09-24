@@ -1,10 +1,11 @@
 # legible-storage
 
 `FactStore`/`Region` implementations of the fire-after-commit engine's
-storage SPI, proving the engine is storage-agnostic.
+storage SPI, proving the engine is storage-agnostic. CLAD ships **in-memory**
+(canonical, in `legible-engine`) and **Postgres** (here). Any other backend —
+including an RDF/SPARQL triplestore — is a `FactStore` implementation you
+provide against the SPI.
 
-- **`JenaFactStore`** — a triplestore backend: one named graph per concept
-  (`concept:<name>`); facts are `predicate(subject) = value` triples.
 - **`RmapPostgresFactStore`** — a relational backend using **relation
   realization**: Halpin's Rmap derives one typed table per concept, with the
   individual identifier as primary key, one typed column per fact type
@@ -21,8 +22,8 @@ storage SPI, proving the engine is storage-agnostic.
   realization**: a single generic `fact(concept, subject, predicate, value)`
   relation (the SQL analog of RDF triples).
 
-`StorageContractTest` runs the login feature against the generic and triplestore
-backends; `RmapPostgresFactStoreTest` runs it against the Rmap-derived schema and
+`StorageContractTest` runs the login feature against the Postgres backends;
+`RmapPostgresFactStoreTest` runs it against the Rmap-derived schema and
 asserts the schema shape. See
 `methodology/implementation/STORAGE_MAPPING.md` for the Rmap vs fact-realization
 distinction.
