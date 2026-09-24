@@ -231,8 +231,8 @@ source differs.
 The canonical fire-after-commit profile implements concept-state reads
 through the `FactStore`/`Region` SPI: internal flow data is joined through
 the shared flow id in the action log, and a concept-state read is a named
-`StateRead` against another concept's `Region`. The legacy Jena profile
-implements the same distinction against named graphs by IRI; the relational
-profile against per-concept tables. Every backend honours the same rule:
+`StateRead` against another concept's `Region`. The relational Postgres
+backends implement the same distinction against per-concept tables or a
+generic fact relation. Every backend honours the same rule:
 internal flow data needs no review; a concept-state read is flagged in
 Stage 03a.

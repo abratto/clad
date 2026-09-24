@@ -257,6 +257,43 @@ gate produces files on disk you can diff, edit, and approve. The full
 turn-by-turn session is in
 [`methodology/WALKTHROUGH.md`](methodology/WALKTHROUGH.md).
 
+## Ways of working
+
+CLAD matches how an agent runs the stages to the harness you are using. All
+three modes below run the **same stage contracts, the same checks, and the
+same three human gates** — the only thing that changes is whether each stage
+gets its own context window. Pick the one your harness supports; ask the agent
+in plain language and it will follow along.
+
+**1. Single session (default).** One conversation walks the whole feature:
+the agent produces a stage, runs its checks, auto-advances between gates, and
+stops for your approval at each of the three gates. Nothing to configure.
+
+**2. One sub-agent per stage (recommended when your harness can spawn
+sub-agents).** Each stage runs in its own sub-agent with a fresh context
+window; the parent session orchestrates and only you approve gates. This is
+the cheapest way to get the context isolation a long feature needs. Say:
+
+> Walk `<feature>` one sub-agent per stage, each driving `./clad advance`.
+> You orchestrate; I approve the gates.
+
+The sub-agent never picks a stage and never approves a gate — `./clad advance`
+owns every transition, and approval stays with you. Full loop and rules:
+[`methodology/implementation/STAGES.md`](methodology/implementation/STAGES.md)
+§"Orchestration: one sub-agent per stage".
+
+**3. A fresh session per stage (`workflow.session-per-stage=true`).** The
+human-driven equivalent, for harnesses without sub-agents: `advance.py` stops
+after every stage and prints a ready-to-paste handover prompt for a new
+conversation. Set it in [`clad.properties`](clad.properties); the payload is
+[`methodology/implementation/HANDOVER.md`](methodology/implementation/HANDOVER.md).
+See `STAGES.md` §"Workflow control".
+
+> **Why the choice exists.** Context window, not capability, is what degrades
+> on a long feature. Modes 2 and 3 give each stage a clean window; mode 2 does
+> it without you starting conversations by hand. The gates are identical in
+> every mode.
+
 ## Quick start
 
 ```bash
@@ -313,6 +350,8 @@ test.command=python3 quality-gate/verify_artefacts.py && mvn test -f reference-i
 storage.layer=In-memory FactStore relations (canonical fire-after-commit profile)
 
 # How advance.py handles human gates and session boundaries.
+# Set session-per-stage=true (or run one sub-agent per stage) to give each
+# stage its own context window. See "Ways of working" above.
 workflow.autonomous=false
 workflow.session-per-stage=false
 ```
@@ -329,7 +368,7 @@ fire-after-commit engine (`dev.legible.engine`): [`java-plain/`](reference-impl/
 transport surface is a method call), the canonical multi-feature
 [`java-legible/`](reference-impl/java-legible/) profile (the recommended
 implementation), and a durable deployable
-[`java-micronaut-postgres/`](reference-impl/java-micronaut-postgres/)
+[`java-micronaut/`](reference-impl/java-micronaut/)
 profile — Micronaut for the HTTP transport, Postgres concept state derived
 from the Stage 03b data models (R-map), with a `Dockerfile` +
 `docker-compose.yml` and a `fly.toml` for Fly.io. The legacy
@@ -341,6 +380,29 @@ releases may include breaking methodology changes. This repository uses
 [Semantic Versioning](https://semver.org/) and annotated Git tags;
 downstream CLAD-based projects define their own release policy. See
 [CHANGELOG.md](CHANGELOG.md) for CLAD upgrade notes.
+
+### Choosing a reference profile
+
+The methodology is one; the stacks are examples. Pick the profile closest to
+what you are building and copy its shape — **transport** (how requests reach
+the engine) and **storage** (where concept state persists) are separate
+concerns, so you can start from one and swap the other.
+
+| If you want to… | Start from | Transport | Concept state |
+|---|---|---|---|
+| See the smallest complete CLAD app (a method call, no framework) | [`java-plain/`](reference-impl/java-plain/) | none (method call) | in-memory `FactStore` |
+| Study the full sync model (fan-out, Pattern D, `OPTIONAL`, joins) | [`java-legible/`](reference-impl/java-legible/) | none (method call) | in-memory `FactStore` |
+| **Build a real backend service** | [`java-micronaut/`](reference-impl/java-micronaut/) | Micronaut HTTP | in-memory (default) or Postgres (`clad.storage`) |
+
+`java-micronaut` is the profile to copy when you are building an HTTP
+backend: Micronaut owns the transport, and the domain state persists through
+the engine's `FactStore`/`Region` SPI. Storage is an infrastructure concern,
+not a methodology one — the same concept and sync code runs over in-memory,
+Postgres, or a backend you implement yourself (the SPI is in
+[`reference-impl/legible-storage/`](reference-impl/legible-storage/); see
+[`methodology/implementation/STORAGE_MAPPING.md`](methodology/implementation/STORAGE_MAPPING.md)).
+CLAD ships the in-memory and Postgres backends; anything else, including
+RDF/SPARQL, is yours to wire against the SPI.
 
 ### Built with CLAD
 
@@ -392,7 +454,7 @@ clad/
     ├── legible-engine/             Canonical engine (dev.legible.engine, zero-dependency)
     ├── java-plain/                 Plain-Java quick-start (login only, no framework)
     ├── java-legible/               Canonical profile — recommended
-    ├── java-micronaut-postgres/    Durable profile (Micronaut + R-map Postgres, Docker/Fly.io)
+    ├── java-micronaut/             Micronaut HTTP transport; storage selectable (memory/postgres)
     ├── legible-storage/            FactStore backends (Jena / Postgres)
     └── LEGACY.md                   Retired Jena/RDF stack pointer (last at v0.4.0)
 ```

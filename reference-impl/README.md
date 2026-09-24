@@ -23,23 +23,26 @@ the canonical runtime is the **fire-after-commit engine**:
   UC-00-login plus example features (social, tagging, token) exercising the
   full sync model — fan-out, Pattern D reads, `OPTIONAL`, `?_eachthen`
   aggregation, `bind(uuid)`, route scoping, and the flow-token back-trace.
-- [`java-micronaut-postgres/`](java-micronaut-postgres/) — the durable
+- [`java-micronaut/`](java-micronaut/) — the Micronaut HTTP
   Ports & Adapters profile: Micronaut for the HTTP transport, Postgres
   concept state via `RmapPostgresFactStore` (R-map-derived from the Stage
   03b data models; Flyway owns base DDL, jOOQ introspects it). Ships a
   `Dockerfile` + `docker-compose.yml` (local smoke) and a `fly.toml`
   (Fly.io deploy). Re-lowered from the legacy transactional engine — see
   `maintenance/reference-profiles-fire-after-commit.md`.
-- [`legible-storage/`](legible-storage/) — the `JenaFactStore`,
-  `PostgresFactStore`, and `RmapPostgresFactStore` backends, proving the
-  engine is storage-agnostic: the same `Concept`/`SyncRule` code runs on
-  in-memory, Jena, and Postgres with identical outcomes.
+- [`legible-storage/`](legible-storage/) — the `PostgresFactStore`
+  (generic fact relation) and `RmapPostgresFactStore` (typed table per
+  concept). These show the engine is storage-agnostic: the same
+  `Concept`/`SyncRule` code runs on in-memory or Postgres with identical
+  outcomes. **CLAD ships in-memory and Postgres as supported backends**; any
+  other backend — including an RDF/SPARQL triplestore — is a `FactStore`
+  implementation you provide against the SPI.
 
 ## Retired: legacy transactional engine
 
 The original transactional-predicate/RDF (Jena) stack — the `clad-engine`
 module and the `java-micronaut-jena` profile — was **retired** after the
-`java-micronaut-postgres` re-lowering. It is not built, checked, or
+`java-micronaut` re-lowering. It is not built, checked, or
 maintained here. The last version that contains it is tag `v0.4.0`; see
 [`LEGACY.md`](LEGACY.md).
 
@@ -49,7 +52,14 @@ maintained here. The last version that contains it is tag `v0.4.0`; see
 |---|---|---|---|
 | `java-plain` | the smallest complete example / method-call quick start | none (method call) | in-memory `FactStore` |
 | `java-legible` | the full sync-model catalogue (seed features) | none / method call | in-memory `FactStore` |
-| `java-micronaut-postgres` | durable deployable stack (HTTP, SQL, containers, Fly.io) | Micronaut HTTP | Postgres (`RmapPostgresFactStore`) |
+| `java-micronaut` | **a real backend service** (HTTP; storage selectable) | Micronaut HTTP | in-memory (default) or Postgres (`clad.storage`) |
+
+**Transport and storage are independent.** The three profiles above pair a
+transport choice with a storage choice; the engine sees only `FactStore`. To
+build a Micronaut service on in-memory state, or a method-call app on Postgres,
+keep the concepts, syncs, and `Web` bootstrap and change the `FactStore`
+binding (`legible-storage/`; see
+[`../methodology/implementation/STORAGE_MAPPING.md`](../methodology/implementation/STORAGE_MAPPING.md)).
 
 ## Why the engine was re-architected
 
@@ -75,8 +85,10 @@ The fire-after-commit engine follows that model directly:
 - **Syncs fire after commit.** No transaction spans concept boundaries; the
   action log (invocation + completion, with provenance edges) is the source
   of truth.
-- **Storage is a profile detail.** `FactStore`/`Region` is the boundary;
-  in-memory, Jena, and Postgres are interchangeable backends.
+- **Storage is a profile detail.** `FactStore`/`Region` is the boundary. CLAD
+  ships an in-memory backend (canonical) and a Postgres backend (durable); any
+  other backend, including an RDF/triplestore one, is a `FactStore`
+  implementation you provide.
 
 ## Benefits
 

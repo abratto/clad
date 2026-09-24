@@ -178,9 +178,9 @@ not relax the *intent*.
 The canonical profile is `reference-impl/java-legible/` (fire-after-commit
 engine, in-memory `FactStore`). The plain-Java quick-start is
 `reference-impl/java-plain/` (same engine, login only, zero framework). The
-durable deployable profile is `reference-impl/java-micronaut-postgres/`
+durable deployable profile is `reference-impl/java-micronaut/` (Postgres binding via `clad.storage=postgres`)
 (Micronaut transport, `RmapPostgresFactStore`, gate:
-`mvn -pl legible-storage,java-micronaut-postgres -am test`);
+`mvn -pl legible-storage,java-micronaut -am test`);
 `reference-impl/legible-storage/` carries the FactStore conformance suites.
 The legacy Jena/RDF profile was retired — it is not built or checked
 (see [`reference-impl/LEGACY.md`](../../reference-impl/LEGACY.md)).

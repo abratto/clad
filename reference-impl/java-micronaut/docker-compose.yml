@@ -1,0 +1,52 @@
+# Smoke the re-lowered CLAD reference profile: app + Postgres.
+# Usage:
+#   cd reference-impl/java-micronaut
+#   docker compose up --build
+#   curl -i -X POST localhost:8080/login -H 'Content-Type: application/json' \
+#        -d '{"username":"ada","password":"correct-horse-battery-staple"}'
+#
+# The app connects to Postgres by service name — no hardcoded IPs, no
+# host port conflicts. The R-map concept tables are derived at startup
+# (RmapPostgresFactStore.createSchema()); Flyway owns the migration
+# timeline over the same base DDL.
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: reference-impl/java-micronaut/Dockerfile
+    image: clad-login-ref:local
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/clad
+      PGUSER: clad
+      PGPASSWORD: clad
+      DATASOURCES_DEFAULT_URL: jdbc:postgresql://db:5432/clad
+      DATASOURCES_DEFAULT_USERNAME: clad
+      DATASOURCES_DEFAULT_PASSWORD: clad
+      MICRONAUT_ENVIRONMENTS: production
+      CLAD_STORAGE: postgres
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: clad
+      POSTGRES_USER: clad
+      POSTGRES_PASSWORD: clad
+    volumes:
+      - clad_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clad -d clad"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  clad_data:

@@ -10,6 +10,32 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.12.0] — 2026-09-24
+
+**Ways of working + a reference-stack clarification.** Documentation for how a
+user runs the stages, plus a deliberate simplification of the shipped reference
+profiles.
+
+- **Ways of working.** The README now documents three modes: single session
+  (default), **one sub-agent per stage** (recommended when the harness can spawn
+  sub-agents — same contracts and gates, fresh context per stage), and
+  `workflow.session-per-stage=true` for harnesses without sub-agents. The
+  config block, `CONTEXT.md` routing, and the `clad-handover` skill point at
+  the orchestration loop.
+- **Choosing a reference profile.** A new README section maps intent → profile
+  and states plainly that **transport and storage are independent concerns**:
+  build a backend service from `java-micronaut`; storage is the `FactStore` SPI.
+- **`java-micronaut` transport/storage split (breaking module rename).**
+  `java-micronaut-postgres` → **`java-micronaut`**; the concept-state backend is
+  selected by `clad.storage` — `memory` (default; no database, no Docker) or
+  `postgres` (R-map tables). Same concepts, syncs, and transport either way.
+  **Upgrade:** rename the module reference and, for durable deployments, set
+  `CLAD_STORAGE=postgres` (the Docker/Fly/compose assets already do). See
+  `maintenance/micronaut-transport-storage-split.md`.
+- **Jena backend removed.** CLAD ships in-memory and Postgres only; the
+  unshipped `JenaFactStore` is gone and RDF/SPARQL is a `FactStore` you
+  implement. See `maintenance/jena-backend-demotion.md`.
+
 ## [0.11.0] — 2026-09-23
 
 **Sync expressiveness + quality-gate health.** Two focused batches: sync

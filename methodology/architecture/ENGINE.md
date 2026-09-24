@@ -37,7 +37,7 @@ pending invocation that a later drain re-processes idempotently (the
 
 | Component | File | Responsibility |
 |---|---|---|
-| `FactStore` / `Region` | `engine/FactStore.java`, `engine/Region.java` | Storage-agnostic relations; one `Region` per concept (R2). `InMemoryFactStore` is canonical; Jena/Postgres implement the SPI. |
+| `FactStore` / `Region` | `engine/FactStore.java`, `engine/Region.java` | Storage-agnostic relations; one `Region` per concept (R2). `InMemoryFactStore` is canonical; Postgres implements the SPI in `legible-storage`. |
 | `ActionLog` | `engine/ActionLog.java` | Append-only record store of `Invocation`s and `Completion`s; per-flow, so flows never share mutable log state. |
 | `Concept` | `engine/Concept.java` | A state machine whose actions are `Map execute(String action, Map input)` returning an `outcome` + fields. |
 | `SyncRule` | `engine/SyncRule.java` | A declarative `when`/`where`/`then` rule (pure data, no branching — R3). |

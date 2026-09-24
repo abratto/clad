@@ -37,7 +37,7 @@ Stage 04a `Inputs` names `STORAGE_MAPPING.md`, `templates/storage.md`, `clad.pro
   Maven dependencies (`com.example.clad:legible-engine`) or copied
   verbatim, changing only the package declaration to match
   `APP_PACKAGE_ROOT`. For a durable stack the reference realization is
-  `reference-impl/java-micronaut-postgres/` (R-map concept state via
+  `reference-impl/java-micronaut/` (R-map concept state via
   `RmapPostgresFactStore`, Flyway-owned base DDL); for a scaffold without
   a framework, `reference-impl/java-plain/`. Never author engine classes
   from scratch. See

@@ -71,7 +71,7 @@ jobs:
           cache: maven
       # Canonical profile module + its reactor deps, matching DELIVERY.md's
       # "mvn verify" check. The durable profiles (legible-storage,
-      # java-micronaut-postgres) add Docker/Testcontainers; run the full reactor
+      # java-micronaut) add Docker/Testcontainers; run the full reactor
       # `mvn -B -ntp verify -f reference-impl/pom.xml` in a Docker-capable job
       # when validating those.
       - name: mvn verify (java-legible)

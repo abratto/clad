@@ -28,8 +28,8 @@ structures that were not already approved in Stage 03b.
 Use [`../../templates/storage.md`](../../templates/storage.md) as the
 default output shape unless the selected profile needs a stricter local
 format. See [`../../templates/storage-rdf-example.md`](../../templates/storage-rdf-example.md)
-for one concrete RDF / named-graph example based on the Java/Jena
-reference profile.
+for one concrete RDF / named-graph example — the shape to follow if your own
+backend stores concepts as named graphs (CLAD ships no RDF profile).
 
 ## The engine-level boundary: `FactStore` / `Region`
 
@@ -42,13 +42,17 @@ of an object (Daniel Jackson, *Why concepts aren't objects*).
 
 The canonical in-memory profile (`reference-impl/java-legible/`)
 implements the SPI directly; `reference-impl/legible-storage/` provides
-the Jena (one named graph per concept) and Postgres (one `fact` relation
-per application) backends. Stage 04a's job is to document which backend
+the Postgres backends (Rmap relation realization, and a generic `fact`
+relation). Any other backend — RDF/named-graph included — is a `FactStore`
+implementation you provide. Stage 04a's job is to document which backend
 realises each approved fact type — the SPI itself is fixed by the engine.
 
 ## Profile guidance
 
 ### RDF / named-graph profiles
+
+> CLAD ships no RDF profile — this section is guidance for the `FactStore`
+> backend you would write if you choose RDF persistence.
 
 For RDF-backed profiles, the default CLAD stance is **fact realization
 in triples, integrity checks in shapes/tests, and optional ontology
@@ -89,7 +93,7 @@ model first.
 
 The deterministic mapping from the Stage 03b CSDP fact model to this schema is
 Halpin's Rmap (arity + uniqueness + mandatory roles). See the
-`java-micronaut-postgres` profile's `RELATIONAL_LOWERING.md` for the
+`java-micronaut` profile's `RELATIONAL_LOWERING.md` for the
 profile-specific rule set.
 
 Relational profiles may instead choose **fact realization** — persisting facts
