@@ -120,6 +120,13 @@ where {
   distinction from conceptbox's imperative `frames.query/filter/collectAs`
   (`SYNCHRONIZATIONS.md` §"Collect", R3).
 
+**Record form.** When one list must carry several correlated bindings per frame,
+`collect ( ?a ?b as ?rows )` gathers a binding subset — one record per frame,
+grouped by the non-collected bindings (`collect by ?key ( ?a ?b as ?rows )` to
+group by a named key). Records keep frame order, so the correlation survives by
+position. Grouping/projection only (R3); see
+`maintenance/engine-record-collect.md`.
+
 ### Absence (negative state pattern)
 
 `absent ( Concept ; ?subject ; predicate )` keeps a frame only if `?subject`
@@ -141,6 +148,39 @@ frame, so a rule never asserts an absence it could not check. A `where` that
 ends with no frames does not fire; that is why an aggregate over a possibly
 empty set must use `collectBy` (empty-safe), not `collect`.
 See `maintenance/engine-absent-state-guard.md`.
+
+---
+
+## Compensation (post-commit undo)
+
+CLAD has no transactions: a downstream action that fails completes with a named
+`error` outcome, and the actions that already committed stay committed. The
+paper's *earlier* transactional scheme (§3) suppressed a failed chain by aborting
+its trigger; the paper's final scheme — and CLAD — drop that. Compensation is
+therefore **an ordinary sync**: match the downstream failure outcome in the same
+flow and call the owning concept's compensating action.
+
+```
+sync ReleaseReservationWhenPaymentFailed
+
+when {
+    pay:       Payment/charge:    [ order: ?order ] => [ error: ?err ]
+    reserved:  Inventory/reserve: [ order: ?order ] => [ Reserved ; unit: ?unit ]
+    requested: Web/request: [ route: "checkout" ] => [ Routed ]
+}
+then {
+    Inventory/release: [ unit: ?unit ]
+}
+```
+
+- The compensating action (`release`) belongs to the concept that owns the state
+  (`Inventory`), never to the sync — R3.
+- It is a normal rule: a joined `when` (the failure **and** the earlier success in
+  one flow) plus a declarative `then`. The engine fires it after both completions
+  are committed, so it sees exactly what happened.
+- This is the deliberate replacement for transactional rollback — the paper's §3
+  transaction elimination. The undo is a rule you can read, not an exception
+  handler hidden in an engine.
 
 ---
 

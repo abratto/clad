@@ -1,5 +1,7 @@
 package dev.legible.engine;
 
+import java.util.List;
+
 /**
  * One clause of a sync's declarative {@code where} block. Each clause maps a
  * frame (a set of variable bindings) to zero or more frames, so fan-out is
@@ -7,7 +9,7 @@ package dev.legible.engine;
  */
 public sealed interface Clause permits
         Clause.Bind, Clause.FanOut, Clause.Absent, Clause.Guard, Clause.OptionalClause,
-        Clause.CollectBy {
+        Clause.CollectBy, Clause.RecordCollect {
 
     /** Bind {@code var} from {@code source}; drop the frame if the source is empty. */
     record Bind(String var, Source source) implements Clause {}
@@ -39,4 +41,19 @@ public sealed interface Clause permits
      * frame-set analogue of {@link Source.Collect} / conceptbox's {@code collectAs}.
      */
     record CollectBy(String var, Source source, String groupKey) implements Clause {}
+
+    /**
+     * Record-form collect: gather a <em>binding subset</em> per frame into a
+     * List of records (one entry per frame, carrying the selected
+     * {@code vars}). Grouping/projection only — no filter, computation, or
+     * assembly (R3); the declarative analogue of conceptbox's
+     * {@code collectAs([a, b], results)}. See
+     * {@code maintenance/engine-record-collect.md}.
+     *
+     * <p>When {@code groupKey} is null the frames are grouped by their
+     * non-collected bindings (the surviving frame keeps its other fields); when
+     * non-null, frames are grouped by that key. The records are ordered by frame
+     * order (not sorted), which preserves inter-variable correlation by position.
+     */
+    record RecordCollect(String var, List<String> vars, String groupKey) implements Clause {}
 }

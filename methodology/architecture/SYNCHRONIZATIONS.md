@@ -455,6 +455,27 @@ where {
   fails closed on an unbound subject. See
   `maintenance/engine-absent-state-guard.md`.
 
+**Record form — a binding subset per frame.** When the list must carry several
+correlated bindings per frame (a copy *and* its due date), `collect` accepts two
+or more already-bound variables:
+
+```
+where {
+    collect ( ?copy ?dueDate as ?rows )            // one record per frame
+    collect by ?loanId ( ?copy ?dueDate as ?rows ) // one list of records per group
+}
+```
+
+- Each record is the ordered projection of the selected variables.
+- Ungrouped, frames are grouped by their **non-collected** bindings, so the
+  surviving frame keeps its other fields; grouped, by the named key.
+- Records are kept in **frame order** (not sorted), which preserves
+  copy↔dueDate correlation by position.
+- Grouping/projection only — no filter, computation, or assembly (R3). It is the
+  declarative analogue of conceptbox's `collectAs([a, b], results)`, not its
+  imperative `frames.query/filter/collectAs`. See
+  `maintenance/engine-record-collect.md`.
+
 This is the declarative analogue of the reference implementation's
 `collectAs`, and is deliberately **not** its imperative
 `frames.query/filter/collectAs` API: there are no in-`where` filters, JSON

@@ -102,4 +102,87 @@ class CollectClausesTest {
         assertEquals(Set.of("java", "rust"), byArticle.get("a1"));
         assertEquals(Set.of("go"), byArticle.get("a2"));
     }
+
+    @Test
+    void recordCollectGathersABindingSubsetPerFrame() {
+        // A member's open loans, each row carrying { loanId, copy, dueAt }.
+        Region lending = facts.region("Lending");
+        lending.write("loan1", "borrower", "m1");
+        lending.write("loan2", "borrower", "m1");
+        lending.write("loan1", "copy", "c1");
+        lending.write("loan1", "dueAt", "d1");
+        lending.write("loan2", "copy", "c2");
+        lending.write("loan2", "dueAt", "d2");
+
+        SyncRule rule = SyncRule.of("r", "C", "act", "ok",
+                List.of(Dsl.fanOut("?loanId", "Lending", "borrower", Dsl.lit("m1")),
+                        Dsl.bind("?copy", Dsl.stateRead("Lending", Dsl.ref("?loanId"), "copy")),
+                        Dsl.bind("?dueAt", Dsl.stateRead("Lending", Dsl.ref("?loanId"), "dueAt")),
+                        // All three per-frame vars are collected, so the
+                        // non-collected bindings are empty: ONE list.
+                        Dsl.collectRecords("?rows", List.of("?loanId", "?copy", "?dueAt"))),
+                List.of());
+
+        List<Map<String, Object>> frames = ev.evaluate(rule, INV, COMP);
+
+        assertEquals(1, frames.size(), "one list for the whole frame set");
+        List<?> rows = (List<?>) frames.get(0).get("?rows");
+        assertEquals(2, rows.size());
+        // Assert by identity so the test does not depend on source iteration
+        // order — but the copy/dueAt pairing must travel together.
+        Map<String, Map<?, ?>> byLoan = new LinkedHashMap<>();
+        for (Object row : rows) {
+            Map<?, ?> record = (Map<?, ?>) row;
+            byLoan.put((String) record.get("?loanId"), record);
+        }
+        assertEquals("c1", byLoan.get("loan1").get("?copy"));
+        assertEquals("d1", byLoan.get("loan1").get("?dueAt"));
+        assertEquals("c2", byLoan.get("loan2").get("?copy"));
+        assertEquals("d2", byLoan.get("loan2").get("?dueAt"));
+    }
+
+    @Test
+    void recordCollectGroupsByTheNamedKey() {
+        Region lending = facts.region("Lending");
+        lending.write("loan1", "loan", "all");
+        lending.write("loan2", "loan", "all");
+        lending.write("loan3", "loan", "all");
+        lending.write("loan1", "group", "g1");
+        lending.write("loan2", "group", "g1");
+        lending.write("loan3", "group", "g2");
+
+        SyncRule rule = SyncRule.of("r", "C", "act", "ok",
+                List.of(Dsl.fanOut("?loanId", "Lending", "loan", Dsl.lit("all")),
+                        Dsl.bind("?group", Dsl.stateRead("Lending", Dsl.ref("?loanId"), "group")),
+                        Dsl.collectRecordsBy("?rows", List.of("?loanId"), "?group")),
+                List.of());
+
+        List<Map<String, Object>> frames = ev.evaluate(rule, INV, COMP);
+
+        assertEquals(2, frames.size(), "one frame per group key");
+        Map<String, Set<Object>> byGroup = new LinkedHashMap<>();
+        for (Map<String, Object> f : frames) {
+            byGroup.put((String) f.get("?group"), new LinkedHashSet<>((List<?>) f.get("?rows")));
+        }
+        // Each record is the projection of the collected vars, not the raw value.
+        Set<Object> g1 = new LinkedHashSet<>();
+        g1.add(Map.of("?loanId", "loan1"));
+        g1.add(Map.of("?loanId", "loan2"));
+        assertEquals(g1, byGroup.get("g1"));
+        assertEquals(Set.of(Map.of("?loanId", "loan3")), byGroup.get("g2"));
+    }
+
+    @Test
+    void recordCollectEmitsEmptyListWhenNoFrameCarriesTheBindings() {
+        // No fan-out: the single synthetic frame has none of the collected vars
+        // bound, so the group is empty — a zero-item collection is a value.
+        SyncRule rule = SyncRule.of("r", "C", "act", "ok",
+                List.of(Dsl.collectRecords("?rows", List.of("?copy", "?dueAt"))),
+                List.of());
+
+        List<Map<String, Object>> frames = ev.evaluate(rule, INV, COMP);
+
+        assertEquals(1, frames.size());
+        assertEquals(List.of(), frames.get(0).get("?rows"));
+    }
 }

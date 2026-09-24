@@ -36,6 +36,33 @@ tables, `concept-bindings.md` + the canonical concept specs
 6. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
 7. Stop at the gate.
 
+## Which subset do I need
+
+Match the chain-table row in front of you and add only the level it needs.
+
+- **Level 0 — bootstrap row.** `when Web/request … then <Concept>/<action>`;
+  add `where { bind ( uuid() as ?id ) }` when the row mints an entity. Most rows.
+- **Level 1 — a value never in this flow.** Add a `where` concept-state read
+  (Pattern D) only when the argument was not carried by the trigger or a sibling.
+- **Level 2 — matching ≥2 completions.** Add named-conjunct joins.
+- **Level 3 — the flow is shared / the result is a set / the match is an
+  absence.** Add flow pinning, `collect`/`collectBy`, or `absent`.
+
+**A/B vs. D — the one choice that matters:** reuse a flow binding (A/B) when the
+value already travelled this flow; read concept state (D) only when the value was
+never in this flow. D is a real cross-boundary read and the Stage 03a audit will
+flag it.
+
+## Translating from paper / ConceptBox examples
+
+> The sources order and phrase things differently; a verbatim translation can
+> fire with blank arguments or bypass the audit.
+
+- **Request-first (paper) / order-agnostic (`actions([...])`, ConceptBox) → pin last.** CLAD evaluates a rule's `where` against its primary (**first**) conjunct, so the flow pin is the **final** conjunct.
+- **`frames.filter(...)` (ConceptBox) → a concept action outcome** (business discrimination belongs in the concept, R3).
+- **`collectAs` (ConceptBox) → `collect` / `collect by ?key`** for a single binding; a correlated multi-binding record has no declarative CLAD form today.
+- **Nested `body:` in `then` → the primary adapter** (`verify_sync_then_shape.py` enforces the flat `then`).
+
 ## Hard constraints
 
 - No imperative branching in syncs (R3).

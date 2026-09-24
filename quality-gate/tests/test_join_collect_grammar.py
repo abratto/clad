@@ -269,6 +269,50 @@ class SyncJoinParsingTests(unittest.TestCase):
             self.assertIn("Tagging", spec.pattern_d_concepts)
             self.assertIn("Article", spec.pattern_d_concepts)
 
+    def test_record_collect_forms_are_detected(self):
+        """`collect ( ?a ?b as ?rows )` is the record form (two or more vars);
+        `collect ( ?a as ?rows )` stays the value form —
+        maintenance/engine-record-collect.md."""
+        body = """sync RespondForReturnsWhenCloseReturned
+
+## Sync Contract Matrix
+
+| Source row | Target row | `when` signature | `then` signature | Allowed literals |
+|---|---|---|---|---|
+| `4` | `7` | `Lending/close: [...] => [ Returned ]` | `Web/respond: [ openLoans: ?openLoans ]` | `<none>` |
+
+## Rule
+
+```
+when {
+    Lending/close: [ ... ] => [ Returned ; ... ]
+}
+where {
+    fanOut ( ?loanId ; "Lending" ; "borrower" ; ?memberId )
+    absent ( Lending ; ?loanId ; returnedAt )
+    collect ( ?loanId ?copyId ?dueAt as ?openLoans )
+}
+then {
+    Web/respond: [ openLoans: ?openLoans ]
+}
+```
+"""
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "x.sync.md"
+            write(path, body)
+            spec = ap.parse_sync(str(path))
+        self.assertEqual(len(spec.record_collect_forms), 1)
+        self.assertIn("?loanId ?copyId ?dueAt as ?openLoans",
+                      spec.record_collect_forms[0])
+        # The record form is still a collect form (aggregate audit).
+        self.assertIn("collect", " ".join(spec.collect_forms))
+        # The single-variable form is not the record form.
+        with tempfile.TemporaryDirectory() as tmp2:
+            join_path = Path(tmp2) / "RespondWhenJoinListListedAndTagTagged.sync.md"
+            write(join_path, JOIN_SYNC)
+            single = ap.parse_sync(str(join_path))
+        self.assertEqual(single.record_collect_forms, [])
+
     def test_absent_state_pattern_is_detected_as_a_concept_read(self):
         """`absent(...)` consults concept state and binds nothing (a D- read).
 

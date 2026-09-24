@@ -274,6 +274,22 @@ public final class Dsl {
         return new Clause.CollectBy(var, source, groupKey);
     }
 
+    /**
+     * Record-form collect: gather {@code vars} (a binding subset) from every
+     * frame into one record per frame, bound to {@code var} as a List. Frames
+     * are grouped by their non-collected bindings. Grouping/projection only —
+     * the declarative analogue of conceptbox's {@code collectAs([...], results)}.
+     * See {@code maintenance/engine-record-collect.md}.
+     */
+    public static Clause collectRecords(String var, List<String> vars) {
+        return new Clause.RecordCollect(var, List.copyOf(vars), null);
+    }
+
+    /** Record-form collect grouped by {@code groupKey} instead of the non-collected bindings. */
+    public static Clause collectRecordsBy(String var, List<String> vars, String groupKey) {
+        return new Clause.RecordCollect(var, List.copyOf(vars), groupKey);
+    }
+
     public static Clause optional(Clause inner) {
         return new Clause.OptionalClause(inner);
     }
