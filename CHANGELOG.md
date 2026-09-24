@@ -10,6 +10,53 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.11.0] — 2026-09-23
+
+**Sync expressiveness + quality-gate health.** Two focused batches: sync
+authoring and one declarative expressiveness gap, then a hardening pass on the
+gate scripts themselves.
+
+**Sync expressiveness.**
+
+- **Record-form `collect`.** `collect ( ?a ?b as ?rows )` — and
+  `collect by ?key ( ?a ?b as ?rows )` — gathers a **binding subset per frame**
+  into one list of records, preserving inter-variable correlation by position
+  (e.g. a copy paired with its due date). Grouping/projection only, no filter or
+  assembly (R3); the engine maintenance contract (fire-after-commit,
+  exactly-once) is preserved. See `maintenance/engine-record-collect.md`.
+- **Authoring surface.** `templates/sync.md` and the `clad-sync-design` skill
+  gain a paper/ConceptBox translation callout (request-first → pin last;
+  `frames.filter` → a concept outcome; `collectAs` → `collect`; nested `body:` →
+  the adapter), an A/B-vs-D decision line, and a progressive-disclosure reorder
+  with a "which subset do I need" ladder. `SYNC_PATTERNS.md` gains the
+  post-commit compensation pattern.
+- **Comparison guards declined.** The proposed minimal `>`/`<`/`>=`/`<=` guard
+  was discussed and declined, with the reasoning recorded
+  (`maintenance/sync-comparison-guards.md`); comparisons stay in concept
+  outcomes.
+
+**Quality-gate script health.**
+
+- **False greens fixed (verdict changes).** `verify_outcome_alignment`,
+  `verify_scenario_coverage`, and `verify_concept_additivity` no longer pass on a
+  defect: a present-but-empty input now FAILs, while a genuinely absent input
+  still skips. See `maintenance/gate-verdict-hardening.md`.
+- **One RESUME gate-line grammar.** `parse_gate_status` / `set_gate_status` in
+  `artifact_parsers.py` replace three near-identical regexes; `advance.py` now
+  warns loudly when a gate line cannot be written instead of failing silently.
+- **Atomic concept promotion.** `promote_concepts.py` stages the spec,
+  companions, catalog, and receipt to temp files and swaps them in as one
+  all-or-nothing set, rolling back on any failure — the corpus can never be left
+  half-written. See `maintenance/promote-atomic.md`.
+- **Generated gate index.** `quality-gate/INDEX.md` is generated from
+  `clad_stages.py` with a consistency guard; the `clad-quality-gate` skill and
+  `QUALITY_GATE.md` point at the sources instead of a hand-copied list. See
+  `maintenance/gate-index.md`.
+
+**Upgrade notes:** none required. The verdict changes only affect features whose
+inputs are missing or empty (previously a silent pass); a legitimately absent
+input still skips.
+
 ## [0.10.0] — 2026-09-23
 
 **Workflow-consistency fixes.** A follow-up pass on the stage contracts, the
