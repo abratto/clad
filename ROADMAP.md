@@ -24,6 +24,8 @@
 
 - Production workload characterization — benchmark the predicate engine with a durable backend, realistic graph sizes and action chains, mixed read/write traffic, and sustained concurrency. Publish throughput, p50/p95/p99 latency, error rate, and the tested hardware/configuration; use the results to establish production workload expectations rather than a generic RPS claim.
 - Legacy polling-engine scheduler hardening — deferred. The transactional predicate engine is the preferred path because it performs better and matches the WYSIWID sync semantics; revisit bounded polling, claims, and lease recovery only for legacy-engine users.
+- `java-micronaut` transport/storage split — separate the Micronaut HTTP transport from the storage backend so Postgres, in-memory, and an RDF/triplestore backend are swappable `@Factory`/config choices rather than fused into one `java-micronaut-postgres` module. Design-gated (maintenance record). Surfaced while clarifying the reference-profile guidance.
+- Jena backend demotion — CLAD ships no Jena/TDB persistence profile. Move `JenaFactStore` out of the supported build (exclude from CI/tests, mark illustrative/experimental, or delete) and sweep the remaining "in-memory/Jena/Postgres" phrasing in `methodology/architecture/*`, `methodology/implementation/*`, and the root `clad.properties` storage examples to match. Maintenance-recorded.
 
 ## Resume point
 
@@ -32,4 +34,4 @@
 - **Last gate passed:** `UC-00-login` Stage 05 (worked example shipped)
 - **Next stage:** start `UC-01-<slug>` Stage 00 (actor/goal)
 - **Blockers:** none
-- **Last updated:** 2026-08-02 — added production workload characterization to establish realistic capacity expectations for the transactional predicate engine; legacy polling-engine scheduler hardening remains deferred.
+- **Last updated:** 2026-09-24 — documented the ways of working (single session / one sub-agent per stage / session-per-stage) and reference-profile guidance; backlogged the `java-micronaut` transport/storage split and the Jena backend demotion.

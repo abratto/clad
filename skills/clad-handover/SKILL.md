@@ -1,6 +1,6 @@
 ---
 name: clad-handover
-description: Hand off or resume a feature mid-flight during a CLAD session. Use when orienting a fresh model session to pick up an in-progress feature without manual stage narration.
+description: Hand off, resume, or orchestrate a CLAD feature mid-flight. Use when orienting a fresh model session to pick up an in-progress feature, or when running one sub-agent per stage without manual stage narration.
 ---
 
 # CLAD Handover
