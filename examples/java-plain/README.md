@@ -1,4 +1,4 @@
-# reference-impl/java-plain/
+# examples/java-plain/
 
 The **plain Java quick-start**: one module, zero framework. The fire-after-commit engine, one `FactStore`, the login feature's three concepts, `Web` bootstrap, and the seven syncs — and nothing else. No DI, no HTTP server: the transport surface is a method call.
 
@@ -13,8 +13,11 @@ The **plain Java quick-start**: one module, zero framework. The fire-after-commi
 ## Run it
 
 ```bash
-mvn -pl java-plain -am test            # concept + flow + concurrency tests
-mvn -pl java-plain -am exec:java       # interactive demo (PlainDemoApp)
+# one-time: install the engine into the local repo
+mvn -f ../../reference-impl/pom.xml -pl legible-engine -am install -DskipTests
+# then, from this directory:
+mvn test            # concept + flow + concurrency tests
+mvn exec:java       # interactive demo (PlainDemoApp)
 ```
 
 Demo keys: `seed`, `success`, `wrong-password`, `unknown-user`, `lockout`, `quit`.
@@ -53,8 +56,10 @@ concurrency, and flow-token lineage. Copy `ConceptTest` / `FlowTraceTest` /
 
 ## Not included by design
 
-No persistence (in-memory only — for durable state use the re-lowered
-[`java-micronaut`](../java-micronaut/) profile), no HTTP
+No persistence (in-memory only — for durable state use the Micronaut
+[`../../reference-impl/java-micronaut/`](../../reference-impl/java-micronaut/) profile), no HTTP
 (transport surfaces belong to adapter-bearing profiles), no multi-feature
-catalogue (see [`java-legible`](../java-legible/) for the full sync model:
-fan-out, Pattern D reads, `OPTIONAL`, `?_eachthen`, route filters).
+catalogue (see
+[`../../reference-impl/java-legible/`](../../reference-impl/java-legible/)
+for the full sync model: fan-out, Pattern D reads, `OPTIONAL`, `?_eachthen`,
+route filters).

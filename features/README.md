@@ -25,7 +25,7 @@ between stages.
 
 ## Worked example
 
-[`UC-00-login/`](UC-00-login/) is a small, illustrative example: a
+The worked example lives at [`../examples/UC-00-login/`](../examples/UC-00-login/), not here: a
 classic username/password login. It is intentionally simple so that
 nothing is hidden behind incidental complexity. Use it as a template
 for your own first feature.

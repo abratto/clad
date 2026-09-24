@@ -11,6 +11,9 @@ Stage 05 cannot decide whether an observed runtime trace was correct
 or merely plausible. Hence: Fully Dressed, both Postcondition
 sub-sections, mandatory.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../examples/UC-00-login/stages/01_usecase/output/`](../../../../examples/UC-00-login/stages/01_usecase/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - `usecase.md` → 01a (scenarios drive coverage), 01b (one chain table per scenario), 02 (each concept's operational principle must reference these scenarios), 03 (every sync's `Cites` names a scenario), 04c (one flow test per scenario), 05 (verifier walks each scenario's token tree).

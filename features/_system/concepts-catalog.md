@@ -6,6 +6,3 @@
 
 | Concept | Purpose | Type params | Actions | Introduced by | Used by | Notes |
 |---|---|---|---|---|---|---|
-| `PasswordAuth` | to verify a principal by userId + password | UserId | `check`, `setCredential` | UC-00-login | UC-00-login | — |
-| `Session` | to manage bearer-token sessions for a principal | SessionId, UserId | `grant`, `lookup` | UC-00-login | UC-00-login | — |
-| `UserNaming` | to associate usernames with opaque user identifiers | UserId | `lookupByUsername`, `register` | UC-00-login | UC-00-login | — |

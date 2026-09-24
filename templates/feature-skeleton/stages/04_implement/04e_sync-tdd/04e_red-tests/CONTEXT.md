@@ -14,6 +14,9 @@ expectations, run them red, and hand a precise contract to `04e-green`.
 Making this a separate ICM folder gives weaker models a hard boundary:
 no sync implementation belongs here.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../../../examples/UC-00-login/stages/04_implement/04e_sync-tdd/04e_red-tests/output/`](../../../../../../examples/UC-00-login/stages/04_implement/04e_sync-tdd/04e_red-tests/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - `output/sync-test-derivation.md` plus approved sync test files -> `04e-green`

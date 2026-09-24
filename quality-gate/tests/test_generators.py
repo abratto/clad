@@ -54,7 +54,7 @@ class GeneratorPropertyTests(unittest.TestCase):
         # Feature must sit under a `features/` dir for scope derivation.
         cls.features = cls.platform / "features"
         cls.features.mkdir()
-        src = REPO_ROOT / "features" / "UC-00-login"
+        src = REPO_ROOT / "examples" / "UC-00-login"
         cls.feature = cls.features / "UC-00-login"
         shutil.copytree(src, cls.feature)
 

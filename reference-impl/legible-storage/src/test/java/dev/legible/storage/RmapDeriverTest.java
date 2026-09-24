@@ -21,7 +21,7 @@ class RmapDeriverTest {
 
     private static Path conceptSpec(String name) {
         return repoRoot().resolve(
-                "features/UC-00-login/stages/02_concepts/output/" + name + ".concept.md");
+                "examples/UC-00-login/stages/02_concepts/output/" + name + ".concept.md");
     }
 
     private static Path repoRoot() {

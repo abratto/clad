@@ -14,6 +14,9 @@ Flow tests use **Cucumber/BDD (Gherkin)**, the recommended outer-red track.
 The `.feature` file IS the spec — a Gherkin Scenario maps 1:1 to a
 use-case scenario, with no invented steps.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../../examples/UC-00-login/stages/04_implement/04c_flow-tests/output/`](../../../../../examples/UC-00-login/stages/04_implement/04c_flow-tests/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - `<feature>.feature` → 04e (Cucumber scenarios go green at the end);

@@ -6,13 +6,13 @@ more than a "hello world": authenticate a user with a username and a
 password, and on success establish a session token they can present
 on subsequent requests.
 
-Read this folder as the canonical example first. The Java reference
-profile is also runnable now, and `mvn test` exercises the active outer-loop
-login flow tests end-to-end.
+Read this folder as the canonical example first. The zero-framework
+[`../java-plain/`](../java-plain/) build runs the login scenario; the
+canonical `java-legible` profile also runs it (`mvn test`).
 
-> **Do not copy this folder as a starter template.** UC-00 is the worked
-> example; new work runs Stage 00 only in
-> `features/_system/stages/00_actor-goal/` and then copies
+> **Do not copy this folder as a starter template.** It is frozen history and
+> lives under `examples/` — read it, don't import it. New work runs Stage 00
+> at system scope (`features/_system/stages/00_actor-goal/`) and then copies
 > `templates/feature-skeleton/` for each per-UC feature.
 
 ## Contract vs example
@@ -84,7 +84,7 @@ of the generic *Why this stage exists* block in each CONTEXT.
 
 | Stage | CONTEXT (with rationale) | Output(s) | Why this stage matters in UC-00 |
 |---|---|---|---|
-| 00 | [`features/_system/stages/00_actor-goal/CONTEXT.md`](../../features/_system/stages/00_actor-goal/CONTEXT.md) *(system scope)* | [`actors.md`](../../features/_system/stages/00_actor-goal/output/actors.md), [`goals.md`](../../features/_system/stages/00_actor-goal/output/goals.md) | The brief mentions registration, password reset, MFA, SSO, logout. Stage 00 is where each of those gets explicitly marked **out of scope** so the use case can't drift. |
+| 00 | [`features/_system/stages/00_actor-goal/CONTEXT.md`](../../features/_system/stages/00_actor-goal/CONTEXT.md) *(system scope)* | [`actors.md`](system-stage-00/actors.md), [`goals.md`](system-stage-00/goals.md) *(travels with the example)* | The brief mentions registration, password reset, MFA, SSO, logout. Stage 00 is where each of those gets explicitly marked **out of scope** so the use case can't drift. | The brief mentions registration, password reset, MFA, SSO, logout. Stage 00 is where each of those gets explicitly marked **out of scope** so the use case can't drift. |
 | 01 | [`stages/01_usecase/CONTEXT.md`](stages/01_usecase/CONTEXT.md) | [`usecase.md`](stages/01_usecase/output/usecase.md) | The four scenarios (`successful-login`, `wrong-password`, `unknown-user`, `lockout`) and especially the *Postconditions—Failure* assertion *"no state is modified"* are what make the no-enumeration property mechanically checkable at Stage 04c. |
 | 01a | [`stages/01a_responsibility-map/CONTEXT.md`](stages/01a_responsibility-map/CONTEXT.md) | [`responsibility-map.md`](stages/01a_responsibility-map/output/responsibility-map.md) | Three concepts (`UserNaming`, `PasswordAuth`, `Session`) plus `Web` (R4 bootstrap). The *Out of scope* note records why `LoginAttemptHistory` and `Account` were rejected as concepts — keeping that visible prevents reinvention later. |
 | 01b | [`stages/01b_chain-table/CONTEXT.md`](stages/01b_chain-table/CONTEXT.md) | [`successful-login-chain.md`](stages/01b_chain-table/output/successful-login-chain.md), [`wrong-password-chain.md`](stages/01b_chain-table/output/wrong-password-chain.md), [`unknown-user-chain.md`](stages/01b_chain-table/output/unknown-user-chain.md), [`lockout-chain.md`](stages/01b_chain-table/output/lockout-chain.md), [`login-all-scenarios-chain.md`](stages/01b_chain-table/output/login-all-scenarios-chain.md) | Four canonical scenario chains plus one derived consolidated chain. The canonical tables fix the action names; the consolidated chain makes the full Stage 01b `When -> Then` branching surface explicit for Stage 03 sync derivation without smuggling `where` provenance down from Stage 03. |

@@ -8,6 +8,9 @@ Pattern D exposure from 03a into a **profile-neutral** fact model
 before Stage 04 starts talking about RDF, SQL, document fields, or
 other storage primitives.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../examples/UC-00-login/stages/03b_data-model/output/`](../../../../examples/UC-00-login/stages/03b_data-model/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - `<Name>.data-model.md` → 04a (profile-specific storage mapping), 04d (state invariants remain visible when implementation starts).

@@ -104,8 +104,8 @@ human's answers.
 
 **Outputs written:**
 
-- [`features/_system/stages/00_actor-goal/output/actors.md`](../features/_system/stages/00_actor-goal/output/actors.md) — one row, `EndUser`.
-- [`features/_system/stages/00_actor-goal/output/goals.md`](../features/_system/stages/00_actor-goal/output/goals.md) — three in-scope goals; six out-of-scope items.
+- [`examples/UC-00-login/system-stage-00/actors.md`](../examples/UC-00-login/system-stage-00/actors.md) — one row, `EndUser`.
+- [`examples/UC-00-login/system-stage-00/goals.md`](../examples/UC-00-login/system-stage-00/goals.md) — three in-scope goals; six out-of-scope items.
 
 **Gate question (canonical):** *"Do you agree with this step? Any
 corrections before I continue?"*
@@ -119,7 +119,7 @@ corrections before I continue?"*
 
 ## Turn 3 — Stage 01 (Use case), Fully Dressed
 
-**CONTEXT loaded:** [`features/UC-00-login/stages/01_usecase/CONTEXT.md`](../features/UC-00-login/stages/01_usecase/CONTEXT.md)
+**CONTEXT loaded:** [`examples/UC-00-login/stages/01_usecase/CONTEXT.md`](../examples/UC-00-login/stages/01_usecase/CONTEXT.md)
 
 **Inputs opened:**
 
@@ -137,7 +137,7 @@ outcomes*, **and both** *Postconditions—Success* and
 modified"* but must be present); explicit *Out of scope* + *Relationship
 to other use cases* (Registration, Logout, Password reset).
 
-**Output written:** [`features/UC-00-login/stages/01_usecase/output/usecase.md`](../features/UC-00-login/stages/01_usecase/output/usecase.md).
+**Output written:** [`examples/UC-00-login/stages/01_usecase/output/usecase.md`](../examples/UC-00-login/stages/01_usecase/output/usecase.md).
 
 **Gate question (canonical).**
 
@@ -151,7 +151,7 @@ to other use cases* (Registration, Logout, Password reset).
 
 ## Turn 4 — Stage 01a (Responsibility map)
 
-**CONTEXT loaded:** [`features/UC-00-login/stages/01a_responsibility-map/CONTEXT.md`](../features/UC-00-login/stages/01a_responsibility-map/CONTEXT.md)
+**CONTEXT loaded:** [`examples/UC-00-login/stages/01a_responsibility-map/CONTEXT.md`](../examples/UC-00-login/stages/01a_responsibility-map/CONTEXT.md)
 
 **Inputs opened:**
 
@@ -168,7 +168,7 @@ section pairing each scenario to the concepts it touches. Add an *Out
 of scope* section recording what was deliberately not made into a
 concept (e.g. `LoginAttemptHistory`).
 
-**Output written:** [`features/UC-00-login/stages/01a_responsibility-map/output/responsibility-map.md`](../features/UC-00-login/stages/01a_responsibility-map/output/responsibility-map.md).
+**Output written:** [`examples/UC-00-login/stages/01a_responsibility-map/output/responsibility-map.md`](../examples/UC-00-login/stages/01a_responsibility-map/output/responsibility-map.md).
 
 **Gate question (canonical).**
 
@@ -180,7 +180,7 @@ concept (e.g. `LoginAttemptHistory`).
 
 ## Turn 5 — Stage 01b (Chain tables)
 
-**CONTEXT loaded:** [`features/UC-00-login/stages/01b_chain-table/CONTEXT.md`](../features/UC-00-login/stages/01b_chain-table/CONTEXT.md)
+**CONTEXT loaded:** [`examples/UC-00-login/stages/01b_chain-table/CONTEXT.md`](../examples/UC-00-login/stages/01b_chain-table/CONTEXT.md)
 
 **Inputs opened:**
 
@@ -196,10 +196,10 @@ diagram. First row is always `Web.request`; last row is always
 
 **Outputs written:**
 
-- [`successful-login-chain.md`](../features/UC-00-login/stages/01b_chain-table/output/successful-login-chain.md)
-- [`wrong-password-chain.md`](../features/UC-00-login/stages/01b_chain-table/output/wrong-password-chain.md)
-- [`unknown-user-chain.md`](../features/UC-00-login/stages/01b_chain-table/output/unknown-user-chain.md)
-- [`lockout-chain.md`](../features/UC-00-login/stages/01b_chain-table/output/lockout-chain.md)
+- [`successful-login-chain.md`](../examples/UC-00-login/stages/01b_chain-table/output/successful-login-chain.md)
+- [`wrong-password-chain.md`](../examples/UC-00-login/stages/01b_chain-table/output/wrong-password-chain.md)
+- [`unknown-user-chain.md`](../examples/UC-00-login/stages/01b_chain-table/output/unknown-user-chain.md)
+- [`lockout-chain.md`](../examples/UC-00-login/stages/01b_chain-table/output/lockout-chain.md)
 
 **Gate question (canonical).**
 
@@ -213,7 +213,7 @@ diagram. First row is always `Web.request`; last row is always
 
 ## Turn 6 — Stage 02 (Concept specs)
 
-**CONTEXT loaded:** [`features/UC-00-login/stages/02_concepts/CONTEXT.md`](../features/UC-00-login/stages/02_concepts/CONTEXT.md)
+**CONTEXT loaded:** [`examples/UC-00-login/stages/02_concepts/CONTEXT.md`](../examples/UC-00-login/stages/02_concepts/CONTEXT.md)
 
 **Inputs opened:**
 
@@ -236,9 +236,9 @@ mention `UserNaming`'s state; it works with opaque `UserId`.
 each NEW concept. The proposals become the canonical corpus specs (introduced
 by UC-00-login) on Gate 2 approval:
 
-- [`UserNaming.concept.md`](../features/UC-00-login/stages/02_concepts/output/UserNaming.concept.md)
-- [`PasswordAuth.concept.md`](../features/UC-00-login/stages/02_concepts/output/PasswordAuth.concept.md)
-- [`Session.concept.md`](../features/UC-00-login/stages/02_concepts/output/Session.concept.md)
+- [`UserNaming.concept.md`](../examples/UC-00-login/stages/02_concepts/output/UserNaming.concept.md)
+- [`PasswordAuth.concept.md`](../examples/UC-00-login/stages/02_concepts/output/PasswordAuth.concept.md)
+- [`Session.concept.md`](../examples/UC-00-login/stages/02_concepts/output/Session.concept.md)
 
 **Gate question (canonical).**
 
@@ -250,7 +250,7 @@ by UC-00-login) on Gate 2 approval:
 
 ## Turn 7 — Stage 03 (Syncs)
 
-**CONTEXT loaded:** [`features/UC-00-login/stages/03_syncs/CONTEXT.md`](../features/UC-00-login/stages/03_syncs/CONTEXT.md)
+**CONTEXT loaded:** [`examples/UC-00-login/stages/03_syncs/CONTEXT.md`](../examples/UC-00-login/stages/03_syncs/CONTEXT.md)
 
 **Inputs opened:**
 
@@ -266,8 +266,8 @@ branching, no state, no I/O. Every `where` clause labels its pattern
 
 For UC-00 the agent writes:
 
-- [`GrantForLoginWhenCheckOk.sync.md`](../features/UC-00-login/stages/03_syncs/output/GrantForLoginWhenCheckOk.sync.md) — `when PasswordAuth.check(userId, password) -> Ok` then `Session.grant(userId)` then `Web.respond(200, { sessionToken })`. The `where: B: sessionId = result_of(Session.grant).sessionId` is **Pattern B** (flow-sibling); see [`SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md).
-- [`RespondForLoginWhenCheckLocked.sync.md`](../features/UC-00-login/stages/03_syncs/output/RespondForLoginWhenCheckLocked.sync.md) — lockout response path.
+- [`GrantForLoginWhenCheckOk.sync.md`](../examples/UC-00-login/stages/03_syncs/output/GrantForLoginWhenCheckOk.sync.md) — `when PasswordAuth.check(userId, password) -> Ok` then `Session.grant(userId)` then `Web.respond(200, { sessionToken })`. The `where: B: sessionId = result_of(Session.grant).sessionId` is **Pattern B** (flow-sibling); see [`SYNC_PATTERNS.md`](architecture/SYNC_PATTERNS.md).
+- [`RespondForLoginWhenCheckLocked.sync.md`](../examples/UC-00-login/stages/03_syncs/output/RespondForLoginWhenCheckLocked.sync.md) — lockout response path.
 
 The unhappy paths (`wrong-password`, `unknown-user`, `lockout`) are also
 syncs. Stage 03 remains the single declarative coordination surface for
@@ -283,7 +283,7 @@ both success and failure responses.
 
 ## Turn 8 — Stage 03a (Coordination review)
 
-**CONTEXT loaded:** [`features/UC-00-login/stages/03a_dependency-review/CONTEXT.md`](../features/UC-00-login/stages/03a_dependency-review/CONTEXT.md)
+**CONTEXT loaded:** [`examples/UC-00-login/stages/03a_dependency-review/CONTEXT.md`](../examples/UC-00-login/stages/03a_dependency-review/CONTEXT.md)
 
 **Inputs opened:**
 
@@ -306,11 +306,11 @@ now resolved (per PR #6 — the chain tables won).
 
 **Outputs written:**
 
-- [`UserNaming-card.md`](../features/UC-00-login/stages/03a_dependency-review/output/UserNaming-card.md)
-- [`PasswordAuth-card.md`](../features/UC-00-login/stages/03a_dependency-review/output/PasswordAuth-card.md)
-- [`Session-card.md`](../features/UC-00-login/stages/03a_dependency-review/output/Session-card.md)
-- [`Web-card.md`](../features/UC-00-login/stages/03a_dependency-review/output/Web-card.md)
-- [`pattern-d-summary.md`](../features/UC-00-login/stages/03a_dependency-review/output/pattern-d-summary.md)
+- [`UserNaming-card.md`](../examples/UC-00-login/stages/03a_dependency-review/output/UserNaming-card.md)
+- [`PasswordAuth-card.md`](../examples/UC-00-login/stages/03a_dependency-review/output/PasswordAuth-card.md)
+- [`Session-card.md`](../examples/UC-00-login/stages/03a_dependency-review/output/Session-card.md)
+- [`Web-card.md`](../examples/UC-00-login/stages/03a_dependency-review/output/Web-card.md)
+- [`pattern-d-summary.md`](../examples/UC-00-login/stages/03a_dependency-review/output/pattern-d-summary.md)
 
 **Gate question (canonical).**
 
@@ -322,18 +322,18 @@ now resolved (per PR #6 — the chain tables won).
 
 ## Turn 9 — Stage 04 (Implement, sub-stages 04a → 04e)
 
-**Router CONTEXT loaded:** [`features/UC-00-login/stages/04_implement/CONTEXT.md`](../features/UC-00-login/stages/04_implement/CONTEXT.md)
+**Router CONTEXT loaded:** [`examples/UC-00-login/stages/04_implement/CONTEXT.md`](../examples/UC-00-login/stages/04_implement/CONTEXT.md)
 
 The router has **no artefact of its own** — it gates after each
 sub-stage. The five sub-stages run in order; each one is its own turn
 with its own `CONTEXT.md`. For UC-00 in this round:
 
-- **03b (Data model):** the conceptual state model is written before implementation. CONTEXT loaded: [`../features/UC-00-login/stages/03b_data-model/CONTEXT.md`](../features/UC-00-login/stages/03b_data-model/CONTEXT.md).
-- **04a (Storage mapping):** the in-memory profile triggers `_NOT_APPLICABLE.md`. CONTEXT loaded: [`04a_storage-mapping/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04a_storage-mapping/CONTEXT.md).
-- **04b (contract):** mechanically extract action signatures and outcome enums per concept. CONTEXT loaded: [`04b_contract/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04b_contract/CONTEXT.md).
-- **04c (Flow tests, outer red):** a Gherkin `.feature` file, step-definition skeleton, Cucumber runner, and `@Disabled` stub flow tests per use case. CONTEXT loaded: [`04c_flow-tests/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04c_flow-tests/CONTEXT.md).
-- **04d (Concept TDD router):** structural handoff point for concept red/green. Open [`04d_concept-tdd/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04d_concept-tdd/CONTEXT.md), then run [`04d_red-tests/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04d_concept-tdd/04d_red-tests/CONTEXT.md) to derive red concept tests (automated gate: `verify_concept_test_derivation.py`), followed by [`04d_green-impl/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04d_concept-tdd/04d_green-impl/CONTEXT.md) to implement them.
-- **04e (Sync TDD router):** structural handoff point for sync red/green. Open [`04e_sync-tdd/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04e_sync-tdd/CONTEXT.md), then run [`04e_red-tests/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04e_sync-tdd/04e_red-tests/CONTEXT.md) to derive red sync tests (automated gate: `verify_sync_matrix.py`), followed by [`04e_green-impl/CONTEXT.md`](../features/UC-00-login/stages/04_implement/04e_sync-tdd/04e_green-impl/CONTEXT.md) to implement them and turn the `04c` flow tests green.
+- **03b (Data model):** the conceptual state model is written before implementation. CONTEXT loaded: [`../examples/UC-00-login/stages/03b_data-model/CONTEXT.md`](../examples/UC-00-login/stages/03b_data-model/CONTEXT.md).
+- **04a (Storage mapping):** the in-memory profile triggers `_NOT_APPLICABLE.md`. CONTEXT loaded: [`04a_storage-mapping/CONTEXT.md`](../examples/UC-00-login/stages/04_implement/04a_storage-mapping/CONTEXT.md).
+- **04b (contract):** mechanically extract action signatures and outcome enums per concept. CONTEXT loaded: [`04b_contract/CONTEXT.md`](../examples/UC-00-login/stages/04_implement/04b_contract/CONTEXT.md).
+- **04c (Flow tests, outer red):** a Gherkin `.feature` file, step-definition skeleton, Cucumber runner, and `@Disabled` stub flow tests per use case. CONTEXT loaded: [`04c_flow-tests/CONTEXT.md`](../examples/UC-00-login/stages/04_implement/04c_flow-tests/CONTEXT.md).
+- **04d (Concept TDD router):** structural handoff point for concept red/green. Open [`04d_concept-tdd/CONTEXT.md`](../examples/UC-00-login/stages/04_implement/04d_concept-tdd/CONTEXT.md), then run [`04d_red-tests/CONTEXT.md`](../examples/UC-00-login/stages/04_implement/04d_concept-tdd/04d_red-tests/CONTEXT.md) to derive red concept tests (automated gate: `verify_concept_test_derivation.py`), followed by [`04d_green-impl/CONTEXT.md`](../examples/UC-00-login/stages/04_implement/04d_concept-tdd/04d_green-impl/CONTEXT.md) to implement them.
+- **04e (Sync TDD router):** structural handoff point for sync red/green. Open [`04e_sync-tdd/CONTEXT.md`](../examples/UC-00-login/stages/04_implement/04e_sync-tdd/CONTEXT.md), then run [`04e_red-tests/CONTEXT.md`](../examples/UC-00-login/stages/04_implement/04e_sync-tdd/04e_red-tests/CONTEXT.md) to derive red sync tests (automated gate: `verify_sync_matrix.py`), followed by [`04e_green-impl/CONTEXT.md`](../examples/UC-00-login/stages/04_implement/04e_sync-tdd/04e_green-impl/CONTEXT.md) to implement them and turn the `04c` flow tests green.
 
 **Human gates across the loop:** Gate 1 (01b — Requirements), Gate 2 (03b — Architecture), **Gate 3 (04c — Executable spec)**. No human gates at 04d or 04e — those red→green handoffs are automated by quality-gate scripts.
 
@@ -347,7 +347,7 @@ with its own `CONTEXT.md`. For UC-00 in this round:
 
 ## Turn 10 — Stage 05 (Verify and close)
 
-**CONTEXT loaded:** [`features/UC-00-login/stages/05_verify/CONTEXT.md`](../features/UC-00-login/stages/05_verify/CONTEXT.md)
+**CONTEXT loaded:** [`examples/UC-00-login/stages/05_verify/CONTEXT.md`](../examples/UC-00-login/stages/05_verify/CONTEXT.md)
 
 **Inputs opened:**
 

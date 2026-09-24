@@ -9,6 +9,9 @@ against the contracts, not against the prose. Without 04b the inner-loop
 tests would have to re-derive the contract from prose every time
 the spec changes.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../../examples/UC-00-login/stages/04_implement/04b_contract/output/`](../../../../../examples/UC-00-login/stages/04_implement/04b_contract/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - `<Name>.contract.md` → 04c (flow tests assert contract-level signatures), 04d (concept TDD compiles against contract), 04e (sync TDD references contract action enums).

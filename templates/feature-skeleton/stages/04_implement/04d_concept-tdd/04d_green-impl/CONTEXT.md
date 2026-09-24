@@ -15,6 +15,9 @@ exactly what the approved red tests require. Making this a separate ICM
 folder gives weaker models a hard boundary: implementation may consult
 upstream prose, but it may not redesign approved tests.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../../../examples/UC-00-login/stages/04_implement/04d_concept-tdd/04d_green-impl/output/`](../../../../../../examples/UC-00-login/stages/04_implement/04d_concept-tdd/04d_green-impl/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - green concept implementation -> `04e`

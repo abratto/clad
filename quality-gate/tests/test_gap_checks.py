@@ -11,7 +11,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 QG = REPO_ROOT / "quality-gate"
-UC00_SYNCS = REPO_ROOT / "features/UC-00-login/stages/03_syncs/output"
+UC00_SYNCS = REPO_ROOT / "examples/UC-00-login/stages/03_syncs/output"
 LOGIN_IMPL = REPO_ROOT / "reference-impl/java-legible/src/main/java/dev/legible/example/login"
 
 
@@ -217,7 +217,7 @@ class RouteFilterAmbiguityTests(unittest.TestCase):
 class DescriptorCompletenessTests(unittest.TestCase):
     def test_expected_outputs_cover_all_stages(self):
         result = run(str(QG / "describe_feature.py"),
-                     "--feature", str(REPO_ROOT / "features/UC-00-login"))
+                     "--feature", str(REPO_ROOT / "examples/UC-00-login"))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         expected = json.loads(result.stdout)["expectedOutputs"]
         for stage_id in ("01", "01a", "01b", "02", "03", "03a", "03b",

@@ -4,6 +4,9 @@ This directory owns no artefacts or transition. It is a reference
 container for five top-level sub-stages; `04d` and `04e` contain
 structural red/green child stages.
 
+> **Completed example.** The worked instance of the implementation stages is at
+> [`../../../../examples/UC-00-login/stages/04_implement/`](../../../../examples/UC-00-login/stages/04_implement/) — read it if useful; it is illustrative, not a template.
+
 ## Why this stage exists
 
 **Outside-in TDD double-loop.** The outer loop is one failing flow

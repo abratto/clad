@@ -8,6 +8,9 @@ is committed to paper. Without 01a the human reviews concept fan-out
 (01b) and concept anatomy (02) at the same time, which doubles the
 rework cost when a concept turns out to be wrong.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../examples/UC-00-login/stages/01a_responsibility-map/output/`](../../../../examples/UC-00-login/stages/01a_responsibility-map/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - `responsibility-map.md` → 01b (only listed concepts and actions may appear in chains), 02 (each row's `Origin` decides whether the feature binds to a canonical concept or proposes an addition), 03a (one dependency-review card per concept).

@@ -284,7 +284,7 @@ The login `.feature` lives with the feature:
 
 | Artefact | File | Derivation source |
 |---|---|---|
-| `.feature` file | `features/UC-00-login/stages/04_implement/04c_flow-tests/output/login.feature` | `stages/01_usecase/output/usecase.md` (scenarios, preconditions, triggers, postconditions) + `stages/03_syncs/output/` (response body literals) |
+| `.feature` file | `examples/UC-00-login/stages/04_implement/04c_flow-tests/output/login.feature` | `stages/01_usecase/output/usecase.md` (scenarios, preconditions, triggers, postconditions) + `stages/03_syncs/output/` (response body literals) |
 
 The canonical `java-legible` profile runs its outer loop as a **direct JUnit
 flow test** (`LoginFlowTest`) rather than Cucumber step definitions, so it has
@@ -342,4 +342,4 @@ When operating at Stage 04c, follow this checklist:
 | Gherkin template | [`../../templates/feature.feature`](../../templates/feature.feature) | Output template with derivation rules |
 | Step-def skeleton template | [`../../templates/step-definitions.java`](../../templates/step-definitions.java) | Step-def derivation rules |
 | 04c CONTEXT | [`../../templates/feature-skeleton/stages/04_implement/04c_flow-tests/CONTEXT.md`](../../templates/feature-skeleton/stages/04_implement/04c_flow-tests/CONTEXT.md) | Stage process, verify items |
-| Worked example | [`../../features/UC-00-login/stages/04_implement/04c_flow-tests/output/login.feature`](../../features/UC-00-login/stages/04_implement/04c_flow-tests/output/login.feature) | Real `.feature` file |
+| Worked example | [`../../examples/UC-00-login/stages/04_implement/04c_flow-tests/output/login.feature`](../../examples/UC-00-login/stages/04_implement/04c_flow-tests/output/login.feature) | Real `.feature` file |

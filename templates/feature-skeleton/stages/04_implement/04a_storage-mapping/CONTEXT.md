@@ -15,6 +15,9 @@ another's region directly). This stage no longer decides the fact model;
 it only realizes the approved one in RDF, SQL, document storage, or an
 equivalent profile mechanism.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../../examples/UC-00-login/stages/04_implement/04a_storage-mapping/output/`](../../../../../examples/UC-00-login/stages/04_implement/04a_storage-mapping/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - `<Name>.storage.md` → 04d (the test fixture builds against this mapping), and the runtime data layer in the profile.

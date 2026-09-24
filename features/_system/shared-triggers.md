@@ -8,11 +8,3 @@
 
 | Trigger | Outcome | Features | Syncs |
 |---|---|---|---|
-| `PasswordAuth.check` | `badPassword` | UC-00-login | `RespondForLoginWhenCheckBadPassword` |
-| `PasswordAuth.check` | `locked` | UC-00-login | `RespondForLoginWhenCheckLocked` |
-| `PasswordAuth.check` | `ok` | UC-00-login | `GrantForLoginWhenCheckOk` |
-| `Session.grant` | `granted` | UC-00-login | `RespondForLoginWhenGrantGranted` |
-| `UserNaming.lookupByUsername` | `found` | UC-00-login | `CheckForLoginWhenLookupByUsernameFound` |
-| `UserNaming.lookupByUsername` | `refused` | UC-00-login | `RespondForLoginWhenLookupByUsernameRefused` |
-| `Web.request` | `Routed` | UC-00-login | `CheckForLoginWhenLookupByUsernameFound`, `GrantForLoginWhenCheckOk`, `RespondForLoginWhenCheckBadPassword`, `RespondForLoginWhenCheckLocked`, `RespondForLoginWhenGrantGranted`, `RespondForLoginWhenLookupByUsernameRefused` |
-| `Web.request` | `routed` | UC-00-login | `LookupByUsernameForLoginWhenRequestRouted` |

@@ -9,6 +9,9 @@ code. Each sync also commits to one of the four legal data-flow
 patterns (A/B/C/D), which makes Stage 03a's audit and Stage 04e's TDD
 mechanical.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../examples/UC-00-login/stages/03_syncs/output/`](../../../../examples/UC-00-login/stages/03_syncs/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - `<name>.sync.md` → 03a (every `then` call and every `where` clause is tabulated; Pattern D reads are flagged), 04c (the sync chain is what the outer flow test asserts), 04e (one inner red→green TDD loop per sync).
