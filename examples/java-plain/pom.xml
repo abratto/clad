@@ -5,24 +5,32 @@
                              http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>com.example.clad</groupId>
-    <artifactId>clad-reference-impl</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
-    <relativePath>../pom.xml</relativePath>
-  </parent>
-
+  <groupId>com.example.clad</groupId>
   <artifactId>java-plain</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>java-plain</name>
-  <description>Zero-framework quick-start profile on the fire-after-commit engine: the login feature only, no DI and no HTTP server — the transport surface is a method call.</description>
+  <description>CLAD worked-example profile: zero-framework quick-start on the fire-after-commit engine — the login feature only, no DI and no HTTP server (the transport surface is a method call). Standalone: depends on the installed legible-engine artifact.</description>
+
+  <!--
+    Standalone build (not part of the reference-impl reactor). Install the
+    engine first:
+      mvn -f ../../reference-impl/pom.xml -pl legible-engine -am install -DskipTests
+    then:
+      mvn test
+  -->
+  <properties>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <junit.version>5.11.0</junit.version>
+  </properties>
 
   <dependencies>
     <dependency>
       <groupId>com.example.clad</groupId>
       <artifactId>legible-engine</artifactId>
-      <version>${project.version}</version>
+      <version>0.1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -42,6 +50,11 @@
           <release>21</release>
           <parameters>true</parameters>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.0</version>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>

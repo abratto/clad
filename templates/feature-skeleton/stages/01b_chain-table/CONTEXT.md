@@ -8,6 +8,9 @@ resolver for action-name disputes**: if a sync spec (Stage 03)
 disagrees with a chain table, the table wins. That rule keeps Stage 03
 from silently inventing names that nothing else will recognise.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../examples/UC-00-login/stages/01b_chain-table/output/`](../../../../examples/UC-00-login/stages/01b_chain-table/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - `<scenario>-chain.md` → 02 (every action used must be declared in the matching concept spec with the same outcome enum), 03 (each row formalises into a sync `when`/`then` link), 03a (the chain is the dependency graph 03a audits), 04c (the flow test asserts the token sequence the chain predicts).

@@ -6,7 +6,7 @@ import java.util.List;
  * The UC-00-login relational schemas, <em>derived</em> from the Stage 02
  * concept specs' {@code ## State} notation by {@link RmapDeriver} — not
  * hand-authored. The state notation below is copied verbatim from
- * {@code features/UC-00-login/stages/02_concepts/output/*.concept.md};
+ * {@code examples/UC-00-login/stages/02_concepts/output/*.concept.md};
  * {@link RmapDeriverTest} re-reads those files and asserts the derivation
  * matches, so the schema cannot drift from the spec.
  */

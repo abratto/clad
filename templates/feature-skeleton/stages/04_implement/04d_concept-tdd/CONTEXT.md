@@ -13,6 +13,9 @@ London School red/green handoff structural: `04d-red` derives and
 approves tests, `04d-green` implements only against those approved
 tests. One concept, one test fixture, no other concepts in scope (R1).
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../../examples/UC-00-login/stages/04_implement/04d_concept-tdd/output/`](../../../../../examples/UC-00-login/stages/04_implement/04d_concept-tdd/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - approved red concept tests + handoff bundle -> `04d_green-impl/`

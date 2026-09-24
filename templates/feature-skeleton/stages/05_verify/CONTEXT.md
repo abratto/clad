@@ -13,6 +13,9 @@ proves runtime behaviour matches the use case (Part 1, back-trace) and
 that the deployable thing actually runs (Part 2, smoke). Without it,
 *merged* is not *done* — and the next session has no resume-point.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../examples/UC-00-login/stages/05_verify/output/`](../../../../examples/UC-00-login/stages/05_verify/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - `trace.md` → the next feature's Stage 00 (the `Resume point:` line is the bridge between features).

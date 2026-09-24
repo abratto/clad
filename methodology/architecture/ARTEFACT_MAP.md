@@ -221,4 +221,4 @@ re-derivation. (See also
 
 **As a human onboarding:** read `usecase.md`, then walk down the
 diagram in §1 with one of the worked-example artefacts open per stage
-(see [`../../features/UC-00-login/README.md`](../../features/UC-00-login/README.md)).
+(see [`../../examples/UC-00-login/README.md`](../../examples/UC-00-login/README.md)).

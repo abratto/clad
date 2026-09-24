@@ -14,6 +14,9 @@ and hand a precise contract to `04d-green`. Making this a separate ICM
 folder gives weaker models a hard boundary: no production code belongs
 here.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../../../examples/UC-00-login/stages/04_implement/04d_concept-tdd/04d_red-tests/output/`](../../../../../../examples/UC-00-login/stages/04_implement/04d_concept-tdd/04d_red-tests/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - `output/concept-test-derivation.md` plus approved test files -> `04d-green`

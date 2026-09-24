@@ -16,6 +16,9 @@ tests green. Making this a separate ICM folder gives weaker models a
 hard boundary: implementation may consult earlier artefacts, but it may
 not redesign approved tests.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../../../examples/UC-00-login/stages/04_implement/04e_sync-tdd/04e_green-impl/output/`](../../../../../../examples/UC-00-login/stages/04_implement/04e_sync-tdd/04e_green-impl/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - green sync implementation -> Stage 05

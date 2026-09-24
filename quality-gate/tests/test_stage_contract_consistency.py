@@ -36,21 +36,25 @@ class StageContractConsistencyTests(unittest.TestCase):
     def test_canonical_stage00_outputs_resolve_at_system_scope(self):
         """Stage-00 actors/goals are canonical system-scope assets.
 
-        They live at `features/_system/stages/00_actor-goal/output/`, never
-        inside a UC folder. When they are misplaced, the `scenario_coverage`
-        and `port_spec_contract` checks resolve no input and silently skip —
-        UC-00 shipped that way once. Guard the resolver's target, not just the
-        presence of a file."""
-        feature = REPO_ROOT / "features" / "UC-00-login"
+        For a feature under `features/`, they resolve to the sibling
+        `features/_system/stages/00_actor-goal/output/`, never to a per-UC
+        folder. When they are misplaced, the `scenario_coverage` and
+        `port_spec_contract` checks resolve no input and silently skip — UC-00
+        shipped that way once. Guard the resolver's *shape* (a sibling
+        `_system`), not just the presence of a file; a live feature lives under
+        `features/`, so its `_system` sibling is `features/_system`."""
+        feature = REPO_ROOT / "features" / "UC-99-example"
         expected = (REPO_ROOT / "features" / "_system" / "stages"
                     / "00_actor-goal" / "output")
         goals = Path(cs._goals(str(feature)))
         self.assertEqual(goals.parent, expected)
-        self.assertTrue((goals.parent / "actors.md").is_file(),
-                        f"missing system-scope actors.md under {goals.parent}")
-        self.assertTrue(goals.is_file(),
-                        f"missing system-scope goals.md: {goals}")
         self.assertEqual(Path(cs._port_spec(str(feature))).parent, expected)
+
+        # The worked example is self-contained under `examples/` (frozen, not a
+        # live feature): its Stage-00 outputs travel with it.
+        example = REPO_ROOT / "examples" / "UC-00-login" / "system-stage-00"
+        self.assertTrue((example / "actors.md").is_file())
+        self.assertTrue((example / "goals.md").is_file())
 
     def test_stage_contracts_advance_through_the_cli_not_by_walking_on(self):
         """A stage contract must never instruct the agent to open the next
@@ -58,7 +62,7 @@ class StageContractConsistencyTests(unittest.TestCase):
         (`./clad advance`, AGENTS.md §2 principles 12-13). The old
         `## Next stage` link-and-proceed phrasing contradicted that rule and
         was the most agent-confusing drift in the repo."""
-        roots = [SKELETON, REPO_ROOT / "features" / "UC-00-login"]
+        roots = [SKELETON, REPO_ROOT / "examples" / "UC-00-login"]
         offenders = []
         for root in roots:
             for cf in sorted(root.rglob("stages/**/CONTEXT.md")):

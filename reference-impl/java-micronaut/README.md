@@ -47,7 +47,7 @@ change.
 The action log is **in-memory** in every fire-after-commit profile — only
 concept state differs. The same `Concept`/`SyncRule` code the
 [`java-legible`](../java-legible/) profile runs against `InMemoryFactStore`,
-[`java-plain`](../java-plain/) boots method-only, and this profile runs against
+[`examples/java-plain/`](../../examples/java-plain/) boots method-only, and this profile runs against
 whichever `FactStore` `clad.storage` selects, proven by `legible-storage`'s
 `StorageContractTest`.
 

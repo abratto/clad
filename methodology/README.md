@@ -46,7 +46,7 @@ CLAD targets. They are paraphrases of, and citations to, Meng & Jackson
 
 ## 5. Worked example — how a CLAD session actually runs
 
-- [`WALKTHROUGH.md`](WALKTHROUGH.md) — turn-by-turn replay of producing UC-00-login from brief through Stage 05, with the loaded `CONTEXT.md`, opened inputs, written outputs, and gate question called out at every turn. Read this alongside [`../features/UC-00-login/README.md`](../features/UC-00-login/README.md).
+- [`WALKTHROUGH.md`](WALKTHROUGH.md) — turn-by-turn replay of producing UC-00-login from brief through Stage 05, with the loaded `CONTEXT.md`, opened inputs, written outputs, and gate question called out at every turn. Read this alongside [`../examples/UC-00-login/README.md`](../examples/UC-00-login/README.md).
 
 ## 6. Optional overlays
 

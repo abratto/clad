@@ -11,7 +11,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DESCRIBE = REPO_ROOT / "quality-gate" / "describe_feature.py"
 VERIFY_CHAIN = REPO_ROOT / "quality-gate" / "verify_chain_grammar.py"
-FEATURE = REPO_ROOT / "features" / "UC-00-login"
+FEATURE = REPO_ROOT / "examples" / "UC-00-login"
 
 
 class MachineContractTests(unittest.TestCase):

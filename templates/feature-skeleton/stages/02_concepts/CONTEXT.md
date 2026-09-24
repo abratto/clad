@@ -20,6 +20,9 @@ of two things per concept: **binds** to an existing canonical concept, or
 **proposes** an addition to the vocabulary. Hard rule **R1** is enforced here:
 no concept names another concept's state, actions, or types beyond opaque ids.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../examples/UC-00-login/stages/02_concepts/output/`](../../../../examples/UC-00-login/stages/02_concepts/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - `concept-bindings.md` → 03b/04b (which concepts to derive models/specs for),

@@ -1,7 +1,7 @@
 # templates/feature-skeleton/
 
 The empty CLAD feature skeleton. **Copy this folder** to start a new
-per-UC feature (Stages 01–05); do not copy `features/UC-00-login/`
+per-UC feature (Stages 01–05); do not copy `examples/UC-00-login/`
 (which contains worked example content).
 
 > **Stage 00 is system-level.** It lives in
@@ -52,7 +52,7 @@ gates, and each sub-agent produces exactly one stage. See
 
 - No `00_actor-goal/` stage. That stage is system-level and belongs only
   in `features/_system/`. Do not create it inside a UC folder.
-- No example artefacts. Do not copy `features/UC-00-login/output/*` into a
+- No example artefacts. Do not copy `examples/UC-00-login/output/*` into a
   new feature; derive your own from the actor/goal stage.
 - No feature-specific `README.md` content. Replace the starter `README.md`
   with one that explains your new feature.

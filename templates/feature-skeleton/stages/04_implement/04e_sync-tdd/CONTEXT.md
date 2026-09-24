@@ -13,6 +13,9 @@ School red/green handoff structural: `04e-red` derives and approves
 sync tests, `04e-green` implements only against those approved tests and
 turns the outer flow tests green.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../../examples/UC-00-login/stages/04_implement/04e_sync-tdd/output/`](../../../../../examples/UC-00-login/stages/04_implement/04e_sync-tdd/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - approved red sync tests + handoff bundle -> `04e_green-impl/`

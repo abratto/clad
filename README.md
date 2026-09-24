@@ -325,7 +325,7 @@ Steer in plain language: "what's next", "let's do UC-02", "redo the syncs".
 **Reading order** (if you want the full picture):
 [`AGENTS.md`](AGENTS.md) → [`methodology/README.md`](methodology/README.md) →
 [`methodology/WALKTHROUGH.md`](methodology/WALKTHROUGH.md) →
-[`features/UC-00-login/README.md`](features/UC-00-login/README.md)
+[`examples/UC-00-login/README.md`](examples/UC-00-login/README.md)
 
 ### Requirements
 
@@ -360,14 +360,13 @@ workflow.session-per-stage=false
 
 CLAD is **public, pre-1.0, and still evolving.** It ships a complete
 methodology loop, agent guides, a worked example
-([`features/UC-00-login/`](features/UC-00-login/README.md)), and a tiered
+([`examples/UC-00-login/`](examples/UC-00-login/README.md)) with its
+zero-framework [`java-plain/`](examples/java-plain/) build, and a tiered
 reference stack under
 [`reference-impl/`](reference-impl/README.md) on the zero-dependency
-fire-after-commit engine (`dev.legible.engine`): [`java-plain/`](reference-impl/java-plain/)
-(a plain-Java quick-start: the login feature only, no framework — the
-transport surface is a method call), the canonical multi-feature
-[`java-legible/`](reference-impl/java-legible/) profile (the recommended
-implementation), and a durable deployable
+fire-after-commit engine (`dev.legible.engine`): the canonical multi-feature
+[`java-legible/`](reference-impl/java-legible/) profile (the engine's
+test/demo), and a durable deployable
 [`java-micronaut/`](reference-impl/java-micronaut/)
 profile — Micronaut for the HTTP transport, Postgres concept state derived
 from the Stage 03b data models (R-map), with a `Dockerfile` +
@@ -390,7 +389,7 @@ concerns, so you can start from one and swap the other.
 
 | If you want to… | Start from | Transport | Concept state |
 |---|---|---|---|
-| See the smallest complete CLAD app (a method call, no framework) | [`java-plain/`](reference-impl/java-plain/) | none (method call) | in-memory `FactStore` |
+| See the smallest complete CLAD app (a method call, no framework) | [`examples/java-plain/`](examples/java-plain/) | none (method call) | in-memory `FactStore` |
 | Study the full sync model (fan-out, Pattern D, `OPTIONAL`, joins) | [`java-legible/`](reference-impl/java-legible/) | none (method call) | in-memory `FactStore` |
 | **Build a real backend service** | [`java-micronaut/`](reference-impl/java-micronaut/) | Micronaut HTTP | in-memory (default) or Postgres (`clad.storage`) |
 
@@ -446,16 +445,17 @@ clad/
 │   ├── plan-board.md                Optional sequencing board
 │   └── ...
 │
-├── features/
-│   ├── _system/                     System-level Stage 00 (run once per brief)
-│   └── UC-00-login/                 Worked example (stages 00–05)
+├── features/                        Your project's use cases
+│   └── _system/                     System-level Stage 00 (run once per brief)
+├── examples/
+│   ├── UC-00-login/                 Worked example (stages 00–05) + system-stage-00
+│   └── java-plain/                  Zero-framework realisation of the example (standalone)
 │
 └── reference-impl/
     ├── legible-engine/             Canonical engine (dev.legible.engine, zero-dependency)
-    ├── java-plain/                 Plain-Java quick-start (login only, no framework)
-    ├── java-legible/               Canonical profile — recommended
+    ├── java-legible/               Canonical in-memory profile (engine test/demo)
     ├── java-micronaut/             Micronaut HTTP transport; storage selectable (memory/postgres)
-    ├── legible-storage/            FactStore backends (Jena / Postgres)
+    ├── legible-storage/            FactStore backends (in-memory / Postgres)
     └── LEGACY.md                   Retired Jena/RDF stack pointer (last at v0.4.0)
 ```
 

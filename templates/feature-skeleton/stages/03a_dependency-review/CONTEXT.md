@@ -22,6 +22,9 @@ edge, but the edge is a purpose judgment, made in the graph.
 
 This stage does **not** emit the dependence graph.
 
+> **Completed example.** A worked instance of this stage's output is at
+> [`../../../../examples/UC-00-login/stages/03a_dependency-review/output/`](../../../../examples/UC-00-login/stages/03a_dependency-review/output/) — read it if useful; it is illustrative, not a template.
+
 **Feeds:**
 
 - `<concept>-card.md` → 03b (Pattern D fields drive conceptual data-model coverage), 04b (per-concept contract author sees the full inbound contract), 04d (concept TDD knows its inbound surface), 04e (sync TDD knows which concepts it must double).

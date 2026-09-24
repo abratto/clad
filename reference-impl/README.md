@@ -16,13 +16,11 @@ the canonical runtime is the **fire-after-commit engine**:
   `when`/`where`/`then` rules. Coordination happens **after** an action is
   committed to a per-flow action log — there are no transactions and no
   rollback.
-- [`java-plain/`](java-plain/) — the plain-Java quick-start: the login
-  feature only, zero framework. No DI, no HTTP server — the transport
-  surface is a method call. Start here.
-- [`java-legible/`](java-legible/) — the canonical in-memory profile:
-  UC-00-login plus example features (social, tagging, token) exercising the
-  full sync model — fan-out, Pattern D reads, `OPTIONAL`, `?_eachthen`
-  aggregation, `bind(uuid)`, route scoping, and the flow-token back-trace.
+- [`java-legible/`](java-legible/) — the canonical in-memory profile and the
+  engine's test/demo: the worked example's login feature plus `social`,
+  `tagging`, and `token`, exercising the full sync model — fan-out, Pattern D
+  reads, `OPTIONAL`, `?_eachthen` aggregation, `bind(uuid)`, route scoping, and
+  the flow-token back-trace.
 - [`java-micronaut/`](java-micronaut/) — the Micronaut HTTP
   Ports & Adapters profile: Micronaut for the HTTP transport, Postgres
   concept state via `RmapPostgresFactStore` (R-map-derived from the Stage
@@ -50,9 +48,12 @@ maintained here. The last version that contains it is tag `v0.4.0`; see
 
 | Profile | Use it when you need | Transport | Concept state |
 |---|---|---|---|
-| `java-plain` | the smallest complete example / method-call quick start | none (method call) | in-memory `FactStore` |
-| `java-legible` | the full sync-model catalogue (seed features) | none / method call | in-memory `FactStore` |
+| `java-legible` | the engine's test/demo catalogue (seed features), in-memory | none / method call | in-memory `FactStore` |
 | `java-micronaut` | **a real backend service** (HTTP; storage selectable) | Micronaut HTTP | in-memory (default) or Postgres (`clad.storage`) |
+
+The worked example's zero-framework `java-plain` profile now lives with the
+example:
+[`../examples/java-plain/`](../examples/java-plain/) (standalone build).
 
 **Transport and storage are independent.** The three profiles above pair a
 transport choice with a storage choice; the engine sees only `FactStore`. To

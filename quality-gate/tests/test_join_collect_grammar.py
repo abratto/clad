@@ -431,7 +431,7 @@ class JoinNamingAndCoverageTests(unittest.TestCase):
         # UC-00-login: all transitions present -> PASS.
         r = subprocess.run(
             [sys.executable, str(QUALITY_GATE / "verify_sync_transition_coverage.py"),
-             "--feature", str(REPO_ROOT / "features/UC-00-login")],
+             "--feature", str(REPO_ROOT / "examples/UC-00-login")],
             cwd=REPO_ROOT, capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn("PASS", r.stdout)

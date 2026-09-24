@@ -14,6 +14,13 @@
 > topological level have no dependence edges between them and may be built in
 > parallel (D7).
 
+> **A project's corpus starts empty.** CLAD seeds no concepts: an app's domain
+> is not known in advance. The corpus grows only from *this* project's features
+> (promoted on Gate 2 approval), so the graph below begins with no edges. See
+> the completed example at
+> [`../../examples/UC-00-login/`](../../examples/UC-00-login/) for what a filled
+> graph looks like.
+
 ## How to read an edge
 
 An edge `A → B` ("A requires B") means: in this app, `A` cannot function
@@ -25,44 +32,24 @@ a wiring detail — resolve it here before scheduling.
 
 | Concept | requires | Why (extrinsic, app-specific) |
 |---|---|---|
-| `UserNaming` | — | Root: it mints the opaque `UserId` other concepts key on. |
-| `PasswordAuth` | `UserNaming` | Its currency is `UserId`; in this app the only supplier of a `UserId` is `UserNaming`. |
-| `Session` | `UserNaming` | A session records a principal as a `UserId`; supplied only by `UserNaming`. |
-
-`Session` does **not** require `PasswordAuth`. A session merely records that an
-authentication happened; it is coherent without `PasswordAuth`. The
-"authenticate, then grant" sequencing of a login is **coordination**, expressed
-by a sync — not a dependence. This is the canonical example of why 03a cards
-are evidence for an edge rather than its source.
+| *(none yet)* | — | Promote a feature's concepts (Gate 2) and record the edges this project depends on. |
 
 ## Topological levels (implementation schedule)
 
-- **Level 0:** `UserNaming`
-- **Level 1:** `PasswordAuth`, `Session`
+- *(none yet)*
 
-Levels are the parallel-work units (D7). `PasswordAuth` and `Session` share no
-edge and may be authored concurrently once `UserNaming` is canonical.
+Levels are the parallel-work units (D7). Concepts in the same level share no
+edge and may be authored concurrently.
 
 ## Valid subsets
 
 Every app is a subset of the vocabulary plus its edges. A subset is **coherent**
 when it is closed under `requires` (every concept's suppliers are present).
-
-| Subset | Concepts | Coherent? | Rationale |
-|---|---|---|---|
-| Naming only | `UserNaming` | yes | Root concept stands alone. |
-| Naming + auth | `UserNaming`, `PasswordAuth` | yes | Authentication without sessions. |
-| Naming + session | `UserNaming`, `Session` | yes | Anonymous/attributed sessions. |
-| Login app | `UserNaming`, `PasswordAuth`, `Session` | yes | The worked example `UC-00-login`. |
-
-A subset that contains `PasswordAuth` or `Session` but **not** `UserNaming` is
-incoherent — its supplier is missing. Because this graph is reviewed (not
-derived), coherence is judged by the human at corpus acceptance; the promotion
-receipt records any pending dependence claims for that review.
+With an empty corpus there is nothing to schedule yet; the graph fills in as
+concepts are promoted.
 
 ## Provenance
 
-Seeded from the `UC-00-login` worked example's three concepts
-(`UserNaming`, `PasswordAuth`, `Session`). Per D2 the canonical specs live in
-[`concepts/`](concepts/); the generated index is
-[`concepts-catalog.md`](concepts-catalog.md).
+The canonical specs live in [`concepts/`](concepts/); the generated index is
+[`concepts-catalog.md`](concepts-catalog.md). This project's corpus starts
+empty and is seeded only by its own promoted features.

@@ -13,7 +13,7 @@
 
 | # | Phase | Feature(s) | Status | Notes |
 |---|---|---|---|---|
-| 1 | Seed methodology | `UC-00-login` | done | Worked example, end-to-end through Stage 04. |
+| 1 | Seed methodology | `examples/UC-00-login` | done | Worked example, end-to-end; unbundled into `examples/` so `features/` is project workspace only. |
 | 2 | First real feature | `UC-01-<slug>` | next | Replace this row when you start your first feature. |
 
 ## Backlog
@@ -34,7 +34,7 @@
 
 > Updated at the end of every working session.
 
-- **Last gate passed:** `UC-00-login` Stage 05 (worked example shipped)
+- **Last gate passed:** worked example shipped (`examples/UC-00-login` Stage 05)
 - **Next stage:** start `UC-01-<slug>` Stage 00 (actor/goal)
 - **Blockers:** none
 - **Last updated:** 2026-09-24 — documented the ways of working (single session / one sub-agent per stage / session-per-stage) and reference-profile guidance; completed the `java-micronaut` transport/storage split and the Jena backend demotion.
