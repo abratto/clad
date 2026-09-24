@@ -10,6 +10,36 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.13.0] — 2026-09-24
+
+**Unbundle the worked example.** `features/` becomes project workspace only;
+the teaching material moves to `examples/`. Directory-contract change.
+
+- **The worked example moves out of the way.** `features/UC-00-login/` →
+  **`examples/UC-00-login/`** (frozen; its Stage-00 outputs travel with it as
+  `examples/UC-00-login/system-stage-00/`). Reference implementation renamed
+  too: the zero-framework quick-start moves to
+  **`examples/java-plain/`** (standalone build — install `legible-engine`
+  first). The engine demo stays in `reference-impl/java-legible/`, reframed as
+  the engine's test/demo profile.
+- **The concept corpus starts empty.** A project's domain is unknown in
+  advance, so CLAD no longer seeds login concepts into a fresh clone:
+  `features/_system/concepts/` ships as empty scaffolds and the catalog,
+  dependence graph, and shared-trigger view regenerate empty. The example's
+  vocabulary is frozen history inside the example. See
+  `maintenance/unbundle-worked-example.md`.
+- **Per-stage reference access.** Every skeleton stage contract now opens with
+  a "Completed example → `examples/UC-00-login/stages/NN_*/output/`" pointer —
+  illustrative, not a template — so the end-to-end example stays available at
+  each relevant stage without duplicating artefacts.
+
+**Upgrade notes:** if you depended on `reference-impl/java-plain/` via the
+reactor, build it standalone from `examples/java-plain/` (requires
+`mvn -f reference-impl/pom.xml -pl legible-engine -am install -DskipTests`
+once). A project that wants the SEED corpus shape it had before keeps
+`examples/` alongside a re-seeded corpus; a new project starts empty. See
+`maintenance/unbundle-worked-example.md`.
+
 ## [0.12.0] — 2026-09-24
 
 **Ways of working + a reference-stack clarification.** Documentation for how a
