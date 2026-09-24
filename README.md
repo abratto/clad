@@ -368,7 +368,7 @@ fire-after-commit engine (`dev.legible.engine`): [`java-plain/`](reference-impl/
 transport surface is a method call), the canonical multi-feature
 [`java-legible/`](reference-impl/java-legible/) profile (the recommended
 implementation), and a durable deployable
-[`java-micronaut-postgres/`](reference-impl/java-micronaut-postgres/)
+[`java-micronaut/`](reference-impl/java-micronaut/)
 profile — Micronaut for the HTTP transport, Postgres concept state derived
 from the Stage 03b data models (R-map), with a `Dockerfile` +
 `docker-compose.yml` and a `fly.toml` for Fly.io. The legacy
@@ -392,9 +392,9 @@ concerns, so you can start from one and swap the other.
 |---|---|---|---|
 | See the smallest complete CLAD app (a method call, no framework) | [`java-plain/`](reference-impl/java-plain/) | none (method call) | in-memory `FactStore` |
 | Study the full sync model (fan-out, Pattern D, `OPTIONAL`, joins) | [`java-legible/`](reference-impl/java-legible/) | none (method call) | in-memory `FactStore` |
-| **Build a real backend service** | [`java-micronaut-postgres/`](reference-impl/java-micronaut-postgres/) | Micronaut HTTP | Postgres (R-map), Docker/Fly.io |
+| **Build a real backend service** | [`java-micronaut/`](reference-impl/java-micronaut/) | Micronaut HTTP | in-memory (default) or Postgres (`clad.storage`) |
 
-`java-micronaut-postgres` is the profile to copy when you are building an HTTP
+`java-micronaut` is the profile to copy when you are building an HTTP
 backend: Micronaut owns the transport, and the domain state persists through
 the engine's `FactStore`/`Region` SPI. Storage is an infrastructure concern,
 not a methodology one — the same concept and sync code runs over in-memory,
@@ -454,7 +454,7 @@ clad/
     ├── legible-engine/             Canonical engine (dev.legible.engine, zero-dependency)
     ├── java-plain/                 Plain-Java quick-start (login only, no framework)
     ├── java-legible/               Canonical profile — recommended
-    ├── java-micronaut-postgres/    Durable profile (Micronaut + R-map Postgres, Docker/Fly.io)
+    ├── java-micronaut/             Micronaut HTTP transport; storage selectable (memory/postgres)
     ├── legible-storage/            FactStore backends (Jena / Postgres)
     └── LEGACY.md                   Retired Jena/RDF stack pointer (last at v0.4.0)
 ```

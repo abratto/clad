@@ -93,7 +93,7 @@ model first.
 
 The deterministic mapping from the Stage 03b CSDP fact model to this schema is
 Halpin's Rmap (arity + uniqueness + mandatory roles). See the
-`java-micronaut-postgres` profile's `RELATIONAL_LOWERING.md` for the
+`java-micronaut` profile's `RELATIONAL_LOWERING.md` for the
 profile-specific rule set.
 
 Relational profiles may instead choose **fact realization** — persisting facts

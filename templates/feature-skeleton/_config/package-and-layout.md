@@ -41,7 +41,7 @@ reference implementation when they are not correct for this project.
    copied **verbatim** into `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/engine/`,
    changing only the package declaration. Never author engine/runtime
    classes from scratch. For a durable stack the reference is
-   `reference-impl/java-micronaut-postgres/` (Micronaut transport, R-map
+   `reference-impl/java-micronaut/` (Micronaut transport, R-map
    concept state via `com.example.clad:legible-storage`); for a scaffold
    without a framework use `reference-impl/java-plain/`. Only concepts,
    syncs, boundary DTOs, and the transport adapter are written per feature.

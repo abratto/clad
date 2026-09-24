@@ -19,7 +19,7 @@
     <module>java-legible</module>
     <module>legible-bench</module>
     <module>legible-storage</module>
-    <module>java-micronaut-postgres</module>
+    <module>java-micronaut</module>
   </modules>
 
   <properties>

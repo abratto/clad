@@ -1,0 +1,20 @@
+micronaut:
+  router:
+    static-resources:
+      public:
+        paths: classpath:public
+        mapping: /**
+
+# Concept-state backend: `memory` (default, no database needed) or `postgres`.
+# The engine's FactStore SPI is the boundary, so concepts and syncs are
+# identical either way; only where state persists changes. Postgres-specific
+# beans (datasource, StoreInitializer) are inert unless clad.storage=postgres.
+clad:
+  storage: memory
+
+datasources:
+  default:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/clad}
+    username: ${PGUSER:clad}
+    password: ${PGPASSWORD:clad}
+    driver-class-name: org.postgresql.Driver

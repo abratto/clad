@@ -23,7 +23,7 @@ the canonical runtime is the **fire-after-commit engine**:
   UC-00-login plus example features (social, tagging, token) exercising the
   full sync model — fan-out, Pattern D reads, `OPTIONAL`, `?_eachthen`
   aggregation, `bind(uuid)`, route scoping, and the flow-token back-trace.
-- [`java-micronaut-postgres/`](java-micronaut-postgres/) — the durable
+- [`java-micronaut/`](java-micronaut/) — the Micronaut HTTP
   Ports & Adapters profile: Micronaut for the HTTP transport, Postgres
   concept state via `RmapPostgresFactStore` (R-map-derived from the Stage
   03b data models; Flyway owns base DDL, jOOQ introspects it). Ships a
@@ -42,7 +42,7 @@ the canonical runtime is the **fire-after-commit engine**:
 
 The original transactional-predicate/RDF (Jena) stack — the `clad-engine`
 module and the `java-micronaut-jena` profile — was **retired** after the
-`java-micronaut-postgres` re-lowering. It is not built, checked, or
+`java-micronaut` re-lowering. It is not built, checked, or
 maintained here. The last version that contains it is tag `v0.4.0`; see
 [`LEGACY.md`](LEGACY.md).
 
@@ -52,7 +52,7 @@ maintained here. The last version that contains it is tag `v0.4.0`; see
 |---|---|---|---|
 | `java-plain` | the smallest complete example / method-call quick start | none (method call) | in-memory `FactStore` |
 | `java-legible` | the full sync-model catalogue (seed features) | none / method call | in-memory `FactStore` |
-| `java-micronaut-postgres` | **a real backend service** (HTTP, durable state, containers, Fly.io) | Micronaut HTTP | Postgres (`RmapPostgresFactStore`) |
+| `java-micronaut` | **a real backend service** (HTTP; storage selectable) | Micronaut HTTP | in-memory (default) or Postgres (`clad.storage`) |
 
 **Transport and storage are independent.** The three profiles above pair a
 transport choice with a storage choice; the engine sees only `FactStore`. To
