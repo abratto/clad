@@ -53,7 +53,99 @@ class SyncParityTests(unittest.TestCase):
             self.assertIn("then mismatch", result.stdout)
 
 
-class TestNamingFlatLayoutTests(unittest.TestCase):
+class FalseGreenTests(unittest.TestCase):
+    """A gate must not exit 0 on a defect: missing input may skip, but present
+    input that yields nothing comparable must FAIL
+    (maintenance/gate-verdict-hardening.md)."""
+
+    def _run(self, script, *args):
+        return run(str(QG / script), *args)
+
+    def test_outcome_alignment_fails_on_empty_chain_rows(self):
+        # A chain file whose every row is a terminal respond row parses to zero
+        # comparable rows: a defect, not an absence.
+        with tempfile.TemporaryDirectory() as temporary:
+            chain = Path(temporary) / "chain"
+            chain.mkdir()
+            write(chain / "login-chain.md",
+                  "## Chain\n\n"
+                  "| # | When | Then |\n|---|---|---|\n"
+                  "| 1 | `Web/request: [ ... ] => [ Routed ]` | `Web/respond: [ 200 ]` |\n")
+            contract = Path(temporary) / "contract"
+            contract.mkdir()
+            write(contract / "UserNaming.contract.md", "# UserNaming — contract\n")
+            result = self._run("verify_outcome_alignment.py",
+                               "--chain-dir", str(chain),
+                               "--contract-dir", str(contract))
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("FAIL", result.stdout)
+
+    def test_outcome_alignment_skips_when_chain_dir_absent(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            contract = Path(temporary) / "contract"
+            contract.mkdir()
+            write(contract / "UserNaming.contract.md", "# UserNaming — contract\n")
+            result = self._run("verify_outcome_alignment.py",
+                               "--chain-dir", str(Path(temporary) / "missing"),
+                               "--contract-dir", str(contract))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("SKIP", result.stdout)
+
+    def test_scenario_coverage_fails_on_missing_chain_dir_with_scenarios(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            write(root / "goals.md",
+                  "## In scope\n\n- Sign in\n")
+            write(root / "usecase.md",
+                  "## Scenarios\n\n### Scenario: sign-in\n\nstuff\n")
+            result = self._run("verify_scenario_coverage.py",
+                               "--goals", str(root / "goals.md"),
+                               "--usecase", str(root / "usecase.md"),
+                               "--chain-dir", str(root / "no-chain"),
+                               "--sync-dir", str(root / "no-sync"))
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("FAIL", result.stdout)
+
+    def test_additivity_fails_on_missing_proposal_contract(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            feature = root / "features/UC-01-x"
+            write(feature / "stages/01a_responsibility-map/output/responsibility-map.md",
+                  "| Concept | Origin | Owned state | Owned actions | Notes |\n|---|---|---|---|---|\n"
+                  "| `Widget` | `extends:UC-00` | `x: Map<Id, V>` | `act` | — |\n")
+            corpus = root / "corpus"
+            write(corpus / "Widget.concept.md", "# Widget\n\n## State\n\nx\n")
+            # A canonical contract exists; the proposal's 04b_contract is empty.
+            write(corpus / "Widget.contract.md",
+                  "# Widget — contract\n\n## Actions\n\n"
+                  "### `act(order: OrderId)`\n\n"
+                  "- **Outcomes:** `OK`, `Refused`\n")
+            (feature / "stages/04_implement/04b_contract/output").mkdir(parents=True)
+            result = self._run("verify_concept_additivity.py",
+                               "--feature", str(feature), "--corpus", str(corpus))
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("contract", result.stdout.lower())
+
+    def test_shared_triggers_ignores_whitespace_eol_drift(self):
+        # A generated view that differs only by trailing whitespace / CRLF is
+        # current (logical comparison), not stale.
+        with tempfile.TemporaryDirectory() as temporary:
+            features = Path(temporary) / "features"
+            system = features / "_system"
+            system.mkdir(parents=True)
+            import sys as _sys
+            _sys.path.insert(0, str(QG))
+            import generate_shared_triggers as gst
+            fresh = gst.render(str(features))
+            drifted = "\r\n".join(line + "   " for line in fresh.split("\n"))
+            write(system / "shared-triggers.md", drifted)
+            result = self._run("verify_shared_triggers_current.py",
+                               "--features-dir", str(features))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("PASS", result.stdout)
+
+
+
     def _root(self, temporary):
         root = Path(temporary) / "dev/legible/example/health"
         root.mkdir(parents=True)

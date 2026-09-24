@@ -31,6 +31,48 @@ def run(script, *arguments):
     )
 
 
+class GateLineParsingTests(unittest.TestCase):
+    """One grammar for the RESUME gate line
+    (maintenance/gate-verdict-hardening.md): parse and write share
+    artifact_parsers, so the three former copies cannot drift."""
+
+    SKELETON = ("- **Gate 1 (Requirements):** `pending` | `approved` | `rejected` | `auto-approved`\n"
+                "- **Gate 2 (Architecture):** `approved`\n"
+                "- **Gate 3 (Executable spec):** `pending`\n")
+
+    def test_parse_reads_the_token(self):
+        self.assertEqual(ap.parse_gate_status(self.SKELETON, 2, "Architecture"), "approved")
+        self.assertEqual(ap.parse_gate_status(self.SKELETON, 3, "Executable spec"), "pending")
+
+    def test_parse_returns_none_when_absent(self):
+        self.assertIsNone(ap.parse_gate_status(self.SKELETON, 1, "Nonexistent"))
+
+    def test_write_round_trips_skeleton_format(self):
+        text, matched = ap.set_gate_status(self.SKELETON, 1, "Requirements", "approved")
+        self.assertTrue(matched)
+        self.assertEqual(ap.parse_gate_status(text, 1, "Requirements"), "approved")
+        # The other lines are untouched.
+        self.assertEqual(ap.parse_gate_status(text, 2, "Architecture"), "approved")
+
+    def test_write_preserves_uc00_completed_format(self):
+        uc00 = ("- **Gate 2 (Architecture):** `approved`\n"
+                "- **Gate 2 content hash:** `624ecad3`\n")
+        text, matched = ap.set_gate_status(uc00, 2, "Architecture", "auto-approved")
+        self.assertTrue(matched)
+        self.assertEqual(ap.parse_gate_status(text, 2, "Architecture"), "auto-approved")
+        self.assertIn("**Gate 2 content hash:** `624ecad3`", text,
+                      "the content-hash line must survive a status write")
+
+    def test_write_reports_no_match(self):
+        text, matched = ap.set_gate_status(self.SKELETON, 9, "Nope", "approved")
+        self.assertFalse(matched)
+        self.assertEqual(text, self.SKELETON)
+
+    def test_write_rejects_untrusted_status(self):
+        with self.assertRaises(ValueError):
+            ap.set_gate_status(self.SKELETON, 1, "Requirements", "definitely-approved")
+
+
 def sync_rule(name, tconcept="Web", taction="request", toutcome="Routed",
               then_concept="Inventory", then_action="lend"):
     return (

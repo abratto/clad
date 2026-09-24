@@ -34,7 +34,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
 
 PROVENANCE = re.compile(r"^introduced-by\s+(.+?)\s*$", re.MULTILINE)
-GATE2_APPROVED = re.compile(r"^- \*\*Gate 2 \([^)]*\):\*\*\s+`approved`", re.MULTILINE)
+
+
+def gate2_approved(resume_text):
+    """True when the feature's RESUME records Gate 2 as approved (single grammar:
+    artifact_parsers.parse_gate_status)."""
+    return ap.parse_gate_status(resume_text, 2, "Architecture") == "approved"
 
 
 def corpus_specs(concepts_dir):
@@ -119,7 +124,7 @@ def main():
                 if concept not in corpus:
                     resume = os.path.join(feature, "RESUME.md")
                     approved = (os.path.isfile(resume)
-                                and GATE2_APPROVED.search(open(resume, encoding="utf-8").read()))
+                                and gate2_approved(open(resume, encoding="utf-8").read()))
                     if approved:
                         failures.append(
                             f"{slug}/{concept}: Gate 2 approved but the proposal is "

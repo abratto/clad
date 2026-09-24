@@ -1258,3 +1258,44 @@ def feature_scope_from_path(path: str) -> str:
     feature = parts[index + 1]
     match = re.match(r"UC-\d+-(.+)", feature)
     return pascal_token(match.group(1) if match else feature)
+
+
+# ---------------------------------------------------------------------------
+# RESUME gate lines (single grammar; see maintenance/gate-verdict-hardening.md)
+#
+# The gate-status line is read by verify_stage_sequence.py and
+# verify_concept_registry.py and written by advance.py. Three copies of this one
+# grammar was a drift source, so the parse/write helpers live here.
+# ---------------------------------------------------------------------------
+
+_TRUSTED_GATE_STATUSES = {"approved", "auto-approved", "rejected", "pending",
+                          "awaiting-human", "awaiting_human"}
+
+
+def _gate_line_prefix(gate: int, label: str) -> str:
+    return rf"- \*\*Gate {gate} \({re.escape(label)}\):\*\*"
+
+
+def parse_gate_status(text: str, gate: int, label: str) -> str | None:
+    r"""The recorded status token for a gate, or None if the line is absent.
+
+    Matches the canonical line ``- **Gate N (Label):** `token```.
+    """
+    match = re.search(rf"^{_gate_line_prefix(gate, label)}\s+`([\w-]+)`",
+                      text, re.MULTILINE)
+    return match.group(1) if match else None
+
+
+def set_gate_status(text: str, gate: int, label: str, status: str) -> tuple[str, bool]:
+    """Replace a gate status token in place; return (new_text, matched).
+
+    `matched` is False when no canonical line is present, so a caller can warn
+    instead of silently failing to record a gate.
+    """
+    if status not in _TRUSTED_GATE_STATUSES:
+        raise ValueError(f"untrusted gate status: {status!r}")
+    new_text, n = re.subn(
+        rf"^({_gate_line_prefix(gate, label)})\s+`[\w-]+`.*$",
+        rf"\1 `{status}`",
+        text, count=1, flags=re.MULTILINE)
+    return new_text, bool(n)

@@ -58,6 +58,7 @@ import subprocess
 import sys
 
 import clad_stages as cs
+import artifact_parsers as ap
 from verify_stage_sequence import (
     compute_output_hash,
     gate_approval_current,
@@ -99,19 +100,29 @@ def _resolve_bool(cli_value: str | None, env_key: str, prop_key: str,
 
 def set_gate_status(feature_root: str, gate: int, status: str) -> bool:
     """Write a gate status token into RESUME.md. Returns True if a matching
-    gate line was found and updated."""
+    gate line was found and updated.
+
+    A missing line is a defect, not a no-op: without the update the gate reads
+    `pending` forever. Warn loudly (feature, gate, expected format) so a
+    malformed RESUME surfaces instead of silently blocking the feature."""
     resume_path = os.path.join(feature_root, RESUME_FILE)
     if not os.path.isfile(resume_path):
+        print(f"WARN  cannot record Gate {gate} ({cs.GATE_LABELS[gate]}): "
+              f"{os.path.relpath(resume_path)} does not exist")
         return False
     with open(resume_path) as fh:
         text = fh.read()
     label = cs.GATE_LABELS[gate]
-    pattern = rf"(- \*\*Gate {gate} \({re.escape(label)}\):\*\*)\s+`[\w-]+`.*"
-    new_text, n = re.subn(pattern, rf"\1 `{status}`", text, count=1)
-    if n:
+    new_text, matched = ap.set_gate_status(text, gate, label, status)
+    if matched:
         with open(resume_path, "w") as fh:
             fh.write(new_text)
-    return bool(n)
+        return True
+    print(f"WARN  cannot record Gate {gate} ({label}) in "
+          f"{os.path.relpath(resume_path, feature_root)}: no gate line found. "
+          f"Expected: `- **Gate {gate} ({label}):** `{status}`` "
+          f"(the token may also be `pending`). Fix the RESUME and re-run.")
+    return False
 
 
 def run_script(script: str, argv: list[str]) -> subprocess.CompletedProcess:

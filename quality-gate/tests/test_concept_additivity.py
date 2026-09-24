@@ -165,17 +165,31 @@ class AdditivityTests(unittest.TestCase):
                 Path(temporary) / "UC-98-x",
                 proposal_state=["ref:    MemberId -> String",
                                 "name:   MemberId -> String",
-                                "lastSeen: MemberId -> Timestamp"])
+                                "lastSeen: MemberId -> Timestamp"],
+                proposal_contract=contract())
             result = run(str(QG / "verify_concept_additivity.py"),
                          "--feature", str(root), "--corpus", str(self.corpus(temporary)))
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("PASS", result.stdout)
+
+    def test_missing_proposal_contract_fails(self):
+        """A canonical contract exists but the proposal produced none — a
+        dropped contract is a defect, not a skip."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.feature(
+                Path(temporary) / "UC-97-x",
+                proposal_state=CANON_STATE)
+            result = run(str(QG / "verify_concept_additivity.py"),
+                         "--feature", str(root), "--corpus", str(self.corpus(temporary)))
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("dropped contract", result.stdout.lower())
 
     def test_authorised_exception_passes(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = self.feature(
                 Path(temporary) / "UC-95-x",
                 proposal_state=["ref: MemberId -> String"],
+                proposal_contract=contract(),
                 exception="- `name: MemberId -> String` — retired in maintenance #12\n")
             result = run(str(QG / "verify_concept_additivity.py"),
                          "--feature", str(root), "--corpus", str(self.corpus(temporary)))

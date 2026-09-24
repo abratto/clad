@@ -322,6 +322,48 @@ class GateApprovalAutonomyTests(unittest.TestCase):
             cwd=REPO_ROOT, capture_output=True, text=True,
         )
 
+    def test_set_gate_status_warns_when_no_gate_line_matches(self):
+        """A malformed RESUME must surface, not silently fail to record a gate
+        (maintenance/gate-verdict-hardening.md)."""
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-01-warn"
+            feature.mkdir()
+            (feature / "RESUME.md").write_text(
+                "# RESUME\n\n- **Feature:** `x`\n", encoding="utf-8")
+            captured = io.StringIO()
+            with contextlib.redirect_stdout(captured):
+                wrote = advance.set_gate_status(str(feature), 2, "approved")
+            self.assertFalse(wrote)
+            out = captured.getvalue()
+            self.assertIn("WARN", out)
+            self.assertIn("Gate 2", out)
+            self.assertIn("Architecture", out)
+
+    def test_set_gate_status_warns_when_resume_missing(self):
+        import contextlib
+        import io
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-01-nofile"
+            feature.mkdir()
+            captured = io.StringIO()
+            with contextlib.redirect_stdout(captured):
+                wrote = advance.set_gate_status(str(feature), 1, "approved")
+            self.assertFalse(wrote)
+            self.assertIn("WARN", captured.getvalue())
+
+    def test_set_gate_status_writes_a_matched_line(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-01-ok"
+            feature.mkdir()
+            (feature / "RESUME.md").write_text(
+                "- **Gate 2 (Architecture):** `pending`\n", encoding="utf-8")
+            wrote = advance.set_gate_status(str(feature), 2, "approved")
+            self.assertTrue(wrote)
+            self.assertIn("`approved`",
+                          (feature / "RESUME.md").read_text(encoding="utf-8"))
+
     def test_auto_approved_gate_satisfies_stage_precondition(self):
         with tempfile.TemporaryDirectory() as temporary:
             feature = Path(temporary) / "UC-01-auto"
