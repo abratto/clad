@@ -1,23 +1,49 @@
 # CLAD — Contract-Led, Artefact-Driven Development
 
-> A methodology for building [WYSIWID-compliant](#whats-wysiwid) systems with
-> AI coding agents. One human steering, deterministic enforcement, a fraction
-> of the usual token spend.
+> A **harness-free agentic workflow** for building systems from a
+> plain-language brief. One human steering, one AI coding agent executing,
+> deterministic Python gates controlling the agent's feedback — not a
+> framework controlling the agent. The systems it produces are built on Meng
+> & Jackson's **concepts and synchronizations** (WYSIWID, Onward! 2025):
+> fully decoupled, legible, and reviewable one screen at a time.
+
+## The idea in one paragraph
+
+CLAD answers the three questions any agentic workflow has to answer:
+
+| Question | CLAD's answer |
+|---|---|
+| **What is deterministic?** | Everything mechanical. Python generators derive every artefact that is a pure function of earlier artefacts (syncs, data models, contracts, test scaffolds) — the model never authors them. Python gates check every stage transition, block test feedback on a skipped stage, and refuse a commit that decouples code from spec. |
+| **What does the agent do?** | Only the judgement-laden residue: scoping actors and goals, writing the use case, decomposing it into concepts, and implementing red→green TDD against an executable spec it cannot edit to make tests pass. |
+| **Where is the human?** | At exactly four points: answering a handful of scoping questions up front, and reviewing three gates per use case — Requirements, Architecture, Executable spec — each a set of markdown files on disk you can read, diff, and edit. |
+
+The result: a complete RealWorld backend built by one agent for **$2.91 in
+tokens, 0.2% rework, 0 cross-concept imports, 0 logic defects** — because the
+workflow makes the wrong move unreachable instead of asking the model not to
+make it.
+
+**It runs.** The brief-to-system loop is exercised end-to-end by a bundled
+reference stack: `legible-engine` (zero-dependency, fire-after-commit)
+executing declarative syncs, with profiles for **plain Java** (a login
+quick-start, no framework), the **canonical `java-legible`** multi-feature
+service, and a **durable Micronaut + Postgres** deployment (concept state
+derived from the Stage 03b data models, Docker/Fly.io). Same methodology,
+swappable profile — proof the architecture is not tied to one stack.
 
 ## What's WYSIWID?
 
 Meng & Jackson's WYSIWID paper (Onward! 2025) describes an architecture where
 every system is decomposed into fully decoupled **concepts** — small state
 machines with explicit operational principles — connected only by declarative
-**synchronizations**. No concept imports another. A change to one concept has a
-blast radius of exactly one concept. The code stays legible to humans and LLMs
-alike.
+**synchronizations**. No concept imports another. A change to one concept has
+a blast radius of exactly one concept. The code stays legible to humans and
+LLMs alike.
 
 The paper includes a reference Conduit implementation, demonstrating that
-the architecture works. What it doesn't include is a methodology for
-*building* such systems with an AI coding agent. CLAD is that methodology —
-a staged pipeline with human gates and deterministic enforcement that
-produces WYSIWID-compliant systems from a plain-language brief.
+the architecture works. What it doesn't include is a way to *build* such
+systems with an AI coding agent. CLAD is that missing piece — the staged
+pipeline, human gates, and deterministic enforcement that turn a
+plain-language brief into a WYSIWID-compliant system.
 
 ## How CLAD works
 
@@ -60,7 +86,7 @@ flowchart TD
     G2 -->|"approved"| SPEC
     subgraph SPEC["Executable spec"]
         direction LR
-        STORE["storage mapping"] --> SLICE["SPEC slice"] --> FLOW["flow tests"]
+        STORE["storage mapping"] --> SLICE["concept contract"] --> FLOW["flow tests"]
     end
     G3{"Gate 3"}
     SPEC --> G3
@@ -107,7 +133,7 @@ ships a Python generator so the model never has to author it. Stage
 | 03 syncs | `generate_syncs.py` | one `*.sync.md` per chain-table transition |
 | 03a | `generate_sync_cards.py` | per-concept dependency cards + `pattern-d-summary.md` |
 | 03b | `generate_data_model.py` | CSDP data models (types + constraints auto-derived from `--` annotations) |
-| 04b | `generate_spec.py` | per-concept SPECs |
+| 04b | `generate_contract.py` | per-concept concept contracts |
 | 04c | `generate_feature_files.py` | Gherkin scaffold |
 
 The generator produces the derived skeleton verbatim (names, matrices,
@@ -121,7 +147,7 @@ feature for downstream runtimes, keeping the parsing grammar in one place.
 ## What CLAD guarantees
 
 1. **Requirements → code.** Every in-scope goal becomes a use-case
-   scenario → chain table → concept specs + sync contracts → SPECs +
+   scenario → chain table → concept specs + sync contracts → concept contracts +
    TDD tests → implementation. Nothing appears in code without a
    requirement upstream.
 
