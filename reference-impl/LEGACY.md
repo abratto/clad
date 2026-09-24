@@ -12,7 +12,7 @@ were retired from CLAD. They were:
 They are **no longer part of the build, CI, or any quality-gate check**, and
 they receive no maintenance. The canonical engine is the fire-after-commit
 [`legible-engine/`](legible-engine/); the durable profile is
-[`java-micronaut-postgres/`](java-micronaut-postgres/).
+[`java-micronaut/`](java-micronaut/).
 
 ## Where to find it
 

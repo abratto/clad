@@ -54,7 +54,7 @@ concurrency, and flow-token lineage. Copy `ConceptTest` / `FlowTraceTest` /
 ## Not included by design
 
 No persistence (in-memory only — for durable state use the re-lowered
-[`java-micronaut-postgres`](../java-micronaut-postgres/) profile), no HTTP
+[`java-micronaut`](../java-micronaut/) profile), no HTTP
 (transport surfaces belong to adapter-bearing profiles), no multi-feature
 catalogue (see [`java-legible`](../java-legible/) for the full sync model:
 fan-out, Pattern D reads, `OPTIONAL`, `?_eachthen`, route filters).
