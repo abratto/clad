@@ -21,6 +21,7 @@ The agent MUST run this AFTER the human explicitly says "approved."
 import argparse
 import os
 import re
+import subprocess
 import sys
 
 # Import the gate model + hash from the sibling module (same directory).
@@ -134,6 +135,25 @@ def main():
             with open(resume_path, "w") as f:
                 f.write(content)
             print(f"PASS  Gate {args.gate} ({label}) approved in {resume_path}")
+
+        if args.gate == 3 and not args.baseline:
+            # Gate-3 closure publishes the concept's model/contract companions.
+            # They are derived at 03b/04b, AFTER Gate-2 promotion, so a reused
+            # concept has no canonical contract until its extender refreshes it
+            # (experiment defect D43). Non-fatal: a later reuse is caught by
+            # `verify_reused_concept_contracts.py`, and the refresh is idempotent.
+            proc = subprocess.run(
+                [sys.executable,
+                 os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              "promote_concepts.py"),
+                 "--feature", os.path.abspath(args.feature), "--companions-only"],
+                capture_output=True, text=True)
+            print()
+            for line in (proc.stdout + proc.stderr).strip().splitlines():
+                print(f"  {line}")
+            if proc.returncode != 0:
+                print("  (companion refresh did not complete — re-run "
+                      "`./clad promote-concepts <feature> --companions-only`)")
         print()
         print("  The agent may now proceed to the next stage.")
 

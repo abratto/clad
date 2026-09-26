@@ -28,12 +28,14 @@ use case. Change class `platform`; feature contracts preserved. See
   longer maintenance-scoped. `./clad` no longer silently targets a completed
   feature when several exist.
 - **Model-B correctness.** Promotion regenerates `concepts-catalog.md` against
-  the pending write set (it was stale after every promotion); the 04b contract
-  manifest is derived independently of the promotion-erased state diff; concept
-  checks run for a project's first feature instead of skipping; `concept_additivity`
-  also runs at Stage 02; a reused concept must have a canonical contract
-  (`verify_reused_concept_contracts.py`); `advance` blocks when the full
-  artefact pipeline is broken.
+  the pending write set (it was stale after every promotion); **Gate-3 approval
+  now publishes the concept's data-model/contract companions**
+  (`promote-concepts --companions-only`), so a reused concept has a canonical
+  contract to bind; the 04b contract manifest is derived independently of the
+  promotion-erased state diff; concept checks run for a project's first feature
+  instead of skipping; `concept_additivity` also runs at Stage 02;
+  `verify_reused_concept_contracts.py` guards reuse; `advance` blocks when the
+  full artefact pipeline is broken.
 - **Generators/conventions.** `generate_feature_files.py` emits one Scenario per
   terminal branch with its own status (was one collapsed Scenario asserting the
   first terminal code); `generate_syncs.py` splits multi-field carried payloads

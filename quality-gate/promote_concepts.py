@@ -329,15 +329,70 @@ def dependence_claims(feature_root: str):
     return claims
 
 
+def _refresh_companions(feature_root: str) -> int:
+    """Publish model/contract companions for the feature's already-promoted
+    concepts, without rewriting specs or provenance.
+
+    Data models are derived at 03b and contracts at 04b — both AFTER Gate-2
+    promotion (which owns the spec). Without this refresh a reused concept has a
+    canonical spec and model but no canonical contract, so the first pure-reuse
+    feature failed `outcome_alignment`/`action_chain` (experiment defect D43).
+    Idempotent; run at Gate-3 closure.
+    """
+    corpus = corpus_dir(feature_root)
+    introducer = promoter = ""
+    writes = {}
+    refreshed = []
+    for concept in sorted(proposals_for(feature_root)):
+        canonical_path = os.path.join(corpus, f"{concept}.concept.md")
+        if not os.path.isfile(canonical_path):
+            continue  # not promoted yet; Gate-2 promotion owns the spec
+        with open(canonical_path, encoding="utf-8") as fh:
+            intro, prom = provenance_scope(fh.read())
+        for rel, suffix in (("03b_data-model", "data-model.md"),
+                            ("04_implement/04b_contract", "contract.md")):
+            produced = os.path.join(feature_root, "stages", rel, "output",
+                                    f"{concept}.{suffix}")
+            if not os.path.isfile(produced):
+                continue
+            with open(produced, encoding="utf-8") as fh:
+                text = canonical_companion(fh.read(), concept, intro, prom)
+            target = os.path.join(corpus, f"{concept}.{suffix}")
+            existing = ""
+            if os.path.isfile(target):
+                with open(target, encoding="utf-8") as fh:
+                    existing = fh.read()
+            if existing != text:
+                writes[target] = text
+                refreshed.append(f"{concept}.{suffix}")
+    if not writes:
+        print("PASS  canonical companions already current (nothing to refresh)")
+        return 0
+    try:
+        atomic_write_set(writes)
+    except AtomicWriteFailed as exc:
+        print(f"FAIL  companion refresh aborted and rolled back: {exc}")
+        return 1
+    print(f"PASS  refreshed {len(refreshed)} canonical companion(s): "
+          f"{', '.join(refreshed)}")
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Promote approved NEW/EXTEND proposals into the concept corpus")
     parser.add_argument("--feature", required=True, help="Feature root")
     parser.add_argument("--dry-run", action="store_true",
                         help="Report what would be promoted; write nothing")
+    parser.add_argument("--companions-only", action="store_true",
+                        help="Publish model/contract companions for already-"
+                             "promoted concepts (no spec rewrite); run at Gate-3 "
+                             "closure")
     args = parser.parse_args()
 
     feature_root = os.path.abspath(args.feature)
+    if args.companions_only:
+        return _refresh_companions(feature_root)
     slug = feature_slug(feature_root)
     resume = os.path.join(feature_root, "RESUME.md")
     if not os.path.isfile(resume):

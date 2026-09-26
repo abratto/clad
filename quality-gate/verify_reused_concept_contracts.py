@@ -74,13 +74,14 @@ def main() -> int:
               "has none.")
         print("      Promotion runs at Gate 2 (before 04b derives contracts), so a "
               "concept introduced/extended earlier may lack one.")
-        print("      Remedy (idempotent): re-run promotion for the feature that "
-              "last derived the concept")
+        print("      Remedy (idempotent): publish the companions for the feature "
+              "that last derived the concept")
         print("      — see its `Introduced by`/`Used by` row in "
               "features/_system/concepts-catalog.md:")
-        print(f"        ./clad promote-concepts <that-feature>")
+        print("        ./clad promote-concepts <that-feature> --companions-only")
         print(f"      (this feature is `{slug}`; if it extends the concept, "
-              f"`./clad promote-concepts {slug}` also publishes it.)")
+              f"the same command for `{slug}` also publishes it. Gate-3 "
+              f"approval does this automatically.)")
         return 1
 
     print(f"PASS  {len(reused)} reused concept(s) bind a canonical contract")
