@@ -12,7 +12,7 @@
 | `UserNaming` | `new` | `users: Map<UserId, Username>` | `register`, `lookupByUsername` | Account *creation* is out of UC-00 scope; `register` exists for concept coherence |
 | `PasswordAuth` | `new` | `credentials: Map<UserId, PasswordHash>`, `failedAttempts: Map<UserId, Int>` | `setCredential`, `check` | Lockout counter belongs here, not in `Session` |
 | `Session` | `new` | `sessions: Map<SessionId, UserId>` | `grant`, `lookup` | Session lifetime / revocation is out of UC-00 scope |
-| `Web` | `new` | `(none — bootstrap concept)` | `handle`, `respond` | Sole HTTP entry (R4); see `methodology/architecture/WEB_CONCEPT.md` |
+| `Web` | `new` | `(none — bootstrap concept)` | `request`, `respond` | Sole HTTP entry (R4); see `methodology/architecture/WEB_CONCEPT.md` |
 
 ## Proposals
 

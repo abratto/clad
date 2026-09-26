@@ -133,7 +133,9 @@ Run:
 `verify_file_manifest.py`, writes the stage receipt, prints the artefact
 summary and the `approve_gate.py --gate 2` command, and stops (exit 10).
 Present its summary to the human and **wait**. Do NOT run `present_gate.py`
-yourself and do NOT edit `RESUME.md`.
+yourself and do NOT edit the gate snapshot (the `Gate N` status lines and
+content-hash lines) in `RESUME.md`. You MAY refresh the live working-memory
+fields (`Current stage`, `Files touched`, `Next steps`) per AGENTS.md §2.9.
 
 Only after the human explicitly says "approved", run the approval command
 `advance.py` printed, then re-run `./clad advance` to cross the gate. Gate 2

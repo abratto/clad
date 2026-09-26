@@ -134,6 +134,36 @@ derived status codes/token chains.
 - Passwords and secrets MUST NOT appear in any token payload.
 
 
+## Profile & harness notes (read before starting)
+
+- **Discovery path (D21).** The wired check reads
+  `<test.source.root>/resources/features/`. For a Maven profile whose
+  `test.source.root` is `app/src/test/java`, that is
+  `app/src/test/java/resources/features/` — NOT the Maven-standard
+  `app/src/test/resources/features/`. If the configured path is absent the
+  check silently SKIPs, so deploy the `.feature` where the check reads it
+  (deploying to both paths is safe).
+- **A compiling app is required at this red stage (D22).** `TDD.md` says 04c is
+  tests/derivation only, but the completion rule requires test compilation and
+  step 6 requires a profile integration test. For a greenfield derived project
+  that means writing the **boundary scaffold** (bootstrap adapter/controller,
+  DTOs) here — no business concept or sync implementation.
+- **Step bodies must be non-empty (D23).** `verify_step_definition_parity.py`
+  treats comment-only/empty bodies as trivial and fails. A "skeleton" still
+  needs real (e.g. chain-action assertion) bodies; `@Disabled` makes it red.
+- **`@Disabled` on a Cucumber `@Suite` runner is not guaranteed (D24).** The
+  JUnit Platform Suite engine may ignore it. Safe here because 04c only needs
+  `test-compile`; do not rely on `@Disabled` to exclude a runner from `mvn test`.
+- **Step-definition checks resolve different directories by entry point (D25).**
+  `advance.py` points them at the 04c `output/`; this CONTEXT points them at the
+  discovery path. Both must pass — verify against both.
+- **Shared Cucumber glue across features (D37).** A shared Background step or
+  runtime belongs in a single shared world/harness class, not duplicated per
+  feature step-definition class (duplicate glue throws at run time).
+- **Collection-coverage fixtures must match the assertion (D45).** When the
+  response omits the just-closed/just-changed item, size a multi-item fixture
+  accordingly; do not assert `>= N` from a fixture that yields `N-1`.
+
 ## Progress checklist
 
 - [ ] One `.feature` file per use-case scenario

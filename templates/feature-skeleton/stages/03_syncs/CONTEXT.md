@@ -149,7 +149,7 @@ not introduce new logic.
 
 ## Progress checklist
 
-- [ ] One `.sync.md` per chain-table row (When → Then)
+- [ ] One `.sync.md` per chain-table **transition** (When → Then), i.e. rows−1 for a linear chain
 - [ ] `when` clause names trigger concept + action + outcome
 - [ ] `then` clause names target concept + action + inputs
 - [ ] Sync Contract Matrix complete for each sync
@@ -206,6 +206,12 @@ python3 ../../../../quality-gate/verify_sync_transition_coverage.py \
 ### Semantic checks (human)
 
 - No sync contains imperative branching or persists state.
+- **Pattern-C literals are constants.** A `Web/respond` (or any `then`)
+  literal must not embed a `<field>` placeholder for interpolation — the
+  declarative engine does not interpolate. If the response must name a
+  request value (e.g. an error message quoting the offending ISBN), bind that
+  value as a field (Pattern A/B) and let the contract carry it; otherwise the
+  response ships the placeholder text verbatim.
 - **Sync count:** the number of sync files in `output/` equals the
   number of transitions in the chain table(s) for this feature (each
   chain-table row-to-row arrow = one sync).

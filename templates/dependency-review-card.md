@@ -1,6 +1,6 @@
 <!-- Template for Stage 03a (03a_dependency-review), the per-UC COORDINATION REVIEW. One file per concept. Purpose: see methodology/implementation/STAGES.md §"Stage 03a" and methodology/architecture/SYNC_PATTERNS.md. This card is EVIDENCE for a concept-dependence edge, never its source; the app-level graph is features/_system/concept-dependence.md. -->
 
-# Coordination review — `<ConceptName>`
+# Dependency review — `<ConceptName>`
 
 > Per-concept **coordination** card (Stage 03a). One file per concept that
 > appears in any chain table. The card answers two questions:

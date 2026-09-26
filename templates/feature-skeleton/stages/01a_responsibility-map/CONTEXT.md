@@ -75,7 +75,7 @@ paper.
 
 - [ ] One row per concept identified in the use case
 - [ ] State columns filled for each concept
-- [ ] Action columns filled with names + outcomes
+- [ ] Action columns filled with names only (no signatures, no outcomes)
 - [ ] Web bootstrap concept listed
 - [ ] Self-audit: `./clad verify` passes
 ## Outputs

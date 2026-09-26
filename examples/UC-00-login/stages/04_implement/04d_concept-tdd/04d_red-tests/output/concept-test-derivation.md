@@ -1,65 +1,95 @@
---- template: templates/test-intent-derivation-map.md ---
-# Concept Test Derivation Map — UC-00-login
+<!-- template: templates/test-intent-derivation-map.md -->
 
-> Stage 04d-red handoff to 04d-green. Documents test coverage for all contract
-> outcomes plus the red-to-green handoff bundle.
+# Test-intent derivation map — UC-00-login (concepts)
 
-## Source artefacts
+> Stage 04d-red handoff to 04d-green. Format A (`### \`Concept.action\` →
+> test class` plus the `@Nested` table) is the grammar
+> `verify_concept_test_derivation.py` consumes; this worked example was updated
+> from a legacy coverage-matrix layout that the parser read as zero rows.
 
-- **Flow tests:** `04c_flow-tests/output/login.feature` — 4 Gherkin scenarios
-- **contracts:** `UserNaming.contract.md`, `PasswordAuth.contract.md`, `Session.contract.md`
-- **Hard rules:** R1 (no cross-concept imports), R5 (flow token), R9 (distinct outcomes)
+## Use-case scenarios → flow tests
 
-## Coverage matrix
-
-### UserNaming (2 actions, 4 outcomes)
-
-| Action | Outcome | Test coverage | Location |
+| Scenario | Trigger | Flow test | Status |
 |---|---|---|---|
-| `register` | `REGISTERED` | Uncovered by login flow | — (needs unit test) |
-| `register` | `USERNAME_TAKEN` | Uncovered by login flow | — (needs unit test) |
-| `lookupByUsername` | `FOUND` | Covered — successful-login scenario | `CucumberTest` |
-| `lookupByUsername` | `NOT_FOUND` | Covered — unknown-user scenario | `CucumberTest` |
+| `successful-login` | `POST /login` | `CucumberTest` | green |
+| `wrong-password` | `POST /login` | `CucumberTest` | green |
+| `unknown-user` | `POST /login` | `CucumberTest` | green |
+| `lockout` | `POST /login` | `CucumberTest` | green |
 
-### PasswordAuth (2 actions, 4 outcomes)
+## Concept actions → concept tests
 
-| Action | Outcome | Test coverage | Location |
-|---|---|---|---|
-| `setCredential` | `STORED` | Uncovered by login flow | — (needs unit test) |
-| `check` | `OK` | Covered — successful-login scenario | `CucumberTest` |
-| `check` | `BAD_PASSWORD` | Covered — wrong-password scenario | `CucumberTest` |
-| `check` | `LOCKED` | Covered — lockout scenario | `CucumberTest` |
+### `UserNaming.lookupByUsername` → test class: `UserNamingLookupByUsernameTest`
 
-### Session (2 actions, 3 outcomes)
+| # | @Nested | Test method | Outcome | Source | Preconditions |
+|---|---|---|---|---|---|
+| 1 | `WhenUserExists` | `shouldReturnUserIdWhenUsernameIsRegistered()` | `FOUND` | Flow: `successful-login` | none |
+| 2 | `WhenUserUnknown` | `shouldRefuseWhenUsernameIsNotRegistered()` | `NOT_FOUND` | Flow: `unknown-user` | none |
 
-| Action | Outcome | Test coverage | Location |
-|---|---|---|---|
-| `grant` | `GRANTED` | Covered — successful-login scenario | `CucumberTest` |
-| `lookup` | `FOUND` | Uncovered by login flow | — (needs unit test) |
-| `lookup` | `UNKNOWN` | Uncovered by login flow | — (needs unit test) |
+### `UserNaming.register` → test class: `UserNamingRegisterTest`
 
-## Summary
+| # | @Nested | Test method | Outcome | Source | Preconditions |
+|---|---|---|---|---|---|
+| 1 | `WhenUsernameIsFree` | `shouldRegisterWhenUsernameIsFree()` | `REGISTERED` | Spec: `02_concepts/output/UserNaming.concept.md` | none |
+| 2 | `WhenUsernameIsTaken` | `shouldRefuseWhenUsernameIsTaken()` | `USERNAME_TAKEN` | Spec: `02_concepts/output/UserNaming.concept.md` | a user named `ada` exists |
 
-- **Total contract outcomes:** 11
-- **Covered by flow tests:** 6 (all login-scenario outcomes)
-- **Uncovered:** 5 (`register`/REGISTERED, `register`/USERNAME_TAKEN, `setCredential`/STORED, `lookup`/FOUND, `lookup`/UNKNOWN)
-- **Architecture compliance:** Verified — `LegibleArchitectureRulesTest` passes R1–R5
+### `PasswordAuth.check` → test class: `PasswordAuthCheckTest`
+
+| # | @Nested | Test method | Outcome | Source | Preconditions |
+|---|---|---|---|---|---|
+| 1 | `WhenPasswordMatches` | `shouldReturnOkWhenPasswordMatches()` | `OK` | Flow: `successful-login` | a credential is stored |
+| 2 | `WhenPasswordDiffers` | `shouldReturnBadPasswordWhenPasswordDiffers()` | `BAD_PASSWORD` | Flow: `wrong-password` | a credential is stored |
+| 3 | `WhenAttemptsExhausted` | `shouldLockWhenAttemptsAreExhausted()` | `LOCKED` | Flow: `lockout` | a credential and a locked counter state exist |
+
+### `PasswordAuth.setCredential` → test class: `PasswordAuthSetCredentialTest`
+
+| # | @Nested | Test method | Outcome | Source | Preconditions |
+|---|---|---|---|---|---|
+| 1 | `WhenCredentialIsAbsent` | `shouldStoreWhenNoCredentialExists()` | `STORED` | Spec: `02_concepts/output/PasswordAuth.concept.md` | none |
+
+### `Session.grant` → test class: `SessionGrantTest`
+
+| # | @Nested | Test method | Outcome | Source | Preconditions |
+|---|---|---|---|---|---|
+| 1 | `WhenPasswordOk` | `shouldGrantWhenPasswordIsOk()` | `GRANTED` | Flow: `successful-login` | a stored credential matches |
+
+### `Session.lookup` → test class: `SessionLookupTest`
+
+| # | @Nested | Test method | Outcome | Source | Preconditions |
+|---|---|---|---|---|---|
+| 1 | `WhenSessionExists` | `shouldReturnSessionWhenItExists()` | `FOUND` | Spec: `02_concepts/output/Session.concept.md` | a granted session exists |
+| 2 | `WhenSessionUnknown` | `shouldReturnUnknownWhenSessionIsAbsent()` | `UNKNOWN` | Spec: `02_concepts/output/Session.concept.md` | none |
+
+## Sync rules → sync tests
+
+> For Stage 04e. One test class per sync; interaction verification only.
+
+| Sync | @Nested class | Test method | Trigger pattern | Resulting actions |
+|---|---|---|---|---|
+| `GrantForLoginWhenCheckOk` | `WhenCheckOk` | `shouldGrantWhenCheckOk()` | `PasswordAuth.check -> OK` | `Session.grant` |
+
+## Red-To-Green Handoff Bundle
+
+| Item | Value |
+|---|---|
+| Approved test files | `UserNamingLookupByUsernameTest`, `PasswordAuthCheckTest`, `SessionGrantTest` |
+| Exact package names | `dev.legible.example.login` |
+| Exact class names | as above |
+| Exact method signatures under test | see the tables above |
+| Red evidence command | `mvn -f reference-impl/pom.xml test -pl java-legible` |
+| Expected red outcome | failing assertions / `@Disabled` stubs |
+| Next implementation target | `SyncRules` + concept implementations |
+
+## Test file continuity
+
+| Test file (test-source-root-relative) | SHA-256 at red |
+|---|---|
+| `dev/legible/example/login/UserNamingLookupByUsernameTest.java` | `<64-hex-sha256>` |
+| `dev/legible/example/login/PasswordAuthCheckTest.java` | `<64-hex-sha256>` |
+| `dev/legible/example/login/SessionGrantTest.java` | `<64-hex-sha256>` |
 
 ## Notes
 
-The reference implementation tests login-critical concept behavior through
-`UserNamingLookupByUsernameTest`, `PasswordAuthCheckTest`, CucumberTest,
-CucumberTest, and LegibleArchitectureRulesTest. Dedicated concept tests for
-the 5 uncovered non-login outcomes would complete 04d-red contract coverage.
-The current baseline is `mvn verify` with 46 tests and 0 failures.
-
----
-
-## Red-to-green handoff
-
-- **Approved red tests:** None — existing tests are flow-level and pass green
-- **Concept packages:** `com.example.app.concepts.usernaming`, `concepts.passwordauth`, `concepts.session`
-- **Concept classes:** `UserNamingConcept`, `PasswordAuthConcept`, `SessionConcept`
-- **Test command:** `mvn -f reference-impl/java-micronaut-jena/pom.xml test`
-- **Expected red outcome:** N/A — existing tests are green
-- **Next implementation target:** Sync TDD (04e)
+The non-login outcomes (`register`/`REGISTERED`, `register`/`USERNAME_TAKEN`,
+`setCredential`/`STORED`, `lookup`/`FOUND`, `lookup`/`UNKNOWN`) are spec-defined
+and covered by dedicated unit tests rather than the login flow — as the
+coverage rule requires, each carries a `Spec:` source.
