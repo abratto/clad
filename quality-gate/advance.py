@@ -534,6 +534,34 @@ def main() -> None:
                       autonomous, session_per_stage)
         sys.exit(1)
 
+    # --- 1b. Whole-pipeline pre-flight --------------------------------------
+    # A stage subset can miss corpus-level checks (e.g. concept_registry, which
+    # is not attached to any single stage). `advance` must not report PASS while
+    # the full artefact gate is broken (experiment defect D17).
+    artefacts = os.path.join(HERE, "verify_artefacts.py")
+    feature_prefix = os.path.join(os.path.dirname(HERE), "features") + os.sep
+    in_tree = os.path.abspath(feature_root).startswith(feature_prefix)
+    if os.path.isfile(artefacts) and in_tree:
+        proc = subprocess.run([sys.executable, artefacts],
+                              capture_output=True, text=True,
+                              cwd=os.path.dirname(HERE))
+        if proc.returncode != 0:
+            combined = (proc.stdout or "") + (proc.stderr or "")
+            write_receipt(feature_root, stage, [], "fail", combined.strip(),
+                          autonomous, session_per_stage)
+            print(BAR)
+            print("  ADVANCE BLOCKED — the full artefact pipeline is not intact")
+            print(f"  Feature: {feature_name}")
+            print(BAR)
+            for line in combined.strip().splitlines()[-25:]:
+                print(f"  {line}")
+            print()
+            print(AGENT_INSTRUCTION)
+            print("  Fix the failing pipeline checks above (run ./clad verify).")
+            print("  Do NOT advance.")
+            print(BAR)
+            sys.exit(1)
+
     # --- 2. Stage checks ----------------------------------------------------
     results = run_checks(feature_root, stage)
     failed = [r for r in results if r["status"] == "fail"]

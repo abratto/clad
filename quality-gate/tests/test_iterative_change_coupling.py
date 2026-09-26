@@ -64,6 +64,45 @@ class IterativeChangeCouplingTests(unittest.TestCase):
     def test_empty_diff_is_presentation_change(self):
         self.assertTrue(coupling.is_import_or_package_only_diff(""))
 
+    # --- D29/D30: bootstrap and non-implementation classes are exempt ------
+    def test_bootstrap_concept_impl_is_exempt(self):
+        paths = ["app/src/main/java/dev/library/lending/concepts/web/WebConcept.java"]
+        self.assertEqual(coupling.changed_concept_impls(paths), set())
+
+    def test_production_concept_impl_is_detected(self):
+        paths = ["app/src/main/java/dev/library/lending/concepts/lending/LendingConcept.java"]
+        self.assertEqual(coupling.changed_concept_impls(paths), {"Lending"})
+
+    def test_test_class_under_concepts_is_exempt(self):
+        paths = ["app/src/test/java/dev/library/lending/concepts/lending/LendingRecordTest.java"]
+        self.assertEqual(coupling.changed_concept_impls(paths), set())
+
+    def test_fixture_and_aggregator_are_exempt(self):
+        paths = [
+            "app/src/main/java/dev/library/lending/syncs/SyncTestFixture.java",
+            "app/src/main/java/dev/library/lending/syncs/EnrolSyncRules.java",
+        ]
+        self.assertEqual(coupling.changed_sync_impls(paths), set())
+
+    def test_sync_impl_is_detected(self):
+        paths = ["app/src/main/java/dev/library/lending/syncs/ChargeForLoanWhenOverdue.java"]
+        self.assertEqual(coupling.changed_sync_impls(paths), {"ChargeForLoanWhenOverdue"})
+
+    # --- D31: pairing only on modification, not greenfield addition --------
+    def test_greenfield_new_file_is_exempt(self):
+        paths = ["app/src/main/java/dev/library/lending/concepts/lending/LendingConcept.java"]
+        self.assertEqual(
+            coupling.changed_concept_impls(paths, is_new=lambda p: True), set())
+
+    def test_modified_existing_impl_is_detected(self):
+        paths = ["app/src/main/java/dev/library/lending/concepts/lending/LendingConcept.java"]
+        self.assertEqual(
+            coupling.changed_concept_impls(paths, is_new=lambda p: False), {"Lending"})
+
+    def test_missing_matches_reports_unpaired_impl(self):
+        self.assertEqual(coupling.missing_matches({"Lending"}, {"Stocking"}), ["Lending"])
+        self.assertEqual(coupling.missing_matches({"Lending"}, {"Lending"}), [])
+
 
 if __name__ == "__main__":
     unittest.main()

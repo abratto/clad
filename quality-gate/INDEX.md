@@ -21,7 +21,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_close_evidence.py` | Stage 05 WARN-only close evidence. | stage 05 (Verify) | gate |
 | `verify_code_refs.py` | backticked code references resolve (advisory) | project-level (every `verify_artefacts` run) | advisory |
 | `verify_collection_coverage.py` | Stage gate: collection responses carry empty + multi-item (and repeated-key) fixtures. | stage 04c (Flow tests) | gate |
-| `verify_concept_additivity.py` | Model B additive-only gate for corpus concepts. | stage 03b (Data model); stage 04b (Concept contract) | gate |
+| `verify_concept_additivity.py` | Model B additive-only gate for corpus concepts. | stage 02 (Concept specs); stage 03b (Data model); stage 04b (Concept contract) | gate |
 | `verify_concept_corpus_current.py` | the canonical corpus is not behind its promotions | project-level (every `verify_artefacts` run) | gate |
 | `verify_concept_criteria.py` | criteria gate: the mechanical subset of the concept criteria. | stage 02 (Concept specs) | gate |
 | `verify_concept_field_assertions.py` | Enforce R14/R16 for Java concept tests. | stage 04d-red (Concept TDD red); stage 04d-green (Concept TDD green) | gate |
@@ -48,6 +48,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_profile_paths.py` | Profile-path integrity: configured implementation paths must not silently audit a different tree than the feature declares. | stage 04a (Storage mapping); stage 04c (Flow tests); stage 04d-red (Concept TDD red); stage 04d-green (Concept TDD green); stage 04e-red (Sync TDD red) | gate |
 | `verify_reference_integrity.py` | no dangling artefact reference after a rename | project-level (every `verify_artefacts` run) | gate |
 | `verify_relational_mapping.py` | Conditional gate: relational storage mappings (Stage 04a) must satisfy the Rmap rules. | stage 04a (Storage mapping) | gate |
+| `verify_reused_concept_contracts.py` | a REUSED concept must have a canonical contract in the corpus. | stage 04b (Concept contract) | gate |
 | `verify_scenario_coverage.py` | Stage gate: goal → scenario → chain → sync coverage. | stage 03 (Syncs) | gate |
 | `verify_shared_action_contracts.py` | a concept action/outcome vocabulary shared across features does not drift | project-level (every `verify_artefacts` run) | gate |
 | `verify_shared_triggers_current.py` | the generated cross-UC shared-trigger view is current | project-level (every `verify_artefacts` run) | advisory |

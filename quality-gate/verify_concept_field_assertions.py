@@ -114,8 +114,10 @@ def has_outcome_assertion(body):
 def is_refusal_test(body):
     """A test that asserts 'refused' outcome or 'refusalReason' tests a
     refused action — no happy-path flow-token fields are expected."""
-    has_refused_outcome = bool(re.search(r'"refused"', body))
-    has_refusal_reason = bool(re.search(r'refusalReason', body))
+    # Outcome casing is not fixed across profiles (`refused`, `REFUSED`,
+    # `Refused`), so match case-insensitively (experiment defect D27).
+    has_refused_outcome = bool(re.search(r'"refused"', body, re.IGNORECASE))
+    has_refusal_reason = bool(re.search(r'refusalreason', body, re.IGNORECASE))
     return has_refused_outcome or has_refusal_reason
 
 

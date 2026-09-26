@@ -122,13 +122,23 @@ active_feature() {
         fi
     done
     if [ -n "$best2" ]; then echo "$best2"; return 0; fi
-    # Fallback: first feature with a RESUME.md
+    # No in-progress feature. Do NOT silently pick a completed one: once several
+    # features are complete, guessing the gate target is unsafe and mis-stamps a
+    # closed feature's receipt (experiment defect D41). Refuse and name them.
+    local complete_list="" n_complete=0
     for d in "$FEATURES_DIR"/UC-*/; do
         [ -d "$d" ] || continue
         [ -f "$d/RESUME.md" ] || continue
-        basename "$d"
-        return 0
+        n_complete=$((n_complete + 1))
+        complete_list="${complete_list}  $(basename "$d")
+"
     done
+    if [ "$n_complete" -ge 1 ]; then
+        echo "No in-progress feature; ${n_complete} feature(s) appear complete:" >&2
+        printf '%s' "$complete_list" >&2
+        echo "Pass the feature explicitly (e.g. ./clad advance UC-XX-slug) or set CLAD_FEATURE=<name>." >&2
+        return 1
+    fi
     echo "" >&2
     return 1
 }

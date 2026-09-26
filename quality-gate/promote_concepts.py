@@ -39,6 +39,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
@@ -63,10 +64,30 @@ def catalog_out_path(corpus: str) -> str:
     return os.path.join(os.path.dirname(corpus.rstrip(os.sep)), "concepts-catalog.md")
 
 
-def _catalog_text(corpus: str, feature_root: str) -> str:
-    """The catalog content this promotion would write, via the real generator."""
+def _catalog_text(corpus: str, feature_root: str, overrides=None) -> str:
+    """The catalog content this promotion would write, via the real generator.
+
+    `overrides` is `{concept: spec_text}` for specs that are part of this
+    promotion's write set but are NOT yet on disk. The catalog must be rendered
+    against the POST-promotion corpus, otherwise it is generated from the old
+    on-disk state and omits the concepts just promoted (experiment defect D16:
+    every promotion left the catalog stale until the next stage regenerated it).
+    """
     import generate_concepts_catalog as gcc
-    return gcc.render(corpus, os.path.join(repo_root(feature_root), "features"))
+    features_dir = os.path.join(repo_root(feature_root), "features")
+    if not overrides:
+        return gcc.render(corpus, features_dir)
+    with tempfile.TemporaryDirectory() as tmp:
+        if os.path.isdir(corpus):
+            for fname in os.listdir(corpus):
+                if fname.endswith(".concept.md"):
+                    shutil.copy2(os.path.join(corpus, fname),
+                                 os.path.join(tmp, fname))
+        for concept, text in overrides.items():
+            with open(os.path.join(tmp, concept + ".concept.md"), "w",
+                      encoding="utf-8") as fh:
+                fh.write(text)
+        return gcc.render(tmp, features_dir)
 
 
 def feature_slug(feature_root: str) -> str:
@@ -436,7 +457,8 @@ def main():
     # the catalog is itself an input to the write set, so a render failure
     # aborts before any write.
     try:
-        writes[catalog_out_path(corpus)] = _catalog_text(corpus, feature_root)
+        writes[catalog_out_path(corpus)] = _catalog_text(
+            corpus, feature_root, {c: planned[c][0] for c in planned})
     except Exception as exc:  # noqa: BLE001
         print(f"FAIL  promotion aborted before writing — the corpus is unchanged: {exc}")
         return 1

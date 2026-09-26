@@ -53,7 +53,10 @@ FIELD_RE = re.compile(r"^\s*(\w+)\s*:\s*([^->]+?)\s*->")
 # object-oriented trap Jackson describes: `userid`, `username`, `password`.
 BARE_FIELD_RE = re.compile(r"^\s*[\w]+(?:[\s,]+[\w]+)*\s*$")
 # The concept header: concept Name [TypeParams]
-HEADER_RE = re.compile(r"^\s*concept\s+(\w+)")
+# MULTILINE: a proposal may carry a leading `<!-- proposal snapshot -->`
+# comment before the `concept <Name>` header (templates/concept.md does), so the
+# header must be matchable on any line (experiment defect D7).
+HEADER_RE = re.compile(r"^\s*concept\s+(\w+)", re.MULTILINE)
 
 
 def check_concept(path):
