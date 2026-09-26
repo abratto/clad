@@ -39,6 +39,13 @@ use case. Change class `platform`; feature contracts preserved. See
   step-definition parity check accepts signed numbers; refusal detection and the
   concept-state header are case/multiline tolerant; the Stage-03 overlap check
   is documented as advisory.
+- **Outcome discipline.** Authored outcome tokens are pinned to
+  SCREAMING_SNAKE_CASE and enforced at Stages 01b/02
+  (`verify_outcome_casing.py`), so chain tables, concept specs, contracts,
+  derivations, and Gherkin agree; a profile's runtime casing is normalised
+  rather than copied. A new check (`verify_distinct_outcomes.py`) fails when one
+  completion token fans out to two terminal responses — the fix is distinct
+  pure guard actions, not one shared `Refused` (D3).
 - **Process.** The Stage-01 contract now requires externally-supplied/policy
   values to be named and cross-use-case references to be addressable.
 

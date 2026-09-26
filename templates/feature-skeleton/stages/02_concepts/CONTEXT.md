@@ -133,6 +133,8 @@ python3 ../../../../quality-gate/verify_concept_proposals.py \
   --feature ../..
 python3 ../../../../quality-gate/verify_concept_additivity.py \
   --feature ../..
+python3 ../../../../quality-gate/verify_outcome_casing.py \
+  --feature ../..
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output \
   --expected "concept-bindings.md,…"  # + one <Name>.concept.md per NEW/EXTEND concept
@@ -150,6 +152,9 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   **additive only** — every canonical state line survives. It runs here, at the
   stage that authors the extension (waiting until 03b/04b let a non-additive
   extension be written first). It skips for `new` concepts (no canonical).
+- **verify_outcome_casing.py:** every flow-token outcome token in a proposal is
+  SCREAMING_SNAKE_CASE (per `FLOW_TOKENS.md` §"Outcome casing"), matching the
+  chain table and the eventual contract enum.
 - **verify_file_manifest.py:** `output/` contains exactly `concept-bindings.md`
   plus one `.concept.md` per NEW/EXTEND concept.
 - **Cross-artefact action-name parity** (`verify_action_chain.py`) needs the

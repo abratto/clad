@@ -106,12 +106,22 @@ Run the following before requesting the human gate:
 ```
 python3 ../../../../quality-gate/verify_chain_grammar.py \
   --chain-dir output
+python3 ../../../../quality-gate/verify_distinct_outcomes.py \
+  --chain-dir output
+python3 ../../../../quality-gate/verify_outcome_casing.py \
+  --feature ../..
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<scenario-name>-chain.md"  # one per scenario
 ```
 
 - **verify_chain_grammar.py:** every row carries exactly one backticked
   outcome token (no pipe unions, no multi-token cells).
+- **verify_distinct_outcomes.py:** a single completion token must not be the
+  trigger of two terminal responses with different statuses. When two
+  request-level refusals need distinct responses, split them into distinct pure
+  guard actions/outcomes before the first write (R23), not one shared `Refused`.
+- **verify_outcome_casing.py:** every authored outcome token is
+  SCREAMING_SNAKE_CASE (per `FLOW_TOKENS.md` §"Outcome casing").
 - **verify_file_manifest.py:** `output/` contains exactly one
   `<scenario-name>-chain.md` per use-case scenario.
 

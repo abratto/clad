@@ -720,6 +720,21 @@ _CHAIN_GRAMMAR = Check(
     requires=lambda r: [CHAIN_DIR(r)],
 )
 
+_DISTINCT_OUTCOMES = Check(
+    name="distinct_outcomes",
+    script="verify_distinct_outcomes.py",
+    build_args=lambda r: ["--chain-dir", CHAIN_DIR(r)],
+    requires=lambda r: [CHAIN_DIR(r)],
+)
+
+_OUTCOME_CASING = Check(
+    name="outcome_casing",
+    script="verify_outcome_casing.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [CHAIN_DIR(r)],
+)
+
+
 _CONCEPT_STATE_RELATIONAL = Check(
     name="concept_state_relational",
     script="verify_concept_state_relational.py",
@@ -774,13 +789,18 @@ STAGES: List[Stage] = [
     Stage("01a", "Responsibility map", "01a_responsibility-map",
           checks=[_FILE_02A]),
         Stage("01b", "Chain table", "01b_chain-table", gate_after=1,
-            checks=[_CHAIN_GRAMMAR, _CHAIN_MANIFEST]),
-    Stage("02", "Concept specs", "02_concepts",
+            # `distinct_outcomes` (D3): a single completion token must not fan
+            # out to two terminal responses. `outcome_casing` (D9/D26): authored
+            # outcome tokens are SCREAMING_SNAKE_CASE, here and in Stage 02.
+            checks=[_CHAIN_GRAMMAR, _DISTINCT_OUTCOMES, _OUTCOME_CASING,
+                    _CHAIN_MANIFEST]),
+        Stage("02", "Concept specs", "02_concepts",
           # `concept_additivity` runs here, at the stage that AUTHORS an extend;
           # waiting until 03b/04b let a non-additive extension be written first
           # (experiment defect D38). It skips for `new` concepts (no canonical).
           checks=[_CONCEPT_STATE_RELATIONAL, _CONCEPT_CRITERIA,
-                  _CONCEPT_PROPOSALS, _CONCEPT_ADDITIVITY, _CONCEPT_MANIFEST]),
+                  _CONCEPT_PROPOSALS, _CONCEPT_ADDITIVITY, _OUTCOME_CASING,
+                  _CONCEPT_MANIFEST]),
     Stage("03", "Syncs", "03_syncs", checks=[_SCENARIO_COVERAGE, _SYNC_MATRIX,
           _SYNC_TRANSITION_COVERAGE,
           _SYNC_CYCLE_GRAPH, _SYNC_OVERLAP]),

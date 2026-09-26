@@ -33,6 +33,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_contract_parity.py` | Stage gate: concept spec actions match contract entries. | stage 04b (Concept contract) | gate |
 | `verify_cucumber_green.py` | Stage gate: Cucumber scenarios must all pass. | stage 04e-green (Sync TDD green) — run by the profile test command | gate |
 | `verify_data_model.py` | Stage gate: CSDP structural validation for data model files. | stage 03b (Data model) | gate |
+| `verify_distinct_outcomes.py` | one completion token must not fan out to two distinct terminal responses. | stage 01b (Chain table) | gate |
 | `verify_feature_file_presence.py` | Stage gate: ensure .feature files exist for Stage 04c. | stage 04c (Flow tests) | gate |
 | `verify_file_manifest.py` | Stage gate: output/ contains exactly the expected files. | stage 01 (Use case); stage 01a (Responsibility map); stage 01b (Chain table); stage 02 (Concept specs); stage 03a (Dependency review); stage 03b (Data model); stage 04b (Concept contract); stage 04d-red (Concept TDD red); stage 04e-red (Sync TDD red) | gate |
 | `verify_gherkin_derivation.py` | Stage gate: Gherkin artefacts match upstream derivation rules. | stage 04c (Flow tests) | gate |
@@ -44,6 +45,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_maintenance_change_readiness.py` | engine/profile/config changes have a governed maintenance record | pre-commit hook | gate |
 | `verify_mechanism_citations.py` | a mechanism claim cites the code it rests on | project-level (every `verify_artefacts` run) | gate |
 | `verify_outcome_alignment.py` | Stage gate: chain-table outcomes match contract enums. | stage 04b (Concept contract) | gate |
+| `verify_outcome_casing.py` | authored outcome tokens are SCREAMING_SNAKE_CASE. | stage 01b (Chain table); stage 02 (Concept specs) | gate |
 | `verify_port_spec_contract.py` | Stage gate: port-spec consumers exist. | stage 04b (Concept contract); stage 04c (Flow tests) | gate |
 | `verify_profile_paths.py` | Profile-path integrity: configured implementation paths must not silently audit a different tree than the feature declares. | stage 04a (Storage mapping); stage 04c (Flow tests); stage 04d-red (Concept TDD red); stage 04d-green (Concept TDD green); stage 04e-red (Sync TDD red) | gate |
 | `verify_reference_integrity.py` | no dangling artefact reference after a rename | project-level (every `verify_artefacts` run) | gate |
