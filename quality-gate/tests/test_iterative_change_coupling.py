@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Regression coverage for iterative-change coupling (R17 presentation change handling)."""
 
+import os
+import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -102,6 +105,23 @@ class IterativeChangeCouplingTests(unittest.TestCase):
     def test_missing_matches_reports_unpaired_impl(self):
         self.assertEqual(coupling.missing_matches({"Lending"}, {"Stocking"}), ["Lending"])
         self.assertEqual(coupling.missing_matches({"Lending"}, {"Lending"}), [])
+
+    # --- D31: coupling governs iterative changes only ---------------------
+    def test_no_active_iterative_change_passes_even_unpaired(self):
+        """Feature-stage work (no active _changes/) is not an R17 change."""
+        fd, path = tempfile.mkstemp(suffix=".txt")
+        try:
+            with os.fdopen(fd, "w") as handle:
+                handle.write(
+                    "app/src/main/java/dev/x/concepts/lending/LendingConcept.java\n")
+            r = subprocess.run(
+                [sys.executable, str(QUALITY_GATE / "verify_iterative_change_coupling.py"),
+                 "--changed-files-file", path],
+                cwd=REPO_ROOT, capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("no active iterative change", r.stdout)
+        finally:
+            os.remove(path)
 
 
 if __name__ == "__main__":

@@ -232,6 +232,31 @@ def has_active_maintenance_record():
     return False
 
 
+def has_active_iterative_change():
+    """True when any feature carries an active `_changes/` record.
+
+    Re-deriving a concept/sync spec+impl is an ITERATIVE change (R17). During
+    ordinary feature-stage work there is no active change record — the feature's
+    own spec and impl are being authored across the gate commits — so coupling
+    does not apply, and requiring the spec in the same commit as a first or
+    extension implementation contradicted the per-gate commit flow (experiment
+    defect D31). Readiness (`verify_iterative_change_readiness.py`) still forces
+    a `_changes/` record for any implementation edit outside new stage work, so
+    this gate cannot be bypassed for a genuine iterative change.
+    """
+    features_dir = Path(__file__).resolve().parent.parent / "features"
+    if not features_dir.is_dir():
+        return False
+    status_re = re.compile(r"^- \*\*Status:\*\*\s*`?active`?\s*$", re.MULTILINE)
+    for change in features_dir.glob("UC-*/_changes/*.md"):
+        try:
+            if status_re.search(change.read_text(encoding="utf-8")):
+                return True
+        except OSError:
+            continue
+    return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Verify iterative implementation/spec coupling in the diff.")
     parser.add_argument("--base", default="origin/main", help="Base ref for git diff detection")
@@ -240,6 +265,11 @@ def main():
 
     if has_active_maintenance_record():
         print("PASS  maintenance-governed change (R20); iterative-change coupling (R17) not applicable")
+        sys.exit(0)
+
+    if not has_active_iterative_change():
+        print("PASS  no active iterative change (R17 coupling not applicable; "
+              "feature-stage work is governed by the readiness/sequence gates)")
         sys.exit(0)
 
     changed = changed_files(args.base, args.changed_files_file)

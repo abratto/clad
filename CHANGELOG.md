@@ -19,12 +19,14 @@ green, plus the generator/convention frictions that forced hand-editing every
 use case. Change class `platform`; feature contracts preserved. See
 `maintenance/v0.14.0-clad-hardening.md`.
 
-- **Commit-time unblocking.** The R17 coupling check now exempts bootstrap
-  concepts (`Web`/`Grpc`/`Cli`/`Stream`) and non-implementation classes, fires
-  only when an already-existing spec+impl is *modified* (not on greenfield
-  addition), and reads only committed+staged files. A `clad.properties` change
-  that only edits derived-project binding keys is no longer maintenance-scoped.
-  `./clad` no longer silently targets a completed feature when several exist.
+- **Commit-time unblocking.** The R17 coupling check now applies only to
+  **iterative changes** (an active `_changes/` record) — ordinary feature-stage
+  commits no longer need the spec in the same commit as the implementation. It
+  also exempts bootstrap concepts (`Web`/`Grpc`/`Cli`/`Stream`) and
+  non-implementation classes, and reads only committed+staged files. A
+  `clad.properties` change that only edits derived-project binding keys is no
+  longer maintenance-scoped. `./clad` no longer silently targets a completed
+  feature when several exist.
 - **Model-B correctness.** Promotion regenerates `concepts-catalog.md` against
   the pending write set (it was stale after every promotion); the 04b contract
   manifest is derived independently of the promotion-erased state diff; concept
