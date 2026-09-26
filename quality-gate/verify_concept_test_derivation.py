@@ -111,12 +111,18 @@ def main():
         derived_outcomes.setdefault(key, set()).add(outcome)
         derived_methods.setdefault(test_class, []).append((test_method, outcome))
 
-    # 3. Cross-reference: every contract outcome has a derivation row
+    # 3. Cross-reference: every contract outcome has a derivation row.
+    # Compare under `normalize_outcome` (D9/D26): the contract enum is
+    # SCREAMING_SNAKE_CASE and a derivation map authored from the concept/chain
+    # token may use the runtime profile's casing (e.g. `Ok`); the two are the
+    # same token under normalisation.
     for (concept, action), spec_outs in sorted(spec_outcomes.items()):
         key = (concept, action)
         derived_outs = derived_outcomes.get(key, set())
-        missing = spec_outs - derived_outs
-        extra = derived_outs - spec_outs
+        spec_by_norm = {ap.normalize_outcome(o): o for o in spec_outs}
+        derived_by_norm = {ap.normalize_outcome(o): o for o in derived_outs}
+        missing = [spec_by_norm[n] for n in spec_by_norm if n not in derived_by_norm]
+        extra = [derived_by_norm[n] for n in derived_by_norm if n not in spec_by_norm]
 
         for outcome in sorted(missing):
             print(f"FAIL  {concept}.{action}: contract outcome '{outcome}' "

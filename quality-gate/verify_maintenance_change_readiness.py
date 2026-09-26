@@ -17,6 +17,20 @@ MAINTENANCE_PATTERNS = (
     re.compile(r"^clad\.properties$"),
 )
 
+# `clad.properties` is a platform-config surface for CLAD itself, but it is ALSO
+# the file a derived project edits to point CLAD at its own code. A change that
+# only edits these derived-project binding keys is project configuration, not a
+# platform change, and must not require a maintenance record (experiment defect
+# D1: the first thing a downstream project does was blocked).
+PROJECT_CONFIG_KEYS = {
+    "test.command",
+    "sync.impl.dir",
+    "concept.impl.dir",
+    "test.source.root",
+    "concepts.dir",
+    "storage.layer",
+}
+
 
 def git_names(args):
     result = subprocess.run(args, check=False, capture_output=True, text=True)
@@ -28,12 +42,43 @@ def changed_files(base, changed_files_file):
         return [line.strip() for line in Path(changed_files_file).read_text().splitlines() if line.strip()]
     names = set(git_names(["git", "diff", "--name-only", f"{base}...HEAD"]))
     names.update(git_names(["git", "diff", "--name-only", "--cached"]))
-    names.update(git_names(["git", "diff", "--name-only"]))
     return sorted(names)
 
 
 def is_maintenance_scope(path):
     return any(pattern.match(path) for pattern in MAINTENANCE_PATTERNS)
+
+
+def changed_property_keys(diff_text):
+    """Keys assigned on added/removed `key=value` lines of a clad.properties diff."""
+    keys = set()
+    for line in diff_text.splitlines():
+        if not (line.startswith("+") or line.startswith("-")):
+            continue
+        if line.startswith("+++") or line.startswith("---"):
+            continue
+        content = line[1:].strip()
+        if not content or content.startswith("#") or "=" not in content:
+            continue
+        keys.add(content.split("=", 1)[0].strip())
+    return keys
+
+
+def clad_properties_diff(path, base):
+    """Unified diff for `path` across the committed-on-branch and staged surfaces."""
+    parts = []
+    for surface in (
+        ["git", "diff", "--unified=0", f"{base}...HEAD", "--", path],
+        ["git", "diff", "--unified=0", "--cached", "--", path],
+    ):
+        parts.extend(git_names(surface))
+    return "\n".join(parts)
+
+
+def is_project_config_only(diff_text):
+    """True when a clad.properties diff only edits derived-project binding keys."""
+    keys = changed_property_keys(diff_text)
+    return bool(keys) and keys <= PROJECT_CONFIG_KEYS
 
 
 def field_value(text, label):
@@ -69,6 +114,13 @@ def main():
     args = parser.parse_args()
 
     scoped = [path for path in changed_files(args.base, args.changed_files_file) if is_maintenance_scope(path)]
+    # A derived project editing only its own binding keys is project config, not
+    # a platform change (D1). A clad.properties-only diff on those keys drops out.
+    if not args.changed_files_file and scoped == ["clad.properties"]:
+        if is_project_config_only(clad_properties_diff("clad.properties", args.base)):
+            print("PASS  clad.properties binding-key change is project configuration, "
+                  "not a platform change")
+            return
     if not scoped:
         print("PASS  no engine, profile, configuration, or deployment changes detected")
         return

@@ -128,6 +128,22 @@ def concept_source_dirs(feature_root: str) -> List[str]:
     return dirs
 
 
+def _concept_source_requires(feature_root: str) -> List[str]:
+    """`requires` inputs for concept-reading checks.
+
+    The feature's own Stage-02 output is always listed, so the check runs even
+    for a project's FIRST feature whose canonical corpus is still empty.
+    Requiring the corpus dir unconditionally made every concept check silently
+    `skip` in that case — a false green (experiment defect D8). The corpus is
+    required only once it is populated.
+    """
+    dirs = [output_dir(feature_root, "02_concepts")]
+    corpus = _concept_corpus_dir(feature_root)
+    if corpus and dir_is_populated(corpus):
+        dirs.append(corpus)
+    return dirs
+
+
 def feature_concept_names(feature_root: str) -> List[str]:
     """The concepts THIS feature uses, from its Stage-01a responsibility map.
 
@@ -229,7 +245,7 @@ _DATA_MODEL = Check(
     name="data_model",
     script="verify_data_model.py",
     build_args=lambda r: ["--data-dir", DATA_DIR(r)] + _concept_dir_args(r),
-    requires=lambda r: [DATA_DIR(r)] + concept_source_dirs(r),
+    requires=lambda r: [DATA_DIR(r)] + _concept_source_requires(r),
 )
 
 _CONTRACT_PARITY = Check(
@@ -704,18 +720,33 @@ _CHAIN_GRAMMAR = Check(
     requires=lambda r: [CHAIN_DIR(r)],
 )
 
+_DISTINCT_OUTCOMES = Check(
+    name="distinct_outcomes",
+    script="verify_distinct_outcomes.py",
+    build_args=lambda r: ["--chain-dir", CHAIN_DIR(r)],
+    requires=lambda r: [CHAIN_DIR(r)],
+)
+
+_OUTCOME_CASING = Check(
+    name="outcome_casing",
+    script="verify_outcome_casing.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [CHAIN_DIR(r)],
+)
+
+
 _CONCEPT_STATE_RELATIONAL = Check(
     name="concept_state_relational",
     script="verify_concept_state_relational.py",
     build_args=lambda r: _concept_dir_args(r),
-    requires=lambda r: concept_source_dirs(r),
+    requires=lambda r: _concept_source_requires(r),
 )
 
 _CONCEPT_CRITERIA = Check(
     name="concept_criteria",
     script="verify_concept_criteria.py",
     build_args=lambda r: _concept_dir_args(r),
-    requires=lambda r: concept_source_dirs(r),
+    requires=lambda r: _concept_source_requires(r),
 )
 
 _CONCEPT_PROPOSALS = Check(
@@ -729,8 +760,16 @@ _CONCEPT_ADDITIVITY = Check(
     name="concept_additivity",
     script="verify_concept_additivity.py",
     build_args=lambda r: ["--feature", r],
-    requires=lambda r: [_resp_map(r)] + concept_source_dirs(r),
+    requires=lambda r: [_resp_map(r)] + _concept_source_requires(r),
 )
+
+_REUSED_CONTRACTS = Check(
+    name="reused_concept_contracts",
+    script="verify_reused_concept_contracts.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [_resp_map(r)],
+)
+
 
 _RELATIONAL_MAPPING = Check(
     name="relational_mapping",
@@ -750,10 +789,18 @@ STAGES: List[Stage] = [
     Stage("01a", "Responsibility map", "01a_responsibility-map",
           checks=[_FILE_02A]),
         Stage("01b", "Chain table", "01b_chain-table", gate_after=1,
-            checks=[_CHAIN_GRAMMAR, _CHAIN_MANIFEST]),
-    Stage("02", "Concept specs", "02_concepts",
+            # `distinct_outcomes` (D3): a single completion token must not fan
+            # out to two terminal responses. `outcome_casing` (D9/D26): authored
+            # outcome tokens are SCREAMING_SNAKE_CASE, here and in Stage 02.
+            checks=[_CHAIN_GRAMMAR, _DISTINCT_OUTCOMES, _OUTCOME_CASING,
+                    _CHAIN_MANIFEST]),
+        Stage("02", "Concept specs", "02_concepts",
+          # `concept_additivity` runs here, at the stage that AUTHORS an extend;
+          # waiting until 03b/04b let a non-additive extension be written first
+          # (experiment defect D38). It skips for `new` concepts (no canonical).
           checks=[_CONCEPT_STATE_RELATIONAL, _CONCEPT_CRITERIA,
-                  _CONCEPT_PROPOSALS, _CONCEPT_MANIFEST]),
+                  _CONCEPT_PROPOSALS, _CONCEPT_ADDITIVITY, _OUTCOME_CASING,
+                  _CONCEPT_MANIFEST]),
     Stage("03", "Syncs", "03_syncs", checks=[_SCENARIO_COVERAGE, _SYNC_MATRIX,
           _SYNC_TRANSITION_COVERAGE,
           _SYNC_CYCLE_GRAPH, _SYNC_OVERLAP]),
@@ -769,7 +816,8 @@ STAGES: List[Stage] = [
           checks=[_RELATIONAL_MAPPING, _FEATURE_IMPL_PATHS]),
     Stage("04b", "Concept contract", "04_implement/04b_contract",
           checks=[_CONTRACT_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN,
-                  _CONTRACT_MANIFEST, _CONCEPT_ADDITIVITY, _PORT_SPEC_04B]),
+                  _CONTRACT_MANIFEST, _CONCEPT_ADDITIVITY, _REUSED_CONTRACTS,
+                  _PORT_SPEC_04B]),
     Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3,
           checks=[_FEATURE_IMPL_PATHS, _GHERKIN_DERIVATION, _COLLECTION_COVERAGE,
                   _STEP_DEF_PARITY,

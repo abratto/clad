@@ -37,6 +37,17 @@ case-insensitively. Do not invent casing: copy contract enums from
 and tests. Consistency is "same token under normalisation", not "identical
 bytes".
 
+**Enforcement (authored artefacts are SCREAMING).** `quality-gate/verify_outcome_casing.py`
+(wired at Stages 01b and 02) requires every *authored* outcome token —
+chain-table `Outcome` cells, concept-spec action signatures, and flow-token
+`outcome:` values — to be SCREAMING_SNAKE_CASE. The contract generator emits the
+same enum, so chain tables, concept specs, contracts, derivation maps, and
+Gherkin all agree. A profile whose runtime emits a different casing (the
+canonical `java-legible` profile uses PascalCase) is normalised at the flow-token
+assertion; authored artefacts do **not** copy the runtime casing. This closes the
+`Ok`-vs-`OK` split that made every use case reconcile two conventions by hand
+(v0.14.0 experiment defect D9/D26).
+
 ## One token per invocation
 
 **Each concept action emits exactly one flow token.** Internal steps

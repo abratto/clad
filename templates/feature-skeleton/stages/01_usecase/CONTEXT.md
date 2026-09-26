@@ -103,6 +103,14 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 - `Trigger` is present unless the scenario is a straightforward
   actor-initiated flow.
 - Out-of-scope section is non-empty.
+- **Externally-supplied and policy values are named.** Every value the system
+  does not derive itself — a clock/moment, a period (e.g. a loan due-date
+  window), a rate — is stated here or explicitly declared caller-supplied.
+  Leaving it unnamed invents policy silently at Stage 04 (experiment D39).
+- **Cross-use-case references are addressable.** When a scenario consumes an
+  entity another use case creates (e.g. borrowing a catalogued copy), say how
+  that reference is obtained — or state that the features are independently
+  complete and the journey is composed elsewhere (experiment D40).
 - The operational principle reads as a coherent story, not a feature list.
 - **Cross-stage check (back):** every in-scope goal in
   `features/_system/stages/00_actor-goal/output/goals.md` corresponds to at least one named

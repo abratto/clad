@@ -149,7 +149,7 @@ not introduce new logic.
 
 ## Progress checklist
 
-- [ ] One `.sync.md` per chain-table row (When → Then)
+- [ ] One `.sync.md` per chain-table **transition** (When → Then), i.e. rows−1 for a linear chain
 - [ ] `when` clause names trigger concept + action + outcome
 - [ ] `then` clause names target concept + action + inputs
 - [ ] Sync Contract Matrix complete for each sync
@@ -158,6 +158,10 @@ not introduce new logic.
 ## Outputs
 
 - `output/<name>.sync.md` — one per coordination rule
+- `features/_system/shared-triggers.md` — the generated shared-trigger view.
+  `verify_artefacts.py` (`shared_triggers_current`) requires it to match the sync
+  pack, so run `generate_shared_triggers.py --write` and include it in this
+  stage's commit (it is a system-scope generated file this stage owns).
 
 ## Verify
 
@@ -176,7 +180,7 @@ python3 ../../../../quality-gate/verify_scenario_coverage.py \
 python3 ../../../../quality-gate/verify_sync_cycle_graph.py \
   --sync-dir output
 python3 ../../../../quality-gate/verify_sync_overlap.py \
-  --sync-dir output
+  --sync-dir output --advisory
 python3 ../../../../quality-gate/verify_sync_transition_coverage.py \
   --feature ../..
 ```
@@ -188,7 +192,11 @@ python3 ../../../../quality-gate/verify_sync_transition_coverage.py \
 - **verify_sync_cycle_graph.py:** no cross-concept sync cycle (A→B→A).
   `Web` (bootstrap) and self-references are excluded.
 - **verify_sync_overlap.py:** no two syncs share 2+ concepts with
-  conflicting lock order (deadlock risk). Same-order overlaps warn.
+  conflicting lock order (deadlock risk). Same-order overlaps warn. The gate
+  runs it `--advisory` because the canonical fire-after-commit engine dispatches
+  single-threaded, so concurrent lock-order deadlock is not reachable at
+  runtime; a blocking run on a linear multi-concept chain may still report
+  lock-order pairs, and that is expected, not a defect.
 - **verify_sync_transition_coverage.py:** every chain-table transition is
   lowered to a sync file (destroys the "missing carrier" blind spot; a
   shortfall blocks the stage). This is the file-manifest check for this
@@ -198,6 +206,12 @@ python3 ../../../../quality-gate/verify_sync_transition_coverage.py \
 ### Semantic checks (human)
 
 - No sync contains imperative branching or persists state.
+- **Pattern-C literals are constants.** A `Web/respond` (or any `then`)
+  literal must not embed a `<field>` placeholder for interpolation — the
+  declarative engine does not interpolate. If the response must name a
+  request value (e.g. an error message quoting the offending ISBN), bind that
+  value as a field (Pattern A/B) and let the contract carry it; otherwise the
+  response ships the placeholder text verbatim.
 - **Sync count:** the number of sync files in `output/` equals the
   number of transitions in the chain table(s) for this feature (each
   chain-table row-to-row arrow = one sync).

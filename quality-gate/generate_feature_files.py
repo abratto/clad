@@ -71,18 +71,33 @@ def _token_chain_comment(chain_dir: str, scenario: str) -> str:
     return "#   " + " -> ".join(tokens)
 
 
-def _scenario_status(chain_dir: str, scenario: str) -> Optional[int]:
-    """The terminal Web.respond status for a scenario chain (row with then_suffix)."""
+def _terminal_branches(chain_dir: str, scenario: str) -> List[int]:
+    """Every terminal `Web.respond` status in a scenario chain, in order.
+
+    A top-level use-case scenario carries its extension branches in the SAME
+    chain file as extra rows. Emitting a single Scenario with the FIRST terminal
+    status produced a "happy path" asserting a refusal code and left the real
+    success branch untested (experiment defect D20). One Scenario per terminal
+    branch is the correct scaffold.
+    """
     chain_file = _chain_file(chain_dir, scenario)
     if chain_file is None:
-        return None
-    rows = ap.parse_chain_table(chain_file)
-    for r in rows:
+        return []
+    statuses: List[int] = []
+    for r in ap.parse_chain_table(chain_file):
         if r.then_suffix is not None and r.then_concept == "Web":
             digits = re.search(r"\d+", r.then_suffix or "")
             if digits:
-                return int(digits.group(0))
-    return None
+                status = int(digits.group(0))
+                if status not in statuses:
+                    statuses.append(status)
+    return statuses
+
+
+def _scenario_status(chain_dir: str, scenario: str) -> Optional[int]:
+    """The first terminal Web.respond status (compat helper)."""
+    statuses = _terminal_branches(chain_dir, scenario)
+    return statuses[0] if statuses else None
 
 
 def build_feature(feature_root: str) -> Optional[str]:
@@ -140,22 +155,23 @@ def build_feature(feature_root: str) -> Optional[str]:
     add("    Given the system is running")
     add("")
 
-    status_flip = {"happy-path", "failure-path"}
     for i, sc in enumerate(scenarios):
-        status = _scenario_status(chain_dir, sc)
-        add(f"  # Scenario {i+1} — TODO: confirm happy/failure path tag")
-        add(_token_chain_comment(chain_dir, sc))
-        tag = "@happy-path" if status and status < 400 else "@failure-path"
-        add(f"  @{ap.slugify(sc)} {tag}")
-        add(f"  Scenario: TODO — scenario title for `<{sc}>`")
-        add(f"    Given <TODO: {sc} precondition(s)>")
-        add(f"    When <TODO: {sc} trigger — main-flow step 1>")
-        if status is not None:
-            add(f"    Then the response status is {status}")
-        else:
-            add(f"    Then the response status is <TODO: derive from sync specs>")
-        add(f"    And the response body matches <TODO: {sc} expected body shape>")
-        add("")
+        statuses = _terminal_branches(chain_dir, sc) or [None]
+        for j, status in enumerate(statuses):
+            add(f"  # Scenario {i+1}.{j+1} — TODO: confirm happy/failure path tag")
+            add(_token_chain_comment(chain_dir, sc))
+            tag = "@happy-path" if status and status < 400 else "@failure-path"
+            add(f"  @{ap.slugify(sc)} {tag}")
+            suffix = "" if len(statuses) == 1 else f" (status {status})"
+            add(f"  Scenario: TODO — scenario title for `<{sc}>`{suffix}")
+            add(f"    Given <TODO: {sc} precondition(s)>")
+            add(f"    When <TODO: {sc} trigger — main-flow step 1>")
+            if status is not None:
+                add(f"    Then the response status is {status}")
+            else:
+                add(f"    Then the response status is <TODO: derive from sync specs>")
+            add(f"    And the response body matches <TODO: {sc} expected body shape>")
+            add("")
     return "\n".join(L)
 
 

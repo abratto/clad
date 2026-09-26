@@ -130,7 +130,11 @@ before Stage 04 turns it into code.
 - [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
-- `output/<concept>-card.md` — one per concept named in 01a's map.
+- `output/<concept>-card.md` — one per concept named in 01a's map, **plus
+  `Web-card.md`**: the bootstrap concept is excluded from the concept matrix but
+  its `respond` action is a legitimate inbound invocation, so the file manifest
+  requires the Web card. (`feature_concept_names` filters `Web` out; the derived
+  manifest does not — do not omit the card.)
 - `output/pattern-d-summary.md` — single consolidated cross-flow view.
 - `output/concept-matrix.md` — FR×DP matrix mapping scenarios to
   concepts. Surfaces God Objects, duplication, and entanglement visually.

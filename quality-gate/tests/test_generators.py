@@ -334,5 +334,60 @@ class BranchedChainGeneratorTests(unittest.TestCase):
             self.assertNotIn("RespondWhenRespondSent", stems)
 
 
+class GeneratorRegressionTests(unittest.TestCase):
+    """Defects D10/D11/D20: payload lowering, respond literals, branch scenarios."""
+
+    def _write_chain(self, chain, name, rows):
+        chain.mkdir(parents=True, exist_ok=True)
+        body = ["# Chain table", "",
+                "| # | When | Then | Inputs | Outcome | Why this step |",
+                "|---|---|---|---|---|---|"]
+        for num, when, then, outcome in rows:
+            body.append(f"| {num} | `{when}` | `{then}` | `x` | `{outcome}` | e |")
+        (chain / f"{name}-chain.md").write_text("\n".join(body) + "\n",
+                                                encoding="utf-8")
+
+    def test_multi_field_payload_splits_into_one_bind_per_field(self):
+        sys.path.insert(0, str(QG))
+        import generate_syncs as gs
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "features/UC-01-lend"
+            chain = feature / "stages/01b_chain-table/output"
+            self._write_chain(chain, "lend-copy", [
+                ("1", "Web/request[POST /lend]", "Web.request", "Routed(ref, name)"),
+                ("2", "Web.request[Routed(ref, name)]", "Inventory.lend", "Lent"),
+                ("3", "Inventory.lend[Lent]", "Web.respond[200]", "Sent"),
+            ])
+            syncs, _ = gs.derive_syncs_for_feature(str(feature))
+            lends = [s for s in syncs if s.target_action == "lend"]
+            self.assertEqual(len(lends), 1, [s.target_action for s in syncs])
+            self.assertEqual(sorted(v for v, _p, _s in lends[0].binds),
+                             ["?name", "?ref"])
+            responses = [s for s in syncs if s.target_action == "respond"]
+            self.assertIn("status = 200", responses[0].literals)
+
+    def test_branch_chain_generates_a_scenario_per_terminal_status(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "features/UC-02-enrol"
+            (feature / "stages/01_usecase/output").mkdir(parents=True)
+            (feature / "stages/01_usecase/output/usecase.md").write_text(
+                "# UC-02 — Enrol\n\n## Actors\n\n- Clerk — staff\n\n"
+                "### Scenario: enrol-member\n\nTrigger: submit.\n",
+                encoding="utf-8")
+            self._write_chain(feature / "stages/01b_chain-table/output",
+                              "enrol-member", [
+                ("1", "Web/request[POST /enrol]", "Web.request", "Routed"),
+                ("2", "Web.request[Routed]", "Member.check", "Ok"),
+                ("3", "Member.check[Ok]", "Web.respond[201]", "Sent"),
+                ("4", "Member.check[Bad]", "Web.respond[400]", "Sent"),
+            ])
+            r = run(GEN_FEATURE, "--feature", feature, "--write")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            text = next((feature / "stages/04_implement/04c_flow-tests/output")
+                        .glob("*.feature")).read_text(encoding="utf-8")
+            self.assertIn("Then the response status is 201", text)
+            self.assertIn("Then the response status is 400", text)
+
+
 if __name__ == "__main__":
     unittest.main()

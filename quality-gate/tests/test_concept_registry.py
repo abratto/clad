@@ -236,6 +236,41 @@ class PromotionTests(unittest.TestCase):
             again = run(PROMOTE, "--feature", str(feature))
             self.assertIn("no-op", again.stdout)
 
+    def test_companions_only_publishes_a_contract_after_gate2(self):
+        """D43 remedy: the contract is derived at 04b, after Gate-2 promotion,
+        so Gate-3 closure refreshes companions into the corpus."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature = make_feature(tmp, [("Foo", "new")], specs=("Foo",),
+                                   gate2="approved")
+            run(PROMOTE, "--feature", str(feature))  # Gate-2 promotion (spec)
+            contract_dir = feature / "stages/04_implement/04b_contract/output"
+            contract_dir.mkdir(parents=True)
+            (contract_dir / "Foo.contract.md").write_text("# Foo contract\n",
+                                                          encoding="utf-8")
+            r = run(PROMOTE, "--feature", str(feature), "--companions-only")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            canonical = (Path(tmp) / "features" / "_system" / "concepts"
+                         / "Foo.contract.md")
+            self.assertTrue(canonical.is_file())
+            self.assertIn("current source UC-01-a",
+                          canonical.read_text(encoding="utf-8"))
+
+    def test_promotion_leaves_a_current_catalog(self):
+        """D16: the catalog is regenerated against the pending write set.
+
+        Rendered from the pre-write on-disk corpus it omitted the just-promoted
+        concept, so the next stage failed `concept_registry` until it
+        regenerated the catalog by hand."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature = make_feature(tmp, [("Foo", "new")], specs=("Foo",),
+                                   gate2="approved")
+            r = run(PROMOTE, "--feature", str(feature))
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            catalog = (Path(tmp) / "features" / "_system"
+                       / "concepts-catalog.md")
+            self.assertTrue(catalog.is_file())
+            self.assertIn("`Foo`", catalog.read_text(encoding="utf-8"))
+
     def test_promotion_drops_the_proposal_snapshot_header(self):
         """A proposal's `<!-- proposal snapshot … -->` header is feature-local;
         the canonical spec is identified by its location and provenance, so the

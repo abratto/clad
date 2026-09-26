@@ -10,6 +10,54 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.14.0] — 2026-09-26
+
+**Harden the gate against the four-use-case experiment.** A v0.13.0 end-to-end
+run (four use cases, Model-B reuse/extend) surfaced 45 defects; this release
+fixes the ones that block downstream projects at commit time or give a false
+green, plus the generator/convention frictions that forced hand-editing every
+use case. Change class `platform`; feature contracts preserved. See
+`maintenance/v0.14.0-clad-hardening.md`.
+
+- **Commit-time unblocking.** The R17 coupling check now applies only to
+  **iterative changes** (an active `_changes/` record) — ordinary feature-stage
+  commits no longer need the spec in the same commit as the implementation. It
+  also exempts bootstrap concepts (`Web`/`Grpc`/`Cli`/`Stream`) and
+  non-implementation classes, and reads only committed+staged files. A
+  `clad.properties` change that only edits derived-project binding keys is no
+  longer maintenance-scoped. `./clad` no longer silently targets a completed
+  feature when several exist.
+- **Model-B correctness.** Promotion regenerates `concepts-catalog.md` against
+  the pending write set (it was stale after every promotion); **Gate-3 approval
+  now publishes the concept's data-model/contract companions**
+  (`promote-concepts --companions-only`), so a reused concept has a canonical
+  contract to bind; the 04b contract manifest is derived independently of the
+  promotion-erased state diff; concept checks run for a project's first feature
+  instead of skipping; `concept_additivity` also runs at Stage 02;
+  `verify_reused_concept_contracts.py` guards reuse; `advance` blocks when the
+  full artefact pipeline is broken.
+- **Generators/conventions.** `generate_feature_files.py` emits one Scenario per
+  terminal branch with its own status (was one collapsed Scenario asserting the
+  first terminal code); `generate_syncs.py` splits multi-field carried payloads
+  into one binding per field and fills `Web/respond` status literals; the
+  step-definition parity check accepts signed numbers; refusal detection and the
+  concept-state header are case/multiline tolerant; the Stage-03 overlap check
+  is documented as advisory.
+- **Outcome discipline.** Authored outcome tokens are pinned to
+  SCREAMING_SNAKE_CASE and enforced at Stages 01b/02
+  (`verify_outcome_casing.py`), so chain tables, concept specs, contracts,
+  derivations, and Gherkin agree; a profile's runtime casing is normalised
+  rather than copied. A new check (`verify_distinct_outcomes.py`) fails when one
+  completion token fans out to two terminal responses — the fix is distinct
+  pure guard actions, not one shared `Refused` (D3).
+- **Process.** The Stage-01 contract now requires externally-supplied/policy
+  values to be named and cross-use-case references to be addressable.
+
+**Upgrade notes:** `clad.properties` binding-key edits commit without a
+maintenance record; `./clad advance`/`approve` require an explicit feature once
+several are complete; a reused concept whose canonical contract predates this
+release needs one idempotent `./clad promote-concepts <feature>` re-run.
+
 ## [0.13.0] — 2026-09-24
 
 **Unbundle the worked example.** `features/` becomes project workspace only;

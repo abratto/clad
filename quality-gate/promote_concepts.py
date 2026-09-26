@@ -39,6 +39,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
@@ -63,10 +64,30 @@ def catalog_out_path(corpus: str) -> str:
     return os.path.join(os.path.dirname(corpus.rstrip(os.sep)), "concepts-catalog.md")
 
 
-def _catalog_text(corpus: str, feature_root: str) -> str:
-    """The catalog content this promotion would write, via the real generator."""
+def _catalog_text(corpus: str, feature_root: str, overrides=None) -> str:
+    """The catalog content this promotion would write, via the real generator.
+
+    `overrides` is `{concept: spec_text}` for specs that are part of this
+    promotion's write set but are NOT yet on disk. The catalog must be rendered
+    against the POST-promotion corpus, otherwise it is generated from the old
+    on-disk state and omits the concepts just promoted (experiment defect D16:
+    every promotion left the catalog stale until the next stage regenerated it).
+    """
     import generate_concepts_catalog as gcc
-    return gcc.render(corpus, os.path.join(repo_root(feature_root), "features"))
+    features_dir = os.path.join(repo_root(feature_root), "features")
+    if not overrides:
+        return gcc.render(corpus, features_dir)
+    with tempfile.TemporaryDirectory() as tmp:
+        if os.path.isdir(corpus):
+            for fname in os.listdir(corpus):
+                if fname.endswith(".concept.md"):
+                    shutil.copy2(os.path.join(corpus, fname),
+                                 os.path.join(tmp, fname))
+        for concept, text in overrides.items():
+            with open(os.path.join(tmp, concept + ".concept.md"), "w",
+                      encoding="utf-8") as fh:
+                fh.write(text)
+        return gcc.render(tmp, features_dir)
 
 
 def feature_slug(feature_root: str) -> str:
@@ -308,15 +329,70 @@ def dependence_claims(feature_root: str):
     return claims
 
 
+def _refresh_companions(feature_root: str) -> int:
+    """Publish model/contract companions for the feature's already-promoted
+    concepts, without rewriting specs or provenance.
+
+    Data models are derived at 03b and contracts at 04b — both AFTER Gate-2
+    promotion (which owns the spec). Without this refresh a reused concept has a
+    canonical spec and model but no canonical contract, so the first pure-reuse
+    feature failed `outcome_alignment`/`action_chain` (experiment defect D43).
+    Idempotent; run at Gate-3 closure.
+    """
+    corpus = corpus_dir(feature_root)
+    introducer = promoter = ""
+    writes = {}
+    refreshed = []
+    for concept in sorted(proposals_for(feature_root)):
+        canonical_path = os.path.join(corpus, f"{concept}.concept.md")
+        if not os.path.isfile(canonical_path):
+            continue  # not promoted yet; Gate-2 promotion owns the spec
+        with open(canonical_path, encoding="utf-8") as fh:
+            intro, prom = provenance_scope(fh.read())
+        for rel, suffix in (("03b_data-model", "data-model.md"),
+                            ("04_implement/04b_contract", "contract.md")):
+            produced = os.path.join(feature_root, "stages", rel, "output",
+                                    f"{concept}.{suffix}")
+            if not os.path.isfile(produced):
+                continue
+            with open(produced, encoding="utf-8") as fh:
+                text = canonical_companion(fh.read(), concept, intro, prom)
+            target = os.path.join(corpus, f"{concept}.{suffix}")
+            existing = ""
+            if os.path.isfile(target):
+                with open(target, encoding="utf-8") as fh:
+                    existing = fh.read()
+            if existing != text:
+                writes[target] = text
+                refreshed.append(f"{concept}.{suffix}")
+    if not writes:
+        print("PASS  canonical companions already current (nothing to refresh)")
+        return 0
+    try:
+        atomic_write_set(writes)
+    except AtomicWriteFailed as exc:
+        print(f"FAIL  companion refresh aborted and rolled back: {exc}")
+        return 1
+    print(f"PASS  refreshed {len(refreshed)} canonical companion(s): "
+          f"{', '.join(refreshed)}")
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Promote approved NEW/EXTEND proposals into the concept corpus")
     parser.add_argument("--feature", required=True, help="Feature root")
     parser.add_argument("--dry-run", action="store_true",
                         help="Report what would be promoted; write nothing")
+    parser.add_argument("--companions-only", action="store_true",
+                        help="Publish model/contract companions for already-"
+                             "promoted concepts (no spec rewrite); run at Gate-3 "
+                             "closure")
     args = parser.parse_args()
 
     feature_root = os.path.abspath(args.feature)
+    if args.companions_only:
+        return _refresh_companions(feature_root)
     slug = feature_slug(feature_root)
     resume = os.path.join(feature_root, "RESUME.md")
     if not os.path.isfile(resume):
@@ -436,7 +512,8 @@ def main():
     # the catalog is itself an input to the write set, so a render failure
     # aborts before any write.
     try:
-        writes[catalog_out_path(corpus)] = _catalog_text(corpus, feature_root)
+        writes[catalog_out_path(corpus)] = _catalog_text(
+            corpus, feature_root, {c: planned[c][0] for c in planned})
     except Exception as exc:  # noqa: BLE001
         print(f"FAIL  promotion aborted before writing — the corpus is unchanged: {exc}")
         return 1

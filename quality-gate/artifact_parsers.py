@@ -1080,10 +1080,16 @@ def expected_stage_outputs(feature_root: str) -> Dict[str, List[str]]:
 
     out["04a"] = ["_NOT_APPLICABLE.md"]
 
+    # Derive the two manifests INDEPENDENTLY. Deriving the contract manifest
+    # inside `if model_concepts:` tied it to the state-change diff, which Gate-2
+    # promotion erases — so an extend feature whose state was already promoted
+    # silently skipped its 04b manifest (experiment defect D44).
     model_concepts = feature_model_concepts(feature_root)
     if model_concepts:
         out["03b"] = [c + ".data-model.md" for c in model_concepts]
-        out["04b"] = [c + ".contract.md" for c in feature_contract_concepts(feature_root)]
+    contract_concepts = feature_contract_concepts(feature_root)
+    if contract_concepts:
+        out["04b"] = [c + ".contract.md" for c in contract_concepts]
 
     sync_specs = parse_syncs(_dir("03_syncs")) if os.path.isdir(_dir("03_syncs")) else []
     if sync_specs:

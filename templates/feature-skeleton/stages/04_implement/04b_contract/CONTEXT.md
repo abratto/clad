@@ -106,6 +106,8 @@ python3 ../../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<Name>.contract.md,…"  # one per business concept
 python3 ../../../../../quality-gate/verify_concept_additivity.py \
   --feature ../../../
+python3 ../../../../../quality-gate/verify_reused_concept_contracts.py \
+  --feature ../../../
 python3 ../../../../../quality-gate/verify_port_spec_contract.py \
   --port-spec ../../../../../features/_system/stages/00_actor-goal/output/port-spec.md \
   --contract-dir output
@@ -125,6 +127,18 @@ python3 ../../../../../quality-gate/verify_port_spec_contract.py \
   **additive only** — every canonical action, and every canonical outcome of a
   surviving action, must still be listed. Same escape hatch as Stage 03b:
   `_config/additivity-exceptions.md`, one authorised line per bullet.
+- **verify_reused_concept_contracts.py:** a `reused:UC-XX` concept binds the
+  canonical contract, so the corpus must actually have one. Promotion runs at
+  Gate 2 (before contracts are derived at 04b), so a concept introduced or
+  extended earlier may lack a canonical contract; this check fails with the
+  idempotent remedy (`./clad promote-concepts <that-feature> --companions-only`)
+  instead of letting `outcome_alignment`/`action_chain` fail obscurely.
+
+> **Companion promotion is automatic at Gate-3 closure.** When Gate 3 is
+> approved, `approve_gate.py --gate 3` runs
+> `promote-concepts --companions-only` for the feature, publishing the data
+> models and contracts it derived at 03b/04b into the corpus. That is what makes
+> a later reuse able to bind a canonical contract. The refresh is idempotent.
 
 - **verify_port_spec_contract.py:** skips when no `port-spec.md` exists;
   otherwise checks the port spec is concrete and at least one contract file

@@ -144,6 +144,26 @@ def _resolve_when_source(wc, wa, wo, producers, current_row, warnings, fname):
     return prev, trigger_outcome_raw
 
 
+def _split_payload_fields(payload: str) -> List[str]:
+    """Split a completion payload into individual field names.
+
+    A completion payload may carry several fields (`Routed(ref, name)`). The
+    generator used to put the WHOLE parenthesised text into one binding,
+    producing the invalid `bind ( <source> as ?ref, name )` (experiment defects
+    D10/D33). One binding per field is the correct lowering.
+    """
+    return [field.strip() for field in payload.split(",") if field.strip()]
+
+
+def _respond_status(row) -> str:
+    """Numeric terminal status from a `Web.respond[<status>]` chain row, else ''."""
+    if row.then_concept == "Web" and row.then_action == "respond" and row.then_suffix:
+        digits = re.search(r"\d+", row.then_suffix)
+        if digits:
+            return digits.group(0)
+    return ""
+
+
 def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], List[str]]:
     chain_dir = cs.CHAIN_DIR(feature_root)
     # Concept sources: the feature's own proposals shadow the canonical corpus
@@ -219,6 +239,12 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                         f"unresolved conjunct; skipped")
                     continue
                 target_concept, target_action = row.then_concept, row.then_action
+                join_literals = "<none>"
+                join_then_sig = f"{target_concept}/{target_action}: [ <args> ]"
+                join_status = _respond_status(row)
+                if join_status:
+                    join_literals = f"status = {join_status}"
+                    join_then_sig = f"Web/respond: [ status: {join_status} ]"
                 joined = [ap.Conjunct(n, c, a, o)
                           for (n, c, a, o, _rn) in resolved]
                 when_sig = " \u2227 ".join(
@@ -237,8 +263,8 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                     source_row="+".join(str(rn) for *_x, rn in resolved),
                     target_row=str(row.row_num),
                     when_sig=when_sig,
-                    then_sig=f"{target_concept}/{target_action}: [ <args> ]",
-                    literals="<none>",
+                    then_sig=join_then_sig,
+                    literals=join_literals,
                     binds=[],
                     pattern_d_notes=[],
                     cited_scenario=scenario,
@@ -289,12 +315,20 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                             f"[ {trigger_outcome_raw} ]")
                 literals = "<none>"
             then_sig = f"{target_concept}/{target_action}: [ <args> ]"
+            # A `Web/respond` target carries its terminal status; put it in the
+            # Allowed-literals column so the Gherkin-derivation check can read it
+            # (the generator emitted `<none>` before — experiment defect D11).
+            respond_status = _respond_status(row)
+            if respond_status:
+                then_sig = f"Web/respond: [ status: {respond_status} ]"
+                literals = f"status = {respond_status}"
 
             binds: List[Tuple[str, str, str]] = []
             pattern_d_notes: List[str] = []
             if prev.outcome_payload:
-                var = "?" + prev.outcome_payload
-                binds.append((var, "A", f"Trigger token (`{trigger_concept}/{trigger_action}`)"))
+                for field in _split_payload_fields(prev.outcome_payload):
+                    binds.append((f"?{field}", "A",
+                                  f"Trigger token (`{trigger_concept}/{trigger_action}`)"))
 
             syncs.append(GeneratedSync(
                 name="",

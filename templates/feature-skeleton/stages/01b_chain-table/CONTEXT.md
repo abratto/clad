@@ -57,8 +57,19 @@ completed in the same flow, and still carries exactly one `Then` and one
 
 If a downstream action needs request-originated data, the approved 01b
 row must name those carried fields on the trigger contract itself
-(for example `Web.request[Routed(email, password)]`). Stage 03 may bind
-Pattern A values only from names that 01b has already declared.
+(for example `Web.request[Routed(email, password)]`), and **every consuming
+downstream `when` repeats the same parenthesised field list**. Assignment is
+not implicit: a row that consumes `username` must write
+`Web.request[Routed(username, password)]` (or the exact sub-list it needs),
+not a bare `Web.request[Routed]`. Stage 03 may bind Pattern A values only
+from names that 01b has already declared.
+
+**The transport route is a Stage-01b decision.** The bootstrap row's entry
+signal (`Web/request[POST /loans]` or `Web/request[route: "loans" ; method:
+"POST"]`) is the route Stage 03 will scope syncs to. No earlier stage names a
+route (unless `_system/.../port-spec.md` exists), so author it deliberately
+here and flag it for the Gate-1 reviewer — it is otherwise a silent choice
+with no automated check.
 
 Include a Mermaid `stateDiagram-v2` as a derived view — it is required, and
 the gate covers the table and the diagram together (same-turn rule, below).
@@ -95,12 +106,22 @@ Run the following before requesting the human gate:
 ```
 python3 ../../../../quality-gate/verify_chain_grammar.py \
   --chain-dir output
+python3 ../../../../quality-gate/verify_distinct_outcomes.py \
+  --chain-dir output
+python3 ../../../../quality-gate/verify_outcome_casing.py \
+  --feature ../..
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<scenario-name>-chain.md"  # one per scenario
 ```
 
 - **verify_chain_grammar.py:** every row carries exactly one backticked
   outcome token (no pipe unions, no multi-token cells).
+- **verify_distinct_outcomes.py:** a single completion token must not be the
+  trigger of two terminal responses with different statuses. When two
+  request-level refusals need distinct responses, split them into distinct pure
+  guard actions/outcomes before the first write (R23), not one shared `Refused`.
+- **verify_outcome_casing.py:** every authored outcome token is
+  SCREAMING_SNAKE_CASE (per `FLOW_TOKENS.md` §"Outcome casing").
 - **verify_file_manifest.py:** `output/` contains exactly one
   `<scenario-name>-chain.md` per use-case scenario.
 
@@ -161,7 +182,9 @@ Run:
 `verify_file_manifest.py`, writes the stage receipt, prints the artefact
 summary and the `approve_gate.py --gate 1` command, and stops (exit 10).
 Present its summary to the human and **wait**. Do NOT run `present_gate.py`
-yourself and do NOT edit `RESUME.md`.
+yourself and do NOT edit the gate snapshot (the `Gate N` status lines and
+content-hash lines) in `RESUME.md`. You MAY refresh the live working-memory
+fields (`Current stage`, `Files touched`, `Next steps`) per AGENTS.md §2.9.
 
 Only after the human explicitly says "approved", run the approval command
 `advance.py` printed, then re-run `./clad advance` to cross the gate. Gate 1

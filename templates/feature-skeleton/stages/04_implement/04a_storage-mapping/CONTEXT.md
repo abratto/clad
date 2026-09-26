@@ -122,6 +122,11 @@ quality-gate/verify_relational_mapping.py \
 - Package/source-root decisions used by later implementation stages are
   sourced from `../../../_config/package-and-layout.md`, not inferred from
   `reference-impl/` paths.
+- When the profile needs no storage mapping, `output/_NOT_APPLICABLE.md` is
+  not a bare placeholder: it names the profile and the feature's business
+  concepts and records that one runtime region per concept (R2) remains the
+  contract (this note has no structural validator, so its content is the
+  review surface).
 
 ## Gate
 

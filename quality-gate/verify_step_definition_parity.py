@@ -44,15 +44,17 @@ _METHOD_BODY_START = re.compile(
 # Cucumber expression parameters and their regex equivalents
 _EXPR_TO_REGEX = {
     "{string}": r'"([^"]*)"',
-    "{int}": r"\d+",
-    "{float}": r"\d+\.\d+",
+    # Numeric parameters may carry a sign (`-1`); mapping {int} to `\d+` made a
+    # negative-count step look undefined (experiment defect D36).
+    "{int}": r"-?\d+",
+    "{float}": r"-?\d+\.\d+",
     "{word}": r"\w+",
-    "{double}": r"\d+\.\d+",
-    "{biginteger}": r"\d+",
-    "{bigdecimal}": r"\d+\.\d+",
-    "{byte}": r"\d+",
-    "{short}": r"\d+",
-    "{long}": r"\d+",
+    "{double}": r"-?\d+\.\d+",
+    "{biginteger}": r"-?\d+",
+    "{bigdecimal}": r"-?\d+\.\d+",
+    "{byte}": r"-?\d+",
+    "{short}": r"-?\d+",
+    "{long}": r"-?\d+",
 }
 _EXPR_PARAM = re.compile(r'\{(?:string|int|float|word|double|biginteger|bigdecimal|byte|short|long)\}')
 
