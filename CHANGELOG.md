@@ -35,6 +35,17 @@ re-realised on jOOQ and covered by a full-stack Testcontainers test.
   (no raw JDBC, no Micronaut Data); the table shape still comes from the Rmap
   derivation, and observable SPI semantics are unchanged (existing R-map store
   test green).
+- **Flyway owns DDL when a SQL/R-map store is used.** The base migration is now
+  **generated** from the R-map derivation (`dev.legible.storage.RmapMigration`)
+  instead of hand-mirrored, with a drift guard (`RmapMigrationTest`); startup
+  runs Flyway only (the runtime `createSchema()` is a dev/test helper). The
+  seeding split is explicit: reference/lookup data via Flyway, demo data via the
+  backend-agnostic `DemoSeed`.
+- **Persistence adapter placement named.** The reusable secondary/outbound
+  adapter is the engine SDK's `dev.legible.storage.RmapPostgresFactStore`
+  (jOOQ); an app composes it under `storage/<backend>/`, and inbound transport
+  stays under `infrastructure/`. Documented in `_config/package-and-layout.md`
+  and the Ports & Adapters overlay.
 - **Durable profile coverage + CI.** A new full-stack `RmapPostgresPersistenceIT`
   (Testcontainers) proves Flyway owns the base schema, the R-map tables are
   typed with **no cross-concept foreign key**, and a jOOQ write/read round-trips

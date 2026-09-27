@@ -16,7 +16,7 @@ roles**. CLAD adds one constraint of its own: **no cross-concept foreign key**.
 
 | Stage 03b form | Relational realization |
 |---|---|
-| `field: S -> V` (mandatory) | column on S's table, `NOT NULL` |
+| `field: S -> V` (mandatory) | column on S's table (mandatory role recorded; not emitted `NOT NULL` — see "Constraint realization") |
 | `field: S -> V` (optional) | column on S's table, nullable |
 | `field: S -> V` with a default | column with a `DEFAULT` |
 | `List<T>` / `Map<K,V>` / "zero or more" | child table, composite PK, intra-concept FK to S's table |
@@ -76,6 +76,46 @@ enforced structurally:
 - **Optional** → nullable column.
 - **Value constraints** → `CHECK`.
 - **Set/subset** → FK (intra-concept only).
+
+## Schema versioning — Flyway owns DDL
+
+When an R-map/SQL store is used, **Flyway owns the schema (DDL)**. The base
+migration `src/main/resources/db/migration/V1__login_rmap.sql` is **generated**
+from the same R-map derivation the runtime store reads
+(`dev.legible.storage.RmapMigration` over `LoginSchemas`), so it cannot drift
+from the concepts:
+
+- **Applied at startup** by `store.postgres.StoreInitializer`
+  (`Flyway.migrate()`); the runtime store does **not** create tables
+  (`RmapPostgresFactStore.createSchema()` is a dev/test helper only).
+- **jOOQ codegen introspects the migration** (`jooq-codegen-maven` + `DDLDatabase`
+  over `db/migration` → `com.example.app.db`), so the generated tables track
+  the versioned schema.
+- **Drift guard:** `RmapMigrationTest` fails when the committed migration is
+  stale. Regenerate after any concept `## State` change:
+
+  ```
+  mvn -f reference-impl/pom.xml -pl java-micronaut -am test \
+      -Dtest=RmapMigrationTest -Drmap.migration.write=true
+  ```
+
+`TEXT` is rendered as `varchar` so jOOQ's `DDLDatabase` (H2) can parse it;
+the types are equivalent on Postgres. Later schema changes are new `Vn`
+migrations (Flyway is append-only after release) — author them at Stage 04a
+from the changed data model.
+
+## Seeding
+
+Keep **schema/reference data** and **demo/fixture data** separate:
+
+- **Reference/lookup data** (enums, static tables) → Flyway, as a versioned or
+  repeatable (`R__*.sql`) migration.
+- **Demo/fixture data** (the `ada` user) → **not** a production migration. It is
+  seeded by the app's `DemoSeed` through the engine's `FactStore` SPI, so it
+  works identically on the in-memory binding (which has no Flyway) and does not
+  ship demo rows to production. If a durable-only dev seed is ever wanted, add
+  it under a separate Flyway `locations` (e.g. `classpath:db/dev`) gated by an
+  environment property — never in the base migration.
 
 ## Traceability
 

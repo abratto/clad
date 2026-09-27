@@ -55,6 +55,16 @@ coordinate work triggered by that outcome; they do not perform the I/O.
 Generic dispatch, durable delivery, and adapter registration are engine or
 profile concerns, not concept responsibilities.
 
+A **reusable** secondary adapter ships with the engine SDK; the app **composes**
+it. Persistence is the worked example: the engine's `FactStore`/`Region` SPI is
+the port and `legible-storage`'s `RmapPostgresFactStore` (jOOQ-backed) is the
+shared adapter; the app's `storage/` package selects the backend and owns the
+schema lifecycle, and its `infrastructure/` package stays inbound-transport only
+(see `_config/package-and-layout.md`). When the app needs app-specific SQL, it
+belongs under `storage/`, not `infrastructure/`. A reopened schema with Flyway
+owns DDL as a generated, versioned migration — the runtime store does not create
+tables.
+
 ## Declaring a port
 
 Use [`../../templates/port-spec.md`](../../templates/port-spec.md) when an

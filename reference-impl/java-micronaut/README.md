@@ -41,7 +41,8 @@ change.
 | Sync | one final `*Rule` carrier per `*.sync.md` under `com.example.app.syncs`, emitting a declarative `SyncRule` (R3); assembled by `LoginSyncRules.all()` |
 | Web bootstrap (R4) | `WebController` and `LoginGateway` — normalize input, `engine.run("Web", "request", …)`, translate the authored `Web/respond` fields |
 | Concept state | the injected `FactStore`: `InMemoryFactStore` or `RmapPostgresFactStore` (Stage 03b typed tables via `dev.legible.storage.LoginSchemas`) |
-| Storage binding | `com.example.app.storage` — `MemoryStorageFactory` / `storage.postgres.PostgresStorageFactory`, selected by `clad.storage` |
+| Persistence (secondary/outbound) adapter | shared SDK adapter `dev.legible.storage.RmapPostgresFactStore` (jOOQ is the SQL interface); the app's `com.example.app.storage` composes it — backend selection (`MemoryStorageFactory` / `storage.postgres.PostgresStorageFactory`) and schema lifecycle (`storage.postgres.StoreInitializer`) |
+| Schema (DDL) | **Flyway owns it**: the generated, versioned migration `db/migration/V1__login_rmap.sql` (`dev.legible.storage.RmapMigration`); jOOQ codegen introspects it into `com.example.app.db`. The runtime store does not create tables. |
 | Flow token | the engine's action log + `causedBySync` lineage (unchanged across FactStore backends) |
 
 The action log is **in-memory** in every fire-after-commit profile — only

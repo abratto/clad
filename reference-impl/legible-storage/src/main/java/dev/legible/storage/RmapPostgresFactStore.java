@@ -55,7 +55,15 @@ public final class RmapPostgresFactStore implements FactStore {
         }
     }
 
-    /** Create every concept's table (idempotent). */
+    /**
+     * Create every concept's table (idempotent).
+     *
+     * <p><strong>Dev/test helper only.</strong> When a SQL/R-map store is
+     * deployed, Flyway owns DDL: the schema is a generated, versioned migration
+     * ({@link RmapMigration}), applied at startup, not created by the runtime
+     * store. This method applies the same derived DDL directly, for tests and
+     * local use without Flyway.
+     */
     public void createSchema() {
         try {
             for (RelationSchema schema : schemas.values()) {

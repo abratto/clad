@@ -31,6 +31,18 @@
   dynamic `Table`/`Field` identifiers (the R-map tables are derived at runtime,
   so generated classes cannot be used); `#createSchema` still executes the
   Rmap DDL, and `RmapDeriver` remains the single source of the table shape.
+- **Flyway owns DDL.** `dev.legible.storage.RmapMigration#render` renders the
+  Stage 03b R-map derivation as the base migration
+  (`db/migration/V1__login_rmap.sql`, generated; `RmapMigrationTest` is the
+  drift guard); `store.postgres.StoreInitializer` runs Flyway only (the runtime
+  `RmapPostgresFactStore.createSchema()` is a documented dev/test helper);
+  jOOQ codegen introspects the migration. Seeding split: reference data via
+  Flyway, demo data via app-level `DemoSeed` (backend-agnostic).
+- **Adapter placement.** The reusable persistence (secondary/outbound) adapter
+  is `dev.legible.storage.RmapPostgresFactStore` (engine SDK, jOOQ SQL
+  interface); the app composes it under `com.example.app.storage`
+  (`storage/<backend>/`), and inbound transport stays under `infrastructure/`.
+  Documented in `_config/package-and-layout.md` and the Ports & Adapters overlay.
 - **Durable coverage.**
   `reference-impl/java-micronaut/src/test/java/com/example/app/storage/postgres/RmapPostgresPersistenceIT.java#jooqWriteIsVisibleToTheEngineStore`
   proves the DDLDatabase-introspected jOOQ schema and the runtime DDL agree; the
@@ -70,6 +82,7 @@
 | Artefact pipeline | gate | `python3 quality-gate/verify_artefacts.py` | pass | intact |
 | R-map store (jOOQ) SPI+typing+persistence | integration | `mvn -pl legible-storage -am test -Dtest=RmapPostgresFactStoreTest` | pass | 5 tests (Testcontainers) |
 | Service persistence: Flyway + R-map shape + no-FK + jOOQ round-trip | integration | `mvn -pl java-micronaut -am test -Dclad.storage=postgres -Dtest=RmapPostgresPersistenceIT` | pass | 3 tests |
+| Base migration matches the R-map derivation (Flyway owns DDL) | unit | `mvn -pl java-micronaut -am test -Dtest=RmapMigrationTest` | pass | 1 test (drift guard) |
 | Full durable reactor | integration | `mvn verify -pl legible-storage,java-micronaut -am -Dclad.storage=postgres` | pass | BUILD SUCCESS |
 | Reference HTTP e2e flow-token chain | integration | same (java-micronaut `LoginFlowTest`) | pass | 2 tests |
 
