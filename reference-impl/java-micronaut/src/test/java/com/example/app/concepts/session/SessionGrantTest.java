@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@DisplayName("SessionGrant (Postgres)")
+@DisplayName("SessionGrant")
 class SessionGrantTest extends ConceptTestBase {
 
     private static final String USER_ID = "33333333-3333-3333-3333-333333333333";

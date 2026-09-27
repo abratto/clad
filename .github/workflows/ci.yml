@@ -76,3 +76,24 @@ jobs:
       # when validating those.
       - name: mvn verify (java-legible)
         run: mvn -B -ntp verify -f reference-impl/pom.xml -pl java-legible -am
+
+  postgres-verify:
+    name: Postgres persistence (R-map + jOOQ)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      # Docker is available on ubuntu-latest, so Testcontainers-backed tests
+      # run here. The durable modules (legible-storage, java-micronaut) are
+      # excluded from the Docker-free java-verify job above; this job is the
+      # "when validating those" run promised in its comment.
+      - name: mvn verify (legible-storage + java-micronaut, postgres)
+        run: >-
+          mvn -B -ntp verify -f reference-impl/pom.xml
+          -pl legible-storage,java-micronaut -am
+          -Dclad.storage=postgres

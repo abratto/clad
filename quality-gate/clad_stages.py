@@ -546,6 +546,54 @@ def _port_spec(feature_root: str) -> str:
         "output", "port-spec.md")
 
 
+def _adapter_surface_present(feature_root: str) -> bool:
+    """True when the feature crosses an adapter surface.
+
+    HTTP today: a `port-spec.md` inbound entry, a `Web` bootstrap in any chain
+    table, or `Web` in the use case. Used to make the adapter-test check skip
+    cleanly for non-adapter features/profiles instead of reporting a false green.
+    """
+    spec = _port_spec(feature_root)
+    if os.path.isfile(spec):
+        try:
+            with open(spec, encoding="utf-8", errors="replace") as fh:
+                if re.search(r"\binbound\b", fh.read(), re.IGNORECASE):
+                    return True
+        except OSError:
+            pass
+    chain_dir = CHAIN_DIR(feature_root)
+    if os.path.isdir(chain_dir):
+        for name in sorted(os.listdir(chain_dir)):
+            if not name.endswith("-chain.md") or name.endswith("-all-scenarios-chain.md"):
+                continue
+            try:
+                with open(os.path.join(chain_dir, name), encoding="utf-8",
+                          errors="replace") as fh:
+                    if re.search(r"Web[/.](?:request|handle|respond)", fh.read()):
+                        return True
+            except OSError:
+                continue
+    usecase = _usecase(feature_root)
+    if os.path.isfile(usecase):
+        try:
+            with open(usecase, encoding="utf-8", errors="replace") as fh:
+                return bool(re.search(r"\bWeb\b", fh.read()))
+        except OSError:
+            return False
+    return False
+
+
+def _adapter_test_requires(feature_root: str, stage_rel: str) -> List[str]:
+    """`requires` for the adapter-test check: a sentinel skips it when the
+    feature has no adapter surface or no configured test root."""
+    out = output_dir(feature_root, stage_rel)
+    if not _adapter_surface_present(feature_root):
+        return [os.path.join(out, "__no_adapter_surface__")]
+    if not _test_source_root(feature_root):
+        return [os.path.join(out, "__no_test_source_root__")]
+    return [out]
+
+
 def _feature_files_dir(feature_root: str) -> str:
     root = _test_source_root(feature_root)
     if not root:
@@ -585,6 +633,27 @@ _PORT_SPEC_04C = Check(
         "--feature-dir", output_dir(r, "04_implement/04c_flow-tests"),
     ],
     requires=lambda r: [_port_spec(r), _contract_dir(r)],
+)
+
+_ADAPTER_TEST_04C = Check(
+    name="adapter_test",
+    script="verify_adapter_test.py",
+    build_args=lambda r: [
+        "--feature-root", r,
+        "--test-source-root", _test_source_root(r) or "",
+    ],
+    requires=lambda r: _adapter_test_requires(r, "04_implement/04c_flow-tests"),
+)
+
+_ADAPTER_TEST_05 = Check(
+    name="adapter_test",
+    script="verify_adapter_test.py",
+    build_args=lambda r: [
+        "--feature-root", r,
+        "--test-source-root", _test_source_root(r) or "",
+        "--require-enabled",
+    ],
+    requires=lambda r: _adapter_test_requires(r, "05_verify"),
 )
 
 _CLOSE_EVIDENCE = Check(
@@ -820,7 +889,7 @@ STAGES: List[Stage] = [
                   _PORT_SPEC_04B]),
     Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3,
           checks=[_FEATURE_IMPL_PATHS, _GHERKIN_DERIVATION, _COLLECTION_COVERAGE,
-                  _STEP_DEF_PARITY,
+                  _STEP_DEF_PARITY, _ADAPTER_TEST_04C,
                   _STEP_DEF_DERIVATION, _FEATURE_FILE_PRESENCE, _PORT_SPEC_04C]),
         Stage("04d-red", "Concept TDD red", "04_implement/04d_concept-tdd/04d_red-tests",
             checks=[_FEATURE_IMPL_PATHS, _CONCEPT_TEST_DERIVATION, _FIELD_ASSERTIONS,
@@ -833,7 +902,8 @@ STAGES: List[Stage] = [
             checks=[_IMPL_PARITY, _SYNC_IMPL_PARITY, _SYNC_ROUTE_FILTERS,
                 _SYNC_DECLARATIVE, _ACTION_LOG_ISOLATION, _CUCUMBER_GREEN,
                 _TEST_CONTINUITY_04E]),
-    Stage("05", "Verify", "05_verify", checks=[_CLOSE_EVIDENCE]),
+    Stage("05", "Verify", "05_verify",
+          checks=[_CLOSE_EVIDENCE, _ADAPTER_TEST_05]),
 ]
 
 GATE_LABELS = {

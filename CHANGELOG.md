@@ -10,6 +10,46 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.15.0] — 2026-09-26
+
+**Adapter e2e is a gate, and jOOQ is the Postgres SQL interface.** Two
+follow-ups from the v0.14.0 hardening: an adapter-surface feature can no longer
+skip its end-to-end adapter test, and the durable persistence profile is
+re-realised on jOOQ and covered by a full-stack Testcontainers test.
+
+- **Blocking adapter end-to-end test.** A feature that exposes an adapter
+  surface (`port-spec.md` inbound, or a `Web` bootstrap) must now carry a
+  profile-specific end-to-end adapter test: `verify_adapter_test.py` blocks at
+  **Stage 04c** (the test must exist; it may be `@Disabled` while red) and at
+  **Stage 05** (`--require-enabled`, so it must be green). It skips cleanly when
+  the profile has no adapter surface or no test root. New
+  `templates/http-integration-test.java` gives the derivation shape. Replaces the
+  advisory-only warning.
+- **HTTP e2e asserts the flow-token chain.** The reference `LoginFlowTest` now
+  asserts the runtime `Web.request -> UserNaming.lookupByUsername ->
+  PasswordAuth.check -> Session.grant -> Web.respond` chain (and no stuck
+  actions), not just the HTTP status/body — proving the response came back
+  through the authorised action/sync chain.
+- **jOOQ is the SQL interface for the R-map Postgres store.**
+  `RmapPostgresFactStore` now builds all reads/writes/clears through the jOOQ DSL
+  (no raw JDBC, no Micronaut Data); the table shape still comes from the Rmap
+  derivation, and observable SPI semantics are unchanged (existing R-map store
+  test green).
+- **Durable profile coverage + CI.** A new full-stack `RmapPostgresPersistenceIT`
+  (Testcontainers) proves Flyway owns the base schema, the R-map tables are
+  typed with **no cross-concept foreign key**, and a jOOQ write/read round-trips
+  against the engine's `FactStore` (the introspection and runtime DDL agree). CI
+  gains a Docker-capable `postgres-verify` job; the default `test.command` stays
+  Docker-free. The in-memory concept tests' misleading `(Postgres)` display
+  names are removed, and the test `DataSource` is now `@Primary` (it previously
+  competed with `datasources.default`).
+
+**Upgrade notes:** a feature with an adapter surface now fails Stage 04c/05
+without an (enabled) adapter test — derive one from
+`templates/http-integration-test.java`. The Postgres `RmapPostgresFactStore`
+uses jOOQ at runtime (add `org.jooq:jooq` on the classpath; the reference module
+already does). No concept/sync/contract change.
+
 ## [0.14.0] — 2026-09-26
 
 **Harden the gate against the four-use-case experiment.** A v0.13.0 end-to-end

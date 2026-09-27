@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@DisplayName("PasswordAuthCheck (Postgres)")
+@DisplayName("PasswordAuthCheck")
 class PasswordAuthCheckTest extends ConceptTestBase {
 
     private static final String USER_ID = "22222222-2222-2222-2222-222222222222";
