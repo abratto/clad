@@ -33,6 +33,6 @@ runtime for concepts and syncs (`dev.legible.engine`).
 | `WhereEvaluator` | The `where`-clause binding engine (frames). |
 | `SyncEngine` | Dispatch, commit, evaluate, mint; per-concept serialisation. |
 | `FlowArchiver` / `FlowArchiveBuffer` / `FlowArchiveSink` | Bounded flow archival. |
-| `DebugApi` | Introspection (the old `/api/dev/*` surface, as direct record lookups). |
+| `DebugApi` | Introspection (the developer `/api/dev/*` surface, as direct record lookups): `/syncs` designed rules, `/flow/{id}` realized chain, `/stuck`, `/concept/{name}/facts`. |
 
 See `methodology/architecture/ENGINE.md` for the full contract.

@@ -183,7 +183,7 @@ public final class SyncEngine {
         return inFlight;
     }
 
-    /** Introspection surface (the Jena profile's {@code /api/dev/*} endpoints). */
+    /** Introspection surface for the developer {@code /api/dev/*} endpoints. */
     public DebugApi debug() {
         return new DebugApi(inFlight, facts, rules, archiver.buffer());
     }
