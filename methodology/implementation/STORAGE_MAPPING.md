@@ -96,6 +96,16 @@ Halpin's Rmap (arity + uniqueness + mandatory roles). See the
 `java-micronaut` profile's `RELATIONAL_LOWERING.md` for the
 profile-specific rule set.
 
+**DDL ownership (R-map/SQL).** When a relational profile realizes the R-map, the
+schema is owned by **Flyway**, as a generated, versioned migration derived from
+the Stage 03b model (the java-micronaut profile renders it with
+`dev.legible.storage.RmapMigration` and guards staleness with a drift test); the
+runtime store does not create tables. jOOQ (the profile's SQL interface) and its
+generated classes introspect that migration. Keep **reference/lookup data** in
+Flyway (versioned or `R__` repeatable) and **demo/fixture data** in app-level
+seeding (it must also work on the in-memory binding and must not ship to
+production).
+
 Relational profiles may instead choose **fact realization** — persisting facts
 in a single generic relation (`fact(concept, subject, predicate, value)`), as
 `legible-storage/PostgresFactStore` does. This is the relational analog of the

@@ -16,6 +16,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 |---|---|---|---|
 | `verify_action_chain.py` | Stage gate: action names flow consistently through the full artefact chain: responsibility map → chain table → concept spec → sync spec → dependency card → contract. | stage 04b (Concept contract) | gate |
 | `verify_action_log_isolation.py` | Gate: concept state is reached only through the engine. | stage 04e-green (Sync TDD green) | gate |
+| `verify_adapter_test.py` | when a feature exposes an adapter surface, a profile-specific end-to-end adapter test must exist (blocking). | stage 04c (Flow tests); stage 05 (Verify) | gate |
 | `verify_artefacts.py` | the one-shot artefact pipeline gate (runs the stage checks for every feature + the project-level checks below) | project-level (every `verify_artefacts` run) | gate |
 | `verify_chain_grammar.py` | Verify the lossless, one-branch grammar of Stage 01b chain tables. | stage 01b (Chain table) | gate |
 | `verify_close_evidence.py` | Stage 05 WARN-only close evidence. | stage 05 (Verify) | gate |

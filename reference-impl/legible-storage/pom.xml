@@ -29,6 +29,12 @@
       <artifactId>postgresql</artifactId>
       <version>42.7.3</version>
     </dependency>
+    <!-- jOOQ is the SQL interface for the R-map Postgres store (no raw JDBC). -->
+    <dependency>
+      <groupId>org.jooq</groupId>
+      <artifactId>jooq</artifactId>
+      <version>${jooq.version}</version>
+    </dependency>
 
     <!-- Tests run the login example against each backend to prove parity. -->
     <dependency>

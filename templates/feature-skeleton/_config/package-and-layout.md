@@ -54,7 +54,10 @@ If using Java, typical paths are:
 - Engine/runtime classes: `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/engine/`
 - Concepts: `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/concepts/<name>/`
 - Syncs: `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/syncs/`
-- HTTP entry: `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/infrastructure/`
+- Inbound transport (HTTP entry): `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/infrastructure/`
+- Persistence / secondary (outbound) storage adapter: `<APP_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/storage/`
+  (backend selection + schema lifecycle; `<…>/storage/<backend>/` for a
+  backend-specific adapter)
 - Concept tests: `<APP_TEST_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/concepts/<name>/`
 - Sync tests: `<APP_TEST_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/syncs/`
 - Flow tests: `<APP_TEST_SOURCE_ROOT>/<APP_PACKAGE_ROOT>/flows/`
@@ -64,6 +67,9 @@ concept logic, it belongs under `concepts/<name>/`; if it is sync
 coordination, it belongs under `syncs/`; if it is transport-only HTTP
 code, it belongs under `infrastructure/`; if it is DTO-only boundary
 shape, it belongs under `api/`; if it is shared runtime/dispatch
-machinery, it belongs under `engine/`.
+machinery, it belongs under `engine/`; if it is the **persistence
+(secondary/outbound) adapter** — backend selection, schema migration
+lifecycle, or app-specific SQL — it belongs under `storage/`, never under
+`infrastructure/` (that bucket is inbound transport).
 
 Replace dots with path separators when mapping `APP_PACKAGE_ROOT`.

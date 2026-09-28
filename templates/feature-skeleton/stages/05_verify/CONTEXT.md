@@ -128,14 +128,18 @@ Automated close-evidence self-audit (advisory — warnings, never blocks):
 python3 ../../../../quality-gate/verify_close_evidence.py \
   --feature-root ../.. \
   --test-source-root <APP_TEST_SOURCE_ROOT>
+python3 ../../../../quality-gate/verify_adapter_test.py \
+  --feature-root ../.. \
+  --test-source-root <APP_TEST_SOURCE_ROOT> --require-enabled
 ```
 
 - Confirms `trace.md` (the canonical name) is present and warns on the legacy
   `verification-trace.md`.
-- Warns when an adapter surface is declared but no enabled flow/integration
-  test exists. This makes the "required, not optional" integration test
-  visible to `advance`/`./clad verify`; it is advisory because there is no
-  reliable profile-agnostic definition of that test.
+- **`verify_adapter_test.py --require-enabled` (blocking):** when an adapter
+  surface is declared, a profile-specific end-to-end adapter test must exist
+  **and be enabled** (green) under `test.source.root`. Stage 04c already
+  requires it to *exist* (it may be `@Disabled` while red); Stage 05 requires it
+  to run. `verify_close_evidence.py` remains an advisory cross-check.
 
 - Every scenario has an entry in `trace.md`.
 - `findings.md`, if present, names the owning stage for each finding.
@@ -155,9 +159,10 @@ python3 ../../../../quality-gate/verify_close_evidence.py \
   integration test that exercises that surface end-to-end (response shape
   + state round-tripping). Derived alongside the 04c flow tests. Required,
   not optional. Distinct from Gherkin flow tests (action token chain).
-  A *failing* integration test blocks the build (`mvn test`); a *missing*
-  one is surfaced as a warning by `verify_close_evidence.py` (above) and
-  confirmed by this human checklist.
+  A *missing* test now **blocks** at Stage 04c
+  (`verify_adapter_test.py`), and an *unenabled* one blocks at Stage 05
+  (`--require-enabled`). `verify_close_evidence.py` remains an advisory
+  cross-check.
 - **Cross-stage check (back):** every flow token observed at runtime
   back-traces to a use-case scenario.
 

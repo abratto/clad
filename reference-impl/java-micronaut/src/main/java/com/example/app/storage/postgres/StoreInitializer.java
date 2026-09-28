@@ -1,6 +1,5 @@
 package com.example.app.storage.postgres;
 
-import dev.legible.storage.RmapPostgresFactStore;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.runtime.event.annotation.EventListener;
@@ -11,33 +10,29 @@ import org.flywaydb.core.Flyway;
 import javax.sql.DataSource;
 
 /**
- * Applies base DDL at startup for the Postgres binding, in one deterministic
- * order:
+ * Applies the schema at startup for the Postgres binding.
  *
- * <ol>
- *   <li>Flyway owns the migration timeline ({{@code V1__login_rmap.sql}}
- *       documents the R-map base).</li>
- *   <li>{@link RmapPostgresFactStore#createSchema()} derives each concept's
- *       region table from the Stage 03b data models (idempotent, so tests may
- *       also call it directly).</li>
- * </ol>
+ * <p><strong>Flyway owns DDL.</strong> The base migration
+ * ({@code V1__login_rmap.sql}), generated from the Stage 03b R-map derivation,
+ * is the single source of the table shape and its version history. The runtime
+ * store does not create tables here —
+ * {@link dev.legible.storage.RmapPostgresFactStore#createSchema()} remains only
+ * as a dev/test helper (it applies the same derived DDL without Flyway).
  *
  * <p>Only present when {@code clad.storage=postgres}; the in-memory binding
- * needs no initialization. A demo seed is not applied here — the login flow's
- * happy path is seeded per environment (see the module README), keeping this
- * class to DDL ownership only.
+ * needs no initialization. Demo data is not applied here — it is seeded by
+ * {@code DemoSeed} through the engine's {@code FactStore} SPI, backend-agnostic
+ * (see the module README).
  */
 @Singleton
 @Requires(property = "clad.storage", value = "postgres")
 public class StoreInitializer {
 
     private final DataSource dataSource;
-    private final RmapPostgresFactStore factStore;
 
     @Inject
-    public StoreInitializer(DataSource dataSource, RmapPostgresFactStore factStore) {
+    public StoreInitializer(DataSource dataSource) {
         this.dataSource = dataSource;
-        this.factStore = factStore;
     }
 
     @EventListener
@@ -46,6 +41,5 @@ public class StoreInitializer {
                 .dataSource(dataSource)
                 .load()
                 .migrate();
-        factStore.createSchema();
     }
 }

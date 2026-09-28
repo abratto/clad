@@ -46,6 +46,7 @@ Read `methodology/implementation/TDD.md` before writing anything.
 | `../../../../../methodology/implementation/TDD.md` | 3 | London School double-loop discipline |
 | `../../../../../templates/feature.feature` | 3 | Gherkin output template with derivation rules |
 | `../../../../../templates/step-definitions.java` | 3 | Step-def skeleton template |
+| `../../../../../templates/http-integration-test.java` | 3 | Profile-specific end-to-end adapter test (step 6) |
 
 ## Process
 
@@ -215,6 +216,9 @@ python3 ../../../../../quality-gate/verify_port_spec_contract.py \
   --feature-dir output
 python3 ../../../../../quality-gate/verify_collection_coverage.py \
   --feature ../../../
+python3 ../../../../../quality-gate/verify_adapter_test.py \
+  --feature-root ../../.. \
+  --test-source-root <APP_TEST_SOURCE_ROOT>
 ```
 
 - **verify_profile_paths.py:** the effective `test.source.root` /
@@ -238,6 +242,13 @@ python3 ../../../../../quality-gate/verify_collection_coverage.py \
   section naming the empty, multi-item, and repeated-key (`n/a` allowed with a
   reason) fixtures. Skips non-collection features and features already closed
   at Stage 05 (no retrofit).
+- **verify_adapter_test.py:** when the feature exposes an adapter surface
+  (`port-spec.md` inbound, or a `Web` bootstrap in a chain/use-case), a
+  profile-specific end-to-end adapter test (`*FlowTest`/`*IntegrationTest`/
+  `*ContractTest`/`*IT`) must exist under `test.source.root`. It may be
+  `@Disabled` while red; Stage 05 re-runs it with `--require-enabled` so it must
+  be green at closure. Skips when the profile has no adapter surface or no test
+  root. Derive it from `templates/http-integration-test.java`.
 
 ### Semantic checks
 

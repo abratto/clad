@@ -1,6 +1,7 @@
 package com.example.app;
 
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 import org.postgresql.ds.PGSimpleDataSource;
@@ -24,6 +25,7 @@ public class TestPostgresDataSourceFactory {
         POSTGRES.start();
     }
 
+    @Primary
     @Singleton
     public DataSource dataSource() {
         PGSimpleDataSource dataSource = new PGSimpleDataSource();
