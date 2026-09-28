@@ -2,6 +2,8 @@ package com.example.app.storage.postgres;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.StartupEvent;
+import io.micronaut.core.annotation.Order;
+import io.micronaut.core.order.Ordered;
 import io.micronaut.runtime.event.annotation.EventListener;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -35,6 +37,10 @@ public class StoreInitializer {
         this.dataSource = dataSource;
     }
 
+    // HIGHEST precedence: the schema must exist before any StartupEvent writer
+    // (notably DemoSeed) touches a table. Event-listener order is otherwise
+    // arbitrary, which made the durable run flaky (fixed in v0.15.2).
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     @EventListener
     void onStartup(StartupEvent event) {
         Flyway.configure()
