@@ -41,7 +41,7 @@ the need for transactions, and also allows much finer granularity"
 (arXiv:2508.14511 / 2606.11051) — the engine was re-architected so that:
 
 - **the action is the atomic unit**: a concept mutates only its own
-  `Region` of the shared `FactStore` SPI (in-memory, Jena, or Postgres —
+  `Region` of the shared `FactStore` SPI (in-memory or Postgres —
   `reference-impl/legible-storage/` proves storage-agnosticism);
 - **syncs fire after commit**: the per-flow action log
   (`Invocation`/`Completion` with `parent`/`causedBySync` lineage) is the
@@ -134,5 +134,5 @@ carry the same syntax (see `SYNCHRONIZATIONS.md` and `SYNC_PATTERNS.md`).
 | OPTIONAL | — | CLAD superset |
 | per-concept permutations | — | FanOut/StateRead (R-map aware) |
 | flow lineage `parent`/`causedBySync`, archiving, `/api/dev/*` debug, replay | partial (multi-when flow history only) | CLAD superset |
-| durable concept state | in-memory only | `FactStore` SPI (in-memory/Jena/Postgres) |
+| durable concept state | in-memory only | `FactStore` SPI (in-memory/Postgres) |
 | multi-`when` join declarative | direct | **direct** since `engine-declarative-join-collect`: named conjuncts (`conj(...)` / `SyncRule.ofJoin`) fire once when all complete in one flow |

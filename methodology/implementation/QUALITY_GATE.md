@@ -3,7 +3,7 @@
 A **quality gate** is the small set of checks every commit on a CLAD
 project must pass before being pushed. This file describes the
 language-agnostic gate, then the gate as it applies to the
-Java/Micronaut/Jena profile that ships with this starter.
+Java/Micronaut profile that ships with this starter.
 
 The gate is intentionally small. A long gate that nobody runs is
 worse than a short gate that everybody runs.

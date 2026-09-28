@@ -10,6 +10,28 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.15.1] — 2026-09-26
+
+**Document the fire-after-commit runtime; correct stale Jena/SPARQL framing.**
+Docs-only patch (plus one javadoc comment); no behavioural change.
+
+- **`ENGINE.md` now describes the runtime in detail**, answering "how are sync
+  chains constructed and displayed, and what does *stuck* mean now that nothing
+  polls?": the `Invocation`/`Completion` action-log records and their
+  `parentActionId`/`causedBySync` provenance edges; sync dispatch (trigger index,
+  conjunct matching, provenance-based exactly-once, synchronous pending-queue
+  drain — no scheduler or polling loop); the debug surface, contrasting the
+  **designed** `/api/dev/syncs` rules with the **realized** `/api/dev/flow/{id}`
+  chain (and `/flows`, `/stuck`, `/concept/{name}/facts`); and the precise
+  `stuck` semantics (an invocation with no completion — a liveness/integrity
+  signal, never a timeout) with `drain` replay. Cross-linked from
+  `SYNCHRONIZATIONS.md` and `FLOW_TOKENS.md`.
+- **Stale framing fixed** in `QUALITY_GATE.md`, `SYNC_ENGINE_EVOLUTION.md`,
+  `DECISIONS.md`, the engine README, and the `SyncEngine#debug` javadoc — all
+  still referred to the retired Jena/SPARQL profile as current.
+
+**Upgrade notes:** none — documentation only.
+
 ## [0.15.0] — 2026-09-26
 
 **Adapter e2e is a gate, and jOOQ is the Postgres SQL interface.** Two

@@ -108,7 +108,10 @@ The canonical fire-after-commit engine
 per-flow `ActionLog` of `Invocation`/`Completion` records, with the
 `parent` link carried explicitly (`parentActionId`) and each action's
 authorising sync recorded (`causedBySync`). `05_verify/` reads it directly
-via the `DebugApi` surface — no graph reconstruction.
+via the `DebugApi` surface — no graph reconstruction. The endpoints that reveal
+the token tree (the *designed* `/api/dev/syncs` rules vs the *realized*
+`/api/dev/flow/{id}` chain, and `/api/dev/stuck`) are catalogued in
+[`ENGINE.md`](ENGINE.md) §"The debug surface".
 
 ## In stage `05_verify/`
 

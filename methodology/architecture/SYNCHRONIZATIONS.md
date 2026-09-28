@@ -25,6 +25,12 @@ This model ensures three guarantees: syncs never mutate state during
 inspection, execution is deterministic per frame set, and all matching
 is scoped to a single causal flow token.
 
+> This file is the *grammar and discipline* of syncs. How the runtime engine
+> actually constructs and fires a chain — the action log, the trigger index,
+> fire-after-commit dispatch, and the debug surface that shows syncs — is
+> described in [`ENGINE.md`](ENGINE.md) §"Sync dispatch" and §"The debug
+> surface".
+
 ## Shape
 
 ```

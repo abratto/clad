@@ -11,8 +11,8 @@
 CLAD's stage gates capture **what** was decided each turn (the
 `output/` of each stage *is* the decision). They do not capture
 **why** — particularly for cross-cutting choices that span features:
-"why Jena over Postgres for the reference profile?", "why one named
-graph per concept rather than one schema?", "why no JWT?".
+"why Postgres over in-memory for durable deployments?", "why one
+relation per concept rather than one shared table?", "why no JWT?".
 
 Without a place to write those down, the same questions get
 re-litigated session after session. The DECISIONS overlay is that
