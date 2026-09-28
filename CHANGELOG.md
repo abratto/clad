@@ -10,6 +10,20 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.15.2] — 2026-09-28
+
+**Fix flaky Postgres startup ordering (seed ran before schema).** The demo
+seed's `StartupEvent` listener (`DemoSeed`) could run before the Flyway
+migration (`StoreInitializer`), writing to tables that did not exist yet —
+`relation "user_naming" does not exist`. The listener order was arbitrary, so
+the durable run passed by luck on v0.15.0 and failed on v0.15.1's CI.
+
+- `StoreInitializer` now runs at `@Order(Ordered.HIGHEST_PRECEDENCE)` and
+  `DemoSeed` at `@Order(Ordered.LOWEST_PRECEDENCE)`, so the schema is always
+  migrated before any seed write. No contract change; concepts/syncs unaffected.
+
+**Upgrade notes:** none.
+
 ## [0.15.1] — 2026-09-26
 
 **Document the fire-after-commit runtime; correct stale Jena/SPARQL framing.**

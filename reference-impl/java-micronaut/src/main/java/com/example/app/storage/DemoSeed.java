@@ -4,6 +4,8 @@ import com.example.app.concepts.passwordauth.PasswordAuthConcept;
 import com.example.app.concepts.usernaming.UserNamingConcept;
 import dev.legible.engine.FactStore;
 import io.micronaut.context.event.StartupEvent;
+import io.micronaut.core.annotation.Order;
+import io.micronaut.core.order.Ordered;
 import io.micronaut.runtime.event.annotation.EventListener;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -25,6 +27,10 @@ public class DemoSeed {
         this.factStore = factStore;
     }
 
+    // LOWEST precedence: seed AFTER schema initialization. The Postgres
+    // StoreInitializer runs Flyway at HIGHEST precedence; without this, the
+    // seed could write to tables the migration had not created yet.
+    @Order(Ordered.LOWEST_PRECEDENCE)
     @EventListener
     void onStartup(StartupEvent event) {
         String userId = "ada00001-0000-0000-0000-000000000001";
