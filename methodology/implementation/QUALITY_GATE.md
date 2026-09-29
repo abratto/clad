@@ -259,7 +259,7 @@ consistency checks across the CLAD artefact chain.
 | `verify_mutation_score.py` | 04d, 04e | The unit suite meets `mutation.threshold` (R24); skips when `mutation.command` is unset |
 | `verify_close_evidence.py` | 05 | Advisory: canonical `trace.md` present (warns on legacy name); enabled adapter integration test exists when an adapter surface is declared |
 | `verify_concept_test_derivation.py` | 04d | Every contract outcome has a matching concept test row and Java method |
-| `verify_test_naming.py` | 04d, 04e (advisory) | London School naming per scope: class/method naming, `@Nested`, GIVEN/WHEN/THEN. Report only — not a blocking gate (DR-0001) |
+| `verify_test_naming.py` | 04d, 04e (advisory) | Test naming per scope: class/method naming, `@Nested`, GIVEN/WHEN/THEN. Report only — not a blocking gate (DR-0001) |
 | `verify_concept_field_assertions.py` | 04d | Java concept tests assert required completion fields from contract flow-token shapes |
 
 Each script returns exit code 0 on pass, 1 on fail, with a structured

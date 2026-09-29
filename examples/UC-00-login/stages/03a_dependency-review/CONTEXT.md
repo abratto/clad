@@ -31,7 +31,7 @@ This stage does **not** emit the dependence graph.
 
 **Feeds:**
 
-- `<concept>-card.md` → 03b (Pattern D fields drive conceptual data-model coverage), 04b (per-concept contract author sees the full inbound contract), 04d (concept TDD knows its inbound surface), 04e (sync TDD knows which concepts it must double).
+- `<concept>-card.md` → 03b (Pattern D fields drive conceptual data-model coverage), 04b (per-concept contract author sees the full inbound contract), 04d (concept tests know their inbound surface), 04e (sync tests know which concepts they must double).
 - `pattern-d-summary.md` → 03b (single cross-cutting checklist for conceptual data-model design).
 
 **Agent stance for this stage:** this stage produces **no new design**.

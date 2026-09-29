@@ -54,8 +54,7 @@ def _current_stage(feature_root):
         reentry_stage, change_path = reentry_change
         current = cs.stage_by_id(reentry_stage)
         changed_after = os.path.getmtime(change_path)
-        last_child = cs.stage_index("04e-green")
-        for stage in cs.STAGES[cs.stage_index(reentry_stage):last_child + 1]:
+        for stage in cs.STAGES[cs.stage_index(reentry_stage):]:
             output = stage.output_dir(feature_root)
             if not cs.dir_is_populated(output):
                 continue

@@ -77,7 +77,7 @@ def chain_actions(feature_root: str) -> Dict[str, List[str]]:
     """Scenario slug -> the ordered `Concept.action` token chain (the Then column
     of each canonical per-scenario chain table). Terminal `Web.respond[NNN]` rows
     are included as `Web.respond` (suffix stripped) so a runtime can reconstruct
-    the full step-definition token sequence."""
+    the full flow-token sequence."""
     chain_dir = cs.CHAIN_DIR(feature_root)
     out: Dict[str, List[str]] = {}
     if not os.path.isdir(chain_dir):

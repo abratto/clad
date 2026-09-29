@@ -39,7 +39,8 @@ and Böckeler, *TDD inside the agent loop* (cited in
 - **Mutation is the test-effectiveness gate (R24).** New
   `quality-gate/verify_mutation_score.py` runs `mutation.command` and fails
   Stage 04d/04e below `mutation.threshold` (default 80%). The canonical profile
-  ships `scripts/mutation-score.sh` (PIT) and sets `mutation.command`. New
+  ships `scripts/mutation-score.sh` (PIT 1.30.0, which supports current JDKs
+  including Java 25) and sets `mutation.command`. New
   `quality-gate/verify_acceptance_binding.py` proves the Acceptance Spec maps
   1:1 to the native flow tests.
 - **Docs/rules.** `methodology/implementation/TDD.md` → `TESTING.md`; R8

@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """
-verify_test_naming.py — Stage gate: London School test naming conventions.
+verify_test_naming.py — Advisory: unit-test naming conventions.
 
 Why this exists:
-  Concept and sync unit tests (Stages 04d and 04e) must follow London School
-  BDD naming conventions. An LLM can invent arbitrary method names that drift
-  from the convention. This script checks for compliance deterministically.
+  Concept and sync unit tests (Stages 04d and 04e) read best when they follow
+  consistent BDD naming conventions. An LLM can invent arbitrary method names
+  that drift from the convention. This script reports drift deterministically.
+  It is ADVISORY (not a blocking gate): prescribing how a suite is written is
+  fragile across models and releases; effectiveness (mutation score) and
+  coverage are what block (DR-0001).
 
 Checks:
   1. Class name follows <Concept><Action>Test or <SyncName>Test pattern
@@ -221,7 +224,7 @@ def check_conventions(filepath, info):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Verify London School test naming conventions")
+        description="Report unit-test naming-convention drift (advisory)")
     parser.add_argument("--test-source-root", required=True,
                         help="Path to the test source root (e.g. ref-impl/.../test/java)")
     parser.add_argument("--scope", default="concepts,syncs",

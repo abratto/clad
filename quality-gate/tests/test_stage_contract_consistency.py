@@ -240,8 +240,7 @@ class StageContractConsistencyTests(unittest.TestCase):
 
     def test_present_gate_does_not_hardcode_a_divergent_label(self):
         """present_gate.py must derive gate labels from clad_stages, not
-        restate them (the source of the old 'Executable specification'
-        vs 'Executable spec' drift)."""
+        restate them (the historical source of label drift)."""
         present = (QUALITY_GATE / "present_gate.py").read_text(encoding="utf-8")
         self.assertIn("cs.GATE_LABELS", present,
                       "present_gate.py must import gate labels from clad_stages")

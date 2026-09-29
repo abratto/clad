@@ -148,7 +148,7 @@ def main():
     failures = []
     if path is None:
         failures.append("no `## Collection coverage` section under "
-                        "04c_flow-tests/output/ (collection signal: %s)" % evidence)
+                        "04c_acceptance-tests/output/ (collection signal: %s)" % evidence)
     else:
         low = body.lower()
         if "empty" not in low:

@@ -111,7 +111,8 @@ different purposes, they are two concepts' state, not one concept's.
 
 The verbs the concept exposes. Each action lists every possible output as
 a separate indented case-split block. This makes exhaustiveness visible
-at a glance and maps directly to the TDD case-split in Stage 04.
+at a glance and maps directly to the action's outcome case-split invoked in
+Stage 04.
 
 Two formats are available:
 

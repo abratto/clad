@@ -18,7 +18,7 @@ the spec changes.
 
 **Feeds:**
 
-- `<Name>.contract.md` → 04c (flow tests assert contract-level signatures), 04d (concept TDD compiles against contract), 04e (sync TDD references contract action enums).
+- `<Name>.contract.md` → 04c (the Acceptance Spec's native tests assert contract-level signatures), 04d (concept tests compile against the contract), 04e (sync tests reference contract action enums).
 
 **Agent stance for this stage:** mechanical extraction only. If the
 contract needs an action that isn't in the concept spec, the defect is

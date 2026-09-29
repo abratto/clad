@@ -4,7 +4,8 @@
 Why this exists:
   `FLOW_TOKENS.md` §"Outcome casing" states the convention: the canonical,
   profile-agnostic outcome token is SCREAMING_SNAKE_CASE, and it is used in the
-  chain tables, concept specs, contracts, derivation maps, and Gherkin. The
+  chain tables, concept specs, contracts, derivation maps, and the Acceptance
+  Spec. The
   runtime profile may emit a different casing (e.g. java-legible PascalCase) and
   comparisons normalise — but the AUTHORED artefacts must agree so a worker
   never has to guess whether to write `Ok` or `OK` (experiment defect D9/D26:

@@ -8,7 +8,7 @@ Why this exists:
   then inherits whatever flow it lands in, and nothing checks that it belongs
   there. So two use cases sharing a completion fire each other's rules — UC-03's
   `lend` fired in UC-04's return flow and UC-04's `close` fired in UC-03's borrow
-  flow, surfacing only at Stage 04e-green.
+  flow, surfacing only at Stage 04e.
 
   The paper's `RegistrationError` names the request, matcher and all (§5.3:
   "other web requests may be in process at the same time"), and every ConceptBox

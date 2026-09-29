@@ -42,12 +42,11 @@ body:
         - "01_usecase"
         - "02_concepts"
         - "03_syncs"
-        - "04_implement / 04b_spec"
-        - "04_implement / 04c_flow-tests"
-        - "04_implement / 04d_concept-tdd / 04d_red-tests"
-        - "04_implement / 04d_concept-tdd / 04d_green-impl"
-        - "04_implement / 04e_sync-tdd / 04e_red-tests"
-        - "04_implement / 04e_sync-tdd / 04e_green-impl"
+        - "04_implement / 04a_storage-mapping"
+        - "04_implement / 04b_contract"
+        - "04_implement / 04c_acceptance-tests"
+        - "04_implement / 04d_concept-impl"
+        - "04_implement / 04e_sync-impl"
         - "05_verify"
     validations:
       required: true

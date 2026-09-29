@@ -316,8 +316,8 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                 literals = "<none>"
             then_sig = f"{target_concept}/{target_action}: [ <args> ]"
             # A `Web/respond` target carries its terminal status; put it in the
-            # Allowed-literals column so the Gherkin-derivation check can read it
-            # (the generator emitted `<none>` before — experiment defect D11).
+            # Allowed-literals column so the derivation/alignment checks can read
+            # it (the generator emitted `<none>` before — experiment defect D11).
             respond_status = _respond_status(row)
             if respond_status:
                 then_sig = f"Web/respond: [ status: {respond_status} ]"

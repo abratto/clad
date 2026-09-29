@@ -76,10 +76,9 @@ sync suites:
 - `verify_mutation_score.py` fails Stage 04d/04e below threshold. It
   **SKIPs** — visibly, not silently — when `mutation.command` is unset or
   the tool reports `MUTATION_SKIP`. It skips nothing when passed
-  `--require` (or `mutation.require=true`): then a SKIP is a failure. CI
-  runs the canonical profile's mutation gate with `--require` on JDK 21
-  (the JVM PIT supports); a developer on a newer JVM gets a SKIP rather
-  than a false failure.
+  `--require` (or `mutation.require=true`): then a SKIP is a failure. The
+  canonical profile pins PIT 1.30.0 (which supports current JDKs, including
+  25); CI runs the gate with `--require` on JDK 21.
 
 Neither a red-green ritual nor a test count substitutes for this signal.
 

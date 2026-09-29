@@ -64,7 +64,7 @@ def rename_spec(feature_root, old, new, write):
 
 
 def rename_doc_refs(feature_root, old, new, write):
-    for path in walk(feature_root, (".md", ".feature")):
+    for path in walk(feature_root, (".md",)):
         if write:
             if replace_in(path, [(f"{old}.sync.md", f"{new}.sync.md")]):
                 print(f"  update {os.path.relpath(path, feature_root)}")

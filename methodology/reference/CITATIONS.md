@@ -52,8 +52,10 @@ and the `after`/`then` trace form for the `## Operational Principle`
 section. Neither the Alloy language syntax nor the Alloy Analyzer tool
 is required — the notation is used for precision and human readability
 only. The paper's use of Alloy `check` for mechanical verification of
-operational principles is a deliberate gap in CLAD: gate review and
-red-first TDD are the practical substitutes. Full Alloy verification
+operational principles is a deliberate gap in CLAD: gate review and the
+frozen Acceptance Spec plus mutation-gated unit tests
+([`../../docs/decisions/0001-spec-driven-testing.md`](../../docs/decisions/0001-spec-driven-testing.md))
+are the practical substitutes. Full Alloy verification
 remains appropriate if state-machine bugs become the dominant failure
 category in a given project.
 

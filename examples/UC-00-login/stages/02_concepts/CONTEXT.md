@@ -18,7 +18,7 @@ until it has printed this stage as `NEXT STAGE`.
 Establishes the full anatomy of every concept this feature needs — state,
 action signatures with outcomes, flow-token shape, operational principle —
 so Stage 03 can name actions/outcomes precisely, Stage 03b can derive a
-conceptual data model from `state`, and Stage 04d can TDD the concept against
+conceptual data model from `state`, and Stage 04d can test the concept against
 a fixed contract.
 
 Concepts are **system-scope, canonical assets** (the corpus at

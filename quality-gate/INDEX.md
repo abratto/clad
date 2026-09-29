@@ -64,7 +64,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_sync_route_filters.py` | R11: route scoping on shared-trigger syncs. | stage 04e (Sync implementation) | gate |
 | `verify_sync_then_shape.py` | a sync `then` carries the authored result, not a transport frame | project-level (every `verify_artefacts` run) | gate |
 | `verify_sync_transition_coverage.py` | Stage 03: every chain-table invocation edge must have a sync file. | stage 03 (Syncs) | gate |
-| `verify_test_naming.py` | Stage gate: London School test naming conventions. | by hand (advisory tooling) | gate |
+| `verify_test_naming.py` | Advisory: unit-test naming conventions. | by hand (advisory tooling) | gate |
 
 ## Non-`verify_` helper scripts
 

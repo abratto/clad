@@ -148,7 +148,7 @@ feature for downstream runtimes, keeping the parsing grammar in one place.
 
 1. **Requirements → code.** Every in-scope goal becomes a use-case
    scenario → chain table → concept specs + sync contracts → concept contracts +
-   TDD tests → implementation. Nothing appears in code without a
+   derived tests → implementation. Nothing appears in code without a
    requirement upstream.
 
 2. **Code → requirements.** Every runtime action emits a flow token.

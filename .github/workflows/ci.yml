@@ -88,10 +88,10 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
-      # The test-effectiveness gate (R24, DR-0001). PIT supports JDK 21; this
-      # job is where the gate is authoritative. `--require` makes a SKIP
-      # (tooling unavailable) a failure, so the job cannot silently pass
-      # without measuring. Locally, on a newer JVM, the same check reports SKIP.
+      # The test-effectiveness gate (R24, DR-0001). The canonical profile pins
+      # PIT 1.30.0; this job runs on JDK 21 (LTS) where the gate is
+      # authoritative. `--require` makes a SKIP (tooling unavailable) a failure,
+      # so the job cannot silently pass without measuring.
       - name: Mutation score gate (java-legible example)
         run: >-
           python3 quality-gate/verify_mutation_score.py

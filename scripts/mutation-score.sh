@@ -7,10 +7,11 @@
 #   MUTATION_SCORE: <pct>   the suite was measured; compare to mutation.threshold
 #   MUTATION_SKIP: <reason> the tool could not run in this environment
 #
-# SKIP is for environments that cannot host the tool (a JVM newer than PIT
-# supports, a missing toolchain). It is NOT a pass: `verify_mutation_score.py
-# --require` (used in CI) turns a SKIP into a failure. Locally, a SKIP keeps
-# the gate from producing a false negative on a developer's newer JVM.
+# SKIP is for environments that cannot host the tool (an unsupported JVM, a
+# missing toolchain). It is NOT a pass: `verify_mutation_score.py --require`
+# (used in CI) turns a SKIP into a failure. The pinned PIT 1.30.0 supports
+# current JDKs (including 25), so a SKIP here usually means a broken toolchain,
+# not a JVM-version gap.
 #
 # Not bound to a Maven lifecycle phase: `mvn test` is unaffected. Configured as
 # `mutation.command` in clad.properties; unset it for a profile with no
@@ -40,7 +41,7 @@ fi
 if ! mvn -q -f reference-impl/pom.xml -pl java-legible \
         org.pitest:pitest-maven:mutationCoverage >>"$LOG" 2>&1; then
   jvm="$(mvn -version 2>/dev/null | sed -n 's/.*Java version: \([0-9.]*\).*/\1/p' | head -1)"
-  emit_skip "mutation tooling failed (JVM ${jvm:-unknown}; PIT may not support this JVM)"
+  emit_skip "mutation tooling failed (JVM ${jvm:-unknown})"
 fi
 
 # 3. Parse the XML report into a single score line.

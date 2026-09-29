@@ -38,11 +38,11 @@ class GateLineParsingTests(unittest.TestCase):
 
     SKELETON = ("- **Gate 1 (Requirements):** `pending` | `approved` | `rejected` | `auto-approved`\n"
                 "- **Gate 2 (Architecture):** `approved`\n"
-                "- **Gate 3 (Executable spec):** `pending`\n")
+                "- **Gate 3 (Acceptance spec):** `pending`\n")
 
     def test_parse_reads_the_token(self):
         self.assertEqual(ap.parse_gate_status(self.SKELETON, 2, "Architecture"), "approved")
-        self.assertEqual(ap.parse_gate_status(self.SKELETON, 3, "Executable spec"), "pending")
+        self.assertEqual(ap.parse_gate_status(self.SKELETON, 3, "Acceptance spec"), "pending")
 
     def test_parse_returns_none_when_absent(self):
         self.assertIsNone(ap.parse_gate_status(self.SKELETON, 1, "Nonexistent"))

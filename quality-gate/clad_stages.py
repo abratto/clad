@@ -207,9 +207,9 @@ class Stage:
 # --------------------------------------------------------------------------
 # Check definitions (only checks whose inputs are plain markdown artefacts and
 # therefore runnable profile-agnostically at design time are wired here).
-# Profile-specific checks (Java test roots, Gherkin discovery paths, parity
-# scripts) remain the responsibility of the local pre-commit gate / CI, which
-# have the profile config available.
+# Profile-specific checks (Java test roots, acceptance-test discovery paths,
+# parity scripts) remain the responsibility of the local pre-commit gate / CI,
+# which have the profile config available.
 # --------------------------------------------------------------------------
 
 _SCENARIO_COVERAGE = Check(

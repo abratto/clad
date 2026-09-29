@@ -32,6 +32,8 @@
     <micronaut.openapi.version>6.20.0</micronaut.openapi.version>
     <junit.version>5.11.0</junit.version>
     <archunit.version>1.3.0</archunit.version>
+    <pitest.version>1.30.0</pitest.version>
+    <pitest.junit5.plugin.version>1.2.3</pitest.junit5.plugin.version>
     <graphql-java.version>22.4</graphql-java.version>
     <testcontainers.version>1.20.4</testcontainers.version>
     <jooq.version>3.19.10</jooq.version>

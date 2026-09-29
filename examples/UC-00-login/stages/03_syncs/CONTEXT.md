@@ -13,7 +13,7 @@ Coordination is **declarative** so that **no concept imports another**
 (hard rule R1) and so each cross-concept link is reviewable as a small
 `when … where … then` rule rather than being buried in imperative
 code. Each sync also commits to one of the four legal data-flow
-patterns (A/B/C/D), which makes Stage 03a's audit and Stage 04e's TDD
+patterns (A/B/C/D), which makes Stage 03a's audit and Stage 04e's sync tests
 mechanical.
 
 **Feeds:**

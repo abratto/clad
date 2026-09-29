@@ -4,10 +4,10 @@ verify_reference_integrity.py — a rename must not leave a dangling reference.
 
 Why this exists:
   Renaming a sync or concept is mechanical for the artefact itself, but its tail
-  is not: cards, derivation maps, traces, the `.feature`, and the README cite the
-  artefact by filename, and the Java rule / test class is named after it. The
-  route-scoped-pinned-names change touched ~25 syncs across two repos; the tail
-  was found by hand. This check catches it mechanically.
+  is not: cards, derivation maps, traces, the Acceptance Spec, and the README
+  cite the artefact by filename, and the Java rule / test class is named after
+  it. The route-scoped-pinned-names change touched ~25 syncs across two repos;
+  the tail was found by hand. This check catches it mechanically.
 
 Checks (per feature; `_changes/` history and bootstrap concepts are exempt):
   * A backticked `<Name>.sync.md` reference must resolve to a real sync spec in
@@ -68,7 +68,7 @@ def markdown_files(feature_root):
     for dirpath, dirs, files in os.walk(feature_root):
         dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
         for name in sorted(files):
-            if name.endswith(".md") or name.endswith(".feature"):
+            if name.endswith(".md"):
                 yield os.path.join(dirpath, name)
 
 

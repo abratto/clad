@@ -5,6 +5,7 @@ import dev.legible.engine.Region;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -121,5 +122,93 @@ class ConceptTest {
 
         Map<String, Object> unknown = session.execute("lookup", Map.of("sessionId", "missing"));
         assertEquals("UNKNOWN", unknown.get("outcome"));
+    }
+
+    @Test
+    void registerFreshUsernameReturnsRegisteredWithFields() {
+        Map<String, Object> res = userNaming.execute("register", Map.of("username", "bob"));
+
+        assertEquals("REGISTERED", res.get("outcome"));
+        assertEquals("bob", res.get("username"));
+        assertNotNull(res.get("userId"));
+        assertFalse(((String) res.get("userId")).isEmpty());
+
+        // The registration is observable through lookup (the write happened).
+        Map<String, Object> found = userNaming.execute("lookupByUsername",
+                Map.of("username", "bob"));
+        assertEquals("FOUND", found.get("outcome"));
+        assertEquals(res.get("userId"), found.get("userId"));
+    }
+
+    @Test
+    void registerDuplicateUsernameIsRefused() {
+        userNaming.execute("register", Map.of("username", "bob"));
+
+        Map<String, Object> res = userNaming.execute("register", Map.of("username", "bob"));
+
+        assertEquals("refused", res.get("outcome"));
+    }
+
+    @Test
+    void registerAndLookupMissingUsernameAreErrors() {
+        assertEquals("error",
+                userNaming.execute("register", new HashMap<>()).get("outcome"));
+        assertEquals("error",
+                userNaming.execute("lookupByUsername", new HashMap<>()).get("outcome"));
+    }
+
+    @Test
+    void setCredentialEnablesCheckAndReportsSet() {
+        Map<String, Object> res = passwordAuth.execute("setCredential",
+                Map.of("userId", "u1", "password", "pw"));
+
+        assertEquals("SET", res.get("outcome"));
+        assertEquals("u1", res.get("userId"));
+        assertEquals("OK", passwordAuth.execute("check",
+                Map.of("userId", "u1", "password", "pw")).get("outcome"));
+    }
+
+    @Test
+    void setCredentialAndCheckMissingArgsAreErrors() {
+        assertEquals("error", passwordAuth.execute("setCredential",
+                Map.of("userId", "u1")).get("outcome"));
+        assertEquals("error", passwordAuth.execute("check",
+                Map.of("userId", "u1")).get("outcome"));
+    }
+
+    @Test
+    void successfulCheckClearsAccumulatedFailures() {
+        String userId = seedUser("alice", "secret");
+        for (int i = 0; i < 4; i++) {
+            passwordAuth.execute("check", Map.of("userId", userId, "password", "wrong"));
+        }
+
+        // The correct password clears the counter (clearAttempts).
+        assertEquals("OK", passwordAuth.execute("check",
+                Map.of("userId", userId, "password", "secret")).get("outcome"));
+
+        // One more failure must be the first again, not the fifth: a leaked
+        // counter would lock the account and reject the following success.
+        Map<String, Object> res = passwordAuth.execute("check",
+                Map.of("userId", userId, "password", "wrong"));
+        assertEquals("BAD_PASSWORD", res.get("outcome"));
+        assertEquals("OK", passwordAuth.execute("check",
+                Map.of("userId", userId, "password", "secret")).get("outcome"));
+    }
+
+    @Test
+    void setCredentialResetsAccumulatedFailures() {
+        passwordAuth.execute("setCredential", Map.of("userId", "u2", "password", "pw"));
+        for (int i = 0; i < 4; i++) {
+            passwordAuth.execute("check", Map.of("userId", "u2", "password", "wrong"));
+        }
+
+        // Re-seeding clears failedAttempts (seedCredential); a leaked counter
+        // would make the next failure the fifth and lock the account.
+        passwordAuth.execute("setCredential", Map.of("userId", "u2", "password", "pw"));
+        assertEquals("BAD_PASSWORD", passwordAuth.execute("check",
+                Map.of("userId", "u2", "password", "wrong")).get("outcome"));
+        assertEquals("OK", passwordAuth.execute("check",
+                Map.of("userId", "u2", "password", "pw")).get("outcome"));
     }
 }
