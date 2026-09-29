@@ -6,7 +6,7 @@
   (`UserNamingLookupByUsernameTest`, `PasswordAuthCheckTest`; `Session.grant`
   covered through the flow/sync tests).
 - **Contract-outcome coverage:** every outcome in
-  [`../04b_contract/output/`](../04b_contract/output/) has a row in
+  [`../../04b_contract/output/`](../../04b_contract/output/) has a row in
   [`concept-test-derivation.md`](concept-test-derivation.md).
 - **Mutation score:** reported by `verify_mutation_score.py` when the
   profile configures `mutation.command`; this worked example sets none, so

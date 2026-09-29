@@ -9,12 +9,12 @@
 
 This is a reference container for the implementation sub-stages. The
 authoritative stage contract is
-[`../../../../../templates/feature-skeleton/stages/04_implement/CONTEXT.md`](../../../../../templates/feature-skeleton/stages/04_implement/CONTEXT.md).
+[`../../../../templates/feature-skeleton/stages/04_implement/CONTEXT.md`](../../../../templates/feature-skeleton/stages/04_implement/CONTEXT.md).
 
 Stage 04 is spec-driven and test-verified: `04c` authors the frozen
 Acceptance Spec and native flow tests (Gate 3); `04d`/`04e` produce unit
 tests and implementation together, gated by mutation score. See
-[`../../../../../methodology/implementation/TESTING.md`](../../../../../methodology/implementation/TESTING.md).
+[`../../../../methodology/implementation/TESTING.md`](../../../../methodology/implementation/TESTING.md).
 
 In this worked feature the native outer loop is `LoginFlowTest`
 (`reference-impl/java-legible/src/test/java/dev/legible/example/login/`).

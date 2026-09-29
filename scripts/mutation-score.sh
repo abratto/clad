@@ -30,10 +30,13 @@ emit_skip() {
   exit 0
 }
 
-# 1. Compile the module and its reactor dependencies.
-if ! mvn -q -f reference-impl/pom.xml -pl java-legible -am test-compile \
+# 1. Install the module and its reactor dependencies. `install` (not just
+#    test-compile) is required: step 2 runs PIT scoped to java-legible without
+#    `-am`, so `legible-engine` must resolve from the local repository. On a
+#    clean CI runner it is absent otherwise, and the scoped build fails fast.
+if ! mvn -q -f reference-impl/pom.xml -pl java-legible -am install -DskipTests \
         >"$LOG" 2>&1; then
-  emit_skip "test-compile failed"
+  emit_skip "build/install failed"
 fi
 
 # 2. Run PIT scoped to java-legible only (no -am: the goal must not run on the

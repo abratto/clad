@@ -30,7 +30,7 @@ from pathlib import Path
 
 LINK_RE = re.compile(r"\]\(\s*([^)]+?)\s*\)")
 FENCE_RE = re.compile(r"^\s*(```|~~~)", re.MULTILINE)
-TRACKED_DIRS = ("methodology", "templates", "skills")
+TRACKED_DIRS = ("methodology", "templates", "skills", "examples")
 TRACKED_FILES = ("AGENTS.md", "CONTEXT.md", "CLAUDE.md")
 IGNORED_PATH_PARTS = ("/output/", "CHANGELOG.md", "/maintenance/", "/.git/")
 
