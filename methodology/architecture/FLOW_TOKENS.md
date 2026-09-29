@@ -42,7 +42,7 @@ bytes".
 chain-table `Outcome` cells, concept-spec action signatures, and flow-token
 `outcome:` values — to be SCREAMING_SNAKE_CASE. The contract generator emits the
 same enum, so chain tables, concept specs, contracts, derivation maps, and
-Gherkin all agree. A profile whose runtime emits a different casing (the
+the Acceptance Spec all agree. A profile whose runtime emits a different casing (the
 canonical `java-legible` profile uses PascalCase) is normalised at the flow-token
 assertion; authored artefacts do **not** copy the runtime casing. This closes the
 `Ok`-vs-`OK` split that made every use case reconcile two conventions by hand

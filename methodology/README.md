@@ -27,14 +27,13 @@ CLAD targets. They are paraphrases of, and citations to, Meng & Jackson
 9. [`architecture/DATA_MODEL_NOTES.md`](architecture/DATA_MODEL_NOTES.md) — drafting per-concept conceptual data models (Stage 03b)
 10. [`architecture/ARTEFACT_MAP.md`](architecture/ARTEFACT_MAP.md) — the dependency graph between every per-feature artefact (producer → consumer, with the data each consumer needs and why)
 11. [`architecture/TRACEABILITY.md`](architecture/TRACEABILITY.md) — artefact-to-architecture-to-code mapping (what WYSIWID concept each artefact realizes, how it's verified, where it lives at runtime)
-12. [`architecture/GHERKIN_INTEGRATION.md`](architecture/GHERKIN_INTEGRATION.md) — the optional Gherkin/Cucumber outer-red BDD track (derivation rules, cross-stage consistency, worked example)
 
 ## 3. Implementation — hard rules and the workspace scaffold
 
 1. [`implementation/RULES.md`](implementation/RULES.md) — the non-negotiable rules
 2. [`implementation/STAGES.md`](implementation/STAGES.md) — how CLAD stages map onto the ICM scaffold, the gate model, and the recommended one-sub-agent-per-stage orchestration
 3. [`implementation/STORAGE_MAPPING.md`](implementation/STORAGE_MAPPING.md) — mapping conceptual data models onto a concrete profile (Stage 04a)
-4. [`implementation/TDD.md`](implementation/TDD.md) — the outside-in London School TDD double-loop discipline for Stage 04
+4. [`implementation/TESTING.md`](implementation/TESTING.md) — the spec-driven, test-verified discipline for Stage 04 (Acceptance Spec + native flow tests; mutation-gated unit tests)
 5. [`implementation/QUALITY_GATE.md`](implementation/QUALITY_GATE.md) — local pre-commit checks per profile
 6. [`implementation/HANDOVER.md`](implementation/HANDOVER.md) — the fresh-session / sub-agent handoff prompt
 7. [`implementation/MACHINE_CONTRACT.md`](implementation/MACHINE_CONTRACT.md) — the consumer-facing feature descriptor for runtimes such as `clad-agent`

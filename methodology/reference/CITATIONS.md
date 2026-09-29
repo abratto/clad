@@ -90,6 +90,25 @@ workspace pattern, and the `CONTEXT.md` stage-contract format
 and the templates in `templates/stage-CONTEXT.md` are direct
 adaptations of these ideas.
 
+## Spec-driven testing in agent loops
+
+Birgitta Böckeler. **TDD inside the agent loop — theater or actual
+value?** *Exploring Gen AI* (martinfowler.com), 2026.
+
+- URL: [martinfowler.com/articles/exploring-gen-ai/tdd-in-the-agent-loop.html](https://martinfowler.com/articles/exploring-gen-ai/tdd-in-the-agent-loop.html)
+
+This article (and the WebApp1K, TDAD, and TGen work it draws on) is the
+source of CLAD's move away from in-loop TDD ceremony toward spec-driven
+verification. It supports the two decisions recorded in
+[`docs/decisions/0001-spec-driven-testing.md`](../../docs/decisions/0001-spec-driven-testing.md):
+tests are most useful to an agent as frozen, human-approved acceptance
+expectations and as regression/effectiveness sensors, not as a
+design-discovery process; and test effectiveness is monitored by
+outcome (mutation score) rather than by mandating a red-green process.
+The article's "Approved Scenarios" pattern is the model for CLAD's
+frozen Acceptance Spec. `methodology/implementation/TESTING.md` is the
+adaptation; it is a paraphrase, not a derivative copy.
+
 ## ORM / Conceptual Schema Design Procedure
 
 Mustafa Jarrar. **Object Role Modelling (ORM/ORM-ML) and the

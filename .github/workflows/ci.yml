@@ -77,6 +77,26 @@ jobs:
       - name: mvn verify (java-legible)
         run: mvn -B -ntp verify -f reference-impl/pom.xml -pl java-legible -am
 
+  mutation-gate:
+    name: Mutation gate (java-legible, JDK 21)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      # The test-effectiveness gate (R24, DR-0001). PIT supports JDK 21; this
+      # job is where the gate is authoritative. `--require` makes a SKIP
+      # (tooling unavailable) a failure, so the job cannot silently pass
+      # without measuring. Locally, on a newer JVM, the same check reports SKIP.
+      - name: Mutation score gate (java-legible example)
+        run: >-
+          python3 quality-gate/verify_mutation_score.py
+          --feature-root examples/UC-00-login --scope concepts --require
+
   postgres-verify:
     name: Postgres persistence (R-map + jOOQ)
     runs-on: ubuntu-latest

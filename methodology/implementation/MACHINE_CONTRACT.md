@@ -39,7 +39,7 @@ not understand. It may ignore optional fields it does not use.
 `expectedOutputs` is keyed by **canonical stage id** (`01`, `01a`, `01b`,
 `02`, `03`, `03a`, `03b`, `04b`), matching `clad_stages.py`. It lists only
 outputs derivable at design time; profile-dependent side effects (`04a`
-storage mappings, `04c` features and step definitions, `04d`/`04e`
+storage mappings, `04c` acceptance spec and native flow tests, `04d`/`04e`
 implementation, `05` evidence) are intentionally omitted rather than guessed.
 
 This is a compatibility boundary, not a second source of truth:

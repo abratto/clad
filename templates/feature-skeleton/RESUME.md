@@ -31,7 +31,7 @@
 -->
 - **Gate 1 (Requirements):** `pending` | `approved` | `rejected` | `auto-approved`
 - **Gate 2 (Architecture):** `pending` | `approved` | `rejected` | `auto-approved`
-- **Gate 3 (Executable spec):** `pending` | `approved` | `rejected` | `auto-approved`
+- **Gate 3 (Acceptance spec):** `pending` | `approved` | `rejected` | `auto-approved`
 - **Last completed stage:** `TBD`
 - **Corrections at last gate:** `TBD`
 - **Deferred concepts:** `TBD`

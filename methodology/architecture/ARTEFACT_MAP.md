@@ -78,13 +78,11 @@ see [`TRACEABILITY.md`](TRACEABILITY.md).
    │                        storage mapping         │
    │  04b_contract/         concept spec → contract │
    │                        slice                   │
-   │  04c_flow-tests/       one outer-red flow test │
-   │                        per scenario            │
-   │  04d_concept-tdd/      → 04d_red-tests,        │
-   │                        04d_green-impl          │
-   │  04e_sync-tdd/         → 04e_red-tests,        │
-   │                        04e_green-impl; outer   │
-   │                        flow tests go GREEN     │
+   │  04c_acceptance-tests/ Acceptance Spec +       │
+   │                        native flow tests       │
+   │  04d_concept-impl/     concepts + unit tests   │
+   │  04e_sync-impl/        syncs + unit tests;     │
+   │                        acceptance tests green  │
    └──────┬─────────────────────────────────────────┘
           │ (compilable artefact + green test suite)
           ▼
@@ -110,9 +108,10 @@ Key edges to notice:
   *before* code at 04 ossifies it. The cards are *evidence* for the app-level
   concept-dependence graph (`features/_system/concept-dependence.md`), never
   its source — 03a never emits that graph.
-- **04c is the outer red, 04e closes it.** Nothing else makes the
-  flow tests go green; that is the whole point of separating 04d
-  from 04e.
+- **04c freezes the Acceptance Spec; 04e closes the loop.** The native
+  flow tests are authored at 04c and go green by the end of 04e; 04d and
+  04e are single implementation stages (tests and code produced
+  together), so there is no red/green split.
 - **05 has two halves.** *Verify* back-traces (loop closure); *Close*
   smoke-tests + writes the resume-point that becomes the next
   feature's bridge.
@@ -135,7 +134,7 @@ consumer need that?**
 | `usecase.md` | 01 | 01b | One named scenario per chain file | One chain table per scenario; trigger and final response must match. |
 | `usecase.md` | 01 | 02 | Scenario names + Postconditions | Each concept's *operational principle* must reference these scenarios; the principle is what 04d tests against. |
 | `usecase.md` | 01 | 03 | Scenario names | Every sync's `Cites` block names a scenario it satisfies. |
-| `usecase.md` | 01 | 04c | Scenarios + Postconditions—Success/Failure | One outer-red flow test per scenario; Postconditions are what the test asserts (including the *no state is modified* assertion that mechanises no-enumeration). |
+| `usecase.md` | 01 | 04c | Scenarios + Postconditions—Success/Failure | One native flow test per scenario; Postconditions are what the test asserts (including the *no state is modified* assertion that mechanises no-enumeration). |
 | `usecase.md` | 01 | 05 | Full scenario set | The verifier walks each scenario's flow-token tree; any unauthorised observed action is a finding. |
 | `responsibility-map.md` | 01a | 01b | Concept set + action names per concept | The chain table may only reference these concepts and these actions. |
 | `responsibility-map.md` | 01a | 02 | Concept set | One `<Name>.concept.md` per row. |
@@ -148,15 +147,15 @@ consumer need that?**
 | `<Name>.concept.md` | 02 | 03a | Action existence + state field declarations | Cards cite action names; concept-state read rows cite state fields. |
 | `<Name>.concept.md` | 02 | 04a | `state` section | The schema is derived from this; one named region per concept (R2). |
 | `<Name>.concept.md` | 02 | 04b | Action signatures + outcome enums + flow-token shape | Mechanically extracted into the contract slice. |
-| `<Name>.concept.md` | 02 | 04d | Operational principle + per-action effect on state | The TDD red tests are derived from these. |
+| `<Name>.concept.md` | 02 | 04d | Operational principle + per-action effect on state | The concept unit tests are derived from these. |
 | `<name>.sync.md` | 03 | 03a | Every `then` call + every `where` clause | Tabulated per concept (cards), with internal-flow vs concept-state source called out. |
 | `<name>.sync.md` | 03 | 04c | Expected coordination chain | Flow test's expected token sequence comes from here. |
-| `<name>.sync.md` | 03 | 04e | `when … where … then` | One inner red→green TDD pass per sync. |
+| `<name>.sync.md` | 03 | 04e | `when … where … then` | One sync unit test derived from this spec (tests and implementation produced together; mutation-gated). |
 | `<name>.sync.md` | 03 | 05 | Authorisation surface | The verifier checks every observed call is authorised by either a sync `then` or a use-case scenario trigger. |
 | `<concept>-card.md` | 03a | 03b | concept-state read fields owned by this concept | Drives conceptual data-model coverage (the field must be exposed in this concept's region). |
 | `<concept>-card.md` | 03a | 04b | Full inbound contract for this concept | The contract author sees every call this concept will receive. |
-| `<concept>-card.md` | 03a | 04d | Inbound action surface | The concept TDD knows what its boundary actually is. |
-| `<concept>-card.md` | 03a | 04e | Set of concepts this sync invokes | The sync TDD knows which concepts to double. |
+| `<concept>-card.md` | 03a | 04d | Inbound action surface | The concept implementation knows what its boundary actually is. |
+| `<concept>-card.md` | 03a | 04e | Set of concepts this sync invokes | The sync implementation knows which concepts to double. |
 | `pattern-d-summary.md` | 03a | 03b | Single cross-cutting list of every concept-state read | One conceptual data-model checklist for the whole feature. |
 | `<concept>-card.md` | 03a | concept-dependence review | Coordination evidence | Evidence for a possible dependence edge; the edge itself is reviewed judgment, recorded in the graph. |
 | `concepts/<Name>.contract.md` | `_system` corpus | 04b, 04c, 04d, 04e | Canonical compilation contract — action signatures, outcome enums, flow-token shape | Promoted beside the spec; an extending feature moves it, a reusing feature binds it. |
@@ -166,11 +165,11 @@ consumer need that?**
 | `concept-dependence.md` | reviewed (human) | 01a, 03a, scheduling | App-level extrinsic dependence + valid subsets | Reviewed, not derived. 03a cards are evidence for an edge, never its source. |
 | `shared-triggers.md` | `generate_shared_triggers.py` | 03, 03a | Cross-UC triggers | Generated advisory view of the same `Concept.action` fired by another UC. |
 | `<Name>.data-model.md` | 03b | 04a | Approved fact types and constraints | The storage mapping must realize this model without drift. |
-| `<Name>.storage.md` (or `_NOT_APPLICABLE.md`) | 04a | 04d | Storage shape for the test fixture | The concept TDD builds against this mapping when persistence exists. |
-| `<Name>.contract.md` | 04b | 04c, 04d, 04e | Action signatures the test code compiles against | All inner-loop and outer-loop tests reference contracts, not prose. |
-| `<feature>.feature` + `<Feature>StepDefinitions.java` | 04c | 04e | The flow test that must go green | When the last sync goes green, the flow test must too. |
-| `<feature>.feature` + runner | 04c | 05 | Expected runtime token chain + Gherkin scenarios | The back-trace evidence comes from running this. |
-| `concept-test-derivation.md` | 04d | 04e | What concept actions are already-green | The sync TDD relies on these as its substrate. |
+| `<Name>.storage.md` (or `_NOT_APPLICABLE.md`) | 04a | 04d | Storage shape for the test fixture | The concept implementation builds against this mapping when persistence exists. |
+| `<Name>.contract.md` | 04b | 04c, 04d, 04e | Action signatures the test code compiles against | All unit and acceptance tests reference contracts, not prose. |
+| `acceptance-spec.md` + native flow tests | 04c | 04e | The acceptance test that must go green | When the last sync lands, the native flow test must too. |
+| `acceptance-spec.md` + native flow tests | 04c | 05 | Frozen scenarios + expected runtime token chain | The back-trace evidence comes from running these. |
+| `concept-test-derivation.md` | 04d | 04e | Which concept actions are covered | The sync implementation relies on these as its substrate. |
 | `concept-test-derivation.md` | 04d | 05 | Test coverage map for actions | Distinguishes "covered by unit test" from "covered only by flow test." |
 | `<Name>ConceptTest.java` + `<Name>Concept.java` | 04d | 04e, 05 | Running concept layer | The substrate the syncs orchestrate; the back-trace target. |
 | `sync-test-derivation.md` | 04e | 05 | Test coverage map for syncs | Same purpose as the concept derivation map, for syncs. |

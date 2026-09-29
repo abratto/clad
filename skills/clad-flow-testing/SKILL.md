@@ -1,6 +1,6 @@
 ---
 name: clad-flow-testing
-description: Write outer-red flow tests during CLAD Stage 04c. Use when producing Gherkin .feature files, step-definition skeletons, and stub flow tests from approved use cases and chain tables under the London School TDD double-loop.
+description: Author the frozen Acceptance Spec and native per-scenario flow tests during CLAD Stage 04c. Use when deriving acceptance-spec.md and native flow-test methods from approved use cases, chain tables, contracts, and sync specs. Gate 3 is the Acceptance spec.
 ---
 
 # CLAD Flow Testing (Stage 04c)
@@ -9,33 +9,58 @@ description: Write outer-red flow tests during CLAD Stage 04c. Use when producin
 
 ## What this skill covers
 
-Writing the outer-red flow tests — Gherkin `.feature` files and
-step-definition skeletons for each use-case scenario. This is Gate 3
-(Executable spec) — the last human gate before implementation.
+Writing the frozen, human-facing `output/acceptance-spec.md` (the Gate 3
+artifact) plus the **native per-scenario flow tests** that enforce it.
+The native test is the executable form of the scenario — there is no
+separate BDD feature-file track and no generated glue layer. Read
+`methodology/implementation/TESTING.md` before writing anything.
 
 ## Files
 
-Stage 04c `Inputs` names `TDD.md`, the `.feature`/step-def/flow templates, `FLOW_TOKENS.md`, and the 01/01b/04b outputs. The extra `methodology/architecture/GHERKIN_INTEGRATION.md` derivation rules (G1–G5, S1–S3, E1) is the only reference worth having open alongside `Inputs`.
+Stage 04c `Inputs` names `TESTING.md`, `templates/acceptance-spec.md`,
+`templates/http-integration-test.java`, `FLOW_TOKENS.md`, and the
+01/01b/03/04b outputs. The Acceptance Spec is a derived view — every row
+traces to the use case, a chain table, a contract, or a sync spec; it
+invents nothing.
 
 ## Process
 
-1. Derive one Gherkin `.feature` per use-case scenario from
-   `01_usecase` + `01b_chain-table` + `04b_contract`.
-2. Derive step-definition skeletons from chain-table rows and contract
-   outcome enums.
-3. If `port-spec.md` exists, add at least one `@contract` scenario per
-   HTTP endpoint. Assert exact JSON paths, constrained field types, and
-   the primary error envelope shape.
-4. Produce per-scenario markdown flow specs and stub flow test files.
-5. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
-6. Stop at the gate (Gate 3 — human reviews the executable specification).
+1. Derive one `## Scenario:` section in `acceptance-spec.md` per top-level
+   `### Scenario:` in `usecase.md`, using the exact scenario name.
+   Record the trigger, expected response (literals from the sync spec's
+   `then`), expected token chain (from the chain table), postconditions,
+   and one or more `**Test:**` bindings.
+2. Write the native per-scenario flow test methods under
+   `APP_TEST_SOURCE_ROOT`; each asserts the transport response and the
+   runtime flow-token chain. One method per spec binding.
+3. If the feature exposes an adapter surface (HTTP/CLI/GraphQL/pub-sub),
+   derive a profile-specific end-to-end integration test from
+   `templates/http-integration-test.java` (may be `@Disabled` until the
+   implementation lands; Stage 05 re-runs it).
+4. If `port-spec.md` has inbound entries, add at least one `@contract`
+   block per inbound port asserting exact paths, field types, and the
+   primary failure envelope.
+5. If the response carries a collection, add a `## Collection coverage`
+   section naming the empty, multi-item, and (where applicable)
+   repeated-key fixtures.
+6. Confirm the tests compile with the canonical build/test command.
+7. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
+8. Stop at the gate (Gate 3 — Acceptance spec; the human reviews
+   `usecase.md` + the frozen `acceptance-spec.md`).
 
 ## Hard constraints
 
-- `.feature` files are derived views — regenerate when the use case
-  changes, do not hand-edit.
+- The Acceptance Spec is **frozen** at Gate 3: editing it after approval
+  stales Gate 3 and forces human re-approval.
+- Outcome values are SCREAMING_SNAKE_CASE, copied from the contract;
+  token count = number of chain-table rows — no phantom tokens.
 - `04b_contract` must exist before `04c` begins.
-- Markdown alone does not complete the stage; stub flow tests must exist.
-- When a port spec exists, `@contract` scenarios are required and must
-   use exact JSON path/type/envelope assertions rather than string-contains.
+- Markdown alone does not complete the stage; native flow tests must
+  exist and compile.
+- When a port spec exists, `@contract` assertions use exact JSON
+  path/type/envelope assertions rather than string-contains.
+- No password or secret appears in any token payload.
+- `verify_acceptance_binding.py` must pass: every use-case scenario has a
+  spec section, every `Test:` binding resolves, and every `*FlowTest`
+  method is documented.
 - Do not merge `04c`, `04d`, and `04e` into one pass.

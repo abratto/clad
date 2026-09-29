@@ -14,8 +14,8 @@ CLAD answers the three questions any agentic workflow has to answer:
 | Question | CLAD's answer |
 |---|---|
 | **What is deterministic?** | Everything mechanical. Python generators derive every artefact that is a pure function of earlier artefacts (syncs, data models, contracts, test scaffolds) — the model never authors them. Python gates check every stage transition, block test feedback on a skipped stage, and refuse a commit that decouples code from spec. |
-| **What does the agent do?** | Only the judgement-laden residue: scoping actors and goals, writing the use case, decomposing it into concepts, and implementing red→green TDD against an executable spec it cannot edit to make tests pass. |
-| **Where is the human?** | At exactly four points: answering a handful of scoping questions up front, and reviewing three gates per use case — Requirements, Architecture, Executable spec — each a set of markdown files on disk you can read, diff, and edit. |
+| **What does the agent do?** | Only the judgement-laden residue: scoping actors and goals, writing the use case, decomposing it into concepts, and implementing against a frozen acceptance spec it cannot edit to make tests pass. |
+| **Where is the human?** | At exactly four points: answering a handful of scoping questions up front, and reviewing three gates per use case — Requirements, Architecture, Acceptance spec — each a set of markdown files on disk you can read, diff, and edit. |
 
 The result: a complete RealWorld backend built by one agent for **$2.91 in
 tokens, 0.2% rework, 0 cross-concept imports, 0 logic defects** — because the
@@ -84,9 +84,9 @@ flowchart TD
     ARCH --> G2
     G2 -->|"reject"| ARCH
     G2 -->|"approved"| SPEC
-    subgraph SPEC["Executable spec"]
+    subgraph SPEC["Acceptance spec"]
         direction LR
-        STORE["storage mapping"] --> SLICE["concept contract"] --> FLOW["flow tests"]
+        STORE["storage mapping"] --> SLICE["concept contract"] --> FLOW["acceptance tests"]
     end
     G3{"Gate 3"}
     SPEC --> G3
@@ -94,13 +94,13 @@ flowchart TD
     G3 -->|"approved"| DELIVERY
     subgraph DELIVERY["Delivery"]
         direction LR
-        CTDD["concept TDD"] --> STDD["sync TDD"] --> VER["verify & close"]
+        CTDD["concept impl"] --> STDD["sync impl"] --> VER["verify & close"]
     end
     DELIVERY --> END(( ))
 ```
 
 One collaborative scoping gate for the system, then three review gates per
-use case (Requirements → Architecture → Executable spec). Stage 00 runs
+use case (Requirements → Architecture → Acceptance spec). Stage 00 runs
 once per brief; stages 01–05 run once per in-scope goal. The full stage
 table is in [`AGENTS.md`](AGENTS.md) §3; the artefact dependency graph is
 in [`methodology/architecture/ARTEFACT_MAP.md`](methodology/architecture/ARTEFACT_MAP.md).
@@ -134,7 +134,7 @@ ships a Python generator so the model never has to author it. Stage
 | 03a | `generate_sync_cards.py` | per-concept dependency cards + `pattern-d-summary.md` |
 | 03b | `generate_data_model.py` | CSDP data models (types + constraints auto-derived from `--` annotations) |
 | 04b | `generate_contract.py` | per-concept concept contracts |
-| 04c | `generate_feature_files.py` | Gherkin scaffold |
+| 04c | (authored) | Acceptance Spec (`acceptance-spec.md`) + native flow tests |
 
 The generator produces the derived skeleton verbatim (names, matrices,
 signatures) and leaves `<TODO>` markers only where genuine design judgment is
@@ -252,7 +252,7 @@ Agent:  [writes actors.md and goals.md to output/]
 
 The agent then walks stage by stage through the numbered CONTEXT.md
 contracts — proposing, writing, and stopping at each of three human
-gates for review (Requirements, Architecture, Executable spec). Each
+gates for review (Requirements, Architecture, Acceptance spec). Each
 gate produces files on disk you can diff, edit, and approve. The full
 turn-by-turn session is in
 [`methodology/WALKTHROUGH.md`](methodology/WALKTHROUGH.md).
@@ -406,7 +406,7 @@ RDF/SPARQL, is yours to wire against the SPI.
 ### Built with CLAD
 
 A complete [RealWorld Conduit](https://github.com/gothinkster/realworld)
-backend (7 use cases, 40+ sync agents, 36 Cucumber scenarios) was built with
+backend (7 use cases, 40+ sync agents, 36 flow-test scenarios) was built with
 CLAD by a single agent under human review:
 [`abratto/clad-realworld-conduit-app`](https://github.com/abratto/clad-realworld-conduit-app).
 **$2.91 total token cost, 0.2% rework, 74% coverage, 0 cross-concept imports,

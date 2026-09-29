@@ -4,15 +4,15 @@ verify_port_spec_contract.py - Stage gate: port-spec consumers exist.
 
 When Stage 00 produces port-spec.md, directional entries determine the
 required evidence. Inbound entries require Stage 04b response-shape assertions
-and Stage 04c Gherkin @contract scenarios. Outbound entries require named
-adapter-boundary evidence, but do not imply an HTTP/JSON response contract.
-If no port-spec.md exists, this check skips.
+and Stage 04c `@contract` scenarios in the Acceptance Spec. Outbound entries
+require named adapter-boundary evidence, but do not imply an HTTP/JSON response
+contract. If no port-spec.md exists, this check skips.
 
 Usage:
   python3 verify_port_spec_contract.py \
     --port-spec <features/_system/stages/00_actor-goal/output/port-spec.md> \
     --contract-dir <04b_contract/output/> \
-    --feature-dir <04c_flow-tests/output/>
+    --feature-dir <04c_acceptance-tests/output/>
 """
 
 import argparse
@@ -177,27 +177,22 @@ def verify_specs(contract_dir, require_response_shapes, require_all_specs):
 def verify_features(feature_dir):
     failures = []
     if not os.path.isdir(feature_dir):
-        return [f"feature output directory not found: {feature_dir}"]
+        return [f"acceptance-test output directory not found: {feature_dir}"]
 
-    feature_files = sorted(
-        os.path.join(feature_dir, name)
-        for name in os.listdir(feature_dir)
-        if name.endswith(".feature")
-    )
-    if not feature_files:
-        return [f"no .feature files found in {feature_dir}"]
+    spec = os.path.join(feature_dir, "acceptance-spec.md")
+    if not os.path.isfile(spec):
+        return [f"no acceptance-spec.md found in {feature_dir}"]
 
-    for path in feature_files:
-        text = read(path)
-        if "@contract" not in text:
-            failures.append(f"{path}: missing @contract scenario")
-            continue
-        if not re.search(r"JSON path", text, re.IGNORECASE):
-            failures.append(f"{path}: @contract scenario has no JSON path assertion")
-        if not re.search(r"\btype\b", text, re.IGNORECASE):
-            failures.append(f"{path}: @contract scenario has no field type assertion")
-        if not re.search(r"error envelope", text, re.IGNORECASE):
-            failures.append(f"{path}: @contract scenario has no error envelope assertion")
+    text = read(spec)
+    if "@contract" not in text:
+        failures.append(f"{spec}: missing @contract scenario")
+        return failures
+    if not re.search(r"JSON path", text, re.IGNORECASE):
+        failures.append(f"{spec}: @contract scenario has no JSON path assertion")
+    if not re.search(r"\btype\b", text, re.IGNORECASE):
+        failures.append(f"{spec}: @contract scenario has no field type assertion")
+    if not re.search(r"error envelope", text, re.IGNORECASE):
+        failures.append(f"{spec}: @contract scenario has no error envelope assertion")
     return failures
 
 

@@ -29,18 +29,18 @@ folder.
 
 ---
 
-CLAD's contract loop has six steps once the outside-in TDD discipline
-is unfolded:
+CLAD's contract loop has six steps:
 
 ```
 actor/goal -> use case -> concepts -> syncs -> implement -> verify
                                               (04a..04e)
 ```
 
-Each step is one ICM stage. Stage 04 (implement) decomposes further
-into five sub-stages that capture the **outside-in TDD double-loop**:
-the outer loop is a flow test (red), the inner loop is per-concept and
-per-sync TDD (red → green).
+Each step is one ICM stage. Stage 04 (implement) decomposes into five
+sub-stages: `04c` authors the frozen Acceptance Spec and native flow
+tests; `04d`/`04e` implement concepts and syncs with unit tests. There is
+no red/green split — tests are derived verification, gated by mutation
+score ([`TESTING.md`](TESTING.md)).
 
 ## Folder layout
 
@@ -78,25 +78,15 @@ features/UC-XX-name/
     │   ├── 04b_contract/            Per-concept concept contract
     │   │   ├── CONTEXT.md
     │   │   └── output/          <Name>.contract.md
-    │   ├── 04c_flow-tests/      Outside-loop red: HTTP → flow-token tree
+    │   ├── 04c_acceptance-tests/ Acceptance Spec + native flow tests (Gate 3)
     │   │   ├── CONTEXT.md
-    │   │   └── output/
-  │   ├── 04d_concept-tdd/     Container: concept red/green split
+    │   │   └── output/          acceptance-spec.md
+   │   ├── 04d_concept-impl/    Concepts + unit tests (single stage)
    │   │   ├── CONTEXT.md
-   │   │   ├── 04d_red-tests/
-   │   │   │   ├── CONTEXT.md
-   │   │   │   └── output/      concept-test-derivation.md
-  │   │   └── 04d_green-impl/
-  │   │       ├── CONTEXT.md
-  │   │       └── output/      green-evidence.md
-  │   └── 04e_sync-tdd/        Container: sync red/green split
+   │   │   └── output/          concept-test-derivation.md, verification-evidence.md
+   │   └── 04e_sync-impl/       Syncs + unit tests (single stage)
    │       ├── CONTEXT.md
-   │       ├── 04e_red-tests/
-   │       │   ├── CONTEXT.md
-   │       │   └── output/      sync-test-derivation.md
-  │       └── 04e_green-impl/
-  │           ├── CONTEXT.md
-  │           └── output/      green-evidence.md
+   │       └── output/          sync-test-derivation.md, verification-evidence.md
     └── 05_verify/
         ├── CONTEXT.md
         └── output/              trace.md, findings.md, smoke.md, tracking.md
@@ -347,29 +337,22 @@ single source of truth for per-stage instructions:
 | 03b | `stages/03b_data-model/CONTEXT.md` | `<Name>.data-model.md` per concept | **Gate 2 (Architecture)** |
 | 04a | `stages/04_implement/04a_storage-mapping/CONTEXT.md` | `<Name>.storage.md` or `_NOT_APPLICABLE.md` | Auto → 04c |
 | 04b | `stages/04_implement/04b_contract/CONTEXT.md` | `<Name>.contract.md` per concept | Auto → 04c |
-| 04c | `stages/04_implement/04c_flow-tests/CONTEXT.md` | `.feature` files + step definitions | **Gate 3 (Executable spec)** |
-| 04d-red | `stages/04_implement/04d_concept-tdd/04d_red-tests/CONTEXT.md` | `concept-test-derivation.md` | Auto → 04d-green |
-| 04d-green | `stages/04_implement/04d_concept-tdd/04d_green-impl/CONTEXT.md` | `green-evidence.md` | Auto → 04e-red |
-| 04e-red | `stages/04_implement/04e_sync-tdd/04e_red-tests/CONTEXT.md` | `sync-test-derivation.md` | Auto → 04e-green |
-| 04e-green | `stages/04_implement/04e_sync-tdd/04e_green-impl/CONTEXT.md` | `green-evidence.md` | Auto → 05 |
+| 04c | `stages/04_implement/04c_acceptance-tests/CONTEXT.md` | `acceptance-spec.md` + native flow tests | **Gate 3 (Acceptance spec)** |
+| 04d | `stages/04_implement/04d_concept-impl/CONTEXT.md` | `concept-test-derivation.md`, `verification-evidence.md` | Auto → 04e |
+| 04e | `stages/04_implement/04e_sync-impl/CONTEXT.md` | `sync-test-derivation.md`, `verification-evidence.md` | Auto → 05 |
 | 05 | `stages/05_verify/CONTEXT.md` | `trace.md`, `findings.md`, `smoke.md`, `tracking.md` | Auto (close) |
 
-### Legacy Stage 04 evidence
+### Stage 04 shape
 
-The split `04d-red`/`04d-green` and `04e-red`/`04e-green` stages are the
-required shape for all new work. A completed historical feature may retain its
-pre-split parent evidence (`04d_concept-tdd/output/concept-tdd.md` or
-`concept-test-derivation.md`; `04e_sync-tdd/output/sync-tdd.md` or
-`sync-test-derivation.md`) without fabricating child-stage placeholders. The
-sequence guard interprets those named files as migration evidence only when
-the corresponding split child outputs are absent.
-
-An explicitly marked historical green summary may cover only its immediately
-preceding red stage. New work and an iterative re-entry marked `Status:
-active` remain strict: each child output must be produced in canonical order.
-During an active Stage 04 re-entry, the artefact gate validates through the
-latest child output written after that change record, rather than a historical
-Stage 05 output.
+Stage 04 is spec-driven and test-verified. `04c` authors the frozen
+**Acceptance Spec** (the Gate-3 human artifact) and the native per-scenario
+flow tests. `04d` and `04e` are **single** implementation stages: the
+derivation map, the unit tests, and the implementation are produced
+together, gated by mutation score plus contract-outcome coverage. There is
+no red/green sub-stage split (DR-0001); legacy `04d_red`/`04e_green` trees
+are rejected, not migrated. See
+[`TESTING.md`](TESTING.md) and
+[`../../docs/decisions/0001-spec-driven-testing.md`](../../docs/decisions/0001-spec-driven-testing.md).
 
 ### What each stage group demands of the model
 
@@ -377,7 +360,7 @@ Stage 05 output.
 |---|---|---|---|
 | **Requirements analysis** | 00–01b | Collaborative clarification, structured prose, use-case writing | No implementation code or test files |
 | **Structural modelling** | 02–03b | Cross-concept consistency, chain-table derivation, sync authoring, dependency analysis | No implementation code or test files |
-| **Implementation** | 04a–05 | Test-first discipline, spec-to-code fidelity, storage-layer compliance | Red phase: tests only. Green phase: implementation only |
+| **Implementation** | 04a–05 | Spec-to-code fidelity, derived-test discipline, storage-layer compliance | 04c: acceptance spec + tests. 04d/04e: tests + implementation together |
 
 ### Deterministic generation vs model authoring
 
@@ -400,7 +383,7 @@ generator's output satisfies its sibling `verify_*` check by construction.
 Stages that remain model-authored (no generator exists, by design):
 - 00 (collaborative intake), 01 (use-case prose), **01a (concept
   decomposition — the irreducibly-judgment task)**, 02 (concept design),
-  and the judgment inside the red phases and 05.
+  and the judgment inside 04c (acceptance-spec wording) and 05.
 
 Generators are **manual-first**: the agent invokes them per the stage contract;
 `advance.py` does not auto-run them. This keeps the deterministic step a
@@ -443,9 +426,12 @@ These rules apply to individual stages and do not appear in the
   concept-dependence edge, never its source; the app-level **concept
   dependence graph** (`features/_system/concept-dependence.md`) is a separate,
   reviewed system-scope artefact, and 03a never emits it.
-- **Stage 04 implements the outside-in TDD double-loop:** 04c is the
-  outer red test (a flow), 04d and 04e are the inner red→green TDD on
-  concepts and syncs.
+- **Stage 04 is spec-driven and test-verified:** 04c authors the frozen
+  Acceptance Spec (the Gate-3 human artifact) and the native flow tests;
+  04d and 04e are single stages producing tests and implementation
+  together. No red/green split; unit-suite effectiveness is gated by
+  mutation score
+  ([`TESTING.md`](TESTING.md)).
 - **Stage 04e imperative orchestration** is a fail condition. An
   implementation that branches on business conditions or coordinates
   domain calls in a `*Coordinator` class does not satisfy the sync
@@ -501,5 +487,5 @@ reviewing at the gate?" Read top to bottom for a single feature.
 |---|---|---|---|---|
 | **1 (Requirements)** | 01 → 01a → 01b | Project brief (Stage 00) | usecase.md, responsibility-map.md, chain-table.md | Actors/goals correct? Scenarios cover all flows? Concept boundaries right? Action chains plausible? |
 | **2 (Architecture)** | 02 → 03 → 03a → 03b | Approved requirements | concept.md, sync.md, dep-cards, data-model.md | Concept state machines cover the chains? Sync coordination declarative? Concept-state reads intentional? Data model complete? |
-| **3 (Executable spec)** | 04a → 04b → 04c | Approved architecture | storage.md, `<Name>.contract.md`, .feature files | Tests capture the right scenarios and inputs? |
-| **Auto (Delivery)** | 04d-red → 04d-green → 04e-red → 04e-green → 05 | (nothing — all upstream artefacts approved) | concept code, sync code, test code, trace.md, smoke.md, tracking.md | (none — script-checked: `mvn test` passes, quality-gate scripts pass) |
+| **3 (Acceptance spec)** | 04a → 04b → 04c | Approved architecture | storage.md, `<Name>.contract.md`, `acceptance-spec.md` + native flow tests | Frozen scenarios cover every flow and input? Expected responses and token chains correct? |
+| **Auto (Delivery)** | 04d → 04e → 05 | (nothing — all upstream artefacts approved) | concept code, sync code, test code, trace.md, smoke.md, tracking.md | (none — script-checked: `mvn test` + mutation pass, quality-gate scripts pass) |

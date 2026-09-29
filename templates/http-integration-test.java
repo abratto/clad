@@ -4,7 +4,7 @@
 //               ../04b_contract/output/<Name>.contract.md        (response shapes)
 //               ../../../_config/package-and-layout.md           (package, source roots)
 //
-// This is NOT the Gherkin flow test. The flow test asserts the action TOKEN
+// This is NOT the flow test. The flow test asserts the action TOKEN
 // CHAIN (request -> guards -> write -> respond) through the engine. This test
 // asserts the TRANSPORT round-trip: an HTTP request hits the controller, the
 // bootstrap (`Web`) concept routes it, the business concepts/syncs run, and an
@@ -23,9 +23,9 @@
 // harness: java-legible/plain builds the app directly (e.g. `App.create()` /
 // the gateway) and calls the flow, as `reference-impl/java-legible/.../flows/`.
 //
-// Red phase: at Stage 04c the app has no business implementation yet, so this
-// test is `@Disabled` (red). Remove `@Disabled` at Stage 04e-green; Stage 05
-// (`verify_adapter_test.py --require-enabled`) requires it enabled.
+// At Stage 04c the app has no business implementation yet, so this test is
+// `@Disabled`. Remove `@Disabled` once the implementation lands (04d/04e);
+// Stage 05 (`verify_adapter_test.py --require-enabled`) requires it enabled.
 
 package <APP_PACKAGE_ROOT>.flows;
 
@@ -51,9 +51,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   -> WebConcept + <business concepts>/<syncs> -> HTTP response.
  *
  * Uses the profile's concept-state binding (in-memory by default; the durable
- * binding is exercised by the persistence tests). Remove @Disabled at 04e-green.
+ * binding is exercised by the persistence tests). Remove @Disabled once 04d/04e land.
  */
-@Disabled("Stage 04c outer red — enable at 04e-green")
+@Disabled("acceptance/adapter test — enable once 04d/04e land")
 @MicronautTest
 class <Feature>HttpIntegrationTest {
 

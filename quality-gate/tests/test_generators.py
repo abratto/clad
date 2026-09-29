@@ -27,7 +27,6 @@ GEN_SYNCS = QG / "generate_syncs.py"
 GEN_CONTRACT = QG / "generate_contract.py"
 GEN_CARDS = QG / "generate_sync_cards.py"
 GEN_DATA = QG / "generate_data_model.py"
-GEN_FEATURE = QG / "generate_feature_files.py"
 VERIFY_MATRIX = QG / "verify_sync_matrix.py"
 VERIFY_CYCLE = QG / "verify_sync_cycle_graph.py"
 VERIFY_OVERLAP = QG / "verify_sync_overlap.py"
@@ -192,40 +191,6 @@ class GeneratorPropertyTests(unittest.TestCase):
         self.assertEqual(r.returncode, 0,
                          f"generated data models failed CSDP check:\n{r.stdout}{r.stderr}")
 
-    def test_generate_feature_files_derives_scenarios_and_status(self):
-        out_dir = self.feature / "stages" / "04_implement" / "04c_flow-tests" / "output"
-        for f in out_dir.glob("*.feature"):
-            f.unlink()
-        r = run(GEN_FEATURE, "--feature", self.feature, "--write")
-        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        features = list(out_dir.glob("*.feature"))
-        self.assertEqual(len(features), 1, features)
-        text = features[0].read_text(encoding="utf-8")
-        # Four UC-00-login scenarios, each present as a Scenario stub.
-        for sc in ("successful-login", "wrong-password", "unknown-user", "lockout"):
-            self.assertIn(f"@{sc}", text)
-        # Happy path asserts 200; failure paths assert 401.
-        self.assertIn("Then the response status is 200", text)
-        self.assertIn("Then the response status is 401", text)
-
-    def test_chain_lookup_resolves_slugified_scenario_name(self):
-        """A display-name scenario must resolve its slugified chain file.
-
-        The conduit rebuild hit this every UC: the generator looked up
-        `<scenario name>-chain.md` (spaced) while chain files are slugified
-        (`comment-on-article-add-comment-chain.md`), so it emitted `<TODO>`
-        token-chain stubs."""
-        sys.path.insert(0, str(QG))
-        import generate_feature_files as gff
-        with tempfile.TemporaryDirectory() as temporary:
-            chain_dir = Path(temporary)
-            write = chain_dir / "comment-on-article-add-comment-chain.md"
-            write.write_text("chain", encoding="utf-8")
-            self.assertEqual(str(write),
-                             gff._chain_file(str(chain_dir),
-                                             "Comment on Article — Add Comment"))
-            self.assertIsNone(gff._chain_file(str(chain_dir), "No Such Scenario"))
-
     def test_route_scoped_bootstrap_renders_route_matcher(self):
         """A `Web/request` bootstrap sync carries its R15 route matcher.
 
@@ -255,13 +220,12 @@ class GeneratorPropertyTests(unittest.TestCase):
         the result. This is the integration test that catches coherence bugs
         (e.g. outcome normalization drift) that per-file unit tests miss."""
         f = self.feature
-        # Regenerate every downstream stage.
+        # Regenerate every derivable downstream stage.
         for gen, kwargs in [
             (GEN_SYNCS, {}),
             (GEN_CARDS, {}),
             (GEN_DATA, {}),
             (GEN_CONTRACT, {}),
-            (GEN_FEATURE, {}),
         ]:
             r = run(gen, "--feature", f, "--write")
             self.assertEqual(r.returncode, 0, f"{gen.name}:\n{r.stdout}{r.stderr}")
@@ -365,28 +329,6 @@ class GeneratorRegressionTests(unittest.TestCase):
                              ["?name", "?ref"])
             responses = [s for s in syncs if s.target_action == "respond"]
             self.assertIn("status = 200", responses[0].literals)
-
-    def test_branch_chain_generates_a_scenario_per_terminal_status(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            feature = Path(temporary) / "features/UC-02-enrol"
-            (feature / "stages/01_usecase/output").mkdir(parents=True)
-            (feature / "stages/01_usecase/output/usecase.md").write_text(
-                "# UC-02 — Enrol\n\n## Actors\n\n- Clerk — staff\n\n"
-                "### Scenario: enrol-member\n\nTrigger: submit.\n",
-                encoding="utf-8")
-            self._write_chain(feature / "stages/01b_chain-table/output",
-                              "enrol-member", [
-                ("1", "Web/request[POST /enrol]", "Web.request", "Routed"),
-                ("2", "Web.request[Routed]", "Member.check", "Ok"),
-                ("3", "Member.check[Ok]", "Web.respond[201]", "Sent"),
-                ("4", "Member.check[Bad]", "Web.respond[400]", "Sent"),
-            ])
-            r = run(GEN_FEATURE, "--feature", feature, "--write")
-            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-            text = next((feature / "stages/04_implement/04c_flow-tests/output")
-                        .glob("*.feature")).read_text(encoding="utf-8")
-            self.assertIn("Then the response status is 201", text)
-            self.assertIn("Then the response status is 400", text)
 
 
 if __name__ == "__main__":

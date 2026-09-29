@@ -17,7 +17,7 @@ Rule:
   envelope key such as `articles`, `comments`, `tags`, `authors`, `following`,
   `flags`, or a `List<...>` completion field) must declare a
   `## Collection coverage` section in a markdown file under
-  `04c_flow-tests/output/`. The section must name, at minimum:
+  `04c_acceptance-tests/output/`. The section must name, at minimum:
     * `empty`        — the zero-item success case;
     * `multi-item`   — a case with at least two items;
     * `repeated-key` — a case where two positionally-aligned lists share a key
@@ -27,8 +27,7 @@ Rule:
 
 No retrofit:
   Features already closed (a `05_verify/output/trace.md` exists) are skipped, so
-  the requirement is forward-only — the same no-retrofit policy as the T2
-  test-continuity gate.
+  the requirement is forward-only.
 
 Usage:
   python3 verify_collection_coverage.py --feature features/UC-XX-<slug> [--advisory]
@@ -136,13 +135,13 @@ def main():
         return 0
 
     flow_dir = os.path.join(feature_root, "stages", "04_implement",
-                            "04c_flow-tests", "output")
+                            "04c_acceptance-tests", "output")
     # Evidence that 04c ran is ANY output file, not only a markdown carrier:
     # the `## Collection coverage` section is optional in the stage contract, so
-    # keying on markdown meant a feature whose 04c output is only its `.feature`
-    # file was always skipped — the edges this check exists for never ran.
+    # keying on markdown meant a feature whose 04c output was only its flow-test
+    # carrier was always skipped — the edges this check exists for never ran.
     if not stage_output_present(flow_dir):
-        print("SKIP  no 04c flow-test output yet")
+        print("SKIP  no 04c acceptance-test output yet")
         return 0
 
     path, body = declared_coverage(flow_dir)

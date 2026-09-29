@@ -62,7 +62,7 @@ class PortSpecContractFixtures(unittest.TestCase):
         feature_dir = root / "features"
         write(port_spec_path, port_spec(entries))
         write(contract_dir / "Notification.contract.md", spec_body)
-        write(feature_dir / "notification.feature", feature_body)
+        write(feature_dir / "acceptance-spec.md", feature_body)
         return port_spec_path, contract_dir, feature_dir
 
     def test_inbound_port_requires_and_accepts_response_shape_evidence(self):

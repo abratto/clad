@@ -3,7 +3,7 @@
 verify_concept_test_derivation.py — Stage gate: concept test derivation matches contract outcomes.
 
 Why this exists:
-  Concept tests (Stage 04d-red) are derived mechanically from contract outcome enums
+  Concept tests (Stage 04d) are derived mechanically from contract outcome enums
   (04b_contract) and outer flow tests (04c). An LLM can omit an outcome, rename it,
   or write tests without updating the derivation map. This script checks that
   every contract outcome has a corresponding test row in the derivation map and

@@ -29,7 +29,7 @@ Together they form the complete traceability chain.
 | 00 | `goals.md` | Human brief, `actors.md` | (system boundary) | Human review; `verify_scenario_coverage.py` checks goal→scenario coverage | — |
 | 01 | `usecase.md` | `goals.md`, `actors.md` | Cockburn use case — trigger, actors, scenarios, postconditions | `verify_scenario_coverage.py` checks every goal has a scenario; human review at Gate 1 | — |
 | 01a | `responsibility-map.md` | `usecase.md` | Concept discovery — which concepts exist, what state they track, what actions they expose | `verify_file_manifest.py` | — |
-| 01b | `<scenario>-chain.md` | `usecase.md`, `responsibility-map.md` | Action choreography — the predicted runtime sequence of actions and outcomes | `verify_outcome_alignment.py` checks outcomes match contract; `verify_step_definition_derivation.py` checks chain actions appear in step defs | — |
+| 01b | `<scenario>-chain.md` | `usecase.md`, `responsibility-map.md` | Action choreography — the predicted runtime sequence of actions and outcomes | `verify_outcome_alignment.py` checks outcomes match contract | — |
 | 02 | `<Name>.concept.md` | `usecase.md`, `responsibility-map.md`, `<scenario>-chain.md` | Concept state machine — state (Alloy-like relations), actions (case-split outcomes, pre/post), operational principle (witness trace) | `verify_outcome_alignment.py`; 04d tests assert post-conditions as field values (R14); 05 back-traces flow tokens against operational principle | `state` → `<Name>Concept` relations in its own `Region`; `actions` → `execute(action, input)` returning an `outcome` + fields; `operational principle` → `<Name>ConceptTest.java` |
 | `_system` | `concepts/<Name>.contract.md` | the proposer that introduced or last extended the concept; `promote-concepts` on Gate 2 | Canonical compilation contract — the machine-checkable action surface 04c/04d/04e compile against | `verify_contract_parity.py`; `verify_outcome_alignment.py` | Compiled against by tests |
 | `_system` | `concepts/<Name>.data-model.md` | the proposer that introduced or last changed the state; `promote-concepts` on Gate 2 | Canonical conceptual data model — the CSDP model of the canonical state | `verify_data_model.py` (shape); reviewed at the proposing UC's gate | `Region` relation schema |
@@ -43,14 +43,12 @@ Together they form the complete traceability chain.
 | 03b | `<Name>.data-model.md` | `<Name>.concept.md`, `<concept>-card.md`, `pattern-d-summary.md` | Conceptual data model — CSDP fact types and constraints per concept | `verify_data_model.py` checks all 7 CSDP steps present | `Region` relation schema |
 | 04a | `<Name>.storage.md` | `<Name>.data-model.md` | Storage mapping — CSDP facts → profile-specific schema | Profile-specific | `Region` relation schema (in-memory canonical); SQL table per concept in the durable Postgres R-map profile (the Jena profile is retired) |
 | 04b | `<Name>.contract.md` | `<Name>.concept.md` | contract slice — action signatures, outcome enums, flow-token shape (stripped of prose) | `verify_contract_parity.py` checks action parity with concept specs; `verify_outcome_alignment.py` checks outcomes match chain tables | Compiled-against by 04d/04e tests |
-| 04b | `contract.md` §Response shapes | `port-spec.md` inbound entry (when present) | Inbound port contract — exact transport paths/types/error envelopes | `verify_port_spec_contract.py` when an inbound entry exists | `@Contract` Cucumber scenarios in 04c |
-| 04c | `<feature>.feature` | `usecase.md` (scenarios), `<scenario>-chain.md` | BDD outer-red test — one Gherkin scenario per use-case scenario, derived from chain table | `verify_gherkin_derivation.py` checks derivation rules G1–G5; `verify_step_definition_parity.py` catches empty stubs; `verify_cucumber_green.py` (at 04e) enforces all-green | Cucumber runner + `<Feature>StepDefinitions.java` |
-| 04d-red | `<Name>ConceptTest.java` + derivation map | `<Name>.contract.md`, `<Name>.concept.md` (operational principle) | Concept test derivation (red) | `verify_concept_test_derivation.py` checks every contract outcome has a test; `verify_concept_field_assertions.py` checks field assertions (R14/R16) | Handoff to 04d-green |
-| 04d-green | `<Name>Concept.java` + green evidence | `<Name>.concept.md`, `<Name>.contract.md`, `<Name>ConceptTest.java` | Concept implementation — state machine as `Concept.execute` returning an `outcome` + fields | Concept tests pass; `verify_action_log_isolation.py` checks infrastructure doesn't bypass the engine (R4) | Invoked by `SyncEngine` |
-| 04e-red | `<SyncName>Test.java` + derivation map | `<name>.sync.md`, `<concept>-card.md` | Sync test derivation (red) | Sync tests fail for behavioural reasons | Handoff to 04e-green |
-| 04e-green | `<SyncName>` (`SyncRule`) + green evidence | `<name>.sync.md`, `<SyncName>Test.java` | Sync implementation — declarative `SyncRule` `when`/`where`/`then` | `verify_implementation_parity.py` checks spec/code pairing; `verify_sync_implementation_parity.py` checks every Stage 03 sync has a `SyncRule` | Registered with `SyncEngine` |
+| 04b | `contract.md` §Response shapes | `port-spec.md` inbound entry (when present) | Inbound port contract — exact transport paths/types/error envelopes | `verify_port_spec_contract.py` when an inbound entry exists | `@contract` acceptance-spec blocks in 04c |
+| 04c | `acceptance-spec.md` + native flow tests | `usecase.md` (scenarios), `<scenario>-chain.md` | Acceptance Spec + native flow test — one spec section and one test method per use-case scenario, derived from the chain table | `verify_acceptance_binding.py` checks every scenario has a spec section bound to a real test method; the native tests run green by 04e | native `*FlowTest.java` under `test.source.root` |
+| 04d | `<Name>ConceptTest.java` + `concept-test-derivation.md` | `<Name>.contract.md`, `<Name>.concept.md` (operational principle) | Concept unit tests + implementation, produced together (single stage, no red/green split) | `verify_concept_test_derivation.py` checks every contract outcome has a test; `verify_concept_field_assertions.py` checks field assertions (R14/R16); `verify_mutation_score.py` gates effectiveness | `Concept.execute` invoked by `SyncEngine` |
+| 04e | `<SyncName>Test.java` + `<SyncName>` (`SyncRule`) | `<name>.sync.md`, `<concept>-card.md` | Sync unit tests + declarative implementation, produced together (single stage) | `verify_implementation_parity.py` checks spec/code pairing; `verify_sync_implementation_parity.py` checks every Stage 03 sync has a `SyncRule`; `verify_mutation_score.py` gates effectiveness | Registered with `SyncEngine` |
 | 04e | Primary adapter | `<scenario>-chain.md` (transport entries), `<name>.sync.md` (respond syncs) | Bootstrap concept adapter — translates transport → engine → transport (normalize input, `rootAction()`, `awaitResponse()`, translate output) | `verify_action_log_isolation.py` catches raw ActionLog access (R4); ArchUnit catches concept imports | `WebController.java`, `AuthController.java`, or profile equivalent |
-| 05 | `trace.md` | All implementation, `<feature>.feature` | Flow-token back-trace — proves runtime action sequence matches chain table | Human review; `verify_cucumber_green.py` already proved all scenarios green | Runs against deployed artefact |
+| 05 | `trace.md` | All implementation, `acceptance-spec.md` + native flow tests | Flow-token back-trace — proves runtime action sequence matches chain table | Human review; the native acceptance tests already proved all scenarios green | Runs against deployed artefact |
 | 05 | `smoke.md` | Running system | Deployable proof — recorded transport calls or adapter exchanges | Human review | `curl`, Hurl, provider sandbox, or profile equivalent |
 | — | `port-spec.md` (optional, Stage 00) | External port contract | Imposed inbound response shapes or outbound observable semantics | `verify_port_spec_contract.py` checks inbound 04b/04c evidence and complete directional entries | External oracle or adapter-boundary suite |
 
@@ -103,11 +101,11 @@ flowchart TD
     subgraph S04["Stage 04 · implementation"]
         STORAGE["Name.storage.md<br/><i>(04a)</i>"]
         contract["Name.contract.md<br/><i>(04b)</i>"]
-        FEATURE["feature.feature<br/><i>(04c)</i>"]
-        CONCEPTTEST["NameConceptTest.java<br/><i>(04d red)</i>"]
-        CONCEPTIMPL["NameConcept.java<br/><i>(04d green)</i>"]
-        SYNCTEST["SyncNameTest.java<br/><i>(04e red)</i>"]
-        SYNCIMPL["SyncName.java<br/><i>(04e green)</i>"]
+        FEATURE["acceptance-spec.md +<br/>native flow tests<br/><i>(04c)</i>"]
+        CONCEPTTEST["NameConceptTest.java<br/><i>(04d)</i>"]
+        CONCEPTIMPL["NameConcept.java<br/><i>(04d)</i>"]
+        SYNCTEST["SyncNameTest.java<br/><i>(04e)</i>"]
+        SYNCIMPL["SyncName.java<br/><i>(04e)</i>"]
         CONTROLLER["infrastructure<br/>WebController.java<br/><i>(04e)</i>"]
     end
 

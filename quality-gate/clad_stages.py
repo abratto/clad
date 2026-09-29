@@ -310,9 +310,6 @@ def _test_source_root(feature_root: str) -> str:
 def _features_dir(feature_root: str) -> str:
     return os.path.dirname(feature_root)
 
-def _test_command(feature_root: str) -> str:
-    return _prop(feature_root, "test.command")
-
 def _package_layout(feature_root: str) -> str:
     return os.path.join(feature_root, "_config", "package-and-layout.md")
 
@@ -371,67 +368,72 @@ _FIELD_ASSERTIONS = Check(
     requires=lambda r: [_contract_dir(r), _test_source_root(r)],
 )
 
-_CUCUMBER_GREEN = Check(
-    name="cucumber_green",
-    script="verify_cucumber_green.py",
-    build_args=lambda r: [
-        "--feature-root", _features_dir(r),
-        "--test-command", _test_command(r),
-    ],
-    requires=lambda root: [d for d in [_features_dir(root)]
-                           if os.path.isdir(d)],
+def _mutation_configured(feature_root: str) -> bool:
+    """True when the profile declares a mutation command (clad.properties
+    `mutation.command`). Mutation gating is opt-in per profile."""
+    return bool(_prop(feature_root, "mutation.command"))
+
+
+def _mutation_requires(feature_root: str, rel: str) -> List[str]:
+    """`requires` for the mutation-score check: a sentinel skips it when the
+    profile has no mutation command or no configured test root."""
+    out = output_dir(feature_root, rel)
+    if not _mutation_configured(feature_root):
+        return [os.path.join(out, "__no_mutation_command__")]
+    if not _test_source_root(feature_root):
+        return [os.path.join(out, "__no_test_source_root__")]
+    return [out]
+
+
+def _mutation_args(feature_root: str, scope: str) -> List[str]:
+    """Args for the mutation-score check. `mutation.require=true` makes a SKIP
+    (the tool cannot run in this environment) a failure — for CI."""
+    args = ["--feature-root", feature_root, "--scope", scope]
+    if (_prop(feature_root, "mutation.require") or "").strip().lower() in (
+            "true", "1", "yes"):
+        args.append("--require")
+    return args
+
+
+# Mutation score is the test-effectiveness gate (DR-0001). It runs the
+# profile's mutation tool, which is slow, so it is skipped in the fast
+# artefact gate and enforced by `advance` / the local pre-commit gate.
+_MUTATION_SCORE_04D = Check(
+    name="mutation_score",
+    script="verify_mutation_score.py",
+    build_args=lambda r: _mutation_args(r, "concepts"),
+    requires=lambda r: _mutation_requires(r, "04_implement/04d_concept-impl"),
     skip_in_artefact_gate=True,
 )
 
-_TEST_CONTINUITY_04D = Check(
-    name="test_continuity",
-    script="verify_test_continuity.py",
-    build_args=lambda r: [
-        "--derivation", os.path.join(
-            output_dir(r, "04_implement/04d_concept-tdd/04d_red-tests"),
-            "concept-test-derivation.md"),
-        "--test-source-root", _test_source_root(r),
-    ],
-    requires=lambda r: [os.path.join(
-        output_dir(r, "04_implement/04d_concept-tdd/04d_red-tests"),
-        "concept-test-derivation.md"), _test_source_root(r)],
+_MUTATION_SCORE_04E = Check(
+    name="mutation_score",
+    script="verify_mutation_score.py",
+    build_args=lambda r: _mutation_args(r, "syncs"),
+    requires=lambda r: _mutation_requires(r, "04_implement/04e_sync-impl"),
+    skip_in_artefact_gate=True,
 )
 
-_TEST_CONTINUITY_04E = Check(
-    name="test_continuity",
-    script="verify_test_continuity.py",
+# The Acceptance Spec is the human-facing, frozen Gate-3 artifact (DR-0001).
+# The binding check proves every spec row maps to a native test method and
+# every scenario is covered; the gate content-hash in verify_stage_sequence.py
+# provides the freeze (a changed spec stales Gate 3 and must be re-approved).
+_ACCEPTANCE_BINDING = Check(
+    name="acceptance_binding",
+    script="verify_acceptance_binding.py",
     build_args=lambda r: [
-        "--derivation", os.path.join(
-            output_dir(r, "04_implement/04e_sync-tdd/04e_red-tests"),
-            "sync-test-derivation.md"),
+        "--spec", os.path.join(
+            output_dir(r, "04_implement/04c_acceptance-tests"),
+            "acceptance-spec.md"),
+        "--usecase", _usecase(r),
+        "--chain-dir", CHAIN_DIR(r),
         "--test-source-root", _test_source_root(r),
     ],
-    requires=lambda r: [os.path.join(
-        output_dir(r, "04_implement/04e_sync-tdd/04e_red-tests"),
-        "sync-test-derivation.md"), _test_source_root(r)],
-)
-
-# London School test naming, split by scope: concept tests are written at
-# 04d-red, sync tests at 04e-red. The contracts claimed this was automated but
-# it was wired nowhere.
-_TEST_NAMING_04D = Check(
-    name="test_naming",
-    script="verify_test_naming.py",
-    build_args=lambda r: [
-        "--test-source-root", _test_source_root(r),
-        "--scope", "concepts",
+    requires=lambda r: [
+        os.path.join(output_dir(r, "04_implement/04c_acceptance-tests"),
+                     "acceptance-spec.md"),
+        _usecase(r),
     ],
-    requires=lambda r: [_test_source_root(r)],
-)
-
-_TEST_NAMING_04E = Check(
-    name="test_naming",
-    script="verify_test_naming.py",
-    build_args=lambda r: [
-        "--test-source-root", _test_source_root(r),
-        "--scope", "syncs",
-    ],
-    requires=lambda r: [_test_source_root(r)],
 )
 
 _SYNC_DECLARATIVE = Check(
@@ -471,47 +473,6 @@ _SYNC_OVERLAP = Check(
     build_args=lambda r: ["--sync-dir", SYNC_DIR(r), "--advisory"],
     requires=lambda r: [SYNC_DIR(r)],
 )
-
-def _cucumber_glue_present(feature_root: str) -> bool:
-    """True when the configured test source tree contains Cucumber step
-    definitions. Step-definition checks are Gherkin-track-only; a profile
-    whose flow tests are direct (no Cucumber glue) is out of scope for them."""
-    root = _test_source_root(feature_root)
-    if not root:
-        return False
-    for dirpath, _dirs, files in os.walk(root):
-        for name in files:
-            if not name.endswith(".java"):
-                continue
-            try:
-                with open(os.path.join(dirpath, name)) as fh:
-                    text = fh.read()
-            except OSError:
-                continue
-            if re.search(r"@(?:Given|When|Then|And|But)\s*\(", text):
-                return True
-    return False
-
-
-def _glue_requires(feature_root: str) -> List[str]:
-    """Requires list for step-definition checks: skip when no Cucumber glue."""
-    if _cucumber_glue_present(feature_root):
-        return [output_dir(feature_root, "04_implement/04c_flow-tests"),
-                _test_source_root(feature_root)]
-    return [os.path.join(
-        output_dir(feature_root, "04_implement/04c_flow-tests"),
-        "__no_cucumber_glue__")]
-
-
-def _stepdef_derivation_requires(feature_root: str) -> List[str]:
-    """Requires list for the step-definition-derivation check (needs the
-    chain dir plus Cucumber glue; skip when the profile has no glue)."""
-    if _cucumber_glue_present(feature_root):
-        return [CHAIN_DIR(feature_root), _test_source_root(feature_root)]
-    return [os.path.join(
-        output_dir(feature_root, "04_implement/04c_flow-tests"),
-        "__no_cucumber_glue__")]
-
 
 def _expected_outputs(feature_root: str, key: str) -> List[str]:
     try:
@@ -594,25 +555,17 @@ def _adapter_test_requires(feature_root: str, stage_rel: str) -> List[str]:
     return [out]
 
 
-def _feature_files_dir(feature_root: str) -> str:
-    root = _test_source_root(feature_root)
-    if not root:
-        return ""
-    candidate = os.path.join(root, "resources", "features")
-    return candidate if os.path.isdir(candidate) else ""
-
-
 _CHAIN_MANIFEST = _manifest_check("chain", "01b_chain-table", "01b")
 _CONCEPT_MANIFEST = _manifest_check("concept", "02_concepts", "02")
 _CARD_MANIFEST = _manifest_check("dependency", "03a_dependency-review", "03a")
 _DATA_MODEL_MANIFEST = _manifest_check("data_model", "03b_data-model", "03b")
 _CONTRACT_MANIFEST = _manifest_check("contract", "04_implement/04b_contract", "04b")
-# The red stages have a single canonical output each; their contracts claimed a
-# manifest check that was never wired.
-_CONCEPT_TDD_RED_MANIFEST = _manifest_check(
-    "concept_tdd_red", "04_implement/04d_concept-tdd/04d_red-tests", "04d-red")
-_SYNC_TDD_RED_MANIFEST = _manifest_check(
-    "sync_tdd_red", "04_implement/04e_sync-tdd/04e_red-tests", "04e-red")
+_ACCEPTANCE_MANIFEST = _manifest_check(
+    "acceptance", "04_implement/04c_acceptance-tests", "04c")
+_CONCEPT_IMPL_MANIFEST = _manifest_check(
+    "concept_impl", "04_implement/04d_concept-impl", "04d")
+_SYNC_IMPL_MANIFEST = _manifest_check(
+    "sync_impl", "04_implement/04e_sync-impl", "04e")
 
 _PORT_SPEC_04B = Check(
     name="port_spec_contract",
@@ -630,7 +583,7 @@ _PORT_SPEC_04C = Check(
     build_args=lambda r: [
         "--port-spec", _port_spec(r),
         "--contract-dir", _contract_dir(r),
-        "--feature-dir", output_dir(r, "04_implement/04c_flow-tests"),
+        "--feature-dir", output_dir(r, "04_implement/04c_acceptance-tests"),
     ],
     requires=lambda r: [_port_spec(r), _contract_dir(r)],
 )
@@ -642,7 +595,7 @@ _ADAPTER_TEST_04C = Check(
         "--feature-root", r,
         "--test-source-root", _test_source_root(r) or "",
     ],
-    requires=lambda r: _adapter_test_requires(r, "04_implement/04c_flow-tests"),
+    requires=lambda r: _adapter_test_requires(r, "04_implement/04c_acceptance-tests"),
 )
 
 _ADAPTER_TEST_05 = Check(
@@ -666,57 +619,13 @@ _CLOSE_EVIDENCE = Check(
     requires=lambda r: [output_dir(r, "05_verify")],
 )
 
-_FEATURE_FILE_PRESENCE = Check(
-    name="feature_file_presence",
-    script="verify_feature_file_presence.py",
-    build_args=lambda r: [
-        "--feature-output-dir", output_dir(r, "04_implement/04c_flow-tests"),
-        "--feature-files-dir", _feature_files_dir(r),
-    ],
-    requires=lambda r: [_feature_files_dir(r)] if _feature_files_dir(r)
-    else [os.path.join(output_dir(r, "04_implement/04c_flow-tests"),
-                       "__no_feature_files_dir__")],
-)
-
-
-def _first_feature(feature_root: str) -> str:
-    """First canonical `.feature` file in the 04c output dir, or ''."""
-    flow_dir = output_dir(feature_root, "04_implement/04c_flow-tests")
-    if not os.path.isdir(flow_dir):
-        return ""
-    for name in sorted(os.listdir(flow_dir)):
-        if name.endswith(".feature"):
-            return os.path.join(flow_dir, name)
-    return ""
-
-
-def _gh_des_features(feature_root: str) -> List[str]:
-    """Requires list for the Gherkin-derivation check: the feature file when
-    present, otherwise a non-existent sentinel so the check reports `skip`."""
-    feature = _first_feature(feature_root)
-    return [feature] if feature else [
-        os.path.join(output_dir(feature_root, "04_implement/04c_flow-tests"),
-                     "__no_feature_file__")]
-
-
-_GHERKIN_DERIVATION = Check(
-    name="gherkin_derivation",
-    script="verify_gherkin_derivation.py",
-    build_args=lambda r: [
-        "--usecase", _usecase(r),
-        "--feature", _first_feature(r),
-        "--sync-dir", SYNC_DIR(r),
-    ],
-    requires=lambda r: [_usecase(r), SYNC_DIR(r)] + _gh_des_features(r),
-)
-
 _COLLECTION_COVERAGE = Check(
     name="collection_coverage",
     script="verify_collection_coverage.py",
     build_args=lambda r: ["--feature", r],
     requires=lambda r: [
         CHAIN_DIR(r),
-        output_dir(r, "04_implement/04c_flow-tests"),
+        output_dir(r, "04_implement/04c_acceptance-tests"),
     ],
 )
 
@@ -726,36 +635,16 @@ _CONCEPT_TEST_DERIVATION = Check(
     build_args=lambda r: [
         "--contract-dir", _contract_dir(r),
         "--derivation", os.path.join(
-            output_dir(r, "04_implement/04d_concept-tdd/04d_red-tests"),
+            output_dir(r, "04_implement/04d_concept-impl"),
             "concept-test-derivation.md"),
         "--test-source-root", _test_source_root(r),
     ],
     requires=lambda r: [
         _contract_dir(r),
-        os.path.join(output_dir(r, "04_implement/04d_concept-tdd/04d_red-tests"),
+        os.path.join(output_dir(r, "04_implement/04d_concept-impl"),
                      "concept-test-derivation.md"),
         _test_source_root(r),
     ],
-)
-
-_STEP_DEF_PARITY = Check(
-    name="step_definition_parity",
-    script="verify_step_definition_parity.py",
-    build_args=lambda r: [
-        "--feature-files-dir", output_dir(r, "04_implement/04c_flow-tests"),
-        "--glue-dir", _test_source_root(r),
-    ],
-    requires=_glue_requires,
-)
-
-_STEP_DEF_DERIVATION = Check(
-    name="step_definition_derivation",
-    script="verify_step_definition_derivation.py",
-    build_args=lambda r: [
-        "--chain-dir", CHAIN_DIR(r),
-        "--glue-dir", _test_source_root(r),
-    ],
-    requires=_stepdef_derivation_requires,
 )
 
 # File-manifest checks for stages with predictable single-file outputs.
@@ -887,21 +776,17 @@ STAGES: List[Stage] = [
           checks=[_CONTRACT_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN,
                   _CONTRACT_MANIFEST, _CONCEPT_ADDITIVITY, _REUSED_CONTRACTS,
                   _PORT_SPEC_04B]),
-    Stage("04c", "Flow tests", "04_implement/04c_flow-tests", gate_after=3,
-          checks=[_FEATURE_IMPL_PATHS, _GHERKIN_DERIVATION, _COLLECTION_COVERAGE,
-                  _STEP_DEF_PARITY, _ADAPTER_TEST_04C,
-                  _STEP_DEF_DERIVATION, _FEATURE_FILE_PRESENCE, _PORT_SPEC_04C]),
-        Stage("04d-red", "Concept TDD red", "04_implement/04d_concept-tdd/04d_red-tests",
-            checks=[_FEATURE_IMPL_PATHS, _CONCEPT_TEST_DERIVATION, _FIELD_ASSERTIONS,
-                    _TEST_NAMING_04D, _CONCEPT_TDD_RED_MANIFEST]),
-        Stage("04d-green", "Concept TDD green", "04_implement/04d_concept-tdd/04d_green-impl",
-            checks=[_FEATURE_IMPL_PATHS, _FIELD_ASSERTIONS, _TEST_CONTINUITY_04D]),
-        Stage("04e-red", "Sync TDD red", "04_implement/04e_sync-tdd/04e_red-tests",
-            checks=[_FEATURE_IMPL_PATHS, _TEST_NAMING_04E, _SYNC_TDD_RED_MANIFEST]),
-        Stage("04e-green", "Sync TDD green", "04_implement/04e_sync-tdd/04e_green-impl",
-            checks=[_IMPL_PARITY, _SYNC_IMPL_PARITY, _SYNC_ROUTE_FILTERS,
-                _SYNC_DECLARATIVE, _ACTION_LOG_ISOLATION, _CUCUMBER_GREEN,
-                _TEST_CONTINUITY_04E]),
+    Stage("04c", "Acceptance tests", "04_implement/04c_acceptance-tests",
+          gate_after=3,
+          checks=[_FEATURE_IMPL_PATHS, _ACCEPTANCE_BINDING, _COLLECTION_COVERAGE,
+                  _ADAPTER_TEST_04C, _PORT_SPEC_04C, _ACCEPTANCE_MANIFEST]),
+    Stage("04d", "Concept implementation", "04_implement/04d_concept-impl",
+          checks=[_FEATURE_IMPL_PATHS, _CONCEPT_TEST_DERIVATION, _FIELD_ASSERTIONS,
+                  _MUTATION_SCORE_04D, _CONCEPT_IMPL_MANIFEST]),
+    Stage("04e", "Sync implementation", "04_implement/04e_sync-impl",
+          checks=[_FEATURE_IMPL_PATHS, _IMPL_PARITY, _SYNC_IMPL_PARITY,
+                  _SYNC_ROUTE_FILTERS, _SYNC_DECLARATIVE, _ACTION_LOG_ISOLATION,
+                  _MUTATION_SCORE_04E, _SYNC_IMPL_MANIFEST]),
     Stage("05", "Verify", "05_verify",
           checks=[_CLOSE_EVIDENCE, _ADAPTER_TEST_05]),
 ]
@@ -909,7 +794,7 @@ STAGES: List[Stage] = [
 GATE_LABELS = {
     1: "Requirements",
     2: "Architecture",
-    3: "Executable spec",
+    3: "Acceptance spec",
 }
 
 # Stages whose output a given human gate approves. A gate approval is bound to

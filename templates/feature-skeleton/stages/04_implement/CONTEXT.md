@@ -1,28 +1,33 @@
 # Stage 04 — Implement (router)
 
 This directory owns no artefacts or transition. It is a reference
-container for five top-level sub-stages; `04d` and `04e` contain
-structural red/green child stages.
+container for three implementation sub-stages plus the Gate-3
+acceptance stage.
 
 > **Completed example.** The worked instance of the implementation stages is at
 > [`../../../../examples/UC-00-login/stages/04_implement/`](../../../../examples/UC-00-login/stages/04_implement/) — read it if useful; it is illustrative, not a template.
 
 ## Why this stage exists
 
-**Outside-in TDD double-loop.** The outer loop is one failing flow
-test per use-case scenario (`04c`). The inner loop is per-concept
-(`04d-red` -> `04d-green`) and per-sync (`04e-red` -> `04e-green`).
-`04a` and `04b` prepare the ground (profile mapping and per-concept
-contract slice). Order matters: profile mapping before tests when a
-persistent store exists, tests before code, concept code before sync
-code, sync code is what turns the outer flow test green.
+**Spec-driven, test-verified implementation.** Design was settled in
+Stages 01–03 and frozen as contracts at 04b. Stage 04 executes it:
+
+- `04c` authors the **Acceptance Spec** and the native flow tests
+  (Gate 3 — the frozen acceptance spec).
+- `04d` implements concepts and their unit tests.
+- `04e` implements syncs and their unit tests; the acceptance tests go
+  green here.
+
+There is **no red/green sub-stage split** — tests are derived from
+already-approved artefacts and produced alongside implementation. Test
+effectiveness is measured by mutation score, not by process adherence
+(see `methodology/implementation/TESTING.md`).
 
 Stage 04 is the **executable implementation stage**. The markdown
-derivation files produced in `04b`/`04c`/`04d-red`/`04e-red` are
-supporting artefacts, not substitutes for code or tests. A Stage 04
-sub-stage is not complete unless its required side effects exist in the
-selected profile and the required commands have been executed for that
-sub-stage.
+derivation files produced in `04b`/`04c`/`04d`/`04e` are supporting
+artefacts, not substitutes for code or tests. A Stage 04 sub-stage is
+not complete unless its required side effects exist in the selected
+profile and the required commands have been executed for that sub-stage.
 
 **Feeds:**
 
@@ -42,6 +47,7 @@ sub-stage.
 | `../../../../templates/artefact-impact-matrix.md` | 3 | Required `_changes/` worksheet for iterative changes |
 | `../../../../methodology/implementation/STAGES.md` | 3 | Stage 04 routing contract |
 | `../../../../methodology/implementation/RULES.md` | 3 | Hard rules |
+| `../../../../methodology/implementation/TESTING.md` | 3 | Spec-driven verification discipline |
 | `../../../../reference-impl/java-legible/README.md` (default profile) | 3 | Runtime evidence surface for the canonical fire-after-commit profile |
 
 ## Process
@@ -54,9 +60,9 @@ stop and tell the human which earlier sub-stage must be completed first.
 |---|---|---|
 | 1 | [`04a_storage-mapping/`](04a_storage-mapping/CONTEXT.md) — optional profile mapping | `03b_data-model/output/` is non-empty |
 | 2 | [`04b_contract/`](04b_contract/CONTEXT.md) — per-concept contract slice | `04a_storage-mapping/output/` exists (or `_NOT_APPLICABLE.md` present) |
-| 3 | [`04c_flow-tests/`](04c_flow-tests/CONTEXT.md) — outer red (flow tests) | `04b_contract/output/` is non-empty |
-| 4 | [`04d_red-tests/`](04d_concept-tdd/04d_red-tests/CONTEXT.md) then [`04d_green-impl/`](04d_concept-tdd/04d_green-impl/CONTEXT.md) | `04c_flow-tests/output/` is non-empty and Gate 3 is approved |
-| 5 | [`04e_red-tests/`](04e_sync-tdd/04e_red-tests/CONTEXT.md) then [`04e_green-impl/`](04e_sync-tdd/04e_green-impl/CONTEXT.md) | All concept tests from `04d_green` are green |
+| 3 | [`04c_acceptance-tests/`](04c_acceptance-tests/CONTEXT.md) — Acceptance Spec + native flow tests | `04b_contract/output/` is non-empty |
+| 4 | [`04d_concept-impl/`](04d_concept-impl/CONTEXT.md) — concepts + unit tests | `04c_acceptance-tests/output/` is non-empty and Gate 3 is approved |
+| 5 | [`04e_sync-impl/`](04e_sync-impl/CONTEXT.md) — syncs + unit tests | concept tests from `04d` are green |
 
 During `04c` through `04e`, if the selected profile exposes a runtime
 debug surface, use it as the default evidence source for explaining
@@ -74,9 +80,8 @@ response, and translate transport output. Do not call business concept
 classes directly, branch on domain outcomes, compute domain policy, or
 read/mutate concept state in the controller/route handler.
 
-**Do not skip or reorder sub-stages.** The fast-path exception in
-`STAGES.md` applies only when all listed conditions hold; when in
-doubt, use one-stage-per-turn.
+**Do not skip or reorder sub-stages.** When in doubt, use
+one-stage-per-turn.
 
 ## Outputs
 
@@ -89,14 +94,14 @@ doubt, use one-stage-per-turn.
   passes before 04d/04e work starts, and
   `quality-gate/verify_iterative_change_coupling.py` passes before merge.
 - `04b` exists before any `04c`/`04d`/`04e` work.
-- `04d_red-tests/` is complete before `04d_green-impl/` starts.
-- `04e_red-tests/` is complete before `04e_green-impl/` starts.
+- `04c` is complete and Gate 3 approved before `04d` starts.
+- Concept tests are green before `04e` starts.
 - No sub-stage is treated as complete from markdown outputs alone; each
   required code/test side effect exists for the selected profile.
-- The flow tests from `04c` are green at the end of `04e_green`.
-- Any runtime explanation of why a flow is red, green, stuck, or
-  archived is backed by the profile's debug surface or an equivalent
-  executed runtime inspection command.
+- The acceptance tests authored at `04c` are green at the end of `04e`.
+- Any runtime explanation of a flow being stuck or archived is backed by
+  the profile's debug surface or an equivalent executed runtime
+  inspection command.
 - Any bootstrap / `Web` implementation is transport-only: no direct
   business-concept dependency, no domain branching, and no concept-state
   read/write in the controller/route handler.
@@ -105,14 +110,13 @@ doubt, use one-stage-per-turn.
 
 ## Gate
 
-Auto-advances (next human gate: Stage 04c). Sub-stages 04a and 04b auto-advance.
-**Sub-stage 04c (flow tests) is Gate 3 (Executable spec) —
-human reviews the Gherkin `.feature` files as the executable form of
-the use case.** After 04c is approved, sub-
-stages 04d and 04e auto-advance because their tests are mechanically
-derived from already-approved artefacts (contracts, chain tables, sync
-specs). The inner loops verify implementation fidelity; the design
-was settled at 04c.
+Auto-advances. **Sub-stage 04c (acceptance tests) is Gate 3 (Acceptance
+spec) — the human reviews `usecase.md` + the frozen
+`acceptance-spec.md`.** After 04c is approved, sub-stages 04d and 04e
+auto-advance because their tests are mechanically derived from
+already-approved artefacts (contracts, chain tables, sync specs). The
+inner stages verify implementation fidelity; the design was settled at
+04c.
 
 ## Advancing
 

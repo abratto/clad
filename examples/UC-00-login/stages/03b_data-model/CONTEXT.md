@@ -142,7 +142,7 @@ yourself and do NOT edit `RESUME.md`.
 Only after the human explicitly says "approved", run the approval command
 `advance.py` printed, then re-run `./clad advance` to cross the gate. Gate 2
 is the **Architecture** gate; Stages 04a and 04b auto-advance, and the next
-human gate is **Gate 3 (Executable spec)** at Stage 04c.
+human gate is **Gate 3 (Acceptance spec)** at Stage 04c.
 
 ## Advancing
 

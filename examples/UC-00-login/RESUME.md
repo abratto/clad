@@ -26,7 +26,7 @@
 - **Gate 1 content hash:** `2297b79e007e09c660cb7dcc9fdb98e63cb146e43ed290df9e40c19f34894515`
 - **Gate 2 (Architecture):** `approved`
 - **Gate 2 content hash:** `624ecad3820abc4346d1f70c1b7e12b7e0ed785067d0f1e07fa57d8b75ff4772`
-- **Gate 3 (Executable spec):** `approved`
+- **Gate 3 (Acceptance spec):** `approved`
 - **Gate 3 content hash:** `4eee3b9a793dd6f818f13cb6e4c3477cec12e4539796cba3ebac06267590921d`
 - **Iterative change `rename-user-to-usernaming`:** `approved`
 - **Iterative change `fire-after-commit-engine`:** `approved`

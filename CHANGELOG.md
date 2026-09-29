@@ -10,6 +10,51 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.16.0] — 2026-09-28
+
+**Spec-driven testing: frozen Acceptance Spec + mutation gate replace in-loop
+TDD and the Gherkin/Cucumber track (DR-0001).** A breaking methodology change.
+Design is settled in Stages 01–03b and frozen as contracts; tests are derived
+verification, not a design-discovery process. Motivation and evidence:
+[`docs/decisions/0001-spec-driven-testing.md`](docs/decisions/0001-spec-driven-testing.md)
+and Böckeler, *TDD inside the agent loop* (cited in
+[`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md)).
+
+- **Stage 04 reshaped.** `04c_flow-tests` → `04c_acceptance-tests`: it now
+  produces a generated, frozen `acceptance-spec.md` (the human-facing Gate-3
+  artifact) plus **native** per-scenario flow tests. `04d_concept-tdd` (red/green
+  children) and `04e_sync-tdd` (red/green children) collapse into single
+  `04d_concept-impl` / `04e_sync-impl` stages: unit tests and implementation are
+  produced together.
+- **Gate 3 renamed** to *Acceptance spec*. Gate approval is still bound to the
+  stage content hash, so editing the Acceptance Spec after approval stales the
+  gate and forces re-approval (the freeze).
+- **Gherkin/Cucumber removed.** No `.feature` files, step definitions, or
+  Cucumber runner. The acceptance tests are native tests in the profile's
+  framework. Deleted scripts: `verify_gherkin_derivation.py`,
+  `verify_step_definition_parity.py`, `verify_step_definition_derivation.py`,
+  `verify_cucumber_green.py`, `verify_feature_file_presence.py`,
+  `verify_test_continuity.py`, `generate_feature_files.py`. `verify_test_naming.py`
+  is now advisory.
+- **Mutation is the test-effectiveness gate (R24).** New
+  `quality-gate/verify_mutation_score.py` runs `mutation.command` and fails
+  Stage 04d/04e below `mutation.threshold` (default 80%). The canonical profile
+  ships `scripts/mutation-score.sh` (PIT) and sets `mutation.command`. New
+  `quality-gate/verify_acceptance_binding.py` proves the Acceptance Spec maps
+  1:1 to the native flow tests.
+- **Docs/rules.** `methodology/implementation/TDD.md` → `TESTING.md`; R8
+  rewritten, R16 retired into R14, R24 added; `GHERKIN_INTEGRATION.md` deleted.
+  Skills `clad-concept-tdd`/`clad-sync-tdd` → `clad-concept-impl`/`clad-sync-impl`.
+  `templates/acceptance-spec.md` added; `feature.feature` and
+  `step-definitions.java` deleted; the worked example migrated.
+
+**Upgrade notes (breaking).** Legacy red/green Stage 04 trees
+(`04d_red-tests`, `04d_green-impl`, `04e_red-tests`, `04e_green-impl`) and
+Gherkin/Cucumber artefacts are **rejected, not migrated** — a pre-v0.16 feature
+must re-enter Stage 04 and author an Acceptance Spec plus native flow tests.
+`mutation.command` requires the profile's mutation tool; profiles without one
+should leave it unset (the gate then skips).
+
 ## [0.15.2] — 2026-09-28
 
 **Fix flaky Postgres startup ordering (seed ran before schema).** The demo

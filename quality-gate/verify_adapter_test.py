@@ -3,16 +3,17 @@
 profile-specific end-to-end adapter test must exist (blocking).
 
 Why this exists:
-  Stage 04c step 6 requires a profile-specific integration test that exercises
+  Stage 04c requires a profile-specific integration test that exercises
   the adapter surface end-to-end — an HTTP request hitting the controller, the
   bootstrap (`Web`) concept, the business concepts/syncs, and back to the HTTP
-  response — distinct from the Gherkin flow tests (which assert the action token
+  response — distinct from the native flow tests (which assert the action token
   chain). Until now that requirement was only an advisory Stage-05 warning
   (`verify_close_evidence.py`), so a worker could skip it and still pass.
 
   This check blocks at the stage that authors it:
-    * Stage 04c — a matching test file must EXIST. At 04c the outer loop is red,
-      so a `@Disabled` test is acceptable; presence is what is enforced.
+    * Stage 04c — a matching test file must EXIST. The acceptance tests may
+      still be unwired at 04c, so a `@Disabled` test is acceptable; presence is
+      what is enforced.
     * Stage 05 — `--require-enabled`: the test must exist AND be enabled (the
       feature is closed and green).
 
@@ -136,12 +137,12 @@ def main() -> int:
               f"test found under {test_root}{note}")
         print("      Stage 05 requires the profile end-to-end test to run green. "
               "Write one from templates/http-integration-test.java and enable it "
-              "at 04e-green.")
+              "at 04d/04e.")
         return 1
 
     if enabled or disabled:
         found = enabled or disabled
-        state = "enabled" if enabled else "@Disabled (red)"
+        state = "enabled" if enabled else "@Disabled (not yet wired)"
         print(f"PASS  adapter test present ({state}): "
               f"{os.path.relpath(found, test_root)}")
         return 0
@@ -151,7 +152,7 @@ def main() -> int:
     print("      Derive a profile-specific end-to-end test (HTTP request -> "
           "adapter -> bootstrap -> concepts/syncs -> response) from "
           "templates/http-integration-test.java. Stage 04c requires it to exist "
-          "(it may be @Disabled while red).")
+          "(it may be @Disabled until the implementation lands).")
     return 1
 
 

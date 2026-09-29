@@ -11,7 +11,7 @@ worse than a short gate that everybody runs.
 ## How quality gates relate to stage gates
 
 CLAD's per-feature workflow uses **3 human gates** (Requirements, Architecture,
-Executable spec) with auto-advance between them. Between every auto-advance step,
+Acceptance spec) with auto-advance between them. Between every auto-advance step,
 the agent runs the relevant quality-gate scripts from this table. If any script
 fails, the agent stops and surfaces the defect — it does not silently advance.
 
@@ -105,26 +105,30 @@ not relax the *intent*.
       identified and entity-type combination decisions are sound.
 11. **Stage 04 implementation-stage checks (automated).**
      When a diff touches `features/UC-*/stages/04_implement/`:
-     - **Automated:** Run `quality-gate/verify_feature_file_presence.py`
-       as a pre-flight before any 04c work.
      - **Automated:** Run `quality-gate/verify_contract_parity.py`
        to check every concept spec action has a matching contract entry.
      - **Automated:** Run `quality-gate/verify_port_spec_contract.py`
        when `port-spec.md` exists to check complete directional entries, plus
-         Stage 04b response shapes and Stage 04c `@contract` scenarios for
+         Stage 04b response shapes and Stage 04c `@contract` assertions for
          inbound entries.
-     - **Automated:** For the Gherkin track, run
-       `quality-gate/verify_gherkin_derivation.py` to validate derivation.
+     - **Automated:** At 04c, run
+       `quality-gate/verify_acceptance_binding.py` to check every use-case
+       scenario has an Acceptance Spec section, every `Test:` binding resolves
+       to a native test method, and every flow-test method is documented.
      - **Automated:** Run `quality-gate/verify_concept_test_derivation.py`
        to check every contract outcome has a matching concept test.
      - **Automated:** For Java concept tests, run
        `quality-gate/verify_concept_field_assertions.py` to confirm tests
        assert required completion field values, not only outcome tokens.
-      - **Automated:** At the end of Stage 04e-green, run
-        `quality-gate/verify_sync_implementation_parity.py` to confirm every
-        approved Stage 03 sync contract has a matching SyncRule implementation.
-     - The automated checks replace the previous semantic (human) checks.
-       04d and 04e auto-advance; the scripts are the gate.
+     - **Automated:** At 04d/04e, run `quality-gate/verify_mutation_score.py`
+       to confirm each unit suite meets `mutation.threshold` (skips when the
+       profile sets no `mutation.command`). This is the test-effectiveness
+       gate (R24, DR-0001).
+     - **Automated:** At the end of Stage 04e, run
+       `quality-gate/verify_sync_implementation_parity.py` to confirm every
+       approved Stage 03 sync contract has a matching SyncRule implementation.
+     - The automated checks are the gate for 04d/04e; there is no red/green
+       sub-stage split (DR-0001).
 12. **Implementation parity checks (R17 enforcement).**
     When a diff touches any implementation source file under a profile's
     sync or concept packages (e.g. `app/backend/src/.../syncs/`,
@@ -234,13 +238,13 @@ consistency checks across the CLAD artefact chain.
 | `verify_sync_cycle_graph.py` | 03 | Detects design-time cross-concept sync cycles (A→B→A). Excludes Web (bootstrap) and self-references (A→A). Accepts `--advisory` flag for refactoring analysis on existing projects |
 | `verify_sync_overlap.py` | 03 | Detects sync pairs sharing 2+ concepts. Lock-order aware: conflicting order = deadlock risk (blocking), same order = safe (advisory). Accepts `--advisory` flag to downgrade all findings to warnings |
 | `verify_concept_matrix.py` | 03 | Builds FR×DP matrix from use-case scenarios × concepts. Flags God Objects (>75% scenario coverage), duplication (identical patterns), and entanglement (shared scenarios). Always advisory (exit 0) — patterns need human judgment |
-| `verify_sync_route_filters.py` | 04e-green | Legacy `SyncTrigger` shared-trigger syncs must carry route filters (R11, blocking); `SyncRule.of` profiles get a WARN on genuinely ambiguous shared triggers. |
-| `verify_sync_declarative.py` | 04e-green | Sync implementations are declarative (R3); no coordinators/orchestrators, no imperative branching |
-| `verify_action_log_isolation.py` | 04e-green | The action log is transient execution state, isolated from durable concept regions |
+| `verify_sync_route_filters.py` | 04e | Legacy `SyncTrigger` shared-trigger syncs must carry route filters (R11, blocking); `SyncRule.of` profiles get a WARN on genuinely ambiguous shared triggers. |
+| `verify_sync_declarative.py` | 04e | Sync implementations are declarative (R3); no coordinators/orchestrators, no imperative branching |
+| `verify_action_log_isolation.py` | 04e | The action log is transient execution state, isolated from durable concept regions |
 | `verify_data_model.py` | 03b | CSDP structure, storage-leakage prevention |
 | `verify_relational_mapping.py` | 04a | Relational storage mappings honour Rmap and R2 (no cross-concept foreign key); skips for non-relational profiles |
 | `verify_contract_parity.py` | 04b | Action name parity between concept specs and contracts |
-| `verify_port_spec_contract.py` | 04b, 04c | When `port-spec.md` exists, directional entries are complete; inbound entries have response shapes and `@contract` scenarios |
+| `verify_port_spec_contract.py` | 04b, 04c | When `port-spec.md` exists, directional entries are complete; inbound entries have response shapes and `@contract` assertions |
 | `verify_collection_coverage.py` | 04c | A collection response declares empty, multi-item, and repeated-key fixtures |
 | `verify_iterative_change_readiness.py` | 04+ | Iterative concept/sync spec or implementation changes have a structured `_changes/` classification and artefact-impact matrix |
 | `verify_iterative_change_coupling.py` | 04+ | Concept/sync implementation changes are committed with their matching Stage 02/03 artefacts |
@@ -251,22 +255,18 @@ consistency checks across the CLAD artefact chain.
 | `verify_reference_integrity.py` | Any | A backticked `<Name>.sync.md` / `.concept.md` / `.contract.md` / `.data-model.md` reference resolves to a real artefact (`_changes/` history and bootstrap concepts exempt); with `--sync-impl-dir`, every Java `rule("…")` matches a real sync stem |
 | `verify_implementation_parity.py` | 04+ | Implementation concept/sync classes have corresponding stage artefact specs; sync names lower mechanically from Stage 03 rules |
 | `verify_sync_implementation_parity.py` | 04e | Stage 03 sync contracts have a matching `SyncRule.of` implementation; with `--strict-trigger`, trigger and primary `then` target must match |
-| `verify_feature_file_presence.py` | 04c | Pre-flight: `.feature` file exists in output + Cucumber discovery path |
+| `verify_acceptance_binding.py` | 04c | The Acceptance Spec maps 1:1 to native flow tests: every scenario has a section, every `Test:` binding resolves, every flow-test method is documented |
+| `verify_mutation_score.py` | 04d, 04e | The unit suite meets `mutation.threshold` (R24); skips when `mutation.command` is unset |
 | `verify_close_evidence.py` | 05 | Advisory: canonical `trace.md` present (warns on legacy name); enabled adapter integration test exists when an adapter surface is declared |
-| `verify_gherkin_derivation.py` | 04c | `.feature` file derivation per GHERKIN_INTEGRATION.md rules G1–G5, S1–S3, E1 |
 | `verify_concept_test_derivation.py` | 04d | Every contract outcome has a matching concept test row and Java method |
-| `verify_test_naming.py` | 04d-red, 04e-red | London School naming per scope: class/method naming, `@Nested`, GIVEN/WHEN/THEN |
-| `verify_test_continuity.py` | 04d-green, 04e-green | Red-stage test files are unchanged: the SHA-256 recorded in the red derivation map still matches |
+| `verify_test_naming.py` | 04d, 04e (advisory) | London School naming per scope: class/method naming, `@Nested`, GIVEN/WHEN/THEN. Report only — not a blocking gate (DR-0001) |
 | `verify_concept_field_assertions.py` | 04d | Java concept tests assert required completion fields from contract flow-token shapes |
-| `verify_step_definition_parity.py` | 04c | Every Gherkin step has a matching step-definition method with a non-empty body — catches empty stubs |
-| `verify_step_definition_derivation.py` | 04c | Every chain-table business action name appears in at least one step-definition method body — catches methods that don't exercise the chain-table actions they were derived from |
-| `verify_cucumber_green.py` | 04e-green | Runs the test command and confirms all Cucumber scenarios pass (fails on undefined, pending, skipped, or failing scenarios) |
 
 Each script returns exit code 0 on pass, 1 on fail, with a structured
 report. Profile-agnostic scripts are invoked by `advance.py` via
-`clad_stages.py`; profile-specific scripts (including the Cucumber and
-step-definition checks) are invoked from the relevant stage's `## Verify`
-section.
+`clad_stages.py`; profile-specific slow checks (mutation, adapter tests)
+are invoked from the relevant stage's `## Verify` section and skipped in
+the fast artefact gate.
 
 #### Checker shape-awareness (corpus union, flow pin, route-scoped names)
 

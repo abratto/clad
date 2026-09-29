@@ -44,8 +44,8 @@ gates, and each sub-agent produces exactly one stage. See
   `methodology/core/ITERATIVE_CHANGES.md`
 - `stages/` — empty stage tree (`01_usecase`, `01a_responsibility-map`,
   `01b_chain-table`, `02_concepts`, `03_syncs`, `03a_dependency-review`,
-  `04_implement` with sub-stages `04a..04e`, where `04d` and `04e`
-  each contain structural red/green child folders, and `05_verify`),
+  `04_implement` with sub-stages `04a..04e`, where `04d` and `04e` are
+  single implementation stages (no red/green child folders), and `05_verify`),
   each stage folder with a `CONTEXT.md`
 
 ## What is **not** in here

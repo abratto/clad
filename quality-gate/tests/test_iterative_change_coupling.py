@@ -108,7 +108,11 @@ class IterativeChangeCouplingTests(unittest.TestCase):
 
     # --- D31: coupling governs iterative changes only ---------------------
     def test_no_active_iterative_change_passes_even_unpaired(self):
-        """Feature-stage work (no active _changes/) is not an R17 change."""
+        """Feature-stage work (no active _changes/) is not an R17 change.
+
+        The check defers to R20 when *any* active maintenance record exists
+        repo-wide; both paths pass here. The assertion accepts either message
+        so the test does not depend on the repo's transient maintenance state."""
         fd, path = tempfile.mkstemp(suffix=".txt")
         try:
             with os.fdopen(fd, "w") as handle:
@@ -119,7 +123,10 @@ class IterativeChangeCouplingTests(unittest.TestCase):
                  "--changed-files-file", path],
                 cwd=REPO_ROOT, capture_output=True, text=True)
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-            self.assertIn("no active iterative change", r.stdout)
+            self.assertTrue(
+                "no active iterative change" in r.stdout
+                or "maintenance-governed change" in r.stdout,
+                r.stdout)
         finally:
             os.remove(path)
 

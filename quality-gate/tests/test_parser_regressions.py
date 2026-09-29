@@ -14,7 +14,7 @@ sys.path.insert(0, str(QUALITY_GATE))
 import artifact_parsers as ap  # noqa: E402
 IMPLEMENTATION_PARITY = REPO_ROOT / "quality-gate" / "verify_implementation_parity.py"
 SYNC_PARITY = REPO_ROOT / "quality-gate" / "verify_sync_implementation_parity.py"
-CUCUMBER_GREEN = REPO_ROOT / "quality-gate" / "verify_cucumber_green.py"
+
 
 
 def write(path, content):
@@ -155,47 +155,6 @@ class SyncImplementationParityFixtures(unittest.TestCase):
                          "--sync-impl-dir", impl_dir)
 
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-
-
-class CucumberGreenFixtures(unittest.TestCase):
-
-    def run_report(self, suite_body):
-        temporary = tempfile.TemporaryDirectory()
-        self.addCleanup(temporary.cleanup)
-        root = Path(temporary.name)
-        feature = root / "features/UC-01-widget"
-        report = root / "target/surefire-reports/TEST-Cucumber.xml"
-        feature.mkdir(parents=True)
-        write(root / "clad.properties", "test.command=true\n")
-        write(report, suite_body)
-        return run(
-            CUCUMBER_GREEN,
-            "--feature-root", feature,
-            "--test-command", "true",
-            "--surefire-dir", report.parent,
-        )
-
-    def test_cucumber_test_suite_counts_passing_scenarios(self):
-        result = self.run_report("""<testsuite name="example.steps.CucumberTest" tests="2" errors="0" skipped="0" failures="0">
-  <testcase name="first scenario" classname="Widget Injector" />
-  <testcase name="second scenario" classname="Widget Injector" />
-</testsuite>""")
-
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("2 Cucumber scenarios", result.stdout)
-
-    def test_cucumber_test_suite_rejects_failing_skipped_and_zero_scenarios(self):
-        failing = self.run_report("""<testsuite name="example.steps.CucumberTest" tests="1" errors="0" skipped="0" failures="1">
-  <testcase name="broken scenario" classname="Widget Injector"><failure message="broken" /></testcase>
-</testsuite>""")
-        skipped = self.run_report("""<testsuite name="example.steps.CucumberTest" tests="1" errors="0" skipped="1" failures="0">
-  <testcase name="pending scenario" classname="Widget Injector"><skipped /></testcase>
-</testsuite>""")
-        zero = self.run_report("""<testsuite name="example.steps.CucumberTest" tests="0" errors="0" skipped="0" failures="0" />""")
-
-        self.assertNotEqual(failing.returncode, 0)
-        self.assertNotEqual(skipped.returncode, 0)
-        self.assertNotEqual(zero.returncode, 0)
 
 
 class GoalScopeParsingTests(unittest.TestCase):

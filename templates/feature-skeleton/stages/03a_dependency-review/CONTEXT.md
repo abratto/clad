@@ -27,7 +27,7 @@ This stage does **not** emit the dependence graph.
 
 **Feeds:**
 
-- `<concept>-card.md` → 03b (Pattern D fields drive conceptual data-model coverage), 04b (per-concept contract author sees the full inbound contract), 04d (concept TDD knows its inbound surface), 04e (sync TDD knows which concepts it must double).
+- `<concept>-card.md` → 03b (Pattern D fields drive conceptual data-model coverage), 04b (per-concept contract author sees the full inbound contract), 04d (concept implementation knows its inbound surface), 04e (sync implementation knows which concepts it must double).
 - `pattern-d-summary.md` → 03b (single cross-cutting checklist for conceptual data-model design).
 
 **Agent stance for this stage:** this stage produces **no new design**.
@@ -198,7 +198,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   `concept-matrix.md`.
 - Route-filter enforcement is a design audit here (every shared-trigger
   sync records its filter status or justification in a card) **and** is
-  enforced mechanically on the implementation at Stage 04e-green by
+  enforced mechanically on the implementation at Stage 04e by
   `verify_sync_route_filters.py`. It is not run on markdown sync specs.
 
 ### Semantic checks (human)

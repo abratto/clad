@@ -18,7 +18,7 @@ This change is governed by `methodology/core/ITERATIVE_CHANGES.md`.
 | Concept(s) | `yes` / `no` | <e.g. "added `hostFirm` field to `User.concept.md`"> |
 | Sync(s) | `yes` / `no` | <e.g. "new `InterceptForProfileWhenLookupByUsernameFound.sync.md`"> |
 | Contract slices | `yes` / `no` | <e.g. "regenerated `User.contract.md`"> |
-| Flow tests | `yes` / `no` | <e.g. "added `spillover.feature` scenario"> |
+| Acceptance tests | `yes` / `no` | <e.g. "added a `spillover` scenario to `acceptance-spec.md` and its native flow test"> |
 | Concept tests | `yes` / `no` | <e.g. "added `UserLookupTest.shouldReturnHostFirm`"> |
 | Sync tests | `yes` / `no` | <e.g. "added `InterceptForProfileWhenLookupByUsernameFoundTest`"> |
 | Production code | `yes` / `no` | <e.g. "`UserConcept.java` updated; new `SpilloverSync.java`"> |
@@ -28,9 +28,9 @@ This change is governed by `methodology/core/ITERATIVE_CHANGES.md`.
 1. <step — e.g. "Re-open Stage 02 and update `User.concept.md`">
 2. <step — e.g. "Re-open Stage 03 and add new sync spec">
 3. <step — e.g. "Re-open Stage 04b and regenerate contracts">
-4. <step — e.g. "Re-open Stage 04c and add flow test scenario">
-5. <step — e.g. "Re-open Stage 04d and implement concept changes">
-6. <step — e.g. "Re-open Stage 04e and implement sync + close flow tests">
+4. <step — e.g. "Re-open Stage 04c and add the scenario to the Acceptance Spec and its native flow test">
+5. <step — e.g. "Re-open Stage 04d and implement concept + unit-test changes">
+6. <step — e.g. "Re-open Stage 04e and implement sync + unit-test changes; close the acceptance tests">
 
 ---
 

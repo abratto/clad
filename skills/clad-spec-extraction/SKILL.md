@@ -1,6 +1,6 @@
 ---
 name: clad-spec-extraction
-description: Extract per-concept Contract slices during CLAD Stage 04b. Use when mechanically deriving contract files from approved concept specs and chain tables, producing action signatures and outcome enums for Stage 04c flow tests.
+description: Extract per-concept Contract slices during CLAD Stage 04b. Use when mechanically deriving contract files from approved concept specs and chain tables, producing action signatures and outcome enums for the Stage 04c Acceptance Spec and native flow tests.
 ---
 
 # CLAD contract Extraction (Stage 04b)
@@ -12,8 +12,8 @@ description: Extract per-concept Contract slices during CLAD Stage 04b. Use when
 Mechanically extracting Contract slices — one `<Name>.contract.md` per concept —
 from the canonical concept specs (the corpus, shadowed by this feature's
 `02` proposals). contracts declare action signatures,
-outcome enums, and flow-token shapes in a form that Stage 04c flow tests
-and Stage 04d concept TDD compile against.
+outcome enums, and flow-token shapes in a form that the Stage 04c native
+flow tests and the Stage 04d/04e unit tests compile against.
 
 ## Files
 

@@ -198,7 +198,7 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   `concept-matrix.md`.
 - Route-filter enforcement is a design audit here (every shared-trigger
   sync records its filter status or justification in a card) **and** is
-  enforced mechanically on the implementation at Stage 04e-green by
+  enforced mechanically on the implementation at Stage 04e by
   `verify_sync_route_filters.py`. It is not run on markdown sync specs.
 
 ### Semantic checks (human)

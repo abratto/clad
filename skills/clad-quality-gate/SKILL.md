@@ -14,8 +14,9 @@ description: Run CLAD quality-gate verification scripts between stages. Use when
 Self-audit discipline: running the verification scripts between stages
 to catch defects before human gates. Scripts check file manifests, scenario
 coverage, outcome alignment, action chains, sync matrices, data models,
-contract parity, Gherkin presence, Gherkin derivation, and concept test
-derivation.
+contract parity, Acceptance Spec binding (`verify_acceptance_binding.py`),
+and concept/sync test derivation and mutation score
+(`verify_mutation_score.py`).
 
 ## Where to look
 

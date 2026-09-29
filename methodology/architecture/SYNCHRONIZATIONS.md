@@ -513,7 +513,7 @@ In implementation stages, treat imperative orchestration as a defect,
 not as an alternative style. If a scenario can only be made green by a
 coordinator that orders domain calls and chooses the final branch inline,
 the sync set or concept outcomes are incomplete and the work must return
-to Stage 03 or 04e-red.
+to Stage 03 or 04e.
 
 ## Composition
 

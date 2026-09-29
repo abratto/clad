@@ -840,35 +840,6 @@ def parse_derivation_map(path: str) -> List[Tuple[str, str, str, str, str]]:
     return derivations
 
 
-def parse_feature_scenarios(path: str):
-    """Return `(scenarios, in_outline)` for a Gherkin `.feature` file.
-
-    `scenarios` maps Scenario/Scenario Outline name -> its raw lines.
-    `in_outline` is the last-seen scenario's outline flag (kept for the
-    existing `verify_gherkin_derivation` behavior).
-    """
-    scenarios = {}
-    current_name = None
-    current_lines = []
-    in_outline = False
-    with open(path) as handle:
-        lines = handle.readlines()
-    for line in lines:
-        m_scenario = re.match(
-            r"^\s*(?:Scenario|Scenario\s+Outline):\s+(.+)$", line.strip())
-        if m_scenario:
-            if current_name:
-                scenarios[current_name] = current_lines
-            current_name = m_scenario.group(1).strip()
-            current_lines = [line]
-            in_outline = "Outline" in line
-        elif current_name:
-            current_lines.append(line)
-    if current_name:
-        scenarios[current_name] = current_lines
-    return scenarios, in_outline
-
-
 def parse_scenario_names(usecase_path: str) -> Set[str]:
     names: Set[str] = set()
     with open(usecase_path) as f:
@@ -1106,12 +1077,9 @@ def expected_stage_outputs(feature_root: str) -> Dict[str, List[str]]:
         out["03a"] = [c + "-card.md" for c in sorted(participating)] + [
             "pattern-d-summary.md", "concept-matrix.md"]
 
-    slug = feature_slug(feature_root)
-    out["04c"] = [(slug or "flow") + ".feature"]
-    out["04d-red"] = ["concept-test-derivation.md"]
-    out["04d-green"] = ["green-evidence.md"]
-    out["04e-red"] = ["sync-test-derivation.md"]
-    out["04e-green"] = ["green-evidence.md"]
+    out["04c"] = ["acceptance-spec.md"]
+    out["04d"] = ["concept-test-derivation.md", "verification-evidence.md"]
+    out["04e"] = ["sync-test-derivation.md", "verification-evidence.md"]
     out["05"] = ["trace.md", "smoke.md", "tracking.md"]
     return out
 

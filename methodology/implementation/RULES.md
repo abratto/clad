@@ -7,7 +7,7 @@ rather than relax the rule.
 
 > **This file is the authoritative text.** `AGENTS.md` §"Hard rules"
 > carries only a compact index and defers here. R1–R9 are the nine
-> original rules; R10–R23 are hard-learned additions. R10 and R21 are
+> original rules; R10–R24 are hard-learned additions. R10, R16 and R21 are
 > retired — their IDs are kept only so an audit that greps for them
 > finds the retirement note, not a live obligation.
 
@@ -88,24 +88,24 @@ be walkable for every observable effect. If you find an effect that
 does not back-trace, you have either an unauthorised behaviour (fix the
 code) or an incomplete use case (amend the contract).
 
-## R8. Outer-loop tests before implementation — inner loops are derived
+## R8. Acceptance tests before implementation — unit tests are derived verification
 
-In Stage 04c, flow tests (Gherkin `.feature` files) are the executable
-form of the use case. They must be written, reviewed, and approved by
-the human before any implementation begins. This is Gate 3 (Executable
-specification) — the last design-stage human gate.
+In Stage 04c, the Acceptance Spec and the native per-scenario flow tests
+are the executable form of the use case. They must be written, reviewed,
+and approved by the human before any implementation begins. This is
+Gate 3 (Acceptance spec) — the last design-stage human gate.
 
 In Stages 04d and 04e, concept tests and sync tests are **mechanically
-derived** from already-approved artefacts (04c flow tests, 04b contracts,
-chain tables, sync specs). They verify implementation fidelity, not
-design. The red→green handoff in 04d and 04e is automated — the
-quality-gate scripts (`verify_concept_test_derivation.py`,
-`verify_sync_matrix.py`) serve as the gate. No human approval is
-required at these inner boundaries.
+derived** from already-approved artefacts (the 04c Acceptance Spec, 04b
+contracts, chain tables, sync specs) and are produced **alongside** the
+implementation in a single stage. They verify implementation fidelity,
+not design. There is no red/green sub-stage split; the quality-gate
+scripts (`verify_concept_test_derivation.py`, `verify_mutation_score.py`)
+are the gate. No human approval is required at these inner boundaries.
 
 An agent that writes concept or sync implementation before the
-corresponding red tests exist has violated this rule. The flow test
-(04c) must be approved before any inner loop begins.
+corresponding unit tests exist has violated this rule. The Acceptance
+Spec (04c) must be approved before any 04d/04e work begins.
 
 ## R9. Every contract outcome maps to a distinct implementation branch
 
@@ -193,15 +193,12 @@ coordination review cards.
 A sync that fires on a shared trigger with no when-matcher and no guard,
 and no explicit route-agnostic justification, is a defect.
 
-## R16. Stage 04d tests assert completion field values
+## R16. *(retired — merged into R14)* Stage 04d tests assert completion field values
 
-A concept action's completion map carries named fields that downstream
-syncs consume. If a field-mapping bug exists (wrong key name, missing
-binding, value collision), an outcome-only test will pass while
-all downstream consumers receive null or empty values.
-
-Stage 04d red tests must therefore include field-value assertions for
-every primary completion field that downstream syncs read.
+> **Retired.** R16 restated R14 for the former `04d` stage. With the
+> red/green split gone (DR-0001), R14 applies to every concept and sync
+> unit test. The ID is kept so an audit that greps for R16 finds this
+> note, not a live obligation.
 
 ## R17. Every change to a sync or concept MUST re-enter the CLAD stage pipeline
 
@@ -340,6 +337,21 @@ fix moved the check to a pure `Stocking.checkCount` invoked first, gating
 Reviewed at Stage 01b (the chain — a guard action precedes the writing action)
 and Stage 02 (the guard action's anatomy); the guard's concept test asserts it
 writes no state.
+
+## R24. Test effectiveness is gated by mutation score, not process adherence
+
+A passing test suite is not evidence that the tests constrain the code.
+Concept and sync unit suites MUST meet the `mutation.threshold` declared in
+`clad.properties` (run via `mutation.command`); `verify_mutation_score.py` fails
+Stage 04d/04e below it. A profile without a mutation tool leaves
+`mutation.command` unset and the gate skips — it then relies on
+contract-outcome coverage and field assertions (R14).
+
+CLAD does not require, and does not reward, a red-green-refactor process inside
+the agent loop (DR-0001). Watching a test go red proves only that the agent ran
+it; mutation measures whether the test would catch a wrong implementation.
+
+Mechanised by `quality-gate/verify_mutation_score.py`.
 
 ---
 

@@ -176,10 +176,12 @@ reference and are not repeated here. The three essentials to remember:
 - **Per-UC scope:** Stages 01–05 run once per in-scope goal, each in
   `features/UC-XX-<slug>/`. One folder per confirmed in-scope goal.
 - **Gates:** Gate 1 (Requirements) at 01b, Gate 2 (Architecture) at 03b,
-  Gate 3 (Executable spec) at 04c. Stages between gates auto-advance.
-  Stages 04a–04e implement the outside-in TDD double-loop: `04c` is the
-  outer red test (a flow); `04d`/`04e` are the inner red→green TDD on
-  concepts and syncs.
+  Gate 3 (Acceptance spec) at 04c. Stages between gates auto-advance.
+  Stage 04 is spec-driven, test-verified: `04c` authors the frozen
+  Acceptance Spec and the native flow tests; `04d`/`04e` implement concepts
+  and syncs with unit tests. There is no red/green split — unit test
+  effectiveness is gated by mutation score
+  ([`methodology/implementation/TESTING.md`](methodology/implementation/TESTING.md)).
 
 Stage 00 has special semantics: the agent **proposes**, **asks ≤5
 clarifying questions**, iterates, and only writes `actors.md` /
@@ -243,8 +245,8 @@ lists built-in skills), read the corresponding raw files instead:
 The stage contract is authoritative and identical either way: a skill
 adds on-demand guidance but never overrides the stage `CONTEXT.md`
 `Inputs`/`Outputs`/`Verify`. Some skills are the required stage
-guidance (`clad-sync-design`, `clad-concept-design`, `clad-concept-tdd`,
-`clad-sync-tdd`); others are thin aggregators; each `SKILL.md` states
+guidance (`clad-sync-design`, `clad-concept-design`, `clad-concept-impl`,
+`clad-sync-impl`); others are thin aggregators; each `SKILL.md` states
 its own role in its header.
 
 ## 5. Hard rules — index
@@ -258,22 +260,24 @@ That file is authoritative; this section is an index only.
   (`when … then …`) not imperative; one primary bootstrap adapter per
   transport surface; every action emits a flow token.
 - **R6–R9 (process/discipline):** stage outputs written only by the
-  owning stage; every running effect traces to a use case; outer-loop
-  tests before implementation; every contract outcome maps to a distinct
-  branch.
-- **R10, R21 (retired):** kept as IDs only, with retirement notes.
+  owning stage; every running effect traces to a use case; acceptance
+  tests before implementation, unit tests derived; every contract outcome
+  maps to a distinct branch.
+- **R10, R16, R21 (retired):** kept as IDs only, with retirement notes.
 - **R11–R20 (hard-learned implementation):** shared-trigger route
   scoping (R11); `outcome` field required (R12); Jackson
-  `Include.ALWAYS` (R13); field-value test assertions (R14); Stage 03a
-  route-scope verification (R15); Stage 04d completion-field assertions
-  (R16); iterative-change re-entry (R17); mandatory quality gate at
-  commit (R18); `test.command` only (R19); maintenance governance (R20).
+  `Include.ALWAYS` (R13); field-value unit-test assertions (R14); Stage 03a
+  route-scope verification (R15); iterative-change re-entry (R17);
+  mandatory quality gate at commit (R18); `test.command` only (R19);
+  maintenance governance (R20).
 - **R22 (concept vocabulary):** a concept is defined once, in the
   canonical corpus.
 - **R23 (design discipline):** a request-level refusal is decided before
   the first state write in the flow (no partial state on a refusal).
+- **R24 (test effectiveness):** unit suites are gated by mutation score,
+  not by red-green process adherence.
 
-Quality-gate scripts enforce R1–R5, R14–R20 mechanically — do not relax
+Quality-gate scripts enforce R1–R5, R14–R20 and R24 mechanically — do not relax
 any of them. If a rule appears to conflict with a request, **stop and ask**.
 
 ## 6. Rejection protocol

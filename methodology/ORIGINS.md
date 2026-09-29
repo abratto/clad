@@ -143,12 +143,14 @@ control. CLAD is the missing piece:
   CSDP data-model structure ([`verify_data_model.py`](../quality-gate/verify_data_model.py)),
   and contract parity ([`verify_contract_parity.py`](../quality-gate/verify_contract_parity.py)).
   See [`methodology/implementation/QUALITY_GATE.md`](../methodology/implementation/QUALITY_GATE.md).
-- **Outer-loop BDD tests (Cucumber/Gherkin).** Stage 04c
-  derives executable Gherkin `.feature` files and step-definition
-  skeletons from the use case, chain tables, and contracts, replacing
-  hand-written markdown flow specs with executable specifications
-  that go green at the end of 04e. See
-  [methodology/architecture/GHERKIN_INTEGRATION.md](../methodology/architecture/GHERKIN_INTEGRATION.md).
+- **Spec-driven, test-verified implementation (DR-0001).** Stage 04c
+  freezes a human-facing Acceptance Spec and derives native per-scenario
+  flow tests from the use case, chain tables, and contracts (the native
+  test is the executable form, with no separate BDD step-definition
+  track); 04d/04e produce unit tests and implementation
+  together, gated by mutation score rather than a red-green ritual. See
+  [`docs/decisions/0001-spec-driven-testing.md`](../docs/decisions/0001-spec-driven-testing.md)
+  and [methodology/implementation/TESTING.md](../methodology/implementation/TESTING.md).
 - **Optional overlays, not mandates.** Tracking
   ([methodology/overlays/TRACKING.md](../methodology/overlays/TRACKING.md))
   and planning intake

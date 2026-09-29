@@ -6,15 +6,15 @@ Coordination is **declarative** so that **no concept imports another**
 (hard rule R1) and so each cross-concept link is reviewable as a small
 `when … where … then` rule rather than being buried in imperative
 code. Each sync also commits to one of the four legal data-flow
-patterns (A/B/C/D), which makes Stage 03a's audit and Stage 04e's TDD
-mechanical.
+patterns (A/B/C/D), which makes Stage 03a's audit and Stage 04e's sync
+tests mechanical.
 
 > **Completed example.** A worked instance of this stage's output is at
 > [`../../../../examples/UC-00-login/stages/03_syncs/output/`](../../../../examples/UC-00-login/stages/03_syncs/output/) — read it if useful; it is illustrative, not a template.
 
 **Feeds:**
 
-- `<name>.sync.md` → 03a (every `then` call and every `where` clause is tabulated; Pattern D reads are flagged), 04c (the sync chain is what the outer flow test asserts), 04e (one inner red→green TDD loop per sync).
+- `<name>.sync.md` → 03a (every `then` call and every `where` clause is tabulated; Pattern D reads are flagged), 04c (the sync chain is what the native acceptance test asserts), 04e (the sync unit test and implementation produced together).
 
 **Agent stance for this stage:** if you reach for an `if`, you are in
 the wrong file. Branching belongs inside a concept action's outcomes;

@@ -221,10 +221,9 @@ class DescriptorCompletenessTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         expected = json.loads(result.stdout)["expectedOutputs"]
         for stage_id in ("01", "01a", "01b", "02", "03", "03a", "03b",
-                         "04a", "04b", "04c", "04d-red", "04d-green",
-                         "04e-red", "04e-green", "05"):
+                         "04a", "04b", "04c", "04d", "04e", "05"):
             self.assertIn(stage_id, expected)
-        self.assertEqual(expected["04c"], ["login.feature"])
+        self.assertEqual(expected["04c"], ["acceptance-spec.md"])
 
 
 class CloseEvidenceTests(unittest.TestCase):

@@ -153,7 +153,7 @@ def render():
     lines.append("  `present_gate.py`, `approve_gate.py`, `approve_maintenance_change.py`, `promote_concepts.py`.")
     lines.append("- **Generators:** `generate_syncs.py`, `generate_syncs_java.py`, `generate_contract.py`,")
     lines.append("  `generate_data_model.py`, `generate_concepts_catalog.py`, `generate_shared_triggers.py`,")
-    lines.append("  `generate_sync_cards.py`, `generate_feature_files.py`, `rename_sync.py`, `generate_gate_index.py`.")
+    lines.append("  `generate_sync_cards.py`, `rename_sync.py`, `generate_gate_index.py`.")
     lines.append("- **Shared parsers:** `artifact_parsers.py` (the artefact-grammar single source of truth),")
     lines.append("  `descriptor.py`, `describe_feature.py` (the machine contract — see `MACHINE_CONTRACT.md`).")
     lines.append("")

@@ -18,7 +18,7 @@ mechanical.
 
 **Feeds:**
 
-- `<name>.sync.md` → 03a (every `then` call and every `where` clause is tabulated; Pattern D reads are flagged), 04c (the sync chain is what the outer flow test asserts), 04e (one inner red→green TDD loop per sync).
+- `<name>.sync.md` → 03a (every `then` call and every `where` clause is tabulated; Pattern D reads are flagged), 04c (the sync chain is what the acceptance tests assert), 04e (sync unit tests).
 
 **Agent stance for this stage:** if you reach for an `if`, you are in
 the wrong file. Branching belongs inside a concept action's outcomes;

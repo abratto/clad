@@ -19,9 +19,9 @@
 | Concept(s) | `features/_system/concepts/*.concept.md` (corpus) and/or `features/UC-XX/stages/02_concepts/output/*.concept.md` (proposals) | yes \| no | <which concepts, what changes> |
 | Sync(s) | `features/UC-XX/stages/03_syncs/output/*.sync.md` | yes \| no | <which syncs, what changes> |
 | Contract slices | `features/UC-XX/stages/04_implement/04b_contract/output/*.contract.md` | yes \| no | <which> |
-| Flow tests | `features/UC-XX/stages/04_implement/04c_flow-tests/output/` | yes \| no | <which> |
-| Concept tests | `features/UC-XX/stages/04_implement/04d_concept-tdd/04d_red-tests/output/` | yes \| no | <which> |
-| Sync tests | `features/UC-XX/stages/04_implement/04e_sync-tdd/04e_red-tests/output/` | yes \| no | <which> |
+| Acceptance tests | `features/UC-XX/stages/04_implement/04c_acceptance-tests/output/` | yes \| no | <which scenarios in `acceptance-spec.md` / which native flow tests> |
+| Concept tests + implementation | `features/UC-XX/stages/04_implement/04d_concept-impl/output/` | yes \| no | <which> |
+| Sync tests + implementation | `features/UC-XX/stages/04_implement/04e_sync-impl/output/` | yes \| no | <which> |
 | Production code | `reference-impl/<profile>/...` | yes \| no | <which classes> |
 | Verification trace | `features/UC-XX/stages/05_verify/output/` | yes \| no | <which scenarios> |
 

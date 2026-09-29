@@ -28,9 +28,8 @@ that the deployable thing actually runs (Part 2, smoke). Without it,
 |---|---|---|
 | `../01_usecase/output/usecase.md` | 4 | Scenarios to verify against |
 | `../03_syncs/output/` | 4 | Authorising sync rules |
-| `../04_implement/04c_flow-tests/output/` | 4 | Outer test specs for cross-reference (.feature or markdown) |
+| `../04_implement/04c_acceptance-tests/output/acceptance-spec.md` | 4 | Acceptance Spec + native flow tests for cross-reference |
 | (a flow-token log from a representative test run) | 4 | Runtime evidence |
-| (Cucumber HTML/JSON report, Gherkin track only) | 4 | Supplementary scenario-pass evidence |
 | Skill: `clad-verification` | 3 | Verification reference (see skills/ directory) |
 | `../../../../methodology/architecture/FLOW_TOKENS.md` | 3 | Token semantics |
 | `../../../../reference-impl/java-legible/README.md` (default profile) | 3 | Runtime evidence surface for the canonical fire-after-commit profile (`DebugApi`, archived flow records) |
@@ -53,12 +52,12 @@ For each named scenario in the use case:
    chain -> transport exit, rather than being short-circuited inside the
    controller / route handler.
 
-On the Gherkin track, additionally cross-reference:
-   - Every Gherkin `Scenario` / `Scenario Outline` name in
-     `../04_implement/04c_flow-tests/output/*.feature` matches a
-     use-case scenario name in `../01_usecase/output/usecase.md`.
-   - Every scenario's trace entry references its Gherkin scenario
-     name and line number alongside the use-case heading.
+In the Acceptance Spec, additionally cross-reference:
+   - Every `## Scenario:` section in
+     `../04_implement/04c_acceptance-tests/output/acceptance-spec.md`
+     matches a use-case scenario name in `../01_usecase/output/usecase.md`.
+   - Every scenario's trace entry references its Acceptance Spec scenario
+     name alongside the use-case heading.
 
 When the selected profile exposes a read-oriented runtime debug surface,
 use that surface as the default proof source for the walk before you
@@ -138,8 +137,9 @@ python3 ../../../../quality-gate/verify_adapter_test.py \
 - **`verify_adapter_test.py --require-enabled` (blocking):** when an adapter
   surface is declared, a profile-specific end-to-end adapter test must exist
   **and be enabled** (green) under `test.source.root`. Stage 04c already
-  requires it to *exist* (it may be `@Disabled` while red); Stage 05 requires it
-  to run. `verify_close_evidence.py` remains an advisory cross-check.
+  requires it to *exist* (it may be `@Disabled` until implementation lands);
+  Stage 05 requires it to run. `verify_close_evidence.py` remains an advisory
+  cross-check.
 
 - Every scenario has an entry in `trace.md`.
 - `findings.md`, if present, names the owning stage for each finding.
@@ -157,8 +157,9 @@ python3 ../../../../quality-gate/verify_adapter_test.py \
 - **Adapter-surface integration test:** features exposing any adapter
   surface (HTTP, CLI, GraphQL, pub/sub) **must** carry a profile-specific
   integration test that exercises that surface end-to-end (response shape
-  + state round-tripping). Derived alongside the 04c flow tests. Required,
-  not optional. Distinct from Gherkin flow tests (action token chain).
+  + state round-tripping). Derived alongside the 04c native flow tests.
+  Required, not optional. Distinct from the native acceptance flow tests
+  (action token chain).
   A *missing* test now **blocks** at Stage 04c
   (`verify_adapter_test.py`), and an *unenabled* one blocks at Stage 05
   (`--require-enabled`). `verify_close_evidence.py` remains an advisory
@@ -166,16 +167,18 @@ python3 ../../../../quality-gate/verify_adapter_test.py \
 - **Cross-stage check (back):** every flow token observed at runtime
   back-traces to a use-case scenario.
 
-### Gherkin/Cucumber coverage
+### Acceptance-spec coverage
 
-- Every Gherkin scenario name in
-  `../04_implement/04c_flow-tests/output/*.feature` appears as a
-  heading or cross-reference in `trace.md`.
-- The Cucumber report (if present) shows 0 failed scenarios for the
-  scenarios exercised in `smoke.md`.
-- The Gherkin scenarios provide no additional coverage beyond what the
-  use case already defines — they are a derived view, not a new
-  contract.
+- Every `## Scenario:` heading in
+  `../04_implement/04c_acceptance-tests/output/acceptance-spec.md`
+  appears as a heading or cross-reference in `trace.md`.
+- The native acceptance tests (run at 04e) pass for the scenarios
+  exercised in `smoke.md`.
+- The Acceptance Spec scenarios provide no additional coverage beyond
+  what the use case already defines — they are a frozen, derived view,
+  not a new contract.
+- The concept and sync unit suites meet the configured mutation
+  threshold (`verify_mutation_score.py`, when `mutation.command` is set).
 
 ## Gate
 
