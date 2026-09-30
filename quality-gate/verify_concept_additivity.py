@@ -104,6 +104,12 @@ def dropped_contract_terms(feature_root, corpus, concept):
               if c == concept}
     if not before:
         return []
+    if not os.path.isdir(contract_dir):
+        # Stage 02/03b: the proposal's contracts are authored later, at 04b.
+        # Until that directory exists the contract arm is not runnable — only
+        # the state arm applies. Treating its absence as a dropped contract
+        # made this gate fail every project's *first* extend before 04b ran.
+        return []
     after = {(c, a): o for (c, a), o in ap.parse_spec_outcomes(contract_dir).items()
              if c == concept}
     if not after:

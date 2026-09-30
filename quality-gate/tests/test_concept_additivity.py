@@ -174,15 +174,33 @@ class AdditivityTests(unittest.TestCase):
 
     def test_missing_proposal_contract_fails(self):
         """A canonical contract exists but the proposal produced none — a
-        dropped contract is a defect, not a skip."""
+        dropped contract is a defect, not a skip. 04b has run (its directory
+        holds a contract), so the contract arm is runnable."""
         with tempfile.TemporaryDirectory() as temporary:
             root = self.feature(
                 Path(temporary) / "UC-97-x",
                 proposal_state=CANON_STATE)
+            write(root / "stages/04_implement/04b_contract/output/Other.contract.md",
+                  "# Other\n")
             result = run(str(QG / "verify_concept_additivity.py"),
                          "--feature", str(root), "--corpus", str(self.corpus(temporary)))
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("dropped contract", result.stdout.lower())
+
+    def test_extend_before_04b_skips_contract_arm(self):
+        """At Stage 02/03b the proposal's contracts do not exist yet (04b).
+
+        A project's first extend must not be blocked: with no `04b_contract`
+        directory, only the state arm runs; the contract arm becomes runnable
+        once 04b authors contracts."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.feature(
+                Path(temporary) / "UC-96-x",
+                proposal_state=CANON_STATE + ["lastSeen: MemberId -> Timestamp"])
+            result = run(str(QG / "verify_concept_additivity.py"),
+                         "--feature", str(root), "--corpus", str(self.corpus(temporary)))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("PASS", result.stdout)
 
     def test_authorised_exception_passes(self):
         with tempfile.TemporaryDirectory() as temporary:

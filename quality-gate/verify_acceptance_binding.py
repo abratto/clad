@@ -33,6 +33,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import glob
 import os
 import re
 import sys
@@ -58,6 +59,38 @@ def parse_acceptance_spec(path: str) -> tuple[list[str], list[tuple[str, str]]]:
     names = [m.strip() for m in SPEC_SECTION_RE.findall(text)]
     binds = [(c, m) for c, m in TEST_BIND_RE.findall(text)]
     return names, binds
+
+
+def _documented_union(spec_path: str, own_binds: list) -> set:
+    """Every `Class.method` documented by an acceptance spec in this repo.
+
+    The "no undocumented flow test" rule is a repo-level orphan check, not a
+    per-spec one: in a shared test source root a flow test may legitimately
+    belong to another feature. Comparing every flow test against *this* spec
+    forced each feature to index every other feature's tests. When the spec is
+    not inside a `features/` tree (a standalone fixture), fall back to this
+    spec's own bindings.
+    """
+    documented = set()
+    spec = os.path.abspath(spec_path)
+    parent = os.path.dirname(spec)
+    while parent and os.path.basename(parent) != "features":
+        nxt = os.path.dirname(parent)
+        if nxt == parent:
+            parent = ""
+            break
+        parent = nxt
+    if not parent or os.path.basename(parent) != "features":
+        return set(own_binds)
+    pattern = os.path.join(parent, "*", "stages", "04_implement",
+                           "04c_acceptance-tests", "output", "acceptance-spec.md")
+    for path in glob.glob(pattern):
+        try:
+            _names, binds = parse_acceptance_spec(path)
+        except OSError:
+            continue
+        documented.update(binds)
+    return documented or set(own_binds)
 
 
 def _index_test_methods(root: str) -> dict[str, set[str]]:
@@ -152,7 +185,7 @@ def main() -> int:
                 ok = False
                 print(f"FAIL  bound test method not found: {cls}.{method}")
 
-        documented = set(binds)
+        documented = _documented_union(args.spec, binds)
         for cls, method in _flow_test_methods(args.test_source_root):
             if (cls, method) not in documented:
                 ok = False

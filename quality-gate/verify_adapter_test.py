@@ -84,14 +84,45 @@ def has_adapter_surface(feature_root: str) -> bool:
     return False
 
 
-def find_adapter_tests(test_root: str):
-    """(enabled_path, disabled_path) — first enabled and first @Disabled match."""
+def _scenario_bound_classes(feature_root: str):
+    """Classes this feature's Acceptance Spec binds in a `## Scenario:` section.
+
+    Bindings that live in any other section (for example a shared-test-root
+    index that lists other features' tests) are foreign and must not satisfy
+    this gate. Returns None when there is no acceptance spec yet, so callers
+    fall back to a whole-root scan.
+    """
+    spec = os.path.join(feature_root, "stages", "04_implement",
+                        "04c_acceptance-tests", "output", "acceptance-spec.md")
+    if not os.path.isfile(spec):
+        return None
+    with open(spec, encoding="utf-8", errors="replace") as fh:
+        text = fh.read()
+    classes = set()
+    for match in re.finditer(r"^##\s+Scenario:.*$", text, re.MULTILINE):
+        section = text[match.end():]
+        nxt = re.search(r"^##\s+", section, re.MULTILINE)
+        if nxt:
+            section = section[:nxt.start()]
+        classes.update(re.findall(r"\*\*Test:\*\*\s*`([A-Za-z_]\w*)\.", section))
+    return classes or None
+
+
+def find_adapter_tests(test_root: str, owned=None):
+    """(enabled_path, disabled_path) — first enabled and first @Disabled match.
+
+    When `owned` (the feature's own scenario-bound classes) is given, only those
+    test classes are considered, so another feature's enabled test cannot make
+    this feature's missing/disabled adapter test look present.
+    """
     enabled = disabled = None
     for root, _dirs, files in os.walk(test_root):
         for name in sorted(files):
             if not name.endswith(".java"):
                 continue
             if not ADAPTER_TEST_RE.search(name[:-len(".java")]):
+                continue
+            if owned is not None and name[:-len(".java")] not in owned:
                 continue
             path = os.path.join(root, name)
             try:
@@ -126,7 +157,7 @@ def main() -> int:
         print("SKIP  no test source root configured (test.source.root)")
         return 0
 
-    enabled, disabled = find_adapter_tests(test_root)
+    enabled, disabled = find_adapter_tests(test_root, _scenario_bound_classes(feature_root))
     if args.require_enabled:
         if enabled:
             print(f"PASS  enabled adapter test present: "
