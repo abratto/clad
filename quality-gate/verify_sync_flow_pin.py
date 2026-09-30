@@ -8,7 +8,7 @@ Why this exists:
   then inherits whatever flow it lands in, and nothing checks that it belongs
   there. So two use cases sharing a completion fire each other's rules — UC-03's
   `lend` fired in UC-04's return flow and UC-04's `close` fired in UC-03's borrow
-  flow, surfacing only at Stage 04e.
+  flow, surfacing only at Stage 04e-green.
 
   The paper's `RegistrationError` names the request, matcher and all (§5.3:
   "other web requests may be in process at the same time"), and every ConceptBox
@@ -89,6 +89,23 @@ def chain_routes(features_dir, feature):
     return routes
 
 
+def all_chain_routes(features_dir):
+    """Union of every feature's chain roots.
+
+    A sync a feature owns may legitimately fire in another feature's flow — a
+    read-model projection listens on the producing flow's completions — so the
+    pin must name that flow's route, which is rooted by the *other* feature's
+    chain tables, not this one's.
+    """
+    routes = set()
+    if not os.path.isdir(features_dir):
+        return routes
+    for name in sorted(os.listdir(features_dir)):
+        if os.path.isdir(os.path.join(features_dir, name)):
+            routes |= chain_routes(features_dir, name)
+    return routes
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Every non-bootstrap sync pins its flow root last")
@@ -103,6 +120,7 @@ def main() -> int:
     failures = []
     pinned = bootstraps = 0
     known_routes = {}
+    global_routes = all_chain_routes(features_dir)
     for feature, path in sync_files(features_dir):
         with open(path, encoding="utf-8") as handle:
             text = handle.read()
@@ -152,11 +170,12 @@ def main() -> int:
         if feature not in known_routes:
             known_routes[feature] = chain_routes(features_dir, feature)
         routes = known_routes[feature]
-        if routes and route not in routes:
+        if routes and route not in routes and route not in global_routes:
             failures.append(
                 f"{feature}/{name}: pins route {route!r}, but the feature's chain "
-                f"tables root {sorted(routes)} — the generator derives the pin "
-                "from row 1, so this rule has drifted from its chain")
+                f"tables root {sorted(routes)} and no other feature roots it — the "
+                "generator derives the pin from row 1, so this rule has drifted "
+                "from its chain")
             continue
         pinned += 1
 

@@ -158,6 +158,24 @@ class FlowPinTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("drifted from its chain", result.stdout)
 
+    def test_cross_feature_pin_passes(self):
+        """A feature may own a sync that fires in another feature's flow.
+
+        A read-model projection listens on the producing flow's completions, so
+        its pin names that flow's route — rooted by the other feature's chain
+        tables, not the owner's."""
+        with tempfile.TemporaryDirectory() as temporary:
+            features = Path(temporary) / "features"
+            write_chain(features, "UC-02-producer", "intercept",
+                        'Web/request[route: "spillover-intercept" ; method: "POST"]')
+            write_chain(features, "UC-04-consumer", "view-queue",
+                        'Web/request[route: "triage/queue" ; method: "GET"]')
+            write_sync(features, "UC-04-consumer", "ProjectWhenHydrated",
+                       PINNED.replace('"returns"', '"spillover-intercept"'))
+            result = run("--features-dir", str(features))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("PASS", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
