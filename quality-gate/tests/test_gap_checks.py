@@ -115,12 +115,15 @@ class FalseGreenTests(unittest.TestCase):
                   "| `Widget` | `extends:UC-00` | `x: Map<Id, V>` | `act` | — |\n")
             corpus = root / "corpus"
             write(corpus / "Widget.concept.md", "# Widget\n\n## State\n\nx\n")
-            # A canonical contract exists; the proposal's 04b_contract is empty.
+            # A canonical contract exists; 04b has run (it authored another
+            # concept's contract) but produced none for this concept.
             write(corpus / "Widget.contract.md",
                   "# Widget — contract\n\n## Actions\n\n"
                   "### `act(order: OrderId)`\n\n"
                   "- **Outcomes:** `OK`, `Refused`\n")
-            (feature / "stages/04_implement/04b_contract/output").mkdir(parents=True)
+            output = feature / "stages/04_implement/04b_contract/output"
+            output.mkdir(parents=True)
+            write(output / "Other.contract.md", "# Other — contract\n")
             result = self._run("verify_concept_additivity.py",
                                "--feature", str(feature), "--corpus", str(corpus))
             self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)

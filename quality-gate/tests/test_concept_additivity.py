@@ -202,6 +202,23 @@ class AdditivityTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("PASS", result.stdout)
 
+    def test_precreated_empty_contract_dir_skips_contract_arm(self):
+        """The skeleton pre-creates 04b_contract/output/ with only `.gitkeep`.
+
+        That placeholder is not "04b has run"; an extend before 04b authors a
+        contract must not be read as a dropped contract."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = self.feature(
+                Path(temporary) / "UC-95-x",
+                proposal_state=CANON_STATE + ["lastSeen: MemberId -> Timestamp"])
+            output = root / "stages/04_implement/04b_contract/output"
+            output.mkdir(parents=True, exist_ok=True)
+            (output / ".gitkeep").write_text("", encoding="utf-8")
+            result = run(str(QG / "verify_concept_additivity.py"),
+                         "--feature", str(root), "--corpus", str(self.corpus(temporary)))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("PASS", result.stdout)
+
     def test_authorised_exception_passes(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = self.feature(
