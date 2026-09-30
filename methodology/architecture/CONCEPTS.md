@@ -7,6 +7,40 @@ or what the surrounding system looks like. They are *self-contained*:
 their state is theirs alone, and they expose behaviour only through
 named actions.
 
+## Behaviour, individuals, relationships, actions
+
+*(The "why" behind the notation, from Daniel Jackson's concept-design
+lectures — see [`CITATIONS.md`](../reference/CITATIONS.md). The rules below
+are unchanged; this section grounds them.)*
+
+Behaviour is made of three kinds of phenomena:
+
+- **Individuals** — things with persistent identity (a `User`, a `Slot`, a
+  `Reservation`).
+- **Relationships** — facts that connect individuals ("reservation one is
+  *for* slot two"; "slot two is for Maido at 19:30 on 2026-01-20").
+- **Actions** — atomic occurrences ("Alice reserves slot two"; "slot two is
+  created"; "reservation one is cancelled").
+
+They form a cycle: **individuals participate in actions; actions affect
+relationships; relationships connect individuals.** A **behaviour is a
+history (trace) of actions**, and the **state** at any moment is the set of
+relationships holding after that prefix of the trace.
+
+This is exactly the shape a concept spec already has:
+
+- `## State` types the **relationships**, over a set of **individuals** (the
+  subject of a relation is the individual's identifier type);
+- `## Actions` types the **actions** — typed inputs, typed outputs, each an
+  atomic occurrence that produces the relationships that hold afterwards;
+- the operational principle is a witness **trace** of those actions.
+
+So designing a concept is a concrete procedure: **group the individuals into
+types, type the relationships, type the actions, and decide which actions
+affect which relationships** — for one cohesive aspect of functionality. The
+*actions* are the capability (name the concept for them — `Reserving`,
+`Availability`); the *individuals* are the entities (`Reservation`, `Slot`).
+
 ## Anatomy
 
 Every concept spec has four sections.
@@ -237,6 +271,14 @@ rule **R22**). Reuse is roughly 90% of design — an app is a composition of
 concepts, and only the tricky ones need detailed specification
 (Jackson, *The Essence of Software*).
 
+> **Module-like, but not microservices.** A concept is the unit of reuse and
+> can be reasoned about (and tested) alone, but in a CLAD system it is an
+> in-process module over one engine: each concept owns one persistence region
+> (R2), and all coordination between concepts happens in syncs. Independence
+> is about legibility and reuse, not separate deployment; do not split a
+> concept or introduce an out-of-process boundary just because "it could be a
+> service."
+
 ### Proposal snapshots vs the canonical entry
 
 A feature that introduces or extends a concept keeps a copy under its own
@@ -372,6 +414,12 @@ split it:
 **Heuristic:** If you describe the concept in conversation and need the
 word "and," you might need two concepts. "It handles authentication" →
 one concept. "It handles authentication and profile management" → two.
+
+**Whose work is it?** The actor who performs a concept's actions often
+identifies the concept. In a restaurant system, `Availability` (create slots)
+is what restaurant staff do; `Reserving` (reserve, cancel) is what diners do.
+If two actions are performed by, or serve, different actors with different
+goals, they are probably two concepts.
 
 ### 2. Self-contained state
 

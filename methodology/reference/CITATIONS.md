@@ -78,6 +78,24 @@ over. It also supplies the "separating views" argument (naming vs
 authentication vs profiling) and the object-oriented "bad smells" that
 `verify_concept_state_relational.py` turns into a deterministic Stage 02 gate.
 
+## Concept design lectures
+
+Daniel Jackson. **Concept design** (lecture series). *The Essence of
+Software*.
+
+Source for CLAD's ontology of behaviour, restated in
+[`../architecture/CONCEPTS.md`](../architecture/CONCEPTS.md) §"Behaviour,
+individuals, relationships, actions": behaviour is made of **individuals**
+(things with persistent identity), **relationships** (facts connecting
+individuals), and **actions** (atomic occurrences); individuals participate
+in actions, actions affect relationships, and relationships connect
+individuals. A **behaviour is a history (trace) of actions**, and the
+**state** at any moment is the set of relationships holding after a prefix
+of that trace. This is the rationale for CLAD's `## State` relational
+notation, the `## Actions` case-split, and the operational principle as a
+witness trace. The same source supplies the "whose work is it?" factoring
+heuristic (`Availability` is what staff do; `Reserving` is what diners do).
+
 ## Interpretable Context Methodology (ICM)
 
 Jake Van Clief. **Interpretable Context Methodology (ICM).** 2026.
