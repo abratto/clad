@@ -207,9 +207,9 @@ class Stage:
 # --------------------------------------------------------------------------
 # Check definitions (only checks whose inputs are plain markdown artefacts and
 # therefore runnable profile-agnostically at design time are wired here).
-# Profile-specific checks (Java test roots, acceptance-test discovery paths,
-# parity scripts) remain the responsibility of the local pre-commit gate / CI,
-# which have the profile config available.
+# Profile-specific checks (Java test roots, Gherkin discovery paths, parity
+# scripts) remain the responsibility of the local pre-commit gate / CI, which
+# have the profile config available.
 # --------------------------------------------------------------------------
 
 _SCENARIO_COVERAGE = Check(
@@ -241,11 +241,20 @@ _SYNC_MATRIX = Check(
     requires=lambda r: [SYNC_DIR(r)],
 )
 
+def _requires_data_model(feature_root: str):
+    """A feature with no state-owning concept (e.g. an unchanged-state extend)
+    produces no Stage 03b model, so treat the stage as satisfied (skip) rather
+    than failing on an empty output directory."""
+    if not feature_model_concepts(feature_root):
+        return [os.path.join(DATA_DIR(feature_root), "__no_expected_outputs__")]
+    return [DATA_DIR(feature_root)] + _concept_source_requires(feature_root)
+
+
 _DATA_MODEL = Check(
     name="data_model",
     script="verify_data_model.py",
     build_args=lambda r: ["--data-dir", DATA_DIR(r)] + _concept_dir_args(r),
-    requires=lambda r: [DATA_DIR(r)] + _concept_source_requires(r),
+    requires=_requires_data_model,
 )
 
 _CONTRACT_PARITY = Check(
