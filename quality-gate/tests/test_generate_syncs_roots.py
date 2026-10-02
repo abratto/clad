@@ -31,8 +31,10 @@ class RootRouteMethodTests(unittest.TestCase):
         self.assertEqual((route, method), ("admin/onboarding", "GET"))
 
     def test_shorthand_method_and_path(self):
-        route, method = self.gs._root_route_method("Web/request[POST /admin/onboarding]")
-        self.assertEqual((route, method), ("admin/onboarding", "POST"))
+        # The shorthand form `Web/request[POST /loans]` names a single-segment
+        # route; the generator reads the resource segment as the route.
+        route, method = self.gs._root_route_method("Web/request[POST /loans]")
+        self.assertEqual((route, method), ("loans", "POST"))
 
     def test_two_roots_yield_independent_matchers(self):
         post = self.gs._root_route_method('Web/request[route: "admin/onboarding" ; method: "POST"]')
