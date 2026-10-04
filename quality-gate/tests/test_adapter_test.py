@@ -75,6 +75,28 @@ class AdapterTestCheckTests(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertIn("no test source root", r.stdout)
 
+    def test_foreign_enabled_test_does_not_satisfy_the_gate(self):
+        """The feature's own e2e test is @Disabled; another feature's enabled
+        test sits in the same root and must not make the gate PASS."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature, root = make_feature(tmp, tests={
+                "ForeignFlowTest.java": "class ForeignFlowTest {}",
+                "OwnHttpIntegrationTest.java":
+                    "@Disabled\nclass OwnHttpIntegrationTest {}",
+            })
+            spec = (feature / "stages/04_implement/04c_acceptance-tests/"
+                    "output/acceptance-spec.md")
+            spec.parent.mkdir(parents=True)
+            spec.write_text(
+                "# Acceptance spec\n\n## Scenario: x\n\n"
+                "- **Test:** `OwnHttpIntegrationTest.someCase`\n",
+                encoding="utf-8")
+            at_04c = run("--feature-root", feature, "--test-source-root", root)
+            self.assertEqual(at_04c.returncode, 0, at_04c.stdout + at_04c.stderr)
+            at_05 = run("--feature-root", feature, "--test-source-root", root,
+                        "--require-enabled")
+            self.assertEqual(at_05.returncode, 1, at_05.stdout + at_05.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

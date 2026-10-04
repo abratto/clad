@@ -164,6 +164,33 @@ def _respond_status(row) -> str:
     return ""
 
 
+def _root_route_method(when: str) -> Tuple[Optional[str], Optional[str]]:
+    """Route/method matcher declared by a `Web/request[...]` flow-root row.
+
+    A chain's flow root carries the route/method in its When cell, e.g.
+    `Web/request[route: "tags" ; method: "GET"]` or the shorthand
+    `Web/request[POST /loans]`. A feature's chain may carry more than one
+    root (a POST write flow and a GET read flow sharing one path), so the
+    matcher must be derived per flow root, never from `rows[0]` alone.
+    """
+    route = method = None
+    m = re.search(r'route\s*:\s*"([^"]+)"', when or "")
+    if m:
+        route = m.group(1)
+    else:
+        # A chain table writes the flow root as `Web/request[POST /loans]`
+        # (method + path), so the route is the resource segment. Without
+        # this the bootstrap got no route matcher at all and two routes
+        # bootstrapping one action produced identical names.
+        m = re.search(r'\b([A-Z]+)\s+/([A-Za-z0-9_-]+)', when or "")
+        if m:
+            method, route = m.group(1), m.group(2)
+    m = re.search(r'method\s*:\s*"([^"]+)"', when or "")
+    if m:
+        method = m.group(1)
+    return route, method
+
+
 def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], List[str]]:
     chain_dir = cs.CHAIN_DIR(feature_root)
     # Concept sources: the feature's own proposals shadow the canonical corpus
@@ -181,27 +208,17 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
         rows = ap.parse_chain_table(os.path.join(chain_dir, fname))
         scenario = fname.replace("-chain.md", "")
 
-        # The flow root (row 1) carries the route/method in its When cell, e.g.
-        # `Web/request[route: "tags" ; method: "GET"]`. The bootstrap sync
-        # (`Web.request -> <first action>`) must keep that as its R15 route
-        # matcher. Authors previously added it by hand every UC.
-        root_route = root_method = None
-        if rows:
-            root_when = rows[0].when or ""
-            m = re.search(r'route\s*:\s*"([^"]+)"', root_when)
-            if m:
-                root_route = m.group(1)
-            else:
-                # A chain table writes the flow root as `Web/request[POST /loans]`
-                # (method + path), so the route is the resource segment. Without
-                # this the bootstrap got no route matcher at all and two routes
-                # bootstrapping one action produced identical names.
-                m = re.search(r'\b([A-Z]+)\s+/([A-Za-z0-9_-]+)', root_when)
-                if m:
-                    root_method, root_route = m.group(1), m.group(2)
-            m = re.search(r'method\s*:\s*"([^"]+)"', root_when)
-            if m:
-                root_method = m.group(1)
+        # Every flow starts at a `Web/request[...] -> Web.request` root row. A
+        # chain may carry several roots (e.g. a POST write flow and a GET read
+        # flow sharing one path); each rule's route/method matcher comes from
+        # the root of ITS OWN flow — the most recent root at or before it — not
+        # from `rows[0]`. A root row itself is the flow entry, never a sync.
+        row_root: Dict[int, Tuple[Optional[str], Optional[str]]] = {}
+        current_route = current_method = None
+        for r in rows:
+            if r.then_concept == "Web" and r.then_action == "request":
+                current_route, current_method = _root_route_method(r.when)
+            row_root[r.row_num] = (current_route, current_method)
 
         # Derive the invocation graph by matching completions, not by adjacent
         # position: a row R is driven by an earlier row P whose `Then` action is
@@ -218,6 +235,12 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                       ap.normalize_outcome(r.outcome_base), r) for r in rows]
 
         for row in rows:
+            # A root row (`... -> Web.request`) is the flow entry (R4); it is
+            # not a sync. Without this, two roots in one chain each match the
+            # other's `Web.request` completion and fabricate a self-sync.
+            if row.then_concept == "Web" and row.then_action == "request":
+                continue
+            flow_route, flow_method = row_root.get(row.row_num, (None, None))
             # A composite `When` (join) resolves EVERY conjunct to its producer
             # and emits one joined sync with all conjuncts in declared order.
             if row.composite_when and row.conjuncts:
@@ -271,8 +294,8 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                     is_join=True,
                     conjuncts=[(n, c, a, o) for (n, c, a, o, _rn) in resolved],
                     trigger_outcome_raw=first[3],
-                    flow_route=root_route,
-                    flow_method=root_method,
+                    flow_route=flow_route,
+                    flow_method=flow_method,
                 ))
                 continue
 
@@ -293,11 +316,11 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
             target_concept = row.then_concept
             target_action = row.then_action
 
-            # R15 route matcher: a `Web/request` bootstrap sync keeps the flow
+            # R15 route matcher: a `Web/request` bootstrap sync keeps its flow
             # root's route/method as its when-clause input matcher.
             route = method = None
             if trigger_concept == "Web" and trigger_action == "request":
-                route, method = root_route, root_method
+                route, method = flow_route, flow_method
 
             source_row_id = str(prev.row_num)
             target_row_id = str(row.row_num)
@@ -316,8 +339,8 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                 literals = "<none>"
             then_sig = f"{target_concept}/{target_action}: [ <args> ]"
             # A `Web/respond` target carries its terminal status; put it in the
-            # Allowed-literals column so the derivation/alignment checks can read
-            # it (the generator emitted `<none>` before — experiment defect D11).
+            # Allowed-literals column so the Gherkin-derivation check can read it
+            # (the generator emitted `<none>` before — experiment defect D11).
             respond_status = _respond_status(row)
             if respond_status:
                 then_sig = f"Web/respond: [ status: {respond_status} ]"
@@ -347,8 +370,8 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                 pattern_d_notes=pattern_d_notes,
                 cited_scenario=scenario,
                 route=route,
-                flow_route=root_route,
-                flow_method=root_method,
+                flow_route=flow_route,
+                flow_method=flow_method,
                 method=method,
                 trigger_outcome_raw=trigger_outcome_raw,
             ))

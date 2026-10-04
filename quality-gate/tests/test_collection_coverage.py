@@ -127,5 +127,20 @@ class CollectionCoverageTests(unittest.TestCase):
             self.assertIn("Collection coverage", result.stdout)
 
 
+    def test_prose_collection_word_is_not_a_signal(self):
+        """The word must be a structured field (`{...}`), not prose.
+
+        The chain-table Notes used the verb "authors", which the old
+        word-boundary match read as the collection key `authors`."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = feature(
+                Path(temporary) / "UC-98-x",
+                chain="# Chain\n| 2 | `A.b[C]` | `Web.respond[200]` | ok | `Sent` |\n\n"
+                      "The proposal authors the redirect; no collection is returned.\n")
+            result = run(str(QG / "verify_collection_coverage.py"), "--feature", str(root))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("SKIP", result.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

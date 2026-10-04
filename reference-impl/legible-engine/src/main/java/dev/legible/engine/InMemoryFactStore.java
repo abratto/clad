@@ -24,9 +24,25 @@ public final class InMemoryFactStore implements FactStore {
         @Override
         public Set<String> read(String subject, String predicate) {
             Map<String, Set<String>> preds = facts.get(subject);
-            if (preds == null) return Set.of();
-            Set<String> values = preds.get(predicate);
-            return values == null ? Set.of() : Set.copyOf(values);
+            if (preds != null) {
+                Set<String> values = preds.get(predicate);
+                return values == null ? Set.of() : Set.copyOf(values);
+            }
+            // Composite individuals are stored under the joined subject
+            // {@code keyA\u0000keyB}. A read by the leading key component
+            // (a partial composite key, as a sync's Pattern-D projection read)
+            // matches every composite individual that shares that component.
+            String prefix = subject + "\u0000";
+            Set<String> out = new LinkedHashSet<>();
+            for (Map.Entry<String, Map<String, Set<String>>> e : facts.entrySet()) {
+                if (e.getKey().startsWith(prefix)) {
+                    Set<String> values = e.getValue().get(predicate);
+                    if (values != null) {
+                        out.addAll(values);
+                    }
+                }
+            }
+            return out;
         }
 
         @Override

@@ -89,6 +89,17 @@ def dropped_state_lines(feature_root, corpus, concept):
     return sorted(before - after)
 
 
+def _authored_contracts(contract_dir):
+    """True when 04b has authored at least one `<Name>.contract.md`.
+
+    A feature skeleton pre-creates `04b_contract/output/` with only a
+    `.gitkeep`, so the directory can exist while 04b has authored nothing.
+    """
+    if not os.path.isdir(contract_dir):
+        return False
+    return any(name.endswith(".contract.md") for name in os.listdir(contract_dir))
+
+
 def dropped_contract_terms(feature_root, corpus, concept):
     """Canonical actions and outcomes the proposal's contract no longer carries.
 
@@ -103,6 +114,15 @@ def dropped_contract_terms(feature_root, corpus, concept):
     before = {(c, a): o for (c, a), o in ap.parse_spec_outcomes(corpus).items()
               if c == concept}
     if not before:
+        return []
+    if not _authored_contracts(contract_dir):
+        # Stage 02/03b: the proposal's contracts are authored later, at 04b.
+        # Until 04b authors a contract the contract arm is not runnable — only
+        # the state arm applies. The feature skeleton pre-creates
+        # `04b_contract/output/` (holding only `.gitkeep`), so the directory's
+        # existence is not the signal: an authored `*.contract.md` is. Treating
+        # the pre-created placeholder as a dropped contract made this gate fail
+        # an extend before 04b ran.
         return []
     after = {(c, a): o for (c, a), o in ap.parse_spec_outcomes(contract_dir).items()
              if c == concept}

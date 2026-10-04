@@ -92,9 +92,16 @@ model first.
 - Constraints → `UNIQUE`, `NOT NULL`, `CHECK`, lookup tables, etc.
 
 The deterministic mapping from the Stage 03b CSDP fact model to this schema is
-Halpin's Rmap (arity + uniqueness + mandatory roles). See the
+Halpin's Rmap, complete: arity + uniqueness + mandatory roles selects a
+single table per concept **or a table set** (`RmapModel`) for a concept
+ranging over several object types, a compound (objectified) subject, or
+multi-valued facts; **subtypes** realise per an explicit per-model choice
+(`absorb | separate | partition` — separate is the deterministic default) and
+**independent object types** realise as their own single-column tables. A
+concept region is therefore a table set, not always one table. See the
 `java-micronaut` profile's `RELATIONAL_LOWERING.md` for the
-profile-specific rule set.
+profile-specific rule set (including the subtyping and
+tabled-views decisions).
 
 **DDL ownership (R-map/SQL).** When a relational profile realizes the R-map, the
 schema is owned by **Flyway**, as a generated, versioned migration derived from

@@ -95,7 +95,10 @@ def collection_signal(feature_root):
 
     low = blob.lower()
     for key in COLLECTION_KEYS:
-        if re.search(r"(?<![a-z0-9])" + re.escape(key) + r"(?![a-z0-9])", low):
+        # A collection is a plural *field* in a structured field list, e.g.
+        # `{"articles": [...], "articlesCount": N}` — not the same word used in
+        # prose ("the proposal authors ..."). Require the key inside `{ ... }`.
+        if re.search(r"\{[^}]*\b" + re.escape(key) + r"\b", low):
             return True, "chain/contract names the collection key %r" % key
     return False, ""
 

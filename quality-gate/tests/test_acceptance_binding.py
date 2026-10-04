@@ -112,6 +112,54 @@ class AcceptanceBindingTests(unittest.TestCase):
             r = self.invoke(self.fixture(temporary, spec="# empty\n"))
             self.assertNotEqual(r.returncode, 0)
 
+    def test_foreign_flow_test_documented_by_a_sibling_spec_is_not_required(self):
+        """Rule (3) is a repo-level orphan check, not a per-spec one.
+
+        A shared test source root holds several features' flow tests; this
+        spec must not have to index another feature's tests for them to count
+        as documented."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features = root / "features"
+            this_spec = (features / "UC-02-x/stages/04_implement/"
+                         "04c_acceptance-tests/output/acceptance-spec.md")
+            this_usecase = features / "UC-02-x/stages/01_usecase/output/usecase.md"
+            write(this_spec, SPEC)
+            write(this_usecase, USECASE)
+            write(features / "UC-01-y/stages/04_implement/04c_acceptance-tests/"
+                  "output/acceptance-spec.md",
+                  "# Acceptance spec\n\n## Scenario: other\n\n"
+                  "- **Test:** `OtherFlowTest.otherWorks`\n")
+            tests = root / "src/test/java/example"
+            write(tests / "WidgetFlowTest.java", FLOW_TEST)
+            write(tests / "OtherFlowTest.java",
+                  "package example;\nclass OtherFlowTest {"
+                  " @Test void otherWorks() {} }\n")
+            r = run(str(QG / "verify_acceptance_binding.py"),
+                    "--spec", str(this_spec), "--usecase", str(this_usecase),
+                    "--test-source-root", str(tests))
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_orphan_flow_test_with_no_spec_fails(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features = root / "features"
+            this_spec = (features / "UC-02-x/stages/04_implement/"
+                         "04c_acceptance-tests/output/acceptance-spec.md")
+            this_usecase = features / "UC-02-x/stages/01_usecase/output/usecase.md"
+            write(this_spec, SPEC)
+            write(this_usecase, USECASE)
+            tests = root / "src/test/java/example"
+            write(tests / "WidgetFlowTest.java", FLOW_TEST)
+            write(tests / "OrphanFlowTest.java",
+                  "package example;\nclass OrphanFlowTest {"
+                  " @Test void orphan() {} }\n")
+            r = run(str(QG / "verify_acceptance_binding.py"),
+                    "--spec", str(this_spec), "--usecase", str(this_usecase),
+                    "--test-source-root", str(tests))
+            self.assertNotEqual(r.returncode, 0)
+            self.assertIn("Orphan", r.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

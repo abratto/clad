@@ -294,6 +294,18 @@ public final class SyncEngine {
     private Map<String, Object> execute(String conceptName, Concept c, String action,
                                         Map<String, Object> input) {
         synchronized (conceptLocks.computeIfAbsent(conceptName, k -> new Object())) {
+            Region region = facts.maybeRegion(conceptName);
+            if (region instanceof TransactionalRegion tx) {
+                tx.beginAction();
+                try {
+                    Map<String, Object> out = c.execute(action, input);
+                    tx.flushAction();
+                    return out;
+                } catch (RuntimeException ex) {
+                    tx.abortAction();
+                    throw ex;
+                }
+            }
             return c.execute(action, input);
         }
     }

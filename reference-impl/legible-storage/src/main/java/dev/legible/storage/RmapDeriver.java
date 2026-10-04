@@ -1,83 +1,217 @@
 package dev.legible.storage;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Derives a {@link RelationSchema} from a concept's Stage 02 {@code ## State}
- * relational notation, by Halpin's Rmap rules.
+ * Derives a concept's relational tables from its Stage 02 {@code ## State}
+ * relational notation, by Halpin's <strong>Rmap</strong>.
  *
- * <p>The notation is {@code field: SubjectType -> FieldType -- annotations},
- * where annotations are {@code mandatory | optional}, {@code unique …}, and
- * {@code default <expr>}. The subject type becomes the primary key (snake_case);
- * each field becomes a typed column: {@code Int} → {@code INTEGER},
- * {@code Timestamp} → {@code TIMESTAMP}, and every other value type
- * ({@code String}, {@code PasswordHash}, {@code UserId}, …) → {@code TEXT}.
- * A {@code unique} annotation becomes {@code UNIQUE}; a {@code default} becomes
- * the reset-on-clear expression; {@code mandatory} is recorded as schema
- * metadata.
+ * <p><strong>Input notation.</strong> One fact type per line:
+ * <pre>
+ *   field: Subject -&gt; Value        -- annotations
+ *   field: (A, B) -&gt; Value         -- composite subject (objectified / nested)
+ *   field: Subject -&gt; {Value}      -- multi-valued ("zero or more")
+ * </pre>
+ * Annotations recognised: {@code mandatory | optional}, {@code unique …},
+ * {@code default <expr>}, and an enumerated value constraint
+ * {@code in {a, b, c}} or {@code in {a..b}}.
+ *
+ * <p><strong>Rmap stages.</strong>
+ * <ol>
+ *   <li>Each subject object type is a table; nested/compound subjects become
+ *       their own table (they are "compidots").</li>
+ *   <li>A fact type whose key is composite (the subject is a pair, or the value
+ *       is multi-valued) maps to its own table, keyed on that composite.</li>
+ *   <li>Fact types with a simple key on a common object type group into that
+ *       object type's table, keyed on its identifier.</li>
+ *   <li>Compidots are unpacked into component attributes (the columns of their
+ *       own table).</li>
+ * </ol>
+ *
+ * <p>A concept whose state ranges over several object types yields several
+ * tables (an {@link RmapModel}); this is what lets a concept such as an ontology
+ * (three reference schemes plus a compound subject) realise faithfully, instead
+ * of being forced into one table.
  */
 public final class RmapDeriver {
 
-    private static final Pattern STATE_LINE = Pattern.compile(
+    /** {@code field: Subject -> Value} (single subject, single value). */
+    private static final Pattern SIMPLE = Pattern.compile(
             "^\\s*(\\w+)\\s*:\\s*(\\w+)\\s*->\\s*(\\w+)\\s*(?:--\\s*(.*))?\\s*$");
+
+    /** {@code field: (A, B) -> Value} (compound/objectified subject). */
+    private static final Pattern COMPOUND = Pattern.compile(
+            "^\\s*(\\w+)\\s*:\\s*\\(\\s*([^)]*)\\s*\\)\\s*->\\s*(\\w+)\\s*(?:--\\s*(.*))?\\s*$");
+
+    /** {@code field: Subject -> {Value}} or the word form "zero or more". */
+    private static final Pattern MULTI = Pattern.compile(
+            "^\\s*(\\w+)\\s*:\\s*(\\w+)\\s*->\\s*\\{\\s*(\\w+)\\s*\\}\\s*(?:--\\s*(.*))?\\s*$");
+
+    /** {@code field: Subject -> Value -- zero or more} (multi-valued in prose). */
+    private static final Pattern MULTI_PROSE = Pattern.compile(
+            "^\\s*(\\w+)\\s*:\\s*(\\w+)\\s*->\\s*(\\w+)\\s*--\\s*(.*\\b(zero or more|many|optional many)\\b.*)$");
+
+    /** {@code Sub is a Sup -- mapping: absorb|separate|partition} (subtype declaration). */
+    private static final Pattern SUBTYPE = Pattern.compile(
+            "^\\s*(\\w+)\\s+is a\\s+(\\w+)\\s*(?:--\\s*(.*))?\\s*$");
+
+    /** {@code independent T} — an object type with no functional fact role. */
+    private static final Pattern INDEPENDENT = Pattern.compile(
+            "^\\s*independent\\s+(\\w+)\\s*(?:--\\s*(.*))?\\s*$");
+
     private static final Pattern DEFAULT = Pattern.compile("\\bdefault\\s+(\\w+)");
+    private static final Pattern ENUM_IN = Pattern.compile("\\bin\\s*\\{([^}]*)\\}");
+
+    /** How a subtype's fact types realise (the per-model Rmap choice). */
+    private enum SubtypeMapping {
+        ABSORB, SEPARATE, PARTITION;
+
+        static SubtypeMapping of(String annotation) {
+            if (annotation == null) {
+                return SEPARATE; // deterministic default: loss-free separation
+            }
+            String a = annotation.toLowerCase(java.util.Locale.ROOT);
+            if (a.contains("absorb")) return ABSORB;
+            if (a.contains("partition")) return PARTITION;
+            return SEPARATE;
+        }
+    }
 
     private RmapDeriver() {
     }
 
-    /**
-     * Derive the schema for {@code concept} from its state notation.
-     *
-     * @param concept       the concept name (e.g. {@code "PasswordAuth"})
-     * @param stateNotation the {@code ## State} block body, one relation per line
-     */
-    public static RelationSchema derive(String concept, String stateNotation) {
-        String subjectType = null;
-        List<RelationSchema.Column> columns = new ArrayList<>();
-
-        for (String line : stateNotation.split("\\R")) {
-            Matcher m = STATE_LINE.matcher(line);
-            if (!m.matches()) {
-                continue;
-            }
-            String field = m.group(1);
-            String subject = m.group(2);
-            String valueType = m.group(3);
-            String annotations = m.group(4) == null ? "" : m.group(4);
-
-            if (subjectType == null) {
-                subjectType = subject;
-            }
-            boolean mandatory = annotations.contains("mandatory");
-            boolean unique = annotations.contains("unique");
-            String defaultValue = defaultOf(annotations);
-
-            columns.add(new RelationSchema.Column(
-                    field,
-                    toSnakeCase(field),
-                    sqlTypeOf(valueType),
-                    mandatory,
-                    unique,
-                    defaultValue));
-        }
-
-        if (subjectType == null) {
-            throw new IllegalArgumentException(
-                    "no state relation parsed for concept " + concept);
-        }
-        return new RelationSchema(
-                concept, toSnakeCase(concept), toSnakeCase(subjectType), columns);
+    /** Derive the concept's table set from its {@code ## State} block body. */
+    public static RmapModel deriveModel(String concept, String stateNotation) {
+        return realize(concept, parse(concept, stateNotation));
     }
 
-    private static String sqlTypeOf(String valueType) {
-        return switch (valueType) {
-            case "Int" -> "INTEGER";
-            case "Timestamp" -> "TIMESTAMP";
-            default -> "TEXT";
-        };
+    /**
+     * Derive the single table for the common case (one object type, no
+     * compound/multi-valued subjects). Throws when the concept is genuinely
+     * multi-table — callers that can handle a set should use
+     * {@link #deriveModel(String, String)}.
+     */
+    public static RelationSchema derive(String concept, String stateNotation) {
+        RmapModel model = deriveModel(concept, stateNotation);
+        if (model.tables().size() != 1) {
+            throw new IllegalArgumentException("concept " + concept + " realises as "
+                    + model.tables().size() + " tables — use deriveModel()");
+        }
+        return model.tables().get(0);
+    }
+
+    // ---- parsing -------------------------------------------------------------
+
+    private record FactType(String field, List<String> subjectTypes, String valueType,
+                            boolean multiValued, boolean mandatory, boolean unique,
+                            String defaultValue, String valueConstraint) {
+        boolean compound() {
+            return subjectTypes.size() > 1;
+        }
+    }
+
+    /** Parsed subtype declarations: which could a new model add; none today. */
+    record DeclaredSubtype(String subtype, String supertype, SubtypeMapping mapping) {}
+
+    private record ParsedState(List<FactType> facts, List<DeclaredSubtype> subtypes,
+                               List<String> independentTypes) {}
+
+    private static ParsedState parse(String concept, String stateNotation) {
+        List<FactType> facts = new ArrayList<>();
+        List<DeclaredSubtype> subtypes = new ArrayList<>();
+        List<String> independentTypes = new ArrayList<>();
+        boolean sawRelation = false;
+        for (String line : stateNotation.split("\\R")) {
+            if (line.isBlank()) {
+                continue;
+            }
+            String trimmed = line.trim();
+            // Skip structural/prose lines: headings, blockquotes, fenced-code
+            // markers, and anything that is clearly not a relation line. A
+            // *candidate* relation line that fails to parse still throws below.
+            if (trimmed.startsWith("#") || trimmed.startsWith(">")
+                    || trimmed.startsWith("```") || trimmed.startsWith("--")
+                    || trimmed.endsWith(":")) {
+                continue;
+            }
+            Matcher sub = SUBTYPE.matcher(trimmed);
+            if (sub.matches() && !trimmed.contains("->")) {
+                subtypes.add(new DeclaredSubtype(sub.group(1), sub.group(2),
+                        SubtypeMapping.of(sub.group(3))));
+                sawRelation = true;
+                continue;
+            }
+            Matcher ind = INDEPENDENT.matcher(trimmed);
+            if (ind.matches()) {
+                independentTypes.add(ind.group(1));
+                sawRelation = true;
+                continue;
+            }
+            if (!trimmed.contains("->")) {
+                continue;
+            }
+            sawRelation = true;
+            Matcher cm = COMPOUND.matcher(line);
+            if (cm.matches()) {
+                facts.add(factType(concept, cm.group(1),
+                        splitSubjects(cm.group(2)), cm.group(3), false, cm.group(4)));
+                continue;
+            }
+            Matcher mm = MULTI.matcher(line);
+            if (mm.matches()) {
+                facts.add(factType(concept, mm.group(1),
+                        List.of(mm.group(2)), mm.group(3), true, mm.group(4)));
+                continue;
+            }
+            Matcher mp = MULTI_PROSE.matcher(line);
+            if (mp.matches()) {
+                facts.add(factType(concept, mp.group(1),
+                        List.of(mp.group(2)), mp.group(3), true, mp.group(4)));
+                continue;
+            }
+            Matcher sm = SIMPLE.matcher(line);
+            if (sm.matches()) {
+                facts.add(factType(concept, sm.group(1),
+                        List.of(sm.group(2)), sm.group(3), false, sm.group(4)));
+                continue;
+            }
+            // A line that looks like a relation (`->` present) but does not
+            // match: surface it loudly rather than silently dropping a fact —
+            // a silent drop is the exact failure this rewrite fixes.
+            throw new IllegalArgumentException(
+                    "cannot parse state relation for " + concept + ": " + line);
+        }
+        if (!sawRelation) {
+            throw new IllegalArgumentException("no state relation parsed for concept " + concept);
+        }
+        return new ParsedState(facts, subtypes, independentTypes);
+    }
+
+    private static List<String> splitSubjects(String inner) {
+        List<String> out = new ArrayList<>();
+        for (String s : inner.split(",")) {
+            if (!s.isBlank()) {
+                out.add(s.trim());
+            }
+        }
+        return out;
+    }
+
+    private static FactType factType(String concept, String field, List<String> subjects,
+                                     String valueType, boolean multi, String annotations) {
+        String ann = annotations == null ? "" : annotations;
+        return new FactType(field, subjects, valueType, multi,
+                ann.contains("mandatory"),
+                ann.contains("unique"),
+                defaultOf(ann),
+                enumConstraint(ann));
     }
 
     private static String defaultOf(String annotations) {
@@ -85,7 +219,326 @@ public final class RmapDeriver {
         return m.find() ? m.group(1) : null;
     }
 
-    private static String toSnakeCase(String s) {
+    private static String enumConstraint(String annotations) {
+        Matcher m = ENUM_IN.matcher(annotations);
+        return m.find() ? m.group(1) : null;
+    }
+
+    // ---- realization (Rmap stages 1-4) ----------------------------------------
+
+    private static RmapModel realize(String concept, ParsedState parsed) {
+        List<FactType> facts = parsed.facts();
+        Map<String, SubtypeMapping> subtypeOf = new LinkedHashMap<>();
+        Map<String, String> supertypeOf = new LinkedHashMap<>();
+        for (DeclaredSubtype d : parsed.subtypes()) {
+            subtypeOf.put(d.subtype(), d.mapping());
+            supertypeOf.put(d.subtype(), d.supertype());
+        }
+
+        // Stage 1: each subject object type is a table; a compound subject is a
+        // compidot (its own table). A subtype's simple-key facts group into the
+        // table its mapping chooses — the supertype's under absorption, its own
+        // under separation/partition. Preserve first-seen order.
+        Map<String, List<FactType>> byObjectType = new LinkedHashMap<>();
+        Map<String, Boolean> compidots = new LinkedHashMap<>();
+        Set<String> occupiedTables = new LinkedHashSet<>();
+        for (FactType f : facts) {
+            if (f.compound()) {
+                String key = compoundKey(f.subjectTypes());
+                compidots.put(key, true);
+                byObjectType.computeIfAbsent(key, k -> new ArrayList<>()).add(f);
+                occupiedTables.add(key);
+                continue;
+            }
+            String subject = f.subjectTypes().get(0);
+            if (subtypeOf.containsKey(subject)
+                    && subtypeOf.get(subject) == SubtypeMapping.ABSORB) {
+                subject = supertypeOf.get(subject);
+            }
+            byObjectType.computeIfAbsent(subject, k -> new ArrayList<>()).add(f);
+            occupiedTables.add(subject);
+        }
+
+        // Absorption moves the subtype's fact types onto the supertype's
+        // table; the supertype group must therefore see them. Retarget the
+        // grouped lists, not the facts themselves.
+        for (Map.Entry<String, String> e : supertypeOf.entrySet()) {
+            if (subtypeOf.get(e.getKey()) != SubtypeMapping.ABSORB) {
+                continue;
+            }
+            List<FactType> absorbed = byObjectType.remove(e.getKey());
+            if (absorbed != null) {
+                byObjectType.computeIfAbsent(e.getValue(), k -> new ArrayList<>())
+                        .addAll(absorbed);
+                occupiedTables.remove(e.getKey());
+            }
+        }
+
+        // Partition: the supertype's own fact types are flattened into each
+        // subtype's table (disjoint, exhaustive members carry the whole shape),
+        // so the supertype needs no table of its own.
+        Map<String, List<String>> partitionMembers = new LinkedHashMap<>();
+        for (Map.Entry<String, String> e : supertypeOf.entrySet()) {
+            if (subtypeOf.get(e.getKey()) == SubtypeMapping.PARTITION) {
+                partitionMembers.computeIfAbsent(e.getValue(), k -> new ArrayList<>())
+                        .add(e.getKey());
+            }
+        }
+        for (Map.Entry<String, List<String>> e : partitionMembers.entrySet()) {
+            String supertype = e.getKey();
+            List<FactType> supertypeFacts = byObjectType.get(supertype);
+            if (supertypeFacts == null) {
+                continue;
+            }
+            List<FactType> direct = new ArrayList<>();
+            for (FactType f : supertypeFacts) {
+                if (!f.compound() && f.subjectTypes().get(0).equals(supertype)) {
+                    direct.add(f);
+                }
+            }
+            for (String member : e.getValue()) {
+                List<FactType> memberGroup = byObjectType.computeIfAbsent(member,
+                        k -> new ArrayList<>());
+                for (FactType f : direct) {
+                    if (!memberGroup.contains(f)) {
+                        memberGroup.add(f);
+                    }
+                }
+            }
+            byObjectType.remove(supertype);
+            occupiedTables.remove(supertype);
+        }
+
+        // A declared supertype with no facts of its own under
+        // separation/partition contributes no rows; drop its empty group.
+        byObjectType.entrySet().removeIf(e -> e.getValue().isEmpty());
+
+        // Table naming: when the region's realised non-compidot tables are
+        // exactly one, it carries the concept's plain name; otherwise each
+        // table is concept-qualified.
+        List<String> simpleTables = new ArrayList<>();
+        for (String t : byObjectType.keySet()) {
+            if (!compidots.containsKey(t)) {
+                simpleTables.add(t);
+            }
+        }
+        boolean single = simpleTables.size() == 1 && parsed.independentTypes().isEmpty();
+        Map<String, String> tableNames = new LinkedHashMap<>();
+        for (String t : byObjectType.keySet()) {
+            boolean isCompidot = compidots.containsKey(t);
+            if (isCompidot || !single) {
+                tableNames.put(t, snake(concept) + "__" + snakeName(t));
+            } else {
+                tableNames.put(t, snake(concept));
+            }
+        }
+
+        List<RelationSchema> tables = new ArrayList<>();
+        for (Map.Entry<String, List<FactType>> entry : byObjectType.entrySet()) {
+            String objectType = entry.getKey();
+            tables.add(realizeTable(concept, objectType, entry.getValue(),
+                    compidots.containsKey(objectType), tableNames.get(objectType),
+                    subtypeOf, supertypeOf, tableNames));
+        }
+        // Stage 2: multi-valued facts get their own child table (composite PK).
+        for (RelationSchema child : childTables(concept, facts)) {
+            tables.add(child);
+        }
+        // Independent object types play no functional role; Rmap realises each
+        // as its own single-column table keyed by the reference scheme.
+        for (String independent : parsed.independentTypes()) {
+            if (tableNames.containsKey(independent)) {
+                continue; // already realised through its facts' grouping
+            }
+            // A lone independent type carries the concept's plain name; beside
+            // other tables it is concept-qualified.
+            tables.add(independentTable(concept, independent, byObjectType.isEmpty()
+                    ? snake(concept) : snake(concept) + "__" + snakeName(independent)));
+        }
+        return new RmapModel(concept, tables);
+    }
+
+    private static RmapModel realize(String concept, List<FactType> facts) {
+        return realize(concept, new ParsedState(facts, List.of(), List.of()));
+    }
+
+    /** The single-column table for an independent object type. */
+    private static RelationSchema independentTable(String concept, String objectType,
+                                                   String table) {
+        String id = snake(objectType);
+        List<RelationSchema.Column> columns = List.of(
+                new RelationSchema.Column(id, id, "TEXT", true, false, null, null));
+        return new RelationSchema(concept, table, objectType, columns,
+                List.of(id), List.of(), List.of(), false);
+    }
+
+    private static RelationSchema realizeTable(String concept, String objectType,
+                                               List<FactType> group, boolean isCompidot,
+                                               String table,
+                                               Map<String, SubtypeMapping> subtypeOf,
+                                               Map<String, String> supertypeOf,
+                                               Map<String, String> tableNames) {
+        // Stage 3: absorb every simple-key fact grouped under this object type.
+        // Stage 4: a compidot absorbs its component value columns. Subtypes
+        // realise under the mapping's choice (separate/partition keep a table,
+        // with an intra-concept link to the supertype's table).
+        List<RelationSchema.Column> columns = new ArrayList<>();
+        List<RelationSchema.Check> checks = new ArrayList<>();
+        List<String> foreignKeys = new ArrayList<>();
+        List<String> pk;
+
+        boolean isSubtype = subtypeOf.containsKey(objectType)
+                && subtypeOf.get(objectType) != SubtypeMapping.ABSORB;
+
+        for (FactType f : group) {
+            if (f.compound()) {
+                // The compound fact's components are columns of the compidot
+                // table (subject components + the value).
+                for (String s : f.subjectTypes()) {
+                    addColumn(columns, snake(s), snake(s), "TEXT", true, false, null, null);
+                }
+                addColumn(columns, f.field(), snake(f.field()), sqlTypeOf(f.valueType()),
+                        f.mandatory(), f.unique(), f.defaultValue(), null);
+                if (f.valueConstraint() != null) {
+                    checks.add(new RelationSchema.Check(
+                            checkName(objectType, f.field()),
+                            checkExprOn(snake(f.field()), f.valueConstraint())));
+                }
+                continue;
+            }
+            // Multi-valued fact (zero or more): Rmap stage 2 → its own child
+            // table, keyed on (subject, value). Handled in childTables.
+            if (f.multiValued()) {
+                continue;
+            }
+            addColumn(columns, f.field(), snake(f.field()), sqlTypeOf(f.valueType()),
+                    f.mandatory(), f.unique(), f.defaultValue(), null);
+            if (f.valueConstraint() != null) {
+                checks.add(new RelationSchema.Check(
+                        checkName(objectType, f.field()),
+                        checkExprOn(snake(f.field()), f.valueConstraint())));
+            }
+        }
+
+        if (isCompidot) {
+            // A compidot's primary key is its component columns (the
+            // objectified fact's roles); it has no separate surrogate id.
+            pk = new ArrayList<>();
+            for (String s : objectType.split("\\+")) {
+                pk.add(snake(s));
+            }
+        } else if (isSubtype) {
+            // A subtype has no reference scheme of its own — its identity is
+            // the supertype's (a subtype row is a supertype row). The table
+            // therefore keys on the supertype's identity column, and reports
+            // the supertype's scheme as its identity-owning object type.
+            String supertype = supertypeOf.get(objectType);
+            String supertable = tableNames.get(supertype);
+            if (supertable != null) {
+                // The subtype's specific columns carry their own rows only
+                // where an individual exists as that subtype; the shared key
+                // links to the supertype's table (an intra-concept FK — legal
+                // under R2; no FK crosses a concept boundary).
+                foreignKeys.add(snake(supertype) + " -> " + supertable
+                        + "(" + snake(supertype) + ")");
+            }
+            String idColumn = snake(supertype);
+            objectType = supertype;
+            pk = List.of(idColumn);
+            if (columns.stream().noneMatch(c -> c.column().equals(idColumn))) {
+                columns.add(0, new RelationSchema.Column(idColumn, idColumn, "TEXT",
+                        true, false, null, null));
+            }
+        } else {
+            String idColumn = snake(objectType);
+            if (columns.stream().noneMatch(c -> c.column().equals(idColumn))) {
+                columns.add(0, new RelationSchema.Column(idColumn, idColumn, "TEXT",
+                        true, false, null, null));
+            }
+            pk = List.of(idColumn);
+        }
+        return new RelationSchema(concept, table, objectType, columns,
+                pk, foreignKeys, checks, false);
+    }
+
+    /** Child tables for multi-valued ("zero or more") facts — Rmap stage 2. */
+    private static List<RelationSchema> childTables(String concept, List<FactType> facts) {
+        List<RelationSchema> out = new ArrayList<>();
+        for (FactType f : facts) {
+            if (!f.multiValued()) {
+                continue;
+            }
+            String subject = f.subjectTypes().get(0);
+            List<RelationSchema.Column> cols = new ArrayList<>();
+            cols.add(new RelationSchema.Column(snake(subject), snake(subject), "TEXT",
+                    true, false, null, null));
+            cols.add(new RelationSchema.Column(f.field(), snake(f.field()),
+                    sqlTypeOf(f.valueType()), true, false, null, null));
+            List<String> pk = List.of(snake(subject), snake(f.field()));
+            out.add(new RelationSchema(concept,
+                    snake(concept) + "__" + snake(f.field()), subject,
+                    cols, pk,
+                    List.of(snake(subject) + "(" + snake(concept) + ")"),
+                    List.of(), false));
+        }
+        return out;
+    }
+
+    private static void addColumn(List<RelationSchema.Column> columns, String predicate,
+                                  String column, String sqlType, boolean mandatory,
+                                  boolean unique, String defaultValue, String constraint) {
+        if (columns.stream().anyMatch(c -> c.column().equals(column))) {
+            return;
+        }
+        columns.add(new RelationSchema.Column(predicate, column, sqlType,
+                mandatory, unique, defaultValue, constraint));
+    }
+
+    private static String compoundKey(List<String> subjectTypes) {
+        return String.join("+", subjectTypes);
+    }
+
+    private static String checkExprOn(String column, String enumBody) {
+        List<String> inValues = new ArrayList<>();
+        List<String> quoted = new ArrayList<>();
+        for (String v : enumBody.split(",")) {
+            String t = v.trim();
+            if (t.isEmpty()) {
+                continue;
+            }
+            if (t.contains("..")) {
+                // Interval form a..b — emit a BETWEEN on a numeric column.
+                String[] bounds = t.split("\\.\\.");
+                return column + " BETWEEN " + bounds[0].trim() + " AND " + bounds[1].trim();
+            }
+            quoted.add("'" + t + "'");
+        }
+        return column + " IN (" + String.join(", ", quoted) + ")";
+    }
+
+    private static String checkName(String objectType, String field) {
+        return "ck_" + snake(objectType) + "_" + snake(field);
+    }
+
+    private static String sqlTypeOf(String valueType) {
+        return switch (valueType) {
+            case "Int", "Integer" -> "INTEGER";
+            case "Timestamp" -> "TIMESTAMP";
+            default -> "TEXT";
+        };
+    }
+
+    private static String snake(String s) {
         return s.replaceAll("([a-z0-9])([A-Z])", "$1_$2").toLowerCase();
+    }
+
+    /** Sanitise an object-type key (which may be {@code A+B}) for a table name. */
+    private static String snakeName(String s) {
+        return snake(s.replace("+", "_and_"));
+    }
+
+    // Public helper for tests/callers building child tables.
+    static List<RelationSchema> childTablesFor(String concept, String stateNotation) {
+        return childTables(concept, parse(concept, stateNotation).facts());
     }
 }
