@@ -4,25 +4,26 @@
 -- conceptual data models via Halpin's R-map. Do NOT edit by hand:
 -- regenerate after a concept `## State` change (see RELATIONAL_LOWERING.md).
 --
--- Fidelity: mandatory roles are not NOT NULL (the Region SPI writes one fact
--- at a time); typed columns, DEFAULT for resettable facts, and UNIQUE are
--- enforced, exactly as the R-map derivation specifies. TEXT is written as
--- varchar here so jOOQ's DDLDatabase can introspect the schema.
+-- R-map realises typed, keyed, constrained tables: NOT NULL (mandatory),
+-- UNIQUE / PRIMARY KEY, CHECK (value constraints), FOREIGN KEY (intra-
+-- concept references only — no cross-concept FK, R2). A concept whose
+-- state ranges over several object types is a table set. TEXT is written
+-- as varchar here so jOOQ's DDLDatabase can introspect the schema.
 
 CREATE TABLE IF NOT EXISTS "user_naming" (
-  "user_id" varchar PRIMARY KEY,
-  "username" varchar UNIQUE
+  "user_id" varchar NOT NULL PRIMARY KEY,
+  "username" varchar NOT NULL UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS "password_auth" (
-  "user_id" varchar PRIMARY KEY,
-  "password_hash" varchar,
-  "failed_attempts" integer DEFAULT 0,
+  "user_id" varchar NOT NULL PRIMARY KEY,
+  "password_hash" varchar NOT NULL,
+  "failed_attempts" integer DEFAULT 0 NOT NULL,
   "locked_until" timestamp
 );
 
 CREATE TABLE IF NOT EXISTS "session" (
-  "session_id" varchar PRIMARY KEY,
-  "user_id" varchar,
-  "opened_at" timestamp
+  "session_id" varchar NOT NULL PRIMARY KEY,
+  "user_id" varchar NOT NULL,
+  "opened_at" timestamp NOT NULL
 );

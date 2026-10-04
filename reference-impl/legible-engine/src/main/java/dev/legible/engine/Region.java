@@ -14,6 +14,15 @@ import java.util.Set;
  * of an object (Daniel Jackson, <em>Why concepts aren't objects</em>). The store
  * is storage-agnostic; an in-memory, SQL, or triplestore implementation all
  * expose this same interface.
+ *
+ * <p><strong>Composite subjects.</strong> An objectified fact type such as
+ * {@code (FirmUri, Service) -> Jurisdiction} has a composite reference scheme:
+ * the individual <em>is</em> the pair. Such an individual is addressed with the
+ * list-subject overloads below ({@code write(List.of(firm, service), ...)}); a
+ * relational realisation keys it on the component columns directly, with no
+ * surrogate identifier and no mapping table. Concepts whose individuals are
+ * single-valued keep using the plain {@code String} forms, which delegate to the
+ * list forms.
  */
 public interface Region {
 
@@ -34,4 +43,34 @@ public interface Region {
 
     /** All facts in this region (debug/introspection). */
     List<Fact> facts();
+
+    // ---- composite-subject forms --------------------------------------------
+
+    /**
+     * Values of {@code predicate(subject)} where the individual is a composite
+     * key (its parts). Returns the values (not the subject parts).
+     */
+    default Set<String> read(List<String> subject, String predicate) {
+        return read(join(subject), predicate);
+    }
+
+    /** Assert {@code predicate(subject) = value} for a composite individual. */
+    default void write(List<String> subject, String predicate, String value) {
+        write(join(subject), predicate, value);
+    }
+
+    /** Retract one composite-individual fact. */
+    default void remove(List<String> subject, String predicate, String value) {
+        remove(join(subject), predicate, value);
+    }
+
+    /** Retract all values of {@code predicate} for a composite individual. */
+    default void clear(List<String> subject, String predicate) {
+        clear(join(subject), predicate);
+    }
+
+    /** Default join used only by backends that do not model composite keys. */
+    static String join(List<String> parts) {
+        return String.join("\u0000", parts);
+    }
 }

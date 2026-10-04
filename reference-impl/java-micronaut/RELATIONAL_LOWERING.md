@@ -77,6 +77,40 @@ enforced structurally:
 - **Value constraints** → `CHECK`.
 - **Set/subset** → FK (intra-concept only).
 
+## Subtypes and independent object types
+
+Two further R-mapping refinements are realised by the same derivation
+(`dev.legible.storage.RmapDeriver`); the `## State` notation expresses the
+structure, not the mapping choice — the mapping choice is a per-model
+decision recorded in the state line:
+
+| Stage 03b form | Relational realisation |
+|---|---|
+| `Sub is a Sup -- mapping: absorb` | The subtype's simple-key fact types become columns on the supertype's table (the subtype itself realises no table). Right for small/sparse subtypes: no extra join, subtype columns nullable where their supertype sibling is optional. |
+| `Sub is a Sup -- mapping: separate` (or no mapping declared — the deterministic default) | The subtype gets its own table keyed on the **supertype's identity column** (a subtype has no reference scheme of its own; a subtype row is a supertype row), with an intra-concept FK naming the supertype's table. The subtype table's identity-owning object type is the supertype's. |
+| `Sub is a Sup -- mapping: partition` (disjoint, exhaustive) | The supertype's own fact types are flattened into each member's table; the members are the only tables (no parent), each keyed on the shared identity. **Runtime caveat:** the region SPI routes facts by predicate to the first table owning the predicate, so a partitioned region's writes land in the first member's table unless the concept addresses members explicitly. Model partition only with a deliberate plan for that. |
+| `independent T` | A single-column table keyed on `T`'s reference scheme, beside the concept's other tables (`concept__t`), for object types that play no functional fact role ("just in case a model needs them"). |
+
+`RmapDeriver.derive()` still throws when a concept realises as more than one
+table — callers with multi-table regions use `deriveModel(...)`.
+
+## Deferred: derived facts → SQL views
+
+Deliberately **tabled** during the P-series (recorded here so the deferral is
+a decision, not a gap). Every derived value in the current state space is
+derived at concept-read time through an approved action — `context` (the
+ordered turn concatenation), `matchScore`, queue wait time, analytics summary
+counts — and every consumer of derived state reads through the concept layer
+(completions and the `Region` SPI). Nothing reads the store directly by SQL.
+
+Generating SQL views now would (a) add a second read path that bypasses the
+concept layer, (b) require a derivation notation the approved `## State`
+blocks do not carry, and (c) produce schema surface with no consumer. If a
+third-party consumer (e.g. BI) ever needs direct SQL, a generated view is the
+adapter boundary for it — that would be a new, properly gated decision with
+an actual consumer, not unprompted scheme building.
+
+
 ## Schema versioning — Flyway owns DDL
 
 When an R-map/SQL store is used, **Flyway owns the schema (DDL)**. The base

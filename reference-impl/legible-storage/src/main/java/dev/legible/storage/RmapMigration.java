@@ -3,7 +3,7 @@ package dev.legible.storage;
 import java.util.List;
 
 /**
- * Renders the R-map derivation as a Flyway base migration.
+ * Renders the Rmap derivation as a Flyway base migration.
  *
  * <p><strong>Flyway owns DDL when an R-map/SQL store is used.</strong> The
  * schema is not applied at runtime; it is a versioned Flyway migration generated
@@ -11,23 +11,30 @@ import java.util.List;
  * Stage 02 concept {@code ## State}). This keeps one source of the table shape
  * and lets jOOQ codegen introspect the migration.
  *
- * <p>Deterministic: the same schemas render the same bytes, so a committed
+ * <p>Deterministic: the same models render the same bytes, so a committed
  * migration can be checked for staleness (regenerate → compare). See
  * {@code reference-impl/java-micronaut/RELATIONAL_LOWERING.md}.
  *
- * <p>{@code TEXT} is rendered as {@code varchar}: jOOQ's {@code DDLDatabase}
- * parser (H2) maps it to {@code String} the same way, and the types are
- * equivalent on Postgres. {@code mandatory} is not rendered as {@code NOT NULL}
- * — the {@code Region} SPI writes one fact at a time, so a row-level constraint
- * would reject the first of several writes.
+ * <p>Rmap realises typed, keyed, constrained tables: {@code TEXT} is written as
+ * {@code varchar} so jOOQ's {@code DDLDatabase} (H2) can parse it (equivalent on
+ * Postgres); mandatory roles are {@code NOT NULL}; uniqueness is {@code UNIQUE}
+ * or {@code PRIMARY KEY}; value constraints are {@code CHECK}; intra-concept
+ * references are {@code FOREIGN KEY}; a concept whose state ranges over several
+ * object types is a set of tables.
  */
 public final class RmapMigration {
 
     private RmapMigration() {
     }
 
-    /** The full migration text for {@code schemas}, headed for {@code appLabel}. */
+    /** The full migration text for a set of single-table {@code schemas}. */
     public static String render(String appLabel, List<RelationSchema> schemas) {
+        return renderModels(appLabel,
+                schemas.stream().map(s -> new RmapModel(s.concept(), s)).toList());
+    }
+
+    /** The full migration text for a set of {@code models} (multi-table regions). */
+    public static String renderModels(String appLabel, List<RmapModel> models) {
         StringBuilder sb = new StringBuilder();
         sb.append("-- Base DDL for ").append(appLabel).append(" concept state.\n");
         sb.append("--\n");
@@ -35,30 +42,50 @@ public final class RmapMigration {
         sb.append("-- conceptual data models via Halpin's R-map. Do NOT edit by hand:\n");
         sb.append("-- regenerate after a concept `## State` change (see RELATIONAL_LOWERING.md).\n");
         sb.append("--\n");
-        sb.append("-- Fidelity: mandatory roles are not NOT NULL (the Region SPI writes one fact\n");
-        sb.append("-- at a time); typed columns, DEFAULT for resettable facts, and UNIQUE are\n");
-        sb.append("-- enforced, exactly as the R-map derivation specifies. TEXT is written as\n");
-        sb.append("-- varchar here so jOOQ's DDLDatabase can introspect the schema.\n");
-        for (RelationSchema schema : schemas) {
-            sb.append("\n").append(createTable(schema)).append(";\n");
+        sb.append("-- R-map realises typed, keyed, constrained tables: NOT NULL (mandatory),\n");
+        sb.append("-- UNIQUE / PRIMARY KEY, CHECK (value constraints), FOREIGN KEY (intra-\n");
+        sb.append("-- concept references only — no cross-concept FK, R2). A concept whose\n");
+        sb.append("-- state ranges over several object types is a table set. TEXT is written\n");
+        sb.append("-- as varchar here so jOOQ's DDLDatabase can introspect the schema.\n");
+        for (RmapModel model : models) {
+            for (RelationSchema table : model.tables()) {
+                sb.append("\n").append(createTable(table)).append(";\n");
+            }
         }
         return sb.toString();
     }
 
     private static String createTable(RelationSchema schema) {
+        boolean singlePk = schema.primaryKey().size() == 1;
+        String singleKeyCol = singlePk ? schema.primaryKey().get(0) : null;
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE TABLE IF NOT EXISTS \"").append(schema.table()).append("\" (\n");
-        sb.append("  \"").append(schema.idColumn()).append("\" varchar PRIMARY KEY");
+        List<String> parts = new java.util.ArrayList<>();
         for (RelationSchema.Column col : schema.columns()) {
-            sb.append(",\n  \"").append(col.column()).append("\" ")
-                    .append(sqlType(col.sqlType()));
+            StringBuilder part = new StringBuilder();
+            part.append('"').append(col.column()).append("\" ").append(sqlType(col.sqlType()));
             if (col.defaultValue() != null) {
-                sb.append(" DEFAULT ").append(col.defaultValue());
+                part.append(" DEFAULT ").append(col.defaultValue());
+            }
+            if (col.mandatory()) {
+                part.append(" NOT NULL");
             }
             if (col.unique()) {
-                sb.append(" UNIQUE");
+                part.append(" UNIQUE");
             }
+            if (singlePk && col.column().equals(singleKeyCol)) {
+                part.append(" PRIMARY KEY");
+            }
+            parts.add(part.toString());
         }
+        if (!singlePk) {
+            parts.add("PRIMARY KEY (" + String.join(", ",
+                    schema.primaryKey().stream().map(c -> "\"" + c + "\"").toList()) + ")");
+        }
+        for (RelationSchema.Check check : schema.checks()) {
+            parts.add("CONSTRAINT " + check.name() + " CHECK (" + check.expression() + ")");
+        }
+        sb.append("  ").append(String.join(",\n  ", parts));
         sb.append("\n)");
         return sb.toString();
     }
