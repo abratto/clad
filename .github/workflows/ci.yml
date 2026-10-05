@@ -112,8 +112,8 @@ jobs:
       # run here. The durable modules (legible-storage, java-micronaut) are
       # excluded from the Docker-free java-verify job above; this job is the
       # "when validating those" run promised in its comment.
-      - name: mvn verify (legible-storage + java-micronaut, postgres)
+      - name: mvn verify (legible-storage + java-micronaut + java-plain, postgres)
         run: >-
           mvn -B -ntp verify -f reference-impl/pom.xml
-          -pl legible-storage,java-micronaut -am
+          -pl legible-storage,java-micronaut,java-plain -am
           -Dclad.storage=postgres

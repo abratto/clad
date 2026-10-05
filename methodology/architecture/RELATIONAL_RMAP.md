@@ -136,6 +136,7 @@ codegen step (see `RELATIONAL_LOWERING.md`).
 | `java-legible` (canonical teaching profile) | `InMemoryFactStore` | no transport framework at all |
 | `java-micronaut` default | `InMemoryFactStore` | full HTTP stack, zero database |
 | `java-micronaut` `clad.storage=postgres` | `RmapPostgresFactStore` | Flyway + jOOQ; CI `postgres-verify` runs its Testcontainers suite |
+| `java-plain` (any `DATABASE_URL`) | `RmapPostgresFactStore` | plain `main()`: Flyway → derived store → `LoginApp`; **no transport framework** — HTTP is the adopter's choice |
 
 An action log remains in-memory in every binding; an RDF/JSON-LD backend is
 guidance, not a shipped profile (`STORAGE_MAPPING.md`; see also its JSON-LD
