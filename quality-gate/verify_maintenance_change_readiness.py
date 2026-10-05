@@ -82,7 +82,14 @@ def is_project_config_only(diff_text):
 
 
 def field_value(text, label):
-    match = re.search(rf"^- \*\*{re.escape(label)}:\*\* `?([^`\n]+)`?\s*$", text, re.MULTILINE)
+    """The backticked value of a `- **Label:** `value`` line.
+
+    The shipped template wraps a field's parenthetical explanation onto later
+    lines (e.g. `Status: \`active\` (\`draft\` until …)`), so the value must be
+    read as the first backticked token — not anchored to end-of-line, which
+    would silently fail to parse the template's own format.
+    """
+    match = re.search(rf"^- \*\*{re.escape(label)}:\*\*\s*`([^`\n]+)`", text, re.MULTILINE)
     return match.group(1).strip().lower() if match else ""
 
 

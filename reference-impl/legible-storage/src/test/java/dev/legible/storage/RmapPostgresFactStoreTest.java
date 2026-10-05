@@ -17,6 +17,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -162,6 +163,39 @@ class RmapPostgresFactStoreTest {
         }
         assertFalse(passwordAuth.read(userId, "lockedUntil").isEmpty(),
                 "after lockout, lockedUntil is present");
+    }
+
+    @Test
+    void writingOneFactUpdatesAnExistingRowWithoutViolatingNotNull() throws Exception {
+        // The SPI writes one fact at a time. Updating a single column of an
+        // existing individual must update in place, not attempt an upsert whose
+        // proposed insert tuple fails NOT NULL on the absent mandatory sibling
+        // (PostgreSQL validates NOT NULL before resolving ON CONFLICT). This is
+        // the write path a caller uses outside an engine action (no
+        // TransactionalRegion buffer).
+        app.seedUser("alice", "secret");
+        String userId = queryOne("SELECT user_id FROM password_auth LIMIT 1");
+        Region passwordAuth = store.region("PasswordAuth");
+
+        passwordAuth.write(userId, "failedAttempts", "4");
+        assertEquals("4", passwordAuth.read(userId, "failedAttempts").iterator().next(),
+                "the fact must update the existing row");
+        passwordAuth.write(userId, "failedAttempts", "7");
+        assertEquals("7", passwordAuth.read(userId, "failedAttempts").iterator().next(),
+                "a second write must overwrite in place");
+        // The mandatory credential is untouched by the partial writes.
+        assertFalse(passwordAuth.read(userId, "passwordHash").isEmpty());
+    }
+
+    @Test
+    void aLoneWriteToAnUnknownIndividualSurfacesTheMissingMandatoryFact() {
+        // No row exists and `passwordHash` is mandatory (NOT NULL, no default):
+        // a lone optional write cannot create the individual, so the insert must
+        // fail loudly rather than invent a value.
+        Region passwordAuth = store.region("PasswordAuth");
+        assertThrows(PostgresFactStore.UncheckedSQLException.class,
+                () -> passwordAuth.write("nobody", "failedAttempts", "1"),
+                "an incomplete mandatory row must be rejected, not fabricated");
     }
 
     private String queryOne(String sql, String... params) throws Exception {

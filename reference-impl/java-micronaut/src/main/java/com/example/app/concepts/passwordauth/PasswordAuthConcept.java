@@ -68,7 +68,8 @@ public final class PasswordAuthConcept implements Concept {
         long now = System.currentTimeMillis();
 
         Set<String> locked = region.read(userId, "lockedUntil");
-        if (!locked.isEmpty() && Long.parseLong(locked.iterator().next()) > now) {
+        if (!locked.isEmpty()
+                && java.time.Instant.parse(locked.iterator().next()).toEpochMilli() > now) {
             return Map.of("outcome", "LOCKED", "userId", userId);
         }
         if (verifier.equals(verify(password))) {
@@ -96,7 +97,8 @@ public final class PasswordAuthConcept implements Concept {
         region.write(userId, "failedAttempts", String.valueOf(failed));
         region.clear(userId, "lockedUntil");
         if (lockedUntil != null) {
-            region.write(userId, "lockedUntil", String.valueOf(lockedUntil));
+            region.write(userId, "lockedUntil",
+                    java.time.Instant.ofEpochMilli(lockedUntil).toString());
         }
     }
 
