@@ -92,6 +92,17 @@
 - No Pattern D exposure exists for `UserNaming` in UC-00.
 - No cross-concept coupling is introduced.
 
+## Machine model
+
+<!-- CSDP-aligned fact/constraint block consumed by Rmap. Faithful
+     transcription of Steps 2/4/5; see DATA_MODEL_NOTES.md §"The machine
+     model block". No storage constructs. -->
+
+```
+object-type UserId identified-by UserId
+fact username : UserId -> String -- mandatory, unique across all users
+```
+
 ## Modeling Notes
 
 - No notable decisions — straight CSDP walk from the approved state section.

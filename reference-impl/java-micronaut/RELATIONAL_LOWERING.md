@@ -16,12 +16,12 @@ roles**. CLAD adds one constraint of its own: **no cross-concept foreign key**.
 
 | Stage 03b form | Relational realization |
 |---|---|
-| `field: S -> V` (mandatory) | column on S's table (mandatory role recorded; not emitted `NOT NULL` — see "Constraint realization") |
-| `field: S -> V` (optional) | column on S's table, nullable |
-| `field: S -> V` with a default | column with a `DEFAULT` |
-| `List<T>` / `Map<K,V>` / "zero or more" | child table, composite PK, intra-concept FK to S's table |
-| nested struct / objectified fact | separate table, surrogate or composite key |
-| value constraint (e.g. enum) | `CHECK` constraint |
+| `fact p : S -> V` (mandatory) | column on S's table, `NOT NULL` (a `TransactionalRegion` flushes one individual's writes as one statement) |
+| `fact p : S -> V` (optional) | column on S's table, nullable |
+| `fact p : S -> V` with a default | column with a `DEFAULT` |
+| `fact p : S -> { V }` / "zero or more" | child table, composite PK `(subject, p)`, intra-concept FK to S's table |
+| `fact p : ( A, B ) -> V` (objectified subject) | compidot table keyed on the component columns — no surrogate id |
+| value constraint (e.g. `in {…}`) | `CHECK` constraint |
 | uniqueness constraint | `UNIQUE` (or `PRIMARY KEY` on the subject column) |
 | intra-concept entity reference | real FK (same concept) |
 | **cross-concept identifier** | **opaque typed column — never a FK** |
@@ -80,9 +80,9 @@ enforced structurally:
 ## Subtypes and independent object types
 
 Two further R-mapping refinements are realised by the same derivation
-(`dev.legible.storage.RmapDeriver`); the `## State` notation expresses the
-structure, not the mapping choice — the mapping choice is a per-model
-decision recorded in the state line:
+(`dev.legible.storage.RmapDeriver`); the machine-model block expresses the
+structure, not the mapping choice — the mapping choice is a per-model decision
+recorded in the fact line:
 
 | Stage 03b form | Relational realisation |
 |---|---|
@@ -91,8 +91,9 @@ decision recorded in the state line:
 | `Sub is a Sup -- mapping: partition` (disjoint, exhaustive) | The supertype's own fact types are flattened into each member's table; the members are the only tables (no parent), each keyed on the shared identity. **Runtime caveat:** the region SPI routes facts by predicate to the first table owning the predicate, so a partitioned region's writes land in the first member's table unless the concept addresses members explicitly. Model partition only with a deliberate plan for that. |
 | `independent T` | A single-column table keyed on `T`'s reference scheme, beside the concept's other tables (`concept__t`), for object types that play no functional fact role ("just in case a model needs them"). |
 
-`RmapDeriver.derive()` still throws when a concept realises as more than one
-table — callers with multi-table regions use `deriveModel(...)`.
+`RmapDeriver.deriveFromDataModel()` still throws when a concept realises as more
+than one table — callers with multi-table regions use
+`deriveModelFromDataModel(...)`.
 
 ## Deferred: derived facts → SQL views
 
@@ -126,7 +127,7 @@ from the concepts:
   over `db/migration` → `com.example.app.db`), so the generated tables track
   the versioned schema.
 - **Drift guard:** `RmapMigrationTest` fails when the committed migration is
-  stale. Regenerate after any concept `## State` change:
+  stale. Regenerate after any concept data-model (machine-model block) change:
 
   ```
   mvn -f reference-impl/pom.xml -pl java-micronaut -am test \

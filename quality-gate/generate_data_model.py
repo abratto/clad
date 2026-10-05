@@ -164,11 +164,65 @@ def render(concept: ap.ConceptSpec) -> str:
     add("- <TODO: judgment — consistency with approved concept state>")
     add("- <TODO: judgment — redundancy or completeness note>")
     add("")
+    add("## Machine model")
+    add("")
+    add("<!-- CSDP-aligned fact/constraint block consumed by Rmap. Generated from")
+    add("     the concept `## State`; keep it a faithful transcription of Steps")
+    add("     2/4/5. See DATA_MODEL_NOTES.md §\"The machine model block\". -->")
+    add("")
+    add("```")
+    for line in _machine_model_block(name, rels, concept.state_lines):
+        add(line)
+    add("```")
+    add("")
     add("## Modeling Notes")
     add("")
     add("- <TODO: judgment — non-obvious modeling decision, or `No notable decisions.`>")
 
     return "\n".join(L)
+
+
+def _model_entity_types(rels) -> List[str]:
+    """Distinct object types a fact subject ranges over.
+
+    A compound subject (`(A, B)`) contributes each component; a simple subject
+    contributes its type. Value types (the `->` targets) are not object types.
+    """
+    out: List[str] = []
+    for r in rels:
+        subject = r.subject_type.strip()
+        parts = [p.strip() for p in subject.strip("()").split(",")] if subject.startswith("(") else [subject]
+        for p in parts:
+            if p and p not in out:
+                out.append(p)
+    return out
+
+
+def _machine_model_block(name: str, rels, state_lines: List[str]) -> List[str]:
+    """The CSDP-aligned machine model consumed by Rmap.
+
+    Object types are declared with their reference scheme (the first relation
+    whose subject is that type identifies it). Every `## State` relation line is
+    copied verbatim as a `fact` line — the two grammars are identical — and
+    subtype / independent declarations carry over unchanged.
+    """
+    L: List[str] = []
+    # Reference scheme per object type: the first relation over it is its
+    # identifier fact (the subject's own column). Declared types come first.
+    for etype in _model_entity_types(rels):
+        L.append(f"object-type {etype} identified-by {etype}")
+    for raw in state_lines:
+        line = raw.strip()
+        if not line or line.startswith("#") or line.startswith(">"):
+            continue
+        if line.startswith("```") or line.startswith("--"):
+            continue
+        if " is a " in line or line.startswith("independent "):
+            L.append(line)  # subtype / independent carry over unchanged
+        elif "->" in line:
+            L.append("fact " + line)
+        # anything else is prose and contributes no clause
+    return L
 
 
 def _snapshot_header(name: str) -> str:
@@ -272,6 +326,14 @@ def _render_stateless(name: str) -> str:
     add("### Final checks")
     add("")
     add(f"- Confirmed: `{name}` is stateless; no conceptual data model required.")
+    add("")
+    add("## Machine model")
+    add("")
+    add("<!-- Stateless concept — no facts, so an empty machine model. -->")
+    add("")
+    add("```")
+    add(f"# {name} is stateless — no machine model.")
+    add("```")
     add("")
     add("## Modeling Notes")
     add("")

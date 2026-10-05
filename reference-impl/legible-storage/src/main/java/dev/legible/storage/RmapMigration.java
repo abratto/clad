@@ -8,8 +8,8 @@ import java.util.List;
  * <p><strong>Flyway owns DDL when an R-map/SQL store is used.</strong> The
  * schema is not applied at runtime; it is a versioned Flyway migration generated
  * from the same derivation the runtime store reads ({@link RmapDeriver} over the
- * Stage 02 concept {@code ## State}). This keeps one source of the table shape
- * and lets jOOQ codegen introspect the migration.
+ * Stage 03b conceptual data model's {@code ## Machine model} block). This keeps
+ * one source of the table shape and lets jOOQ codegen introspect the migration.
  *
  * <p>Deterministic: the same models render the same bytes, so a committed
  * migration can be checked for staleness (regenerate → compare). See

@@ -108,6 +108,55 @@ concept carries another concept's identifier, it is an opaque value
 whose runtime meaning is established by syncs, not by a schema-level
 relationship.
 
+## The machine model block
+
+The seven CSDP steps above are the human-facing model. A relational profile
+realizes them via Halpin's Rmap, so the data model also carries a small,
+hand-authorable **machine model** block that Rmap consumes directly. It is a
+faithful transcription of the same elementary facts and constraints the steps
+name — never a new decision. It is generated deterministically by
+`quality-gate/generate_data_model.py` from the concept `## State` relations and
+validated by `quality-gate/verify_data_model.py`.
+
+CLAD deliberately does **not** use Jarrar/Demey/Meersman's ORM-ML here:
+ORM-ML is an XML serialization of the ORM *diagram* (object roles referenced by
+id), defined by an external XML Schema, and is explicitly "not meant to be
+written by hand or interpreted by humans." CLAD adopts the CSDP *step structure
+and constraint vocabulary* and a compact textual rendering of the subset Rmap
+consumes (fact types and arity, reference schemes, uniqueness, mandatory roles,
+value constraints, subtyping).
+
+Grammar (one clause per line; `#` starts a comment; blank lines ignored):
+
+```
+## Machine model
+
+object-type <EntityType> identified-by <IdType>
+fact <predicate> : <EntityType> -> <ValueType> -- <annotations>
+fact <predicate> : ( <A>, <B> ) -> <ValueType> -- <annotations>
+fact <predicate> : <EntityType> -> { <ValueType> } -- <annotations>
+<Sub> is a <Sup> -- mapping: absorb | separate | partition
+independent <ObjectType>
+```
+
+- `object-type` declares an entity type and its reference scheme (the fact
+  that identifies it). A value type is never declared as an object type.
+- `fact` is one elementary fact type. `( A, B )` is a compound (objectified)
+  subject; `{ V }` is a multi-valued ("zero or more") fact.
+- `<annotations>` is the same `--` tail the `## State` notation uses:
+  `mandatory` | `optional`, `unique …`, `default <expr>`, `in {a, b, c}` or
+  `in {a..b}`.
+- `is a` declares a subtype and the per-model Rmap mapping (default
+  `separate`); `independent T` declares an object type with no functional role.
+
+Rules:
+- Exactly one `## Machine model` block per data model.
+- Every object type in a `fact` subject must be declared with `object-type`
+  (or be a value type introduced by `->`); the block must not introduce facts
+  absent from Steps 2/4/5.
+- No storage construct may appear in the block (no SQL types, `FOREIGN KEY`,
+  table names) — the block is conceptual, like the rest of the artifact.
+
 ## Output shape
 
 Write the result to `output/<Name>.data-model.md` using the structure in

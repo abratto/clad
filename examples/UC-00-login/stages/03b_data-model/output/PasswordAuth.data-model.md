@@ -101,6 +101,19 @@
 - No Pattern D exposure exists for `PasswordAuth` in UC-00.
 - No cross-concept schema relationship to `UserNaming` is introduced.
 
+## Machine model
+
+<!-- CSDP-aligned fact/constraint block consumed by Rmap. Faithful
+     transcription of Steps 2/4/5; see DATA_MODEL_NOTES.md §"The machine
+     model block". No storage constructs. -->
+
+```
+object-type UserId identified-by UserId
+fact passwordHash : UserId -> PasswordHash -- mandatory
+fact failedAttempts : UserId -> Int -- mandatory, default 0
+fact lockedUntil : UserId -> Timestamp -- optional
+```
+
 ## Modeling Notes
 
 - `UserId` is an opaque identifier owned elsewhere; no cross-concept foreign-key relationship is modeled here.

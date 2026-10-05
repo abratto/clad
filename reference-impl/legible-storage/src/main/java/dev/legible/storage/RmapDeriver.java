@@ -87,9 +87,95 @@ public final class RmapDeriver {
     private RmapDeriver() {
     }
 
-    /** Derive the concept's table set from its {@code ## State} block body. */
+    /**
+     * Derive the concept's table set from its {@code ## State} block body.
+     *
+     * <p>This is the raw-notation form, kept for the equivalence check and for
+     * callers that hold a {@code ## State} body. The canonical Rmap input is the
+     * Stage 03b data model, read via
+     * {@link #deriveModelFromDataModel(String, String)}.
+     */
     public static RmapModel deriveModel(String concept, String stateNotation) {
         return realize(concept, parse(concept, stateNotation));
+    }
+
+    /**
+     * Derive the concept's table set from its Stage 03b
+     * {@code <Name>.data-model.md} text, via the CSDP-aligned
+     * {@code ## Machine model} block (the canonical Rmap input). The block's
+     * {@code fact} / {@code is a} / {@code independent} clauses are the same
+     * grammar as {@code ## State}; {@code object-type … identified-by …}
+     * declares reference schemes and contributes no fact of its own.
+     *
+     * <p>Use {@link #deriveModel(String, String)} only for a raw {@code ## State}
+     * body; a data-model file contains CSDP prose, so this entry extracts the
+     * block rather than parsing the whole file.
+     */
+    public static RmapModel deriveModelFromDataModel(String concept, String dataModelMarkdown) {
+        return realize(concept, parse(concept, machineModelBody(concept, dataModelMarkdown)));
+    }
+
+    /**
+     * The single table derived from a data-model file (see
+     * {@link #deriveModelFromDataModel}); throws when the concept is multi-table.
+     */
+    public static RelationSchema deriveFromDataModel(String concept, String dataModelMarkdown) {
+        RmapModel model = deriveModelFromDataModel(concept, dataModelMarkdown);
+        if (model.tables().size() != 1) {
+            throw new IllegalArgumentException("concept " + concept + " realises as "
+                    + model.tables().size() + " tables — use deriveModelFromDataModel()");
+        }
+        return model.tables().get(0);
+    }
+
+    /**
+     * Extract the {@code ## Machine model} fenced block from a data-model file,
+     * returning only the clauses the realization {@link #parse} understands: the
+     * {@code object-type …} declarations are dropped (they name reference
+     * schemes, not facts). Throws when the section or its fence is absent — a
+     * data-model file without a machine block cannot drive Rmap.
+     */
+    private static String machineModelBody(String concept, String dataModelMarkdown) {
+        String[] lines = dataModelMarkdown.split("\\R");
+        int section = -1;
+        for (int i = 0; i < lines.length; i++) {
+            if (lines[i].trim().equals("## Machine model")) {
+                section = i;
+                break;
+            }
+        }
+        if (section < 0) {
+            throw new IllegalArgumentException(
+                    "no `## Machine model` block in data model for concept " + concept);
+        }
+        int fence = -1;
+        for (int i = section + 1; i < lines.length; i++) {
+            if (lines[i].trim().startsWith("```")) {
+                fence = i;
+                break;
+            }
+        }
+        if (fence < 0) {
+            throw new IllegalArgumentException(
+                    "`## Machine model` block is not fenced in data model for concept " + concept);
+        }
+        StringBuilder body = new StringBuilder();
+        for (int i = fence + 1; i < lines.length; i++) {
+            if (lines[i].trim().startsWith("```")) {
+                break;
+            }
+            String line = lines[i].trim();
+            if (line.startsWith("object-type")) {
+                continue; // reference-scheme declaration, not a fact
+            }
+            // The machine block prefixes each fact with `fact `; the realization
+            // parser reads the bare `field : Subject -> Value` form.
+            if (line.startsWith("fact ")) {
+                line = line.substring("fact ".length()).trim();
+            }
+            body.append(line).append('\n');
+        }
+        return body.toString();
     }
 
     /**

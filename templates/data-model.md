@@ -92,6 +92,22 @@
 - <consistency/completeness check>
 - <redundancy or optimization note>
 
+## Machine model
+
+<!-- CSDP-aligned fact/constraint block consumed by Rmap. Generated
+     deterministically from the concept `## State`; keep it a faithful
+     transcription of Steps 2/4/5. See DATA_MODEL_NOTES.md §"The machine model
+     block". Do not put SQL/storage constructs here. -->
+
+```
+object-type <EntityType> identified-by <IdType>
+fact <predicate> : <EntityType> -> <ValueType> -- <mandatory|optional[, unique][, default X]> 
+fact <predicate> : ( <A>, <B> ) -> <ValueType> -- <annotations>
+fact <predicate> : <EntityType> -> { <ValueType> } -- <annotations>
+<Sub> is a <Sup> -- mapping: absorb | separate | partition
+independent <ObjectType>
+```
+
 ## Modeling Notes
 
 - <non-obvious modeling decision, or `No notable decisions.`>

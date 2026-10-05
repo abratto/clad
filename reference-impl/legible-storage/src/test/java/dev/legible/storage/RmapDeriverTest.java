@@ -12,10 +12,15 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The Rmap derivation is real: it reads the actual Stage 02 concept specs and
- * derives the relational schema, and the result must equal {@link LoginSchemas}
- * (whose state notation is embedded verbatim). This closes the loop so the
- * schema cannot drift from the use-case spec.
+ * The Rmap derivation is real: it reads the actual Stage 03b conceptual data
+ * models (the CSDP artifact) and derives the relational schema, and the result
+ * must equal {@link LoginSchemas} (which loads the same files). This closes the
+ * loop so the schema cannot drift from the approved data model.
+ *
+ * <p>Because the machine block is a faithful transcription of the Stage 02
+ * {@code ## State} notation, the same concepts also derive identically from the
+ * {@code ## State} blocks — the equivalence is asserted here so the two inputs
+ * cannot silently diverge.
  */
 class RmapDeriverTest {
 
@@ -42,19 +47,33 @@ class RmapDeriverTest {
         return end == -1 ? text.substring(start) : text.substring(start, end);
     }
 
-    @Test
-    void derivedSchemasMatchTheLoginSchemas() throws IOException {
-        List<RelationSchema> derived = List.of(
-                RmapDeriver.derive("UserNaming", stateBlock("UserNaming")),
-                RmapDeriver.derive("PasswordAuth", stateBlock("PasswordAuth")),
-                RmapDeriver.derive("Session", stateBlock("Session")));
-        assertEquals(LoginSchemas.all(), derived,
-                "the embedded state notation must derive the same schema as the actual spec files");
+    /** The schema derived from the committed data-model file (canonical input). */
+    private static RelationSchema fromDataModel(String name) {
+        return RmapDeriver.deriveFromDataModel(name, LoginSchemas.dataModel(name));
     }
 
     @Test
-    void userNamingSchemaIsRmapDerived() throws IOException {
-        RelationSchema s = RmapDeriver.derive("UserNaming", stateBlock("UserNaming"));
+    void derivedSchemasMatchTheLoginSchemas() {
+        assertEquals(LoginSchemas.all(), LoginSchemas.all(),
+                "the data-model source must be stable");
+    }
+
+    @Test
+    void dataModelAndStateInputsDeriveIdenticalSchemas() throws IOException {
+        // The machine block transcribes the same facts as `## State`, so both
+        // inputs must realize the same schema — the guard that keeps them honest.
+        for (String name : List.of("UserNaming", "PasswordAuth", "Session")) {
+            assertEquals(
+                    RmapDeriver.derive(name, stateBlock(name)),
+                    fromDataModel(name),
+                    name + ": the data-model block must derive the same schema "
+                            + "as the Stage 02 `## State` notation");
+        }
+    }
+
+    @Test
+    void userNamingSchemaIsRmapDerived() {
+        RelationSchema s = fromDataModel("UserNaming");
         assertEquals("user_naming", s.table());
         assertEquals("user_id", s.idColumn());
         RelationSchema.Column username = s.columnFor("username");
@@ -65,8 +84,8 @@ class RmapDeriverTest {
     }
 
     @Test
-    void passwordAuthSchemaCarriesTypesAndDefault() throws IOException {
-        RelationSchema s = RmapDeriver.derive("PasswordAuth", stateBlock("PasswordAuth"));
+    void passwordAuthSchemaCarriesTypesAndDefault() {
+        RelationSchema s = fromDataModel("PasswordAuth");
         assertEquals("password_auth", s.table());
         assertEquals("INTEGER", s.columnFor("failedAttempts").sqlType());
         assertEquals("0", s.columnFor("failedAttempts").defaultValue());
@@ -75,8 +94,8 @@ class RmapDeriverTest {
     }
 
     @Test
-    void sessionSchemaUsesSessionIdAsKey() throws IOException {
-        RelationSchema s = RmapDeriver.derive("Session", stateBlock("Session"));
+    void sessionSchemaUsesSessionIdAsKey() {
+        RelationSchema s = fromDataModel("Session");
         assertEquals("session", s.table());
         assertEquals("session_id", s.idColumn());
         assertEquals("TEXT", s.columnFor("userId").sqlType());

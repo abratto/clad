@@ -95,6 +95,18 @@
 - No Pattern D exposure exists for `Session` in UC-00.
 - No cross-concept schema relationship to `UserNaming` is introduced.
 
+## Machine model
+
+<!-- CSDP-aligned fact/constraint block consumed by Rmap. Faithful
+     transcription of Steps 2/4/5; see DATA_MODEL_NOTES.md §"The machine
+     model block". No storage constructs. -->
+
+```
+object-type SessionId identified-by SessionId
+fact userId : SessionId -> UserId -- mandatory
+fact openedAt : SessionId -> Timestamp -- mandatory
+```
+
 ## Modeling Notes
 
 - `UserId` remains an opaque value; this stage does not model a cross-concept foreign-key relationship to `UserNaming`.

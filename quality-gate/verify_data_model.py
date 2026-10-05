@@ -69,6 +69,9 @@ CONSTRAINT_SUBSECTIONS = {
     "Other constraints",
 }
 
+# A stateless concept's data model says so explicitly (generator wording).
+STATELESS_MARKER = re.compile(r"is stateless", re.IGNORECASE)
+
 # Storage-leakage patterns: these indicate profile-specific implementation
 # detail leaking into a conceptual model. Each is a (regex, context_note) pair.
 STORAGE_LEAK_PATTERNS = [
@@ -151,6 +154,30 @@ def check_data_model(path):
         for pattern, note in STORAGE_LEAK_PATTERNS:
             if re.search(pattern, line, re.IGNORECASE):
                 failures.append(f"line {i}: {note} ('{pattern}')")
+
+    # Check 5: The CSDP-aligned machine model block required by Rmap.
+    machine = ap.parse_machine_model(content)
+    stateless = any(STATELESS_MARKER.search(line) for line in lines)
+    if not stateless and not machine.present:
+        failures.append("missing `## Machine model` block (Rmap input)")
+    else:
+        # Every fact subject must be a declared object type, an introduced
+        # value type, or a compound of declared object types — catch a block
+        # that names a type no Step declared.
+        declared = set(machine.object_types)
+        value_types = {f.value_type for f in machine.facts}
+        for f in machine.facts:
+            subject = f.subject_type.strip()
+            parts = ([p.strip() for p in subject.strip("()").split(",")]
+                     if subject.startswith("(") else [subject])
+            for p in parts:
+                if not p:
+                    continue
+                if p in declared or p in value_types or p in machine.independent:
+                    continue
+                failures.append(
+                    f"machine model references undeclared type '{p}' "
+                    f"in fact '{f.field}'")
 
     return failures
 

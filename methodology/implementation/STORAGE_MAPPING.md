@@ -122,13 +122,26 @@ produce Rmap's typed, keyed, constrained tables. Rmap remains the procedure for
 a normalized relational schema; both are valid Stage 04a outcomes behind the
 same `FactStore`/`Region` boundary. `legible-storage/RmapPostgresFactStore`
 demonstrates the Rmap path: `RmapDeriver` derives a `RelationSchema` per
-concept from the concept spec's `## State` notation (typed columns —
-`TEXT`/`INTEGER`/`TIMESTAMP` — primary key, `DEFAULT`, `UNIQUE` constraints),
-and the generic `Region` SPI maps each fact-type predicate to its column with
-string↔typed value coercion. Mandatory roles are recorded in the schema
-metadata but not emitted as `NOT NULL`: the SPI writes facts one at a time, so
-a concept with several mandatory facts cannot satisfy a row-level `NOT NULL`
-atomically.
+concept from the **Stage 03b conceptual data model's `## Machine model` block**
+— the CSDP-aligned, machine-readable transcription of the elementary facts and
+constraints (typed columns — `TEXT`/`INTEGER`/`TIMESTAMP` — primary key,
+`DEFAULT`, `UNIQUE`, `NOT NULL`, `CHECK`, intra-concept `FOREIGN KEY`) — and
+the generic `Region` SPI maps each fact-type predicate to its column with
+string↔typed value coercion. Mandatory roles are emitted as `NOT NULL`: the
+engine wraps a concept action in a `TransactionalRegion` (`beginAction` →
+`flushAction`), so the buffered writes for one individual flush as a single
+statement and a multi-column mandatory row is satisfied atomically. A single
+fact written outside an engine action updates an existing row in place.
+
+The machine block is generated deterministically from the concept's Stage 02
+`## State` (`generate_data_model.py`) and validated by `verify_data_model.py`;
+it uses the same `field : Subject -> Value` grammar as `## State`, plus
+`object-type … identified-by …` reference-scheme declarations, `is a` subtype
+mappings, and `independent T`. CLAD does **not** use ORM-ML (Jarrar et al.): it
+is an XML serialization of the ORM diagram defined by an external schema and
+explicitly not human-authored; CLAD adopts the CSDP *step structure and
+constraint vocabulary* and a compact textual rendering of the subset Rmap
+consumes.
 
 ### Document profiles
 

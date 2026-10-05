@@ -1,40 +1,70 @@
 package dev.legible.storage;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
- * The UC-00-login relational schemas, <em>derived</em> from the Stage 02
- * concept specs' {@code ## State} notation by {@link RmapDeriver} — not
- * hand-authored. The state notation below is copied verbatim from
- * {@code examples/UC-00-login/stages/02_concepts/output/*.concept.md};
- * {@link RmapDeriverTest} re-reads those files and asserts the derivation
- * matches, so the schema cannot drift from the spec.
+ * The UC-00-login relational schemas, <em>derived</em> from the Stage 03b
+ * conceptual data models' {@code ## Machine model} blocks by
+ * {@link RmapDeriver} — not hand-authored.
+ *
+ * <p>The canonical Rmap input is the Stage 03b data model (the CSDP artifact),
+ * not the Stage 02 {@code ## State} notation: the data model is where the
+ * elementary facts and constraints are approved. This loader reads the
+ * committed {@code <Name>.data-model.md} files and derives from their machine
+ * blocks; {@link RmapDeriverTest} re-reads the same files and asserts the
+ * derivation matches, so the schema cannot drift from the data model.
  */
 public final class LoginSchemas {
 
     private LoginSchemas() {
     }
 
-    // Verbatim `## State` blocks from the Stage 02 concept specs.
-    private static final String USER_NAMING_STATE = """
-            username: UserId -> String   -- mandatory, unique across all users
-            """;
-
-    private static final String PASSWORD_AUTH_STATE = """
-            passwordHash: UserId -> PasswordHash     -- mandatory
-            failedAttempts: UserId -> Int            -- mandatory, default 0
-            lockedUntil: UserId -> Timestamp         -- optional
-            """;
-
-    private static final String SESSION_STATE = """
-            userId: SessionId -> UserId       -- mandatory
-            openedAt: SessionId -> Timestamp  -- mandatory
-            """;
+    /** The concept names, in schema order. */
+    private static final List<String> CONCEPTS = List.of("UserNaming", "PasswordAuth", "Session");
 
     public static List<RelationSchema> all() {
-        return List.of(
-                RmapDeriver.derive("UserNaming", USER_NAMING_STATE),
-                RmapDeriver.derive("PasswordAuth", PASSWORD_AUTH_STATE),
-                RmapDeriver.derive("Session", SESSION_STATE));
+        return CONCEPTS.stream()
+                .map(name -> RmapDeriver.deriveFromDataModel(name, dataModel(name)))
+                .toList();
+    }
+
+    /** The committed Stage 03b data-model text for {@code concept}. */
+    public static String dataModel(String concept) {
+        return read(dataModelPath(concept));
+    }
+
+    private static Path dataModelPath(String concept) {
+        return repoRoot().resolve(
+                "examples/UC-00-login/stages/03b_data-model/output/"
+                        + concept + ".data-model.md");
+    }
+
+    private static Path repoRoot() {
+        Path dir = Path.of("").toAbsolutePath();
+        while (dir != null) {
+            if (Files.isDirectory(dir.resolve("features"))) {
+                return dir;
+            }
+            dir = dir.getParent();
+        }
+        throw new IllegalStateException(
+                "repository root (features/) not found from "
+                        + Path.of("").toAbsolutePath()
+                        + " — the reference profile derives its schema from the "
+                        + "committed Stage 03b data models; an app derived from this "
+                        + "seed rebinds this loader to its own "
+                        + "<Name>.data-model.md files.");
+    }
+
+    private static String read(Path path) {
+        try {
+            return Files.readString(path);
+        } catch (IOException e) {
+            throw new UncheckedIOException("cannot read data model " + path, e);
+        }
     }
 }

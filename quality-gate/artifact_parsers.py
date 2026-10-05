@@ -464,6 +464,98 @@ def parse_state_relations(state_lines: List[str]) -> List[StateRelation]:
 
 
 # --------------------------------------------------------------------------
+# Machine-model parsing (Stage 03b `## Machine model` block)
+# --------------------------------------------------------------------------
+
+@dataclass
+class MachineModel:
+    """A Stage 03b conceptual data model's CSDP-aligned machine block.
+
+    `object_types` maps an entity type name to its reference-scheme id type;
+    `facts` are the elementary fact types (same shape as `StateRelation`);
+    `subtypes` are `(sub, sup, mapping)` triples (mapping may be empty —
+    Rmap's deterministic default is `separate`); `independent` lists object
+    types with no functional role. `present` is False when the data model has
+    no machine block at all (legacy/stateless)."""
+    object_types: dict
+    facts: List[StateRelation]
+    subtypes: List[tuple]
+    independent: List[str]
+    present: bool
+
+
+_MACHINE_OBJECT_TYPE = re.compile(
+    r"^object-type\s+(\w+)\s+identified-by\s+(\w+)\s*$")
+_MACHINE_FACT = re.compile(
+    r"^fact\s+(\w+)\s*:\s*(.+?)\s*->\s*(.+?)(?:\s+--\s+(.*))?$")
+_MACHINE_SUBTYPE = re.compile(
+    r"^(\w+)\s+is a\s+(\w+)\s*(?:--\s*mapping:\s*(\w+))?\s*$")
+_MACHINE_INDEPENDENT = re.compile(r"^independent\s+(\w+)\s*$")
+
+
+def parse_machine_model(data_model_text: str) -> MachineModel:
+    """Parse a `<Name>.data-model.md` file's `## Machine model` block.
+
+    Returns `present=False` when no such section/fence exists (legacy data
+    models and stateless concepts). Lines that are not one of the four clause
+    forms are skipped (comments, blank lines, prose)."""
+    lines = data_model_text.split("\n")
+    start = None
+    for i, line in enumerate(lines):
+        if line.strip() == "## Machine model":
+            start = i
+            break
+    if start is None:
+        return MachineModel({}, [], [], [], present=False)
+    # Find the fenced block.
+    fence = None
+    for i in range(start + 1, len(lines)):
+        if lines[i].strip().startswith("```"):
+            fence = i
+            break
+    if fence is None:
+        return MachineModel({}, [], [], [], present=True)
+    body: List[str] = []
+    for i in range(fence + 1, len(lines)):
+        if lines[i].strip().startswith("```"):
+            break
+        body.append(lines[i])
+
+    object_types: dict = {}
+    facts: List[StateRelation] = []
+    subtypes: List[tuple] = []
+    independent: List[str] = []
+    for raw in body:
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        m = _MACHINE_OBJECT_TYPE.match(line)
+        if m:
+            object_types[m.group(1)] = m.group(2)
+            continue
+        m = _MACHINE_FACT.match(line)
+        if m:
+            field, subject, value, annotation = (
+                m.group(1), m.group(2).strip(), m.group(3).strip(),
+                (m.group(4) or "").strip())
+            facts.append(StateRelation(
+                field=field, subject_type=subject, value_type=value,
+                multiplicity=annotation, unique="unique" in annotation.lower()))
+            continue
+        m = _MACHINE_SUBTYPE.match(line)
+        if m:
+            subtypes.append((m.group(1), m.group(2), (m.group(3) or "separate").lower()))
+            continue
+        m = _MACHINE_INDEPENDENT.match(line)
+        if m:
+            independent.append(m.group(1))
+            continue
+        # Unknown clause forms are reported by the caller (verify_data_model),
+        # which wants to fail loudly rather than silently drop a fact.
+    return MachineModel(object_types, facts, subtypes, independent, present=True)
+
+
+# --------------------------------------------------------------------------
 # Sync specs (Stage 03)
 # --------------------------------------------------------------------------
 
