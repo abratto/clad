@@ -603,7 +603,9 @@ public final class RmapDeriver {
     }
 
     private static String checkName(String objectType, String field) {
-        return "ck_" + snake(objectType) + "_" + snake(field);
+        // snakeName sanitizes a compound subject key ('+' is illegal in an
+        // unquoted SQL identifier): Physician+Patient → physician_and_patient.
+        return "ck_" + snakeName(objectType) + "_" + snake(field);
     }
 
     private static String sqlTypeOf(String valueType) {

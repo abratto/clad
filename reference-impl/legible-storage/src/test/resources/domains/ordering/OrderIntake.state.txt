@@ -1,0 +1,6 @@
+orderNumber: Order -> OrderNumber -- mandatory, unique
+totalCents: Order -> Int -- mandatory, default 0
+status: Order -> Status -- mandatory, in {open, paid, shipped}
+placedAt: Order -> Timestamp -- mandatory
+tags: Order -> { Tag } -- zero or more
+line: (Order, Product) -> Int -- mandatory

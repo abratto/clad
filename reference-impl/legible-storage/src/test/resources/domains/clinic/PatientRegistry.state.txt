@@ -1,0 +1,4 @@
+registeredAt: Person -> Timestamp -- mandatory
+gender: Person -> Gender -- mandatory, in {M, F}
+insurerName: Patient -> InsurerName -- optional
+Patient is a Person -- mapping: separate

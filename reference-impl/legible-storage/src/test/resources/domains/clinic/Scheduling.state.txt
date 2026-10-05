@@ -1,0 +1,3 @@
+appt: (Physician, Patient, Timeslot) -> AppointmentStatus -- mandatory, in {booked, seen, cancelled}
+consultFee: (Physician, Patient) -> Int -- optional
+independent ReferralSource
