@@ -131,6 +131,55 @@ class RmapDeriverModelTest {
         assertTrue(!ddl.contains("\"triage_session_id\" TEXT NOT NULL"), ddl);
     }
 
+    @Test
+    void filteredUniquenessCarriesTheFieldAndEmitsAPartialIndex() {
+        String state = """
+                loanCopy: LoanId -> Copy     -- mandatory, unique while returnedAt absent
+                returnedAt: LoanId -> Timestamp -- optional
+                """;
+        RelationSchema t = RmapDeriver.derive("LendingProbe", state);
+        RelationSchema.Column lc = t.columnFor("loanCopy");
+        // Filtered uniqueness replaces the unconditional column UNIQUE.
+        assertTrue(!lc.unique(),
+                "no standalone UNIQUE — uniqueness applies to open individuals only");
+        assertEquals("returnedAt", lc.uniqueWhileAbsent(),
+                "the filter field is carried on the column model");
+        assertTrue(t.columnFor("copyCode2") == null
+                        || !t.columnFor("copyCode2").unique(),
+                "no phantom column");
+        assertTrue(t.ddl().contains("CREATE UNIQUE INDEX IF NOT EXISTS "
+                + "\"lending_probe_loan_copy_open_idx\""), t.ddl());
+        assertTrue(t.ddl().contains("\"returned_at\" IS NULL"), t.ddl());
+    }
+
+    @Test
+    void childTableForeignKeysNameTheSubjectTableAndColumn() {
+        String state = """
+                orderNumber: Order -> OrderNumber -- mandatory
+                tags: Order -> { Tag }            -- zero or more
+                """;
+        List<RelationSchema> children = RmapDeriver.childTablesFor("Intake", state);
+        assertEquals(1, children.size());
+        assertEquals("order -> intake(order)",
+                children.get(0).foreignKeys().get(0),
+                "the FK targets the subject's own table and identity column");
+    }
+
+    @Test
+    void aChildTableWithAnIdentityOnlyParentCarriesNoForeignKey() {
+        // FirmUri plays no functional role of its own (it appears only as an
+        // objectified-pair component and as the multi-valued subject) — its
+        // table is identity-only, so the provides child gets no FK.
+        String state = """
+                firmByClientId: ClientId -> FirmUri    -- mandatory
+                provides: FirmUri -> {Service}          -- zero or more
+                """;
+        List<RelationSchema> children = RmapDeriver.childTablesFor("Ontology", state);
+        assertEquals(1, children.size());
+        assertEquals(List.of(), children.get(0).foreignKeys(),
+                "an FK onto an identity-only parent is unpopulationable");
+    }
+
     // ---- subtyping (P3, maintenance rmap-subtyping) ------------------------
 
     @Test

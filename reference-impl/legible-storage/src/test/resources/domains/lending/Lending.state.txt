@@ -2,5 +2,5 @@ copyCode: Copy -> CopyCode -- mandatory, unique
 title: Copy -> Title -- mandatory
 borrower: Loan -> Member -- mandatory
 openedAt: Loan -> Timestamp -- mandatory
-loanCopy: Loan -> Copy -- mandatory, unique
+loanCopy: Loan -> Copy -- mandatory, unique while returnedAt absent
 returnedAt: Loan -> Timestamp -- optional

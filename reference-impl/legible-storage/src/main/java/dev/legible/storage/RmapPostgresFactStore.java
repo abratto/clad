@@ -124,6 +124,48 @@ public final class RmapPostgresFactStore implements FactStore {
         private RmapRegion(DSLContext dsl, RmapModel model) {
             this.dsl = dsl;
             this.model = model;
+            enforceRoutablePredicates(model);
+        }
+
+        /**
+         * Predicate routing answers "which table owns this fact's column?" with
+         * the <em>first</em> table carrying it. Under {@code mapping: partition}
+         * several member tables carry the same flattened supertype predicate, so
+         * routing cannot know which member an individual belongs to — writes
+         * would land in the first member regardless, and a mandatory flattened
+         * column makes the other members unwritable. Refuse loudly at region
+         * creation: model partition with `separate` (the default) or `absorb`.
+         */
+        private static void enforceRoutablePredicates(RmapModel model) {
+            Map<String, List<String>> owners = new LinkedHashMap<>();
+            for (RelationSchema t : model.tables()) {
+                for (RelationSchema.Column c : t.columns()) {
+                    // Identity (key) columns legitimately recur across a
+                    // concept's tables — a subtype, child, or compidot row
+                    // shares the parent's key. Only a DATA column owned by
+                    // more than one table is unroutable.
+                    if (t.primaryKey().contains(c.column())) {
+                        continue;
+                    }
+                    owners.computeIfAbsent(c.predicate(), k -> new ArrayList<>())
+                            .add(t.qualifiedName());
+                }
+            }
+            List<String> ambiguous = owners.entrySet().stream()
+                    .filter(e -> e.getValue().size() > 1)
+                    .map(e -> e.getKey() + " (" + String.join(", ", e.getValue()) + ")")
+                    .toList();
+            if (!ambiguous.isEmpty()) {
+                throw new IllegalStateException(
+                        "concept " + model.concept()
+                                + " routes the predicate(s) " + ambiguous
+                                + " to more than one table — a partitioned "
+                                + "supertype is not routable through the Region SPI. "
+                                + "Model the subtypes as `separate` (the default) or "
+                                + "`absorb`, or extend the SPI for member-addressed "
+                                + "writes (a gated decision). See RELATIONAL_LOWERING.md "
+                                + "§Subtypes and independent object types.");
+            }
         }
 
         // ---- reads ----------------------------------------------------------

@@ -85,33 +85,37 @@ class RmapEdgeBehaviorTest {
     }
 
     @Test
-    @DisplayName("P1 separate-subtype: a subtype write does NOT materialize the base row")
-    void subtypeWriteDoesNotMaterializeTheBaseRow() throws Exception {
-        // FINDING: the region SPI writes facts per predicate, nothing writes the
-        // supertype row, and intra-concept FKs are NOT rendered into DDL — so a
-        // subtype individual can exist in `patient_registry__patient` with no
-        // `patient_registry__person` row. The fact model says a Patient is a
-        // Person; the physical state silently disagrees.
+    @DisplayName("P1 separate-subtype: an orphan subtype write fails loudly on the FK; base+subtype writes join")
+    void separateSubtypePopulationIsEnforcedByTheFk() throws Exception {
+        // With intra-concept FKs rendered, `Patient is a Person` becomes the
+        // population constraint the fact model always asserted: to be a
+        // patient an individual must exist in the person table. No base-row
+        // materializer — the concept action writes the supertype's facts.
         RmapPostgresFactStore store = store("clinic", "PatientRegistry");
-        dev.legible.engine.TransactionalRegion r = (dev.legible.engine.TransactionalRegion) store.region("PatientRegistry");
+        dev.legible.engine.TransactionalRegion r =
+                (dev.legible.engine.TransactionalRegion) store.region("PatientRegistry");
 
-        r.write("pat-9", "insurerName", "Orphan");
+        var orphan = assertThrows(RuntimeException.class,
+                () -> r.write("pat-9", "insurerName", "Orphan"),
+                "a subtype individual with no supertype row is not a valid "
+                        + "population state and must fail loudly");
+        assertTrue(orphan.getMessage().contains("patient_registry__person"),
+                "the FK names the missing base table: " + orphan.getMessage());
+        assertEquals(0L, countRows("patient_registry__patient"));
 
-        assertEquals("Orphan", cell("patient_registry__patient", "insurer_name",
-                "person = 'pat-9'"), "the subtype row was written");
-        assertEquals(0L, countRows("patient_registry__person"),
-                "no person base row materializes behind the subtype row");
-        assertTrue(r.read("pat-9", "registeredAt").isEmpty(),
-                "the base facts are absent — the individual only half exists");
-
-        // Once the base row is written the two halves join up.
+        // The concept's action writes the base facts (buffered as one
+        // statement), then the subtype fact joins on the shared identity.
         r.beginAction();
-        r.write("pat-9", "registeredAt", "2026-10-04T09:00:00Z");
-        r.write("pat-9", "gender", "F");
+        r.write("pat-1", "registeredAt", "2026-10-04T09:00:00Z");
+        r.write("pat-1", "gender", "F");
         r.flushAction();
+        r.write("pat-1", "insurerName", "ACME");
+
         assertEquals(1L, countRows("patient_registry__person"));
-        assertEquals("Orphan", cell("patient_registry__patient", "insurer_name",
-                "person = 'pat-9'"));
+        assertEquals(1L, countRows("patient_registry__patient"));
+        assertEquals("ACME", cell("patient_registry__patient", "insurer_name",
+                "person = 'pat-1'"));
+        assertEquals("F", cell("patient_registry__person", "gender", "person = 'pat-1'"));
     }
 
     @Test
@@ -147,116 +151,124 @@ class RmapEdgeBehaviorTest {
     }
 
     @Test
-    @DisplayName("P3 partition: shared predicates route to the first owner; the second member splits or fails")
-    void partitionRoutingPinned() throws Exception {
-        // Both members carry their own predicates; table order (and therefore
-        // the "first owner" of the shared `partyName`) is the Client table.
-        String base = """
-                partyName: Party -> PartyName -- %s
+    @DisplayName("P3 partition: region creation refuses unroutable predicates")
+    void partitionRoutingIsRefusedAtRegionCreation() {
+        // Upgraded from "silent first-owner routing" (the earlier probe) to a
+        // loud guard: partition flattens the supertype's predicate into every
+        // member table, but the Region SPI routes by first owner and cannot
+        // know which member an individual belongs to — writes would be
+        // misrouted and mandatory flattened columns unsatisfiable.
+        String state = """
+                partyName: Party -> PartyName -- mandatory
                 discountRate: Client -> Int -- optional
                 creditLimit: Supplier -> Int -- optional
                 Client is a Party -- mapping: partition
                 Supplier is a Party -- mapping: partition
                 """;
+        RmapModel model = RmapDeriver.deriveModel("Roles", state);
+        RmapPostgresFactStore store = new RmapPostgresFactStore(dataSource, model.tables());
 
-        // --- mandatory variant ---
-        String mandatory = base.formatted("mandatory");
-        RmapModel m1 = RmapDeriver.deriveModel("Roles", mandatory);
-        RmapPostgresFactStore s1 = new RmapPostgresFactStore(dataSource, m1.tables());
-        s1.createSchema();
-        assertTrue(tableExists("roles__client") && tableExists("roles__supplier"),
-                "each partition member gets its own table");
-        dev.legible.engine.TransactionalRegion r =
-                (dev.legible.engine.TransactionalRegion) s1.region("Roles");
+        var thrown = assertThrows(IllegalStateException.class, () -> store.region("Roles"),
+                "a partitioned supertype's predicate is unroutable");
+        assertTrue(thrown.getMessage().contains("partyName"),
+                "the guard names the ambiguous predicate: " + thrown.getMessage());
+        assertTrue(thrown.getMessage().toLowerCase().contains("separate")
+                        || thrown.getMessage().toLowerCase().contains("absorb"),
+                "the guard names the remediation: " + thrown.getMessage());
 
-        // `partyName` routes to the FIRST owner (roles__client). Flushing a
-        // supplier member routes its supertype fact into the client table and
-        // its member fact into roles__supplier — where the flattened NOT NULL
-        // `party_name` can never be satisfied. The second member is unwritable.
-        r.beginAction();
-        r.write("su-1", "partyName", "SupplierCo");
-        r.write("su-1", "creditLimit", "5000");
-        var thrown = assertThrows(RuntimeException.class, r::flushAction,
-                "a mandatory flattened supertype column is unsatisfiable on the "
-                        + "non-first member under predicate routing");
-        assertTrue(thrown.getMessage().contains("party_name"),
-                "the gap is the flattened party_name column: " + thrown.getMessage());
-        // FINDING: the per-table flush leaves the routed row behind.
-        assertEquals("SupplierCo", cell("roles__client", "party_name", "party = 'su-1'"),
-                "the supplier's partyName landed in the CLIENT table");
-        assertEquals(0L, countRows("roles__supplier"), "no supplier row survives");
-
-        // --- optional variant (fresh tables: the first variant's mandatory
-        // DDL would otherwise persist through IF NOT EXISTS) ---
-        try (Connection c = dataSource.getConnection(); Statement st = c.createStatement()) {
-            st.execute("DROP TABLE IF EXISTS roles__client CASCADE");
-            st.execute("DROP TABLE IF EXISTS roles__supplier CASCADE");
-        }
-        String optional2 = base.formatted("optional");
-        RmapModel m2 = RmapDeriver.deriveModel("Roles", optional2);
+        // The guard is nullability-agnostic: an optional supertype fact is
+        // equally unroutable (it splits the individual across members).
+        String optional = """
+                partyName: Party -> PartyName -- optional
+                discountRate: Client -> Int -- optional
+                creditLimit: Supplier -> Int -- optional
+                Client is a Party -- mapping: partition
+                Supplier is a Party -- mapping: partition
+                """;
+        RmapModel m2 = RmapDeriver.deriveModel("Roles", optional);
         RmapPostgresFactStore s2 = new RmapPostgresFactStore(dataSource, m2.tables());
-        s2.createSchema();
-        dev.legible.engine.TransactionalRegion r2 =
-                (dev.legible.engine.TransactionalRegion) s2.region("Roles");
-
-        // A first-owner member writes wholly into its table...
-        r2.beginAction();
-        r2.write("cl-1", "partyName", "ClientCo");
-        r2.write("cl-1", "discountRate", "10");
-        r2.flushAction();
-        assertEquals("ClientCo", cell("roles__client", "party_name", "party = 'cl-1'"));
-        assertEquals("10", cell("roles__client", "discount_rate", "party = 'cl-1'"));
-        assertEquals(0L, countRows("roles__supplier"));
-
-        // ...while a second-owner member SPLITS across one row in each table.
-        r2.beginAction();
-        r2.write("su-1", "partyName", "SupplierCo");
-        r2.write("su-1", "creditLimit", "5000");
-        r2.flushAction();
-        assertEquals("SupplierCo", cell("roles__client", "party_name", "party = 'su-1'"),
-                "the supertype fact still routes to the first owner's table");
-        assertEquals("5000", cell("roles__supplier", "credit_limit", "party = 'su-1'"));
-        assertEquals(2L, countRows("roles__client"),
-                "FINDING: the supplier individual ALSO occupies a client-table row");
-        assertEquals(1L, countRows("roles__supplier"));
+        assertThrows(IllegalStateException.class, () -> s2.region("Roles"),
+                "the split-identity behavior is refused as well");
     }
 
     @Test
-    @DisplayName("P4 1:1 column UNIQUE blocks loan history on a copy")
-    void columnUniqueBlocksLoanHistoryOnACopy() {
-        // FINDING (the deferred 1:1 edge): `loanCopy -- unique` realizes as a
-        // column UNIQUE, which forbids ever loaning the same copy again. "At
-        // most one OPEN loan per copy" needs external-uniqueness-with-filter —
-        // outside the current machine-model grammar. Recorded as the deferral's
-        // evidence; model such facts without `unique` until the grammar grows.
+    @DisplayName("P4 1:1 with history: filtered uniqueness allows a returned copy to be loaned again")
+    void filteredUniquenessPreservesLoanHistory() throws Exception {
+        // The fixture carves `loanCopy -- unique while returnedAt absent`, the
+        // Postgres realisation being a partial unique index over loan_copy
+        // filtered on returned_at IS NULL: at most one OPEN loan per copy.
+        // The inline contrast keeps the plain-`unique` behavior visible.
         RmapPostgresFactStore store = store("lending", "Lending");
-        dev.legible.engine.TransactionalRegion r = (dev.legible.engine.TransactionalRegion) store.region("Lending");
+        dev.legible.engine.TransactionalRegion r =
+                (dev.legible.engine.TransactionalRegion) store.region("Lending");
 
         r.beginAction();
         r.write("c-1", "copyCode", "CB-1");
         r.write("c-1", "title", "Dune");
         r.flushAction();
-
         r.beginAction();
         r.write("l-1", "borrower", "m-1");
         r.write("l-1", "openedAt", "2026-10-01T10:00:00Z");
         r.write("l-1", "loanCopy", "c-1");
         r.flushAction();
 
-        // Return the loan: the copy is free again by every business meaning.
-        r.write("l-1", "returnedAt", "2026-10-04T10:00:00Z");
+        // While l-1 is open, a second loan of the same copy is rejected.
+        r.beginAction();
+        r.write("l-2", "borrower", "m-2");
+        r.write("l-2", "openedAt", "2026-10-05T10:00:00Z");
+        r.write("l-2", "loanCopy", "c-1");
+        var openConflict = assertThrows(RuntimeException.class, r::flushAction,
+                "at most one open loan per copy");
+        assertTrue(openConflict.getMessage().toLowerCase().contains("open_idx")
+                        || openConflict.getMessage().toLowerCase().contains("loan_copy"),
+                "the rejection is the filtered unique index: "
+                        + openConflict.getMessage());
 
-        var thrown = assertThrows(RuntimeException.class, () -> {
-            r.beginAction();
-            r.write("l-2", "borrower", "m-2");
-            r.write("l-2", "openedAt", "2026-10-05T10:00:00Z");
-            r.write("l-2", "loanCopy", "c-1");
-            r.flushAction();
-        }, "the second loan of a RETURNED copy must fail on the column UNIQUE — "
-                + "history is not expressible with a plain COLUMN UNIQUE");
-        assertTrue(thrown.getMessage().toLowerCase().contains("unique")
-                        || thrown.getMessage().toLowerCase().contains("loan_copy"),
-                "the rejection should be the loan_copy uniqueness: " + thrown.getMessage());
+        // Returning l-1 frees the copy: history preserved, l-2 may proceed.
+        r.write("l-1", "returnedAt", "2026-10-04T10:00:00Z");
+        r.beginAction();
+        r.write("l-2", "borrower", "m-2");
+        r.write("l-2", "openedAt", "2026-10-05T10:00:00Z");
+        r.write("l-2", "loanCopy", "c-1");
+        r.flushAction();
+        assertEquals(java.util.Set.of("c-1"), r.read("l-2", "loanCopy"),
+                "the copy is loaned again after its previous loan returned");
+        assertEquals(2L, countRows("lending__loan"), "both loans persist");
+
+        // Contrast — a plain `unique` (no filter) blocks history: even after
+        // the return, the second loan cannot happen.
+        String plain = """
+                copyCode: Copy -> CopyCode -- mandatory, unique
+                title: Copy -> Title -- mandatory
+                borrower: Loan -> Member -- mandatory
+                openedAt: Loan -> Timestamp -- mandatory
+                loanCopy: Loan -> Copy -- mandatory, unique
+                returnedAt: Loan -> Timestamp -- optional
+                """;
+        RmapModel model = RmapDeriver.deriveModel("PlainLending", plain);
+        RmapPostgresFactStore s2 = new RmapPostgresFactStore(dataSource, model.tables());
+        s2.createSchema();
+        dev.legible.engine.TransactionalRegion r2 =
+                (dev.legible.engine.TransactionalRegion) s2.region("PlainLending");
+        r2.beginAction();
+        r2.write("c-1", "copyCode", "CB-1");
+        r2.write("c-1", "title", "Dune");
+        r2.flushAction();
+        r2.beginAction();
+        r2.write("l-1", "borrower", "m-1");
+        r2.write("l-1", "openedAt", "2026-10-01T10:00:00Z");
+        r2.write("l-1", "loanCopy", "c-1");
+        r2.flushAction();
+        r2.write("l-1", "returnedAt", "2026-10-04T10:00:00Z");
+        r2.beginAction();
+        r2.write("l-2", "borrower", "m-2");
+        r2.write("l-2", "openedAt", "2026-10-05T10:00:00Z");
+        r2.write("l-2", "loanCopy", "c-1");
+        var plainConflict = assertThrows(RuntimeException.class, r2::flushAction,
+                "plain unique forbids ever repeating the copy, filtered does not");
+        assertTrue(plainConflict.getMessage().toLowerCase().contains("unique"),
+                "the block is the plain UNIQUE constraint: "
+                        + plainConflict.getMessage());
     }
 
     @Test

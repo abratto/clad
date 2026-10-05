@@ -85,9 +85,43 @@ public final class RmapMigration {
         for (RelationSchema.Check check : schema.checks()) {
             parts.add("CONSTRAINT " + check.name() + " CHECK (" + check.expression() + ")");
         }
+        for (String fk : schema.foreignKeys()) {
+            parts.add(fkConstraint(fk));
+        }
         sb.append("  ").append(String.join(",\n  ", parts));
         sb.append("\n)");
+        // Filtered uniqueness emits its partial index after the table itself
+        // (H2/jOOQ's DDLDatabase may reject the WHERE clause — see
+        // RELATIONAL_LOWERING.md's codegen note).
+        for (RelationSchema.Column col : schema.columns()) {
+            if (col.uniqueWhileAbsent() != null) {
+                sb.append(";\n").append(filteredIdx(schema.table(), col));
+            }
+        }
         return sb.toString();
+    }
+
+    private static String fkConstraint(String spec) {
+        // Same format RelationSchema#ddl renders: column -> table(target)
+        int arrow = spec.indexOf("->");
+        String column = spec.substring(0, arrow).trim();
+        String ref = spec.substring(arrow + 2).trim();
+        String target = ref.substring(ref.indexOf('(') + 1, ref.indexOf(')')).trim();
+        String table = ref.substring(0, ref.indexOf('(')).trim();
+        return "FOREIGN KEY (\"" + column + "\") REFERENCES "
+                + "\"" + table + "\" (\"" + target + "\")";
+    }
+
+    /** The partial unique index for a filtered-unique column. */
+    private static String filteredIdx(String table, RelationSchema.Column col) {
+        return "CREATE UNIQUE INDEX IF NOT EXISTS "
+                + "\"" + table + "_" + col.column() + "_open_idx\""
+                + " ON \"" + table + "\" (\"" + col.column() + "\")"
+                + " WHERE \"" + snake(col.uniqueWhileAbsent()) + "\" IS NULL";
+    }
+
+    private static String snake(String s) {
+        return s.replaceAll("([a-z0-9])([A-Z])", "$1_$2").toLowerCase();
     }
 
     private static String sqlType(String rmapType) {

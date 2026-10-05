@@ -29,5 +29,6 @@ CREATE TABLE IF NOT EXISTS "order_intake__order_and_product" (
 CREATE TABLE IF NOT EXISTS "order_intake__tags" (
   "order" varchar NOT NULL,
   "tags" varchar NOT NULL,
-  PRIMARY KEY ("order", "tags")
+  PRIMARY KEY ("order", "tags"),
+  FOREIGN KEY ("order") REFERENCES "order_intake" ("order")
 );

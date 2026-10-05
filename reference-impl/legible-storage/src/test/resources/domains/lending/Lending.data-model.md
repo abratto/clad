@@ -14,7 +14,7 @@
 - `title: Copy -> Title`
 - `borrower: Loan -> Member`
 - `openedAt: Loan -> Timestamp`
-- `loanCopy: Loan -> Copy` (mandatory, unique)
+- `loanCopy: Loan -> Copy` (mandatory, unique while returnedAt absent)
 - `returnedAt: Loan -> Timestamp` (optional)
 
 ### Population check
@@ -31,12 +31,12 @@ fact copyCode : Copy -> CopyCode -- mandatory, unique
 fact title : Copy -> Title -- mandatory
 fact borrower : Loan -> Member -- mandatory
 fact openedAt : Loan -> Timestamp -- mandatory
-fact loanCopy : Loan -> Copy -- mandatory, unique
+fact loanCopy : Loan -> Copy -- mandatory, unique while returnedAt absent
 fact returnedAt : Loan -> Timestamp -- optional
 ```
 
 ## Modeling Notes
 
-- A loan is identified by the (member, copy) pair, not by an own id; the
-  referenced copy column carries `unique`, i.e. at most one loan row mentions
-  a given copy at all — the probe target for loan history.
+- A loan is identified by its own `Loan` id; `loanCopy` is unique **while
+  `returnedAt` is absent** — at most one open loan per copy, loan history
+  preserved once a loan is returned (filtered uniqueness).

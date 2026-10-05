@@ -145,7 +145,11 @@ independent <ObjectType>
   subject; `{ V }` is a multi-valued ("zero or more") fact.
 - `<annotations>` is the same `--` tail the `## State` notation uses:
   `mandatory` | `optional`, `unique …`, `default <expr>`, `in {a, b, c}` or
-  `in {a..b}`.
+  `in {a..b}`. A filtered uniqueness — `unique while <field> absent` — is
+  external uniqueness restricted to open individuals (Halpin's 1:1 with
+  history: at most one open loan per copy): `unique` alone realises a plain
+  column `UNIQUE`; the filtered form replaces it and realises as a partial
+  unique index over the fact column filtered on `<field>`'s NULL.
 - `is a` declares a subtype and the per-model Rmap mapping (default
   `separate`); `independent T` declares an object type with no functional role.
 

@@ -69,6 +69,17 @@ public final class RmapDeriver {
     private static final Pattern DEFAULT = Pattern.compile("\\bdefault\\s+(\\w+)");
     private static final Pattern ENUM_IN = Pattern.compile("\\bin\\s*\\{([^}]*)\\}");
 
+    /**
+     * {@code unique while <field> absent|missing} — filtered uniqueness in the
+     * annotation tail (see {@link #uniqueWhileAbsentOf}).
+     */
+    private static final Pattern UNIQUE_WHILE_ABSENT = Pattern.compile(
+            "\\bunique\\s+while\\s+(\\w+)\\s+(?:absent|missing)");
+
+    /** A standalone `unique` — not the `unique while \u2026` spelling. */
+    private static final Pattern PLAIN_UNIQUE = Pattern.compile(
+            "\\bunique(?!\\s+while\\b)");
+
     /** How a subtype's fact types realise (the per-model Rmap choice). */
     private enum SubtypeMapping {
         ABSORB, SEPARATE, PARTITION;
@@ -197,7 +208,8 @@ public final class RmapDeriver {
 
     private record FactType(String field, List<String> subjectTypes, String valueType,
                             boolean multiValued, boolean mandatory, boolean unique,
-                            String defaultValue, String valueConstraint) {
+                            String defaultValue, String valueConstraint,
+                            String uniqueWhileAbsent) {
         boolean compound() {
             return subjectTypes.size() > 1;
         }
@@ -293,11 +305,19 @@ public final class RmapDeriver {
     private static FactType factType(String concept, String field, List<String> subjects,
                                      String valueType, boolean multi, String annotations) {
         String ann = annotations == null ? "" : annotations;
+        String filter = uniqueWhileAbsentOf(ann);
+        // When a filtered uniqueness is present it replaces the unconditional
+        // one: `unique while X absent` is NOT a global UNIQUE — the column-only
+        // `UNIQUE` marker must not also fire for the `unique while …` spelling.
+        boolean unique = filter != null
+                ? PLAIN_UNIQUE.matcher(ann).find()
+                : ann.contains("unique");
         return new FactType(field, subjects, valueType, multi,
                 ann.contains("mandatory"),
-                ann.contains("unique"),
+                unique,
                 defaultOf(ann),
-                enumConstraint(ann));
+                enumConstraint(ann),
+                filter);
     }
 
     private static String defaultOf(String annotations) {
@@ -307,6 +327,18 @@ public final class RmapDeriver {
 
     private static String enumConstraint(String annotations) {
         Matcher m = ENUM_IN.matcher(annotations);
+        return m.find() ? m.group(1) : null;
+    }
+
+    /**
+     * A filtered uniqueness — `unique while returnedAt absent` — the
+     * external-uniqueness-with-open-individuals rule (at most one OPEN loan per
+     * copy), realised by the DDL renderers as a partial unique index over the
+     * fact column filtered on the named field's NULL. Only meaningful with a
+     * single-valued fact; ignored for multi-valued child tables.
+     */
+    private static String uniqueWhileAbsentOf(String annotations) {
+        Matcher m = UNIQUE_WHILE_ABSENT.matcher(annotations);
         return m.find() ? m.group(1) : null;
     }
 
@@ -427,7 +459,7 @@ public final class RmapDeriver {
                     subtypeOf, supertypeOf, tableNames));
         }
         // Stage 2: multi-valued facts get their own child table (composite PK).
-        for (RelationSchema child : childTables(concept, facts)) {
+        for (RelationSchema child : childTables(concept, facts, tableNames, tables)) {
             tables.add(child);
         }
         // Independent object types play no functional role; Rmap realises each
@@ -484,7 +516,8 @@ public final class RmapDeriver {
                     addColumn(columns, snake(s), snake(s), "TEXT", true, false, null, null);
                 }
                 addColumn(columns, f.field(), snake(f.field()), sqlTypeOf(f.valueType()),
-                        f.mandatory(), f.unique(), f.defaultValue(), null);
+                        f.mandatory(), f.unique(), f.defaultValue(), null,
+                        f.uniqueWhileAbsent());
                 if (f.valueConstraint() != null) {
                     checks.add(new RelationSchema.Check(
                             checkName(objectType, f.field()),
@@ -498,7 +531,8 @@ public final class RmapDeriver {
                 continue;
             }
             addColumn(columns, f.field(), snake(f.field()), sqlTypeOf(f.valueType()),
-                    f.mandatory(), f.unique(), f.defaultValue(), null);
+                    f.mandatory(), f.unique(), f.defaultValue(), null,
+                    f.uniqueWhileAbsent());
             if (f.valueConstraint() != null) {
                 checks.add(new RelationSchema.Check(
                         checkName(objectType, f.field()),
@@ -548,7 +582,16 @@ public final class RmapDeriver {
     }
 
     /** Child tables for multi-valued ("zero or more") facts — Rmap stage 2. */
-    private static List<RelationSchema> childTables(String concept, List<FactType> facts) {
+    /**
+     * Child tables for multi-valued ("zero or more") facts — Rmap stage 2.
+     * The child's FK names the table actually keyed on the subject object type
+     * (the supertype's under absorb, the subtype's own otherwise — that is
+     * {@code tableNames}); the target column is the subject's identity column
+     * itself, not the concept name.
+     */
+    private static List<RelationSchema> childTables(String concept, List<FactType> facts,
+                                                    Map<String, String> tableNames,
+                                                    List<RelationSchema> tables) {
         List<RelationSchema> out = new ArrayList<>();
         for (FactType f : facts) {
             if (!f.multiValued()) {
@@ -561,10 +604,24 @@ public final class RmapDeriver {
             cols.add(new RelationSchema.Column(f.field(), snake(f.field()),
                     sqlTypeOf(f.valueType()), true, false, null, null));
             List<String> pk = List.of(snake(subject), snake(f.field()));
+            String parentTable = tableNames.getOrDefault(subject, snake(concept));
+            // Render the intra-concept FK only when the parent table carries
+            // data facts — an identity-only table (the subject plays no
+            // functional role, e.g. only objectified-pair components) can never
+            // hold a row through the SPI, so an FK there would be
+            // unpopulationable.
+            boolean parentHasData = tables.stream()
+                    .filter(t -> t.table().equals(parentTable))
+                    .findFirst()
+                    .map(t -> !t.dataColumns().isEmpty())
+                    .orElse(false);
             out.add(new RelationSchema(concept,
                     snake(concept) + "__" + snake(f.field()), subject,
                     cols, pk,
-                    List.of(snake(subject) + "(" + snake(concept) + ")"),
+                    parentHasData
+                            ? List.of(snake(subject) + " -> " + parentTable
+                                      + "(" + snake(subject) + ")")
+                            : List.<String>of(),
                     List.of(), false));
         }
         return out;
@@ -573,11 +630,19 @@ public final class RmapDeriver {
     private static void addColumn(List<RelationSchema.Column> columns, String predicate,
                                   String column, String sqlType, boolean mandatory,
                                   boolean unique, String defaultValue, String constraint) {
+        addColumn(columns, predicate, column, sqlType, mandatory, unique,
+                defaultValue, constraint, null);
+    }
+
+    private static void addColumn(List<RelationSchema.Column> columns, String predicate,
+                                  String column, String sqlType, boolean mandatory,
+                                  boolean unique, String defaultValue, String constraint,
+                                  String uniqueWhileAbsent) {
         if (columns.stream().anyMatch(c -> c.column().equals(column))) {
             return;
         }
         columns.add(new RelationSchema.Column(predicate, column, sqlType,
-                mandatory, unique, defaultValue, constraint));
+                mandatory, unique, defaultValue, constraint, uniqueWhileAbsent));
     }
 
     private static String compoundKey(List<String> subjectTypes) {
@@ -626,7 +691,10 @@ public final class RmapDeriver {
     }
 
     // Public helper for tests/callers building child tables.
+    /** Test hook: the model's child tables (composite PK over (subject, value)). */
     static List<RelationSchema> childTablesFor(String concept, String stateNotation) {
-        return childTables(concept, parse(concept, stateNotation).facts());
+        return deriveModel(concept, stateNotation).tables().stream()
+                .filter(t -> t.primaryKey().size() == 2 && t.columns().size() == 2)
+                .toList();
     }
 }

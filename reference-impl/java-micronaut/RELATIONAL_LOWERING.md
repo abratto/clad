@@ -23,6 +23,8 @@ roles**. CLAD adds one constraint of its own: **no cross-concept foreign key**.
 | `fact p : ( A, B ) -> V` (objectified subject) | compidot table keyed on the component columns — no surrogate id |
 | value constraint (e.g. `in {…}`) | `CHECK` constraint |
 | uniqueness constraint | `UNIQUE` (or `PRIMARY KEY` on the subject column) |
+| filtered uniqueness: `unique while <field> absent` | partial unique index — `(col) WHERE <field> IS NULL` — replacing the plain `UNIQUE`; external uniqueness over open individuals, which preserves 1:1-with-history (a returned loan frees the copy) |
+| intra-concept reference | `FOREIGN KEY (col) REFERENCES table(col)` — rendered by both DDL writers; child-table FKs name the parent keyed on the fact's subject, and are omitted when that table is identity-only (it could never hold a row) |
 | intra-concept entity reference | real FK (same concept) |
 | **cross-concept identifier** | **opaque typed column — never a FK** |
 
@@ -87,9 +89,14 @@ recorded in the fact line:
 | Stage 03b form | Relational realisation |
 |---|---|
 | `Sub is a Sup -- mapping: absorb` | The subtype's simple-key fact types become columns on the supertype's table (the subtype itself realises no table). Right for small/sparse subtypes: no extra join, subtype columns nullable where their supertype sibling is optional. |
-| `Sub is a Sup -- mapping: separate` (or no mapping declared — the deterministic default) | The subtype gets its own table keyed on the **supertype's identity column** (a subtype has no reference scheme of its own; a subtype row is a supertype row), with an intra-concept FK naming the supertype's table. The subtype table's identity-owning object type is the supertype's. |
-| `Sub is a Sup -- mapping: partition` (disjoint, exhaustive) | The supertype's own fact types are flattened into each member's table; the members are the only tables (no parent), each keyed on the shared identity. **Runtime caveat:** the region SPI routes facts by predicate to the first table owning the predicate, so a partitioned region's writes land in the first member's table unless the concept addresses members explicitly. Model partition only with a deliberate plan for that. |
+| `Sub is a Sup -- mapping: separate` (or no mapping declared — the deterministic default) | The subtype gets its own table keyed on the **supertype's identity column** (a subtype has no reference scheme of its own; a subtype row is a supertype row), with a rendered intra-concept FK naming the supertype's table. **Write semantics:** the FK is the fact model's own subset constraint — a subtype fact for an individual with no supertype row fails loudly, so a concept action creating a subtype individual writes the supertype's facts in the same buffered action. Nothing materializes the base row implicitly. |
+| `Sub is a Sup -- mapping: partition` (disjoint, exhaustive) | The supertype's own fact types are flattened into each member's table at derivation. **Not runtime-routable:** the region SPI routes facts by predicate to the first owning table, and partition puts the same predicate in every member, so the store refuses such a region at creation (naming the shared predicates). Derivation still realises the schema for documentation; a concept wanting partition runtime must model `separate` (default)/`absorb`, or extend the SPI with member-addressed writes (a gated decision). |
 | `independent T` | A single-column table keyed on `T`'s reference scheme, beside the concept's other tables (`concept__t`), for object types that play no functional fact role ("just in case a model needs them"). |
+
+**Codegen note:** the partial unique index (`WHERE … IS NULL`) is standard on
+Postgres but may not be parsed by jOOQ's `DDLDatabase` (H2); the shipped login
+migration carries none. A derived app adopting filtered uniqueness must
+re-verify its codegen step.
 
 `RmapDeriver.deriveFromDataModel()` still throws when a concept realises as more
 than one table — callers with multi-table regions use

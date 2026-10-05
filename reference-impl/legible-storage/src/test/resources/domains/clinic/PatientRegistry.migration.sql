@@ -19,5 +19,6 @@ CREATE TABLE IF NOT EXISTS "patient_registry__person" (
 
 CREATE TABLE IF NOT EXISTS "patient_registry__patient" (
   "person" varchar NOT NULL PRIMARY KEY,
-  "insurer_name" varchar
+  "insurer_name" varchar,
+  FOREIGN KEY ("person") REFERENCES "patient_registry__person" ("person")
 );

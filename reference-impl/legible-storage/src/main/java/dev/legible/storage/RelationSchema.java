@@ -72,7 +72,10 @@ public record RelationSchema(
      * alternate-key uniqueness constraint; {@code defaultValue} is the SQL
      * expression used when a fact is cleared and in the DDL's {@code DEFAULT}.
      * {@code valueConstraint} is an optional {@code CHECK} predicate (e.g. an
-     * enum membership or a comparison).
+     * enum membership or a comparison). {@code uniqueWhileAbsent} is the optional
+     * filtered-uniqueness field (from `unique while <field> absent`): the DDL
+     * renderers emit a partial unique index on this column filtered on that
+     * field's NULL — external uniqueness restricted to open individuals.
      */
     public record Column(
             String predicate,
@@ -81,12 +84,21 @@ public record RelationSchema(
             boolean mandatory,
             boolean unique,
             String defaultValue,
-            String valueConstraint) {
+            String valueConstraint,
+            String uniqueWhileAbsent) {
 
         /** Convenience for the common no-value-constraint case. */
         public Column(String predicate, String column, String sqlType,
                       boolean mandatory, boolean unique, String defaultValue) {
-            this(predicate, column, sqlType, mandatory, unique, defaultValue, null);
+            this(predicate, column, sqlType, mandatory, unique, defaultValue, null, null);
+        }
+
+        /** Convenience for the value-constraint case. */
+        public Column(String predicate, String column, String sqlType,
+                      boolean mandatory, boolean unique, String defaultValue,
+                      String valueConstraint) {
+            this(predicate, column, sqlType, mandatory, unique, defaultValue,
+                    valueConstraint, null);
         }
     }
 
@@ -131,12 +143,16 @@ public record RelationSchema(
         return s.replaceAll("([a-z0-9])([A-Z])", "$1_$2").toLowerCase();
     }
 
-    /** The {@code CREATE TABLE} statement derived from this schema. */
+    /**
+     * The {@code CREATE TABLE} statement derived from this schema, plus
+     * (rendered if present) the filtered-uniqueness partial indexes for its
+     * columns. Intra-concept FKs are rendered as table constraints.
+     */
     public String ddl() {
         boolean singlePk = primaryKey.size() == 1;
         String singleKeyCol = singlePk ? primaryKey.get(0) : null;
         StringBuilder sb = new StringBuilder();
-        sb.append("CREATE TABLE IF NOT EXISTS ").append(table).append(" (\n");
+        sb.append("CREATE TABLE IF NOT EXISTS \"").append(table).append("\" (\n");
         List<String> parts = new ArrayList<>();
         for (Column c : columns) {
             StringBuilder col = new StringBuilder();
@@ -163,9 +179,38 @@ public record RelationSchema(
         for (Check check : checks) {
             parts.add("CONSTRAINT " + check.name() + " CHECK (" + check.expression() + ")");
         }
+        for (String fk : foreignKeys) {
+            parts.add(fkConstraint(fk));
+        }
         sb.append("  ").append(String.join(",\n  ", parts));
         sb.append("\n)");
+        // Filtered uniqueness emits its partial index after the table itself.
+        for (Column c : columns) {
+            if (c.uniqueWhileAbsent() != null) {
+                sb.append(";\n").append(filteredIdx(table, c));
+            }
+        }
         return sb.toString();
+    }
+
+    private static String fkConstraint(String spec) {
+        // Format: column -> table(target)
+        int arrow = spec.indexOf("->");
+        String column = spec.substring(0, arrow).trim();
+        String ref = spec.substring(arrow + 2).trim();
+        String target = ref.substring(ref.indexOf('(') + 1, ref.indexOf(')')).trim();
+        String table = ref.substring(0, ref.indexOf('(')).trim();
+        return "FOREIGN KEY (" + quote(column) + ") REFERENCES "
+                + quote(table) + " (" + quote(target) + ")";
+    }
+
+    /** The partial unique index for a filtered-unique column. */
+    private static String filteredIdx(String table, Column c) {
+        return "CREATE UNIQUE INDEX IF NOT EXISTS "
+                + quote(table + "_" + c.column() + "_open_idx")
+                + " ON " + quote(table)
+                + " (" + quote(c.column()) + ")"
+                + " WHERE " + quote(snake(c.uniqueWhileAbsent())) + " IS NULL";
     }
 
     private static String quote(String ident) {
