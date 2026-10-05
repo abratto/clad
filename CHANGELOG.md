@@ -10,6 +10,49 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.17.0] — 2026-10-04
+
+**Complete Halpin R-map for durable relational persistence: a concept region
+is a table set.** The relational lowering is ported from the experiment-proven
+Rmap rewrite (R20 maintenance change
+[`maintenance/rmap-table-set-storage.md`](maintenance/rmap-table-set-storage.md),
+design approved in the source experiment). Pre-1.0, so the engine-SPI and
+storage-shape extensions are a minor change; the observable use-case contracts
+are preserved.
+
+- **Engine SPI.** `Region` gains composite-subject overloads (the individual is
+  the component pair — no surrogate id, no mapping table); `FactStore` gains
+  `maybeRegion` for stateless concepts; new `TransactionalRegion` lets
+  `SyncEngine.execute` buffer an action's writes and flush them as one statement
+  per individual, which is what lets a relational region honour Rmap's
+  mandatory → `NOT NULL`.
+- **Storage.** `RmapModel` makes a concept's region a table set; `RmapDeriver`
+  realises Halpin's stages 1–4 completely (compound/objectified subjects,
+  multi-valued child tables, subtyping via explicit
+  `absorb | separate | partition`, independent object types) and now **throws**
+  on an unparseable `## State` relation line instead of dropping it.
+  `RelationSchema` carries composite PK / `NOT NULL` / `UNIQUE` / `CHECK` /
+  intra-concept FK and the identity/data column split; `RmapMigration` renders
+  full model sets. `RmapPostgresFactStore` routes facts across the table set,
+  buffers writes (mandatory → `NOT NULL`) and retracts (remove-then-write
+  coalesces), and writes `TIMESTAMP` as ISO-8601.
+- **Write path (fix).** A single-fact write outside an engine action now
+  updates an existing row in place rather than issuing an upsert whose proposed
+  insert tuple PostgreSQL rejects `NOT NULL` *before* resolving the conflict;
+  multi-valued child-table values insert as their own rows without overwriting
+  siblings.
+- **Concepts.** Both `PasswordAuthConcept`s (the `java-legible` example and the
+  `java-micronaut` app concept) speak the ISO-8601 instant wire encoding,
+  matching the store's coercion.
+- **Docs.** `methodology/implementation/STORAGE_MAPPING.md` records the
+  table-set Rmap as doctrine; `reference-impl/java-micronaut/RELATIONAL_LOWERING.md`
+  gains the subtyping rules and the tabled derived-views decision.
+- **Tests.** The `java-micronaut` persistence IT is discovered by surefire
+  again (an `*IT` name is not run by the reactor), and new Testcontainers suites
+  cover composite subjects, the table-set store, the write path, and the
+  timestamp wire contract. Quality-gate: `verify_maintenance_change_readiness.py`
+  now parses the shipped template's own `Status` field.
+
 ## [0.16.0] — 2026-09-28
 
 **Spec-driven testing: frozen Acceptance Spec + mutation gate replace in-loop

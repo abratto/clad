@@ -597,29 +597,53 @@ public final class RmapPostgresFactStore implements FactStore {
             dsl.deleteFrom(table(schema)).where(cond).execute();
         }
 
-        private void clearRowBySubject(RelationSchema schema, String subject) {
-            dsl.deleteFrom(table(schema)).where(subjectField(schema).eq(subject)).execute();
-        }
-
-        private List<org.jooq.Field<?>> conflictFields(RelationSchema schema) {
-            List<Field<?>> out = new ArrayList<>();
-            for (String pk : schema.primaryKey()) {
-                out.add(DSL.field(DSL.name(pk)));
-            }
-            return out;
-        }
-
+        /**
+         * Write one fact delivered as {@code predicate(subject) = value}.
+         *
+         * <p>When the fact's column is part of a composite key (a multi-valued
+         * child table, e.g. {@code firm_uri + provides}), the value <em>is</em>
+         * part of the row's identity, so each distinct value is its own row:
+         * insert it if absent, never overwrite a sibling. Otherwise the row is
+         * keyed on the subject alone and the column is a fact to update:
+         * update-if-present, else insert.
+         *
+         * <p>Deliberately not {@code INSERT … ON CONFLICT DO UPDATE}: PostgreSQL
+         * validates {@code NOT NULL} on the <em>proposed insert tuple</em> before
+         * resolving the conflict, so a partial upsert of an existing multi-column
+         * row would be rejected for its absent mandatory sibling even though the
+         * row exists. Update-then-insert updates in place instead. When the row
+         * does not exist and a mandatory sibling is absent, the insert correctly
+         * fails {@code NOT NULL} — surfacing the incomplete write rather than
+         * inventing a value.
+         */
         private void writeColumn(RelationSchema schema, RelationSchema.Column col,
                                  String subject, Object typed) {
-            Map<Field<?>, Object> insert = new LinkedHashMap<>();
-            insert.put(subjectField(schema), subject);
-            insert.put(DSL.field(DSL.name(col.column())), typed);
-            Map<Field<?>, Object> update = new LinkedHashMap<>();
-            update.put(DSL.field(DSL.name(col.column())), typed);
+            Field<?> valueField = DSL.field(DSL.name(col.column()));
             try {
-                dsl.insertInto(table(schema)).set(insert)
-                        .onConflict(conflictFields(schema)).doUpdate().set(update)
-                        .execute();
+                org.jooq.Condition keyCond = subjectField(schema).eq(subject);
+                boolean valueInKey = schema.primaryKey().contains(col.column());
+                if (valueInKey) {
+                    // The value completes the key: match the full key so a
+                    // sibling value is not overwritten, and insert only if new.
+                    org.jooq.Condition fullKey = keyCond.and(typedObjectField(col).eq(typed));
+                    if (dsl.fetchCount(table(schema), fullKey) == 0) {
+                        Map<Field<?>, Object> insert = new LinkedHashMap<>();
+                        insert.put(subjectField(schema), subject);
+                        insert.put(valueField, typed);
+                        dsl.insertInto(table(schema)).set(insert).execute();
+                    }
+                    return;
+                }
+                if (dsl.fetchCount(table(schema), keyCond) > 0) {
+                    Map<Field<?>, Object> update = new LinkedHashMap<>();
+                    update.put(valueField, typed);
+                    dsl.update(table(schema)).set(update).where(keyCond).execute();
+                    return;
+                }
+                Map<Field<?>, Object> insert = new LinkedHashMap<>();
+                insert.put(subjectField(schema), subject);
+                insert.put(valueField, typed);
+                dsl.insertInto(table(schema)).set(insert).execute();
             } catch (org.jooq.exception.DataAccessException e) {
                 throw new PostgresFactStore.UncheckedSQLException(new SQLException(e));
             }

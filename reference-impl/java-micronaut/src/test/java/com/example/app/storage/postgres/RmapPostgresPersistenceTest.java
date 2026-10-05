@@ -37,7 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @EnabledIfSystemProperty(named = "clad.storage", matches = "postgres")
 @MicronautTest
-class RmapPostgresPersistenceIT {
+class RmapPostgresPersistenceTest {
 
     @Inject
     DataSource dataSource;
@@ -101,6 +101,11 @@ class RmapPostgresPersistenceIT {
         assertEquals(Set.of("jooq-user"), username);
 
         // ...and vice versa: the engine's write is readable as a typed jOOQ row.
+        // Seed the mandatory credential column first. The SPI writes one fact at
+        // a time; Rmap realises a mandatory role as NOT NULL, so an individual's
+        // row must be created with its mandatory facts. This mirrors production
+        // (the engine buffers an action's writes into one statement).
+        factStore.region("PasswordAuth").write("u-jooq-1", "passwordHash", "sha256:seed");
         factStore.region("PasswordAuth").write("u-jooq-1", "failedAttempts", "3");
         Integer attempts = dsl().select(PASSWORD_AUTH.FAILED_ATTEMPTS)
                 .from(PASSWORD_AUTH)
