@@ -180,6 +180,46 @@ class RmapDeriverModelTest {
                 "an FK onto an identity-only parent is unpopulationable");
     }
 
+    @Test
+    void roleMembershipAsAnObjectifiedFactRealisesTheDiscriminatorJunction() {
+        // The role-catalog recipe (RELATIONAL_LOWERING §partition remediation):
+        // membership asserted as an objectified fact instead of an implied
+        // subtype — one junction table carries the role discriminator and the
+        // role-scoped columns; no partition, so every predicate has one owner.
+        String state = """
+                partyName: Party -> PartyName -- mandatory
+                roleName: Role -> RoleName -- mandatory, unique
+                memberSince: ( Party, Role ) -> Timestamp -- mandatory
+                creditLimit: ( Party, Role ) -> Int -- optional
+                discountRate: ( Party, Role ) -> Int -- optional
+                """;
+        RmapModel model = RmapDeriver.deriveModel("RoleAssignments", state);
+        assertEquals(3, model.tables().size());
+        RelationSchema party = model.tableFor("Party");
+        RelationSchema role = model.tableFor("Role");
+        RelationSchema junction = model.tables().stream()
+                .filter(t -> t.primaryKey().size() == 2).findFirst().orElse(null);
+        assertNotNull(party);
+        assertNotNull(role);
+        assertNotNull(junction, "the membership fact is the junction");
+        assertEquals(java.util.List.of("party", "role"), junction.primaryKey(),
+                "the discriminator pair IS the key");
+        assertNotNull(junction.columnFor("memberSince"), "membership marker is a column");
+        assertNotNull(junction.columnFor("creditLimit"), "role-scoped fact on the junction");
+        assertNotNull(junction.columnFor("discountRate"));
+        // Every data predicate has exactly one owner — runtime-routable.
+        for (RelationSchema t : model.tables()) {
+            for (RelationSchema.Column c : t.dataColumns()) {
+                long owners = model.tables().stream()
+                        .filter(other -> other.columnFor(c.predicate()) != null
+                                && !other.primaryKey().contains(c.column()))
+                        .count();
+                assertEquals(1L, owners,
+                        "data predicate '" + c.predicate() + "' is multi-owned");
+            }
+        }
+    }
+
     // ---- subtyping (P3, maintenance rmap-subtyping) ------------------------
 
     @Test

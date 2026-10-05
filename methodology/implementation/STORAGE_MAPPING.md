@@ -91,6 +91,10 @@ model first.
   (R2: no cross-region reads)
 - Constraints → `UNIQUE`, `NOT NULL`, `CHECK`, lookup tables, etc.
 
+How the whole relational pipeline fits together — derivation, runtime
+semantics, guardrails, and the drift guard — is mapped in
+[`../architecture/RELATIONAL_RMAP.md`](../architecture/RELATIONAL_RMAP.md).
+
 The deterministic mapping from the Stage 03b CSDP fact model to this schema is
 Halpin's Rmap, complete: arity + uniqueness + mandatory roles selects a
 single table per concept **or a table set** (`RmapModel`) for a concept

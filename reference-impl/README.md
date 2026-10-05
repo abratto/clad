@@ -29,10 +29,13 @@ the canonical runtime is the **fire-after-commit engine**:
   (Fly.io deploy). Re-lowered from the legacy transactional engine — see
   `maintenance/reference-profiles-fire-after-commit.md`.
 - [`legible-storage/`](legible-storage/) — the `PostgresFactStore`
-  (generic fact relation) and `RmapPostgresFactStore` (typed table per
-  concept). These show the engine is storage-agnostic: the same
+  (generic fact relation) and `RmapPostgresFactStore` (R-map **table sets**
+  for a concept whose facts range over several object types, objectified
+  subjects, or multi-valued facts — a concept owning one object type is
+  still one table). These show the engine is storage-agnostic: the same
   `Concept`/`SyncRule` code runs on in-memory or Postgres with identical
-  outcomes. **CLAD ships in-memory and Postgres as supported backends**; any
+  outcomes. The end-to-end narrative lives in
+  `../methodology/architecture/RELATIONAL_RMAP.md`. **CLAD ships in-memory and Postgres as supported backends**; any
   other backend — including an RDF/SPARQL triplestore — is a `FactStore`
   implementation you provide against the SPI.
 

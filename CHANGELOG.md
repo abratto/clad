@@ -10,6 +10,52 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.18.0] — 2026-10-05
+
+**The canonical Rmap input is the Stage 03b data model, the pipeline is
+proven across fixture domains, and the durable relational contract gains
+rendered intra-concept FKs, a partition-routing guard, and filtered
+uniqueness.** Below minor version; observables preserved (the login-derived
+schema is byte-identical throughout).
+
+- **CSDP → Rmap, end to end.** Each Stage 03b `<Name>.data-model.md` carries a
+  CSDP-aligned `## Machine model` block (`object-type … identified-by …`,
+  `fact … : Subject -> Value`, `is a`, `independent T`), emitted
+  deterministically by `generate_data_model.py` from the concept `## State`,
+  validated by `verify_data_model.py`, and parsed by Java
+  (`RmapDeriver.deriveFromDataModel`) — the CSDP artifact is now the machine
+  input; `## State` remains the generator's source and the equivalence oracle.
+  Deliberately not ORM-ML (XML diagram serialization, external schema,
+  not human-authored); CLAD adopts the CSDP step structure and constraint
+  vocabulary in a hand-authorable rendering. The identity of the two inputs is
+  an asserted oracle (`RmapDeriverTest`); the End-to-end narrative lives in
+  `methodology/architecture/RELATIONAL_RMAP.md`.
+- **Durable contract refinements** (`maintenance/relational-gaps-closure.md`):
+  intra-concept foreign keys render and *enforce* — a subtype write without
+  its supertype row fails loudly (no implicit base-row materializer);
+  child-table FKs name the real parent (and are omitted for identity-only
+  parents); a partitioned supertype's region is refused at creation with the
+  remediation spelled out (`separate`/`absorb` or the role-catalog recipe —
+  assert membership as an objectified fact and the discriminator/junction
+  table derives); **filtered uniqueness** (`unique while <field> absent`)
+  realises as a Postgres partial unique index, closing the 1:1-with-history
+  case: a returned loan frees the copy while open loans stay unique.
+- **Hardening caught by exercise:** the deriver's CHECK-constraint names for
+  compound subjects contained `+` (illegal unquoted identifier — the DDL
+  did not execute); sanitised like table names.
+- **Fixtures as proof.** Three domains (clinic, ordering, lending) exercise
+  the full pipeline — 3-part objectified subjects, child tables with
+  retract-to-empty and retract-to-default, separate-subtype joins,
+  partial-app-independent writes, ISO-8601 round-trips — with byte-frozen
+  migration oracles, and `RmapEdgeBehaviorTest` pins the risky behaviours as
+  regression-visible probes (P1–P5). The in-memory lifecycle enforces none of
+  the relational constraints (documented; durable contract only).
+- **Documentation.** `methodology/architecture/RELATIONAL_RMAP.md` is the
+  consolidated how-it-works (pipeline, rules, guardrails, drift guard,
+  evidence map); `legible-storage/README.md` rewritten (it still described
+  the pre-table-set store); pointers added from `STORAGE_MAPPING.md` and the
+  profile README.
+
 ## [0.17.0] — 2026-10-04
 
 **Complete Halpin R-map for durable relational persistence: a concept region

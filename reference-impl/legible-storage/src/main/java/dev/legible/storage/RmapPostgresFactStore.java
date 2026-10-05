@@ -159,12 +159,16 @@ public final class RmapPostgresFactStore implements FactStore {
                 throw new IllegalStateException(
                         "concept " + model.concept()
                                 + " routes the predicate(s) " + ambiguous
-                                + " to more than one table — a partitioned "
-                                + "supertype is not routable through the Region SPI. "
-                                + "Model the subtypes as `separate` (the default) or "
-                                + "`absorb`, or extend the SPI for member-addressed "
-                                + "writes (a gated decision). See RELATIONAL_LOWERING.md "
-                                + "§Subtypes and independent object types.");
+                                + " to more than one table — a partitioned supertype"
+                                + " leaves membership unstated, so the Region SPI"
+                                + " cannot know which member a fact belongs to. Realise"
+                                + " the roles instead: `separate` (the default) or"
+                                + " `absorb` subtype mapping, or make membership an"
+                                + " explicit objectified fact (`member: (Party, Role) ->"
+                                + " Timestamp`) — that derives the discriminator/junction"
+                                + " table with the role-scoped columns on it. See"
+                                + " RELATIONAL_LOWERING.md §Subtypes and independent"
+                                + " object types (the role-catalog recipe).");
             }
         }
 
