@@ -2,12 +2,12 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `proposed`
+- **Status:** `closed`
 - **Affected profile(s):** all profiles (new read-only CLI command)
 - **Feature-contract impact:** `none` (reads the corpus and feature
   snapshots; writes nothing)
-- **Design gate:** `pending`
-- **Evidence gate:** `pending`
+- **Design gate:** `approved`
+- **Evidence gate:** `approved`
 - **Change summary:** `./clad corpus-status` reports the shape of the
   canonical concept corpus: per-concept history, stale proposal snapshots,
   dependence in-degree, and remodel candidates.

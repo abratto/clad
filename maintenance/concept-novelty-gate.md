@@ -2,13 +2,13 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `proposed`
+- **Status:** `closed`
 - **Affected profile(s):** all profiles (gate + templates + config + docs)
 - **Feature-contract impact:** `additive` (one new blocking Gate-1 check,
   one new advisory lint; the `## Why not existing` template section is
   required only when the check finds a near-match)
-- **Design gate:** `pending`
-- **Evidence gate:** `pending`
+- **Design gate:** `approved`
+- **Evidence gate:** `approved`
 - **Change summary:** consulting the canonical concept catalog before
   writing `new` in the Origin column becomes an auditable Gate-1
   obligation instead of a prose instruction.

@@ -10,11 +10,10 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
-## [Unreleased]
+## [0.19.0] — 2026-10-05
 
 **Concept governance hardening** — six maintenance changes making
-use-case-driven concept identification auditable rather than aspirational
-(proposed; pending design/evidence gates):
+use-case-driven concept identification auditable rather than aspirational:
 
 - **`staged-naming-discipline`** — two social rules are now mechanical
   Gate-1 checks: `verify_responsibility_map_shape.py` rejects signatures

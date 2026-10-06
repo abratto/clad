@@ -2,12 +2,12 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `proposed`
+- **Status:** `closed`
 - **Affected profile(s):** all profiles (advisory planning check + overlay docs)
 - **Feature-contract impact:** `none` (not wired into the per-UC stage loop;
   invoked from the optional PLANNING overlay only)
-- **Design gate:** `pending`
-- **Evidence gate:** `pending`
+- **Design gate:** `approved`
+- **Evidence gate:** `approved`
 - **Change summary:** the plan board is checked against concept origins so
   orderings that guarantee corpus friction are visible at planning time.
 

@@ -2,12 +2,12 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `proposed`
+- **Status:** `closed`
 - **Affected profile(s):** all profiles (gate + promotion + templates + R22)
 - **Feature-contract impact:** `additive` (new Origin value `remodel:UC-XX`;
   `bind`/`extends`/`new` semantics unchanged)
-- **Design gate:** `pending`
-- **Evidence gate:** `pending`
+- **Design gate:** `approved`
+- **Evidence gate:** `approved`
 - **Change summary:** R22 gains a fourth proposal class — `remodel` — the
   deliberate, reviewable path for a non-additive change to a canonical
   concept, gated by migration notes and historical consent.

@@ -2,12 +2,12 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `proposed`
+- **Status:** `closed`
 - **Affected profile(s):** all profiles (gate + config + docs)
 - **Feature-contract impact:** `additive` (new advisory warnings only; no
   blocking behaviour changes, no artefact shape changes)
-- **Design gate:** `pending`
-- **Evidence gate:** `pending`
+- **Design gate:** `approved`
+- **Evidence gate:** `approved`
 - **Change summary:** the judgment subset of the concept criteria gains
   heuristic warnings that surface granularity smells at Stage 02 review
   without pretending to decide them.

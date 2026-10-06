@@ -2,12 +2,12 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `proposed`
+- **Status:** `closed`
 - **Affected profile(s):** all profiles (gate + templates + docs)
 - **Feature-contract impact:** `additive` (two new Gate-1 checks; no
   existing artefact shape changes)
-- **Design gate:** `pending`
-- **Evidence gate:** `pending`
+- **Design gate:** `approved`
+- **Evidence gate:** `approved`
 - **Change summary:** two rules that were social ("01a declares names
   only"; "the chain table may not invent names the map never declared")
   become mechanical Gate-1 checks.
