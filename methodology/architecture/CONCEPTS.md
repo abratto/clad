@@ -232,9 +232,9 @@ conceptual data model and its compilation contract beside it**
 (`<Name>.data-model.md`, `<Name>.contract.md`) — a feature derives a model only
 when it introduces or changes the concept's state, and a contract only when it
 introduces or extends the concept. a use case
-**composes** it (reuse / extend / propose) rather than re-deriving it (hard
-rule **R22**). Reuse is roughly 90% of design — an app is a composition of
-concepts, and only the tricky ones need detailed specification
+**composes** it (reuse / extend / remodel / propose) rather than re-deriving
+it (hard rule **R22**). Reuse is roughly 90% of design — an app is a
+composition of concepts, and only the tricky ones need detailed specification
 (Jackson, *The Essence of Software*).
 
 ### Proposal snapshots vs the canonical entry
@@ -271,7 +271,10 @@ Two consequences follow, and both are mechanised:
   current source re-derive and promote the change. Do not force the promotion.
 - **Additivity.** An extend may add fact types, constraints, actions and
   outcomes, but not drop or restate them. A deliberate removal is listed, with
-  a reason, in the feature's `_config/additivity-exceptions.md`.
+  a reason, in the feature's `_config/additivity-exceptions.md` — or, when the
+  removal IS the change, expressed as a `remodel` proposal with migration
+  notes and historical consent (R22, maintenance change
+  `concept-remodel-class`).
 
 `quality-gate/verify_concept_additivity.py` enforces the second at Gate 2 and
 Gate 3; `quality-gate/verify_concept_corpus_current.py` enforces the first

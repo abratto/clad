@@ -110,6 +110,21 @@ after  <ConceptName>/<action>: [ <param>: <value> ] => [ <result>: <value> ]
 then  <ConceptName>/<action>: [ <param>: <value> ] => [ <result>: <value> ]
 ```
 
+## Migration notes
+
+> Required ONLY for a `remodel:UC-XX` proposal (a deliberately
+> non-additive change to a canonical concept — see RULES.md R22). Omit
+> the section entirely for `new` / `extends` / `reused`.
+>
+> One bullet per canonical line this proposal drops or restates — state
+> lines AND contract terms — with the exact line backticked and a reason.
+> `verify_concept_additivity.py` waives the additive-only failure only for
+> noted lines; `promote-concepts` additionally refuses without a consent
+> receipt from every feature on the concept's canonical history
+> (`features/_system/concepts/_remodel-consent/<Concept>-<feature>.md`).
+
+- drops `fieldName: SubjectType -> FieldType   -- mandatory` — <reason and consumer impact>
+
 ## Notes
 
 > Optional. Edge cases, invariants, open questions, or scope boundaries

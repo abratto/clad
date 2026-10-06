@@ -309,6 +309,44 @@ def parse_resp_map_actions(path: str) -> Set[str]:
     return actions
 
 
+def parse_resp_map_action_cells(path: str) -> Dict[str, str]:
+    """Raw `Owned actions` cell text per concept row of the Concepts table.
+
+    `parse_responsibility_map` extracts the backticked action names and drops
+    the raw text; this returns the cell verbatim (backticks included) so a
+    shape check can reject signature syntax (`(`, `->`, `[ ok ]`) that the
+    name extraction would silently discard. Empty dict when the file or the
+    table is absent.
+    """
+    cells: Dict[str, str] = {}
+    if not os.path.isfile(path):
+        return cells
+    with open(path) as f:
+        columns: Dict[int, str] = {}
+        in_table = False
+        for line in f:
+            if line.lstrip().startswith("| Concept |") and "Owned state" in line:
+                columns = _resp_columns(_split_row(line))
+                in_table = True
+                continue
+            if in_table:
+                if re.match(r"^\|[\s\-:]+\|", line):
+                    continue
+                if not line.startswith("|"):
+                    in_table = False
+                    continue
+                parts = _split_row(line)
+                fields: Dict[str, str] = {}
+                for idx, field in columns.items():
+                    if idx < len(parts):
+                        fields[field] = parts[idx]
+                concept = fields.get("concept", "").strip("`").strip()
+                if not concept:
+                    continue
+                cells[concept] = fields.get("owned_actions", "")
+    return cells
+
+
 # --------------------------------------------------------------------------
 # Concept specs (Stage 02)
 # --------------------------------------------------------------------------
@@ -1042,7 +1080,8 @@ def feature_model_concepts(feature_root: str, corpus_dir: str = "") -> List[str]
 
       * `new`                                     -> yes
       * `extends:*` whose `## State` differs from the canonical spec -> yes
-      * `reused`, or an extend leaving state unchanged               -> no
+      * `remodel:*` whose `## State` differs from the canonical spec -> yes
+      * `reused`, or an extend/remodel leaving state unchanged       -> no
       * a legacy map with no `Origin` column      -> every concept (pre-Model-B
         expectation, kept for compatibility).
 
@@ -1061,7 +1100,7 @@ def feature_model_concepts(feature_root: str, corpus_dir: str = "") -> List[str]
         origin = (entry.origin or "").strip().lower()
         if not origin or origin.startswith("new"):
             out.append(concept)
-        elif origin.startswith("extend") and _state_changed(
+        elif origin.startswith(("extend", "remodel")) and _state_changed(
                 feature_root, concept, corpus):
             out.append(concept)
     return out
@@ -1101,7 +1140,7 @@ def feature_contract_concepts(feature_root: str) -> List[str]:
         if concept == "Web":
             continue
         origin = (entry.origin or "").strip().lower()
-        if not origin or origin.startswith("new") or origin.startswith("extend"):
+        if not origin or origin.startswith(("new", "extend", "remodel")):
             out.append(concept)
     return out
 
@@ -1130,10 +1169,10 @@ def expected_stage_outputs(feature_root: str) -> Dict[str, List[str]]:
         concepts = [c for c in sorted(entries) if c != "Web"]
         if any(entries[c].origin for c in concepts):
             # Model B map: Stage 02 always emits bindings, plus a proposal for
-            # every NEW/EXTEND concept. REUSE rows bind only (no spec copy).
+            # every NEW/EXTEND/REMODEL concept. REUSE rows bind only (no spec copy).
             proposals = [
                 c for c in concepts
-                if entries[c].origin.lower().startswith(("new", "extend"))
+                if entries[c].origin.lower().startswith(("new", "extend", "remodel"))
             ]
             out["02"] = ["concept-bindings.md"] + [
                 c + ".concept.md" for c in proposals]

@@ -220,13 +220,17 @@ consistency checks across the CLAD artefact chain.
 | `verify_file_manifest.py` | Any | `output/` contains exactly the expected files |
 | `verify_profile_paths.py` | 04c–04e | Profile-path integrity: configured `test.source.root`/impl dirs resolve inside the feature's declared `package-and-layout.md` roots (blocks); warns on seed `reference-impl/` pointers when the layout declares elsewhere |
 | `verify_scenario_coverage.py` | 01, 01b, 03 | Goal → scenario → chain → sync coverage |
+| `verify_responsibility_map_shape.py` | 01a | The Concepts table's `Owned actions` column carries names only — no signatures, no outcome enums |
 | `verify_chain_grammar.py` | 01b | Every chain-table row has exactly one outcome token and one `Then` action, and the file carries its `stateDiagram-v2` view |
+| `verify_chain_map_names.py` | 01b | Every chained action name resolves against the 01a responsibility map (name-level slice of `verify_action_chain.py`, runnable at Gate 1) |
+| `verify_concept_novelty.py` | 01b | A `new` concept overlapping the concepts catalog above `concept.novelty.threshold` must justify the non-fit in the map's `## Why not existing` section |
+| `lint_concept_overlap.py` | 01b | Advisory: surfaces every NEW/catalog overlap above threshold, including justified ones. Always exit 0 |
 | `verify_sync_transition_coverage.py` | 03 | Every chain-table invocation edge has a corresponding sync file |
 | `verify_concept_state_relational.py` | 02 | Concept `## State` is a relation over a set of individuals, not one instance's field list |
-| `verify_concept_criteria.py` | 02 | Mechanical concept criteria: operational principle present, no external types (R1), type parameters declared |
+| `verify_concept_criteria.py` | 02 | Mechanical concept criteria: operational principle present, no external types (R1), type parameters declared; advisory shape lints (machinery suffixes, purpose length, state/action surface size, degenerate operational principle) |
 | `verify_concept_proposals.py` | 02 | The proposal set matches the responsibility map's NEW/EXTEND rows exactly (a REUSE must not re-author a spec) |
 | `verify_concept_registry.py` | 02 (project) | One introducer per concept, no redefinition, promote-on-approval, catalog completeness |
-| `verify_concept_additivity.py` | 02 (project) | An `extends:*` proposal keeps every canonical state line, action, and outcome (additive-only) |
+| `verify_concept_additivity.py` | 02 (project) | An `extends:*` proposal keeps every canonical state line, action, and outcome (additive-only); a `remodel:*` proposal must note every drop in `## Migration notes` and hold consent receipts from the concept's canonical history |
 | `verify_concept_corpus_current.py` | 02 (project) | The canonical corpus is not behind: promotion history and companions agree |
 | `verify_shared_action_contracts.py` | 02 (project) | A concept action/outcome vocabulary shared across features does not drift |
 | `verify_outcome_alignment.py` | 04b | Chain-table outcomes match contract enums |

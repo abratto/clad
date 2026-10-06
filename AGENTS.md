@@ -343,6 +343,7 @@ Full pointers:
 - Pre-commit quality gate: [`methodology/implementation/QUALITY_GATE.md`](methodology/implementation/QUALITY_GATE.md)
 - Trunk-based delivery + CI gate: [`methodology/implementation/DELIVERY.md`](methodology/implementation/DELIVERY.md)
 - Handover protocol: [`methodology/implementation/HANDOVER.md`](methodology/implementation/HANDOVER.md)
+- Corpus health report: `./clad corpus-status` (read-only; concept history, stale snapshots, remodel candidates)
 - Optional overlays: [`TRACKING.md`](methodology/overlays/TRACKING.md), [`PLANNING.md`](methodology/overlays/PLANNING.md), [`DECISIONS.md`](methodology/overlays/DECISIONS.md), [`LOCAL_LLM.md`](methodology/overlays/LOCAL_LLM.md), [`PORTS_AND_ADAPTERS.md`](methodology/overlays/PORTS_AND_ADAPTERS.md)
 - Agent Skills reference: [`skills/`](skills/)
 - Citations: [`methodology/reference/CITATIONS.md`](methodology/reference/CITATIONS.md)

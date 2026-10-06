@@ -91,10 +91,16 @@ Run the following before requesting the human gate:
 ```
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "responsibility-map.md"
+python3 ../../../../quality-gate/verify_responsibility_map_shape.py \
+  --resp-map output/responsibility-map.md
 ```
 
 - **verify_file_manifest.py:** `output/` contains exactly
   `responsibility-map.md`.
+- **verify_responsibility_map_shape.py:** the Concepts table's
+  `Owned actions` column carries action NAMES only — no signatures
+  (`(`, `->`) and no outcome enums (`[ ok ]`). Signatures and outcomes
+  are Stage 01b/02 work.
 
 ### Semantic checks (human)
 

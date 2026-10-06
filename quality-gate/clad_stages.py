@@ -680,6 +680,16 @@ _FILE_02A = Check(
     requires=lambda r: [output_dir(r, "01a_responsibility-map")],
 )
 
+# 01a declares action NAMES only; signatures and outcome enums are 01b/02
+# work (maintenance change `staged-naming-discipline`). This was a social
+# rule (the walkthrough's agent stance); the check makes it mechanical.
+_RESP_MAP_SHAPE = Check(
+    name="responsibility_map_shape",
+    script="verify_responsibility_map_shape.py",
+    build_args=lambda r: ["--resp-map", _resp_map(r)],
+    requires=lambda r: [_resp_map(r)],
+)
+
 _CHAIN_GRAMMAR = Check(
     name="chain_grammar",
     script="verify_chain_grammar.py",
@@ -699,6 +709,37 @@ _OUTCOME_CASING = Check(
     script="verify_outcome_casing.py",
     build_args=lambda r: ["--feature", r],
     requires=lambda r: [CHAIN_DIR(r)],
+)
+
+# Every chained action name must have been declared at 01a — the chain table
+# is the canonical name source downstream, so it must not invent names
+# (maintenance change `staged-naming-discipline`). This is the name-level
+# slice of verify_action_chain.py, runnable at Gate 1.
+_CHAIN_MAP_NAMES = Check(
+    name="chain_map_names",
+    script="verify_chain_map_names.py",
+    build_args=lambda r: ["--resp-map", _resp_map(r),
+                          "--chain-dir", CHAIN_DIR(r)],
+    requires=lambda r: [_resp_map(r), CHAIN_DIR(r)],
+)
+
+# A `new` concept overlapping the canonical catalog must carry a
+# `## Why not existing` justification in the responsibility map
+# (maintenance change `concept-novelty-gate`) — the auditable form of
+# "consult the system vocabulary BEFORE deriving". Blocking; the linter
+# below is the advisory twin and always exits 0.
+_CONCEPT_NOVELTY = Check(
+    name="concept_novelty",
+    script="verify_concept_novelty.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [_resp_map(r)],
+)
+
+_CONCEPT_OVERLAP_LINT = Check(
+    name="concept_overlap_lint",
+    script="lint_concept_overlap.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [_resp_map(r)],
 )
 
 
@@ -754,12 +795,17 @@ STAGES: List[Stage] = [
     Stage("01", "Use case", "01_usecase",
           checks=[_FILE_01]),
     Stage("01a", "Responsibility map", "01a_responsibility-map",
-          checks=[_FILE_02A]),
+          checks=[_FILE_02A, _RESP_MAP_SHAPE]),
         Stage("01b", "Chain table", "01b_chain-table", gate_after=1,
             # `distinct_outcomes` (D3): a single completion token must not fan
             # out to two terminal responses. `outcome_casing` (D9/D26): authored
             # outcome tokens are SCREAMING_SNAKE_CASE, here and in Stage 02.
+            # `chain_map_names` (`staged-naming-discipline`): chained action
+            # names must resolve against the 01a map before Gate 1 locks them.
+            # `concept_novelty` (`concept-novelty-gate`): a `new` concept with
+            # a catalog near-match must justify the non-fit before Gate 1.
             checks=[_CHAIN_GRAMMAR, _DISTINCT_OUTCOMES, _OUTCOME_CASING,
+                    _CHAIN_MAP_NAMES, _CONCEPT_NOVELTY, _CONCEPT_OVERLAP_LINT,
                     _CHAIN_MANIFEST]),
         Stage("02", "Concept specs", "02_concepts",
           # `concept_additivity` runs here, at the stage that AUTHORS an extend;
