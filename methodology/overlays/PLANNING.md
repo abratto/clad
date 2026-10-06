@@ -69,6 +69,23 @@ Run this whenever Stage 00 outputs change after planning exists:
 3. Re-check dependencies and reorder priority if needed.
 4. Append an intake decision row documenting why ordering changed.
 
+## Concept-order check (advisory)
+
+Once features have Stage 01a responsibility maps, run:
+
+```
+python3 quality-gate/check_plan_concept_order.py \
+  --plan-board plan-board.md --features-dir features
+```
+
+It warns (never blocks) when the board sequences a feature that
+`extends:`/`remodels:` a concept BEFORE the concept's introducer (or when
+the introducer is not on the board at all), and when two features in the
+same active wave (`doing`/`next`) both propose the same concept as `new` —
+a guaranteed Gate-2 collision. Which use case introduces a concept shapes
+the canonical corpus, so catch the bad order at planning time
+(maintenance change `plan-concept-order-check`).
+
 ## Worked examples (one-liners)
 
 1. **No Stage 00 outputs yet**
