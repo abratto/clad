@@ -227,7 +227,7 @@ consistency checks across the CLAD artefact chain.
 | `lint_concept_overlap.py` | 01b | Advisory: surfaces every NEW/catalog overlap above threshold, including justified ones. Always exit 0 |
 | `verify_sync_transition_coverage.py` | 03 | Every chain-table invocation edge has a corresponding sync file |
 | `verify_concept_state_relational.py` | 02 | Concept `## State` is a relation over a set of individuals, not one instance's field list |
-| `verify_concept_criteria.py` | 02 | Mechanical concept criteria: operational principle present, no external types (R1), type parameters declared |
+| `verify_concept_criteria.py` | 02 | Mechanical concept criteria: operational principle present, no external types (R1), type parameters declared; advisory shape lints (machinery suffixes, purpose length, state/action surface size, degenerate operational principle) |
 | `verify_concept_proposals.py` | 02 | The proposal set matches the responsibility map's NEW/EXTEND rows exactly (a REUSE must not re-author a spec) |
 | `verify_concept_registry.py` | 02 (project) | One introducer per concept, no redefinition, promote-on-approval, catalog completeness |
 | `verify_concept_additivity.py` | 02 (project) | An `extends:*` proposal keeps every canonical state line, action, and outcome (additive-only) |
