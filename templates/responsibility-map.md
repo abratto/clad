@@ -45,7 +45,12 @@
 > - `reused:UC-XX` — the concept and the actions needed already exist
 >   canonically. Bind only; do NOT re-author the spec.
 > - `extends:UC-XX` — the concept exists but the needed action/state does
->   not. Record a proposal below.
+>   not. Record a proposal below. Additive only.
+> - `remodel:UC-XX` — the concept exists but needs a NON-additive change
+>   (a dropped or restated state line / contract term). Record a proposal
+>   below; the spec must carry `## Migration notes`, and promotion needs
+>   consent from every feature on the concept's canonical history
+>   (R22, maintenance change `concept-remodel-class`).
 > - `new` — otherwise. Record a proposal below.
 >
 > `UC-XX` is the `introduced-by` provenance from the catalog. When the
@@ -65,7 +70,8 @@
 
 ## Proposals
 
-> One row for every concept whose Origin is `new` or `extends:UC-XX`.
+> One row for every concept whose Origin is `new`, `extends:UC-XX`, or
+> `remodel:UC-XX`.
 > `reused:UC-XX` rows have NO row here — they bind to the canonical spec
 > unchanged. Stage 02 authors each proposal to full anatomy in this
 > feature's output; on gate approval it is promoted into the corpus with
@@ -74,7 +80,7 @@
 
 | Concept | Kind | Proposed addition (actions / state) | Requires (dependence claim) | Rationale |
 |---|---|---|---|---|
-| `<Name>` | `new` \| `extends:UC-XX` | `<actionName>`, `<field>: <Type>` | `<ConceptName>` (or `—`) | <why the vocabulary must grow> |
+| `<Name>` | `new` \| `extends:UC-XX` \| `remodel:UC-XX` | `<actionName>`, `<field>: <Type>` | `<ConceptName>` (or `—`) | <why the vocabulary must grow> |
 
 > **Dependence claims are proposals, not edits.** `Requires` records what
 > this concept would need present in *this app* (an extrinsic dependence —

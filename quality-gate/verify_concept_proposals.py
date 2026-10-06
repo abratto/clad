@@ -80,13 +80,14 @@ def main():
     # Origin vocabulary
     for concept, origin in sorted(origins.items()):
         if not (origin.startswith("new") or origin.startswith("reused")
-                or origin.startswith("extend")):
+                or origin.startswith("extend") or origin.startswith("remodel")):
             failures.append(
                 f"{concept}: unrecognised Origin '{entries[concept].origin}' "
-                f"(expected new / reused:UC-XX / extends:UC-XX)")
+                f"(expected new / reused:UC-XX / extends:UC-XX / "
+                f"remodel:UC-XX)")
 
     expected = {c for c, o in origins.items()
-                if o.startswith("new") or o.startswith("extend")}
+                if o.startswith(("new", "extend", "remodel"))}
     reuse = {c for c, o in origins.items() if o.startswith("reused")}
     present_paths = ap.concept_spec_paths([concept_out])
     present = set(present_paths)

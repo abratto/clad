@@ -28,6 +28,18 @@ Deliberate removals:
   per line, with a reason. The check subtracts exactly those lines and still
   fails on anything else — so a removal is visible, reviewed, and bounded.
 
+Remodel proposals (R22, maintenance change `concept-remodel-class`):
+  A `remodel:*` row is a deliberately NON-additive proposal. The additive-only
+  failure is waived only when BOTH hold:
+    * every dropped state line and contract term is listed in the proposal
+      spec's `## Migration notes` section (exact line in backticks + reason);
+    * a consent receipt exists at
+      `features/_system/concepts/_remodel-consent/<Concept>-<feature>.md`
+      for every feature on the concept's canonical history except the
+      proposer.
+  Consent and migration notes never rescue an `extends:*` row — they apply
+  to remodels only.
+
 Usage:
   python3 verify_concept_additivity.py --feature features/UC-XX-<slug> \
       [--corpus features/_system/concepts]
@@ -158,15 +170,42 @@ def main():
     entries = ap.parse_responsibility_map(resp)
     allowed = load_exceptions(feature_root)
 
+    import concept_remodel as cr
+    slug = os.path.basename(feature_root)
+
     failures = []
     checked = 0
+    remodels = 0
     for concept, entry in sorted(entries.items()):
         origin = (entry.origin or "").strip().lower()
-        if not origin.startswith("extend"):
+        if not origin.startswith("extend") and not cr.is_remodel(origin):
             continue          # `new` has no canonical entry; `reused` derives nothing
         if not os.path.isfile(os.path.join(corpus, concept + ".concept.md")):
             continue          # canonical not promoted yet — nothing to protect
         checked += 1
+
+        if cr.is_remodel(origin):
+            remodels += 1
+            state_drops, term_drops = cr.unauthorised_drops(
+                feature_root, corpus, concept)
+            if state_drops:
+                failures.append(
+                    f"{concept}: remodel drops canonical state line(s) with no "
+                    f"migration note — list each exact line (backticked, with a "
+                    f"reason) in the proposal's `## Migration notes`:")
+                failures.extend(f"  - {line}" for line in state_drops)
+            if term_drops:
+                failures.append(
+                    f"{concept}: remodel drops canonical contract term(s) with "
+                    f"no migration note:")
+                failures.extend(f"  - {t}" for t in term_drops)
+            missing = cr.missing_consent(corpus, concept, slug)
+            if missing:
+                failures.append(
+                    f"{concept}: remodel lacks consent receipt(s) from "
+                    f"{', '.join(missing)} — record each at "
+                    f"{cr.CONSENT_DIRNAME}/{concept}-<feature>.md")
+            continue
 
         lost = [line for line in dropped_state_lines(feature_root, corpus, concept)
                 if line not in allowed]
@@ -204,7 +243,9 @@ def main():
         return 1
 
     note = f" ({len(allowed)} authorised exception(s))" if allowed else ""
-    print(f"PASS  additive-only holds across {checked} extended concept(s){note}")
+    remodel_note = f", {remodels} remodel(s) consented" if remodels else ""
+    print(f"PASS  additive-only holds across {checked} extended concept(s)"
+          f"{note}{remodel_note}")
     return 0
 
 

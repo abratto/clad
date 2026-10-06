@@ -274,9 +274,32 @@ Mechanised by `quality-gate/verify_maintenance_change_readiness.py`.
 A concept's spec lives in exactly one place:
 `features/_system/concepts/<Name>.concept.md`. A use case **binds** to a
 canonical concept (emits `concept-bindings.md`, no spec copy), **proposes an
-extension** (an additive `extends` proposal), or **proposes a new** concept.
+extension** (an additive `extends` proposal), **proposes a remodel** (a
+deliberately non-additive `remodel` proposal — see below), or **proposes a
+new** concept.
 Proposals enter the corpus only on Gate 2 approval, via
 `./clad promote-concepts` — never by hand, never silently.
+
+**Remodel (non-additive, by exception).** A `remodel:UC-XX` proposal is the
+reviewable path for changing a canonical concept non-additively — retiring a
+fact type, correcting a value type, restating an action's outcomes — without
+routing routine evolution through an R20 maintenance change. Two obligations
+make it deliberate rather than silent:
+
+- **Migration notes.** The proposal spec carries a `## Migration notes`
+  section listing every dropped or restated canonical line (state lines and
+  contract actions/outcomes), each exact line backticked, with a reason and
+  the consumer impact. `verify_concept_additivity.py` waives the
+  additive-only failure only for noted lines — an unnoted drop still fails.
+- **Consent.** `promote-concepts` refuses a remodel unless every feature on
+  the concept's canonical history (`introduced-by` / `extended-by`, minus
+  the proposer) has a consent receipt at
+  `features/_system/concepts/_remodel-consent/<Concept>-<feature>.md`. A
+  remodel rewrites what earlier features built on; their sign-off is the
+  review.
+
+Consent receipts and migration notes apply to `remodel` rows **only** — an
+`extends` that drops a canonical line fails additivity regardless.
 
 Re-deriving a concept per use case is the cross-feature drift this rule exists
 to prevent (observed in the Conduit rebuild: six divergent
@@ -292,7 +315,9 @@ obligations:
 - **Additivity.** An `extends` proposal keeps every canonical `## State` line
   and every canonical contract action and outcome. A deliberate removal is
   authorised by listing the exact dropped line, with a reason, in the feature's
-  `_config/additivity-exceptions.md` — visible and bounded, not silent.
+  `_config/additivity-exceptions.md` — visible and bounded, not silent. A
+  change whose purpose IS the removal uses a `remodel` proposal (above), not
+  an exceptions file.
 
 A feature's own copies are **proposal snapshots** (its Gate 2 audit trail), not
 current truth: the canonical model and contract carry a `canonical — derived

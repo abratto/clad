@@ -230,7 +230,7 @@ consistency checks across the CLAD artefact chain.
 | `verify_concept_criteria.py` | 02 | Mechanical concept criteria: operational principle present, no external types (R1), type parameters declared; advisory shape lints (machinery suffixes, purpose length, state/action surface size, degenerate operational principle) |
 | `verify_concept_proposals.py` | 02 | The proposal set matches the responsibility map's NEW/EXTEND rows exactly (a REUSE must not re-author a spec) |
 | `verify_concept_registry.py` | 02 (project) | One introducer per concept, no redefinition, promote-on-approval, catalog completeness |
-| `verify_concept_additivity.py` | 02 (project) | An `extends:*` proposal keeps every canonical state line, action, and outcome (additive-only) |
+| `verify_concept_additivity.py` | 02 (project) | An `extends:*` proposal keeps every canonical state line, action, and outcome (additive-only); a `remodel:*` proposal must note every drop in `## Migration notes` and hold consent receipts from the concept's canonical history |
 | `verify_concept_corpus_current.py` | 02 (project) | The canonical corpus is not behind: promotion history and companions agree |
 | `verify_shared_action_contracts.py` | 02 (project) | A concept action/outcome vocabulary shared across features does not drift |
 | `verify_outcome_alignment.py` | 04b | Chain-table outcomes match contract enums |

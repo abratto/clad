@@ -1080,7 +1080,8 @@ def feature_model_concepts(feature_root: str, corpus_dir: str = "") -> List[str]
 
       * `new`                                     -> yes
       * `extends:*` whose `## State` differs from the canonical spec -> yes
-      * `reused`, or an extend leaving state unchanged               -> no
+      * `remodel:*` whose `## State` differs from the canonical spec -> yes
+      * `reused`, or an extend/remodel leaving state unchanged       -> no
       * a legacy map with no `Origin` column      -> every concept (pre-Model-B
         expectation, kept for compatibility).
 
@@ -1099,7 +1100,7 @@ def feature_model_concepts(feature_root: str, corpus_dir: str = "") -> List[str]
         origin = (entry.origin or "").strip().lower()
         if not origin or origin.startswith("new"):
             out.append(concept)
-        elif origin.startswith("extend") and _state_changed(
+        elif origin.startswith(("extend", "remodel")) and _state_changed(
                 feature_root, concept, corpus):
             out.append(concept)
     return out
@@ -1139,7 +1140,7 @@ def feature_contract_concepts(feature_root: str) -> List[str]:
         if concept == "Web":
             continue
         origin = (entry.origin or "").strip().lower()
-        if not origin or origin.startswith("new") or origin.startswith("extend"):
+        if not origin or origin.startswith(("new", "extend", "remodel")):
             out.append(concept)
     return out
 
@@ -1168,10 +1169,10 @@ def expected_stage_outputs(feature_root: str) -> Dict[str, List[str]]:
         concepts = [c for c in sorted(entries) if c != "Web"]
         if any(entries[c].origin for c in concepts):
             # Model B map: Stage 02 always emits bindings, plus a proposal for
-            # every NEW/EXTEND concept. REUSE rows bind only (no spec copy).
+            # every NEW/EXTEND/REMODEL concept. REUSE rows bind only (no spec copy).
             proposals = [
                 c for c in concepts
-                if entries[c].origin.lower().startswith(("new", "extend"))
+                if entries[c].origin.lower().startswith(("new", "extend", "remodel"))
             ]
             out["02"] = ["concept-bindings.md"] + [
                 c + ".concept.md" for c in proposals]

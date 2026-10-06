@@ -95,7 +95,7 @@ def proposing_features(features_dir):
             if concept == BOOTSTRAP_CONCEPT:
                 continue
             origin = (entry.origin or "").strip().lower()
-            if origin.startswith(("new", "extend")):
+            if origin.startswith(("new", "extend", "remodel")):
                 out.setdefault(concept, []).append((name, feature))
     return out
 

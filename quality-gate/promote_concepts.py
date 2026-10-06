@@ -269,14 +269,14 @@ def canonical_spec(text: str) -> str:
 
 
 def proposals_for(feature_root: str):
-    """(concept -> path) for the feature's NEW/EXTEND proposals."""
+    """(concept -> path) for the feature's NEW/EXTEND/REMODEL proposals."""
     resp_map = os.path.join(feature_root, "stages", "01a_responsibility-map",
                             "output", "responsibility-map.md")
     concept_out = os.path.join(feature_root, "stages", "02_concepts", "output")
     entries = ap.parse_responsibility_map(resp_map) if os.path.isfile(resp_map) else {}
     wanted = {
         c for c, e in entries.items()
-        if (e.origin or "").strip().lower().startswith(("new", "extend"))
+        if (e.origin or "").strip().lower().startswith(("new", "extend", "remodel"))
     }
     return {c: p for c, p in ap.concept_spec_paths([concept_out]).items()
             if c in wanted}
@@ -452,9 +452,36 @@ def main():
 
     # Refusal is per concept: a feature that extends several concepts may be the
     # current source of some and an older source of others. Read-only refusals
-    # are skipped (never silently rolled back), and reported at the end.
+    # are skipped (never silently rolled back), and reported at the end. A
+    # REMODEL additionally requires complete migration notes and consent
+    # receipts (maintenance change `concept-remodel-class`) — a non-additive
+    # rewrite never promotes on the additive path's evidence.
+    import concept_remodel as cr
+    resp_entries = ap.parse_responsibility_map(os.path.join(
+        feature_root, "stages", "01a_responsibility-map", "output",
+        "responsibility-map.md"))
+
     planned, refused = {}, []
     for concept, path in sorted(proposals.items()):
+        entry = resp_entries.get(concept)
+        if entry is not None and cr.is_remodel(entry.origin):
+            problems = []
+            state_drops, term_drops = cr.unauthorised_drops(
+                feature_root, corpus, concept)
+            if state_drops or term_drops:
+                problems.append(
+                    "canonical line(s) dropped with no migration note (list "
+                    "each in the proposal's `## Migration notes`): "
+                    + "; ".join(state_drops + term_drops))
+            missing = cr.missing_consent(corpus, concept, slug)
+            if missing:
+                problems.append(
+                    f"missing consent receipt(s) from {', '.join(missing)} "
+                    f"(expected at {cr.CONSENT_DIRNAME}/{concept}-<feature>.md)")
+            if problems:
+                refused.append((concept, "remodel refused — "
+                                + " AND ".join(problems)))
+                continue
         try:
             planned[concept] = expected_canonical(concept, path)
         except OutOfOrderPromotion as refusal:

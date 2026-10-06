@@ -120,7 +120,7 @@ def main():
                 failures.append(
                     f"{slug}/{concept}: marked {origin} but carries a spec file "
                     f"(a reused concept binds to the corpus; it must not redefine it)")
-            if origin.startswith(("new", "extend")):
+            if origin.startswith(("new", "extend", "remodel")):
                 if concept not in corpus:
                     resume = os.path.join(feature, "RESUME.md")
                     approved = (os.path.isfile(resume)
