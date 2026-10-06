@@ -151,6 +151,13 @@ class Stage03WiringTests(unittest.TestCase):
         checks = {c.name for c in stage.checks}
         self.assertIn("fr_dp_matrix", checks)
 
+    def test_stage01b_carries_the_fr_dp_matrix_check_too(self):
+        # Gate 1 is where God-Object/duplication defects are a one-line map
+        # edit; the matrix runs advisively there as well (ad-review-evidence).
+        stage = next(s for s in cs.STAGES if s.id == "01b")
+        checks = {c.name for c in stage.checks}
+        self.assertIn("fr_dp_matrix", checks)
+
     def test_matrix_check_builds_feature_relative_args(self):
         stage = next(s for s in cs.STAGES if s.id == "03")
         check = next(c for c in stage.checks if c.name == "fr_dp_matrix")

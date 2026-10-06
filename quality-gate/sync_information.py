@@ -42,6 +42,13 @@ _PATTERN_ROW = re.compile(r"^\|\s*`([^`]*)`\s*\|\s*([ABCD])\S*\s*\|")
 _CONJUNCT = re.compile(r"^\s*(?:[a-z][A-Za-z0-9]*:\s*)?[A-Z][A-Za-z0-9]*/[A-Za-z0-9]")
 _WIDE_JOIN = 3
 
+# Advisory per-feature budget on concept-state reads (maintenance change
+# `ad-review-evidence`): every D is a place a concept could decide instead,
+# so a feature needing more than a handful deserves the reviewer's question,
+# not a silent pass. Raising it is a recorded-reason decision at review time
+# (run the CLI with --d-budget), not a repo-wide config key.
+_D_BUDGET = 5
+
 
 def parse_sync(path):
     """One sync's profile: (pattern counts, conjunct count, d_sources, has_table)."""
@@ -79,6 +86,9 @@ def main():
         description="Advisory: per-sync A/B/C/D binding profile + aggregate")
     parser.add_argument("--sync-dir", required=True,
                         help="Path to 03_syncs/output/")
+    parser.add_argument("--d-budget", type=int, default=_D_BUDGET,
+                        help="Advisory per-feature budget on D reads "
+                             "(default %d; 0 disables)" % _D_BUDGET)
     args = parser.parse_args()
 
     if not os.path.isdir(args.sync_dir):
@@ -123,6 +133,12 @@ def main():
           f"D={total['D']}  ({bindings_all} bindings)")
     print("  Reading: A adds zero; B adds chain-topology knowledge; C adds a "
           "copy point; D crosses a concept boundary.")
+    if args.d_budget and total["D"] > args.d_budget:
+        findings.append(
+            f"feature D-read budget exceeded: {total['D']} > {args.d_budget} — "
+            f"every D is a place a concept could decide instead; either move "
+            f"reads into concept outcomes or raise the budget with a recorded "
+            f"reason (--d-budget)")
     if findings:
         print(f"\nWARN  {len(findings)} advisory finding(s):")
         for f in findings:

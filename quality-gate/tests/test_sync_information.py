@@ -24,6 +24,30 @@ def run(*args):
                           cwd=REPO_ROOT, capture_output=True, text=True)
 
 
+SYNC_WITH_SIX_D_READS = """sync ManyWhenRouted
+
+## Rule
+
+when {
+    Web/request: [ route: "x" ] => [ Routed ]
+}
+
+## Where clause patterns (for Stage 03a audit)
+
+| Binding | Pattern | Source |
+|---|---|---|
+| `a` | D | Concept-state read — `Region` |
+| `b` | D | Concept-state read — `Region` |
+| `c` | D | Concept-state read — `Region` |
+| `d` | D | Concept-state read — `Region` |
+| `e` | D | Concept-state read — `Region` |
+| `f` | D | Concept-state read — `Region` |
+
+## Cites
+
+- `../01_usecase/output/usecase.md` — scenario `many`
+"""
+
 SYNC_WITH_D_AND_WIDE_JOIN = """sync LoanAlertWhenBorrowAndHeld
 
 ## Rule
@@ -76,6 +100,19 @@ class ProfileParsingTests(unittest.TestCase):
         self.assertIn("outcome instead of read?", proc.stdout)
         self.assertIn("concepts decide, syncs route", proc.stdout)
         self.assertIn("join arity 3", proc.stdout)
+
+    def test_d_budget_fires_past_the_default_and_never_blocks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "ManyWhenRouted.sync.md").write_text(SYNC_WITH_SIX_D_READS)
+            over = run("--sync-dir", tmp)
+            at = run("--sync-dir", tmp, "--d-budget", "6")
+            off = run("--sync-dir", tmp, "--d-budget", "0")
+        self.assertEqual(0, over.returncode)
+        self.assertIn("feature D-read budget exceeded: 6 > 5", over.stdout)
+        self.assertEqual(0, at.returncode)
+        self.assertNotIn("budget exceeded", at.stdout)
+        self.assertEqual(0, off.returncode)
+        self.assertNotIn("budget exceeded", off.stdout)
 
     def test_missing_table_and_empty_dir_are_skipped_not_failed(self):
         with tempfile.TemporaryDirectory() as tmp:

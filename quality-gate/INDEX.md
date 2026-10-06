@@ -14,6 +14,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 
 | Script | What it checks | When it runs | Kind |
 |---|---|---|---|
+| `generate_review_views.py` | generate_review_views.py — emit Stage 03a's two derived review views: * `concept-matrix.md` — the FR×DP matrix (scenarios × concepts) plus the anti-pattern findings (God Object / duplication / entanglement). | stage 03a (Dependency review) | gate |
 | `lint_concept_overlap.py` | lint_concept_overlap.py — advisory linter: NEW proposals that overlap an existing catalog concept are surfaced as warnings, never failures. | stage 01b (Chain table) | gate |
 | `sync_information.py` | sync_information.py — advisory linter: each sync's A/B/C/D binding profile, the feature aggregate, and two advisory findings. | stage 03 (Syncs) | gate |
 | `verify_acceptance_binding.py` | Stage gate: Acceptance Spec ↔ native tests. | stage 04c (Acceptance tests) | gate |
@@ -30,7 +31,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_concept_corpus_current.py` | the canonical corpus is not behind its promotions | project-level (every `verify_artefacts` run) | gate |
 | `verify_concept_criteria.py` | criteria gate: the mechanical subset of the concept criteria. | stage 02 (Concept specs) | gate |
 | `verify_concept_field_assertions.py` | Enforce R14/R16 for Java concept tests. | stage 04d (Concept implementation) | gate |
-| `verify_concept_matrix.py` | builds the FR × DP matrix from CLAD artefacts and flags architectural anti-patterns. | stage 03 (Syncs) | gate |
+| `verify_concept_matrix.py` | builds the FR × DP matrix from CLAD artefacts and flags architectural anti-patterns. | stage 01b (Chain table); stage 03 (Syncs) | gate |
 | `verify_concept_novelty.py` | Gate-1 check: a NEW concept proposal must justify why nothing in the canonical corpus already fits. | stage 01b (Chain table) | gate |
 | `verify_concept_proposals.py` | Stage 02 gate: the proposal set corresponds exactly to the responsibility map's NEW/EXTEND rows. | stage 02 (Concept specs) | gate |
 | `verify_concept_registry.py` | one introducer per concept; no redefinition; promotion completeness | project-level (every `verify_artefacts` run) | gate |

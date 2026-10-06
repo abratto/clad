@@ -100,7 +100,9 @@ def _concepts_in_chain(path):
         with open(path) as fh:
             for m in re.findall(r"`([A-Za-z]\w*)[/.]\w+", fh.read()):
                 names.add(m)
-    return names
+    # Deterministic order (PYTHONHASHSEED-independent): a sorted list, not a
+    # set — byte-stable rendering for the committed concept-matrix.md view.
+    return sorted(names)
 
 def build_matrix(scenarios, concepts, chain_dir):
     """Build FR×DP matrix. Deduplicates: each concept at most once per scenario
@@ -139,7 +141,8 @@ def detect_god_objects(coverage, scenarios_count, threshold=0.75):
     if scenarios_count <= 3:
         return []
     god_objects = []
-    for concept, count in coverage.items():
+    for concept in sorted(coverage):
+        count = coverage[concept]
         ratio = count / max(scenarios_count, 1)
         if ratio >= threshold:
             god_objects.append((concept, count, scenarios_count, ratio))

@@ -10,6 +10,41 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [Unreleased]
+
+**AD review evidence made durable and early; partition runtime-routable via
+member addressing** (`maintenance/ad-review-evidence.md` and
+`maintenance/member-addressed-routing.md`, both gates approved).
+
+- **03a gains two canonical, generated review views** — `concept-matrix.md`
+  (FR×DP matrix *plus* the anti-pattern findings; the older bare
+  `verify_concept_matrix.py --output` form wrote the matrix without them) and
+  the new `sync-information-profile.md` (per-sync A/B/C/D + aggregate + the
+  D/wide-join prompts), emitted by `generate_review_views.py --write` and
+  **drift-checked** (`--check`; the shared-triggers pattern — a stale view
+  blocks the stage). The FR×DP matrix check now also runs advisively at
+  **Stage 01b**, where God-Object/duplication defects are a one-line map edit.
+- **`sync_information.py` gains `--d-budget`** (default 5, `0` disables):
+  a feature whose D reads exceed the budget gets an advisory finding — every
+  D is a place a concept could decide instead; raising the budget is a
+  recorded-reason decision, not a config key.
+- **Member-qualified operations on `Region`** (`write(member, subject,
+  predicate, value)` etc., default methods): a subtype/partition member is
+  addressed by name; the Rmap store routes the operation to the member's own
+  table, which **closes the partition runtime gap** — a partitioned region is
+  creatable, a mandatory flattened predicate is satisfiable per member, and a
+  plain operation on a shared predicate throws at operation time naming the
+  members (replacing the whole-region creation refusal). The in-memory and
+  generic-fact backends ignore the qualifier (their correct semantics — a
+  concept region is conceptually one region). Member resolution goes by the
+  deriver's naming rule (`memberTableName`), because a member table reports
+  the supertype as its object type.
+- **Defect caught by the new drift check:** `verify_concept_matrix.py` was
+  nondeterministic across processes (`extract_concepts` returned a
+  hash-ordered set; god-object detection iterated a hash-ordered dict), so
+  byte-comparison between processes could disagree — fixed with sorted
+  ordering, proven stable across fresh processes.
+
 ## [0.20.0] — 2026-10-06
 
 **Axiomatic Design made explicit and wired** (`maintenance/ad-design-deepening.md`,

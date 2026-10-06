@@ -117,6 +117,10 @@ python3 ../../../../quality-gate/verify_concept_novelty.py --feature ../..
 python3 ../../../../quality-gate/lint_concept_overlap.py --feature ../..
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<scenario-name>-chain.md"  # one per scenario
+python3 ../../../../quality-gate/verify_concept_matrix.py \
+  --usecase ../01_usecase/output/usecase.md \
+  --chain-dir output \
+  --resp-map ../01a_responsibility-map/output/responsibility-map.md
 ```
 
 - **verify_chain_grammar.py:** every row carries exactly one backticked
@@ -138,6 +142,10 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   including justified ones, for the Gate-1 reviewer. Never fails.
 - **verify_file_manifest.py:** `output/` contains exactly one
   `<scenario-name>-chain.md` per use-case scenario.
+- **verify_concept_matrix.py:** the Axiomatic Design FR×DP matrix
+  (advisory — see Stage 03's Verify for the full description) at Gate 1,
+  where God-Object/duplication defects are a one-line map edit; read it
+  before approving (or run `./clad matrix`).
 
 ### Semantic checks (human)
 

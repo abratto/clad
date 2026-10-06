@@ -137,15 +137,18 @@ before Stage 04 turns it into code.
 - `output/<concept>-card.md` — one per concept named in 01a's map.
 - `output/pattern-d-summary.md` — single consolidated cross-flow view.
 - `output/concept-matrix.md` — FR×DP matrix mapping scenarios to
-  concepts. Surfaces God Objects, duplication, and entanglement visually.
-  Generated via:
+  concepts, plus the anti-pattern findings. Surfaces God Objects,
+  duplication, and entanglement visually.
+- `output/sync-information-profile.md` — the per-sync A/B/C/D binding
+  profile and the feature aggregate (the Information-Axiom reading of
+  `SYNC_PATTERNS.md`'s ladder), with the D-read and wide-join prompts.
+  Both views are generated (never hand-edited) via:
   ```
-  python3 ../../../../quality-gate/verify_concept_matrix.py \
-    --usecase ../01_usecase/output/usecase.md \
-    --chain-dir ../01b_chain-table/output \
-    --resp-map ../01a_responsibility-map/output/responsibility-map.md \
-    --output output/concept-matrix.md
+  python3 ../../../../quality-gate/generate_review_views.py \
+    --feature ../.. --write
   ```
+  (The generator supersedes the older bare `verify_concept_matrix.py
+  --output` form, which wrote the matrix without the findings.)
 
 ### Reading the matrix
 
@@ -190,12 +193,17 @@ Run the following before requesting the human gate:
 
 ```
 python3 ../../../../quality-gate/verify_file_manifest.py \
-  --dir output --expected "<concept>-card.md,…"  # one per concept + pattern-d-summary.md,concept-matrix.md
+  --dir output --expected "<concept>-card.md,…"  # one per concept + pattern-d-summary.md,concept-matrix.md,sync-information-profile.md
+python3 ../../../../quality-gate/generate_review_views.py \
+  --feature ../.. --check
 ```
 
 - **verify_file_manifest.py:** `output/` contains exactly one card
-  per concept in the responsibility map plus `pattern-d-summary.md` and
-  `concept-matrix.md`.
+  per concept in the responsibility map plus `pattern-d-summary.md`,
+  `concept-matrix.md`, and `sync-information-profile.md`.
+- **generate_review_views.py --check:** the two committed views equal a
+  fresh regeneration (drift guard, the shared-triggers pattern) — a stale
+  view fails the stage; regenerate with `--write`.
 - Route-filter enforcement is a design audit here (every shared-trigger
   sync records its filter status or justification in a card) **and** is
   enforced mechanically on the implementation at Stage 04e by

@@ -1206,7 +1206,8 @@ def expected_stage_outputs(feature_root: str) -> Dict[str, List[str]]:
                     participating.add(concept)
             participating.update(c for c, _ in s.then_targets)
         out["03a"] = [c + "-card.md" for c in sorted(participating)] + [
-            "pattern-d-summary.md", "concept-matrix.md"]
+            "pattern-d-summary.md", "concept-matrix.md",
+            "sync-information-profile.md"]
 
     out["04c"] = ["acceptance-spec.md"]
     out["04d"] = ["concept-test-derivation.md", "verification-evidence.md"]

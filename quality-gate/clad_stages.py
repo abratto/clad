@@ -767,6 +767,19 @@ _CONCEPT_NOVELTY = Check(
     requires=lambda r: [_resp_map(r)],
 )
 
+_REVIEW_VIEWS_CURRENT = Check(
+    name="review_views_current",
+    script="generate_review_views.py",
+    # The two derived 03a views (concept-matrix.md, sync-information-profile.md)
+    # are committed review artefacts; staleness blocks (the shared-triggers
+    # drift pattern). Absence is the manifest's to fail on — the check skips
+    # while the files are missing (maintenance change `ad-review-evidence`).
+    build_args=lambda r: ["--feature", r, "--check"],
+    requires=lambda r: [os.path.join(output_dir(r, "03a_dependency-review"), name)
+                        for name in ("concept-matrix.md",
+                                     "sync-information-profile.md")],
+)
+
 _CONCEPT_OVERLAP_LINT = Check(
     name="concept_overlap_lint",
     script="lint_concept_overlap.py",
@@ -836,9 +849,12 @@ STAGES: List[Stage] = [
             # names must resolve against the 01a map before Gate 1 locks them.
             # `concept_novelty` (`concept-novelty-gate`): a `new` concept with
             # a catalog near-match must justify the non-fit before Gate 1.
+            # `fr_dp_matrix` (`ad-review-evidence`): the FR×DP view at
+            # Gate 1, where God-Object/duplication defects are cheapest to
+            # fix (a one-line map edit, not an iterative re-entry into 01a).
             checks=[_CHAIN_GRAMMAR, _DISTINCT_OUTCOMES, _OUTCOME_CASING,
                     _CHAIN_MAP_NAMES, _CONCEPT_NOVELTY, _CONCEPT_OVERLAP_LINT,
-                    _CHAIN_MANIFEST]),
+                    _CHAIN_MANIFEST, _FR_DP_MATRIX]),
         Stage("02", "Concept specs", "02_concepts",
           # `concept_additivity` runs here, at the stage that AUTHORS an extend;
           # waiting until 03b/04b let a non-additive extension be written first
@@ -851,7 +867,7 @@ STAGES: List[Stage] = [
           _SYNC_CYCLE_GRAPH, _SYNC_OVERLAP, _FR_DP_MATRIX,
           _SYNC_INFORMATION]),
     Stage("03a", "Dependency review", "03a_dependency-review",
-          checks=[_CARD_MANIFEST]),
+          checks=[_CARD_MANIFEST, _REVIEW_VIEWS_CURRENT]),
     Stage("03b", "Data model", "03b_data-model", gate_after=2,
           checks=[_DATA_MODEL, _DATA_MODEL_MANIFEST, _CONCEPT_ADDITIVITY]),
     Stage("04a", "Storage mapping", "04_implement/04a_storage-mapping",
