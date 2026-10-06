@@ -51,6 +51,23 @@ public record RmapModel(
         return null;
     }
 
+    /**
+     * The table realising the given subtype/partition member, or {@code null}
+     * (the member is unknown, or absorbed — an absorbed member's predicates
+     * live on the supertype's table). A member table reports the SUPERtype as
+     * its {@code objectType}, so resolution goes by the deriver's deterministic
+     * naming rule ({@link RmapDeriver#memberTableName}), not by object type.
+     */
+    public RelationSchema tableForMember(String member) {
+        String name = RmapDeriver.memberTableName(concept, member);
+        for (RelationSchema t : tables) {
+            if (t.table().equals(name)) {
+                return t;
+            }
+        }
+        return null;
+    }
+
     /** The table that realises the given fact-type predicate, or {@code null}. */
     public RelationSchema tableForPredicate(String predicate) {
         for (RelationSchema t : tables) {

@@ -121,66 +121,112 @@ public final class RmapPostgresFactStore implements FactStore {
         private final Map<String, Map<String, Map<String, Object>>> buffer = new LinkedHashMap<>();
         private boolean buffering = false;
 
+        // Predicates whose DATA column is owned by more than one table (only
+        // a partitioned supertype's flattened predicates): plain operations on
+        // them are ambiguous and throw at operation time naming the members;
+        // member-qualified operations route to the member's own table.
+        private final Map<String, List<String>> ambiguousPredicates = new LinkedHashMap<>();
+
         private RmapRegion(DSLContext dsl, RmapModel model) {
             this.dsl = dsl;
             this.model = model;
-            enforceRoutablePredicates(model);
+            indexAmbiguousPredicates(model);
         }
 
         /**
          * Predicate routing answers "which table owns this fact's column?" with
          * the <em>first</em> table carrying it. Under {@code mapping: partition}
-         * several member tables carry the same flattened supertype predicate, so
-         * routing cannot know which member an individual belongs to — writes
-         * would land in the first member regardless, and a mandatory flattened
-         * column makes the other members unwritable. Refuse loudly at region
-         * creation: model partition with `separate` (the default) or `absorb`.
+         * several member tables carry the same flattened supertype predicate,
+         * so a PLAIN operation cannot know which member an individual belongs
+         * to — it throws at operation time, naming the members and the
+         * member-qualified form. Member-qualified operations
+         * ({@code write(member, subject, predicate, value)}) route to the
+         * member's own table, which is what makes a partitioned region —
+         * including its mandatory flattened predicates — writable: the member's
+         * own row carries them.
          */
-        private static void enforceRoutablePredicates(RmapModel model) {
-            Map<String, List<String>> owners = new LinkedHashMap<>();
+        private void indexAmbiguousPredicates(RmapModel model) {
             for (RelationSchema t : model.tables()) {
                 for (RelationSchema.Column c : t.columns()) {
                     // Identity (key) columns legitimately recur across a
                     // concept's tables — a subtype, child, or compidot row
                     // shares the parent's key. Only a DATA column owned by
-                    // more than one table is unroutable.
+                    // more than one table is ambiguous.
                     if (t.primaryKey().contains(c.column())) {
                         continue;
                     }
-                    owners.computeIfAbsent(c.predicate(), k -> new ArrayList<>())
-                            .add(t.qualifiedName());
+                    ambiguousPredicates.computeIfAbsent(c.predicate(), k -> new ArrayList<>())
+                            .add(memberOf(t));
                 }
             }
-            List<String> ambiguous = owners.entrySet().stream()
-                    .filter(e -> e.getValue().size() > 1)
-                    .map(e -> e.getKey() + " (" + String.join(", ", e.getValue()) + ")")
-                    .toList();
-            if (!ambiguous.isEmpty()) {
-                throw new IllegalStateException(
-                        "concept " + model.concept()
-                                + " routes the predicate(s) " + ambiguous
-                                + " to more than one table — a partitioned supertype"
-                                + " leaves membership unstated, so the Region SPI"
-                                + " cannot know which member a fact belongs to. Realise"
-                                + " the roles instead: `separate` (the default) or"
-                                + " `absorb` subtype mapping, or make membership an"
-                                + " explicit objectified fact (`member: (Party, Role) ->"
-                                + " Timestamp`) — that derives the discriminator/junction"
-                                + " table with the role-scoped columns on it. See"
-                                + " RELATIONAL_LOWERING.md §Subtypes and independent"
-                                + " object types (the role-catalog recipe).");
+            ambiguousPredicates.values().removeIf(owners -> owners.size() <= 1);
+        }
+
+        /** The member a subtype table realises (its name suffix), else the table name. */
+        private static String memberOf(RelationSchema t) {
+            String table = t.table();
+            int sep = table.indexOf("__");
+            return sep < 0 ? table : table.substring(sep + 2);
+        }
+
+        /** The member's table, with the honest errors for unknown/absorbed members. */
+        private RelationSchema memberTable(String member) {
+            RelationSchema table = model.tableForMember(member);
+            if (table != null) {
+                return table;
             }
+            throw new IllegalArgumentException(
+                    "no member table '" + member + "' in concept " + model.concept()
+                            + " — the member is unknown, or absorbed (an absorbed"
+                            + " member's predicates live on the supertype's table;"
+                            + " address its facts directly). Members: "
+                            + model.tables().stream().map(RmapRegion::memberOf)
+                            .distinct().sorted().toList());
+        }
+
+        /** Plain operations on a flattened (multi-owner) predicate are ambiguous. */
+        private RelationSchema unambiguousTableFor(String predicate) {
+            RelationSchema schema = model.tableForPredicate(predicate);
+            if (schema == null) {
+                return null;
+            }
+            List<String> owners = ambiguousPredicates.get(predicate);
+            if (owners != null) {
+                throw new IllegalArgumentException(
+                        "predicate '" + predicate + "' of concept " + model.concept()
+                                + " is flattened across the members " + owners
+                                + " — a plain operation cannot know which member"
+                                + " the individual belongs to; use the member-qualified"
+                                + " form (e.g. write(member, subject, predicate, value))."
+                                + " See RELATIONAL_LOWERING.md §Subtypes and independent"
+                                + " object types.");
+            }
+            return schema;
         }
 
         // ---- reads ----------------------------------------------------------
 
         @Override
         public Set<String> read(String subject, String predicate) {
-            RelationSchema schema = model.tableForPredicate(predicate);
+            return readOn(unambiguousTableFor(predicate), subject, predicate);
+        }
+
+        @Override
+        public Set<String> read(String member, String subject, String predicate) {
+            RelationSchema schema = memberTable(member);
+            memberColumn(schema, member, predicate);
+            return readOn(schema, subject, predicate);
+        }
+
+        /** The single-subject read against an explicit table. */
+        private Set<String> readOn(RelationSchema schema, String subject, String predicate) {
             if (schema == null) {
                 return Set.of();
             }
             RelationSchema.Column col = schema.columnFor(predicate);
+            if (col == null) {
+                return Set.of();
+            }
             try {
                 Field<?> field = typedField(col);
                 Field<String> subjectCol = subjectField(schema);
@@ -200,7 +246,7 @@ public final class RmapPostgresFactStore implements FactStore {
 
         @Override
         public Set<String> subjects(String predicate, String value) {
-            RelationSchema schema = model.tableForPredicate(predicate);
+            RelationSchema schema = unambiguousTableFor(predicate);
             if (schema == null) {
                 return Set.of();
             }
@@ -279,7 +325,7 @@ public final class RmapPostgresFactStore implements FactStore {
 
         @Override
         public void write(String subject, String predicate, String value) {
-            RelationSchema schema = model.tableForPredicate(predicate);
+            RelationSchema schema = unambiguousTableFor(predicate);
             if (schema == null) {
                 throw new IllegalArgumentException(
                         "unknown predicate '" + predicate + "' for concept " + model.concept());
@@ -292,6 +338,52 @@ public final class RmapPostgresFactStore implements FactStore {
                 return;
             }
             writeColumn(schema, col, subject, fromSpi(col, value));
+        }
+
+        // ---- member-qualified forms -----------------------------------------
+
+        @Override
+        public void write(String member, String subject, String predicate, String value) {
+            RelationSchema schema = memberTable(member);
+            RelationSchema.Column col = memberColumn(schema, member, predicate);
+            if (buffering) {
+                appendBuffered(schema, subject, Map.ofEntries(
+                        Map.entry(col.column(), fromSpi(col, value))),
+                        schema.primaryKey().contains(col.column()));
+                return;
+            }
+            writeColumn(schema, col, subject, fromSpi(col, value));
+        }
+
+        @Override
+        public void remove(String member, String subject, String predicate, String value) {
+            clear(member, subject, predicate);
+        }
+
+        @Override
+        public void clear(String member, String subject, String predicate) {
+            RelationSchema schema = memberTable(member);
+            RelationSchema.Column col = memberColumn(schema, member, predicate);
+            if (bufferRetract(schema, null, col, subject)) {
+                return;
+            }
+            applyRetract(schema, col, subjectField(schema).eq(subject),
+                    DSL.field(DSL.name(col.column())));
+        }
+
+        /** The member table's column for the predicate — an explicit address
+         *  never silently misses; a member that does not own the predicate
+         *  fails loudly instead of reading/writing empty. */
+        private static RelationSchema.Column memberColumn(
+                RelationSchema schema, String member, String predicate) {
+            RelationSchema.Column col = schema.columnFor(predicate);
+            if (col == null) {
+                throw new IllegalArgumentException(
+                        "member '" + member + "' does not own predicate '" + predicate
+                                + "' in concept " + schema.concept()
+                                + "'s table " + schema.table());
+            }
+            return col;
         }
 
         // ---- composite-subject forms ---------------------------------------
@@ -702,7 +794,7 @@ public final class RmapPostgresFactStore implements FactStore {
 
         @Override
         public void clear(String subject, String predicate) {
-            RelationSchema schema = model.tableForPredicate(predicate);
+            RelationSchema schema = unambiguousTableFor(predicate);
             if (schema == null) {
                 return;
             }

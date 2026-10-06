@@ -73,4 +73,41 @@ public interface Region {
     static String join(List<String> parts) {
         return String.join("\u0000", parts);
     }
+
+    // ---- member-qualified forms ---------------------------------------------
+
+    /**
+     * Values of {@code predicate(subject)}, where the individual is addressed
+     * as {@code member} — a subtype/partition member of the concept's state
+     * model (e.g. {@code Client} or {@code Supplier} where {@code Client is a
+     * Party}).
+     *
+     * <p><strong>Semantics.</strong> Conceptually a concept region is ONE
+     * region; members are a relational-realization dimension (how a durable
+     * backend physically splits a partitioned or separated supertype's
+     * state). Backends that do not model members — the in-memory store, the
+     * generic fact relation — ignore the qualifier, which is exactly their
+     * correct behavior. A backend that realises subtypes as separate tables
+     * (the Rmap {@code separate}/{@code partition} mappings) routes the
+     * operation to the member's own table; for a partitioned supertype this
+     * is the only way a shared (flattened) predicate is unambiguous.
+     */
+    default Set<String> read(String member, String subject, String predicate) {
+        return read(subject, predicate);
+    }
+
+    /** Assert {@code predicate(subject) = value} for a member individual. */
+    default void write(String member, String subject, String predicate, String value) {
+        write(subject, predicate, value);
+    }
+
+    /** Retract one fact of a member individual. */
+    default void remove(String member, String subject, String predicate, String value) {
+        remove(subject, predicate, value);
+    }
+
+    /** Retract all values of {@code predicate} for a member individual. */
+    default void clear(String member, String subject, String predicate) {
+        clear(subject, predicate);
+    }
 }

@@ -2,9 +2,9 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `active` (`draft` until design approval, `active` while
-  implementing, `closed` after evidence approval) — the port is complete and
-  evidence-approved on this branch; close the record when it merges to `main`.
+- **Status:** `closed` (`draft` until design approval, `active` while
+  implementing, `closed` after evidence approval) — the port merged to `main`
+  (PR #59, aa86799) and shipped in v0.17.0; closed here.
 - **Affected profile(s):** `reference-impl/legible-engine`,
   `reference-impl/legible-storage`, `reference-impl/java-legible`,
   `reference-impl/java-micronaut` (the durable shared surface)

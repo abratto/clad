@@ -690,6 +690,19 @@ public final class RmapDeriver {
         return snake(s.replace("+", "_and_"));
     }
 
+    /**
+     * The table name a subtype/partition member realises under:
+     * {@code snake(concept) + "__" + snakeName(member)}. A member table
+     * reports the SUPERtype as its {@code objectType} (a subtype has no
+     * reference scheme of its own), so {@link RmapModel#tableFor} cannot
+     * distinguish members — the deterministic naming rule is the only
+     * member-resolvable handle. Absorbed members realise no table of their
+     * own (their predicates live on the supertype's table).
+     */
+    public static String memberTableName(String concept, String member) {
+        return snake(concept) + "__" + snakeName(member);
+    }
+
     // Public helper for tests/callers building child tables.
     /** Test hook: the model's child tables (composite PK over (subject, value)). */
     static List<RelationSchema> childTablesFor(String concept, String stateNotation) {

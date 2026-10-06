@@ -100,7 +100,9 @@ Halpin's Rmap, complete: arity + uniqueness + mandatory roles selects a
 single table per concept **or a table set** (`RmapModel`) for a concept
 ranging over several object types, a compound (objectified) subject, or
 multi-valued facts; **subtypes** realise per an explicit per-model choice
-(`absorb | separate | partition` — separate is the deterministic default) and
+(`absorb | separate | partition` — separate is the deterministic default;
+partition is runtime-writable via the Region SPI's member-qualified
+operations) and
 **independent object types** realise as their own single-column tables. A
 concept region is therefore a table set, not always one table. See the
 `java-micronaut` profile's `RELATIONAL_LOWERING.md` for the

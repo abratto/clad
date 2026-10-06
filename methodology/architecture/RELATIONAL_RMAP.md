@@ -56,7 +56,7 @@ multi-valued fact.
 | `fact p : S -> { V }` | child table `PRIMARY KEY (s, p)` |
 | `Sub is a Sup -- mapping: separate` (default) | member table keyed on the supertype's identity column + rendered intra-concept `FOREIGN KEY` |
 | `Sub is a Sup -- mapping: absorb` | subtype facts become nullable columns on the supertype's table |
-| `Sub is a Sup -- mapping: partition` | derivation realises it (flattening, no parent table); **the runtime store refuses the region** — see guardrails |
+| `Sub is a Sup -- mapping: partition` | derivation realises it (flattening, no parent table); **runtime-writable via member-qualified operations** — plain operations on shared predicates throw naming the members; see guardrails |
 | `independent T` | single-column table keyed on `T`'s reference scheme |
 | cross-concept identifier | opaque typed column — never a foreign key (R2) |
 | role membership (your "PartyRole" discriminator) | not a subtype mapping at all: assert the objectified membership fact (`member : (Party, Role) -> Timestamp -- mandatory`) beside a role catalog — that derives the junction table with the discriminator pair as its PK |
@@ -95,11 +95,15 @@ knowing cold:
 ## Guardrails (fail loudly, by design)
 
 - **Unparseable state/block clauses throw** at derivation — no silent drop.
-- **Partition is refused at region creation.** The SPI routes facts by
-  predicate to a single owning table; partition gives one predicate several
-  owners and leaves membership unstated, so `RmapPostgresFactStore` throws
-  naming the ambiguous predicates and the remediation
-  (`separate`/`absorb` or the role-catalog recipe above).
+- **Partition is member-addressed.** A plain operation on a flattened
+  (multi-owner) predicate throws at operation time, naming the members;
+  member-qualified operations (`write(member, subject, predicate, value)`)
+  route to the member's own table — which is what makes a partitioned
+  region, including its mandatory flattened predicates, writable. The
+  member qualifier may also name a `separate` subtype or the supertype
+  itself (each routes to its own table); an absorbed member has no table
+  and fails loudly. The role-catalog recipe above remains the modelling
+  alternative (membership as an objectified fact).
 - **Foreign keys render and enforce.** A `separate` subtype write for an
   individual with no supertype row fails on the FK — the fact model's own
   `Sub is a Sup` subset constraint. There is no implicit base-row
@@ -151,7 +155,7 @@ consumer).
 | Derivation correctness across shapes | `RmapDeriverModelTest` (single, table-set, compound, multi, subtype×3, independent, filtered) + byte-frozen migration oracles |
 | Derivation survives real files, not strings | `RmapDeriverDataModelTest` (prose ignored, missing/unfenced/empty block throws) |
 | Postgres round-trips per domain | `RmapDomainStorageTest` (clinic 3-part objectified, ordering child tables/defaults, PatientRegistry separate-subtype join, lending loans) |
-| Guardrails are behaviour, not comments | `RmapEdgeBehaviorTest` P1–P5 (loud FK, CHECK rejection & retry semantics, partition refusal, filtered-vs-plain uniqueness, retract shapes) |
+| Guardrails are behaviour, not comments | `RmapEdgeBehaviorTest` P1–P5 (loud FK, CHECK rejection & retry semantics, partition member-addressing, filtered-vs-plain uniqueness, retract shapes) |
 | Schema ≡ committed migration | `RmapMigrationTest` (drift guard) + `RmapPostgresPersistenceTest` (Flyway owned, jOOQ agrees) |
 | Pipeline end-to-end on the shipped app | CI `postgres-verify`: `mvn verify -pl legible-storage,java-micronaut -am -Dclad.storage=postgres` |
 

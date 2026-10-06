@@ -80,7 +80,11 @@ class RmapEdgeBehaviorTest {
         try (Connection c = dataSource.getConnection(); Statement st = c.createStatement();
              ResultSet rs = st.executeQuery(
                      "SELECT " + column + " FROM " + table + " WHERE " + where)) {
-            return rs.next() ? String.valueOf(rs.getObject(1)) : null;
+            if (!rs.next()) {
+                return null;
+            }
+            Object v = rs.getObject(1);
+            return v == null ? null : String.valueOf(v);
         }
     }
 
@@ -151,13 +155,14 @@ class RmapEdgeBehaviorTest {
     }
 
     @Test
-    @DisplayName("P3 partition: region creation refuses unroutable predicates")
-    void partitionRoutingIsRefusedAtRegionCreation() {
-        // Upgraded from "silent first-owner routing" (the earlier probe) to a
-        // loud guard: partition flattens the supertype's predicate into every
-        // member table, but the Region SPI routes by first owner and cannot
-        // know which member an individual belongs to — writes would be
-        // misrouted and mandatory flattened columns unsatisfiable.
+    @DisplayName("P3 partition: member-qualified operations route; plain operations on shared predicates throw at the operation")
+    void partitionRoutingIsMemberAddressed() throws Exception {
+        // UPGRADED (maintenance member-addressed-routing): the region is now
+        // creatable — a partitioned supertype's shared (flattened) predicates
+        // are addressed by member. A PLAIN operation on one throws at the
+        // operation, naming the members; member-qualified operations route to
+        // the member's own table, which is what makes a MANDATORY flattened
+        // predicate satisfiable (the member's own row carries it).
         String state = """
                 partyName: Party -> PartyName -- mandatory
                 discountRate: Client -> Int -- optional
@@ -167,28 +172,49 @@ class RmapEdgeBehaviorTest {
                 """;
         RmapModel model = RmapDeriver.deriveModel("Roles", state);
         RmapPostgresFactStore store = new RmapPostgresFactStore(dataSource, model.tables());
+        store.createSchema();
+        dev.legible.engine.TransactionalRegion r =
+                (dev.legible.engine.TransactionalRegion) store.region("Roles");
 
-        var thrown = assertThrows(IllegalStateException.class, () -> store.region("Roles"),
-                "a partitioned supertype's predicate is unroutable");
-        assertTrue(thrown.getMessage().contains("partyName"),
-                "the guard names the ambiguous predicate: " + thrown.getMessage());
-        assertTrue(thrown.getMessage().toLowerCase().contains("separate")
-                        || thrown.getMessage().toLowerCase().contains("absorb"),
-                "the guard names the remediation: " + thrown.getMessage());
+        // The region is creatable, and a plain write on the shared predicate
+        // throws naming the members and the member-qualified form.
+        var plain = assertThrows(IllegalArgumentException.class,
+                () -> r.write("cl-1", "partyName", "ClientCo"),
+                "a plain operation on a flattened predicate is ambiguous");
+        assertTrue(plain.getMessage().contains("partyName"), plain.getMessage());
+        assertTrue(plain.getMessage().toLowerCase().contains("client")
+                        && plain.getMessage().toLowerCase().contains("supplier"),
+                "the error names the members: " + plain.getMessage());
+        assertTrue(plain.getMessage().contains("member-qualified"),
+                "the error names the member form: " + plain.getMessage());
+        assertEquals(0L, countRows("roles__client"));
 
-        // The guard is nullability-agnostic: an optional supertype fact is
-        // equally unroutable (it splits the individual across members).
-        String optional = """
-                partyName: Party -> PartyName -- optional
-                discountRate: Client -> Int -- optional
-                creditLimit: Supplier -> Int -- optional
-                Client is a Party -- mapping: partition
-                Supplier is a Party -- mapping: partition
-                """;
-        RmapModel m2 = RmapDeriver.deriveModel("Roles", optional);
-        RmapPostgresFactStore s2 = new RmapPostgresFactStore(dataSource, m2.tables());
-        assertThrows(IllegalStateException.class, () -> s2.region("Roles"),
-                "the split-identity behavior is refused as well");
+        // Member-qualified writes route to the member's table — one buffered
+        // action can create the Client individual with its MANDATORY
+        // flattened partyName satisfied by its own row.
+        r.beginAction();
+        r.write("Client", "cl-1", "partyName", "ClientCo");
+        r.write("Client", "cl-1", "discountRate", "10");
+        r.flushAction();
+        assertEquals("ClientCo", cell("roles__client", "party_name", "party = 'cl-1'"),
+                "the client's own row carries the mandatory flattened predicate");
+        assertEquals("10", cell("roles__client", "discount_rate", "party = 'cl-1'"));
+        assertEquals(0L, countRows("roles__supplier"), "no supplier row for a client");
+        assertEquals(java.util.Set.of("ClientCo"), r.read("Client", "cl-1", "partyName"));
+
+        // A second member lives wholly in its own table.
+        r.beginAction();
+        r.write("Supplier", "su-1", "partyName", "SupplierCo");
+        r.write("Supplier", "su-1", "creditLimit", "5000");
+        r.flushAction();
+        assertEquals("SupplierCo", cell("roles__supplier", "party_name", "party = 'su-1'"));
+        assertEquals("5000", cell("roles__supplier", "credit_limit", "party = 'su-1'"));
+        assertEquals(1L, countRows("roles__client"), "the supplier never leaks into the client table");
+
+        // Member retracts stay in the member's table.
+        r.clear("Client", "cl-1", "discountRate");
+        assertEquals(null, cell("roles__client", "discount_rate", "party = 'cl-1'"));
+        assertEquals("ClientCo", cell("roles__client", "party_name", "party = 'cl-1'"));
     }
 
     @Test
