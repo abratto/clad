@@ -19,6 +19,14 @@ all *internal flow data* and are not flagged for coordination review. Only
 concept-state reads (Pattern D) require explicit annotation and appear in the
 Stage 03a coordination review.
 
+The ladder also doubles as an **information-content profile** (the
+Information Axiom, adapted — see
+[`../reference/CITATIONS.md`](../reference/CITATIONS.md) §Axiomatic Design):
+A adds zero, B adds chain-topology knowledge, C adds a copy point, D crosses
+a concept boundary. `quality-gate/sync_information.py` reports the profile
+per sync and per feature, advisively, with a finding on every D
+("outcome instead of read?") and on joins of arity 3+.
+
 ---
 
 ## Internal flow data (no cross-concept read)

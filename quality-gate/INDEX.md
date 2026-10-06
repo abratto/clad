@@ -15,6 +15,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | Script | What it checks | When it runs | Kind |
 |---|---|---|---|
 | `lint_concept_overlap.py` | lint_concept_overlap.py — advisory linter: NEW proposals that overlap an existing catalog concept are surfaced as warnings, never failures. | stage 01b (Chain table) | gate |
+| `sync_information.py` | sync_information.py — advisory linter: each sync's A/B/C/D binding profile, the feature aggregate, and two advisory findings. | stage 03 (Syncs) | gate |
 | `verify_acceptance_binding.py` | Stage gate: Acceptance Spec ↔ native tests. | stage 04c (Acceptance tests) | gate |
 | `verify_action_chain.py` | Stage gate: action names flow consistently through the full artefact chain: responsibility map → chain table → concept spec → sync spec → dependency card → contract. | stage 04b (Concept contract) | gate |
 | `verify_action_log_isolation.py` | Gate: concept state is reached only through the engine. | stage 04e (Sync implementation) | gate |

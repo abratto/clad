@@ -26,6 +26,21 @@ script docstrings; it is now part of the workflow:
   `[pass]` line carries no detail by design); `--output <path>` persists it.
 - `CITATIONS.md` credits Suh (*Axiomatic Design: Advances and Applications*,
   2001).
+- **The process domain framed and priced** (`maintenance/ad-process-domain.md`,
+  both gates approved). CLAD's layering maps onto Suh's domain pairs —
+  scenarios = FRs, concepts = DPs, **syncs = the process domain** — so the
+  shipped cycle-graph (blocking) and lock-order overlap (advisory) checks are
+  legible as the Independence Axiom at the DP↔PV pair, and the new
+  `sync_information.py` (advisory, wired at Stage 03) reports each sync's
+  A/B/C/D binding profile plus the feature aggregate: the Information Axiom
+  read as a binding-complexity ladder (A adds zero, B adds chain topology,
+  C adds a copy point, D crosses a concept boundary), with a finding on
+  every D ("outcome instead of read?" — concepts decide, syncs route) and
+  on joins of arity 3+. No weighted single score (devil's advocate:
+  pseudo-quantitative, gameable); the labels are author-declared, so the
+  profile is a self-report — misclassification stays with the literal-lock
+  checks and Stage 03a. The FR×DP matrix stays concept-only (over syncs it
+  is diagonal by construction).
 
 ## [0.19.0] — 2026-10-05
 

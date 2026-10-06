@@ -315,12 +315,21 @@ for `SYNCHRONIZATIONS.md` §Naming / §Flow pinning; `verify_code_refs.py`
 
 ### Axiomatic analysis
 
-`verify_concept_matrix.py` (the FR×DP matrix — see
-[`../reference/CITATIONS.md`](../reference/CITATIONS.md) §Axiomatic Design)
-runs **advisively as part of Stage 03's gate** (`clad_stages.py`, alongside
-the blocking cycle-graph check and the advisory overlap check); the
-reviewer's matrix is a command away: `./clad matrix`. To persist it, pass
-`--output <path>`.
+Axiomatic Design runs at **both domain pairs** (see
+[`../reference/CITATIONS.md`](../reference/CITATIONS.md) §Axiomatic Design
+for the mapping):
+
+- **FR↔DP (scenarios × concepts):** `verify_concept_matrix.py` — the FR×DP
+  matrix, **advisively as part of Stage 03's gate**; the reviewer's matrix
+  is a command away: `./clad matrix` (persist with `--output <path>`).
+- **DP↔PV (concepts × syncs — the process domain):** independence reads as
+  *acyclicity* — `verify_sync_cycle_graph.py` (A→B→A back-coupling,
+  **blocking**) and `verify_sync_overlap.py` (lock-order coupling,
+  advisory); plus `sync_information.py`, the **Information-Axiom profile**
+  (advisory): each sync's A/B/C/D binding ladder and the feature aggregate,
+  with a finding on every D read ("outcome instead of read?") and on joins
+  of arity 3+. The FR×DP matrix itself stays concept-only — over syncs it
+  is diagonal by construction (every sync cites exactly one scenario).
 
 ### Axiomatic analysis — running on existing projects
 

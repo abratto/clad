@@ -187,6 +187,8 @@ python3 ../../../../quality-gate/verify_concept_matrix.py \
   --usecase ../01_usecase/output/usecase.md \
   --chain-dir ../01b_chain-table/output \
   --resp-map ../01a_responsibility-map/output/responsibility-map.md
+python3 ../../../../quality-gate/sync_information.py \
+  --sync-dir output
 ```
 
 - **verify_sync_matrix.py:** every sync has a complete Sync Contract Matrix
@@ -206,6 +208,12 @@ python3 ../../../../quality-gate/verify_concept_matrix.py \
   shortfall blocks the stage). This is the file-manifest check for this
   stage — one sync per transition — so there is no separate
   `verify_file_manifest.py` invocation.
+- **sync_information.py:** each sync's A/B/C/D binding profile and the
+  feature aggregate (the Information Axiom read as a binding ladder —
+  A adds zero, B adds chain topology, C adds a copy point, D crosses a
+  concept boundary). Always advisory: D reads prompt "outcome instead of
+  read?" and joins of arity 3+ get a check-the-chain-table prompt; the
+  labels are author-declared, so the profile is a self-report.
 - **verify_concept_matrix.py:** the Axiomatic Design FR×DP matrix —
   use-case scenarios as functional requirements, concepts as design
   parameters (Suh's Independence Axiom: the matrix should be sparse and

@@ -501,6 +501,20 @@ _FR_DP_MATRIX = Check(
     requires=lambda r: [USECASE(r), CHAIN_DIR(r), _resp_map(r)],
 )
 
+_SYNC_INFORMATION = Check(
+    name="sync_information",
+    script="sync_information.py",
+    # The Information Axiom (adapted) read as a binding-complexity profile:
+    # each sync's A/B/C/D ladder from its own where-pattern table plus the
+    # feature aggregate. Always advisory (the script exits 0 by
+    # construction): D reads and wide joins are prompts for the human at
+    # Gate 2, never blockers; the labels are author-declared, so this is a
+    # self-report — misclassification belongs to the literal-lock checks
+    # and Stage 03a (maintenance change `ad-process-domain`).
+    build_args=lambda r: ["--sync-dir", SYNC_DIR(r)],
+    requires=lambda r: [SYNC_DIR(r)],
+)
+
 def _expected_outputs(feature_root: str, key: str) -> List[str]:
     try:
         return ap.expected_stage_outputs(feature_root).get(key, [])
@@ -834,7 +848,8 @@ STAGES: List[Stage] = [
                   _CONCEPT_MANIFEST]),
     Stage("03", "Syncs", "03_syncs", checks=[_SCENARIO_COVERAGE, _SYNC_MATRIX,
           _SYNC_TRANSITION_COVERAGE,
-          _SYNC_CYCLE_GRAPH, _SYNC_OVERLAP, _FR_DP_MATRIX]),
+          _SYNC_CYCLE_GRAPH, _SYNC_OVERLAP, _FR_DP_MATRIX,
+          _SYNC_INFORMATION]),
     Stage("03a", "Dependency review", "03a_dependency-review",
           checks=[_CARD_MANIFEST]),
     Stage("03b", "Data model", "03b_data-model", gate_after=2,

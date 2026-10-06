@@ -83,16 +83,38 @@ authentication vs profiling) and the object-oriented "bad smells" that
 Nam P. Suh. **Axiomatic Design: Advances and Applications.** Oxford
 University Press, 2001.
 
-Axiomatic Design contributes the review instrument behind Stage 03's
-`verify_concept_matrix.py` (maintenance change `ad-design-deepening`):
-use-case scenarios are the **functional requirements (FRs)** and concepts
-are the **design parameters (DPs)**. Suh's Independence Axiom — maintain
-the independence of the functional requirements — becomes inspectable as a
+Axiomatic Design contributes the review instruments behind Stage 03
+(maintenance changes `ad-design-deepening` and `ad-process-domain`). CLAD's
+layering maps onto Suh's domain pairs:
+
+| Suh's domain | CLAD's layer | Independence check at that pair |
+|---|---|---|
+| Customer | goals/actors (Stage 00) | — |
+| Functional | use-case scenarios (**FRs**) | |
+| Physical | concepts (**DPs**) | FR×DP matrix — `verify_concept_matrix.py` (advisive) |
+| Process | **syncs** (the orchestration that delivers flows) | DP↔PV: no back-coupling through the coordination — `verify_sync_cycle_graph.py` (A→B→A cycles, blocking) and `verify_sync_overlap.py` (lock-order coupling, advisory) |
+
+Scenarios are the **functional requirements (FRs)** and concepts are the
+**design parameters (DPs)**. Suh's Independence Axiom — maintain the
+independence of the functional requirements — becomes inspectable as a
 sparse, near-diagonal FR×DP matrix: a solid column is a God Object, two
 identical columns are redundant DPs, and heavily shared rows are boundary
-confusion. The checker realises it mechanically; the verdict (when to
-split, merge, or re-examine a boundary) stays a human modelling judgement,
-which is why the check runs advisively at Stage 03.
+confusion. At the process pair the same axiom reads as **acyclicity**: a
+sync by definition coordinates 2+ concepts (that is its job), so
+independence there means the orchestration must not create back-coupling —
+no A→B→A cycles, no inverted lock orders. Both shipped checks were this
+all along; the framing only names it.
+
+Suh's second axiom — the **Information Axiom**, minimise information
+content — is an *adaptation* here, cited honestly: Suh's information
+content is probabilistic (design range vs. system range), while
+`sync_information.py` reads the A/B/C/D ladder of `SYNC_PATTERNS.md` as a
+binding-complexity profile (A adds zero, B adds chain topology, C adds a
+copy point, D crosses a concept boundary). The profile is a self-report —
+the pattern labels are author-declared — and it prices departures rather
+than scoring them; the verdict stays a human modelling judgement, which is
+why every Axiomatic-Design check runs advisively except the cycle graph,
+which blocks because a cycle is not a judgement call.
 
 ## Interpretable Context Methodology (ICM)
 
