@@ -10,6 +10,43 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [Unreleased]
+
+**Concept governance hardening** — six maintenance changes making
+use-case-driven concept identification auditable rather than aspirational
+(proposed; pending design/evidence gates):
+
+- **`staged-naming-discipline`** — two social rules are now mechanical
+  Gate-1 checks: `verify_responsibility_map_shape.py` rejects signatures
+  and outcome enums in the 01a `Owned actions` column (names only), and
+  `verify_chain_map_names.py` fails any chain-table action the 01a map
+  never declared, so "chain table wins" can never propagate an unagreed
+  name.
+- **`concept-novelty-gate`** — `verify_concept_novelty.py` (blocking at
+  Gate 1) requires a `## Why not existing` justification when a `new`
+  concept overlaps the canonical catalog above `concept.novelty.threshold`
+  (default 0.5); `lint_concept_overlap.py` surfaces every overlap
+  advisoriily.
+- **`concept-shape-lint`** — `verify_concept_criteria.py` gains advisory
+  warnings for machinery-suffixed names (`Service`/`Manager`/`Handler`…),
+  over-long purposes, over-wide state/action surfaces, and degenerate
+  one-action operational principles (thresholds configurable via
+  `concept.purpose.max-words`, `concept.state.max-fields`,
+  `concept.actions.max-count`).
+- **`concept-remodel-class`** — R22 gains a fourth proposal class:
+  `remodel:UC-XX`, the deliberate reviewable path for a non-additive
+  concept change. Requires `## Migration notes` covering every dropped
+  canonical line and consent receipts from every feature on the concept's
+  promotion history; `promote-concepts` refuses otherwise. Consent never
+  rescues an `extends`.
+- **`plan-concept-order-check`** — `check_plan_concept_order.py` (advisory,
+  PLANNING overlay) warns when a feature is scheduled to extend/remodel a
+  concept before its introducer, or when two active features propose the
+  same concept as `new`.
+- **`corpus-status-command`** — `./clad corpus-status`: read-only corpus
+  health report (per-concept history, stale proposal snapshots,
+  dependence in-degree, remodel candidates).
+
 ## [0.18.0] — 2026-10-05
 
 **The canonical Rmap input is the Stage 03b data model, the pipeline is
