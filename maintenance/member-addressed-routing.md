@@ -2,8 +2,11 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `active` (`draft` until design approval, `active` while
-  implementing, `closed` after evidence approval)
+- **Status:** `closed` (`draft` until design approval, `active` while
+  implementing, `closed` after evidence approval) — the code commit carried
+  it `active` with the evidence gate approved (the pre-commit hook requires
+  exactly one active evidenced record for engine-scoped files); closed in the
+  follow-up documentation-only commit.
 - **Affected profile(s):** `reference-impl/legible-engine` (the `Region` SPI),
   `reference-impl/legible-storage` (`RmapPostgresFactStore`), the relational
   doctrine docs
