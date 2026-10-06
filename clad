@@ -8,6 +8,7 @@
 #   ./clad approve-iter <name> — approve iterative change
 #   ./clad approve-maintenance <name> <design|evidence> — approve maintenance gate
 #   ./clad promote-concepts — promote approved proposals into the concept corpus
+#   ./clad corpus-status — read-only concept-corpus health report
 #   ./clad verify        — run verify_artefacts.py
 #   ./clad next          — show what stage comes next
 #   ./clad stages        — show all stages and their status
@@ -194,6 +195,10 @@ cmd_verify() {
     python3 "$QG/verify_artefacts.py" "$@"
 }
 
+cmd_corpus_status() {
+    python3 "$QG/corpus_status.py" --features-dir "$FEATURES_DIR" "$@"
+}
+
 cmd_rename_sync() {
     local from="${1:-}" to="${2:-}"
     if [ -z "$from" ] || [ -z "$to" ]; then
@@ -282,6 +287,9 @@ CLAD CLI — lightweight wrapper for quality-gate scripts.
                                        proposals into the canonical corpus
                                        (after Gate 2 approval)
   ./clad verify                    Run verify_artefacts.py (artefact gate)
+  ./clad corpus-status             Read-only concept-corpus health report
+                                   (history, stale snapshots, dependence
+                                   in-degree, remodel candidates)
   ./clad rename-sync <Old> <New>   Rename a sync and its tail (dry run by
                                    default; pass --write to apply)
   ./clad next                      Show current stage and next steps
@@ -307,6 +315,7 @@ HELP
 case "${1:-help}" in
     advance)     shift; cmd_advance "$@";;
     approve)     shift; cmd_approve "$@";;
+    corpus-status) shift; cmd_corpus_status "$@";;
     approve-iter) shift; cmd_approve_iter "$@";;
     approve-maintenance) shift; cmd_approve_maintenance "$@";;
     promote-concepts) shift; cmd_promote_concepts "$@";;
