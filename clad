@@ -199,6 +199,21 @@ cmd_corpus_status() {
     python3 "$QG/corpus_status.py" --features-dir "$FEATURES_DIR" "$@"
 }
 
+cmd_matrix() {
+    local feat
+    feat=$(active_feature)
+    if [ -z "$feat" ]; then
+        echo "Usage: ./clad matrix [uses the active feature; set one via RESUME.md]" >&2
+        exit 1
+    fi
+    local root="$FEATURES_DIR/$feat"
+    python3 "$QG/verify_concept_matrix.py" \
+        --usecase "$root/stages/01_usecase/output/usecase.md" \
+        --chain-dir "$root/stages/01b_chain-table/output" \
+        --resp-map "$root/stages/01a_responsibility-map/output/responsibility-map.md" \
+        "$@"
+}
+
 cmd_rename_sync() {
     local from="${1:-}" to="${2:-}"
     if [ -z "$from" ] || [ -z "$to" ]; then
@@ -290,6 +305,8 @@ CLAD CLI — lightweight wrapper for quality-gate scripts.
   ./clad corpus-status             Read-only concept-corpus health report
                                    (history, stale snapshots, dependence
                                    in-degree, remodel candidates)
+  ./clad matrix                    The FR×DP matrix (Axiomatic Design)
+                                   for the active feature
   ./clad rename-sync <Old> <New>   Rename a sync and its tail (dry run by
                                    default; pass --write to apply)
   ./clad next                      Show current stage and next steps
@@ -316,6 +333,7 @@ case "${1:-help}" in
     advance)     shift; cmd_advance "$@";;
     approve)     shift; cmd_approve "$@";;
     corpus-status) shift; cmd_corpus_status "$@";;
+    matrix) shift; cmd_matrix "$@";;
     approve-iter) shift; cmd_approve_iter "$@";;
     approve-maintenance) shift; cmd_approve_maintenance "$@";;
     promote-concepts) shift; cmd_promote_concepts "$@";;

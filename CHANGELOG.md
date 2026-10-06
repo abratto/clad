@@ -10,6 +10,23 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [Unreleased]
+
+**Axiomatic Design made explicit and wired** (`maintenance/ad-design-deepening.md`,
+both gates approved). The FR×DP instrument's knowledge previously lived in
+script docstrings; it is now part of the workflow:
+
+- `verify_concept_matrix.py` runs **advisively at Stage 03's gate** beside
+  the blocking sync-cycle check (scenarios = FRs, concepts = DPs; the
+  Independence Axiom is inspectable as a near-diagonal matrix — God Object,
+  duplication, and entanglement findings stay warnings, never blockers).
+- Stage-03 contracts (template + worked example) teach the review stance and
+  name the check (lockstep, contract-consistency-enforced).
+- Reviewers get the matrix one command away via `./clad matrix` (the check's
+  `[pass]` line carries no detail by design); `--output <path>` persists it.
+- `CITATIONS.md` credits Suh (*Axiomatic Design: Advances and Applications*,
+  2001).
+
 ## [0.19.0] — 2026-10-05
 
 **Concept governance hardening** — six maintenance changes making

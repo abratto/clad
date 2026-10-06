@@ -83,6 +83,7 @@ def _dir(rel: str) -> Callable[[str], str]:
 
 
 # Convenience references to the per-stage output directories.
+USECASE = _dir("01_usecase")
 CHAIN_DIR = _dir("01b_chain-table")
 # Deprecated for concept-spec resolution: prefer `concept_source_dirs()` — the
 # effective concept source is the UNION of this feature's proposals and the
@@ -483,6 +484,23 @@ _SYNC_OVERLAP = Check(
     requires=lambda r: [SYNC_DIR(r)],
 )
 
+_FR_DP_MATRIX = Check(
+    name="fr_dp_matrix",
+    script="verify_concept_matrix.py",
+    # Axiomatic Design's FR×DP check: scenarios are the functional
+    # requirements, concepts the design parameters; a near-diagonal matrix is
+    # the Independence Axiom made inspectable (God Object = solid column,
+    # duplicated coverage = redundant DPs, entangled rows = boundary
+    # confusion). Always advisory — the script itself never blocks — because
+    # the verdict is a modelling judgement for the human at Gate 2, not a
+    # mechanical defect. For the reviewer's copy of the matrix, run
+    # `./clad matrix` (the check's pass line carries no detail by design).
+    build_args=lambda r: ["--usecase", os.path.join(USECASE(r), "usecase.md"),
+                          "--chain-dir", CHAIN_DIR(r),
+                          "--resp-map", _resp_map(r)],
+    requires=lambda r: [USECASE(r), CHAIN_DIR(r), _resp_map(r)],
+)
+
 def _expected_outputs(feature_root: str, key: str) -> List[str]:
     try:
         return ap.expected_stage_outputs(feature_root).get(key, [])
@@ -816,7 +834,7 @@ STAGES: List[Stage] = [
                   _CONCEPT_MANIFEST]),
     Stage("03", "Syncs", "03_syncs", checks=[_SCENARIO_COVERAGE, _SYNC_MATRIX,
           _SYNC_TRANSITION_COVERAGE,
-          _SYNC_CYCLE_GRAPH, _SYNC_OVERLAP]),
+          _SYNC_CYCLE_GRAPH, _SYNC_OVERLAP, _FR_DP_MATRIX]),
     Stage("03a", "Dependency review", "03a_dependency-review",
           checks=[_CARD_MANIFEST]),
     Stage("03b", "Data model", "03b_data-model", gate_after=2,

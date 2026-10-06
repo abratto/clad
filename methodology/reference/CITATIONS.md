@@ -78,6 +78,22 @@ over. It also supplies the "separating views" argument (naming vs
 authentication vs profiling) and the object-oriented "bad smells" that
 `verify_concept_state_relational.py` turns into a deterministic Stage 02 gate.
 
+## Axiomatic Design — the FR×DP matrix
+
+Nam P. Suh. **Axiomatic Design: Advances and Applications.** Oxford
+University Press, 2001.
+
+Axiomatic Design contributes the review instrument behind Stage 03's
+`verify_concept_matrix.py` (maintenance change `ad-design-deepening`):
+use-case scenarios are the **functional requirements (FRs)** and concepts
+are the **design parameters (DPs)**. Suh's Independence Axiom — maintain
+the independence of the functional requirements — becomes inspectable as a
+sparse, near-diagonal FR×DP matrix: a solid column is a God Object, two
+identical columns are redundant DPs, and heavily shared rows are boundary
+confusion. The checker realises it mechanically; the verdict (when to
+split, merge, or re-examine a boundary) stays a human modelling judgement,
+which is why the check runs advisively at Stage 03.
+
 ## Interpretable Context Methodology (ICM)
 
 Jake Van Clief. **Interpretable Context Methodology (ICM).** 2026.

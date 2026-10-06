@@ -313,6 +313,15 @@ for `SYNCHRONIZATIONS.md` §Naming / §Flow pinning; `verify_code_refs.py`
 (advisory) keeps every path-qualified or `file:LINE` citation resolving. The
 `templates/maintenance-change.md` record ships the section.
 
+### Axiomatic analysis
+
+`verify_concept_matrix.py` (the FR×DP matrix — see
+[`../reference/CITATIONS.md`](../reference/CITATIONS.md) §Axiomatic Design)
+runs **advisively as part of Stage 03's gate** (`clad_stages.py`, alongside
+the blocking cycle-graph check and the advisory overlap check); the
+reviewer's matrix is a command away: `./clad matrix`. To persist it, pass
+`--output <path>`.
+
 ### Axiomatic analysis — running on existing projects
 
 The three Stage 03 analysis scripts (`verify_sync_cycle_graph.py`,

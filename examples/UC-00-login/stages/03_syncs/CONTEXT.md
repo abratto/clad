@@ -183,6 +183,10 @@ python3 ../../../../quality-gate/verify_sync_overlap.py \
   --sync-dir output
 python3 ../../../../quality-gate/verify_sync_transition_coverage.py \
   --feature ../..
+python3 ../../../../quality-gate/verify_concept_matrix.py \
+  --usecase ../01_usecase/output/usecase.md \
+  --chain-dir ../01b_chain-table/output \
+  --resp-map ../01a_responsibility-map/output/responsibility-map.md
 ```
 
 - **verify_sync_matrix.py:** every sync has a complete Sync Contract Matrix
@@ -196,6 +200,10 @@ python3 ../../../../quality-gate/verify_sync_transition_coverage.py \
 - **verify_sync_transition_coverage.py:** every chain-table transition is
   lowered to a sync file (destroys the "missing carrier" blind spot; a
   shortfall blocks the stage).
+- **verify_concept_matrix.py:** the Axiomatic Design FR×DP matrix —
+  scenarios as functional requirements, concepts as design parameters
+  (Independence Axiom: sparse, near-diagonal). Always advisory. For the
+  reviewer's copy run `./clad matrix`.
 
 ### Semantic checks (human)
 

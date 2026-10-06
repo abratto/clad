@@ -183,6 +183,10 @@ python3 ../../../../quality-gate/verify_sync_overlap.py \
   --sync-dir output --advisory
 python3 ../../../../quality-gate/verify_sync_transition_coverage.py \
   --feature ../..
+python3 ../../../../quality-gate/verify_concept_matrix.py \
+  --usecase ../01_usecase/output/usecase.md \
+  --chain-dir ../01b_chain-table/output \
+  --resp-map ../01a_responsibility-map/output/responsibility-map.md
 ```
 
 - **verify_sync_matrix.py:** every sync has a complete Sync Contract Matrix
@@ -202,9 +206,24 @@ python3 ../../../../quality-gate/verify_sync_transition_coverage.py \
   shortfall blocks the stage). This is the file-manifest check for this
   stage — one sync per transition — so there is no separate
   `verify_file_manifest.py` invocation.
+- **verify_concept_matrix.py:** the Axiomatic Design FR×DP matrix —
+  use-case scenarios as functional requirements, concepts as design
+  parameters (Suh's Independence Axiom: the matrix should be sparse and
+  near-diagonal). Always advisory; the script never blocks. For the
+  reviewer's copy run `./clad matrix` (the check's `[pass]` line carries
+  no detail).
 
 ### Semantic checks (human)
 
+- **FR×DP matrix review (Axiomatic Design).** Before the gate, run
+  `./clad matrix` (or
+  `python3 ../../../../quality-gate/verify_concept_matrix.py …
+  --output fr-dp-matrix.md`) and read the matrix: a solid column is a
+  concept touching most scenarios (God Object — a potential split);
+  identical rows on two concepts are duplicates worth merging; several
+  shared rows without identity are boundary confusion to re-examine at the
+  responsibility map or the chain table. Small cohesive features
+  (3–5 scenarios) naturally have fat rows — that is expected, not a defect.
 - No sync contains imperative branching or persists state.
 - **Pattern-C literals are constants.** A `Web/respond` (or any `then`)
   literal must not embed a `<field>` placeholder for interpolation — the
