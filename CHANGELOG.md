@@ -10,7 +10,7 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
-## [Unreleased]
+## [0.21.0] — 2026-10-06
 
 **AD review evidence made durable and early; partition runtime-routable via
 member addressing** (`maintenance/ad-review-evidence.md` and
