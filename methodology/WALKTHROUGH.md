@@ -174,7 +174,10 @@ concept (e.g. `LoginAttemptHistory`).
 
 > **Agent stance:** if you find yourself wanting to write
 > `lookupByUsername(username) -> Found(userId) | NotFound`, you are
-> doing Stage 02 work in Stage 01a. Names only.
+> doing Stage 02 work in Stage 01a. Names only — and since
+> `staged-naming-discipline`, this is mechanical:
+> `verify_responsibility_map_shape.py` rejects `(`, `->`, and outcome
+> enums in the `Owned actions` column at Gate 1.
 
 ---
 
@@ -207,7 +210,10 @@ diagram. First row is always `Web.request`; last row is always
 > Stage 03 sync spec later disagrees with a chain table on an action
 > name, **the chain table wins**. PR #6 reconciled `Session.open` →
 > `Session.grant` and `PasswordAuth.verify` → `PasswordAuth.check`
-> precisely on this rule.
+> precisely on this rule. The rule is backstopped at this stage by
+> `verify_chain_map_names.py`: a chain table may only invoke action
+> names the 01a map declared, so "chain table wins" can never
+> propagate a name nobody agreed to.
 
 ---
 

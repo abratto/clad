@@ -220,7 +220,9 @@ consistency checks across the CLAD artefact chain.
 | `verify_file_manifest.py` | Any | `output/` contains exactly the expected files |
 | `verify_profile_paths.py` | 04c–04e | Profile-path integrity: configured `test.source.root`/impl dirs resolve inside the feature's declared `package-and-layout.md` roots (blocks); warns on seed `reference-impl/` pointers when the layout declares elsewhere |
 | `verify_scenario_coverage.py` | 01, 01b, 03 | Goal → scenario → chain → sync coverage |
+| `verify_responsibility_map_shape.py` | 01a | The Concepts table's `Owned actions` column carries names only — no signatures, no outcome enums |
 | `verify_chain_grammar.py` | 01b | Every chain-table row has exactly one outcome token and one `Then` action, and the file carries its `stateDiagram-v2` view |
+| `verify_chain_map_names.py` | 01b | Every chained action name resolves against the 01a responsibility map (name-level slice of `verify_action_chain.py`, runnable at Gate 1) |
 | `verify_sync_transition_coverage.py` | 03 | Every chain-table invocation edge has a corresponding sync file |
 | `verify_concept_state_relational.py` | 02 | Concept `## State` is a relation over a set of individuals, not one instance's field list |
 | `verify_concept_criteria.py` | 02 | Mechanical concept criteria: operational principle present, no external types (R1), type parameters declared |

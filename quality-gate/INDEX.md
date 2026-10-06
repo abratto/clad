@@ -20,6 +20,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_adapter_test.py` | when a feature exposes an adapter surface, a profile-specific end-to-end adapter test must exist (blocking). | stage 04c (Acceptance tests); stage 05 (Verify) | gate |
 | `verify_artefacts.py` | the one-shot artefact pipeline gate (runs the stage checks for every feature + the project-level checks below) | project-level (every `verify_artefacts` run) | gate |
 | `verify_chain_grammar.py` | Verify the lossless, one-branch grammar of Stage 01b chain tables. | stage 01b (Chain table) | gate |
+| `verify_chain_map_names.py` | Stage 01b gate: every chain-table action name resolves against the Stage 01a responsibility map. | stage 01b (Chain table) | gate |
 | `verify_close_evidence.py` | Stage 05 WARN-only close evidence. | stage 05 (Verify) | gate |
 | `verify_code_refs.py` | backticked code references resolve (advisory) | project-level (every `verify_artefacts` run) | advisory |
 | `verify_collection_coverage.py` | Stage gate: collection responses carry empty + multi-item (and repeated-key) fixtures. | stage 04c (Acceptance tests) | gate |
@@ -50,6 +51,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_profile_paths.py` | Profile-path integrity: configured implementation paths must not silently audit a different tree than the feature declares. | stage 04a (Storage mapping); stage 04c (Acceptance tests); stage 04d (Concept implementation); stage 04e (Sync implementation) | gate |
 | `verify_reference_integrity.py` | no dangling artefact reference after a rename | project-level (every `verify_artefacts` run) | gate |
 | `verify_relational_mapping.py` | Conditional gate: relational storage mappings (Stage 04a) must satisfy the Rmap rules. | stage 04a (Storage mapping) | gate |
+| `verify_responsibility_map_shape.py` | Stage 01a gate: the Concepts table's `Owned actions` column carries NAMES ONLY — no signatures, no outcomes. | stage 01a (Responsibility map) | gate |
 | `verify_reused_concept_contracts.py` | a REUSED concept must have a canonical contract in the corpus. | stage 04b (Concept contract) | gate |
 | `verify_scenario_coverage.py` | Stage gate: goal → scenario → chain → sync coverage. | stage 03 (Syncs) | gate |
 | `verify_shared_action_contracts.py` | a concept action/outcome vocabulary shared across features does not drift | project-level (every `verify_artefacts` run) | gate |

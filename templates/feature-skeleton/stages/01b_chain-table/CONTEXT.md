@@ -110,6 +110,9 @@ python3 ../../../../quality-gate/verify_distinct_outcomes.py \
   --chain-dir output
 python3 ../../../../quality-gate/verify_outcome_casing.py \
   --feature ../..
+python3 ../../../../quality-gate/verify_chain_map_names.py \
+  --resp-map ../01a_responsibility-map/output/responsibility-map.md \
+  --chain-dir output
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<scenario-name>-chain.md"  # one per scenario
 ```
@@ -122,6 +125,9 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   guard actions/outcomes before the first write (R23), not one shared `Refused`.
 - **verify_outcome_casing.py:** every authored outcome token is
   SCREAMING_SNAKE_CASE (per `FLOW_TOKENS.md` §"Outcome casing").
+- **verify_chain_map_names.py:** every chained action name resolves against
+  the 01a responsibility map — the chain table is the canonical name source
+  downstream, so it must not invent names the map never declared.
 - **verify_file_manifest.py:** `output/` contains exactly one
   `<scenario-name>-chain.md` per use-case scenario.
 
