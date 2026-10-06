@@ -81,6 +81,16 @@
 > see `concept-dependence.md`). It is reviewed with the proposal at this
 > feature's gate; the app-level graph is updated only through promotion.
 
+## Why not existing
+
+> Required whenever a `new` row overlaps an existing catalog concept —
+> `verify_concept_novelty.py` blocks Gate 1 until each near-match named by
+> the check is addressed here. One bullet per near-match: name the existing
+> concept and the single sharpest reason it does not fit. Omit the section
+> when no `new` row has a near-match (first feature, or genuinely novel).
+
+- `<NearMatchConcept>` — <why it does not fit this responsibility>
+
 ## Coverage check
 
 > For each scenario in `../01_usecase/output/usecase.md`, list the

@@ -723,6 +723,25 @@ _CHAIN_MAP_NAMES = Check(
     requires=lambda r: [_resp_map(r), CHAIN_DIR(r)],
 )
 
+# A `new` concept overlapping the canonical catalog must carry a
+# `## Why not existing` justification in the responsibility map
+# (maintenance change `concept-novelty-gate`) — the auditable form of
+# "consult the system vocabulary BEFORE deriving". Blocking; the linter
+# below is the advisory twin and always exits 0.
+_CONCEPT_NOVELTY = Check(
+    name="concept_novelty",
+    script="verify_concept_novelty.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [_resp_map(r)],
+)
+
+_CONCEPT_OVERLAP_LINT = Check(
+    name="concept_overlap_lint",
+    script="lint_concept_overlap.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [_resp_map(r)],
+)
+
 
 _CONCEPT_STATE_RELATIONAL = Check(
     name="concept_state_relational",
@@ -783,8 +802,11 @@ STAGES: List[Stage] = [
             # outcome tokens are SCREAMING_SNAKE_CASE, here and in Stage 02.
             # `chain_map_names` (`staged-naming-discipline`): chained action
             # names must resolve against the 01a map before Gate 1 locks them.
+            # `concept_novelty` (`concept-novelty-gate`): a `new` concept with
+            # a catalog near-match must justify the non-fit before Gate 1.
             checks=[_CHAIN_GRAMMAR, _DISTINCT_OUTCOMES, _OUTCOME_CASING,
-                    _CHAIN_MAP_NAMES, _CHAIN_MANIFEST]),
+                    _CHAIN_MAP_NAMES, _CONCEPT_NOVELTY, _CONCEPT_OVERLAP_LINT,
+                    _CHAIN_MANIFEST]),
         Stage("02", "Concept specs", "02_concepts",
           # `concept_additivity` runs here, at the stage that AUTHORS an extend;
           # waiting until 03b/04b let a non-additive extension be written first

@@ -113,6 +113,8 @@ python3 ../../../../quality-gate/verify_outcome_casing.py \
 python3 ../../../../quality-gate/verify_chain_map_names.py \
   --resp-map ../01a_responsibility-map/output/responsibility-map.md \
   --chain-dir output
+python3 ../../../../quality-gate/verify_concept_novelty.py --feature ../..
+python3 ../../../../quality-gate/lint_concept_overlap.py --feature ../..
 python3 ../../../../quality-gate/verify_file_manifest.py \
   --dir output --expected "<scenario-name>-chain.md"  # one per scenario
 ```
@@ -128,6 +130,12 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
 - **verify_chain_map_names.py:** every chained action name resolves against
   the 01a responsibility map — the chain table is the canonical name source
   downstream, so it must not invent names the map never declared.
+- **verify_concept_novelty.py:** a `new` concept that overlaps an existing
+  catalog concept (name + action tokens, threshold
+  `concept.novelty.threshold`) must justify the non-fit per near-match in
+  the responsibility map's `## Why not existing` section.
+- **lint_concept_overlap.py:** advisory — surfaces every close call,
+  including justified ones, for the Gate-1 reviewer. Never fails.
 - **verify_file_manifest.py:** `output/` contains exactly one
   `<scenario-name>-chain.md` per use-case scenario.
 

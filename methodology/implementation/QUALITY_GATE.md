@@ -223,6 +223,8 @@ consistency checks across the CLAD artefact chain.
 | `verify_responsibility_map_shape.py` | 01a | The Concepts table's `Owned actions` column carries names only — no signatures, no outcome enums |
 | `verify_chain_grammar.py` | 01b | Every chain-table row has exactly one outcome token and one `Then` action, and the file carries its `stateDiagram-v2` view |
 | `verify_chain_map_names.py` | 01b | Every chained action name resolves against the 01a responsibility map (name-level slice of `verify_action_chain.py`, runnable at Gate 1) |
+| `verify_concept_novelty.py` | 01b | A `new` concept overlapping the concepts catalog above `concept.novelty.threshold` must justify the non-fit in the map's `## Why not existing` section |
+| `lint_concept_overlap.py` | 01b | Advisory: surfaces every NEW/catalog overlap above threshold, including justified ones. Always exit 0 |
 | `verify_sync_transition_coverage.py` | 03 | Every chain-table invocation edge has a corresponding sync file |
 | `verify_concept_state_relational.py` | 02 | Concept `## State` is a relation over a set of individuals, not one instance's field list |
 | `verify_concept_criteria.py` | 02 | Mechanical concept criteria: operational principle present, no external types (R1), type parameters declared |

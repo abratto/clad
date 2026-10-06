@@ -14,6 +14,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 
 | Script | What it checks | When it runs | Kind |
 |---|---|---|---|
+| `lint_concept_overlap.py` | lint_concept_overlap.py — advisory linter: NEW proposals that overlap an existing catalog concept are surfaced as warnings, never failures. | stage 01b (Chain table) | gate |
 | `verify_acceptance_binding.py` | Stage gate: Acceptance Spec ↔ native tests. | stage 04c (Acceptance tests) | gate |
 | `verify_action_chain.py` | Stage gate: action names flow consistently through the full artefact chain: responsibility map → chain table → concept spec → sync spec → dependency card → contract. | stage 04b (Concept contract) | gate |
 | `verify_action_log_isolation.py` | Gate: concept state is reached only through the engine. | stage 04e (Sync implementation) | gate |
@@ -29,6 +30,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_concept_criteria.py` | criteria gate: the mechanical subset of the concept criteria. | stage 02 (Concept specs) | gate |
 | `verify_concept_field_assertions.py` | Enforce R14/R16 for Java concept tests. | stage 04d (Concept implementation) | gate |
 | `verify_concept_matrix.py` | builds the FR × DP matrix from CLAD artefacts and flags architectural anti-patterns. | by hand (advisory tooling) | advisory |
+| `verify_concept_novelty.py` | Gate-1 check: a NEW concept proposal must justify why nothing in the canonical corpus already fits. | stage 01b (Chain table) | gate |
 | `verify_concept_proposals.py` | Stage 02 gate: the proposal set corresponds exactly to the responsibility map's NEW/EXTEND rows. | stage 02 (Concept specs) | gate |
 | `verify_concept_registry.py` | one introducer per concept; no redefinition; promotion completeness | project-level (every `verify_artefacts` run) | gate |
 | `verify_concept_state_relational.py` | Stage 02 gate: concept state must be relations over a set of individuals, not a single object's instance variables. | stage 02 (Concept specs) | gate |
