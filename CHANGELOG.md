@@ -10,6 +10,58 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.22.0] — 2026-10-08
+
+**Downstream-driven corrections: a read-only feature now advances past the
+no-output Stage 03b; the planning check sees consumer dependencies; the R-map
+honours the declared reference scheme; the Stage-03 generator binds and labels
+correctly.** Surfaced building a downstream CLAD app and contributed back as
+three focused PRs (#60, #61, #62).
+
+- **No-output stage advance (Stage 03b).** A feature whose bound concepts own no
+  state (a read-only / binding-only feature) reaches Stage 03b with nothing to
+  model: it is now *satisfied without an output directory* rather than reported
+  as skipped/blocked. New `clad_stages.stage_is_noop`, honoured by
+  `verify_stage_sequence.stage_has_evidence` (recursing to the predecessor) and
+  rendered by `present_gate`. Gated on the feature having authored its concept
+  set (`02_concepts/output/concept-bindings.md`), so a fresh skeleton still
+  routes through 03b normally.
+- **Planning check sees consumer dependencies.** `check_plan_concept_order.py`
+  now also warns when a feature that *consumes* another feature's concept
+  (`reused:UC-XX`) is scheduled before that concept's introducer — previously
+  only `extends`/`remodel` were checked.
+- **R-map honours the reference scheme.** `object-type <Entity> identified-by
+  <IdType>` now names the entity's identity column after `<IdType>`, threaded
+  through `realizeTable`, `childTables` (including a subtype/absorbed subject),
+  compound (compidot) components, `independentTable`, and
+  `RelationSchema.identityColumns()` (which now derives from the primary key, so
+  `facts()`/`dataColumns()` stay correct). An object type whose facts are all
+  multi-valued no longer emits an identity-only table; a child's FK renders only
+  when the subject's own table carries data.
+- **Stage-03 generator binds and labels correctly.** `generate_syncs` now derives
+  a sync's `where` bindings from the row's *own* trigger completion (not the
+  producer row, which on the extension-row carrier is a payload-less `REFUSED`),
+  and labels the payload correctly: bootstrap (`Web/request`) → Pattern A
+  (`triggerInput`); domain trigger → Pattern B (`triggerField`).
+- **Contract/doc sync.** The Stage 03b contract and the `clad-data-modeling`
+  skill document the no-output case; the 03a card contract and the
+  `clad-dependency-review` skill say one card per *participating* concept (+ Web);
+  `STAGES.md`'s stage table matches.
+
+**Upgrade notes.**
+
+- **Read-only features advance.** A feature with no state-owning concept now
+  moves through 03b without a placeholder data model — no action required, but
+  do not author a placeholder `<Name>.data-model.md`.
+- **R-map identity columns follow the declared scheme.** No migration is needed
+  for existing schemas: a model whose `identified-by` type equals the entity name
+  (every committed/generated model today) re-derives byte-identically.
+- **Known limitation (deferred).** A chained subtype hierarchy (`C is a B`,
+  `B is a A`) and a subtype used as a compound component do not yet inherit the
+  *root* reference scheme transitively (`RmapDeriver` resolves one hop). Not
+  reachable from any committed or generated model; a follow-up will resolve the
+  root and stop emitting a scheme for subtypes.
+
 ## [0.21.0] — 2026-10-06
 
 **AD review evidence made durable and early; partition runtime-routable via
