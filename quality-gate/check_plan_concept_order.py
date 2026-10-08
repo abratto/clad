@@ -114,16 +114,24 @@ def main() -> int:
 
     warnings = []
 
-    # 1. Extension/remodel scheduled before its concept's introducer.
+    # 1. Extension/remodel/reuse scheduled before its concept's introducer.
+    #    `reused:UC-XX` is a *consumer* dependency — the feature reads another
+    #    feature's concept data — so the introducer must be scheduled earlier
+    #    for it too, not only for an `extends`/`remodel` (experiment defect D40).
     for slug, concepts in sorted(origins.items()):
         for concept, origin in sorted(concepts.items()):
-            match = re.match(r"(?:extends|remodel):(UC-\S+)", origin,
+            match = re.match(r"(extends|remodel|reused):(UC-\S+)", origin,
                              re.IGNORECASE)
             if not match:
                 continue
-            introducer = match.group(1).rstrip("`").strip()
-            kind = "remodels" if origin.lower().startswith("remodel") \
-                else "extends"
+            kind_token = match.group(1).lower()
+            introducer = match.group(2).rstrip("`").strip()
+            if kind_token == "remodel":
+                kind, verb = "remodels", "extend"
+            elif kind_token == "extends":
+                kind, verb = "extends", "extend"
+            else:
+                kind, verb = "reuses", "bind"
             if introducer == slug:
                 continue
             if introducer not in order:
@@ -135,7 +143,7 @@ def main() -> int:
                 warnings.append(
                     f"{slug} {kind} `{concept}` from "
                     f"{introducer}, but the board schedules {introducer} "
-                    f"LATER — the extension has nothing to extend; re-sequence")
+                    f"LATER — the feature has nothing to {verb}; re-sequence")
 
     # 2. Two features in the same active wave proposing the same NEW concept.
     active = [r["slug"] for r in rows if r["status"] in ("doing", "next")]

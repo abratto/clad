@@ -91,13 +91,21 @@ def active_reentry_stage(feature_root: str) -> str | None:
 def stage_has_evidence(feature_root: str, stage_id: str) -> bool:
     """Return whether a canonical stage has written its output.
 
-    Legacy red/green Stage 04 trees are rejected: only the canonical stage
-    output directory counts. A pre-split feature must re-enter Stage 04
-    (DR-0001)."""
+    A stage with no expected output (`_stage_is_noop`) is satisfied without an
+    output directory, provided its predecessor is satisfied. Legacy red/green
+    Stage 04 trees are rejected: only the canonical stage output directory
+    counts. A pre-split feature must re-enter Stage 04 (DR-0001)."""
     stage = cs.stage_by_id(stage_id)
     if stage is None:
         return False
-    return cs.dir_is_populated(stage.output_dir(feature_root))
+    if cs.dir_is_populated(stage.output_dir(feature_root)):
+        return True
+    if not cs.stage_is_noop(feature_root, stage_id):
+        return False
+    index = cs.stage_index(stage_id)
+    if index <= 0:
+        return True
+    return stage_has_evidence(feature_root, cs.STAGES[index - 1].id)
 
 
 def gate_status(resume_text: str, gate_num: int) -> str | None:
