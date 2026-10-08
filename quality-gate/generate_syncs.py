@@ -144,6 +144,18 @@ def _resolve_when_source(wc, wa, wo, producers, current_row, warnings, fname):
     return prev, trigger_outcome_raw
 
 
+def _outcome_payload(outcome_raw: str) -> str:
+    """The parenthesised payload of a `when`/outcome token, or `''`.
+
+    The sync's `where` bindings come from the row's OWN trigger completion
+    (`when`), not from the producer row the generator matched it to: on the
+    extension-row carrier the producer is a *different* outcome of the same
+    action (often a `REFUSED`, which carries no payload), so binding its fields
+    reads a value the firing completion never emits (experiment defect D25)."""
+    m = re.search(r"\(([^)]*)\)", outcome_raw or "")
+    return m.group(1) if m else ""
+
+
 def _split_payload_fields(payload: str) -> List[str]:
     """Split a completion payload into individual field names.
 
@@ -348,10 +360,23 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
 
             binds: List[Tuple[str, str, str]] = []
             pattern_d_notes: List[str] = []
-            if prev.outcome_payload:
-                for field in _split_payload_fields(prev.outcome_payload):
-                    binds.append((f"?{field}", "A",
-                                  f"Trigger token (`{trigger_concept}/{trigger_action}`)"))
+            # Bind from the row's OWN trigger completion payload. The bootstrap
+            # (`Web/request`) emits no completion fields, so its payload fields
+            # are flow-root INPUTS (Pattern A, `triggerInput`); a domain trigger's
+            # payload fields are completion fields (Pattern B, `triggerField`).
+            when_payload = _outcome_payload(wo)
+            if when_payload:
+                flow_root = trigger_concept == "Web" and trigger_action == "request"
+                for field in _split_payload_fields(when_payload):
+                    if flow_root:
+                        binds.append((f"?{field}", "A",
+                                      f"Flow-root input (`Web/request`) — "
+                                      f'`triggerInput("{field}")`'))
+                    else:
+                        binds.append((f"?{field}", "B",
+                                      f"Trigger completion — "
+                                      f"`{trigger_concept}/{trigger_action}` "
+                                      f'emits `{field}` (`triggerField("{field}")`)'))
 
             syncs.append(GeneratedSync(
                 name="",
