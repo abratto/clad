@@ -215,6 +215,53 @@ class RmapDeriverDataModelTest {
     }
 
     @Test
+    void aMultiValuedFactOnAPartitionMemberSubjectLinksByIdentityColumn() {
+        String text = dataModel("""
+                object-type Party identified-by PartyId
+                Company is a Party -- mapping: partition
+                fact partyName : Party -> PartyName -- mandatory
+                fact vatNumber : Company -> VatNumber -- mandatory
+                fact phones : Company -> { Phone } -- zero or more
+                """);
+        RmapModel model = RmapDeriver.deriveModelFromDataModel("PartyRegistry", text);
+        RelationSchema child = model.tables().stream()
+                .filter(t -> t.primaryKey().size() == 2).findFirst().orElseThrow();
+        assertEquals(java.util.List.of("party_id", "phones"), child.primaryKey());
+        assertEquals("party_id -> party_registry__company(party_id)",
+                child.foreignKeys().get(0),
+                "a partition member's child keys on the inherited identity column");
+    }
+
+    @Test
+    void aReferenceSchemeDeclarationToleratesATrailingComment() {
+        String text = dataModel("""
+                object-type Widget identified-by WidgetId -- the widget's stable id
+                fact name : Widget -> WidgetName -- mandatory
+                """);
+        RelationSchema s = RmapDeriver.deriveFromDataModel("Widgets", text);
+        assertEquals("widget_id", s.idColumn(),
+                "a trailing comment does not defeat the reference-scheme parse");
+    }
+
+    @Test
+    void aCompoundSubjectIsNeverDroppedByTheIdentityOnlyRule() {
+        // The drop rule removes identity-only SINGLE-type subjects; a compidot
+        // (compound subject) always carries its components + value, so it is
+        // never identity-only.
+        String text = dataModel("""
+                object-type Party identified-by PartyId
+                object-type Service identified-by ServiceId
+                fact partyName : Party -> PartyName -- mandatory
+                fact serviceName : Service -> ServiceName -- mandatory
+                fact serviceJurisdiction : ( Party, Service ) -> Jurisdiction -- optional
+                """);
+        RmapModel model = RmapDeriver.deriveModelFromDataModel("LegalOntology", text);
+        assertTrue(model.tables().stream().anyMatch(
+                        t -> t.primaryKey().equals(java.util.List.of("party_id", "service_id"))),
+                "the compidot survives the identity-only drop rule");
+    }
+
+    @Test
     void compoundAndMultiValuedSubjectsRealiseAsATableSet() {
         String text = dataModel("""
                 object-type FirmUri identified-by FirmUri
