@@ -117,7 +117,8 @@ def main() -> int:
     # 1. Extension/remodel/reuse scheduled before its concept's introducer.
     #    `reused:UC-XX` is a *consumer* dependency — the feature reads another
     #    feature's concept data — so the introducer must be scheduled earlier
-    #    for it too, not only for an `extends`/`remodel` (experiment defect D40).
+    #    for it too, not only for an `extends`/`remodel`. (A consumer ordering
+    #    the check previously missed.)
     for slug, concepts in sorted(origins.items()):
         for concept, origin in sorted(concepts.items()):
             match = re.match(r"(extends|remodel|reused):(UC-\S+)", origin,

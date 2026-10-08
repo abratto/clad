@@ -79,6 +79,47 @@ class StageWorkflowTests(unittest.TestCase):
             self.assertTrue(
                 verify_stage_sequence.stage_has_evidence(str(feature), "03b"))
 
+    def test_no_output_03b_is_not_noop_when_a_concept_owns_state(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self.make_feature(temporary)
+            # Bindings authored (the gate's second condition holds)...
+            bindings = Path(stages.stage_by_id("02").output_dir(str(feature)))
+            bindings.mkdir(parents=True, exist_ok=True)
+            (bindings / "concept-bindings.md").write_text(
+                "# bindings", encoding="utf-8")
+            # ...but a NEW concept owns state, so 03b must produce a model.
+            resp = Path(stages.stage_by_id("01a").output_dir(str(feature)))
+            resp.mkdir(parents=True, exist_ok=True)
+            (resp / "responsibility-map.md").write_text(
+                "# Responsibility map\n\n## Concepts\n\n"
+                "| Concept | Origin | Owned state (one line) | Owned actions | Notes |\n"
+                "|---|---|---|---|---|\n"
+                "| `Thing` | `new` | `x: ThingId -> X` | `act` | |\n",
+                encoding="utf-8")
+            self.assertFalse(stages.stage_is_noop(str(feature), "03b"),
+                             "a state-owning concept means 03b is not a no-op")
+
+    def test_read_only_feature_advances_through_noop_03b_to_04a(self):
+        # The reported bug: a read-only feature has a no-op 03b (no output dir)
+        # but a populated 04a; the sequence guard must accept it through 04a
+        # (it FAILED before the no-op mechanism).
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self.make_feature(temporary)
+            resume = feature / "RESUME.md"
+            resume.write_text(
+                resume.read_text(encoding="utf-8").replace("`pending`", "`approved`"),
+                encoding="utf-8")
+            for sid in ("01", "01a", "01b", "02", "03", "03a", "04a"):
+                out = Path(stages.stage_by_id(sid).output_dir(str(feature)))
+                out.mkdir(parents=True, exist_ok=True)
+                (out / "evidence.md").write_text(sid, encoding="utf-8")
+            # Author the concept set so 03b is a legitimate no-op.
+            (Path(stages.stage_by_id("02").output_dir(str(feature)))
+             / "concept-bindings.md").write_text("# bindings", encoding="utf-8")
+            self.assertTrue(stages.stage_is_noop(str(feature), "03b"))
+            result = self.sequence_result(feature, "04a")
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_fresh_skeleton_routes_through_each_stage(self):
         expected_stage_ids = [
             "01", "01a", "01b", "02", "03", "03a", "03b", "04a", "04b",
