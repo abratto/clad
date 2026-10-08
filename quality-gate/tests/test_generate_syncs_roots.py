@@ -51,6 +51,57 @@ class RootRouteMethodTests(unittest.TestCase):
         self.assertEqual(self.gs._outcome_payload("OK(sex, ruleSetId)"), "sex, ruleSetId")
         self.assertEqual(self.gs._outcome_payload("Refused"), "")
 
+    def _derive(self, feature, chain_text):
+        import tempfile
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        features = Path(tmp.name) / "features"
+        chain = (features / feature / "stages/01b_chain-table/output"
+                 / "scenario-chain.md")
+        chain.parent.mkdir(parents=True, exist_ok=True)
+        chain.write_text(chain_text, encoding="utf-8")
+        syncs, _ = self.gs.derive_syncs_for_feature(str(features / feature))
+        return syncs
+
+    CHAIN_HEADER = (
+        "# Chain table\n\n"
+        "| # | When | Then | Inputs | Outcome | Why this step |\n"
+        "|---|---|---|---|---|---|\n")
+
+    def test_carrier_row_binds_from_its_own_when_payload(self):
+        # The extension-row carrier: the row fires on
+        # `Lending.check[Accepted(loanId)]`, but the only producing row is a
+        # payload-less `Lending.check[Refused]`. The binding must come from the
+        # row's OWN when (`loanId`), not the producer (which carries nothing).
+        syncs = self._derive("UC-10-lend", self.CHAIN_HEADER
+            + "| 1 | `Web/request[POST /lend]` | `Web.request` | `x` | `Routed` | entry |\n"
+            + "| 2 | `Web.request[Routed]` | `Lending.check` | `x` | `Refused` | step |\n"
+            + "| 3 | `Lending.check[Accepted(loanId)]` | `Ledger.record` | `loanId` | `Recorded` | carrier |\n")
+        carrier = [s for s in syncs if s.target_action == "record"][0]
+        self.assertIn(("?loanId", "B"),
+                      [(v, p) for v, p, _ in carrier.binds],
+                      "the carrier binds from its own when, not the Refused producer")
+
+    def test_multi_field_when_payload_binds_each_field(self):
+        syncs = self._derive("UC-11-x", self.CHAIN_HEADER
+            + "| 1 | `Web/request[POST /x]` | `Web.request` | `x` | `Routed` | entry |\n"
+            + "| 2 | `Web.request[Routed]` | `Matcher.find` | `x` | `Found(a, b)` | step |\n"
+            + "| 3 | `Matcher.find[Found(a, b)]` | `Ledger.record` | `a, b` | `Recorded` | step |\n")
+        rec = [s for s in syncs if s.target_action == "record"][0]
+        self.assertEqual([("?a", "B"), ("?b", "B")],
+                         [(v, p) for v, p, _ in rec.binds])
+
+    def test_bare_when_yields_no_binding_even_when_the_producer_has_a_payload(self):
+        # A bare `when` (no payload) must not borrow the producer's payload:
+        # the firing `Refused` completion emits nothing.
+        syncs = self._derive("UC-12-x", self.CHAIN_HEADER
+            + "| 1 | `Web/request[POST /x]` | `Web.request` | `x` | `Routed` | entry |\n"
+            + "| 2 | `Web.request[Routed]` | `Lending.check` | `x` | `Accepted(loanId)` | step |\n"
+            + "| 3 | `Lending.check[Refused]` | `Web.respond[401]` | `401` | `Sent` | carrier |\n")
+        resp = [s for s in syncs if s.target_action == "respond"][0]
+        self.assertEqual([], [(v, p) for v, p, _ in resp.binds],
+                         "a bare when carries no payload -> no binding")
+
     def test_flow_root_payload_binds_as_pattern_a_input(self):
         # A bootstrap that carries a field (`Routed(sessionId)`) binds it from
         # the flow-root INPUT (Pattern A, triggerInput) — `Web.request` emits no
