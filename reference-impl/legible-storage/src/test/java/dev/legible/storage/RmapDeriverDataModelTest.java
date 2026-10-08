@@ -3,6 +3,7 @@ package dev.legible.storage;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -83,6 +84,51 @@ class RmapDeriverDataModelTest {
                 .filter(t -> t.primaryKey().equals(java.util.List.of("account_id", "entries")))
                 .findFirst().orElse(null),
                 "the multi-valued fact still gets its child table");
+    }
+
+    @Test
+    void aRenamedSchemeIsUsedByChildTableColumnsAndForeignKey() {
+        // The reference-scheme rename must reach the child table too: its
+        // subject column and the FK target are the parent's identity column
+        // (`entry_id`), never the entity name (`drink_entry`).
+        String text = dataModel("""
+                object-type DrinkEntry identified-by EntryId
+                fact loggedAt : DrinkEntry -> Timestamp -- mandatory
+                fact tags : DrinkEntry -> { Tag } -- zero or more
+                """);
+        RmapModel model = RmapDeriver.deriveModelFromDataModel("DrinkLogging", text);
+        RelationSchema parent = model.tableFor("DrinkEntry");
+        assertNotNull(parent);
+        assertEquals("entry_id", parent.idColumn());
+        RelationSchema child = model.tables().stream()
+                .filter(t -> t.primaryKey().size() == 2).findFirst().orElseThrow();
+        assertTrue(child.primaryKey().contains("entry_id"),
+                "the child's subject column follows the reference scheme");
+        assertEquals("entry_id -> " + parent.table() + "(entry_id)",
+                child.foreignKeys().get(0),
+                "the FK references the parent's identity column, not the entity");
+        assertFalse(child.ddl().contains("drink_entry"),
+                "no dangling column in the child DDL: " + child.ddl());
+    }
+
+    @Test
+    void aSubtypeUnderARenamedSchemeLinksByIdentityColumn() {
+        // The subtype's inherited key and its FK both follow the supertype's
+        // reference scheme (`person_id`), not the supertype entity (`person`).
+        String text = dataModel("""
+                object-type Person identified-by PersonId
+                Patient is a Person -- mapping: separate
+                fact personName : Person -> PersonName -- mandatory
+                fact diagnosis : Patient -> Diagnosis -- mandatory
+                """);
+        RmapModel model = RmapDeriver.deriveModelFromDataModel("Registry", text);
+        RelationSchema patient = model.tables().stream()
+                .filter(t -> t.table().equals("registry__patient"))
+                .findFirst().orElseThrow();
+        assertEquals(java.util.List.of("person_id"), patient.primaryKey());
+        assertEquals("person_id -> registry__person(person_id)",
+                patient.foreignKeys().get(0),
+                "the subtype FK uses the supertype's identity column");
     }
 
     @Test
