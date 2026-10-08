@@ -115,19 +115,25 @@ public record RelationSchema(
     }
 
     /**
-     * The columns that carry the individual's key: every column whose name is
-     * the snake form of an {@code objectType} component (a single reference
-     * scheme's id column, or each component of a compound subject). Predicate
-     * equality is NOT a test for identity: a fact field such as {@code domain}
-     * or {@code provides} snake-cases to its own column name.
+     * The columns that carry the individual's key. Derived from the
+     * {@code primaryKey}, not from the object-type name: the identity column is
+     * named after the object type's reference scheme
+     * ({@code object-type E identified-by I} -> column {@code snake(I)}), so
+     * {@code snake(objectType)} no longer names it once the scheme is renamed.
+     *
+     * <p>A child table (composite PK over {@code (subject, value)}, single-
+     * component object type) contributes only its subject column as identity;
+     * its value column is data even though it sits inside the PK. A compound
+     * (compidot) subject's object type carries {@code +}, so its whole PK is
+     * identity.
      */
     public List<Column> identityColumns() {
-        java.util.Set<String> keyNames = new java.util.LinkedHashSet<>();
-        for (String part : objectType.split("\\+")) {
-            keyNames.add(snake(part));
-        }
+        List<String> keyNames = !objectType.contains("+") && primaryKey.size() > 1
+                ? primaryKey.subList(0, primaryKey.size() - 1)
+                : primaryKey;
+        java.util.Set<String> names = new java.util.LinkedHashSet<>(keyNames);
         return columns.stream()
-                .filter(c -> keyNames.contains(c.column()))
+                .filter(c -> names.contains(c.column()))
                 .toList();
     }
 

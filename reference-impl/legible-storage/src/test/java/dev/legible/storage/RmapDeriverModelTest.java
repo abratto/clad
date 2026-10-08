@@ -311,6 +311,40 @@ class RmapDeriverModelTest {
     }
 
     @Test
+    void aDroppedPartitionMemberDoesNotCollapseTheSurvivingMemberName() {
+        // `Individual`'s only inherited fact is multi-valued, so its table is
+        // not emitted (identity-only). `Company` then survives alone — but the
+        // "single -> concept name" collapse must not fire while partition
+        // membership is in play, or `tableForMember` would return null.
+        String state = """
+                Individual is a Client -- mapping: partition
+                Company is a Client -- mapping: partition
+                entries: Client -> { Entry } -- zero or more
+                companyName: Company -> CompanyName -- mandatory
+                """;
+        RmapModel model = RmapDeriver.deriveModel("Registry", state);
+        RelationSchema company = model.tableForMember("Company");
+        assertNotNull(company, "the surviving partition member stays resolvable");
+        assertEquals("registry__company", company.table());
+        assertTrue(model.tables().stream().noneMatch(t -> t.table().equals("registry")),
+                "the surviving member did not collapse to the concept name");
+    }
+
+    @Test
+    void aDeclaredButUnusedSubtypeDoesNotRenameTheSoleTable() {
+        // No surviving member table -> the sole realised table keeps the
+        // concept's plain name (the collapse is only suppressed by a *surviving*
+        // member table).
+        String state = """
+                Employer is a Party -- mapping: separate
+                partyName: Party -> PartyName -- mandatory
+                """;
+        RmapModel model = RmapDeriver.deriveModel("Employment", state);
+        assertEquals(1, model.tables().size());
+        assertEquals("employment", model.tables().get(0).table());
+    }
+
+    @Test
     void independentObjectTypeRealisesAsItsOwnSingleColumnTable() {
         String state = """
                 domain: ClientId -> Domain    -- mandatory

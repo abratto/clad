@@ -66,6 +66,14 @@ public final class RmapDeriver {
     private static final Pattern INDEPENDENT = Pattern.compile(
             "^\\s*independent\\s+(\\w+)\\s*(?:--\\s*(.*))?\\s*$");
 
+    /**
+     * {@code object-type <Entity> identified-by <IdType>} — a reference-scheme
+     * declaration: the entity's identity column is named after {@code <IdType>},
+     * not after the entity.
+     */
+    private static final Pattern OBJECT_TYPE = Pattern.compile(
+            "^\\s*object-type\\s+(\\S+)\\s+identified-by\\s+(\\S+)(?:\\s+--.*)?\\s*$");
+
     private static final Pattern DEFAULT = Pattern.compile("\\bdefault\\s+(\\w+)");
     private static final Pattern ENUM_IN = Pattern.compile("\\bin\\s*\\{([^}]*)\\}");
 
@@ -123,7 +131,8 @@ public final class RmapDeriver {
      * block rather than parsing the whole file.
      */
     public static RmapModel deriveModelFromDataModel(String concept, String dataModelMarkdown) {
-        return realize(concept, parse(concept, machineModelBody(concept, dataModelMarkdown)));
+        return realize(concept, parse(concept, machineModelBody(concept, dataModelMarkdown)),
+                referenceSchemes(concept, dataModelMarkdown));
     }
 
     /**
@@ -146,7 +155,7 @@ public final class RmapDeriver {
      * schemes, not facts). Throws when the section or its fence is absent — a
      * data-model file without a machine block cannot drive Rmap.
      */
-    private static String machineModelBody(String concept, String dataModelMarkdown) {
+    private static String machineModelBlock(String concept, String dataModelMarkdown) {
         String[] lines = dataModelMarkdown.split("\\R");
         int section = -1;
         for (int i = 0; i < lines.length; i++) {
@@ -170,12 +179,20 @@ public final class RmapDeriver {
             throw new IllegalArgumentException(
                     "`## Machine model` block is not fenced in data model for concept " + concept);
         }
-        StringBuilder body = new StringBuilder();
+        StringBuilder block = new StringBuilder();
         for (int i = fence + 1; i < lines.length; i++) {
             if (lines[i].trim().startsWith("```")) {
                 break;
             }
-            String line = lines[i].trim();
+            block.append(lines[i]).append('\n');
+        }
+        return block.toString();
+    }
+
+    private static String machineModelBody(String concept, String dataModelMarkdown) {
+        StringBuilder body = new StringBuilder();
+        for (String raw : machineModelBlock(concept, dataModelMarkdown).split("\\R")) {
+            String line = raw.trim();
             if (line.startsWith("object-type")) {
                 continue; // reference-scheme declaration, not a fact
             }
@@ -187,6 +204,18 @@ public final class RmapDeriver {
             body.append(line).append('\n');
         }
         return body.toString();
+    }
+
+    /** The reference scheme per object type: {@code object-type E identified-by I}. */
+    private static Map<String, String> referenceSchemes(String concept, String dataModelMarkdown) {
+        Map<String, String> schemes = new LinkedHashMap<>();
+        for (String raw : machineModelBlock(concept, dataModelMarkdown).split("\\R")) {
+            Matcher m = OBJECT_TYPE.matcher(raw.trim());
+            if (m.matches()) {
+                schemes.put(m.group(1), m.group(2));
+            }
+        }
+        return schemes;
     }
 
     /**
@@ -345,6 +374,11 @@ public final class RmapDeriver {
     // ---- realization (Rmap stages 1-4) ----------------------------------------
 
     private static RmapModel realize(String concept, ParsedState parsed) {
+        return realize(concept, parsed, Map.of());
+    }
+
+    private static RmapModel realize(String concept, ParsedState parsed,
+                                     Map<String, String> referenceSchemes) {
         List<FactType> facts = parsed.facts();
         Map<String, SubtypeMapping> subtypeOf = new LinkedHashMap<>();
         Map<String, String> supertypeOf = new LinkedHashMap<>();
@@ -431,6 +465,13 @@ public final class RmapDeriver {
         // separation/partition contributes no rows; drop its empty group.
         byObjectType.entrySet().removeIf(e -> e.getValue().isEmpty());
 
+        // An object type whose facts are all multi-valued plays no functional
+        // role of its own: its multi-valued facts realise as child tables, so a
+        // table for it would be identity-only (unpopulationable through the SPI).
+        // Drop it — the child table already carries the subject column.
+        byObjectType.entrySet().removeIf(e ->
+                e.getValue().stream().allMatch(FactType::multiValued));
+
         // Table naming: when the region's realised non-compidot tables are
         // exactly one, it carries the concept's plain name; otherwise each
         // table is concept-qualified.
@@ -440,7 +481,18 @@ public final class RmapDeriver {
                 simpleTables.add(t);
             }
         }
-        boolean single = simpleTables.size() == 1 && parsed.independentTypes().isEmpty();
+        // The "single -> concept name" collapse is suppressed whenever a
+        // separate/partition member table is in play: a member table is
+        // resolved by its deterministic member name (`memberTableName`), so
+        // collapsing the last surviving simple table to the concept name would
+        // make `tableForMember` return null (the drop rule can remove a member
+        // whose only facts are multi-valued).
+        boolean hasMemberTables = supertypeOf.entrySet().stream()
+                .filter(e -> subtypeOf.get(e.getKey()) != SubtypeMapping.ABSORB)
+                .anyMatch(e -> byObjectType.containsKey(e.getKey()));
+        boolean single = simpleTables.size() == 1
+                && parsed.independentTypes().isEmpty()
+                && !hasMemberTables;
         Map<String, String> tableNames = new LinkedHashMap<>();
         for (String t : byObjectType.keySet()) {
             boolean isCompidot = compidots.containsKey(t);
@@ -456,10 +508,11 @@ public final class RmapDeriver {
             String objectType = entry.getKey();
             tables.add(realizeTable(concept, objectType, entry.getValue(),
                     compidots.containsKey(objectType), tableNames.get(objectType),
-                    subtypeOf, supertypeOf, tableNames));
+                    subtypeOf, supertypeOf, tableNames, referenceSchemes));
         }
         // Stage 2: multi-valued facts get their own child table (composite PK).
-        for (RelationSchema child : childTables(concept, facts, tableNames, tables)) {
+        for (RelationSchema child : childTables(concept, facts, tableNames, tables,
+                referenceSchemes, subtypeOf, supertypeOf)) {
             tables.add(child);
         }
         // Independent object types play no functional role; Rmap realises each
@@ -471,7 +524,8 @@ public final class RmapDeriver {
             // A lone independent type carries the concept's plain name; beside
             // other tables it is concept-qualified.
             tables.add(independentTable(concept, independent, byObjectType.isEmpty()
-                    ? snake(concept) : snake(concept) + "__" + snakeName(independent)));
+                    ? snake(concept) : snake(concept) + "__" + snakeName(independent),
+                    referenceSchemes));
         }
         return new RmapModel(concept, tables);
     }
@@ -482,8 +536,12 @@ public final class RmapDeriver {
 
     /** The single-column table for an independent object type. */
     private static RelationSchema independentTable(String concept, String objectType,
-                                                   String table) {
-        String id = snake(objectType);
+                                                   String table,
+                                                   Map<String, String> referenceSchemes) {
+        // The column follows the type's reference scheme, like every other
+        // identity column; a type without a declared scheme falls back to its
+        // own name.
+        String id = snake(referenceSchemes.getOrDefault(objectType, objectType));
         List<RelationSchema.Column> columns = List.of(
                 new RelationSchema.Column(id, id, "TEXT", true, false, null, null));
         return new RelationSchema(concept, table, objectType, columns,
@@ -495,7 +553,8 @@ public final class RmapDeriver {
                                                String table,
                                                Map<String, SubtypeMapping> subtypeOf,
                                                Map<String, String> supertypeOf,
-                                               Map<String, String> tableNames) {
+                                               Map<String, String> tableNames,
+                                               Map<String, String> referenceSchemes) {
         // Stage 3: absorb every simple-key fact grouped under this object type.
         // Stage 4: a compidot absorbs its component value columns. Subtypes
         // realise under the mapping's choice (separate/partition keep a table,
@@ -513,7 +572,9 @@ public final class RmapDeriver {
                 // The compound fact's components are columns of the compidot
                 // table (subject components + the value).
                 for (String s : f.subjectTypes()) {
-                    addColumn(columns, snake(s), snake(s), "TEXT", true, false, null, null);
+                    // Each component column follows its own type's reference scheme.
+                    String col = snake(referenceSchemes.getOrDefault(s, s));
+                    addColumn(columns, col, col, "TEXT", true, false, null, null);
                 }
                 addColumn(columns, f.field(), snake(f.field()), sqlTypeOf(f.valueType()),
                         f.mandatory(), f.unique(), f.defaultValue(), null,
@@ -545,7 +606,7 @@ public final class RmapDeriver {
             // objectified fact's roles); it has no separate surrogate id.
             pk = new ArrayList<>();
             for (String s : objectType.split("\\+")) {
-                pk.add(snake(s));
+                pk.add(snake(referenceSchemes.getOrDefault(s, s)));
             }
         } else if (isSubtype) {
             // A subtype has no reference scheme of its own — its identity is
@@ -554,15 +615,17 @@ public final class RmapDeriver {
             // the supertype's scheme as its identity-owning object type.
             String supertype = supertypeOf.get(objectType);
             String supertable = tableNames.get(supertype);
+            // The key column is the supertype's identity column — named after
+            // the supertype's reference scheme, not the supertype entity.
+            String idColumn = snake(referenceSchemes.getOrDefault(supertype, supertype));
             if (supertable != null) {
                 // The subtype's specific columns carry their own rows only
                 // where an individual exists as that subtype; the shared key
                 // links to the supertype's table (an intra-concept FK — legal
                 // under R2; no FK crosses a concept boundary).
-                foreignKeys.add(snake(supertype) + " -> " + supertable
-                        + "(" + snake(supertype) + ")");
+                foreignKeys.add(idColumn + " -> " + supertable
+                        + "(" + idColumn + ")");
             }
-            String idColumn = snake(supertype);
             objectType = supertype;
             pk = List.of(idColumn);
             if (columns.stream().noneMatch(c -> c.column().equals(idColumn))) {
@@ -570,7 +633,11 @@ public final class RmapDeriver {
                         true, false, null, null));
             }
         } else {
-            String idColumn = snake(objectType);
+            // The identity column is named after the object type's reference
+            // scheme (`object-type E identified-by I` -> column `snake(I)`), not
+            // after the entity; a type without a declared scheme falls back to
+            // its own name.
+            String idColumn = snake(referenceSchemes.getOrDefault(objectType, objectType));
             if (columns.stream().noneMatch(c -> c.column().equals(idColumn))) {
                 columns.add(0, new RelationSchema.Column(idColumn, idColumn, "TEXT",
                         true, false, null, null));
@@ -591,26 +658,45 @@ public final class RmapDeriver {
      */
     private static List<RelationSchema> childTables(String concept, List<FactType> facts,
                                                     Map<String, String> tableNames,
-                                                    List<RelationSchema> tables) {
+                                                    List<RelationSchema> tables,
+                                                    Map<String, String> referenceSchemes,
+                                                    Map<String, SubtypeMapping> subtypeOf,
+                                                    Map<String, String> supertypeOf) {
         List<RelationSchema> out = new ArrayList<>();
         for (FactType f : facts) {
             if (!f.multiValued()) {
                 continue;
             }
             String subject = f.subjectTypes().get(0);
+            // The subject column is the subject's identity column. A subtype
+            // subject keys on the supertype's identity column (its own scheme is
+            // inherited) and its rows live in the member table (separate/
+            // partition) or the supertype's table (absorb); a normal subject keys
+            // on its own scheme.
+            String subjectColumn;
+            String parentTable;
+            if (subtypeOf.containsKey(subject)) {
+                String supertype = supertypeOf.get(subject);
+                subjectColumn = snake(referenceSchemes.getOrDefault(supertype, supertype));
+                boolean absorbed = subtypeOf.get(subject) == SubtypeMapping.ABSORB;
+                parentTable = tableNames.get(absorbed ? supertype : subject);
+            } else {
+                subjectColumn = snake(referenceSchemes.getOrDefault(subject, subject));
+                parentTable = tableNames.get(subject);
+            }
             List<RelationSchema.Column> cols = new ArrayList<>();
-            cols.add(new RelationSchema.Column(snake(subject), snake(subject), "TEXT",
+            cols.add(new RelationSchema.Column(subjectColumn, subjectColumn, "TEXT",
                     true, false, null, null));
             cols.add(new RelationSchema.Column(f.field(), snake(f.field()),
                     sqlTypeOf(f.valueType()), true, false, null, null));
-            List<String> pk = List.of(snake(subject), snake(f.field()));
-            String parentTable = tableNames.getOrDefault(subject, snake(concept));
-            // Render the intra-concept FK only when the parent table carries
-            // data facts — an identity-only table (the subject plays no
-            // functional role, e.g. only objectified-pair components) can never
-            // hold a row through the SPI, so an FK there would be
+            List<String> pk = List.of(subjectColumn, snake(f.field()));
+            // Render the intra-concept FK only when the subject's own table was
+            // realised and carries data facts. An identity-only parent (the
+            // subject plays no functional role of its own — only multi-valued
+            // facts or objectified-pair components) is not emitted at all, so it
+            // has no table to point at, and an FK there would be
             // unpopulationable.
-            boolean parentHasData = tables.stream()
+            boolean parentHasData = parentTable != null && tables.stream()
                     .filter(t -> t.table().equals(parentTable))
                     .findFirst()
                     .map(t -> !t.dataColumns().isEmpty())
@@ -619,8 +705,8 @@ public final class RmapDeriver {
                     snake(concept) + "__" + snake(f.field()), subject,
                     cols, pk,
                     parentHasData
-                            ? List.of(snake(subject) + " -> " + parentTable
-                                      + "(" + snake(subject) + ")")
+                            ? List.of(subjectColumn + " -> " + parentTable
+                                      + "(" + subjectColumn + ")")
                             : List.<String>of(),
                     List.of(), false));
         }
