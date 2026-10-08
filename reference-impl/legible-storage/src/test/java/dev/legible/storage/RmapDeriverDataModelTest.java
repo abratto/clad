@@ -4,7 +4,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * {@link RmapDeriver#deriveModelFromDataModel} reads the CSDP-aligned
@@ -46,6 +48,41 @@ class RmapDeriverDataModelTest {
         assertEquals("client_id", s.idColumn());
         assertNotNull(s.columnFor("domain"));
         assertNotNull(s.columnFor("createdAt"));
+    }
+
+    @Test
+    void theIdentityColumnIsNamedAfterTheReferenceSchemeNotTheEntity() {
+        // `object-type <Entity> identified-by <IdType>` names the identity
+        // column after <IdType>, not after the entity.
+        String text = dataModel("""
+                object-type DrinkEntry identified-by EntryId
+                fact entryId : DrinkEntry -> EntryId -- mandatory
+                fact loggedAt : DrinkEntry -> Timestamp -- mandatory
+                """);
+        RelationSchema s = RmapDeriver.deriveFromDataModel("DrinkLogging", text);
+        assertEquals("entry_id", s.idColumn(), "the column follows identified-by");
+        assertNull(s.columnFor("drink_entry"),
+                "the entity name is not used as a column");
+    }
+
+    @Test
+    void aMultiValuedOnlySubjectEmitsNoIdentityOnlyTable() {
+        // `AccountId` appears only as the subject of a multi-valued fact, so its
+        // would-be table is identity-only and unpopulationable — it is not
+        // emitted; the multi-valued fact still realises as its child table.
+        String text = dataModel("""
+                object-type AccountId identified-by AccountId
+                object-type DrinkEntry identified-by DrinkEntry
+                fact entries : AccountId -> { DrinkEntry } -- zero or more
+                fact loggedAt : DrinkEntry -> Timestamp -- mandatory
+                """);
+        RmapModel model = RmapDeriver.deriveModelFromDataModel("DrinkLogging", text);
+        assertTrue(model.tables().stream().noneMatch(t -> t.table().contains("account_id")),
+                "no identity-only subject table");
+        assertNotNull(model.tables().stream()
+                .filter(t -> t.primaryKey().equals(java.util.List.of("account_id", "entries")))
+                .findFirst().orElse(null),
+                "the multi-valued fact still gets its child table");
     }
 
     @Test

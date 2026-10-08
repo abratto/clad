@@ -66,6 +66,14 @@ public final class RmapDeriver {
     private static final Pattern INDEPENDENT = Pattern.compile(
             "^\\s*independent\\s+(\\w+)\\s*(?:--\\s*(.*))?\\s*$");
 
+    /**
+     * {@code object-type <Entity> identified-by <IdType>} — a reference-scheme
+     * declaration: the entity's identity column is named after {@code <IdType>},
+     * not after the entity.
+     */
+    private static final Pattern OBJECT_TYPE = Pattern.compile(
+            "^\\s*object-type\\s+(\\S+)\\s+identified-by\\s+(\\S+)\\s*$");
+
     private static final Pattern DEFAULT = Pattern.compile("\\bdefault\\s+(\\w+)");
     private static final Pattern ENUM_IN = Pattern.compile("\\bin\\s*\\{([^}]*)\\}");
 
@@ -123,7 +131,8 @@ public final class RmapDeriver {
      * block rather than parsing the whole file.
      */
     public static RmapModel deriveModelFromDataModel(String concept, String dataModelMarkdown) {
-        return realize(concept, parse(concept, machineModelBody(concept, dataModelMarkdown)));
+        return realize(concept, parse(concept, machineModelBody(concept, dataModelMarkdown)),
+                referenceSchemes(concept, dataModelMarkdown));
     }
 
     /**
@@ -146,7 +155,7 @@ public final class RmapDeriver {
      * schemes, not facts). Throws when the section or its fence is absent — a
      * data-model file without a machine block cannot drive Rmap.
      */
-    private static String machineModelBody(String concept, String dataModelMarkdown) {
+    private static String machineModelBlock(String concept, String dataModelMarkdown) {
         String[] lines = dataModelMarkdown.split("\\R");
         int section = -1;
         for (int i = 0; i < lines.length; i++) {
@@ -170,12 +179,20 @@ public final class RmapDeriver {
             throw new IllegalArgumentException(
                     "`## Machine model` block is not fenced in data model for concept " + concept);
         }
-        StringBuilder body = new StringBuilder();
+        StringBuilder block = new StringBuilder();
         for (int i = fence + 1; i < lines.length; i++) {
             if (lines[i].trim().startsWith("```")) {
                 break;
             }
-            String line = lines[i].trim();
+            block.append(lines[i]).append('\n');
+        }
+        return block.toString();
+    }
+
+    private static String machineModelBody(String concept, String dataModelMarkdown) {
+        StringBuilder body = new StringBuilder();
+        for (String raw : machineModelBlock(concept, dataModelMarkdown).split("\\R")) {
+            String line = raw.trim();
             if (line.startsWith("object-type")) {
                 continue; // reference-scheme declaration, not a fact
             }
@@ -187,6 +204,18 @@ public final class RmapDeriver {
             body.append(line).append('\n');
         }
         return body.toString();
+    }
+
+    /** The reference scheme per object type: {@code object-type E identified-by I}. */
+    private static Map<String, String> referenceSchemes(String concept, String dataModelMarkdown) {
+        Map<String, String> schemes = new LinkedHashMap<>();
+        for (String raw : machineModelBlock(concept, dataModelMarkdown).split("\\R")) {
+            Matcher m = OBJECT_TYPE.matcher(raw.trim());
+            if (m.matches()) {
+                schemes.put(m.group(1), m.group(2));
+            }
+        }
+        return schemes;
     }
 
     /**
@@ -345,6 +374,11 @@ public final class RmapDeriver {
     // ---- realization (Rmap stages 1-4) ----------------------------------------
 
     private static RmapModel realize(String concept, ParsedState parsed) {
+        return realize(concept, parsed, Map.of());
+    }
+
+    private static RmapModel realize(String concept, ParsedState parsed,
+                                     Map<String, String> referenceSchemes) {
         List<FactType> facts = parsed.facts();
         Map<String, SubtypeMapping> subtypeOf = new LinkedHashMap<>();
         Map<String, String> supertypeOf = new LinkedHashMap<>();
@@ -431,6 +465,13 @@ public final class RmapDeriver {
         // separation/partition contributes no rows; drop its empty group.
         byObjectType.entrySet().removeIf(e -> e.getValue().isEmpty());
 
+        // An object type whose facts are all multi-valued plays no functional
+        // role of its own: its multi-valued facts realise as child tables, so a
+        // table for it would be identity-only (unpopulationable through the SPI).
+        // Drop it — the child table already carries the subject column.
+        byObjectType.entrySet().removeIf(e ->
+                e.getValue().stream().allMatch(FactType::multiValued));
+
         // Table naming: when the region's realised non-compidot tables are
         // exactly one, it carries the concept's plain name; otherwise each
         // table is concept-qualified.
@@ -456,7 +497,7 @@ public final class RmapDeriver {
             String objectType = entry.getKey();
             tables.add(realizeTable(concept, objectType, entry.getValue(),
                     compidots.containsKey(objectType), tableNames.get(objectType),
-                    subtypeOf, supertypeOf, tableNames));
+                    subtypeOf, supertypeOf, tableNames, referenceSchemes));
         }
         // Stage 2: multi-valued facts get their own child table (composite PK).
         for (RelationSchema child : childTables(concept, facts, tableNames, tables)) {
@@ -495,7 +536,8 @@ public final class RmapDeriver {
                                                String table,
                                                Map<String, SubtypeMapping> subtypeOf,
                                                Map<String, String> supertypeOf,
-                                               Map<String, String> tableNames) {
+                                               Map<String, String> tableNames,
+                                               Map<String, String> referenceSchemes) {
         // Stage 3: absorb every simple-key fact grouped under this object type.
         // Stage 4: a compidot absorbs its component value columns. Subtypes
         // realise under the mapping's choice (separate/partition keep a table,
@@ -562,7 +604,7 @@ public final class RmapDeriver {
                 foreignKeys.add(snake(supertype) + " -> " + supertable
                         + "(" + snake(supertype) + ")");
             }
-            String idColumn = snake(supertype);
+            String idColumn = snake(referenceSchemes.getOrDefault(supertype, supertype));
             objectType = supertype;
             pk = List.of(idColumn);
             if (columns.stream().noneMatch(c -> c.column().equals(idColumn))) {
@@ -570,7 +612,11 @@ public final class RmapDeriver {
                         true, false, null, null));
             }
         } else {
-            String idColumn = snake(objectType);
+            // The identity column is named after the object type's reference
+            // scheme (`object-type E identified-by I` -> column `snake(I)`), not
+            // after the entity; a type without a declared scheme falls back to
+            // its own name.
+            String idColumn = snake(referenceSchemes.getOrDefault(objectType, objectType));
             if (columns.stream().noneMatch(c -> c.column().equals(idColumn))) {
                 columns.add(0, new RelationSchema.Column(idColumn, idColumn, "TEXT",
                         true, false, null, null));
@@ -604,13 +650,14 @@ public final class RmapDeriver {
             cols.add(new RelationSchema.Column(f.field(), snake(f.field()),
                     sqlTypeOf(f.valueType()), true, false, null, null));
             List<String> pk = List.of(snake(subject), snake(f.field()));
-            String parentTable = tableNames.getOrDefault(subject, snake(concept));
-            // Render the intra-concept FK only when the parent table carries
-            // data facts — an identity-only table (the subject plays no
-            // functional role, e.g. only objectified-pair components) can never
-            // hold a row through the SPI, so an FK there would be
+            // Render the intra-concept FK only when the subject's own table was
+            // realised and carries data facts. An identity-only parent (the
+            // subject plays no functional role of its own — only multi-valued
+            // facts or objectified-pair components) is not emitted at all, so it
+            // has no table to point at, and an FK there would be
             // unpopulationable.
-            boolean parentHasData = tables.stream()
+            String parentTable = tableNames.get(subject);
+            boolean parentHasData = parentTable != null && tables.stream()
                     .filter(t -> t.table().equals(parentTable))
                     .findFirst()
                     .map(t -> !t.dataColumns().isEmpty())
