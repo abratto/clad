@@ -13,7 +13,9 @@ description: Perform the per-UC coordination review during CLAD Stage 03a. Use w
 
 ## What this skill covers
 
-Producing one `<concept>-card.md` per concept and a `pattern-d-summary.md`.
+Producing one `<concept>-card.md` per **participating** concept (a concept that
+appears in a chain table or a sync), a `Web-card.md`, and a
+`pattern-d-summary.md`.
 This is the last cross-concept sanity check before code — making every
 inbound call and every concept-state read visible per concept.
 
@@ -27,7 +29,8 @@ Stage 03a `Inputs` names `SYNC_PATTERNS.md`, the card/summary templates, and the
 
 ## Process
 
-1. Produce one card per concept in the responsibility map.
+1. Produce one card per **participating** concept (a concept that appears in a
+   chain table or a sync), plus a `Web-card.md`.
 2. Section 1: list every sync whose `then` calls an action on this concept.
 3. Section 2: list every concept-state read of this concept by other concepts.
 4. Shared trigger analysis: consult the cross-UC shared-trigger view

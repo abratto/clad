@@ -33,6 +33,17 @@ property IRI, migration, or schema library, you are too far downstream.
 
 ## Process
 
+> **No-output case (read-only / binding-only feature).** When **no** concept
+> this feature binds changes state — every concept is `reused`, or gains only
+> pure-read actions — `generate_data_model.py` emits nothing and this stage
+> writes **no `output/` directory**. Such a 03b is *satisfied without output*
+> (the feature binds the canonical data models unchanged): `advance.py` treats it
+> as a no-op and moves on, and `present_gate` renders it as
+> `(none — no state-owning concept; binds the canonical model unchanged)`. Do
+> **not** author a placeholder data-model file for a concept that owns no state.
+> (A single stateless concept *within* a feature that does own state still gets a
+> data-model recording that fact — see below.)
+
 **Deterministic generation first.** The CSDP is judgement-laden, so the
 generator emits the full seven-step skeleton and auto-fills only the parts that
 are mechanical from the concept `## State` annotations. First run:
@@ -76,7 +87,8 @@ helper fields.
 - [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
-- `output/<Name>.data-model.md` per concept — profile-neutral conceptual data model following the seven-step CSDP structure
+- `output/<Name>.data-model.md` per **state-owning** concept — profile-neutral conceptual data model following the seven-step CSDP structure.
+- **or** no `output/` at all when no concept changes state (read-only feature — see the no-output case above).
 
 ## Verify
 

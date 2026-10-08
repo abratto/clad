@@ -48,7 +48,10 @@ def main():
         stage_name = stage.label if stage else stage_id
         out_dir = stage.output_dir(feature_root) if stage else ""
 
-        if out_dir and os.path.isdir(out_dir):
+        if cs.stage_is_noop(feature_root, stage_id):
+            print(f"  {stage_name}: (none — no state-owning concept; "
+                  f"binds the canonical model unchanged)")
+        elif out_dir and os.path.isdir(out_dir):
             files = [f for f in os.listdir(out_dir)
                      if f != ".gitkeep" and f != ".gitkeep.md"
                      and not f.startswith(".")]

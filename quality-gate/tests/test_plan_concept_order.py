@@ -74,6 +74,34 @@ class PlanConceptOrderTests(unittest.TestCase):
             self.assertIn("UC-03-c", result.stdout)
             self.assertIn("LATER", result.stdout)
 
+    def test_consumer_reuse_before_introduction_warns(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            board, features = make_world(
+                tmp,
+                "| UC-02-b | next | 1 | none | | |\n"
+                "| UC-03-c | later | 2 | none | | |",
+                {"UC-02-b": "| `DrinkLogging` | `reused:UC-03-c` | `e` | `read` | |",
+                 "UC-03-c": "| `DrinkLogging` | `new` | `e` | `record` | |"})
+            result = run("--plan-board", board, "--features-dir", features)
+            self.assertEqual(result.returncode, 0)
+            self.assertIn("WARN", result.stdout)
+            self.assertIn("reuses", result.stdout)
+            self.assertIn("UC-03-c", result.stdout)
+            self.assertIn("LATER", result.stdout)
+
+    def test_consumer_reuse_after_introduction_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            board, features = make_world(
+                tmp,
+                "| UC-02-b | done | 1 | none | | |\n"
+                "| UC-03-c | next | 2 | none | | |",
+                {"UC-02-b": "| `DrinkLogging` | `new` | `e` | `record` | |",
+                 "UC-03-c": "| `DrinkLogging` | `reused:UC-02-b` | `e` | `read` | |"})
+            result = run("--plan-board", board, "--features-dir", features)
+            self.assertEqual(result.returncode, 0)
+            self.assertIn("PASS", result.stdout)
+            self.assertNotIn("WARN", result.stdout)
+
     def test_introducer_absent_from_board_warns(self):
         with tempfile.TemporaryDirectory() as tmp:
             board, features = make_world(

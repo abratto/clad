@@ -130,11 +130,13 @@ before Stage 04 turns it into code.
 - [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
-- `output/<concept>-card.md` — one per concept named in 01a's map, **plus
-  `Web-card.md`**: the bootstrap concept is excluded from the concept matrix but
-  its `respond` action is a legitimate inbound invocation, so the file manifest
-  requires the Web card. (`feature_concept_names` filters `Web` out; the derived
-  manifest does not — do not omit the card.)
+- `output/<concept>-card.md` — one per **participating** concept (a concept that
+  appears in a chain table or a sync), **plus `Web-card.md`**: a concept that is
+  listed in 01a's map but participates in no chain/sync gets no card, and the
+  bootstrap concept is excluded from the concept matrix but its `respond` action
+  is a legitimate inbound invocation, so the file manifest requires the Web card.
+  (`feature_concept_names` filters `Web` out; the derived manifest does not — do
+  not omit the card.)
 - `output/pattern-d-summary.md` — single consolidated cross-flow view.
 - `output/concept-matrix.md` — FR×DP matrix mapping scenarios to
   concepts, plus the anti-pattern findings. Surfaces God Objects,
@@ -193,7 +195,7 @@ Run the following before requesting the human gate:
 
 ```
 python3 ../../../../quality-gate/verify_file_manifest.py \
-  --dir output --expected "<concept>-card.md,…"  # one per concept + pattern-d-summary.md,concept-matrix.md,sync-information-profile.md
+  --dir output --expected "<concept>-card.md,…"  # one per participating concept + pattern-d-summary.md,concept-matrix.md,sync-information-profile.md
 python3 ../../../../quality-gate/generate_review_views.py \
   --feature ../.. --check
 ```

@@ -174,6 +174,28 @@ def feature_model_concepts(feature_root: str) -> List[str]:
     return ap.feature_model_concepts(feature_root, _concept_corpus_dir(feature_root))
 
 
+def stage_is_noop(feature_root: str, stage_id: str) -> bool:
+    """True when a stage has no expected output for this feature.
+
+    The one documented no-output stage: Stage 03b when no concept changes state
+    (so `feature_model_concepts` is empty and no data model is derived). Such a
+    stage is *satisfied* without writing an output directory — the same
+    `__no_expected_outputs__` condition the stage checks already honour.
+    Read-only / binding-only features (e.g. a pure-read use case) hit this.
+
+    Gated on the feature having authored its concept set (Stage 02's
+    `concept-bindings.md`): a fresh skeleton has no concepts yet, so its 03b is
+    *not* a no-op and must route normally — otherwise `determine_stage` (which
+    returns the last stage with evidence) would skip 03b before it is reached."""
+    if stage_id == "03b":
+        if feature_model_concepts(feature_root):
+            return False
+        bindings = os.path.join(feature_root, "stages", "02_concepts",
+                                "output", "concept-bindings.md")
+        return os.path.isfile(bindings)
+    return False
+
+
 def _concept_dir_args(feature_root: str) -> List[str]:
     """`--concept-dir <d>` repeated once per concept-source dir, in precedence
     order. The consumer checks merge the dirs, earlier winning on a name clash."""
