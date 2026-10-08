@@ -331,6 +331,20 @@ class RmapDeriverModelTest {
     }
 
     @Test
+    void aDeclaredButUnusedSubtypeDoesNotRenameTheSoleTable() {
+        // No surviving member table -> the sole realised table keeps the
+        // concept's plain name (the collapse is only suppressed by a *surviving*
+        // member table).
+        String state = """
+                Employer is a Party -- mapping: separate
+                partyName: Party -> PartyName -- mandatory
+                """;
+        RmapModel model = RmapDeriver.deriveModel("Employment", state);
+        assertEquals(1, model.tables().size());
+        assertEquals("employment", model.tables().get(0).table());
+    }
+
+    @Test
     void independentObjectTypeRealisesAsItsOwnSingleColumnTable() {
         String state = """
                 domain: ClientId -> Domain    -- mandatory

@@ -112,6 +112,89 @@ class RmapDeriverDataModelTest {
     }
 
     @Test
+    void identityColumnsFollowTheRenamedScheme() {
+        // The identity-column set must be derived from the primary key, not the
+        // object-type name — otherwise a renamed scheme yields no identity
+        // column and `facts()` corrupts the full-state read.
+        String text = dataModel("""
+                object-type DrinkEntry identified-by EntryId
+                fact loggedAt : DrinkEntry -> Timestamp -- mandatory
+                """);
+        RelationSchema s = RmapDeriver.deriveFromDataModel("DrinkLogging", text);
+        assertEquals(java.util.List.of("entry_id"),
+                s.identityColumns().stream().map(RelationSchema.Column::column).toList(),
+                "identity follows the renamed PK");
+        assertTrue(s.dataColumns().stream().noneMatch(c -> c.column().equals("entry_id")),
+                "the key is not a data column");
+    }
+
+    @Test
+    void anIndependentTypeColumnFollowsTheReferenceScheme() {
+        String text = dataModel("""
+                object-type Widget identified-by WidgetId
+                object-type ClientId identified-by ClientId
+                fact domain : ClientId -> Domain -- mandatory
+                independent Widget
+                """);
+        RmapModel model = RmapDeriver.deriveModelFromDataModel("Whitelist", text);
+        RelationSchema widget = model.tables().stream()
+                .filter(t -> t.table().equals("whitelist__widget"))
+                .findFirst().orElseThrow();
+        assertEquals(java.util.List.of("widget_id"), widget.primaryKey());
+    }
+
+    @Test
+    void aMultiValuedFactOnASubtypeSubjectLinksByIdentityColumn() {
+        String text = dataModel("""
+                object-type Person identified-by PersonId
+                Patient is a Person -- mapping: separate
+                fact personName : Person -> PersonName -- mandatory
+                fact diagnosis : Patient -> Diagnosis -- mandatory
+                fact allergies : Patient -> { Allergy } -- zero or more
+                """);
+        RmapModel model = RmapDeriver.deriveModelFromDataModel("Registry", text);
+        RelationSchema child = model.tables().stream()
+                .filter(t -> t.primaryKey().size() == 2).findFirst().orElseThrow();
+        assertEquals(java.util.List.of("person_id", "allergies"), child.primaryKey());
+        assertEquals("person_id -> registry__patient(person_id)",
+                child.foreignKeys().get(0),
+                "the child keys on the subtype's inherited identity column");
+    }
+
+    @Test
+    void aMultiValuedFactOnAnAbsorbedSubjectLinksToTheSupertypeTable() {
+        String text = dataModel("""
+                object-type Party identified-by PartyId
+                Employer is a Party -- mapping: absorb
+                fact partyName : Party -> PartyName -- mandatory
+                fact vatNumber : Employer -> VatNumber -- mandatory
+                fact tags : Employer -> { Tag } -- zero or more
+                """);
+        RmapModel model = RmapDeriver.deriveModelFromDataModel("Employment", text);
+        RelationSchema child = model.tables().stream()
+                .filter(t -> t.primaryKey().size() == 2).findFirst().orElseThrow();
+        assertEquals(java.util.List.of("party_id", "tags"), child.primaryKey());
+        assertEquals("party_id -> employment(party_id)", child.foreignKeys().get(0),
+                "an absorbed subject's rows live in the supertype's table");
+    }
+
+    @Test
+    void compoundComponentColumnsFollowTheReferenceScheme() {
+        String text = dataModel("""
+                object-type Party identified-by PartyId
+                object-type Service identified-by ServiceId
+                fact partyName : Party -> PartyName -- mandatory
+                fact serviceName : Service -> ServiceName -- mandatory
+                fact serviceJurisdiction : ( Party, Service ) -> Jurisdiction -- optional
+                """);
+        RmapModel model = RmapDeriver.deriveModelFromDataModel("LegalOntology", text);
+        RelationSchema compidot = model.tables().stream()
+                .filter(t -> t.primaryKey().size() == 2).findFirst().orElseThrow();
+        assertEquals(java.util.List.of("party_id", "service_id"), compidot.primaryKey(),
+                "compidot components follow each type's reference scheme");
+    }
+
+    @Test
     void aSubtypeUnderARenamedSchemeLinksByIdentityColumn() {
         // The subtype's inherited key and its FK both follow the supertype's
         // reference scheme (`person_id`), not the supertype entity (`person`).

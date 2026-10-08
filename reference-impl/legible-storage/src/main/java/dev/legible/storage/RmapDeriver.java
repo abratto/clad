@@ -72,7 +72,7 @@ public final class RmapDeriver {
      * not after the entity.
      */
     private static final Pattern OBJECT_TYPE = Pattern.compile(
-            "^\\s*object-type\\s+(\\S+)\\s+identified-by\\s+(\\S+)\\s*$");
+            "^\\s*object-type\\s+(\\S+)\\s+identified-by\\s+(\\S+)(?:\\s+--.*)?\\s*$");
 
     private static final Pattern DEFAULT = Pattern.compile("\\bdefault\\s+(\\w+)");
     private static final Pattern ENUM_IN = Pattern.compile("\\bin\\s*\\{([^}]*)\\}");
@@ -487,8 +487,9 @@ public final class RmapDeriver {
         // collapsing the last surviving simple table to the concept name would
         // make `tableForMember` return null (the drop rule can remove a member
         // whose only facts are multi-valued).
-        boolean hasMemberTables = subtypeOf.values().stream()
-                .anyMatch(m -> m != SubtypeMapping.ABSORB);
+        boolean hasMemberTables = supertypeOf.entrySet().stream()
+                .filter(e -> subtypeOf.get(e.getKey()) != SubtypeMapping.ABSORB)
+                .anyMatch(e -> byObjectType.containsKey(e.getKey()));
         boolean single = simpleTables.size() == 1
                 && parsed.independentTypes().isEmpty()
                 && !hasMemberTables;
@@ -511,7 +512,7 @@ public final class RmapDeriver {
         }
         // Stage 2: multi-valued facts get their own child table (composite PK).
         for (RelationSchema child : childTables(concept, facts, tableNames, tables,
-                referenceSchemes)) {
+                referenceSchemes, subtypeOf, supertypeOf)) {
             tables.add(child);
         }
         // Independent object types play no functional role; Rmap realises each
@@ -571,7 +572,9 @@ public final class RmapDeriver {
                 // The compound fact's components are columns of the compidot
                 // table (subject components + the value).
                 for (String s : f.subjectTypes()) {
-                    addColumn(columns, snake(s), snake(s), "TEXT", true, false, null, null);
+                    // Each component column follows its own type's reference scheme.
+                    String col = snake(referenceSchemes.getOrDefault(s, s));
+                    addColumn(columns, col, col, "TEXT", true, false, null, null);
                 }
                 addColumn(columns, f.field(), snake(f.field()), sqlTypeOf(f.valueType()),
                         f.mandatory(), f.unique(), f.defaultValue(), null,
@@ -603,7 +606,7 @@ public final class RmapDeriver {
             // objectified fact's roles); it has no separate surrogate id.
             pk = new ArrayList<>();
             for (String s : objectType.split("\\+")) {
-                pk.add(snake(s));
+                pk.add(snake(referenceSchemes.getOrDefault(s, s)));
             }
         } else if (isSubtype) {
             // A subtype has no reference scheme of its own — its identity is
@@ -656,16 +659,31 @@ public final class RmapDeriver {
     private static List<RelationSchema> childTables(String concept, List<FactType> facts,
                                                     Map<String, String> tableNames,
                                                     List<RelationSchema> tables,
-                                                    Map<String, String> referenceSchemes) {
+                                                    Map<String, String> referenceSchemes,
+                                                    Map<String, SubtypeMapping> subtypeOf,
+                                                    Map<String, String> supertypeOf) {
         List<RelationSchema> out = new ArrayList<>();
         for (FactType f : facts) {
             if (!f.multiValued()) {
                 continue;
             }
             String subject = f.subjectTypes().get(0);
-            // The subject column is the subject's identity column — named after
-            // its reference scheme — so it matches the parent's primary key.
-            String subjectColumn = snake(referenceSchemes.getOrDefault(subject, subject));
+            // The subject column is the subject's identity column. A subtype
+            // subject keys on the supertype's identity column (its own scheme is
+            // inherited) and its rows live in the member table (separate/
+            // partition) or the supertype's table (absorb); a normal subject keys
+            // on its own scheme.
+            String subjectColumn;
+            String parentTable;
+            if (subtypeOf.containsKey(subject)) {
+                String supertype = supertypeOf.get(subject);
+                subjectColumn = snake(referenceSchemes.getOrDefault(supertype, supertype));
+                boolean absorbed = subtypeOf.get(subject) == SubtypeMapping.ABSORB;
+                parentTable = tableNames.get(absorbed ? supertype : subject);
+            } else {
+                subjectColumn = snake(referenceSchemes.getOrDefault(subject, subject));
+                parentTable = tableNames.get(subject);
+            }
             List<RelationSchema.Column> cols = new ArrayList<>();
             cols.add(new RelationSchema.Column(subjectColumn, subjectColumn, "TEXT",
                     true, false, null, null));
@@ -678,7 +696,6 @@ public final class RmapDeriver {
             // facts or objectified-pair components) is not emitted at all, so it
             // has no table to point at, and an FK there would be
             // unpopulationable.
-            String parentTable = tableNames.get(subject);
             boolean parentHasData = parentTable != null && tables.stream()
                     .filter(t -> t.table().equals(parentTable))
                     .findFirst()
