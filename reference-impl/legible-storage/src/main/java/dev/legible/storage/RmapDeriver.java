@@ -548,6 +548,24 @@ public final class RmapDeriver {
                 List.of(id), List.of(), List.of(), false);
     }
 
+    /**
+     * The reference-scheme type of an object type, following the subtype chain
+     * to its root. A subtype has no reference scheme of its own and inherits its
+     * supertype's <em>transitively</em> (ORM: {@code isA} is transitive), so the
+     * identity column is named after the ROOT supertype's scheme — not the
+     * immediate supertype's.
+     */
+    private static String rootScheme(String objectType,
+                                     Map<String, String> supertypeOf,
+                                     Map<String, String> referenceSchemes) {
+        String current = objectType;
+        java.util.Set<String> seen = new java.util.LinkedHashSet<>();
+        while (supertypeOf.containsKey(current) && seen.add(current)) {
+            current = supertypeOf.get(current);
+        }
+        return referenceSchemes.getOrDefault(current, current);
+    }
+
     private static RelationSchema realizeTable(String concept, String objectType,
                                                List<FactType> group, boolean isCompidot,
                                                String table,
@@ -573,7 +591,7 @@ public final class RmapDeriver {
                 // table (subject components + the value).
                 for (String s : f.subjectTypes()) {
                     // Each component column follows its own type's reference scheme.
-                    String col = snake(referenceSchemes.getOrDefault(s, s));
+                    String col = snake(rootScheme(s, supertypeOf, referenceSchemes));
                     addColumn(columns, col, col, "TEXT", true, false, null, null);
                 }
                 addColumn(columns, f.field(), snake(f.field()), sqlTypeOf(f.valueType()),
@@ -606,7 +624,7 @@ public final class RmapDeriver {
             // objectified fact's roles); it has no separate surrogate id.
             pk = new ArrayList<>();
             for (String s : objectType.split("\\+")) {
-                pk.add(snake(referenceSchemes.getOrDefault(s, s)));
+                pk.add(snake(rootScheme(s, supertypeOf, referenceSchemes)));
             }
         } else if (isSubtype) {
             // A subtype has no reference scheme of its own — its identity is
@@ -615,9 +633,9 @@ public final class RmapDeriver {
             // the supertype's scheme as its identity-owning object type.
             String supertype = supertypeOf.get(objectType);
             String supertable = tableNames.get(supertype);
-            // The key column is the supertype's identity column — named after
-            // the supertype's reference scheme, not the supertype entity.
-            String idColumn = snake(referenceSchemes.getOrDefault(supertype, supertype));
+            // The key column is the ROOT supertype's identity column (the scheme
+            // is inherited transitively), not the immediate supertype's entity.
+            String idColumn = snake(rootScheme(objectType, supertypeOf, referenceSchemes));
             if (supertable != null) {
                 // The subtype's specific columns carry their own rows only
                 // where an individual exists as that subtype; the shared key
@@ -677,7 +695,7 @@ public final class RmapDeriver {
             String parentTable;
             if (subtypeOf.containsKey(subject)) {
                 String supertype = supertypeOf.get(subject);
-                subjectColumn = snake(referenceSchemes.getOrDefault(supertype, supertype));
+                subjectColumn = snake(rootScheme(subject, supertypeOf, referenceSchemes));
                 boolean absorbed = subtypeOf.get(subject) == SubtypeMapping.ABSORB;
                 parentTable = tableNames.get(absorbed ? supertype : subject);
             } else {
