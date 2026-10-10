@@ -10,6 +10,24 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.22.1] — 2026-10-09
+
+**R-map: a subtype inherits the root reference scheme across a chain.**
+
+- `RmapDeriver` now resolves a subtype's identity column through the whole
+  subtype chain to its **root** supertype (`rootScheme`) and uses it for the
+  subtype id column, a child table's subtype subject, and compound (compidot)
+  component columns/PK. Previously `supertypeOf` was resolved one hop, so a
+  chain (`C is a B`, `B is a A`) keyed `C` on `B`'s scheme, and a subtype used
+  as a compidot component used `snake(type)`.
+- `generate_data_model.py` emits the root scheme for a subtype
+  (`object-type <sub> identified-by <root>`), matching "a subtype has no
+  reference scheme of its own".
+
+**Upgrade notes.** Backward-compatible. A direct subtype's root scheme equals
+its own, and every committed/generated model uses direct subtypes or none, so
+derived schemas are unchanged — no migration.
+
 ## [0.22.0] — 2026-10-08
 
 **Downstream-driven corrections: a read-only feature now advances past the
