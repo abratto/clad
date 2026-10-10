@@ -177,6 +177,27 @@ class GeneratorPropertyTests(unittest.TestCase):
         self.assertEqual(cards, ["PasswordAuth", "Session", "UserNaming", "Web"])
         self.assertTrue((dep_dir / "pattern-d-summary.md").exists())
 
+    def test_subtype_emits_the_root_reference_scheme(self):
+        sys.path.insert(0, str(QG))
+        import generate_data_model as gd
+
+        class Rel:
+            def __init__(self, subject_type):
+                self.subject_type = subject_type
+
+        rels = [Rel("A"), Rel("B"), Rel("C")]
+        state = [
+            "aName: A -> AName -- mandatory",
+            "B is a A -- mapping: separate",
+            "C is a B -- mapping: separate",
+            "cName: C -> CName -- mandatory",
+        ]
+        block = gd._machine_model_block("Hierarchy", rels, state)
+        self.assertIn("object-type A identified-by A", block)
+        self.assertIn("object-type B identified-by A", block)
+        self.assertIn("object-type C identified-by A", block,
+                      "a chained subtype emits the ROOT scheme")
+
     def test_generate_data_model_passes_csdp_structure_check(self):
         data_dir = self.feature / "stages" / "03b_data-model" / "output"
         for f in data_dir.glob("*.data-model.md"):

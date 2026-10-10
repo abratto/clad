@@ -28,8 +28,9 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
-from typing import List
+from typing import Dict, List
 
 import artifact_parsers as ap
 import clad_stages as cs
@@ -207,10 +208,25 @@ def _machine_model_block(name: str, rels, state_lines: List[str]) -> List[str]:
     subtype / independent declarations carry over unchanged.
     """
     L: List[str] = []
-    # Reference scheme per object type: the first relation over it is its
-    # identifier fact (the subject's own column). Declared types come first.
+    # Subtype relations: a subtype has no reference scheme of its own — it
+    # inherits the root supertype's, transitively (ORM: `isA` is transitive).
+    supertype_of: Dict[str, str] = {}
+    for raw in state_lines:
+        m = re.match(r"^(\w+)\s+is a\s+(\w+)", raw.strip())
+        if m:
+            supertype_of[m.group(1)] = m.group(2)
+
+    def _root_scheme(etype: str) -> str:
+        current, seen = etype, set()
+        while current in supertype_of and current not in seen:
+            seen.add(current)
+            current = supertype_of[current]
+        return current
+
+    # Reference scheme per object type: the entity's own type, or the root
+    # supertype's for a subtype. Declared types come first.
     for etype in _model_entity_types(rels):
-        L.append(f"object-type {etype} identified-by {etype}")
+        L.append(f"object-type {etype} identified-by {_root_scheme(etype)}")
     for raw in state_lines:
         line = raw.strip()
         if not line or line.startswith("#") or line.startswith(">"):

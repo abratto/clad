@@ -262,6 +262,45 @@ class RmapDeriverDataModelTest {
     }
 
     @Test
+    void chainedSubtypesInheritTheRootReferenceScheme() {
+        // A subtype inherits its supertype's scheme transitively, so `C` keys on
+        // the ROOT `A`'s scheme (`aid`), not its immediate supertype `B`.
+        String text = dataModel("""
+                object-type A identified-by Aid
+                B is a A -- mapping: separate
+                C is a B -- mapping: separate
+                fact aName : A -> AName -- mandatory
+                fact bName : B -> BName -- mandatory
+                fact cName : C -> CName -- mandatory
+                """);
+        RmapModel model = RmapDeriver.deriveModelFromDataModel("Hierarchy", text);
+        RelationSchema c = model.tables().stream()
+                .filter(t -> t.table().equals("hierarchy__c")).findFirst().orElseThrow();
+        assertEquals(java.util.List.of("aid"), c.primaryKey(),
+                "C inherits A's scheme transitively");
+        assertTrue(c.foreignKeys().get(0).startsWith("aid -> hierarchy__b(aid)"),
+                "C links to B's table on the root identity column: " + c.foreignKeys());
+    }
+
+    @Test
+    void aSubtypeAsACompoundComponentUsesTheRootScheme() {
+        String text = dataModel("""
+                object-type Person identified-by PersonId
+                Patient is a Person -- mapping: separate
+                object-type Service identified-by ServiceId
+                fact personName : Person -> PersonName -- mandatory
+                fact diagnosis : Patient -> Diagnosis -- mandatory
+                fact serviceName : Service -> ServiceName -- mandatory
+                fact charge : ( Patient, Service ) -> Amount -- optional
+                """);
+        RmapModel model = RmapDeriver.deriveModelFromDataModel("Clinic", text);
+        RelationSchema compidot = model.tables().stream()
+                .filter(t -> t.primaryKey().size() == 2).findFirst().orElseThrow();
+        assertEquals(java.util.List.of("person_id", "service_id"), compidot.primaryKey(),
+                "a subtype component follows the root reference scheme");
+    }
+
+    @Test
     void compoundAndMultiValuedSubjectsRealiseAsATableSet() {
         String text = dataModel("""
                 object-type FirmUri identified-by FirmUri
