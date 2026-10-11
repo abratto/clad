@@ -216,17 +216,29 @@ def _machine_model_block(name: str, rels, state_lines: List[str]) -> List[str]:
         if m:
             supertype_of[m.group(1)] = m.group(2)
 
-    def _root_scheme(etype: str) -> str:
+    def _root_entity(etype: str) -> str:
         current, seen = etype, set()
         while current in supertype_of and current not in seen:
             seen.add(current)
             current = supertype_of[current]
         return current
 
-    # Reference scheme per object type: the entity's own type, or the root
-    # supertype's for a subtype. Declared types come first.
+    def _identifying_type(entity: str) -> str:
+        """The entity's reference-scheme type: the OBJECT type of its identifying
+        fact (a single-valued fact over the entity whose value type names an
+        identifier — ends in `Id`), else the entity's own name. This is the CSDP
+        `E is identified by <id>` reference scheme."""
+        for raw in state_lines:
+            m = re.match(r"^(\w+)\s*:\s*(\w+)\s*->\s*(\w+)\b", raw.strip())
+            if m and m.group(2) == entity and m.group(3).endswith("Id"):
+                return m.group(3)
+        return entity
+
+    # Reference scheme per object type: the ROOT entity's identifying-fact type
+    # (a subtype inherits it transitively; a root with no `…Id` identifying fact
+    # falls back to its own name). Declared types come first.
     for etype in _model_entity_types(rels):
-        L.append(f"object-type {etype} identified-by {_root_scheme(etype)}")
+        L.append(f"object-type {etype} identified-by {_identifying_type(_root_entity(etype))}")
     for raw in state_lines:
         line = raw.strip()
         if not line or line.startswith("#") or line.startswith(">"):
