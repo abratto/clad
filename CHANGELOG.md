@@ -10,6 +10,23 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.22.2] — 2026-10-09
+
+**Data model: an entity's reference scheme follows its identifying fact.**
+
+- `generate_data_model.py` now emits `object-type <Entity> identified-by <IdType>`
+  — the object type of the entity's identifying fact (the first single-valued
+  fact over the entity whose value type ends in `Id`) — instead of the entity's
+  own name, falling back to the entity's name when the model states no such
+  fact. E.g. `entryId: DrinkEntry -> DrinkEntryId` → `identified-by DrinkEntryId`
+  → identity column `drink_entry_id`. A subtype still inherits the root entity's
+  scheme.
+
+**Upgrade notes.** A model that states an `…Id` identifying fact now names the
+identity column after that fact's type (e.g. `drink_entry` → `drink_entry_id`);
+re-derive the data model and regenerate the schema. A model with no such fact is
+unchanged.
+
 ## [0.22.1] — 2026-10-09
 
 **R-map: a subtype inherits the root reference scheme across a chain.**
