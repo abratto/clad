@@ -177,6 +177,37 @@ class GeneratorPropertyTests(unittest.TestCase):
         self.assertEqual(cards, ["PasswordAuth", "Session", "UserNaming", "Web"])
         self.assertTrue((dep_dir / "pattern-d-summary.md").exists())
 
+    def test_reference_scheme_uses_the_identifying_fact_type(self):
+        sys.path.insert(0, str(QG))
+        import generate_data_model as gd
+
+        class Rel:
+            def __init__(self, subject_type):
+                self.subject_type = subject_type
+
+        rels = [Rel("DrinkEntry")]
+        state = [
+            "entryId: DrinkEntry -> DrinkEntryId -- mandatory, unique",
+            "drinkType: DrinkEntry -> DrinkType -- mandatory",
+        ]
+        block = gd._machine_model_block("DrinkLogging", rels, state)
+        self.assertIn("object-type DrinkEntry identified-by DrinkEntryId", block,
+                      "the reference scheme is the identifying fact's object type")
+
+    def test_reference_scheme_falls_back_to_the_entity_name(self):
+        sys.path.insert(0, str(QG))
+        import generate_data_model as gd
+
+        class Rel:
+            def __init__(self, subject_type):
+                self.subject_type = subject_type
+
+        rels = [Rel("DrinkEntry")]
+        state = ["loggedAt: DrinkEntry -> Timestamp -- mandatory"]
+        block = gd._machine_model_block("DrinkLogging", rels, state)
+        self.assertIn("object-type DrinkEntry identified-by DrinkEntry", block,
+                      "no identifying fact -> the entity's own name")
+
     def test_subtype_emits_the_root_reference_scheme(self):
         sys.path.insert(0, str(QG))
         import generate_data_model as gd

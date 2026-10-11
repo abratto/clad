@@ -301,6 +301,19 @@ class RmapDeriverDataModelTest {
     }
 
     @Test
+    void theIdentityColumnFollowsTheDeclaredReferenceSchemeType() {
+        // The generator emits `identified-by <IdType>` (the identifying fact's
+        // object type); the deriver names the identity column after it.
+        String text = dataModel("""
+                object-type DrinkEntry identified-by DrinkEntryId
+                fact entryId : DrinkEntry -> DrinkEntryId -- mandatory, unique
+                fact loggedAt : DrinkEntry -> Timestamp -- mandatory
+                """);
+        RelationSchema s = RmapDeriver.deriveFromDataModel("DrinkLogging", text);
+        assertEquals("drink_entry_id", s.idColumn());
+    }
+
+    @Test
     void compoundAndMultiValuedSubjectsRealiseAsATableSet() {
         String text = dataModel("""
                 object-type FirmUri identified-by FirmUri
