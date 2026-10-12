@@ -141,6 +141,13 @@ independent <ObjectType>
 
 - `object-type` declares an entity type and its reference scheme (the fact
   that identifies it). A value type is never declared as an object type.
+  `<IdType>` is either the value type of the entity's identifying fact (e.g.
+  `AccountId`, `SessionId`), an identifier type's own name (an entity whose name
+  ends in `Id` is identified by itself), or the entity's intrinsic **`<Entity>.id`
+  scheme** — used for an objectified entity that carries no explicit identifying
+  fact (e.g. `object-type DrinkEntry identified-by DrinkEntry.id`). An
+  `<Entity>.id` scheme realises as the identity column `snake(<Entity>) + "_id"`
+  (`DrinkEntry.id` → `drink_entry_id`).
 - `fact` is one elementary fact type. `( A, B )` is a compound (objectified)
   subject; `{ V }` is a multi-valued ("zero or more") fact.
 - `<annotations>` is the same `--` tail the `## State` notation uses:

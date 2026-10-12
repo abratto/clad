@@ -67,6 +67,19 @@ class RmapDeriverDataModelTest {
     }
 
     @Test
+    void anIntrinsicDotIdSchemeRealisesAsTheEntityColumn() {
+        // `object-type <Entity> identified-by <Entity>.id` — an objectified
+        // entity's intrinsic scheme — names the column `snake(<Entity>)_id`.
+        String text = dataModel("""
+                object-type DrinkEntry identified-by DrinkEntry.id
+                fact loggedAt : DrinkEntry -> Timestamp -- mandatory
+                """);
+        RelationSchema s = RmapDeriver.deriveFromDataModel("DrinkLogging", text);
+        assertEquals("drink_entry_id", s.idColumn(),
+                "the `.id` scheme realises as the entity's snake-cased id column");
+    }
+
+    @Test
     void aMultiValuedOnlySubjectEmitsNoIdentityOnlyTable() {
         // `AccountId` appears only as the subject of a multi-valued fact, so its
         // would-be table is identity-only and unpopulationable — it is not

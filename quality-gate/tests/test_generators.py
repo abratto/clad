@@ -194,7 +194,7 @@ class GeneratorPropertyTests(unittest.TestCase):
         self.assertIn("object-type DrinkEntry identified-by DrinkEntryId", block,
                       "the reference scheme is the identifying fact's object type")
 
-    def test_reference_scheme_falls_back_to_the_entity_name(self):
+    def test_reference_scheme_falls_back_to_the_intrinsic_dot_id(self):
         sys.path.insert(0, str(QG))
         import generate_data_model as gd
 
@@ -205,8 +205,22 @@ class GeneratorPropertyTests(unittest.TestCase):
         rels = [Rel("DrinkEntry")]
         state = ["loggedAt: DrinkEntry -> Timestamp -- mandatory"]
         block = gd._machine_model_block("DrinkLogging", rels, state)
-        self.assertIn("object-type DrinkEntry identified-by DrinkEntry", block,
-                      "no identifying fact -> the entity's own name")
+        self.assertIn("object-type DrinkEntry identified-by DrinkEntry.id", block,
+                      "no identifying fact -> the entity's intrinsic `.id` scheme")
+
+    def test_reference_scheme_of_an_identifier_type_is_its_own_name(self):
+        sys.path.insert(0, str(QG))
+        import generate_data_model as gd
+
+        class Rel:
+            def __init__(self, subject_type):
+                self.subject_type = subject_type
+
+        rels = [Rel("AccountId")]
+        state = ["createdAt: AccountId -> Timestamp -- mandatory"]
+        block = gd._machine_model_block("Registering", rels, state)
+        self.assertIn("object-type AccountId identified-by AccountId", block,
+                      "an identifier type (name ends in `Id`) is identified by itself")
 
     def test_subtype_emits_the_root_reference_scheme(self):
         sys.path.insert(0, str(QG))
@@ -224,9 +238,9 @@ class GeneratorPropertyTests(unittest.TestCase):
             "cName: C -> CName -- mandatory",
         ]
         block = gd._machine_model_block("Hierarchy", rels, state)
-        self.assertIn("object-type A identified-by A", block)
-        self.assertIn("object-type B identified-by A", block)
-        self.assertIn("object-type C identified-by A", block,
+        self.assertIn("object-type A identified-by A.id", block)
+        self.assertIn("object-type B identified-by A.id", block)
+        self.assertIn("object-type C identified-by A.id", block,
                       "a chained subtype emits the ROOT scheme")
 
     def test_generate_data_model_passes_csdp_structure_check(self):
