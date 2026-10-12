@@ -541,7 +541,7 @@ public final class RmapDeriver {
         // The column follows the type's reference scheme, like every other
         // identity column; a type without a declared scheme falls back to its
         // own name.
-        String id = snake(referenceSchemes.getOrDefault(objectType, objectType));
+        String id = schemeColumn(referenceSchemes.getOrDefault(objectType, objectType));
         List<RelationSchema.Column> columns = List.of(
                 new RelationSchema.Column(id, id, "TEXT", true, false, null, null));
         return new RelationSchema(concept, table, objectType, columns,
@@ -591,7 +591,7 @@ public final class RmapDeriver {
                 // table (subject components + the value).
                 for (String s : f.subjectTypes()) {
                     // Each component column follows its own type's reference scheme.
-                    String col = snake(rootScheme(s, supertypeOf, referenceSchemes));
+                    String col = schemeColumn(rootScheme(s, supertypeOf, referenceSchemes));
                     addColumn(columns, col, col, "TEXT", true, false, null, null);
                 }
                 addColumn(columns, f.field(), snake(f.field()), sqlTypeOf(f.valueType()),
@@ -624,7 +624,7 @@ public final class RmapDeriver {
             // objectified fact's roles); it has no separate surrogate id.
             pk = new ArrayList<>();
             for (String s : objectType.split("\\+")) {
-                pk.add(snake(rootScheme(s, supertypeOf, referenceSchemes)));
+                pk.add(schemeColumn(rootScheme(s, supertypeOf, referenceSchemes)));
             }
         } else if (isSubtype) {
             // A subtype has no reference scheme of its own — its identity is
@@ -635,7 +635,7 @@ public final class RmapDeriver {
             String supertable = tableNames.get(supertype);
             // The key column is the ROOT supertype's identity column (the scheme
             // is inherited transitively), not the immediate supertype's entity.
-            String idColumn = snake(rootScheme(objectType, supertypeOf, referenceSchemes));
+            String idColumn = schemeColumn(rootScheme(objectType, supertypeOf, referenceSchemes));
             if (supertable != null) {
                 // The subtype's specific columns carry their own rows only
                 // where an individual exists as that subtype; the shared key
@@ -655,7 +655,7 @@ public final class RmapDeriver {
             // scheme (`object-type E identified-by I` -> column `snake(I)`), not
             // after the entity; a type without a declared scheme falls back to
             // its own name.
-            String idColumn = snake(referenceSchemes.getOrDefault(objectType, objectType));
+            String idColumn = schemeColumn(referenceSchemes.getOrDefault(objectType, objectType));
             if (columns.stream().noneMatch(c -> c.column().equals(idColumn))) {
                 columns.add(0, new RelationSchema.Column(idColumn, idColumn, "TEXT",
                         true, false, null, null));
@@ -695,11 +695,11 @@ public final class RmapDeriver {
             String parentTable;
             if (subtypeOf.containsKey(subject)) {
                 String supertype = supertypeOf.get(subject);
-                subjectColumn = snake(rootScheme(subject, supertypeOf, referenceSchemes));
+                subjectColumn = schemeColumn(rootScheme(subject, supertypeOf, referenceSchemes));
                 boolean absorbed = subtypeOf.get(subject) == SubtypeMapping.ABSORB;
                 parentTable = tableNames.get(absorbed ? supertype : subject);
             } else {
-                subjectColumn = snake(referenceSchemes.getOrDefault(subject, subject));
+                subjectColumn = schemeColumn(referenceSchemes.getOrDefault(subject, subject));
                 parentTable = tableNames.get(subject);
             }
             List<RelationSchema.Column> cols = new ArrayList<>();
@@ -792,6 +792,21 @@ public final class RmapDeriver {
     /** Sanitise an object-type key (which may be {@code A+B}) for a table name. */
     private static String snakeName(String s) {
         return snake(s.replace("+", "_and_"));
+    }
+
+    /**
+     * The identity column a reference scheme realises as. A scheme of the form
+     * {@code <Entity>.id} — an entity's intrinsic identifier — names the column
+     * {@code snake(<Entity>) + "_id"} (so {@code DrinkEntry.id -> drink_entry_id});
+     * any other scheme (an identifier type such as {@code AccountId}, or the
+     * entity's own name as a fallback) names it {@code snake(<scheme>)}.
+     */
+    private static String schemeColumn(String scheme) {
+        String dotId = ".id";
+        if (scheme.endsWith(dotId)) {
+            return snake(scheme.substring(0, scheme.length() - dotId.length())) + "_id";
+        }
+        return snake(scheme);
     }
 
     /**

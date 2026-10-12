@@ -224,15 +224,17 @@ def _machine_model_block(name: str, rels, state_lines: List[str]) -> List[str]:
         return current
 
     def _identifying_type(entity: str) -> str:
-        """The entity's reference-scheme type: the OBJECT type of its identifying
-        fact (a single-valued fact over the entity whose value type names an
-        identifier — ends in `Id`), else the entity's own name. This is the CSDP
+        """The entity's reference-scheme type. An explicit identifying fact — a
+        single-valued fact over the entity whose value type names an identifier
+        (ends in `Id`) — wins; otherwise an identifier type (the entity's own
+        name ends in `Id`) is identified by itself, and any other (objectified)
+        entity by its intrinsic `<Entity>.id` scheme. This is the CSDP
         `E is identified by <id>` reference scheme."""
         for raw in state_lines:
             m = re.match(r"^(\w+)\s*:\s*(\w+)\s*->\s*(\w+)\b", raw.strip())
             if m and m.group(2) == entity and m.group(3).endswith("Id"):
                 return m.group(3)
-        return entity
+        return entity if entity.endswith("Id") else f"{entity}.id"
 
     # Reference scheme per object type: the ROOT entity's identifying-fact type
     # (a subtype inherits it transitively; a root with no `…Id` identifying fact
