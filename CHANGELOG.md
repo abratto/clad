@@ -10,6 +10,29 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.23.0] — 2026-10-11
+
+**Data model: an objectified entity's intrinsic `<Entity>.id` reference scheme.**
+
+- `generate_data_model.py` now declares an objectified entity that states no
+  identifying fact with its intrinsic scheme — `object-type <Entity>
+  identified-by <Entity>.id` — instead of falling back to the bare entity name.
+  An identifier type (a name ending in `Id`) is still identified by itself, and
+  an explicit identifying fact still wins.
+- `RmapDeriver` realises an `<Entity>.id` scheme as the identity column
+  `snake(<Entity>) + "_id"` (`DrinkEntry.id` → `drink_entry_id`) via a new
+  `schemeColumn` helper; every scheme→column site (identity PK, subtype key,
+  compidot components, and the independent and child-table subject columns)
+  routes through it.
+- `methodology/architecture/DATA_MODEL_NOTES.md` documents the three `<IdType>`
+  forms an `object-type … identified-by …` declaration may take.
+
+**Upgrade notes.** Backward-compatible. The change touches only the
+no-identifying-fact fallback, so a model that states an identifying fact (or
+whose entity name ends in `Id`) regenerates identically. An objectified entity
+that previously carried a redundant identifying fact solely to fix its scheme
+may now drop it; the derived identity column is unchanged (`drink_entry_id`).
+
 ## [0.22.2] — 2026-10-09
 
 **Data model: an entity's reference scheme follows its identifying fact.**
