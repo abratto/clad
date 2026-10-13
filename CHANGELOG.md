@@ -10,6 +10,23 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.23.1] — 2026-10-13
+
+**Quality gate: a feature's 03b expectation is stable, not canonical-bound.**
+
+- `artifact_parsers._state_changed` now compares a feature's `## State`
+  proposal to the state it **inherited** — its predecessor in the concept's
+  canonical history (the previous source's frozen proposal) — rather than to the
+  current canonical. Once a *later* feature moved the canonical, an *earlier*
+  feature's frozen proposal looked state-changed, so a completed read-only
+  feature was required to produce a data model, and its empty
+  `03b_data_model/output/` failed the stage-sequence check. Introducer /
+  unknown-provenance features fall back to the canonical comparison.
+
+**Upgrade notes.** Backward-compatible. For a concept with a single source,
+behaviour is unchanged; for a concept with a history, the check is now a
+property of each feature's own artefacts.
+
 ## [0.23.0] — 2026-10-11
 
 **Data model: an objectified entity's intrinsic `<Entity>.id` reference scheme.**
