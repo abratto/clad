@@ -232,5 +232,48 @@ class AdditivityTests(unittest.TestCase):
             self.assertIn("authorised exception", result.stdout)
 
 
+class StateChangedBaselineTest(unittest.TestCase):
+    """`_state_changed` compares a proposal to its PREDECESSOR source, not the
+    current canonical — so a later feature moving the canonical cannot drag an
+    earlier, completed read-only feature into producing a data model."""
+
+    def _spec(self, state_lines):
+        return ("concept DrinkLogging [AccountId]\n"
+                "purpose\n    to log drinks\n\n"
+                "## State\n\n```\n" + "\n".join(state_lines) + "\n```\n")
+
+    def test_predecessor_baseline_is_stable_when_the_canonical_moves(self):
+        sys.path.insert(0, str(QG))
+        import artifact_parsers as ap
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            corpus = root / "features" / "_system" / "concepts"
+            write(corpus / "DrinkLogging.concept.md",
+                  "concept DrinkLogging [AccountId]\n"
+                  "introduced-by UC-04\n"
+                  "extended-by UC-05, UC-06\n"
+                  "## State\n\n```\nentries: AccountId -> DrinkEntry\n```\n")
+            states = {
+                "UC-04": ["entries: AccountId -> DrinkEntry",
+                          "entryId: DrinkEntry -> DrinkEntryId"],
+                "UC-05": ["entries: AccountId -> DrinkEntry",
+                          "entryId: DrinkEntry -> DrinkEntryId"],
+                "UC-06": ["entries: AccountId -> DrinkEntry"],
+            }
+            for slug, lines in states.items():
+                write(root / "features" / slug / "stages" / "02_concepts" /
+                      "output" / "DrinkLogging.concept.md", self._spec(lines))
+            base = root / "features"
+            self.assertTrue(
+                ap._state_changed(str(base / "UC-04"), "DrinkLogging", str(corpus)),
+                "the introducer owns the state")
+            self.assertFalse(
+                ap._state_changed(str(base / "UC-05"), "DrinkLogging", str(corpus)),
+                "UC-05's state equals its predecessor UC-04's — no change")
+            self.assertTrue(
+                ap._state_changed(str(base / "UC-06"), "DrinkLogging", str(corpus)),
+                "UC-06 differs from its predecessor UC-05 — changed")
+
+
 if __name__ == "__main__":
     unittest.main()

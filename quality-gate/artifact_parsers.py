@@ -1079,8 +1079,8 @@ def feature_model_concepts(feature_root: str, corpus_dir: str = "") -> List[str]
     only when it introduces or CHANGES the concept's state:
 
       * `new`                                     -> yes
-      * `extends:*` whose `## State` differs from the canonical spec -> yes
-      * `remodel:*` whose `## State` differs from the canonical spec -> yes
+      * `extends:*`/`remodel:*` whose `## State` differs from the state it
+        INHERITED (its predecessor source's proposal)                -> yes
       * `reused`, or an extend/remodel leaving state unchanged       -> no
       * a legacy map with no `Origin` column      -> every concept (pre-Model-B
         expectation, kept for compatibility).
@@ -1106,8 +1106,41 @@ def feature_model_concepts(feature_root: str, corpus_dir: str = "") -> List[str]
     return out
 
 
+_INTRODUCED_RE = re.compile(r"^introduced-by\s+(.+)$", re.MULTILINE)
+_EXTENDED_RE = re.compile(r"^extended-by\s+(.+)$", re.MULTILINE)
+
+
+def _concept_history(canonical_text: str) -> List[str]:
+    """A concept's canonical history: introducer first, then extenders in
+    promotion order, deduplicated. Empty when the canonical carries no
+    provenance."""
+    features: List[str] = []
+    intro = _INTRODUCED_RE.search(canonical_text)
+    if intro:
+        features.append(intro.group(1).strip())
+    ext = _EXTENDED_RE.search(canonical_text)
+    if ext:
+        features.extend(s.strip() for s in ext.group(1).split(","))
+    seen: Set[str] = set()
+    ordered: List[str] = []
+    for feature in features:
+        if feature and feature not in seen:
+            seen.add(feature)
+            ordered.append(feature)
+    return ordered
+
+
 def _state_changed(feature_root: str, concept: str, corpus: str) -> bool:
-    """True when this feature's proposal changes the concept's `## State`."""
+    """True when this feature's proposal changes the concept's `## State`
+    relative to the state it INHERITED.
+
+    The inherited baseline is the feature's predecessor in the concept's
+    canonical history — the previous source's proposal — NOT the current
+    canonical. Comparing to the current canonical is unstable: once a later
+    feature moves the canonical, an earlier feature's *frozen* proposal looks
+    state-changed, so a completed read-only feature would suddenly be required
+    to produce a data model. A feature's 03b expectation must be a property of
+    its own artefacts, so the baseline is the frozen predecessor proposal."""
     proposal = os.path.join(feature_root, "stages", "02_concepts", "output",
                             concept + ".concept.md")
     canonical = os.path.join(corpus, concept + ".concept.md") if corpus else ""
@@ -1115,8 +1148,22 @@ def _state_changed(feature_root: str, concept: str, corpus: str) -> bool:
         return True                      # no canonical spec — state is new
     if not os.path.isfile(proposal):
         return False
+    slug = os.path.basename(os.path.normpath(feature_root))
+    with open(canonical, encoding="utf-8") as fh:
+        history = _concept_history(fh.read())
+    if slug not in history or history.index(slug) == 0:
+        # Introducer or unknown provenance — the feature has no predecessor to
+        # diff against, so fall back to the canonical comparison.
+        return (parse_concept(proposal).state_lines
+                != parse_concept(canonical).state_lines)
+    prev = history[history.index(slug) - 1]
+    prev_proposal = os.path.join(
+        os.path.dirname(os.path.normpath(feature_root)), prev,
+        "stages", "02_concepts", "output", concept + ".concept.md")
+    if not os.path.isfile(prev_proposal):
+        return True                      # no baseline available — assume changed
     return (parse_concept(proposal).state_lines
-            != parse_concept(canonical).state_lines)
+            != parse_concept(prev_proposal).state_lines)
 
 
 def feature_contract_concepts(feature_root: str) -> List[str]:
