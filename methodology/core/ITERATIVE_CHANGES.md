@@ -139,6 +139,21 @@ so stale downstream output cannot pass as freshly derived. A re-derived stage
 whose content changed makes its gate hash stale and requires fresh approval, as
 always; an unchanged one stays approved.
 
+**One source of truth for the active change.** `**Status:** active` is the
+selector `advance`, the readiness guard, re-entry routing, and the artefact gate
+all read — a closed record stops participating, and two active records are an
+error rather than a silent fallback. The re-entry stage counts as re-derived
+only when `_changes/<slug>.progress.json` records it (content, not a receipt's
+mtime). And `./clad approve-iter` records the record's **content hash**, so
+editing the record after approval stales the review exactly like a gate.
+
+**Promotion cannot roll the corpus back.** `./clad promote-concepts` refuses a
+proposal that would drop a canonical line with no authorisation — a `remodel`
+authorises a drop with `## Migration notes`, an `extend`/`new` only with a
+`_config/additivity-exceptions.md` entry — and refuses when Gate 2's content is
+stale. A refusal exits non-zero, so a partial promotion is never mistaken for
+success. `--concept <Name>` promotes a single concept.
+
 For each stage in the re-derivation order, in order:
 
 1. Open that stage's `CONTEXT.md`.

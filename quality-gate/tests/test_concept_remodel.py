@@ -17,6 +17,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 QG = REPO_ROOT / "quality-gate"
+sys.path.insert(0, str(QG))
 
 ADDITIVITY = QG / "verify_concept_additivity.py"
 PROMOTE = QG / "promote_concepts.py"
@@ -121,9 +122,11 @@ def make_world(tmp, resp_text, proposal_text, with_consent=False,
     cdir.mkdir(parents=True)
     (cdir / "Session.concept.md").write_text(proposal_text, encoding="utf-8")
     if gate2:
+        from verify_stage_sequence import compute_gate_hash
         (feature / "RESUME.md").write_text(
             "# RESUME\n\n- **Gate 2 (Architecture):** `%s`\n"
-            "- **Gate 2 content hash:** `%s`\n" % (gate2, "b" * 64),
+            "- **Gate 2 content hash:** `%s`\n"
+            % (gate2, compute_gate_hash(str(feature), 2)),
             encoding="utf-8")
     if with_consent:
         consent = corpus / "_remodel-consent"
@@ -181,9 +184,9 @@ class RemodelPromotionTests(unittest.TestCase):
             feature, corpus = make_world(tmp, RESP_MAP_REMODEL,
                                          REMODEL_PROPOSAL, with_consent=False)
             result = run(PROMOTE, "--feature", feature)
-            self.assertEqual(result.returncode, 0,
-                             result.stdout + result.stderr)  # refused ≠ crashed
-            self.assertIn("remodel refused", result.stdout)
+            self.assertEqual(result.returncode, 1,
+                             result.stdout + result.stderr)  # refusal exits non-zero
+            self.assertIn("refused", result.stdout)
             self.assertIn("UC-00-login", result.stdout)
             # The corpus is untouched.
             self.assertEqual(
@@ -223,6 +226,21 @@ class RemodelProposalShapeTests(unittest.TestCase):
             result = run(PROPOSALS, "--feature", str(feature))
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("Session", result.stdout)
+
+
+    def test_additive_extend_that_drops_a_line_is_refused(self):
+        """An `extends` may not drop a canonical line even with migration
+        notes — that is a `remodel`. This is the stale-snapshot rollback guard:
+        re-promoting a proposal that drops a later feature's addition is refused
+        at promotion, not silently written."""
+        with tempfile.TemporaryDirectory() as tmp:
+            feature, corpus = make_world(tmp, RESP_MAP_EXTEND, EXTEND_PROPOSAL,
+                                         with_consent=False)
+            result = run(PROMOTE, "--feature", feature)
+            self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+            self.assertIn("dropped with no authorisation", result.stdout)
+            self.assertEqual((Path(corpus) / "Session.concept.md").read_text(),
+                             CANONICAL_SESSION)
 
 
 if __name__ == "__main__":

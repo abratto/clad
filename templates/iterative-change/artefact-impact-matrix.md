@@ -18,7 +18,7 @@ This change is governed by `methodology/core/ITERATIVE_CHANGES.md`.
 | Concept(s) | `yes` / `no` | <e.g. "added `hostFirm` field to `User.concept.md`"> |
 | Sync(s) | `yes` / `no` | <e.g. "new `InterceptForProfileWhenLookupByUsernameFound.sync.md`"> |
 | Contract slices | `yes` / `no` | <e.g. "regenerated `User.contract.md`"> |
-| Acceptance tests | `yes` / `no` | <e.g. "added a `spillover` scenario to `acceptance-spec.md` and its native flow test"> |
+| Flow tests | `yes` / `no` | <e.g. "added a `spillover` scenario to `acceptance-spec.md` and its native flow test"> |
 | Concept tests | `yes` / `no` | <e.g. "added `UserLookupTest.shouldReturnHostFirm`"> |
 | Sync tests | `yes` / `no` | <e.g. "added `InterceptForProfileWhenLookupByUsernameFoundTest`"> |
 | Production code | `yes` / `no` | <e.g. "`UserConcept.java` updated; new `SpilloverSync.java`"> |

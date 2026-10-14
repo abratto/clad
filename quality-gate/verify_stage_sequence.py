@@ -61,13 +61,32 @@ def _field_value(text: str, label: str) -> str:
     return match.group(1).strip().lower() if match else ""
 
 
-def active_reentry_change(feature_root: str) -> tuple[str, str] | None:
-    """Return the earliest stage and path from one active change record."""
+def change_hash(change_path: str) -> str:
+    """Content hash of a `_changes/` record.
+
+    Binds an iterative-change approval to the record's content, so editing the
+    record after approval invalidates the review (mirrors `compute_gate_hash`
+    for the three human gates)."""
+    h = hashlib.sha256()
+    with open(change_path, "rb") as handle:
+        h.update(handle.read())
+    return h.hexdigest()
+
+
+def active_change_records(feature_root: str) -> list[tuple[str, str]]:
+    """Every `_changes/` record marked `**Status:** active`, as
+    `(earliest re-entry stage, path)`, sorted by path.
+
+    The single source of truth for "the active change": `advance`, the readiness
+    guard, re-entry routing, and `verify_artefacts` all read it, so a closed
+    record stops participating and a second active record is visible (an error)
+    rather than silently disabling re-entry routing. A `*.progress.json` is not
+    a record and is ignored (only `.md` is read)."""
     changes_dir = os.path.join(feature_root, "_changes")
     if not os.path.isdir(changes_dir):
-        return None
-    active = []
-    for name in os.listdir(changes_dir):
+        return []
+    records: list[tuple[str, str]] = []
+    for name in sorted(os.listdir(changes_dir)):
         if not name.endswith(".md"):
             continue
         path = os.path.join(changes_dir, name)
@@ -76,10 +95,18 @@ def active_reentry_change(feature_root: str) -> tuple[str, str] | None:
         if _field_value(text, "Status") == "active":
             stage_id = _field_value(text, "Earliest re-entry stage")
             if cs.stage_by_id(stage_id) is not None:
-                active.append((stage_id, path))
-    if len(active) == 1:
-        return active[0]
-    return None
+                records.append((stage_id, path))
+    return records
+
+
+def active_reentry_change(feature_root: str) -> tuple[str, str] | None:
+    """The single active change `(earliest stage, path)`, or None.
+
+    None when no change is active OR more than one is (ambiguous) — callers that
+    must distinguish "none" from "several" use `active_change_records` directly."""
+    records = active_change_records(feature_root)
+    return records[0] if len(records) == 1 else None
+
 
 
 def active_reentry_stage(feature_root: str) -> str | None:

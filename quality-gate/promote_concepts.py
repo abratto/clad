@@ -44,7 +44,11 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
 import clad_stages as cs  # noqa: E402
-from verify_stage_sequence import gate_hash_recorded, gate_status  # noqa: E402
+from verify_stage_sequence import (  # noqa: E402
+    gate_approval_current,
+    gate_hash_recorded,
+    gate_status,
+)
 
 INTRODUCED_RE = re.compile(r"^introduced-by\s+(.+)$", re.MULTILINE)
 EXTENDED_RE = re.compile(r"^extended-by\s+(.+)$", re.MULTILINE)
@@ -382,6 +386,10 @@ def main():
     parser = argparse.ArgumentParser(
         description="Promote approved NEW/EXTEND proposals into the concept corpus")
     parser.add_argument("--feature", required=True, help="Feature root")
+    parser.add_argument("--concept", default=None,
+                        help="Promote only this concept (of the feature's "
+                             "NEW/EXTEND/REMODEL proposals); the default "
+                             "promotes all of them.")
     parser.add_argument("--dry-run", action="store_true",
                         help="Report what would be promoted; write nothing")
     parser.add_argument("--companions-only", action="store_true",
@@ -405,9 +413,21 @@ def main():
         print("FAIL  Gate 2 (Architecture) is not approved — promotion refused.")
         print("      Approve Gate 2 first (./clad approve 2).")
         return 1
+    if not gate_approval_current(feature_root, resume_text, 2):
+        print("FAIL  Gate 2 content is stale — the Stage-02 proposals changed "
+              "since approval (or the approval predates the content hash).")
+        print("      Re-present and re-approve Gate 2 (./clad approve 2), then "
+              "re-run promotion.")
+        return 1
     gate_hash = gate_hash_recorded(resume_text, 2) or "unknown"
 
     proposals = proposals_for(feature_root)
+    if args.concept:
+        proposals = {c: p for c, p in proposals.items() if c == args.concept}
+        if not proposals:
+            print(f"FAIL  no NEW/EXTEND/REMODEL proposal named `{args.concept}` "
+                  f"for this feature")
+            return 1
     claims = dependence_claims(feature_root)
 
     if not proposals:
@@ -464,24 +484,32 @@ def main():
     planned, refused = {}, []
     for concept, path in sorted(proposals.items()):
         entry = resp_entries.get(concept)
-        if entry is not None and cr.is_remodel(entry.origin):
-            problems = []
+        is_remodel = entry is not None and cr.is_remodel(entry.origin)
+        problems = []
+        # A drop of a canonical line is refused for ANY proposal. A `remodel`
+        # authorises a drop with `## Migration notes`; an `extend`/`new` may not
+        # drop at all (only a `_config/additivity-exceptions.md` entry). This
+        # closes the stale-snapshot rollback: re-promoting an earlier snapshot
+        # cannot silently revert a later feature's canonical additions.
+        if is_remodel:
             state_drops, term_drops = cr.unauthorised_drops(
                 feature_root, corpus, concept)
-            if state_drops or term_drops:
-                problems.append(
-                    "canonical line(s) dropped with no migration note (list "
-                    "each in the proposal's `## Migration notes`): "
-                    + "; ".join(state_drops + term_drops))
+        else:
+            state_drops, term_drops = cr.unauthorised_drops_additive(
+                feature_root, corpus, concept)
+        if state_drops or term_drops:
+            problems.append(
+                "canonical line(s) dropped with no authorisation: "
+                + "; ".join(state_drops + term_drops))
+        if is_remodel:
             missing = cr.missing_consent(corpus, concept, slug)
             if missing:
                 problems.append(
                     f"missing consent receipt(s) from {', '.join(missing)} "
                     f"(expected at {cr.CONSENT_DIRNAME}/{concept}-<feature>.md)")
-            if problems:
-                refused.append((concept, "remodel refused — "
-                                + " AND ".join(problems)))
-                continue
+        if problems:
+            refused.append((concept, "refused — " + " AND ".join(problems)))
+            continue
         try:
             planned[concept] = expected_canonical(concept, path)
         except OutOfOrderPromotion as refusal:
@@ -573,6 +601,12 @@ def main():
               "(reviewed artefact):")
         for concept, requires in claims:
             print(f"        {concept} requires {requires}")
+    if refused:
+        print()
+        print(f"FAIL  {len(refused)} concept(s) refused — promotion is "
+              f"incomplete (see the WARN lines above). The corpus is unchanged "
+              f"for those concepts; resolve each and re-run.")
+        return 1
     return 0
 
 

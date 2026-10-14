@@ -13,17 +13,17 @@
 - **Earliest re-entry stage:** `<stage id and name>`
 - **Change summary:** `<one sentence>`
 
-| Artefact | Path | Touched? | How |
-|---|---|---|---|
-| Use case | `features/UC-XX/stages/01_usecase/output/usecase.md` | yes \| no | <what changes> |
-| Concept(s) | `features/_system/concepts/*.concept.md` (corpus) and/or `features/UC-XX/stages/02_concepts/output/*.concept.md` (proposals) | yes \| no | <which concepts, what changes> |
-| Sync(s) | `features/UC-XX/stages/03_syncs/output/*.sync.md` | yes \| no | <which syncs, what changes> |
-| Contract slices | `features/UC-XX/stages/04_implement/04b_contract/output/*.contract.md` | yes \| no | <which> |
-| Acceptance tests | `features/UC-XX/stages/04_implement/04c_acceptance-tests/output/` | yes \| no | <which scenarios in `acceptance-spec.md` / which native flow tests> |
-| Concept tests + implementation | `features/UC-XX/stages/04_implement/04d_concept-impl/output/` | yes \| no | <which> |
-| Sync tests + implementation | `features/UC-XX/stages/04_implement/04e_sync-impl/output/` | yes \| no | <which> |
-| Production code | `reference-impl/<profile>/...` | yes \| no | <which classes> |
-| Verification trace | `features/UC-XX/stages/05_verify/output/` | yes \| no | <which scenarios> |
+| Artefact | Touched? | How |
+|---|---|---|
+| Use case | `yes` / `no` | <what changes> |
+| Concept(s) | `yes` / `no` | <which concepts, what changes — corpus and/or proposal> |
+| Sync(s) | `yes` / `no` | <which syncs, what changes> |
+| Contract slices | `yes` / `no` | <which> |
+| Flow tests | `yes` / `no` | <which scenarios in `acceptance-spec.md` / which native flow tests> |
+| Concept tests | `yes` / `no` | <which concept unit tests> |
+| Sync tests | `yes` / `no` | <which sync unit tests> |
+| Production code | `yes` / `no` | <which classes> |
+| Verification trace | `yes` / `no` | <which scenarios> |
 
 ## Re-derivation order
 

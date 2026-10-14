@@ -57,6 +57,13 @@ REQUIRED_MATRIX_ROWS = (
     "Sync tests",
     PRODUCTION_CODE_ROW,
 )
+# Accepted spellings per required row (the primary template historically said
+# `Acceptance tests`; both names satisfy the same obligation).
+ROW_ALIASES = {
+    "Flow tests": ("Flow tests", "Acceptance tests"),
+    "Concept tests": ("Concept tests", "Concept tests + implementation"),
+    "Sync tests": ("Sync tests", "Sync tests + implementation"),
+}
 
 
 def run_git_names(args):
@@ -225,7 +232,7 @@ def validate_change_file(path, implementation_touched):
 
     rows = matrix_rows(text)
     for row in REQUIRED_MATRIX_ROWS:
-        if row not in rows:
+        if not any(alias in rows for alias in ROW_ALIASES.get(row, (row,))):
             failures.append((path, f"artefact-impact matrix missing row: {row}"))
     touched_rows = [name for name, row in rows.items() if row["touched"].startswith("yes")]
     if not touched_rows:
@@ -235,27 +242,18 @@ def validate_change_file(path, implementation_touched):
     if not rederivation_steps(text):
         failures.append((path, "missing concrete Re-derivation order steps"))
 
-    # Receipt freshness: if a _changes/ artefact exists, the agent must have
-    # re-run advance.py for the earliest re-entry stage (producing a new
-    # .gate-receipt.json). Without this check, the agent can edit stage
-    # outputs, skip advance.py, and commit — bypassing human gate review.
+    # Re-entry progress is content-based, not mtime-based. The re-entry stage
+    # must be recorded as re-derived in the change's `_changes/<slug>.progress.json`
+    # (written by `advance`). The old rule compared the stage receipt's mtime to
+    # the change file's — non-deterministic across clones/rebase (git does not
+    # track mtimes) and a pure ordering trap.
     reentry_stage = field_value(text, "Earliest re-entry stage")
     if reentry_stage:
-        feature_root = os.path.dirname(os.path.dirname(path))
-        stage = cs.stage_by_id(reentry_stage)
-        if stage:
-            receipt_path = os.path.join(
-                stage.output_dir(feature_root), ".gate-receipt.json")
-            change_mtime = os.path.getmtime(path)
-            if not os.path.isfile(receipt_path):
-                failures.append((path,
-                    f"re-entry stage {reentry_stage} has no .gate-receipt.json "
-                    f"— run advance.py for the re-entered stage to regenerate it"))
-            elif os.path.getmtime(receipt_path) < change_mtime:
-                failures.append((path,
-                    f".gate-receipt.json for stage {reentry_stage} is older "
-                    f"than this change artefact — re-run advance.py for the "
-                    f"re-entered stage"))
+        import reentry_progress
+        if reentry_stage not in reentry_progress.done_stages(path):
+            failures.append((path,
+                f"re-entry stage {reentry_stage} is not recorded as re-derived — "
+                f"run `advance` for it (writes _changes/<slug>.progress.json)"))
 
     return failures
 
