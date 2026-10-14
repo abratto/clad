@@ -254,5 +254,36 @@ class ReentryProgressTests(unittest.TestCase):
             self.assertEqual(readiness.validate_change_file(str(change), False), [])
 
 
+class SystemCorpusMaintenanceRouteTests(unittest.TestCase):
+    """A system-scope corpus edit is governed by the maintenance route (R22),
+    not a per-feature `_changes/` record no feature can own."""
+
+    def test_corpus_artefacts_match_the_system_scope(self):
+        self.assertTrue(readiness.SYSTEM_CORPUS_RE.match(
+            "features/_system/concepts/Foo.concept.md"))
+        self.assertTrue(readiness.SYSTEM_CORPUS_RE.match(
+            "features/_system/concepts/Foo.data-model.md"))
+        self.assertTrue(readiness.SYSTEM_CORPUS_RE.match(
+            "features/_system/concepts/Foo.contract.md"))
+        self.assertFalse(readiness.SYSTEM_CORPUS_RE.match(
+            "features/UC-01-a/stages/02_concepts/output/Foo.concept.md"))
+
+    def test_corpus_only_edit_defers_to_the_maintenance_route(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-01-a"
+            feature.mkdir()
+            changed = Path(temporary) / "changed.txt"
+            changed.write_text(
+                "features/_system/concepts/Foo.concept.md\n", encoding="utf-8")
+
+            result = run("--feature", str(feature),
+                         "--changed-files-file", str(changed))
+
+            # With no active maintenance record the maintenance gate refuses, and
+            # the readiness guard surfaces that route (not a feature record).
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("maintenance route", result.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

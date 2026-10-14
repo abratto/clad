@@ -185,6 +185,22 @@ def main():
                     f"`{match.group('intro').strip()}` disagrees with the spec's "
                     f"`{introducer}`.")
 
+        # 3b. the contract companion lists the spec's ACTIONS, not only its
+        #     provenance header. A canonical contract that lags the spec's
+        #     actions is drift (e.g. `GuidelineRules` gained `publishedLineages`
+        #     and its contract did not).
+        if os.path.isfile(os.path.join(corpus, f"{concept}.contract.md")):
+            spec_actions = {a.name for a in ap.parse_concept(
+                os.path.join(corpus, fname)).actions}
+            contract_actions = {action for (c, action) in
+                                ap.parse_spec_outcomes(corpus).items() if c == concept}
+            missing = sorted(spec_actions - contract_actions)
+            if missing:
+                failures.append(
+                    f"{concept}.contract.md: the canonical spec declares action(s) "
+                    + ", ".join(f"`{m}`" for m in missing)
+                    + " that the contract does not — re-derive the companion.")
+
     if failures:
         print("FAIL  the canonical corpus is stale or self-inconsistent")
         for failure in failures:

@@ -48,6 +48,11 @@ ITERATIVE_PATTERNS = (
     re.compile(r"(^|/)(concepts|syncs)/.*\.(java|kt|scala|ts|js|py)$"),
 )
 IMPLEMENTATION_PATTERN = re.compile(r"(^|/)(concepts|syncs)/.*\.(java|kt|scala|ts|js|py)$")
+# A system-scope corpus artefact (canonical spec + its companions). No feature
+# owns it, so a `<feature>/_changes/` record cannot carry its edit — it is
+# governed by the maintenance route instead (see `main`).
+SYSTEM_CORPUS_RE = re.compile(
+    r"^features/_system/concepts/[^/]+\.(concept|data-model|contract)\.md$")
 REQUIRED_MATRIX_ROWS = (
     "Concept(s)",
     "Sync(s)",
@@ -283,6 +288,27 @@ def main():
               "stage output (their gate is not yet approved); no iterative-change "
               "record required")
         sys.exit(0)
+
+    # A system-scope corpus edit (a canonical concept spec or companion) has no
+    # owning feature — a `<feature>/_changes/` record cannot carry it, which is
+    # exactly the "no longer the current source" case R22 routes through the
+    # maintenance route. Defer to that gate rather than demand a feature record.
+    if touched_scope and all(SYSTEM_CORPUS_RE.match(path) for path in touched_scope):
+        cmd = [sys.executable,
+               os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "verify_maintenance_change_readiness.py"),
+               "--base", args.base]
+        if args.changed_files_file:
+            cmd += ["--changed-files-file", args.changed_files_file]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        if proc.returncode == 0:
+            print("PASS  system-scope corpus edit is governed by the maintenance route")
+            sys.exit(0)
+        for line in (proc.stdout + proc.stderr).strip().splitlines():
+            print(f"  {line}")
+        print("FAIL  a system-scope corpus edit requires an active "
+              "maintenance/<change-name>.md record (R22 / the maintenance route)")
+        sys.exit(1)
 
     change_file, failures = select_change_file(args.feature, args.change_file)
     if change_file:

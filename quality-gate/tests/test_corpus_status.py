@@ -59,11 +59,13 @@ def make_corpus(tmp):
         encoding="utf-8")
     (root / "features" / "_system" / "concept-dependence.md").write_text(
         DEPENDENCE, encoding="utf-8")
-    # UC-00-login holds a stale snapshot of Session (diverged from canonical).
+    # UC-00-login holds a stale snapshot of Session: its STATE diverged from the
+    # canonical (the snapshot still records `sessionAt`; the canonical `token`).
     snap = root / "features" / "UC-00-login" / "stages" / "02_concepts" / "output"
     snap.mkdir(parents=True)
     (snap / "Session.concept.md").write_text(
-        spec("Session", "UC-00-login"), encoding="utf-8")
+        spec("Session", "UC-00-login").replace("sessionAt", "token"),
+        encoding="utf-8")
     return str(root / "features")
 
 
@@ -92,6 +94,26 @@ class CorpusStatusTests(unittest.TestCase):
             result = run("--features-dir", make_corpus(tmp))
             self.assertEqual(result.returncode, 0)
             self.assertIn("stale snapshot(s): UC-00-login", result.stdout)
+
+    def test_a_provenance_only_difference_is_not_stale(self):
+        """A snapshot that differs from the canonical only by its provenance
+        (the `<!-- proposal snapshot … -->` header, the introducer's missing
+        `extended-by`) is not content drift — it must not be flagged."""
+        with tempfile.TemporaryDirectory() as tmp:
+            features = make_corpus(tmp)
+            snap = (Path(features) / "UC-01-a" / "stages" / "02_concepts"
+                    / "output")
+            snap.mkdir(parents=True)
+            (snap / "Session.concept.md").write_text(
+                "<!-- proposal snapshot — derived from templates/concept.md; "
+                "canonical spec: features/_system/concepts/Session.concept.md -->\n\n"
+                + spec("Session", "UC-00-login"), encoding="utf-8")
+
+            result = run("--features-dir", features)
+
+            self.assertIn("stale snapshot(s): UC-00-login\n", result.stdout)
+            self.assertNotIn("UC-01-a", result.stdout.split("stale snapshot")[-1]
+                             .split("\n")[0])
 
     def test_deep_history_flags_remodel_candidate(self):
         with tempfile.TemporaryDirectory() as tmp:

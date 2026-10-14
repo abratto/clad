@@ -15,6 +15,11 @@ MAINTENANCE_PATTERNS = (
     re.compile(r"^reference-impl/[^/]+/(Dockerfile|docker-compose[^/]*\.(yml|yaml))$"),
     re.compile(r"^reference-impl/[^/]+/src/main/resources/.*"),
     re.compile(r"^clad\.properties$"),
+    # The canonical concept corpus is system-scope: no single feature owns it, so
+    # an edit no feature's `_changes/` record can carry (R22's current-source rule
+    # for a feature that is no longer the source) is governed by the maintenance
+    # route. This is the route R22/CONCEPTS.md already names for that case.
+    re.compile(r"^features/_system/concepts/[^/]+\.(concept|data-model|contract)\.md$"),
 )
 
 # `clad.properties` is a platform-config surface for CLAD itself, but it is ALSO
