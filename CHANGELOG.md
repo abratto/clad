@@ -10,6 +10,49 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.24.0] — 2026-10-14
+
+**Iterative changes: one source of truth, and promotion cannot roll the corpus
+back. Plus a Stage 03 backstop correction.**
+
+**Coherence — the `_changes/` record had three disagreeing "active change"
+selectors.**
+- `advance`, the readiness guard, re-entry routing, and `verify_artefacts` share
+  one selector (`verify_stage_sequence.active_change_records`: `**Status:**
+  active`; more than one is an error). `advance` no longer picks the newest
+  `_changes/*.md` by mtime ignoring `Status`.
+- One record schema: `advance.parse_change_file` reads the template's `Touched?`
+  header (as well as the legacy `Changed?`), so the impact matrix is parsed and
+  printed; the templates and the readiness required-rows agree (`Flow tests`,
+  with `Acceptance tests` accepted as an alias).
+- Re-entry progress is content-based: the readiness guard requires the re-entry
+  stage to be recorded in `_changes/<slug>.progress.json` (written by `advance`),
+  not a stage `.gate-receipt.json` mtime.
+- Iterative approvals are content-bound: `approve-iter` records the record's
+  content hash and `advance` requires it to still match.
+
+**Promotion safety.**
+- `promote-concepts` refuses a proposal that drops a canonical line with no
+  authorisation — a `remodel` authorises a drop with `## Migration notes`, an
+  `extend`/`new` only with a `_config/additivity-exceptions.md` entry. This
+  closes the stale-snapshot rollback.
+- Promotion requires Gate-2 **content** freshness, not just the `approved`
+  token; a refused concept exits non-zero; `--concept <Name>` promotes one.
+
+**Stage 03 "repeated action backstop" is per causal path, not per target.**
+The backstop previously flagged any `<Concept>.<action>` appearing more than once
+across the `then` lines — which fired on every feature with more than one
+response branch (the single bootstrap `Web.respond`, R4). It now reads a repeat
+as the same action reachable twice on one path (the cycle
+`verify_sync_cycle_graph.py` detects), not the same action in two mutually
+exclusive branches (01b §"One branch per row", R9).
+
+**Upgrade notes.** The iterative-change tooling is stricter: a record must use
+the `Touched?` matrix header and record re-entry progress via `advance`; an
+iterative approval is bound to the record's content hash; promotion refuses an
+unauthorised canonical drop and a stale Gate-2. A feature with no active
+`_changes/` record is unaffected.
+
 ## [0.23.2] — 2026-10-13
 
 **Workflow: an active iterative change routes to its declared re-entry stage.**
