@@ -274,17 +274,19 @@ python3 ../../../../quality-gate/sync_information.py \
   `01_usecase/output/usecase.md` is satisfied by at least one sync, or
   is a `Web`-only failure path (call this out explicitly in the sync
   pack's notes).
-- **Cross-stage check (back to 01b) — repeated action backstop:** scan
-  the full sync set for any `<Concept>.<action>` that appears as the
-  `then` target of one sync and also as the `when` source of another,
-  where both share the same concept action name. If the same
-  `<Concept>.<action>` appears more than once across the `then` lines
-  of the sync set, this indicates that the chain table contained a
-  repeated action invocation that was not caught at the 01b gate. Stop,
-  do not proceed to 03a, and surface the finding to the human: name the
-  duplicated action and the chain table rows that produced it. The chain
-  table must be corrected and re-approved before the syncs can be
-  re-derived.
+- **Cross-stage check (back to 01b) — repeated action backstop:** a *repeated
+  invocation* is the same `<Concept>.<action>` reachable **twice within one
+  execution path** — an action a `then` invokes that can be invoked again later
+  on the same path (the design-time cycle `verify_sync_cycle_graph.py` detects).
+  It is **not** the same action used as the `then` target of two *mutually
+  exclusive* branches: 01b models each outcome of one invocation as its own row
+  with its own `Then` (`01b_chain-table/CONTEXT.md` §"One branch per row"), and
+  R9 requires distinct outcomes to take distinct branches. In particular there is
+  exactly one bootstrap adapter (R4), so `Web.respond` is the `then` target of
+  every response branch — a request's success and refusal responses are two
+  branches, not a repeat. Stop only when the same action can fire twice on one
+  path; name the action and the chain-table rows that produced it, and correct
+  and re-approve the chain table before the syncs can be re-derived.
 
 ## Gate
 
