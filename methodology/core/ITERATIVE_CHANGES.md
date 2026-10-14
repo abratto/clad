@@ -130,6 +130,15 @@ do not treat historical records as competing matrices.
 
 ## 4. Run the re-entry loop
 
+`advance` drives this loop. While a change is `**Status:** active` it routes to
+the change's `Earliest re-entry stage` and walks the record's `## Re-derivation
+order` — **not** the canonical next-stage chain — recording each re-derived
+stage in a sibling `_changes/<slug>.progress.json`. A populated stage the
+re-entry has not yet re-derived is the retained baseline, not a completed step,
+so stale downstream output cannot pass as freshly derived. A re-derived stage
+whose content changed makes its gate hash stale and requires fresh approval, as
+always; an unchanged one stays approved.
+
 For each stage in the re-derivation order, in order:
 
 1. Open that stage's `CONTEXT.md`.

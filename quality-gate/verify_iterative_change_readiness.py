@@ -150,6 +150,7 @@ def discover_change_files(feature_root):
         os.path.join(changes_dir, filename)
         for filename in os.listdir(changes_dir)
         if filename.endswith((".md", ".json"))
+        and not filename.endswith(".progress.json")
     )
 
 
