@@ -15,7 +15,9 @@ sys.path.insert(0, str(QUALITY_GATE))
 
 import advance  # noqa: E402
 import clad_stages as stages  # noqa: E402
+import reentry_progress  # noqa: E402
 import verify_artefacts  # noqa: E402
+import verify_iterative_change_readiness as readiness  # noqa: E402
 import verify_stage_sequence  # noqa: E402
 
 
@@ -244,6 +246,72 @@ class StageWorkflowTests(unittest.TestCase):
             result = self.sequence_result(feature, "04d")
 
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def _active_reentry(self, feature, stage="01", order=None):
+        changes = feature / "_changes"
+        changes.mkdir(exist_ok=True)
+        body = ("- **Status:** `active`\n"
+                "- **Change category:** `structural`\n"
+                f"- **Earliest re-entry stage:** `{stage}`\n"
+                "- **Why:** routing regression\n")
+        if order:
+            body += ("\n## Re-derivation order\n\n"
+                     + "\n".join(f"{i}. Re-open Stage {s} — step {i}"
+                                 for i, s in enumerate(order, 1))
+                     + "\n")
+        (changes / "reentry.md").write_text(body, encoding="utf-8")
+
+    def test_completed_feature_routes_to_the_reentry_stage(self):
+        # The defect: a fully populated feature with an active re-entry must
+        # route to the declared start, not the last stage with evidence (05).
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self.make_feature(temporary)
+            self.populate_through(feature, "05")
+            self._active_reentry(feature, "01")
+
+            self.assertEqual(
+                advance.determine_stage(str(feature), None).id, "01")
+
+    def test_reentry_walks_the_declared_order(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self.make_feature(temporary)
+            self.populate_through(feature, "05")
+            self._active_reentry(feature, "01a", order=["01a", "02", "03b"])
+
+            self.assertEqual(
+                advance.determine_stage(str(feature), None).id, "01a")
+            reentry_progress.mark_done(str(feature), "01a")
+            self.assertEqual(
+                advance.determine_stage(str(feature), None).id, "02")
+            reentry_progress.mark_done(str(feature), "02")
+            self.assertEqual(
+                advance.determine_stage(str(feature), None).id, "03b")
+
+    def test_reentry_order_prefers_the_declared_order(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self.make_feature(temporary)
+            self.populate_through(feature, "05")
+            self._active_reentry(feature, "04b", order=["04b", "04c"])
+
+            self.assertEqual(
+                reentry_progress.active_progress(str(feature))["order"],
+                ["04b", "04c"])
+
+    def test_progress_file_is_not_a_change_record(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self.make_feature(temporary)
+            changes = feature / "_changes"
+            changes.mkdir(exist_ok=True)
+            (changes / "reentry.md").write_text(
+                "- **Status:** `active`\n"
+                "- **Earliest re-entry stage:** `01`\n", encoding="utf-8")
+            (changes / "reentry.progress.json").write_text(
+                "{}", encoding="utf-8")
+
+            names = [Path(p).name
+                     for p in readiness.discover_change_files(str(feature))]
+            self.assertIn("reentry.md", names)
+            self.assertNotIn("reentry.progress.json", names)
 
 
 if __name__ == "__main__":

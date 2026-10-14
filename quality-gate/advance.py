@@ -59,6 +59,7 @@ import sys
 
 import clad_stages as cs
 import artifact_parsers as ap
+import reentry_progress
 from verify_stage_sequence import (
     compute_output_hash,
     gate_approval_current,
@@ -148,6 +149,12 @@ def determine_stage(feature_root: str, explicit: str | None):
             print(f"FAIL  unknown stage id: {explicit}")
             sys.exit(1)
         return stage
+    # An active iterative change routes to its declared re-entry stage. The
+    # feature is usually already complete, so "last stage with evidence" would
+    # wrongly pick the final stage (e.g. 05) and skip the re-entry entirely.
+    reentry = reentry_progress.current_stage(feature_root)
+    if reentry:
+        return cs.stage_by_id(reentry)
     last = -1
     for i, stage in enumerate(cs.STAGES):
         # stage_has_evidence() accepts documented legacy Stage 04 parent
@@ -636,7 +643,15 @@ def main() -> None:
             print(BAR)
 
     # --- 4. Advance ---------------------------------------------------------
-    nxt = cs.next_stage(stage.id)
+    # While a re-entry is active, walk the change's declared re-derivation order
+    # (recording each stage as re-derived) instead of the canonical chain; an
+    # exhausted order ends the change rather than continuing downstream.
+    if reentry_progress.active_progress(feature_root) is not None:
+        reentry_progress.mark_done(feature_root, stage.id)
+        nxt_id = reentry_progress.next_stage(feature_root)
+        nxt = cs.stage_by_id(nxt_id) if nxt_id else None
+    else:
+        nxt = cs.next_stage(stage.id)
     update_resume(feature_root, stage, nxt)
 
     print(BAR)
