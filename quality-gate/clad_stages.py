@@ -777,6 +777,19 @@ _CHAIN_MAP_NAMES = Check(
     requires=lambda r: [_resp_map(r), CHAIN_DIR(r)],
 )
 
+# `chain_outcomes`: every `When` conjunct's `Concept.action[Completion]` must be
+# declared by that concept's spec (a `reused` concept cannot gain an outcome —
+# propose an `extends` and reopen 01a). Design-time; the alternative is a
+# dead-end discovered at Gate 1 or later.
+_CHAIN_OUTCOMES = Check(
+    name="chain_outcomes",
+    script="verify_chain_outcomes.py",
+    build_args=lambda r: (
+        ["--resp-map", _resp_map(r), "--chain-dir", CHAIN_DIR(r)]
+        + [arg for d in concept_source_dirs(r) for arg in ("--concept-dir", d)]),
+    requires=lambda r: [_resp_map(r), CHAIN_DIR(r)] + _concept_source_requires(r),
+)
+
 # A `new` concept overlapping the canonical catalog must carry a
 # `## Why not existing` justification in the responsibility map
 # (maintenance change `concept-novelty-gate`) — the auditable form of
@@ -838,6 +851,20 @@ _CONCEPT_ADDITIVITY = Check(
     requires=lambda r: [_resp_map(r)] + _concept_source_requires(r),
 )
 
+# `concept_bindings`: `concept-bindings.md` agrees with the 01a map (concept +
+# origin) and its listed actions resolve against the concept's spec. The catalog
+# derives its "Used by" column from this file, so an unreviewed row there records
+# a use that never passed Gate 1.
+_CONCEPT_BINDINGS = Check(
+    name="concept_bindings",
+    script="verify_concept_bindings.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [
+        os.path.join(output_dir(r, "02_concepts"), "concept-bindings.md"),
+        _resp_map(r),
+    ],
+)
+
 _REUSED_CONTRACTS = Check(
     name="reused_concept_contracts",
     script="verify_reused_concept_contracts.py",
@@ -875,14 +902,16 @@ STAGES: List[Stage] = [
             # Gate 1, where God-Object/duplication defects are cheapest to
             # fix (a one-line map edit, not an iterative re-entry into 01a).
             checks=[_CHAIN_GRAMMAR, _DISTINCT_OUTCOMES, _OUTCOME_CASING,
-                    _CHAIN_MAP_NAMES, _CONCEPT_NOVELTY, _CONCEPT_OVERLAP_LINT,
+                    _CHAIN_MAP_NAMES, _CHAIN_OUTCOMES, _CONCEPT_NOVELTY,
+                    _CONCEPT_OVERLAP_LINT,
                     _CHAIN_MANIFEST, _FR_DP_MATRIX]),
         Stage("02", "Concept specs", "02_concepts",
           # `concept_additivity` runs here, at the stage that AUTHORS an extend;
           # waiting until 03b/04b let a non-additive extension be written first
           # (experiment defect D38). It skips for `new` concepts (no canonical).
           checks=[_CONCEPT_STATE_RELATIONAL, _CONCEPT_CRITERIA,
-                  _CONCEPT_PROPOSALS, _CONCEPT_ADDITIVITY, _OUTCOME_CASING,
+                  _CONCEPT_PROPOSALS, _CONCEPT_ADDITIVITY, _CONCEPT_BINDINGS,
+                  _OUTCOME_CASING,
                   _CONCEPT_MANIFEST]),
     Stage("03", "Syncs", "03_syncs", checks=[_SCENARIO_COVERAGE, _SYNC_MATRIX,
           _SYNC_TRANSITION_COVERAGE,

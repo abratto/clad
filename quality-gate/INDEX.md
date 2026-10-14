@@ -24,10 +24,12 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_artefacts.py` | the one-shot artefact pipeline gate (runs the stage checks for every feature + the project-level checks below) | project-level (every `verify_artefacts` run) | gate |
 | `verify_chain_grammar.py` | Verify the lossless, one-branch grammar of Stage 01b chain tables. | stage 01b (Chain table) | gate |
 | `verify_chain_map_names.py` | Stage 01b gate: every chain-table action name resolves against the Stage 01a responsibility map. | stage 01b (Chain table) | gate |
+| `verify_chain_outcomes.py` | Stage 01b gate: every chain-table completion resolves against the concept spec that owns it. | stage 01b (Chain table) | gate |
 | `verify_close_evidence.py` | Stage 05 WARN-only close evidence. | stage 05 (Verify) | gate |
 | `verify_code_refs.py` | backticked code references resolve (advisory) | project-level (every `verify_artefacts` run) | advisory |
 | `verify_collection_coverage.py` | Stage gate: collection responses carry empty + multi-item (and repeated-key) fixtures. | stage 04c (Acceptance tests) | gate |
 | `verify_concept_additivity.py` | Model B additive-only gate for corpus concepts. | stage 02 (Concept specs); stage 03b (Data model); stage 04b (Concept contract) | gate |
+| `verify_concept_bindings.py` | Stage 02 gate: `concept-bindings.md` agrees with the Stage 01a responsibility map and resolves against the concept specs. | stage 02 (Concept specs) | gate |
 | `verify_concept_corpus_current.py` | the canonical corpus is not behind its promotions | project-level (every `verify_artefacts` run) | gate |
 | `verify_concept_criteria.py` | criteria gate: the mechanical subset of the concept criteria. | stage 02 (Concept specs) | gate |
 | `verify_concept_field_assertions.py` | Enforce R14/R16 for Java concept tests. | stage 04d (Concept implementation) | gate |

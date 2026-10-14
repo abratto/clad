@@ -133,6 +133,8 @@ python3 ../../../../quality-gate/verify_concept_proposals.py \
   --feature ../..
 python3 ../../../../quality-gate/verify_concept_additivity.py \
   --feature ../..
+python3 ../../../../quality-gate/verify_concept_bindings.py \
+  --feature ../..
 python3 ../../../../quality-gate/verify_outcome_casing.py \
   --feature ../..
 python3 ../../../../quality-gate/verify_file_manifest.py \
@@ -152,6 +154,11 @@ python3 ../../../../quality-gate/verify_file_manifest.py \
   **additive only** — every canonical state line survives. It runs here, at the
   stage that authors the extension (waiting until 03b/04b let a non-additive
   extension be written first). It skips for `new` concepts (no canonical).
+- **verify_concept_bindings.py:** `concept-bindings.md` agrees with the 01a
+  responsibility map — every row's concept and `Origin` match, and every listed
+  action resolves against the concept's spec. The concepts-catalog derives its
+  "Used by" column from this file, so an unreviewed row records a use that never
+  passed Gate 1.
 - **verify_outcome_casing.py:** every flow-token outcome token in a proposal is
   SCREAMING_SNAKE_CASE (per `FLOW_TOKENS.md` §"Outcome casing"), matching the
   chain table and the eventual contract enum.

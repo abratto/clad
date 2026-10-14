@@ -282,6 +282,32 @@ against the `_promotions/` receipts; and `verify_concept_proposals.py` requires
 the snapshot header on a feature's concept proposals while its Gate 2 is still
 open (approved features are grandfathered).
 
+#### State baselines — why three comparisons exist
+
+"Is this the concept's current state?" is answered against three different
+baselines, each correct for its own question. They are not interchangeable:
+
+- **Additivity** (`verify_concept_additivity.py`) compares the proposal to the
+  **current canonical** `## State`: does this extend drop a line a human already
+  approved?
+- **The data-model manifest** (`artifact_parsers.feature_model_concepts`) compares
+  the proposal to the **predecessor feature's frozen proposal** — did *this*
+  feature change the state? Comparing to the moving canonical would make an
+  earlier, completed feature look changed when a later one moves the corpus.
+- **Promotion** (`promote_concepts.py`) compares the proposal to the **current
+  canonical** again: would promoting it roll the corpus back?
+
+The first and third read the canonical because both guard against going
+backwards; the second reads the predecessor because it is about what *this*
+feature did.
+
+#### The `Origin` suffix names the introducer, not the source
+
+`Origin: extends:UC-XX` / `reused:UC-XX` names the concept's **introducer** (its
+`introduced-by`). It is not the concept's current source: the promotion order —
+which feature may write the canonical entry — is the canonical `extended-by`
+list, and `check_plan_concept_order.py` reads the suffix only for scheduling.
+
 ### Concept criteria
 
 A good concept is:

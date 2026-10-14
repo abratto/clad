@@ -113,6 +113,11 @@ python3 ../../../../quality-gate/verify_outcome_casing.py \
 python3 ../../../../quality-gate/verify_chain_map_names.py \
   --resp-map ../01a_responsibility-map/output/responsibility-map.md \
   --chain-dir output
+python3 ../../../../quality-gate/verify_chain_outcomes.py \
+  --resp-map ../01a_responsibility-map/output/responsibility-map.md \
+  --chain-dir output \
+  --concept-dir ../02_concepts/output \
+  --concept-dir ../../../_system/concepts
 python3 ../../../../quality-gate/verify_concept_novelty.py --feature ../..
 python3 ../../../../quality-gate/lint_concept_overlap.py --feature ../..
 python3 ../../../../quality-gate/verify_file_manifest.py \
@@ -134,6 +139,11 @@ python3 ../../../../quality-gate/verify_concept_matrix.py \
 - **verify_chain_map_names.py:** every chained action name resolves against
   the 01a responsibility map — the chain table is the canonical name source
   downstream, so it must not invent names the map never declared.
+- **verify_chain_outcomes.py:** every `When` conjunct's
+  `Concept.action[Completion]` is declared by that concept's spec (the feature's
+  Stage-02 proposal shadows the canonical corpus). A `reused` concept cannot
+  gain an outcome — if the completion is missing, propose an `extends` and
+  reopen Stage 01a rather than inventing a completion the concept never emits.
 - **verify_concept_novelty.py:** a `new` concept that overlaps an existing
   catalog concept (name + action tokens, threshold
   `concept.novelty.threshold`) must justify the non-fit per near-match in
