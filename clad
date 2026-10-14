@@ -214,6 +214,12 @@ cmd_matrix() {
         "$@"
 }
 
+cmd_consent() {
+    # Scaffold a remodel consent receipt (R22). It writes the corpus, so the
+    # feature is explicit (like promote-concepts), not auto-discovered.
+    python3 "$QG/create_consent.py" "$@"
+}
+
 cmd_rename_sync() {
     local from="${1:-}" to="${2:-}"
     if [ -z "$from" ] || [ -z "$to" ]; then
@@ -301,6 +307,8 @@ CLAD CLI — lightweight wrapper for quality-gate scripts.
   ./clad promote-concepts <feature>  Promote approved NEW/EXTEND concept
                                        proposals into the canonical corpus
                                        (after Gate 2 approval)
+  ./clad consent --feature <path> --concept <Name> --consenting <UC-XX>
+                                       Scaffold a remodel consent receipt (R22)
   ./clad verify                    Run verify_artefacts.py (artefact gate)
   ./clad corpus-status             Read-only concept-corpus health report
                                    (history, stale snapshots, dependence
@@ -337,6 +345,7 @@ case "${1:-help}" in
     approve-iter) shift; cmd_approve_iter "$@";;
     approve-maintenance) shift; cmd_approve_maintenance "$@";;
     promote-concepts) shift; cmd_promote_concepts "$@";;
+    consent)     shift; cmd_consent "$@";;
     rename-sync) shift; cmd_rename_sync "$@";;
     verify)      shift; cmd_verify "$@";;
     next)        cmd_next;;

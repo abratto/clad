@@ -205,9 +205,10 @@ class RemodelPromotionTests(unittest.TestCase):
             self.assertIn("expiresAt", promoted)
             state_block = promoted.split("## State")[1].split("##")[0]
             self.assertNotIn("createdAt", state_block)
-            # The migration notes ride along as the permanent audit trail of
-            # the non-additive change.
-            self.assertIn("## Migration notes", promoted)
+            # The migration notes are the PROPOSAL's review evidence (R22) and
+            # are dropped from the canonical entry, which carries current truth
+            # rather than change history.
+            self.assertNotIn("## Migration notes", promoted)
             # History is append-only: UC-02-x joins as extender.
             self.assertIn("extended-by UC-02-x", promoted)
 

@@ -240,6 +240,11 @@ def stamp_provenance(text: str, slug: str, canonical_text: str = "") -> str:
 
 LEADING_COMMENT_RE = re.compile(r"\A<!--.*?-->\n", re.DOTALL)
 
+# A `## Migration notes` section is the remodel proposal's review evidence; it is
+# dropped from the canonical entry (which carries current truth, not history).
+MIGRATION_NOTES_RE = re.compile(
+    r"^##\s+Migration notes\s*$(.*?)(?=^##\s|\Z)", re.MULTILINE | re.DOTALL)
+
 
 def canonical_companion(text: str, concept: str, introducer: str,
                         promoter: str) -> str:
@@ -266,7 +271,13 @@ def canonical_spec(text: str) -> str:
     `introduced-by` / `extended-by` provenance, so the header is dropped rather
     than copied into the corpus (which would leave the canonical entry claiming
     to be a proposal).
+
+    A `## Migration notes` section is the *proposal's* review evidence (R22) — the
+    retired lines it lists are the change history, not current truth — so it is
+    dropped from the canonical entry too. Leaving it in made the canonical carry
+    a change history a later extender had to step around.
     """
+    text = MIGRATION_NOTES_RE.sub("", text)
     if LEADING_COMMENT_RE.match(text):
         return LEADING_COMMENT_RE.sub("", text, count=1).lstrip("\n")
     return text
