@@ -10,6 +10,31 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.26.0] — 2026-10-14
+
+**Governance, part 2: chain completions resolve at Gate 1, bindings are
+validated, and the remodel path gets scaffolding.**
+
+- **Stage 01b — `verify_chain_outcomes.py`.** Every `When` conjunct's
+  `Concept.action[Completion]` must be declared by that concept's spec. A
+  `reused` concept that lacks the completion fails with *"propose an `extends`
+  and reopen Stage 01a"* — the dead-end a reuse-with-a-new-outcome produced is
+  now caught at Gate 1.
+- **Stage 02 — `verify_concept_bindings.py`.** `concept-bindings.md` agrees with
+  the 01a map (concept + `Origin`) and its actions resolve against the spec (the
+  catalog's "Used by" derives from this file).
+- **Remodel scaffolding.** `## Migration notes` is dropped from the promoted
+  canonical entry (it is the proposal's review evidence, not current truth); the
+  feature skeleton ships `_config/additivity-exceptions.md`; `./clad consent`
+  scaffolds a remodel consent receipt.
+- **Docs.** `CONCEPTS.md` documents the three state baselines and the `Origin`
+  suffix semantics.
+
+**Upgrade notes.** Two new design-time checks run at 01b/02. A chain row that
+triggers on a completion the concept does not declare now fails at Gate 1; a
+binding row that disagrees with the 01a map now fails at Stage 02. The canonical
+entry no longer carries a `## Migration notes` section after promotion.
+
 ## [0.25.0] — 2026-10-14
 
 **Governance: a system-scope corpus edit routes through maintenance, and three
