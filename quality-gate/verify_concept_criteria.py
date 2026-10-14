@@ -175,12 +175,26 @@ def check_one(path, others):
             "no `## Operational principle` witness trace (a non-empty fenced "
             "`after`/`then` block) — the end-to-end test of the concept")
 
-    # 2. No external types: a state/action type named after another concept.
-    leak_section = ""
-    for section in (STATE_SECTION.search(text), ACTIONS_SECTION.search(text)):
-        if section:
-            leak_section += section.group(1)
-    used_types = set(CAPITALISED.findall(leak_section))
+    # 2. No external types: a state/action TYPE named after another concept.
+    #    Only type POSITIONS count — a state relation's subject and value types,
+    #    and an action's parameter and output types — not every capitalised word
+    #    in the section (which flagged any coincidental concept name mentioned in
+    #    prose, e.g. `Profiling` naming `GuidelineRules` in a note).
+    used_types: set = set()
+    state_section = STATE_SECTION.search(text)
+    if state_section:
+        for line in state_section.group(1).splitlines():
+            m = re.match(r"\s*\w+\s*:\s*(\w+)\s*->\s*(\w+)", line)
+            if m:
+                used_types.update((m.group(1), m.group(2)))
+    actions_section = ACTIONS_SECTION.search(text)
+    if actions_section:
+        for params, outputs in re.findall(
+                r"\[([^\]]*)\]\s*=>\s*\[([^\]]*)\]", actions_section.group(1)):
+            for group in (params, outputs):
+                for part in group.split(";"):
+                    if ":" in part:
+                        used_types.add(part.split(":", 1)[1].strip())
     leaked = sorted(used_types & (others - {name}))
     if leaked:
         failures.append(

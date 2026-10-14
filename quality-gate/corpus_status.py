@@ -49,18 +49,39 @@ def concept_history(text):
     return introducer, extenders
 
 
+_CONTENT_SECTIONS = (
+    re.compile(r"^##\s+State\s*$(.*?)(?=^##\s|\Z)", re.MULTILINE | re.DOTALL),
+    re.compile(r"^##\s+Actions\s*$(.*?)(?=^##\s|\Z)", re.MULTILINE | re.DOTALL),
+)
+
+
+def _content(text):
+    """A concept spec's reviewable content — its `## State` and `## Actions`
+    blocks. The leading provenance header and the `introduced-by` / `extended-by`
+    lines differ between a snapshot and the canonical by design, so comparing
+    the whole file flags every concept; only a change in the state or actions is
+    real drift."""
+    parts = []
+    for regex in _CONTENT_SECTIONS:
+        match = regex.search(text)
+        if match:
+            parts.append(re.sub(r"\s+", " ", match.group(1)).strip())
+    return "\n".join(parts)
+
+
 def stale_snapshots(features_dir, concept, canonical_text):
     """Features whose Stage-02 copy of the concept differs from canonical."""
     stale = []
     if not os.path.isdir(features_dir):
         return stale
+    canonical_content = _content(canonical_text)
     for name in sorted(os.listdir(features_dir)):
         path = os.path.join(features_dir, name, "stages", "02_concepts",
                             "output", concept + ".concept.md")
         if not name.startswith("UC-") or not os.path.isfile(path):
             continue
         with open(path, encoding="utf-8", errors="replace") as handle:
-            if handle.read() != canonical_text:
+            if _content(handle.read()) != canonical_content:
                 stale.append(name)
     return stale
 

@@ -130,6 +130,27 @@ class CorpusCurrentTests(unittest.TestCase):
                          "--features-dir", str(features))
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_a_contract_missing_a_spec_action_is_flagged(self):
+        """The contract companion must list the spec's actions, not only its
+        provenance header (C3: `GuidelineRules` gained `publishedLineages` and
+        its canonical contract did not)."""
+        with tempfile.TemporaryDirectory() as tmp:
+            features = self.build(tmp, history=["introduced-by UC-01-a",
+                                                "extended-by UC-02-b"])
+            spec_path = (features / "_system" / "concepts"
+                         / "MemberEnrolment.concept.md")
+            spec_path.write_text(
+                spec_path.read_text(encoding="utf-8")
+                + "\n## Actions\n\n```\n"
+                + "enrol [ memberId: MemberId ] => [ ok ]\n```\n",
+                encoding="utf-8")
+
+            result = run(str(QG / "verify_concept_corpus_current.py"),
+                         "--features-dir", str(features))
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("re-derive the companion", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
