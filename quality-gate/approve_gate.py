@@ -88,23 +88,35 @@ def main():
         content = f.read()
 
     if args.iterative:
-        # Record the iterative change as reviewed
-        iterative_line = f"- **Iterative change `{args.iterative}`:** `approved`"
-        if iterative_line in content:
-            print(f"PASS  iterative change `{args.iterative}` already approved")
+        # Record the iterative change as reviewed, bound to the change record's
+        # content (mirrors the gate hashes): editing the record after approval
+        # makes the approval stale and `advance` re-presents the review.
+        from verify_stage_sequence import change_hash
+        changes_path = os.path.join(os.path.abspath(args.feature), "_changes",
+                                    args.iterative + ".md")
+        if not os.path.isfile(changes_path):
+            print(f"FAIL  change record not found: {changes_path}")
+            sys.exit(1)
+        digest = change_hash(changes_path)
+        approval_line = f"- **Iterative change `{args.iterative}`:** `approved`"
+        hash_line = (f"- **Iterative change `{args.iterative}` content hash:** "
+                     f"`{digest}`")
+        # Drop any prior approval/hash lines for this change, then re-insert.
+        kept = [line for line in content.splitlines()
+                if line != approval_line
+                and not line.startswith(
+                    f"- **Iterative change `{args.iterative}` content hash:**")]
+        content = "\n".join(kept) + "\n"
+        block = approval_line + "\n" + hash_line + "\n"
+        m = re.search(r"(- \*\*Gate \d)", content)
+        if m:
+            content = content[:m.start()] + block + content[m.start():]
         else:
-            gate_pattern = r"(- \*\*Gate \d)"
-            m = re.search(gate_pattern, content)
-            if m:
-                content = (content[:m.start()]
-                           + iterative_line + "\n"
-                           + content[m.start():])
-            else:
-                content += "\n" + iterative_line + "\n"
-            with open(resume_path, "w") as f:
-                f.write(content)
-            print(f"PASS  iterative change `{args.iterative}` approved "
-                  f"in {resume_path}")
+            content += "\n" + block
+        with open(resume_path, "w") as f:
+            f.write(content)
+        print(f"PASS  iterative change `{args.iterative}` approved "
+              f"(content hash `{digest[:12]}…`) in {resume_path}")
         print()
         print("  The agent may now commit the changed files + _changes/ artefact.")
     else:

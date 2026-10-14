@@ -117,8 +117,11 @@ def _term_covered(term: str, noted: Set[str]) -> bool:
 
 def unauthorised_drops(feature_root: str, corpus: str,
                        concept: str) -> Tuple[List[str], List[str]]:
-    """(state drops, contract-term drops) NOT covered by the proposal's
-    migration notes."""
+    """A REMODEL's drops NOT covered by its `## Migration notes`.
+
+    Migration notes rescue a `remodel` only; an `extends` uses
+    `unauthorised_drops_additive` (R22: an extend is never rescued by remodel
+    mechanics)."""
     proposal = os.path.join(feature_root, "stages", "02_concepts", "output",
                             concept + ".concept.md")
     noted: Set[str] = set()
@@ -132,6 +135,25 @@ def unauthorised_drops(feature_root: str, corpus: str,
              vca.dropped_contract_terms(feature_root, corpus, concept)
              if term != "<entire contract missing>"
              and not _term_covered(term, noted)]
+    if "<entire contract missing>" in vca.dropped_contract_terms(
+            feature_root, corpus, concept):
+        terms.append("<entire contract missing>")
+    return state, terms
+
+
+def unauthorised_drops_additive(feature_root: str, corpus: str,
+                                concept: str) -> Tuple[List[str], List[str]]:
+    """An EXTEND/NEW proposal's drops, authorised only by the feature's
+    `_config/additivity-exceptions.md`. Migration notes do NOT rescue an extend
+    (R22) — a drop an extend needs is a `remodel`, not an exception."""
+    allowed: Set[str] = set(vca.load_exceptions(feature_root))
+    state = [line for line in
+             vca.dropped_state_lines(feature_root, corpus, concept)
+             if line not in allowed]
+    terms = [term for term in
+             vca.dropped_contract_terms(feature_root, corpus, concept)
+             if term != "<entire contract missing>"
+             and not _term_covered(term, allowed)]
     if "<entire contract missing>" in vca.dropped_contract_terms(
             feature_root, corpus, concept):
         terms.append("<entire contract missing>")

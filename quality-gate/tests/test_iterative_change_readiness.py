@@ -160,5 +160,99 @@ class NewStageWorkExemptionTests(unittest.TestCase):
             self.assertIn("no active", result.stdout)
 
 
+class ActiveChangeSelectorTests(unittest.TestCase):
+    """One selector for "the active change": `Status: active`, not newest mtime."""
+
+    def _record(self, feature, name, status, stage="02"):
+        changes = feature / "_changes"
+        changes.mkdir(parents=True, exist_ok=True)
+        (changes / name).write_text(
+            f"- **Status:** `{status}`\n"
+            f"- **Earliest re-entry stage:** `{stage}`\n", encoding="utf-8")
+
+    def test_selects_by_status_not_mtime(self):
+        import verify_stage_sequence as vss
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-02-x"
+            feature.mkdir()
+            self._record(feature, "closed.md", "closed", "03b")
+            self._record(feature, "active.md", "active", "02")
+
+            records = vss.active_change_records(str(feature))
+
+            self.assertEqual([s for s, _ in records], ["02"])
+            self.assertEqual(vss.active_reentry_change(str(feature))[0], "02")
+
+    def test_two_active_records_are_visible_and_the_single_selector_is_none(self):
+        import verify_stage_sequence as vss
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-02-x"
+            feature.mkdir()
+            self._record(feature, "a.md", "active", "02")
+            self._record(feature, "b.md", "active", "03b")
+
+            self.assertEqual(len(vss.active_change_records(str(feature))), 2)
+            self.assertIsNone(vss.active_reentry_change(str(feature)))
+
+
+class ReentryProgressTests(unittest.TestCase):
+    """The re-entry stage must be recorded as re-derived (content), not by a
+    stage receipt's mtime (non-deterministic across clones/rebase)."""
+
+    def _record(self, feature, done):
+        import json
+        changes = feature / "_changes"
+        changes.mkdir(parents=True, exist_ok=True)
+        change = changes / "reentry.md"
+        change.write_text(
+            "# `reentry` — iterative change\n\n"
+            "- **Change category:** `structural`\n"
+            "- **Status:** `active`\n"
+            "- **Earliest re-entry stage:** `02`\n"
+            "- **Why:** x\n\n"
+            "This change is governed by `methodology/core/ITERATIVE_CHANGES.md`.\n\n"
+            "## Artefact-impact matrix\n\n"
+            "| Artefact | Touched? | How |\n|---|---|---|\n"
+            "| Concept(s) | `yes` | x |\n"
+            "| Sync(s) | `no` | x |\n"
+            "| Contract slices | `no` | x |\n"
+            "| Flow tests | `no` | x |\n"
+            "| Concept tests | `no` | x |\n"
+            "| Sync tests | `no` | x |\n"
+            "| Production code | `no` | x |\n\n"
+            "## Re-derivation order\n\n1. Re-open Stage 02 — x\n",
+            encoding="utf-8")
+        (changes / "reentry.progress.json").write_text(
+            json.dumps({"done": done}), encoding="utf-8")
+        return change
+
+    def test_reentry_stage_must_be_recorded_as_re_derived(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-02-x"
+            feature.mkdir()
+            change = self._record(feature, done=[])
+            failures = readiness.validate_change_file(str(change), False)
+            self.assertTrue(
+                any("not recorded as re-derived" in message
+                    for _, message in failures), failures)
+
+    def test_reentry_stage_recorded_passes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-02-x"
+            feature.mkdir()
+            change = self._record(feature, done=["02"])
+            self.assertEqual(readiness.validate_change_file(str(change), False), [])
+
+    def test_legacy_acceptance_tests_row_is_accepted(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-02-x"
+            feature.mkdir()
+            change = self._record(feature, done=["02"])
+            text = change.read_text(encoding="utf-8").replace("Flow tests",
+                                                              "Acceptance tests")
+            change.write_text(text, encoding="utf-8")
+            self.assertEqual(readiness.validate_change_file(str(change), False), [])
+
+
 if __name__ == "__main__":
     unittest.main()

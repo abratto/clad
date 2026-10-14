@@ -130,6 +130,13 @@ def next_stage(feature_root: str) -> Optional[str]:
     return None
 
 
+def done_stages(change_path: str) -> List[str]:
+    """The stages a specific change record has re-derived (its progress file).
+
+    Content-based (git-trackable), unlike a stage `.gate-receipt.json` mtime."""
+    return list(_read(change_path).get("done", []))
+
+
 def mark_done(feature_root: str, stage_id: str) -> None:
     """Record that the re-entry has re-derived `stage_id`."""
     progress = active_progress(feature_root)

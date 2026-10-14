@@ -573,3 +573,49 @@ class ConceptStateRelationalTests(unittest.TestCase):
             self._write(d, "Clock.concept.md", "*None.* Clock is stateless.\n")
             r = self._run(d)
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+
+class IterativeApprovalBindingTests(unittest.TestCase):
+    """An iterative approval is bound to the change record's content."""
+
+    def test_iterative_approval_is_content_bound(self):
+        import verify_stage_sequence as vss
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-01-workflow"
+            (feature / "_changes").mkdir(parents=True)
+            change = feature / "_changes" / "c.md"
+            change.write_text("- **Status:** `active`\n", encoding="utf-8")
+            (feature / "RESUME.md").write_text(
+                "# RESUME\n\n- **Gate 1 (Requirements):** `pending`\n",
+                encoding="utf-8")
+
+            r = subprocess.run(
+                [sys.executable, str(QUALITY_GATE / "approve_gate.py"),
+                 "--feature", str(feature), "--iterative", "c"],
+                cwd=REPO_ROOT, capture_output=True, text=True)
+
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            resume = (feature / "RESUME.md").read_text(encoding="utf-8")
+            self.assertIn("Iterative change `c` content hash:", resume)
+            recorded = vss.change_hash(str(change))
+            change.write_text("- **Status:** `active`\n- **Why:** x\n",
+                              encoding="utf-8")
+            self.assertNotEqual(vss.change_hash(str(change)), recorded,
+                                "editing the record stales the approval")
+
+
+class ChangeMatrixSchemaTests(unittest.TestCase):
+    """The record's matrix header is `Touched?` (the template's spelling)."""
+
+    def test_parse_change_file_reads_the_touched_header(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            change = Path(temporary) / "c.md"
+            change.write_text(
+                "- **Change category:** `behavioural`\n\n"
+                "| Artefact | Touched? | How |\n|---|---|---|\n"
+                "| Concept(s) | `yes` | added a field |\n"
+                "| Sync(s) | `no` | - |\n", encoding="utf-8")
+
+            info = advance.parse_change_file(str(change))
+
+            self.assertEqual(info["impact"], {"Concept(s)": "added a field"})

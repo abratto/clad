@@ -61,6 +61,8 @@ import clad_stages as cs
 import artifact_parsers as ap
 import reentry_progress
 from verify_stage_sequence import (
+    active_change_records,
+    change_hash,
     compute_output_hash,
     gate_approval_current,
     gate_status,
@@ -192,14 +194,17 @@ def parse_change_file(path: str) -> dict:
         m = re.search(rf"\*\*{field}:\*\*\s*`?([^`\n]+)`?", text)
         if m:
             result[field.lower().replace(" ", "_")] = m.group(1).strip().strip("`")
-    # Extract impact matrix rows
+    # Extract impact matrix rows. The record's matrix header is
+    # `| Artefact | Touched? | How |` (the template's spelling); accept the
+    # legacy `Changed?` too. (This used to look for `Changed?` only, so the
+    # matrix was silently dropped and the review step below printed nothing.)
     rows = {}
     in_table = False
     for line in text.splitlines():
         if line.strip().startswith("|") and not line.strip().startswith("|---"):
             cells = [c.strip().strip("`") for c in line.strip().strip("|").split("|")]
             if len(cells) >= 3:
-                if cells[0] == "Artefact" and cells[1] == "Changed?":
+                if cells[0] == "Artefact" and cells[1] in ("Touched?", "Changed?"):
                     in_table = True
                     continue
                 if in_table and cells[1].lower() == "yes":
@@ -427,12 +432,27 @@ def main() -> None:
         print(BAR)
 
     # --- 0. Iterative change detection ---------------------------------------
-    # When _changes/ files exist, present a git diff review before any
-    # stage-specific logic. This catches iterative changes regardless of
-    # which stage the agent ran advance.py from.
-    change_files = discover_iterative_changes(feature_root)
-    if change_files:
-        latest_change = change_files[0]
+    # An ACTIVE `_changes/` record (`**Status:** active`) is the one change in
+    # flight; a closed record must not participate, and two active records are
+    # ambiguous. This is the same selector the readiness guard and re-entry
+    # routing use, so all three agree (the old "newest .md by mtime, ignoring
+    # Status" rule let a closed record be re-presented or skipped the review).
+    active_changes = active_change_records(feature_root)
+    if len(active_changes) > 1:
+        print(BAR)
+        print("  ADVANCE BLOCKED — multiple active iterative changes")
+        print(f"  Feature: {feature_name}")
+        print(BAR)
+        for _sid, path in active_changes:
+            print(f"    {cs.relpath(path, feature_root)}")
+        print()
+        print(AGENT_INSTRUCTION)
+        print("  Mark all but the in-flight change `**Status:** closed` (or")
+        print("  `superseded`) and re-run this command.")
+        print(BAR)
+        sys.exit(1)
+    if active_changes:
+        _reentry_stage, latest_change = active_changes[0]
         change_info = parse_change_file(latest_change)
         change_name = os.path.splitext(os.path.basename(latest_change))[0]
 
@@ -442,10 +462,14 @@ def main() -> None:
             with open(resume_iter_path) as fh:
                 resume_iter_text = fh.read()
 
-        # Check if this iterative change has already been approved
-        iterative_approved = re.search(
-            rf"iterative.*{re.escape(change_name)}.*approved",
-            resume_iter_text, re.IGNORECASE)
+        # Approved AND still current: the recorded content hash must match the
+        # change record (editing the record after approval stales it, exactly
+        # like a gate hash). The old loose regex kept a stale approval alive.
+        recorded = re.search(
+            rf"^- \*\*Iterative change `{re.escape(change_name)}` content hash:\*\* "
+            rf"`([0-9a-f]+)`", resume_iter_text, re.MULTILINE)
+        iterative_approved = (recorded is not None
+                              and recorded.group(1) == change_hash(latest_change))
 
         if not iterative_approved:
             # Run sequence guard as a pre-flight

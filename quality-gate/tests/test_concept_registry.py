@@ -83,9 +83,13 @@ def make_feature(tmp, rows, specs=(), gate2=None, bindings=None,
         (cdir / "concept-bindings.md").write_text(bindings, encoding="utf-8")
 
     if gate2 is not None:
+        # Promotion checks Gate-2 CONTENT freshness, so the fixture records the
+        # real hash of the gate's stage outputs (not a placeholder).
+        from verify_stage_sequence import compute_gate_hash
+        digest = gate2_hash or compute_gate_hash(str(feature), 2)
         (feature / "RESUME.md").write_text(
             f"# RESUME\n\n- **Gate 2 (Architecture):** `{gate2}`\n"
-            f"- **Gate 2 content hash:** `{gate2_hash or 'a' * 64}`\n",
+            f"- **Gate 2 content hash:** `{digest}`\n",
             encoding="utf-8")
     return feature
 
@@ -93,6 +97,21 @@ def make_feature(tmp, rows, specs=(), gate2=None, bindings=None,
 def run(script, *args):
     return subprocess.run([sys.executable, str(script), *args],
                           capture_output=True, text=True)
+
+
+def rebaseline(feature, gate=2):
+    """Re-record a gate's content hash after a test populates its stages.
+
+    Promotion checks Gate-2 content freshness, so a test that writes a gate
+    stage (e.g. 03b) after `make_feature` must re-baseline the hash."""
+    import re
+    from verify_stage_sequence import compute_gate_hash
+    resume = Path(feature) / "RESUME.md"
+    text = resume.read_text(encoding="utf-8")
+    text = re.sub(rf"^- \*\*Gate {gate} content hash:\*\* `[0-9a-f]+`",
+                  f"- **Gate {gate} content hash:** `{compute_gate_hash(str(feature), gate)}`",
+                  text, flags=re.MULTILINE)
+    resume.write_text(text, encoding="utf-8")
 
 
 class ResolverTests(unittest.TestCase):
@@ -220,6 +239,7 @@ class PromotionTests(unittest.TestCase):
             model_dir.mkdir(parents=True)
             (model_dir / "Foo.data-model.md").write_text("# Foo model\n",
                                                          encoding="utf-8")
+            rebaseline(feature)  # 03b is a Gate-2 stage; re-baseline the hash
 
             r = run(PROMOTE, "--feature", str(feature))
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
@@ -301,7 +321,7 @@ class PromotionTests(unittest.TestCase):
 
             extender = make_feature(tmp, [("Foo", "extends:UC-01-a")],
                                     specs=("Foo",), gate2="approved",
-                                    name="UC-02-b", gate2_hash="b" * 64)
+                                    name="UC-02-b")
             second = run(PROMOTE, "--feature", str(extender))
             self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
 
@@ -310,7 +330,7 @@ class PromotionTests(unittest.TestCase):
             self.assertIn("extended-by UC-02-b", canonical.read_text(encoding="utf-8"))
 
             again = run(PROMOTE, "--feature", str(intro))
-            self.assertEqual(again.returncode, 0, again.stdout + again.stderr)
+            self.assertEqual(again.returncode, 1, again.stdout + again.stderr)
             self.assertIn("WARN  skipped `Foo`", again.stdout)
             # and the refusal left the newer canonical entry alone
             self.assertIn("extended-by UC-02-b", canonical.read_text(encoding="utf-8"))
@@ -322,7 +342,7 @@ class PromotionTests(unittest.TestCase):
             run(PROMOTE, "--feature", str(intro))
             extender = make_feature(tmp, [("Foo", "extends:UC-01-a")],
                                     specs=("Foo",), gate2="approved",
-                                    name="UC-02-b", gate2_hash="b" * 64)
+                                    name="UC-02-b")
             run(PROMOTE, "--feature", str(extender))
             again = run(PROMOTE, "--feature", str(extender))
             self.assertEqual(again.returncode, 0, again.stdout + again.stderr)
@@ -488,6 +508,7 @@ class PromotionAtomicityTests(unittest.TestCase):
             model_dir.mkdir(parents=True)
             (model_dir / "Foo.data-model.md").write_text("# Foo model\n",
                                                          encoding="utf-8")
+            rebaseline(feature)  # 03b is a Gate-2 stage; re-baseline the hash
             r = run(PROMOTE, "--feature", str(feature))
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             base = Path(tmp) / "features" / "_system"
