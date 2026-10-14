@@ -10,6 +10,30 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.23.2] — 2026-10-13
+
+**Workflow: an active iterative change routes to its declared re-entry stage.**
+
+- `advance.determine_stage` returned the last stage with evidence and never
+  consulted `_changes/`, so an iterative change on a **completed** feature
+  resolved to the final stage (e.g. 05): the re-entry never ran and `advance`
+  reported the feature complete. It now consults the active change record and
+  routes to its `Earliest re-entry stage`, walking the record's
+  `## Re-derivation order` (not the canonical next-stage chain) and ending the
+  change when the order is exhausted.
+- Progress is tracked in a change-scoped `_changes/<slug>.progress.json` (new
+  `quality-gate/reentry_progress.py`), not the stage `.gate-receipt.json`
+  (rewritten on every advance, and an asserted contract). A populated stage the
+  re-entry has not re-derived is the retained baseline, not a completed step, so
+  stale downstream output cannot pass as freshly derived; a re-derived stage
+  whose content changed still stales its gate hash and requires fresh approval.
+- `verify_iterative_change_readiness` excludes the progress file from its record
+  scan. `methodology/core/ITERATIVE_CHANGES.md` §4 documents the routing.
+
+**Upgrade notes.** Backward-compatible. A feature with no active `_changes/`
+record behaves exactly as before; only an active iterative change changes
+routing.
+
 ## [0.23.1] — 2026-10-13
 
 **Quality gate: a feature's 03b expectation is stable, not canonical-bound.**
