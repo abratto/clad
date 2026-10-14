@@ -10,6 +10,30 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.25.0] — 2026-10-14
+
+**Governance: a system-scope corpus edit routes through maintenance, and three
+checks stop producing false signals.**
+
+- **System-scope corpus edits.** `features/_system/concepts/*.{concept,data-model,contract}.md`
+  now belongs to the maintenance route (`MAINTENANCE_PATTERNS`), and
+  `verify_iterative_change_readiness` defers to the maintenance gate for a
+  corpus-only diff instead of demanding a `<feature>/_changes/` record no
+  feature can own — the R22 "no longer the current source" case.
+- **`verify_concept_criteria` reads type positions, not capitalised words.** A
+  concept name mentioned in a section's prose is no longer an "external type"
+  false positive.
+- **`corpus-status` compares snapshot bodies.** It compares a snapshot's
+  `## State` + `## Actions` to the canonical, not the whole file — the proposal
+  header and `extended-by` provenance differ by design.
+- **`verify_concept_corpus_current` checks companion actions.** A canonical
+  contract that lags the spec's actions (not just its header) is now drift.
+
+**Upgrade notes.** A corpus-only diff (a canonical concept spec or companion)
+now requires an active `maintenance/<change-name>.md` record rather than a
+feature `_changes/` record. A feature whose own Stage-02 proposal shadows a
+canonical concept is unaffected.
+
 ## [0.24.0] — 2026-10-14
 
 **Iterative changes: one source of truth, and promotion cannot roll the corpus
