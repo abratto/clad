@@ -10,6 +10,30 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.28.0] — 2026-10-15
+
+**Stage-loop ergonomics, the tail: one-command regen, a feature bootstrap, a
+RESUME guard, and a cost note.**
+
+- **`./clad regen`** re-runs the side-generators idempotently — the gate index,
+  the shared-trigger view, the concepts catalog, and each feature's 03a review
+  views. `advance` does not auto-run these, so forgetting one failed the global
+  gate far from the omission.
+- **`./clad new-feature <slug>`** (new `create_feature.py`) bootstraps
+  `features/<slug>` from the skeleton and fills
+  `_config/package-and-layout.md` from `clad.properties`, replacing the shipped
+  `TBD` layout that blocked Stage 04a.
+- **RESUME guard.** `verify_governance_hygiene` warns when a gate is approved
+  but its `## Gate snapshot` content-hash line is missing or malformed (a
+  hand-edit or a legacy approval) — those lines are written by
+  `approve_gate.py`.
+- **Cost note.** `QUALITY_GATE.md` documents the loop's cost and the two
+  levers: the artefact gate is separable from the heavy build (`./clad verify
+  --feature <feature>`), and the generated side-artefacts are one command.
+
+**Upgrade notes.** Backward-compatible; two new `./clad` subcommands and one
+advisory warning.
+
 ## [0.27.0] — 2026-10-14
 
 **Stage-loop ergonomics: refresh stale contracts, tell skip from unverified,
