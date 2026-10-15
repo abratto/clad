@@ -32,6 +32,10 @@ import sys
 
 ACTIVE = re.compile(r"^-\s*\*\*Status:\*\*\s*`active`", re.MULTILINE)
 FEATURE_COMPLETE = re.compile(r"feature complete", re.IGNORECASE)
+GATE_APPROVED = re.compile(
+    r"^-\s*\*\*Gate (\d) \([^)]*\):\*\*\s*`(approved|auto-approved)`", re.MULTILINE)
+GATE_HASH = re.compile(
+    r"^-\s*\*\*Gate (\d) content hash:\*\*\s*`[0-9a-f]{64}`", re.MULTILINE)
 
 
 def is_active(path):
@@ -65,6 +69,24 @@ def main() -> int:
     if os.path.isdir(args.features_dir):
         for feature in sorted(os.listdir(args.features_dir)):
             root = os.path.join(args.features_dir, feature)
+
+            # D5: the `## Gate snapshot` content-hash lines are machine-owned
+            # (written by `approve_gate.py`). An approved gate with no well-formed
+            # hash is a hand-edit (or a legacy approval) — the sequence guard will
+            # block later, so flag it here with the fix.
+            resume = os.path.join(root, "RESUME.md")
+            if os.path.isfile(resume):
+                with open(resume, encoding="utf-8") as handle:
+                    resume_text = handle.read()
+                approved = {m.group(1) for m in GATE_APPROVED.finditer(resume_text)}
+                hashed = {m.group(1) for m in GATE_HASH.finditer(resume_text)}
+                for gate in sorted(approved - hashed):
+                    warnings.append(
+                        f"{feature}: Gate {gate} is approved but has no well-formed "
+                        f"content-hash line — the `## Gate snapshot` hash lines are "
+                        f"written by `approve_gate.py`; re-approve with "
+                        f"`./clad approve {gate}` (or `--baseline` to migrate)")
+
             changes_dir = os.path.join(root, "_changes")
             if not os.path.isdir(changes_dir):
                 continue
@@ -76,15 +98,12 @@ def main() -> int:
                     f"{feature}: {len(active)} `active` _changes/ records — the "
                     f"readiness guard selects exactly one: "
                     + ", ".join(os.path.basename(p) for p in active))
-            resume = os.path.join(root, "RESUME.md")
-            if os.path.isfile(resume):
-                with open(resume, encoding="utf-8") as handle:
-                    if FEATURE_COMPLETE.search(handle.read()):
-                        warnings.append(
-                            f"{feature}: `feature complete` but still carries an "
-                            f"`active` _changes/ record "
-                            f"({', '.join(os.path.basename(p) for p in active)}) "
-                            f"— mark it `closed`")
+            if os.path.isfile(resume) and FEATURE_COMPLETE.search(resume_text):
+                warnings.append(
+                    f"{feature}: `feature complete` but still carries an "
+                    f"`active` _changes/ record "
+                    f"({', '.join(os.path.basename(p) for p in active)}) "
+                    f"— mark it `closed`")
 
     if warnings:
         print(f"WARN  governance hygiene: {len(warnings)} stale record(s)")

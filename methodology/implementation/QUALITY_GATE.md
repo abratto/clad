@@ -458,3 +458,31 @@ compliance must publish, in its `README.md`:
 
 The expectation is that **one command** runs the whole gate. If a
 profile needs five commands chained, it is not yet ready.
+
+---
+
+## Cost, and how to keep the loop fast
+
+CLAD is deliberately thorough: ~13 per-UC stages, 3 human gates, ~5–12 documents
+per stage, and 50+ verifier scripts. The cost is real; two levers keep it
+manageable without weakening the gate.
+
+- **The artefact gate is separable from the build.** `test.command` in
+  `clad.properties` is the project's choice, and it commonly chains the artefact
+  gate with the profile's own test run (`python3 quality-gate/verify_artefacts.py
+  && mvn test …`). That coupling is convenient at a gate but slow in the design
+  stages. While iterating on Stages 01–03b, run the artefact gate alone —
+  `./clad verify`, or `python3 quality-gate/verify_artefacts.py --feature
+  <feature>` to scope it to one feature — and leave the full `test.command` for
+  the implementation stages, where the code exists. A profile that wants a
+  lighter default may set a fast `test.command` and run the heavy build in CI.
+- **Generated side-artefacts are one command.** `./clad regen` re-runs the
+  gate index, the shared-trigger view, the concepts catalog, and each feature's
+  review views; `./clad refresh-contracts` realigns a feature's stage contracts
+  with the template. Forgetting one of these is what turns a small omission into
+  a late global-gate failure.
+
+The aggregate load is a deliberate trade for legibility and reversibility: the
+per-stage gate catches a defect while it is still cheap, rather than at commit
+time. `./clad corpus-status` (`--remodel-depth`) is the lever for a corpus that
+has grown.

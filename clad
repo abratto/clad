@@ -233,6 +233,34 @@ cmd_refresh_contracts() {
     python3 "$QG/refresh_stage_contracts.py" --feature "features/$feat" "$@"
 }
 
+cmd_regen() {
+    # Re-run the side-generators idempotently: the gate index, the shared-trigger
+    # view, the concepts catalog, and each feature's 03a review views. `advance`
+    # does not auto-run these, so forgetting one fails the global gate later
+    # (D4). Safe to run at any time.
+    python3 "$QG/generate_gate_index.py"
+    python3 "$QG/generate_shared_triggers.py" --features-dir "$FEATURES_DIR" --write
+    python3 "$QG/generate_concepts_catalog.py" \
+        --concepts-dir "$FEATURES_DIR/_system/concepts" \
+        --features-dir "$FEATURES_DIR" --write
+    for d in "$FEATURES_DIR"/UC-*; do
+        [ -d "$d/stages/03a_dependency-review/output" ] && \
+            python3 "$QG/generate_review_views.py" --feature "$d" --write
+    done
+    echo "Regenerated side-generators (gate index, shared triggers, catalog, review views)."
+}
+
+cmd_new_feature() {
+    # Bootstrap a feature from the skeleton, filling `_config` from
+    # clad.properties (the skeleton ships `TBD`, which blocks 04a — D7).
+    local slug="${1:-}"
+    [ -z "$slug" ] && { echo "Usage: ./clad new-feature UC-XX-<slug>" >&2; exit 1; }
+    local repo
+    repo="$(dirname "$FEATURES_DIR")"
+    python3 "$QG/create_feature.py" --slug "$slug" --repo-root "$repo" \
+        --skeleton "$repo/templates/feature-skeleton"
+}
+
 cmd_rename_sync() {
     local from="${1:-}" to="${2:-}"
     if [ -z "$from" ] || [ -z "$to" ]; then
@@ -325,6 +353,10 @@ CLAD CLI — lightweight wrapper for quality-gate scripts.
   ./clad refresh-contracts [<feature>] [--write]
                                        Re-copy each stage's `## Verify` section
                                        from the feature-skeleton template
+  ./clad regen                     Re-run the side-generators (gate index,
+                                   shared triggers, catalog, review views)
+  ./clad new-feature <slug>        Bootstrap features/<slug> from the skeleton,
+                                   filling _config from clad.properties
   ./clad verify                    Run verify_artefacts.py (artefact gate)
   ./clad corpus-status             Read-only concept-corpus health report
                                    (history, stale snapshots, dependence
@@ -363,6 +395,8 @@ case "${1:-help}" in
     promote-concepts) shift; cmd_promote_concepts "$@";;
     consent)     shift; cmd_consent "$@";;
     refresh-contracts) shift; cmd_refresh_contracts "$@";;
+    regen)       shift; cmd_regen "$@";;
+    new-feature) shift; cmd_new_feature "$@";;
     rename-sync) shift; cmd_rename_sync "$@";;
     verify)      shift; cmd_verify "$@";;
     next)        cmd_next;;
