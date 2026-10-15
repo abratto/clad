@@ -17,6 +17,7 @@ Wire this into clad.properties as the first half of test.command:
 Exit: 0 = all artefact checks passed; 1 = one or more failed.
 """
 
+import argparse
 import os
 import subprocess
 import sys
@@ -75,6 +76,15 @@ def _current_stage(feature_root):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="CLAD artefact pipeline gate")
+    parser.add_argument("--feature", default="",
+                        help="Limit the per-feature loop to one feature root. "
+                             "The feature-independent project checks still run; "
+                             "another feature's defect no longer blocks this one "
+                             "(the advance pre-flight passes the active feature).")
+    args = parser.parse_args()
+    only = os.path.abspath(args.feature) if args.feature else ""
+
     print(f"{BAR}")
     print("  CLAD artefact pipeline gate")
     print(f"{BAR}")
@@ -260,6 +270,8 @@ def main():
             print(f"        {line}")
 
     for name, root in discover_features():
+        if only and os.path.abspath(root) != only:
+            continue
         any_features = True
         stage = _current_stage(root)
 
@@ -317,7 +329,14 @@ def main():
                 )
             ]
             if missing:
-                print(f"    [SKIP] {check.name} — inputs not present yet")
+                # A `__no_*__` placeholder is a documented no-op; any other
+                # missing input means the check could not run — UNVERIFIED, not
+                # a clean skip (a PASS must not imply every check ran).
+                noop = all(os.path.basename(m).startswith("__no_")
+                           and m.endswith("__") for m in missing)
+                label = "SKIP" if noop else "UNVERIFIED"
+                detail = "documented no-op" if noop else "inputs not present yet"
+                print(f"    [{label}] {check.name} — {detail}")
                 continue
 
             code, out, err = run_script(check.script, check.build_args(root))

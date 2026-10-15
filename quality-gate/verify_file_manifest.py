@@ -15,7 +15,7 @@ Usage:
 Exits 0 if every expected file exists and no unexpected file is present.
 Ignored by construction: `.gitkeep` (a placeholder) and
 `*-all-scenarios-chain.md` (a documented NON-canonical derived view the
-generators already skip — see `features/UC-00-login/README.md`).
+generators already skip — see `examples/UC-00-login/README.md`).
 Exits 1 with a report of mismatches.
 """
 

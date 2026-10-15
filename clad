@@ -220,6 +220,19 @@ cmd_consent() {
     python3 "$QG/create_consent.py" "$@"
 }
 
+cmd_refresh_contracts() {
+    # Re-copy each stage's `## Verify` section from the template. Defaults to
+    # the active feature; pass --write to apply (default is a dry run).
+    local feat="${1:-}"
+    if [ -n "$feat" ] && [ "${feat#-}" = "$feat" ]; then
+        shift
+    else
+        feat="${CLAD_FEATURE:-$(active_feature)}"
+    fi
+    [ -z "$feat" ] && { echo "Usage: ./clad refresh-contracts [<feature>] [--write]" >&2; exit 1; }
+    python3 "$QG/refresh_stage_contracts.py" --feature "features/$feat" "$@"
+}
+
 cmd_rename_sync() {
     local from="${1:-}" to="${2:-}"
     if [ -z "$from" ] || [ -z "$to" ]; then
@@ -309,6 +322,9 @@ CLAD CLI — lightweight wrapper for quality-gate scripts.
                                        (after Gate 2 approval)
   ./clad consent --feature <path> --concept <Name> --consenting <UC-XX>
                                        Scaffold a remodel consent receipt (R22)
+  ./clad refresh-contracts [<feature>] [--write]
+                                       Re-copy each stage's `## Verify` section
+                                       from the feature-skeleton template
   ./clad verify                    Run verify_artefacts.py (artefact gate)
   ./clad corpus-status             Read-only concept-corpus health report
                                    (history, stale snapshots, dependence
@@ -346,6 +362,7 @@ case "${1:-help}" in
     approve-maintenance) shift; cmd_approve_maintenance "$@";;
     promote-concepts) shift; cmd_promote_concepts "$@";;
     consent)     shift; cmd_consent "$@";;
+    refresh-contracts) shift; cmd_refresh_contracts "$@";;
     rename-sync) shift; cmd_rename_sync "$@";;
     verify)      shift; cmd_verify "$@";;
     next)        cmd_next;;
