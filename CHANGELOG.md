@@ -10,6 +10,34 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.27.0] — 2026-10-14
+
+**Stage-loop ergonomics: refresh stale contracts, tell skip from unverified,
+scope the pre-flight, and show the code in the review.**
+
+- **`./clad refresh-contracts`** (new `refresh_stage_contracts.py`) re-copies
+  each stage's `## Verify` section from the feature-skeleton template and
+  reports the stale ones. A feature-local stage contract that lags the template
+  is the recurring "the agent follows stale instructions, then fails checks it
+  never saw" defect.
+- **`skip` vs `UNVERIFIED`.** A check that could not run for lack of its inputs
+  is now `UNVERIFIED`, not a clean `skip`; `advance` and `verify_artefacts`
+  print it distinctly and note that a PASS does not mean every check ran. A
+  `__no_*__` placeholder remains a documented skip.
+- **Scoped advance pre-flight.** `advance` runs the artefact gate with
+  `--feature <the active feature>`, so an unrelated feature's defect no longer
+  blocks this one's advance. The feature-independent project checks still run.
+- **Fuller review diff.** The iterative review diff now covers the
+  implementation dirs, not only the feature's stage outputs (R17: the spec and
+  the code move together).
+- **Doc drift.** `04_implement/CONTEXT.md` says five sub-stages;
+  `verify_file_manifest.py` cites the real example path;
+  `verify_concept_corpus_current` accepts `auto-approved`.
+
+**Upgrade notes.** Backward-compatible. A stage whose checks could not run now
+reports `UNVERIFIED`; run `./clad refresh-contracts` to align a feature's
+stage contracts with the current template.
+
 ## [0.26.0] — 2026-10-14
 
 **Governance, part 2: chain completions resolve at Gate 1, bindings are
