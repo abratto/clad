@@ -72,6 +72,29 @@ class GovernanceHygieneTests(unittest.TestCase):
             self.assertIn("WARN", result.stdout)
             self.assertIn("exactly one", result.stdout)
 
+    def test_approved_gate_without_a_hash_line_warns(self):
+        """D5: the `## Gate snapshot` hash lines are machine-owned."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "maintenance/change.md", "- **Status:** `closed`\n")
+            write(root / "features/UC-01-x/RESUME.md",
+                  "- **Gate 1 (Requirements):** `approved`\n")
+            result = run("--features-dir", str(root / "features"),
+                         "--maintenance-dir", str(root / "maintenance"))
+            self.assertEqual(result.returncode, 0)
+            self.assertIn("no well-formed content-hash line", result.stdout)
+
+    def test_approved_gate_with_a_hash_line_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            write(root / "maintenance/change.md", "- **Status:** `closed`\n")
+            write(root / "features/UC-01-x/RESUME.md",
+                  "- **Gate 1 (Requirements):** `approved`\n"
+                  "- **Gate 1 content hash:** `" + "a" * 64 + "`\n")
+            result = run("--features-dir", str(root / "features"),
+                         "--maintenance-dir", str(root / "maintenance"))
+            self.assertIn("PASS", result.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()
