@@ -619,3 +619,21 @@ class ChangeMatrixSchemaTests(unittest.TestCase):
             info = advance.parse_change_file(str(change))
 
             self.assertEqual(info["impact"], {"Concept(s)": "added a field"})
+
+
+class CheckStatusTests(unittest.TestCase):
+    """A check that could not run is UNVERIFIED, not a clean skip (D2)."""
+
+    def test_sentinel_is_a_documented_noop(self):
+        self.assertTrue(
+            advance._is_noop_sentinel("/x/output/__no_expected_outputs__"))
+        self.assertTrue(
+            advance._is_noop_sentinel("/x/output/__no_mutation_command__"))
+        self.assertFalse(advance._is_noop_sentinel("/x/output/foo.md"))
+
+    def test_missing_inputs_are_unverified_not_skip(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-01-workflow"
+            shutil.copytree(REPO_ROOT / "templates/feature-skeleton", feature)
+            results = advance.run_checks(str(feature), stages.stage_by_id("02"))
+            self.assertIn("unverified", {r["status"] for r in results})

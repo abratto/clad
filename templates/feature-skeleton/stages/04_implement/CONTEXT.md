@@ -1,8 +1,9 @@
 # Stage 04 — Implement (router)
 
 This directory owns no artefacts or transition. It is a reference
-container for three implementation sub-stages plus the Gate-3
-acceptance stage.
+container for five implementation sub-stages (04a storage mapping, 04b
+contract, 04c acceptance tests, 04d concept impl, 04e sync impl), the
+Gate-3 acceptance stage being 04c.
 
 > **Completed example.** The worked instance of the implementation stages is at
 > [`../../../../examples/UC-00-login/stages/04_implement/`](../../../../examples/UC-00-login/stages/04_implement/) — read it if useful; it is illustrative, not a template.

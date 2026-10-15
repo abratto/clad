@@ -216,19 +216,39 @@ def parse_change_file(path: str) -> dict:
 
 
 def git_diff_changed(feature_root: str, change_path: str) -> str:
-    """Run git diff and return the output for review."""
+    """Run git diff and return the output for review.
+
+    Covers the feature's stage outputs AND the implementation dirs: R17 requires
+    the spec change and the code change to move in one commit, so a review that
+    showed only the stage outputs hid the most failure-prone half of the change.
+    """
+    repo = cs._repo_root(feature_root)
+    paths = [os.path.relpath(feature_root, repo)]
+    for impl in (cs._concept_impl_dir(feature_root),
+                 cs._sync_impl_dir(feature_root)):
+        if impl:
+            paths.append(os.path.relpath(impl, repo))
+    paths = sorted(set(paths))
     try:
         out = subprocess.run(
-            ["git", "diff", "--cached", "--", feature_root],
-            cwd=feature_root, capture_output=True, text=True)
+            ["git", "diff", "--cached", "--", *paths],
+            cwd=repo, capture_output=True, text=True)
         if out.stdout.strip():
             return out.stdout.strip()
         out = subprocess.run(
-            ["git", "diff", "--", feature_root],
-            cwd=feature_root, capture_output=True, text=True)
+            ["git", "diff", "--", *paths],
+            cwd=repo, capture_output=True, text=True)
         return out.stdout.strip()
     except (OSError, subprocess.SubprocessError):
         return "(could not run git diff)"
+
+
+def _is_noop_sentinel(path: str) -> bool:
+    """A `__no_*__` placeholder a check's `requires` returns to declare the
+    check a documented no-op for this feature (no expected outputs, no mutation
+    command, no adapter surface). Distinguishes a *deliberate* skip from a check
+    whose inputs are simply missing."""
+    return os.path.basename(path).startswith("__no_") and path.endswith("__")
 
 
 def run_checks(feature_root: str, stage: cs.Stage) -> list[dict]:
@@ -247,10 +267,14 @@ def run_checks(feature_root: str, stage: cs.Stage) -> list[dict]:
                        os.path.isfile(p) and os.path.getsize(p) > 0
                        or os.path.isdir(p) and cs.dir_is_populated(p)))]
         if missing:
+            noop = all(_is_noop_sentinel(m) for m in missing)
             results.append({
-                "name": check.name, "script": check.script, "status": "skip",
-                "detail": "inputs not present: "
-                          + ", ".join(cs.relpath(m, feature_root) for m in missing),
+                "name": check.name, "script": check.script,
+                "status": "skip" if noop else "unverified",
+                "detail": ("documented no-op for this feature" if noop
+                           else "inputs not present: "
+                                + ", ".join(cs.relpath(m, feature_root)
+                                            for m in missing)),
                 "exit": None,
             })
             continue
@@ -331,10 +355,14 @@ def print_check_summary(results: list[dict]) -> None:
         return
     print("  Checks run:")
     for r in results:
-        marker = {"pass": "pass", "fail": "FAIL", "skip": "skip"}[r["status"]]
+        marker = {"pass": "pass", "fail": "FAIL", "skip": "skip",
+                  "unverified": "UNVERIFIED"}[r["status"]]
         print(f"    [{marker}] {r['name']}")
-        if r["status"] == "skip":
+        if r["status"] in ("skip", "unverified"):
             print(f"           {r['detail']}")
+    if any(r["status"] == "unverified" for r in results):
+        print("    note: UNVERIFIED means a check could not run for lack of its "
+              "inputs — a PASS here does not mean every check ran.")
 
 
 def print_failures(results: list[dict]) -> None:
@@ -573,7 +601,10 @@ def main() -> None:
     feature_prefix = os.path.join(os.path.dirname(HERE), "features") + os.sep
     in_tree = os.path.abspath(feature_root).startswith(feature_prefix)
     if os.path.isfile(artefacts) and in_tree:
-        proc = subprocess.run([sys.executable, artefacts],
+        # Scope the per-feature loop to THIS feature: the project checks still
+        # run, but another feature's defect must not block this one's advance
+        # (D3 — an unattributable cross-feature block).
+        proc = subprocess.run([sys.executable, artefacts, "--feature", feature_root],
                               capture_output=True, text=True,
                               cwd=os.path.dirname(HERE))
         if proc.returncode != 0:

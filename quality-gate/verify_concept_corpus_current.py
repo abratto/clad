@@ -39,7 +39,7 @@ import re
 import sys
 
 import artifact_parsers as ap
-from verify_stage_sequence import gate_status
+from verify_stage_sequence import APPROVED_STATES, gate_status
 
 
 INTRODUCED_RE = re.compile(r"^introduced-by\s+(.+)$", re.MULTILINE)
@@ -89,7 +89,7 @@ def proposing_features(features_dir):
         if os.path.isfile(resume):
             with open(resume, encoding="utf-8", errors="replace") as handle:
                 status = gate_status(handle.read(), 2) or ""
-        if status != "approved":
+        if status not in APPROVED_STATES:
             continue
         for concept, entry in sorted(ap.parse_responsibility_map(resp).items()):
             if concept == BOOTSTRAP_CONCEPT:
