@@ -10,6 +10,23 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.28.1] — 2026-10-15
+
+**Fix: the re-entry successor is computed before completion is recorded.**
+
+`advance` recorded the current stage complete and *then* called
+`reentry_progress.next_stage`, which reads the first-unfinished stage as "the
+current one" and returns the one after it. After `mark_done`, that is the
+**second** remaining stage: passing `01a` announced `02` (not `01b`) and wrote
+the wrong stage into RESUME; with one stage left it could announce completion
+prematurely.
+
+`advance.reentry_advance(feature_root, stage)` now computes the successor before
+recording completion. No progress-file migration, stage override, or
+approval-hash change.
+
+**Upgrade notes.** Backward-compatible bug fix; the progress file is unchanged.
+
 ## [0.28.0] — 2026-10-15
 
 **Stage-loop ergonomics, the tail: one-command regen, a feature bootstrap, a
