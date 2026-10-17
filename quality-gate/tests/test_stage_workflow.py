@@ -297,6 +297,79 @@ class StageWorkflowTests(unittest.TestCase):
                 reentry_progress.active_progress(str(feature))["order"],
                 ["04b", "04c"])
 
+    def _done(self, feature):
+        return reentry_progress.done_stages(str(feature / "_changes" / "reentry.md"))
+
+    def test_reentry_advance_announces_the_successor_not_the_one_after(self):
+        # The off-by-one: mark_done() then next_stage() announced `02` after
+        # `01a`. The successor must be computed BEFORE completion is recorded.
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self.make_feature(temporary)
+            self.populate_through(feature, "05")
+            self._active_reentry(feature, "01a", order=["01a", "01b", "02"])
+
+            nxt = advance.reentry_advance(str(feature), stages.stage_by_id("01a"))
+
+            self.assertEqual(nxt.id, "01b")
+            self.assertEqual(self._done(feature), ["01a"],
+                             "only 01a is recorded complete")
+
+    def test_reentry_advance_writes_the_successor_into_resume(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self.make_feature(temporary)
+            self.populate_through(feature, "05")
+            self._active_reentry(feature, "01a", order=["01a", "01b", "02"])
+            stage = stages.stage_by_id("01a")
+
+            advance.update_resume(str(feature), stage,
+                                  advance.reentry_advance(str(feature), stage))
+
+            resume = (feature / "RESUME.md").read_text(encoding="utf-8")
+            self.assertIn("Stage 01b", resume)
+            self.assertNotIn("Stage 02 —", resume)
+
+    def test_two_stage_order_does_not_complete_after_the_first(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self.make_feature(temporary)
+            self.populate_through(feature, "05")
+            self._active_reentry(feature, "01a", order=["01a", "01b"])
+
+            self.assertEqual(
+                advance.reentry_advance(str(feature), stages.stage_by_id("01a")).id,
+                "01b")
+            self.assertIsNone(
+                advance.reentry_advance(str(feature), stages.stage_by_id("01b")))
+
+    def test_final_stage_announces_completion(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self.make_feature(temporary)
+            self.populate_through(feature, "05")
+            self._active_reentry(feature, "01a", order=["01a"])
+
+            self.assertIsNone(
+                advance.reentry_advance(str(feature), stages.stage_by_id("01a")))
+            self.assertEqual(self._done(feature), ["01a"])
+
+    def test_non_contiguous_order_is_followed_exactly(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self.make_feature(temporary)
+            self.populate_through(feature, "05")
+            self._active_reentry(feature, "04b", order=["04b", "04c"])
+
+            self.assertEqual(
+                advance.reentry_advance(str(feature), stages.stage_by_id("04b")).id,
+                "04c")
+            self.assertIsNone(
+                advance.reentry_advance(str(feature), stages.stage_by_id("04c")))
+
+    def test_normal_advancement_is_unchanged(self):
+        # With no active re-entry the canonical chain is used, not the order.
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = self.make_feature(temporary)
+            self.populate_through(feature, "05")
+            self.assertIsNone(advance.reentry_progress.active_progress(str(feature)))
+            self.assertEqual(stages.next_stage("01a").id, "01b")
+
     def test_progress_file_is_not_a_change_record(self):
         with tempfile.TemporaryDirectory() as temporary:
             feature = self.make_feature(temporary)

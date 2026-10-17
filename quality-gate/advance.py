@@ -173,6 +173,23 @@ def determine_stage(feature_root: str, explicit: str | None):
     return cs.STAGES[last]
 
 
+def reentry_advance(feature_root: str, stage: cs.Stage):
+    """Advance one step of an active re-entry and return the successor stage.
+
+    The successor is computed BEFORE `stage` is recorded complete: `next_stage`
+    reads the first-unfinished stage as "the current one" and returns the one
+    after it, so it must still see `stage` as unfinished. Recording completion
+    first made it return the SECOND remaining stage (an off-by-one that
+    announced, e.g., `02` after `01a` and wrote the wrong stage into RESUME).
+
+    Returns the successor `cs.Stage`, or None when the declared order is
+    exhausted (the change is complete).
+    """
+    nxt_id = reentry_progress.next_stage(feature_root)
+    reentry_progress.mark_done(feature_root, stage.id)
+    return cs.stage_by_id(nxt_id) if nxt_id else None
+
+
 def discover_iterative_changes(feature_root: str) -> list[str]:
     """Return sorted list of change files in _changes/, newest first."""
     changes_dir = os.path.join(feature_root, CHANGES_DIR)
@@ -702,9 +719,7 @@ def main() -> None:
     # (recording each stage as re-derived) instead of the canonical chain; an
     # exhausted order ends the change rather than continuing downstream.
     if reentry_progress.active_progress(feature_root) is not None:
-        reentry_progress.mark_done(feature_root, stage.id)
-        nxt_id = reentry_progress.next_stage(feature_root)
-        nxt = cs.stage_by_id(nxt_id) if nxt_id else None
+        nxt = reentry_advance(feature_root, stage)
     else:
         nxt = cs.next_stage(stage.id)
     update_resume(feature_root, stage, nxt)
