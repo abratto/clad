@@ -15,8 +15,8 @@ Ktor, …) or none, without touching engine, storage, concepts, or syncs.
    (default `jdbc:postgresql://localhost:5432/clad`), `PGUSER`/`PGPASSWORD`
    (defaults `clad`/`clad`, mirroring `java-micronaut/application.yml`).
 2. **Flyway migrates** — the schema owner runs before any store use
-   (`V1__login_rmap.sql`, drift-guarded against `LoginSchemas.all()` exactly
-   like the micronaut profile's migration; both render the same derivation).
+   (`V1__login_rmap.sql`, drift-guarded by `./clad rmap --check`; both profiles
+   consume the same generated migration).
 3. `new RmapPostgresFactStore(dataSource, LoginSchemas.all())` — the derived
    R-map table set.
 4. `LoginApp.create(store)` — the login flows (`Web.request` → … →

@@ -92,7 +92,7 @@
 - <consistency/completeness check>
 - <redundancy or optimization note>
 
-## Machine model
+## Conceptual model
 
 <!-- CSDP-aligned fact/constraint block consumed by Rmap. Generated
      deterministically from the concept `## State`; keep it a faithful

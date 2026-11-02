@@ -21,7 +21,7 @@ FLAT = """sync RespondWhenEnrolEnrolled
 
 | Source row | Target row | `when` signature | `then` signature | Allowed literals |
 |---|---|---|---|---|
-| `2` | `5` | `MemberEnrolment/enrol: [...] => [ Enrolled ]` | `Web/respond: [ status: 201 ; memberId: ?memberId ]` | `201` |
+| `2` | `5` | `MemberEnrolment/enrol: [...] => [ Enrolled ]` | `Web/respond: [ httpStatus: 201 ; memberId: ?memberId ]` | `201` |
 
 ## Rule
 
@@ -30,13 +30,13 @@ when {
     MemberEnrolment/enrol: [ ... ] => [ Enrolled ; ... ]
 }
 then {
-    Web/respond: [ status: 201 ; memberId: ?memberId ]
+    Web/respond: [ httpStatus: 201 ; memberId: ?memberId ]
 }
 ```
 """
 
 FRAMED = FLAT.replace(
-    "Web/respond: [ status: 201 ; memberId: ?memberId ]",
+    "Web/respond: [ httpStatus: 201 ; memberId: ?memberId ]",
     "Web/respond: [ status: 201 ; body: { memberId: ?memberId } ]")
 
 
@@ -71,6 +71,53 @@ class SyncThenShapeTests(unittest.TestCase):
             r = self._run(self._feature(tmp, FRAMED), "--advisory")
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertIn("WARN", r.stdout)
+
+    def test_duplicate_transport_and_body_status_fails(self):
+        duplicate = FLAT.replace(
+            "Web/respond: [ httpStatus: 201 ; memberId: ?memberId ]",
+            "Web/respond: [ status: 201 ; status: \"PENDING\" ]")
+        with tempfile.TemporaryDirectory() as tmp:
+            r = self._run(self._feature(tmp, duplicate))
+            self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+            self.assertIn("repeats status", r.stdout)
+
+    def test_non_numeric_transport_status_fails(self):
+        symbolic = FLAT.replace(
+            "Web/respond: [ httpStatus: 201 ; memberId: ?memberId ]",
+            "Web/respond: [ httpStatus: ?code ; memberId: ?memberId ]")
+        with tempfile.TemporaryDirectory() as tmp:
+            r = self._run(self._feature(tmp, symbolic))
+            self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+            self.assertIn("numeric transport code", r.stdout)
+
+    def test_legacy_status_transport_fails(self):
+        legacy = FLAT.replace(
+            "Web/respond: [ httpStatus: 201 ; memberId: ?memberId ]",
+            "Web/respond: [ status: 201 ; memberId: ?memberId ]")
+        with tempfile.TemporaryDirectory() as tmp:
+            r = self._run(self._feature(tmp, legacy))
+            self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+            self.assertIn("name it `httpStatus`", r.stdout)
+
+    def test_missing_http_status_fails(self):
+        missing = FLAT.replace(
+            "Web/respond: [ httpStatus: 201 ; memberId: ?memberId ]",
+            "Web/respond: [ memberId: ?memberId ]")
+        with tempfile.TemporaryDirectory() as tmp:
+            r = self._run(self._feature(tmp, missing))
+            self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+            self.assertIn("no `httpStatus`", r.stdout)
+
+    def test_quoted_brace_in_a_route_is_not_a_frame(self):
+        """A path-parameter route's `{claimId}` is a literal, not a body frame."""
+        routed = FLAT.replace(
+            "MemberEnrolment/enrol: [ ... ] => [ Enrolled ; ... ]",
+            'requested: Web/request: [ route: "claims/{claimId}/decision" ; '
+            'method: "POST" ] => [ Routed ; ... ]')
+        with tempfile.TemporaryDirectory() as tmp:
+            r = self._run(self._feature(tmp, routed))
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("PASS", r.stdout)
 
     def test_no_sync_specs_skips(self):
         with tempfile.TemporaryDirectory() as tmp:

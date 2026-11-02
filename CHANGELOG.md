@@ -10,6 +10,44 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.29.0] — 2026-11-02
+
+**Rmap moves to the workflow, generators cover the branches, and the debug
+archive is inspectable.**
+
+- **Python Rmap.** `quality-gate/rmap.py` is now the single relational
+  derivation implementation: it reads the approved Stage 03b conceptual model
+  and emits both the Flyway migration and the runtime schema descriptor.
+  `RmapSchemaLoader` loads the descriptor at runtime; the Java
+  `RmapDeriver`/`RmapMigration` generators are removed. `./clad rmap --check`
+  and `verify_rmap_descriptor.py` guard drift; `--alter` emits additive DDL from
+  a recorded baseline, and `--review` prints the derived object/fact/constraint/
+  subtype tables for human review.
+- **Incremental/baseline workflow.** Record a deployed descriptor with
+  `--record-baseline <name>`; `--alter` discovers it from `rmap.baseline`,
+  `_generated/rmap-baselines/`, or `_system/rmap-baselines/`. It refuses a new
+  mandatory column without a default and reports drops instead of applying them.
+- **Per-branch generators.** `generate_acceptance_spec.py` renders the 04c
+  Acceptance Spec skeleton from the chain table; `generate_trace.py` renders the
+  05 trace skeleton, optionally filled from `capture_observations.py`.
+  `verify_trace_complete.py` blocks Stage 05 when a frozen scenario has no trace
+  entry.
+- **Archive debug surface.** `DebugApi`/`FlowArchiveBuffer`/`DebugController`
+  expose runtime observations (and the archive) without a live app, so the trace
+  generator can cite captured evidence rather than predicted chains.
+- **`httpStatus` convention.** Sync `then` lists carry the transport status as
+  `httpStatus`; body fields stay flat and must not be named `status`. The frozen
+  login example keeps the legacy spelling.
+- **Stage map.** Stage 04a runs `rmap.py` and `verify_rmap_descriptor.py`;
+  `storage.persistent=false` makes 04a a no-op, and a configured
+  `rmap.migration` makes it a no-op by construction. Stage 05 runs
+  `verify_trace_complete.py`.
+
+**Upgrade notes.** Backward-compatible. A derived app that still uses the Java
+deriver should regenerate from the approved data model with
+`./clad rmap --write`, then commit the descriptor and migration. Keep the
+committed login migration unchanged; it remains the runtime schema.
+
 ## [0.28.1] — 2026-10-15
 
 **Fix: the re-entry successor is computed before completion is recorded.**

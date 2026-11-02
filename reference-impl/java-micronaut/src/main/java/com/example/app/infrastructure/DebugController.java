@@ -50,6 +50,18 @@ public final class DebugController {
         return out;
     }
 
+    /** Completed flows retained in the archive buffer (newest first). */
+    @Get(uri = "/archive", produces = io.micronaut.http.MediaType.APPLICATION_JSON)
+    public List<Map<String, Object>> archive() {
+        return engine.debug().archived();
+    }
+
+    /** Archive retention capacity and eviction count. */
+    @Get(uri = "/archive-info", produces = io.micronaut.http.MediaType.APPLICATION_JSON)
+    public Map<String, Object> archiveInfo() {
+        return engine.debug().archiveInfo();
+    }
+
     /** One flow's full attributed action chain (in-flight or archive buffer). */
     @Get(uri = "/flow/{flowId}", produces = io.micronaut.http.MediaType.APPLICATION_JSON)
     public Map<String, Object> flow(String flowId) {

@@ -222,6 +222,30 @@ class GeneratorPropertyTests(unittest.TestCase):
         self.assertIn("object-type AccountId identified-by AccountId", block,
                       "an identifier type (name ends in `Id`) is identified by itself")
 
+    def test_identifier_subject_is_not_identified_by_an_id_valued_fact(self):
+        """An `…Id` subject is its own reference scheme.
+
+        Regression (expense-app experiment): `ClaimId` carried
+        `claimEmployee: ClaimId -> EmployeeId`, and the generator chose the
+        employee id as the claim's reference scheme — dropping `claim_id` and
+        making one claim per employee.
+        """
+        sys.path.insert(0, str(QG))
+        import generate_data_model as gd
+
+        class Rel:
+            def __init__(self, subject_type):
+                self.subject_type = subject_type
+
+        rels = [Rel("ClaimId")]
+        state = [
+            "claimEmployee: ClaimId -> EmployeeId -- mandatory",
+            "claimAmountMinor: ClaimId -> Int -- mandatory",
+        ]
+        block = gd._machine_model_block("ClaimIntake", rels, state)
+        self.assertIn("object-type ClaimId identified-by ClaimId", block,
+                      "an identifier subject must not adopt an Id-valued fact")
+
     def test_subtype_emits_the_root_reference_scheme(self):
         sys.path.insert(0, str(QG))
         import generate_data_model as gd

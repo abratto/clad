@@ -190,13 +190,14 @@ then {
   the adapter "serialize[s] it to the transport's response"). So
 
   ```
-  Web/respond: [ status: 200 ; sessionToken: ?sid ]      -- authored result
-  Web/respond: [ status: 200 ; body: { sessionToken: ?sid } ]  -- framing: WRONG
+  Web/respond: [ httpStatus: 200 ; sessionToken: ?sid ]      -- authored result
+  Web/respond: [ httpStatus: 200 ; body: { sessionToken: ?sid } ]  -- framing: WRONG
   ```
 
-  `status` is retained in `then` by convention (it is the exit action's
-  response classification, and every chain table and respond spec carries it);
-  the outcome→status mapping is the adapter's concern.
+  `httpStatus` is the transport status. Body fields stay flat and must not be
+  named `status` (use the concept's own name, e.g. `claimStatus`), so a domain
+  status cannot collide with the HTTP status. The frozen login example predates
+  the convention and still uses `status`; new features use `httpStatus`.
   Mechanised by `quality-gate/verify_sync_then_shape.py`.
 
 ## How a sync gets its data — the four patterns
@@ -208,7 +209,7 @@ a `then` clause's arguments are bound:
 |---|---|---|
 | **A** (flow-token join) | A `?variable` declared in the `when` clause's input or output | `?pass` bound from `Web/request: [ password: ?pass ]` |
 | **B** (flow-sibling join) | A `?variable` carried by an earlier action's completion in the same flow | `?user` from `User/lookupByUsername: [...] => [ userId: ?user ]` |
-| **C** (sync constant) | A literal value baked into the sync rule itself | `status: 200` in a `Web/respond` call |
+| **C** (sync constant) | A literal value baked into the sync rule itself | `httpStatus: 200` in a `Web/respond` call |
 | **D** (concept-state join) | A `Concept: { ... }` block inside the `where` clause that reads concept state | `User: { ?user email: ?email }` |
 
 A concept-state read is the only data access that crosses a concept boundary at read time,

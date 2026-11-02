@@ -47,6 +47,27 @@ primitives by following `STORAGE_MAPPING.md` — one named region per
 concept (R2). Otherwise write `_NOT_APPLICABLE.md` explaining why and
 skip.
 
+For a relational profile, do **not** hand-write SQL. Generate it from the
+approved Stage 03b model:
+
+```
+./clad rmap --write <profile>/src/main/resources/db/migration/V<n>__<name>_rmap.sql
+./clad rmap --check <same path>
+```
+
+The same command emits the runtime descriptor when given
+`--json <feature>/_generated/rmap-schema.json`. `Rmap` is the single derivation
+implementation; the LLM reviews the conceptual model, not the SQL.
+
+Record the committed paths in `_config/rmap.migration.md` and
+`_config/rmap.descriptor.md` (or the repo-root `rmap.migration` /
+`rmap.descriptor`). Stage 04a's generated checks then fail when either file is
+stale.
+
+For review, run `./clad rmap --review`. It prints generated object-type,
+fact-type, constraint, subtype, and relational-realization tables from the same
+conceptual block — review that, not the SQL.
+
 Every storage field, property, or region-level structure must trace 1:1
 to an approved fact or constraint in `../../03b_data-model/output/`. Do
 not add helper fields, indexes-as-design, lifecycle concepts, or
@@ -94,8 +115,17 @@ python3 ../../../../../quality-gate/verify_profile_paths.py \
   --feature ../../../
 quality-gate/verify_relational_mapping.py \
   --storage-dir output
+python3 ../../../../../quality-gate/rmap.py \
+  --feature ../../../ --check <rmap.migration>
+python3 ../../../../../quality-gate/verify_rmap_descriptor.py \
+  --feature ../../../ --descriptor <rmap.descriptor>
 ```
 
+- **rmap.py:** the configured migration is current for the approved 03b
+  model. It runs only for a persistent relational profile; a generated Rmap
+  makes this stage a no-op with nothing to author.
+- **verify_rmap_descriptor.py:** the runtime descriptor matches the same
+  model, so the SQL and the in-process schema cannot drift apart.
 - **verify_relational_mapping.py:** for relational profiles, the mapping
   honours Rmap (no foreign key crosses a concept boundary). Skips when
   the profile is not relational or `_NOT_APPLICABLE.md` is used. It is the
@@ -130,8 +160,9 @@ quality-gate/verify_relational_mapping.py \
 
 ## Gate
 
-Auto-advances (next human gate: Stage 04c). The `verify_relational_mapping.py`
-and `verify_profile_paths.py` scripts must pass before advancing.
+Auto-advances (next human gate: Stage 04c). The `verify_relational_mapping.py`,
+`verify_profile_paths.py`, `rmap.py`, and `verify_rmap_descriptor.py` scripts
+must pass before advancing.
 
 ## Advancing
 

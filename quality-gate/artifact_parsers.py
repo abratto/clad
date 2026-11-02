@@ -480,11 +480,12 @@ def parse_state_relations(state_lines: List[str]) -> List[StateRelation]:
     relations: List[StateRelation] = []
     for line in state_lines:
         m = re.match(
-            r"^(\w+)\s*:\s*([\w<>,\[\] ]+?)\s*->\s*([\w<>,\[\] ]+?)(?:\s+--\s+(.*))?$",
+            r"^(\w+)\s*:\s*([\w<>,\[\](){} ]+?)\s*->\s*([\w<>,\[\](){} ]+?)"
+            r"(?:\s+--\s+(.*))?$",
             line)
         if not m:
             # Also accept a bare map/collection form: `field: Map<K,V>` (no arrow).
-            m2 = re.match(r"^(\w+)\s*:\s*([\w<>,\[\] ]+)$", line)
+            m2 = re.match(r"^(\w+)\s*:\s*([\w<>,\[\](){} ]+)$", line)
             if m2:
                 relations.append(StateRelation(
                     field=m2.group(1), subject_type="", value_type=m2.group(2).strip(),
@@ -520,10 +521,11 @@ class MachineModel:
     subtypes: List[tuple]
     independent: List[str]
     present: bool
+    errors: List[str] = field(default_factory=list)
 
 
 _MACHINE_OBJECT_TYPE = re.compile(
-    r"^object-type\s+(\w+)\s+identified-by\s+(\w+)\s*$")
+    r"^object-type\s+(\w+)\s+identified-by\s+(\S+)\s*$")
 _MACHINE_FACT = re.compile(
     r"^fact\s+(\w+)\s*:\s*(.+?)\s*->\s*(.+?)(?:\s+--\s+(.*))?$")
 _MACHINE_SUBTYPE = re.compile(
@@ -532,7 +534,10 @@ _MACHINE_INDEPENDENT = re.compile(r"^independent\s+(\w+)\s*$")
 
 
 def parse_machine_model(data_model_text: str) -> MachineModel:
-    """Parse a `<Name>.data-model.md` file's `## Machine model` block.
+    """Parse a `<Name>.data-model.md` file's conceptual-model block.
+
+    `## Machine model` is the historical heading; `## Conceptual model` is the
+    canonical name. Both are accepted indefinitely for legacy artefacts.
 
     Returns `present=False` when no such section/fence exists (legacy data
     models and stateless concepts). Lines that are not one of the four clause
@@ -540,7 +545,7 @@ def parse_machine_model(data_model_text: str) -> MachineModel:
     lines = data_model_text.split("\n")
     start = None
     for i, line in enumerate(lines):
-        if line.strip() == "## Machine model":
+        if line.strip() in ("## Machine model", "## Conceptual model"):
             start = i
             break
     if start is None:
@@ -563,12 +568,16 @@ def parse_machine_model(data_model_text: str) -> MachineModel:
     facts: List[StateRelation] = []
     subtypes: List[tuple] = []
     independent: List[str] = []
-    for raw in body:
+    errors: List[str] = []
+    for lineno, raw in enumerate(body, 1):
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
         m = _MACHINE_OBJECT_TYPE.match(line)
         if m:
+            if m.group(1) in object_types:
+                errors.append(
+                    f"line {lineno}: duplicate object-type '{m.group(1)}'")
             object_types[m.group(1)] = m.group(2)
             continue
         m = _MACHINE_FACT.match(line)
@@ -588,9 +597,11 @@ def parse_machine_model(data_model_text: str) -> MachineModel:
         if m:
             independent.append(m.group(1))
             continue
-        # Unknown clause forms are reported by the caller (verify_data_model),
-        # which wants to fail loudly rather than silently drop a fact.
-    return MachineModel(object_types, facts, subtypes, independent, present=True)
+        # Never silently drop a malformed clause: a typo must fail the gate,
+        # not disappear from the derived schema.
+        errors.append(f"line {lineno}: unrecognized machine-model clause: {line}")
+    return MachineModel(object_types, facts, subtypes, independent, present=True,
+                        errors=errors)
 
 
 # --------------------------------------------------------------------------

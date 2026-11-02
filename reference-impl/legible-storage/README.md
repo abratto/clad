@@ -8,7 +8,8 @@ SPI.
 
 - **`RmapPostgresFactStore`** — the durable relational backend (**relation
   realization**): a concept region is a **table set** derived by Halpin's Rmap
-  (`RmapDeriver`) from the Stage 03b data model's `## Machine model` block.
+  (`quality-gate/rmap.py`) from the Stage 03b data model's `## Conceptual model`
+  block (`## Machine model` remains a legacy alias).
   Typed columns (`TEXT`/`INTEGER`/`TIMESTAMP`; instants as ISO-8601 strings),
   composite PKs for objectified subjects, child tables for multi-valued
   facts, `NOT NULL`/`UNIQUE`/`CHECK`/`DEFAULT`, rendered intra-concept
@@ -24,7 +25,7 @@ SPI.
 
 **How the pipeline works**: see
 [`methodology/architecture/RELATIONAL_RMAP.md`](../../methodology/architecture/RELATIONAL_RMAP.md)
-for the end-to-end narrative (CSDP → machine model → Rmap → migration and
+for the end-to-end narrative (CSDP → conceptual model → Rmap → migration and
 runtime), [`methodology/implementation/STORAGE_MAPPING.md`](../../methodology/implementation/STORAGE_MAPPING.md)
 for the Rmap vs fact-realization doctrine, and
 [`java-micronaut/RELATIONAL_LOWERING.md`](../java-micronaut/RELATIONAL_LOWERING.md)
@@ -33,10 +34,10 @@ for the per-clause lowering rules.
 ## Where the schema comes from
 
 The derivation reads **data-model files**, not strings:
-`LoginSchemas` derives the login trio from
+`quality-gate/rmap.py` derives the SQL migration and the runtime
+`_generated/rmap-schema.json` descriptor from
 `examples/UC-00-login/stages/03b_data-model/output/*.data-model.md`;
-`RmapDeriverTest` asserts the machine-block derivation equals the `## State`
-equivalence, and `RmapMigrationTest` (in the profile) drift-guards the
+`LoginSchemas` loads the descriptor. `./clad rmap --check` drift-guards the
 Flyway migration against a fresh render. Shape coverage beyond login lives in
 `src/test/resources/domains/` (`clinic`, `ordering`, `lending`): per concept a
 `## State`, the resolved data model, and a frozen migration oracle.

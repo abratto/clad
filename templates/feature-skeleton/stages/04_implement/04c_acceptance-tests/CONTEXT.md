@@ -55,6 +55,17 @@ a unit test, you are at the wrong layer. Read
 
 ## Process
 
+Run the deterministic skeleton generator first:
+
+```
+python3 ../../../../../quality-gate/generate_acceptance_spec.py \
+  --feature ../../../ --write
+```
+
+It emits the scenario sections, triggers, token chains, and terminal statuses;
+resolve only the postconditions and `Test:` bindings by hand. Add `--force`
+only when intentionally regenerating an existing spec.
+
 1. **Derive `output/acceptance-spec.md`** from the inputs using
    `../../../../../templates/acceptance-spec.md`. One `## Scenario:`
    section per top-level `### Scenario:` in `usecase.md`, using the

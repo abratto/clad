@@ -1,8 +1,6 @@
 package dev.legible.storage.domain;
 
 import dev.legible.engine.Region;
-import dev.legible.storage.RmapDeriver;
-import dev.legible.storage.RmapModel;
 import dev.legible.storage.RmapPostgresFactStore;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -61,9 +59,8 @@ class RmapEdgeBehaviorTest {
     }
 
     private RmapPostgresFactStore store(String domain, String concept) {
-        RmapModel model = RmapDeriver.deriveModelFromDataModel(concept,
-                DomainFixtures.dataModel(domain, concept));
-        RmapPostgresFactStore store = new RmapPostgresFactStore(dataSource, model.tables());
+        RmapPostgresFactStore store = new RmapPostgresFactStore(
+                dataSource, DomainFixtures.schemas(domain, concept));
         store.createSchema();
         return store;
     }
@@ -163,15 +160,8 @@ class RmapEdgeBehaviorTest {
         // operation, naming the members; member-qualified operations route to
         // the member's own table, which is what makes a MANDATORY flattened
         // predicate satisfiable (the member's own row carries it).
-        String state = """
-                partyName: Party -> PartyName -- mandatory
-                discountRate: Client -> Int -- optional
-                creditLimit: Supplier -> Int -- optional
-                Client is a Party -- mapping: partition
-                Supplier is a Party -- mapping: partition
-                """;
-        RmapModel model = RmapDeriver.deriveModel("Roles", state);
-        RmapPostgresFactStore store = new RmapPostgresFactStore(dataSource, model.tables());
+        RmapPostgresFactStore store = new RmapPostgresFactStore(
+                dataSource, DomainFixtures.customSchemas("Roles"));
         store.createSchema();
         dev.legible.engine.TransactionalRegion r =
                 (dev.legible.engine.TransactionalRegion) store.region("Roles");
@@ -263,16 +253,8 @@ class RmapEdgeBehaviorTest {
 
         // Contrast — a plain `unique` (no filter) blocks history: even after
         // the return, the second loan cannot happen.
-        String plain = """
-                copyCode: Copy -> CopyCode -- mandatory, unique
-                title: Copy -> Title -- mandatory
-                borrower: Loan -> Member -- mandatory
-                openedAt: Loan -> Timestamp -- mandatory
-                loanCopy: Loan -> Copy -- mandatory, unique
-                returnedAt: Loan -> Timestamp -- optional
-                """;
-        RmapModel model = RmapDeriver.deriveModel("PlainLending", plain);
-        RmapPostgresFactStore s2 = new RmapPostgresFactStore(dataSource, model.tables());
+        RmapPostgresFactStore s2 = new RmapPostgresFactStore(
+                dataSource, DomainFixtures.customSchemas("PlainLending"));
         s2.createSchema();
         dev.legible.engine.TransactionalRegion r2 =
                 (dev.legible.engine.TransactionalRegion) s2.region("PlainLending");

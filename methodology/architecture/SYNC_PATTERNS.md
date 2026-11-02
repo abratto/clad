@@ -44,7 +44,7 @@ when:  User/lookupByUsername: [ username: ?u ] => [ userId: ?id ]
 then:  Session/grant: [ userId: ?id ]               ← from sibling output
 
 when:  Session/grant: [ userId: ?id ] => [ sessionToken: ?token ]
-then:  Web/respond: [ status: 200 ; sessionToken: ?token ]  ← literal 200
+then:  Web/respond: [ httpStatus: 200 ; sessionToken: ?token ]  ← literal 200
 ```
 
 All three are legal without special review. The data lives within the

@@ -82,9 +82,9 @@ enforced structurally:
 ## Subtypes and independent object types
 
 Two further R-mapping refinements are realised by the same derivation
-(`dev.legible.storage.RmapDeriver`); the machine-model block expresses the
-structure, not the mapping choice — the mapping choice is a per-model decision
-recorded in the fact line:
+(`quality-gate/rmap.py`); the machine-model block expresses the structure, not
+the mapping choice — the mapping choice is a per-model decision recorded in the
+fact line:
 
 | Stage 03b form | Relational realisation |
 |---|---|
@@ -98,9 +98,8 @@ Postgres but may not be parsed by jOOQ's `DDLDatabase` (H2); the shipped login
 migration carries none. A derived app adopting filtered uniqueness must
 re-verify its codegen step.
 
-`RmapDeriver.deriveFromDataModel()` still throws when a concept realises as more
-than one table — callers with multi-table regions use
-`deriveModelFromDataModel(...)`.
+`quality-gate/rmap.py` derives multi-table regions directly; the runtime reads
+the generated descriptor and does not perform this check at startup.
 
 ## Deferred: derived facts → SQL views
 
@@ -123,9 +122,8 @@ an actual consumer, not unprompted scheme building.
 
 When an R-map/SQL store is used, **Flyway owns the schema (DDL)**. The base
 migration `src/main/resources/db/migration/V1__login_rmap.sql` is **generated**
-from the same R-map derivation the runtime store reads
-(`dev.legible.storage.RmapMigration` over `LoginSchemas`), so it cannot drift
-from the concepts:
+by `quality-gate/rmap.py` from the Stage 03b conceptual models, so it cannot
+drift from the concepts:
 
 - **Applied at startup** by `store.postgres.StoreInitializer`
   (`Flyway.migrate()`); the runtime store does **not** create tables
@@ -133,12 +131,12 @@ from the concepts:
 - **jOOQ codegen introspects the migration** (`jooq-codegen-maven` + `DDLDatabase`
   over `db/migration` → `com.example.app.db`), so the generated tables track
   the versioned schema.
-- **Drift guard:** `RmapMigrationTest` fails when the committed migration is
-  stale. Regenerate after any concept data-model (machine-model block) change:
+- **Drift guard:** `./clad rmap --check <migration>` fails when the committed
+  migration is stale. Regenerate after any concept data-model change:
 
   ```
-  mvn -f reference-impl/pom.xml -pl java-micronaut -am test \
-      -Dtest=RmapMigrationTest -Drmap.migration.write=true
+  ./clad rmap --feature <feature> --write \
+      reference-impl/java-micronaut/src/main/resources/db/migration/V<n>__<name>_rmap.sql
   ```
 
 `TEXT` is rendered as `varchar` so jOOQ's `DDLDatabase` (H2) can parse it;

@@ -165,11 +165,11 @@ def render(concept: ap.ConceptSpec) -> str:
     add("- <TODO: judgment — consistency with approved concept state>")
     add("- <TODO: judgment — redundancy or completeness note>")
     add("")
-    add("## Machine model")
+    add("## Conceptual model")
     add("")
     add("<!-- CSDP-aligned fact/constraint block consumed by Rmap. Generated from")
     add("     the concept `## State`; keep it a faithful transcription of Steps")
-    add("     2/4/5. See DATA_MODEL_NOTES.md §\"The machine model block\". -->")
+    add("     2/4/5. See DATA_MODEL_NOTES.md §\"The conceptual model block\". -->")
     add("")
     add("```")
     for line in _machine_model_block(name, rels, concept.state_lines):
@@ -200,7 +200,7 @@ def _model_entity_types(rels) -> List[str]:
 
 
 def _machine_model_block(name: str, rels, state_lines: List[str]) -> List[str]:
-    """The CSDP-aligned machine model consumed by Rmap.
+    """The CSDP-aligned conceptual model consumed by Rmap.
 
     Object types are declared with their reference scheme (the first relation
     whose subject is that type identifies it). Every `## State` relation line is
@@ -224,17 +224,29 @@ def _machine_model_block(name: str, rels, state_lines: List[str]) -> List[str]:
         return current
 
     def _identifying_type(entity: str) -> str:
-        """The entity's reference-scheme type. An explicit identifying fact — a
-        single-valued fact over the entity whose value type names an identifier
-        (ends in `Id`) — wins; otherwise an identifier type (the entity's own
-        name ends in `Id`) is identified by itself, and any other (objectified)
-        entity by its intrinsic `<Entity>.id` scheme. This is the CSDP
-        `E is identified by <id>` reference scheme."""
+        """The entity's reference-scheme type.
+
+        An identifier type (the entity's own name ends in `Id`) is identified
+        by itself — never by an `…Id`-valued fact it happens to carry (a claim
+        subject `ClaimId` with `claimEmployee: ClaimId -> EmployeeId` is still
+        identified by `ClaimId`, not by the employee). Any other (objectified)
+        entity is identified by a unique `…Id`-valued fact over it when one is
+        declared, else by its intrinsic `<Entity>.id` scheme. This is the CSDP
+        `E is identified by <id>` reference scheme.
+        """
+        if entity.endswith("Id"):
+            return entity
+        candidates = []
         for raw in state_lines:
-            m = re.match(r"^(\w+)\s*:\s*(\w+)\s*->\s*(\w+)\b", raw.strip())
-            if m and m.group(2) == entity and m.group(3).endswith("Id"):
-                return m.group(3)
-        return entity if entity.endswith("Id") else f"{entity}.id"
+            m = re.match(r"^(\w+)\s*:\s*(\w+)\s*->\s*(\w+)\b(.*)$",
+                         raw.strip())
+            if not m or m.group(2) != entity or not m.group(3).endswith("Id"):
+                continue
+            candidates.append((m.group(3), "unique" in m.group(4).lower()))
+        for value, unique in candidates:
+            if unique:
+                return value
+        return candidates[0][0] if candidates else f"{entity}.id"
 
     # Reference scheme per object type: the ROOT entity's identifying-fact type
     # (a subtype inherits it transitively; a root with no `…Id` identifying fact
@@ -357,12 +369,12 @@ def _render_stateless(name: str) -> str:
     add("")
     add(f"- Confirmed: `{name}` is stateless; no conceptual data model required.")
     add("")
-    add("## Machine model")
+    add("## Conceptual model")
     add("")
-    add("<!-- Stateless concept — no facts, so an empty machine model. -->")
+    add("<!-- Stateless concept — no facts, so an empty conceptual model. -->")
     add("")
     add("```")
-    add(f"# {name} is stateless — no machine model.")
+    add(f"# {name} is stateless — no conceptual model.")
     add("```")
     add("")
     add("## Modeling Notes")

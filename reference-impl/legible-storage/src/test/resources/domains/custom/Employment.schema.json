@@ -1,0 +1,52 @@
+{
+  "models": [
+    {
+      "concept": "Employment",
+      "tables": [
+        {
+          "concept": "Employment",
+          "table": "employment",
+          "objectType": "Party",
+          "primaryKey": [
+            "party"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "party",
+              "column": "party",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "partyName",
+              "column": "party_name",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "vatNumber",
+              "column": "vat_number",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"employment\" (\n  \"party\" varchar NOT NULL PRIMARY KEY,\n  \"party_name\" varchar NOT NULL,\n  \"vat_number\" varchar NOT NULL\n)"
+        }
+      ]
+    }
+  ]
+}

@@ -29,14 +29,6 @@ class RmapCompositeSubjectTest {
 
     private static PGSimpleDataSource dataSource;
 
-    private static final String STATE = """
-            firmByClientId: ClientId -> FirmUri                       -- mandatory
-            provides: FirmUri -> Service                              -- zero or more
-            serviceName: Service -> ServiceName                       -- mandatory
-            serviceJurisdiction: (FirmUri, Service) -> Jurisdiction   -- optional
-            capabilityStatus: (FirmUri, Service) -> Status            -- optional
-            """;
-
     @BeforeAll
     static void startContainer() {
         POSTGRES.start();
@@ -59,8 +51,9 @@ class RmapCompositeSubjectTest {
 
     @Test
     void compositeSubjectIsKeyedByItsPartsAndMultiValuedGetsAChildTable() {
-        RmapModel model = RmapDeriver.deriveModel("LegalOntology", STATE);
-        var store = new RmapPostgresFactStore(dataSource, model.tables());
+        var store = new RmapPostgresFactStore(dataSource,
+                dev.legible.storage.domain.DomainFixtures.customSchemas(
+                        "LegalOntology"));
         store.createSchema();
         Region region = store.region("LegalOntology");
 

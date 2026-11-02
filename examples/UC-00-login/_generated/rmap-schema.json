@@ -1,0 +1,148 @@
+{
+  "models": [
+    {
+      "concept": "UserNaming",
+      "tables": [
+        {
+          "concept": "UserNaming",
+          "table": "user_naming",
+          "objectType": "UserId",
+          "primaryKey": [
+            "user_id"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "user_id",
+              "column": "user_id",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "username",
+              "column": "username",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": true,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"user_naming\" (\n  \"user_id\" varchar NOT NULL PRIMARY KEY,\n  \"username\" varchar NOT NULL UNIQUE\n)"
+        }
+      ]
+    },
+    {
+      "concept": "PasswordAuth",
+      "tables": [
+        {
+          "concept": "PasswordAuth",
+          "table": "password_auth",
+          "objectType": "UserId",
+          "primaryKey": [
+            "user_id"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "user_id",
+              "column": "user_id",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "passwordHash",
+              "column": "password_hash",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "failedAttempts",
+              "column": "failed_attempts",
+              "sqlType": "INTEGER",
+              "mandatory": true,
+              "unique": false,
+              "default": "0",
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "lockedUntil",
+              "column": "locked_until",
+              "sqlType": "TIMESTAMP",
+              "mandatory": false,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"password_auth\" (\n  \"user_id\" varchar NOT NULL PRIMARY KEY,\n  \"password_hash\" varchar NOT NULL,\n  \"failed_attempts\" integer DEFAULT 0 NOT NULL,\n  \"locked_until\" timestamp\n)"
+        }
+      ]
+    },
+    {
+      "concept": "Session",
+      "tables": [
+        {
+          "concept": "Session",
+          "table": "session",
+          "objectType": "SessionId",
+          "primaryKey": [
+            "session_id"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "session_id",
+              "column": "session_id",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "userId",
+              "column": "user_id",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "openedAt",
+              "column": "opened_at",
+              "sqlType": "TIMESTAMP",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"session\" (\n  \"session_id\" varchar NOT NULL PRIMARY KEY,\n  \"user_id\" varchar NOT NULL,\n  \"opened_at\" timestamp NOT NULL\n)"
+        }
+      ]
+    }
+  ]
+}

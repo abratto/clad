@@ -42,8 +42,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * several values) live in their own child table and are flushed as rows.
  *
  * <p><strong>DDL is Flyway's.</strong> This store does not create tables at
- * runtime in a deployed R-map profile ({@link #createSchema()} is a dev/test
- * helper applying the same derived DDL).
+ * runtime in a deployed R-map profile; {@link #createSchema()} is a dev/test
+ * helper applying the generated schema for local tests. Schema derivation and
+ * migration generation live in {@code quality-gate/rmap.py}.
  */
 public final class RmapPostgresFactStore implements FactStore {
 
@@ -75,16 +76,16 @@ public final class RmapPostgresFactStore implements FactStore {
      * Create every table (idempotent).
      *
      * <p><strong>Dev/test helper only.</strong> When a SQL/R-map store is
-     * deployed, Flyway owns DDL: the schema is a generated, versioned migration
-     * ({@link RmapMigration}), applied at startup, not created by the runtime
-     * store. This method applies the same derived DDL directly, for tests and
-     * local use without Flyway.
+     * deployed, Flyway owns DDL: the schema is the generated, versioned
+     * migration produced by {@code quality-gate/rmap.py}, applied at startup,
+     * not created by the runtime store. This method applies the same DDL
+     * directly, for tests and local use without Flyway.
      */
     public void createSchema() {
         try {
             for (RmapModel model : models.values()) {
                 for (RelationSchema schema : model.tables()) {
-                    dsl.execute(schema.ddl());
+                    dsl.execute(schema.ddlText());
                 }
             }
         } catch (org.jooq.exception.DataAccessException e) {
@@ -833,6 +834,7 @@ public final class RmapPostgresFactStore implements FactStore {
             return switch (col.sqlType()) {
                 case "INTEGER" -> DSL.field(DSL.name(col.column()), Integer.class);
                 case "TIMESTAMP" -> DSL.field(DSL.name(col.column()), Timestamp.class);
+                case "BOOLEAN" -> DSL.field(DSL.name(col.column()), Boolean.class);
                 default -> DSL.field(DSL.name(col.column()), String.class);
             };
         }
@@ -852,6 +854,7 @@ public final class RmapPostgresFactStore implements FactStore {
             case "TIMESTAMP" -> value.chars().allMatch(Character::isDigit)
                     ? new Timestamp(Long.parseLong(value))
                     : Timestamp.from(java.time.Instant.parse(value));
+            case "BOOLEAN" -> Boolean.parseBoolean(value);
             default -> value;
         };
     }
@@ -861,6 +864,7 @@ public final class RmapPostgresFactStore implements FactStore {
         return switch (col.sqlType()) {
             case "INTEGER" -> String.valueOf(value);
             case "TIMESTAMP" -> ((Timestamp) value).toInstant().toString();
+            case "BOOLEAN" -> String.valueOf(value);
             default -> String.valueOf(value);
         };
     }

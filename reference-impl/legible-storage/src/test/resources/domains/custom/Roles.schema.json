@@ -1,0 +1,95 @@
+{
+  "models": [
+    {
+      "concept": "Roles",
+      "tables": [
+        {
+          "concept": "Roles",
+          "table": "roles__client",
+          "objectType": "Party",
+          "primaryKey": [
+            "party"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "party",
+              "column": "party",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "discountRate",
+              "column": "discount_rate",
+              "sqlType": "INTEGER",
+              "mandatory": false,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "partyName",
+              "column": "party_name",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"roles__client\" (\n  \"party\" varchar NOT NULL PRIMARY KEY,\n  \"discount_rate\" integer,\n  \"party_name\" varchar NOT NULL\n)"
+        },
+        {
+          "concept": "Roles",
+          "table": "roles__supplier",
+          "objectType": "Party",
+          "primaryKey": [
+            "party"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "party",
+              "column": "party",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "creditLimit",
+              "column": "credit_limit",
+              "sqlType": "INTEGER",
+              "mandatory": false,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "partyName",
+              "column": "party_name",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"roles__supplier\" (\n  \"party\" varchar NOT NULL PRIMARY KEY,\n  \"credit_limit\" integer,\n  \"party_name\" varchar NOT NULL\n)"
+        }
+      ]
+    }
+  ]
+}

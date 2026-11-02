@@ -46,18 +46,9 @@ class RmapReferenceSchemeStoreTest {
 
     @Test
     void factsRoundTripUnderARenamedReferenceScheme() {
-        String model = """
-                # DrinkLogging — conceptual data model
-
-                ## Machine model
-
-                ```
-                object-type DrinkEntry identified-by EntryId
-                fact name : DrinkEntry -> DrinkName -- mandatory
-                ```
-                """;
         RmapPostgresFactStore store = new RmapPostgresFactStore(dataSource,
-                RmapDeriver.deriveModelFromDataModel("DrinkLogging", model).tables());
+                dev.legible.storage.domain.DomainFixtures.customSchemas(
+                        "DrinkLogging"));
         store.createSchema();
 
         Region region = store.region("DrinkLogging");

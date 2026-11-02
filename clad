@@ -330,6 +330,18 @@ for s in cs.STAGES:
 "
 }
 
+cmd_rmap() {
+    case " $* " in
+        *" --feature "*|*" --data-model "*) python3 "$QG/rmap.py" "$@" ;;
+        *)
+            local feat
+            feat=$(active_feature)
+            [ -z "$feat" ] && { echo "No active feature found; pass --feature."; exit 1; }
+            python3 "$QG/rmap.py" --feature "$FEATURES_DIR/$feat" "$@"
+            ;;
+    esac
+}
+
 cmd_feature() {
     local feat
     feat=$(active_feature)
@@ -358,6 +370,7 @@ CLAD CLI — lightweight wrapper for quality-gate scripts.
   ./clad new-feature <slug>        Bootstrap features/<slug> from the skeleton,
                                    filling _config from clad.properties
   ./clad verify                    Run verify_artefacts.py (artefact gate)
+  ./clad rmap [--feature <path>]   Generate/check the relational mapping (Rmap)
   ./clad corpus-status             Read-only concept-corpus health report
                                    (history, stale snapshots, dependence
                                    in-degree, remodel candidates)
@@ -399,6 +412,7 @@ case "${1:-help}" in
     new-feature) shift; cmd_new_feature "$@";;
     rename-sync) shift; cmd_rename_sync "$@";;
     verify)      shift; cmd_verify "$@";;
+    rmap)        shift; cmd_rmap "$@";;
     next)        cmd_next;;
     stages)      cmd_stages "${2:-}";;
     checklists)  cmd_checklists;;

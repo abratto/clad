@@ -12,6 +12,7 @@ public final class FlowArchiveBuffer {
 
     private final int capacity;
     private final ArrayDeque<FlowRecord> recent = new ArrayDeque<>();
+    private long evicted;
 
     public FlowArchiveBuffer(int capacity) {
         this.capacity = capacity;
@@ -22,11 +23,20 @@ public final class FlowArchiveBuffer {
         recent.addLast(flow);
         while (recent.size() > capacity) {
             recent.removeFirst();
+            evicted++;
         }
     }
 
     public synchronized List<FlowRecord> recent() {
         return List.copyOf(recent);
+    }
+
+    public int capacity() {
+        return capacity;
+    }
+
+    public synchronized long evicted() {
+        return evicted;
     }
 
     public synchronized Optional<FlowRecord> latest() {
