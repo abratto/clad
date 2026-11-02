@@ -111,9 +111,8 @@ tabled-views decisions).
 
 **DDL ownership (R-map/SQL).** When a relational profile realizes the R-map, the
 schema is owned by **Flyway**, as a generated, versioned migration derived from
-the Stage 03b model (the java-micronaut profile renders it with
-`dev.legible.storage.RmapMigration` and guards staleness with a drift test); the
-runtime store does not create tables. jOOQ (the profile's SQL interface) and its
+the Stage 03b model by `quality-gate/rmap.py`; `./clad rmap --check` guards
+staleness and the runtime store does not create tables. jOOQ (the profile's SQL interface) and its
 generated classes introspect that migration. Keep **reference/lookup data** in
 Flyway (versioned or `R__` repeatable) and **demo/fixture data** in app-level
 seeding (it must also work on the in-memory binding and must not ship to
@@ -127,9 +126,9 @@ sufficient when the profile only needs the engine's SPI — but it does **not**
 produce Rmap's typed, keyed, constrained tables. Rmap remains the procedure for
 a normalized relational schema; both are valid Stage 04a outcomes behind the
 same `FactStore`/`Region` boundary. `legible-storage/RmapPostgresFactStore`
-demonstrates the Rmap path: `RmapDeriver` derives a `RelationSchema` per
-concept from the **Stage 03b conceptual data model's `## Machine model` block**
-— the CSDP-aligned, machine-readable transcription of the elementary facts and
+demonstrates the Rmap path: `quality-gate/rmap.py` derives the tables from the
+**Stage 03b conceptual data model's `## Conceptual model` block** — the
+CSDP-aligned, machine-readable transcription of the elementary facts and
 constraints (typed columns — `TEXT`/`INTEGER`/`TIMESTAMP` — primary key,
 `DEFAULT`, `UNIQUE`, `NOT NULL`, `CHECK`, intra-concept `FOREIGN KEY`) — and
 the generic `Region` SPI maps each fact-type predicate to its column with

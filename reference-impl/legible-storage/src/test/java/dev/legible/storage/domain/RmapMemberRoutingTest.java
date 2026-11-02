@@ -2,8 +2,6 @@ package dev.legible.storage.domain;
 
 import dev.legible.engine.InMemoryFactStore;
 import dev.legible.engine.Region;
-import dev.legible.storage.RmapDeriver;
-import dev.legible.storage.RmapModel;
 import dev.legible.storage.RmapPostgresFactStore;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -60,9 +58,8 @@ class RmapMemberRoutingTest {
     }
 
     private RmapPostgresFactStore store(String domain, String concept) {
-        RmapModel model = RmapDeriver.deriveModelFromDataModel(concept,
-                DomainFixtures.dataModel(domain, concept));
-        RmapPostgresFactStore store = new RmapPostgresFactStore(dataSource, model.tables());
+        RmapPostgresFactStore store = new RmapPostgresFactStore(
+                dataSource, DomainFixtures.schemas(domain, concept));
         store.createSchema();
         return store;
     }
@@ -135,13 +132,8 @@ class RmapMemberRoutingTest {
                 notOwned.getMessage());
 
         // Absorbed member: no table of its own.
-        String absorbed = """
-                partyName: Party -> PartyName -- mandatory
-                vatNumber: Employer -> VatNumber -- mandatory
-                Employer is a Party -- mapping: absorb
-                """;
-        RmapModel model = RmapDeriver.deriveModel("Employment", absorbed);
-        RmapPostgresFactStore s2 = new RmapPostgresFactStore(dataSource, model.tables());
+        RmapPostgresFactStore s2 = new RmapPostgresFactStore(
+                dataSource, DomainFixtures.customSchemas("Employment"));
         s2.createSchema();
         Region e2 = s2.region("Employment");
         var noTable = assertThrows(IllegalArgumentException.class,

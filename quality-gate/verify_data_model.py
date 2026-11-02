@@ -32,6 +32,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
+import generate_data_model as gdm  # noqa: E402
 
 
 # All required sub-section headings across the 7 CSDP steps
@@ -93,7 +94,127 @@ STORAGE_LEAK_PATTERNS = [
 ]
 
 
-def check_data_model(path):
+def _snake(name):
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
+
+
+def check_machine_semantics(machine):
+    """Ambiguity/cycle checks the textual grammar cannot express.
+
+    Deterministic derivation is only safe when every name maps to exactly one
+    column/table and the subtype graph is acyclic with known mappings.
+    """
+    failures = []
+    field_names = {}
+    for fact in machine.facts:
+        folded = _snake(fact.field)
+        if folded in field_names:
+            failures.append(
+                f"machine model facts '{field_names[folded]}' and "
+                f"'{fact.field}' both map to column '{folded}'")
+        else:
+            field_names[folded] = fact.field
+
+    type_names = {}
+    for object_type in machine.object_types:
+        folded = _snake(object_type)
+        if folded in type_names:
+            failures.append(
+                f"object types '{type_names[folded]}' and "
+                f"'{object_type}' both map to table prefix '{folded}'")
+        else:
+            type_names[folded] = object_type
+
+    supertype_of = {}
+    for subtype, supertype, mapping in machine.subtypes:
+        if mapping not in {"absorb", "separate", "partition"}:
+            failures.append(
+                f"subtype '{subtype}' has unknown mapping '{mapping}' "
+                f"(expected absorb|separate|partition)")
+        supertype_of[subtype] = supertype
+
+    for start in supertype_of:
+        seen = []
+        current = start
+        while current in supertype_of:
+            if current in seen:
+                cycle = " -> ".join(seen + [current])
+                failures.append(f"subtype cycle: {cycle}")
+                break
+            seen.append(current)
+            current = supertype_of[current]
+
+    declared = set(machine.object_types) | set(machine.independent)
+    declared |= {fact.subject_type for fact in machine.facts
+                 if not fact.subject_type.startswith("(")}
+    declared |= {fact.value_type for fact in machine.facts}
+    for subtype, supertype, _mapping in machine.subtypes:
+        if supertype not in declared:
+            failures.append(
+                f"subtype '{subtype}' names undeclared supertype '{supertype}'")
+    return failures
+
+
+def _annotation_tokens(relation):
+    raw = (relation.multiplicity or "").lower()
+    tokens = {token.strip() for token in raw.split(",") if token.strip()}
+    if relation.unique:
+        tokens.add("unique")
+    return tuple(sorted(tokens))
+
+
+def _machine_signature(machine):
+    facts = sorted(
+        (fact.field, fact.subject_type, fact.value_type,
+         _annotation_tokens(fact))
+        for fact in machine.facts)
+    return facts, sorted(machine.subtypes), sorted(machine.independent)
+
+
+def _concept_path(concept_name, concept_dirs):
+    for directory in concept_dirs:
+        candidate = os.path.join(directory, f"{concept_name}.concept.md")
+        if os.path.isfile(candidate):
+            return candidate
+    return None
+
+
+def check_machine_model_fidelity(path, concept_dirs):
+    """The machine block must remain a faithful transcription of `## State`.
+
+    `generate_data_model.py` builds the block mechanically. If a human edits
+    one side without regenerating, the schema silently diverges from the
+    approved concept state. Compare the semantic fact signatures instead of
+    raw bytes so annotation order is not significant.
+    """
+    name = os.path.basename(path).replace(".data-model.md", "")
+    concept_path = _concept_path(name, concept_dirs)
+    if concept_path is None:
+        return []
+    with open(path, encoding="utf-8") as handle:
+        actual_text = handle.read()
+    actual = ap.parse_machine_model(actual_text)
+    if not actual.present:
+        return []
+    concept = ap.parse_concept(concept_path)
+    # The generator only lowers `field: Subject -> Value` relations. A
+    # legitimate map/collection state form has no machine fact, so fidelity
+    # would be a false failure there.
+    if not any("->" in line for line in concept.state_lines):
+        return []
+    expected = ap.parse_machine_model(gdm.render(concept))
+    actual_sig = _machine_signature(actual)
+    expected_sig = _machine_signature(expected)
+    if actual_sig == expected_sig:
+        return []
+    return [
+        "machine model diverges from the concept `## State` — regenerate "
+        "with generate_data_model.py and resolve only the judgment TODOs "
+        f"(expected facts {expected_sig[0]}, got {actual_sig[0]})"
+    ]
+
+
+def check_data_model(path, concept_dirs=None):
     """Validate a single data model file. Returns list of failure messages."""
     failures = []
     with open(path) as f:
@@ -159,8 +280,12 @@ def check_data_model(path):
     machine = ap.parse_machine_model(content)
     stateless = any(STATELESS_MARKER.search(line) for line in lines)
     if not stateless and not machine.present:
-        failures.append("missing `## Machine model` block (Rmap input)")
+        failures.append(
+            "missing `## Conceptual model` block (Rmap input; "
+            "`## Machine model` is accepted as the legacy alias)")
     else:
+        failures.extend(machine.errors)
+        failures.extend(check_machine_semantics(machine))
         # Every fact subject must be a declared object type, an introduced
         # value type, or a compound of declared object types — catch a block
         # that names a type no Step declared.
@@ -179,6 +304,8 @@ def check_data_model(path):
                     f"machine model references undeclared type '{p}' "
                     f"in fact '{f.field}'")
 
+    if concept_dirs:
+        failures.extend(check_machine_model_fidelity(path, concept_dirs))
     return failures
 
 
@@ -267,7 +394,7 @@ def main():
     # Structural checks per file
     for fname in data_files:
         path = os.path.join(data_dir, fname)
-        file_failures = check_data_model(path)
+        file_failures = check_data_model(path, concept_dirs)
         for msg in file_failures:
             print(f"FAIL  {fname}: {msg}")
             total_failures += 1

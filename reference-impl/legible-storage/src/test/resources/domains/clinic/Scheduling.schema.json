@@ -1,0 +1,136 @@
+{
+  "models": [
+    {
+      "concept": "Scheduling",
+      "tables": [
+        {
+          "concept": "Scheduling",
+          "table": "scheduling__physician_and_patient_and_timeslot",
+          "objectType": "Physician+Patient+Timeslot",
+          "primaryKey": [
+            "physician",
+            "patient",
+            "timeslot"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "physician",
+              "column": "physician",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "patient",
+              "column": "patient",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "timeslot",
+              "column": "timeslot",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "appt",
+              "column": "appt",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [
+            {
+              "name": "ck_physician_and_patient_and_timeslot_appt",
+              "expression": "appt IN ('booked', 'seen', 'cancelled')"
+            }
+          ],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"scheduling__physician_and_patient_and_timeslot\" (\n  \"physician\" varchar NOT NULL,\n  \"patient\" varchar NOT NULL,\n  \"timeslot\" varchar NOT NULL,\n  \"appt\" varchar NOT NULL,\n  PRIMARY KEY (\"physician\", \"patient\", \"timeslot\"),\n  CONSTRAINT ck_physician_and_patient_and_timeslot_appt CHECK (appt IN ('booked', 'seen', 'cancelled'))\n)"
+        },
+        {
+          "concept": "Scheduling",
+          "table": "scheduling__physician_and_patient",
+          "objectType": "Physician+Patient",
+          "primaryKey": [
+            "physician",
+            "patient"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "physician",
+              "column": "physician",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "patient",
+              "column": "patient",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "consultFee",
+              "column": "consult_fee",
+              "sqlType": "INTEGER",
+              "mandatory": false,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"scheduling__physician_and_patient\" (\n  \"physician\" varchar NOT NULL,\n  \"patient\" varchar NOT NULL,\n  \"consult_fee\" integer,\n  PRIMARY KEY (\"physician\", \"patient\")\n)"
+        },
+        {
+          "concept": "Scheduling",
+          "table": "scheduling__referral_source",
+          "objectType": "ReferralSource",
+          "primaryKey": [
+            "referral_source"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "referral_source",
+              "column": "referral_source",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"scheduling__referral_source\" (\n  \"referral_source\" varchar NOT NULL PRIMARY KEY\n)"
+        }
+      ]
+    }
+  ]
+}

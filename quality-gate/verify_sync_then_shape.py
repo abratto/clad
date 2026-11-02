@@ -14,7 +14,7 @@ Why this exists:
   (maintenance change `transport-framing-adapter-owned`).
 
 Rule:
-  A `then` argument list is flat — `[ status: 200 ; sessionToken: ?sid ]`. A
+  A `then` argument list is flat — `[ httpStatus: 200 ; sessionToken: ?sid ]`. A
   `{ … }` inside a `then` signature is a defect.
 
 Findings: every `Concept/action: [ … { … } … ]` signature line (in the Rule
@@ -34,6 +34,14 @@ import sys
 # `Concept/action: [ ... ]` — the argument list stops at the first `]`, so a
 # nested `body: { … }` remains inside the captured group.
 SIGNATURE = re.compile(r"\b([A-Z]\w*/\w+):\s*\[([^\]]*)\]")
+# A quoted literal may carry a brace: a path-parameter route is
+# `"claims/{claimId}/decision"`. Only an unquoted brace is a transport frame.
+QUOTED = re.compile(r'"(?:\\.|[^"\\])*"')
+# Argument names in a `Web/respond` signature (values may contain `;` inside a
+# quoted message, but names are the `word:` at the start of an item).
+ARG_NAME = re.compile(r'(?:^|;)\s*([A-Za-z_]\w*)\s*:')
+STATUS_VALUE = re.compile(r'\bhttpStatus\s*:\s*([^;]+)')
+LEGACY_STATUS = re.compile(r'(?:^|;)\s*status\s*:')
 
 
 def scan(path):
@@ -42,9 +50,44 @@ def scan(path):
     with open(path, encoding="utf-8") as handle:
         for lineno, line in enumerate(handle, 1):
             for match in SIGNATURE.finditer(line):
-                if "{" in match.group(2):
+                args = QUOTED.sub('""', match.group(2))
+                if "{" in args:
                     hits.append((lineno, match.group(1)))
     return hits
+
+
+def response_findings(path):
+    """Return response-grammar findings: unique args + numeric transport status."""
+    findings = []
+    with open(path, encoding="utf-8") as handle:
+        for lineno, line in enumerate(handle, 1):
+            for match in SIGNATURE.finditer(line):
+                if match.group(1) != "Web/respond":
+                    continue
+                args = QUOTED.sub('""', match.group(2))
+                names = ARG_NAME.findall(args)
+                duplicates = sorted({name for name in names
+                                     if names.count(name) > 1})
+                if duplicates:
+                    findings.append(
+                        f"line {lineno}: Web/respond repeats "
+                        f"{', '.join(duplicates)} — the transport status and a "
+                        f"body field must have distinct names (e.g. "
+                        f"`claimStatus`)")
+                if LEGACY_STATUS.search(args):
+                    findings.append(
+                        f"line {lineno}: Web/respond uses `status` for the "
+                        f"transport; name it `httpStatus` and keep domain "
+                        f"fields distinct (e.g. `claimStatus`)")
+                status = STATUS_VALUE.search(args)
+                if not status:
+                    findings.append(
+                        f"line {lineno}: Web/respond has no `httpStatus`")
+                elif not re.fullmatch(r"\s*\d{3}\s*", status.group(1)):
+                    findings.append(
+                        f"line {lineno}: Web/respond `httpStatus` must be a "
+                        f"numeric transport code, got `{status.group(1).strip()}`")
+    return findings
 
 
 def main():
@@ -78,6 +121,8 @@ def main():
                     f"{feature}/{name}:{lineno}: `{signature}` nests a `{{ … }}` "
                     f"in its `then` — pass the authored result flat; the "
                     f"primary adapter serializes the response frame")
+            for finding in response_findings(path):
+                findings.append(f"{feature}/{name}: {finding}")
 
     if not scanned:
         print("SKIP  no sync specs found")
@@ -85,8 +130,8 @@ def main():
 
     if findings:
         label = "WARN" if args.advisory else "FAIL"
-        print(f"{label}  {len(findings)} sync `then` signature(s) carry a "
-              f"transport frame:")
+        print(f"{label}  {len(findings)} sync `then` defect(s) — carry a "
+              f"transport frame or violate the response grammar:")
         for finding in findings:
             print(f"  - {finding}")
         return 0 if args.advisory else 1

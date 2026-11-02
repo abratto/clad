@@ -253,6 +253,20 @@ def main():
         for line in detail.splitlines():
             print(f"        {line}")
 
+    # The conceptual model still transcribes the approved concept state
+    # (fast Rmap drift half; the profile test proves the SQL/runtime side).
+    code, out, err = run_script("verify_model_current.py",
+                                ["--include-examples"])
+    detail = (out + err).strip()
+    ok = code == 0
+    print(f"\n  [{'PASS' if ok else 'FAIL'}] model_current")
+    if not ok:
+        all_pass = False
+        for line in detail.splitlines()[:10]:
+            print(f"        {line}")
+    elif detail and not detail.startswith("SKIP"):
+        print(f"        {detail.splitlines()[-1]}")
+
     # Sync `then` carries the authored result, not the transport frame
     # (feature-independent).
     code, out, err = run_script("verify_sync_then_shape.py",

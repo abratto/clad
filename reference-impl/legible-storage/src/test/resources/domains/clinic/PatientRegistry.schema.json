@@ -1,0 +1,92 @@
+{
+  "models": [
+    {
+      "concept": "PatientRegistry",
+      "tables": [
+        {
+          "concept": "PatientRegistry",
+          "table": "patient_registry__person",
+          "objectType": "Person",
+          "primaryKey": [
+            "person"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "person",
+              "column": "person",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "registeredAt",
+              "column": "registered_at",
+              "sqlType": "TIMESTAMP",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "gender",
+              "column": "gender",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [
+            {
+              "name": "ck_person_gender",
+              "expression": "gender IN ('M', 'F')"
+            }
+          ],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"patient_registry__person\" (\n  \"person\" varchar NOT NULL PRIMARY KEY,\n  \"registered_at\" timestamp NOT NULL,\n  \"gender\" varchar NOT NULL,\n  CONSTRAINT ck_person_gender CHECK (gender IN ('M', 'F'))\n)"
+        },
+        {
+          "concept": "PatientRegistry",
+          "table": "patient_registry__patient",
+          "objectType": "Person",
+          "primaryKey": [
+            "person"
+          ],
+          "foreignKeys": [
+            "person -> patient_registry__person(person)"
+          ],
+          "columns": [
+            {
+              "predicate": "person",
+              "column": "person",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "insurerName",
+              "column": "insurer_name",
+              "sqlType": "TEXT",
+              "mandatory": false,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"patient_registry__patient\" (\n  \"person\" varchar NOT NULL PRIMARY KEY,\n  \"insurer_name\" varchar,\n  FOREIGN KEY (\"person\") REFERENCES \"patient_registry__person\" (\"person\")\n)"
+        }
+      ]
+    }
+  ]
+}

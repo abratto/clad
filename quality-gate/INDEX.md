@@ -16,6 +16,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 |---|---|---|---|
 | `generate_review_views.py` | generate_review_views.py — emit Stage 03a's two derived review views: * `concept-matrix.md` — the FR×DP matrix (scenarios × concepts) plus the anti-pattern findings (God Object / duplication / entanglement). | stage 03a (Dependency review) | gate |
 | `lint_concept_overlap.py` | lint_concept_overlap.py — advisory linter: NEW proposals that overlap an existing catalog concept are surfaced as warnings, never failures. | stage 01b (Chain table) | gate |
+| `rmap.py` | Rmap derivation and SQL rendering — the single authoritative implementation. | stage 04a (Storage mapping) | gate |
 | `sync_information.py` | sync_information.py — advisory linter: each sync's A/B/C/D binding profile, the feature aggregate, and two advisory findings. | stage 03 (Syncs) | gate |
 | `verify_acceptance_binding.py` | Stage gate: Acceptance Spec ↔ native tests. | stage 04c (Acceptance tests) | gate |
 | `verify_action_chain.py` | Stage gate: action names flow consistently through the full artefact chain: responsibility map → chain table → concept spec → sync spec → dependency card → contract. | stage 04b (Concept contract) | gate |
@@ -50,6 +51,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_links.py` | relative markdown cross-reference links resolve | project-level (every `verify_artefacts` run) | gate |
 | `verify_maintenance_change_readiness.py` | engine/profile/config changes have a governed maintenance record | pre-commit hook | gate |
 | `verify_mechanism_citations.py` | a mechanism claim cites the code it rests on | project-level (every `verify_artefacts` run) | gate |
+| `verify_model_current.py` | Fast conceptual-model drift check (no Java build required). | by hand (advisory tooling) | gate |
 | `verify_mutation_score.py` | Stage gate: test effectiveness via mutation score. | stage 04d (Concept implementation) — run by the profile test command; stage 04e (Sync implementation) — run by the profile test command | gate |
 | `verify_outcome_alignment.py` | Stage gate: chain-table outcomes match contract enums. | stage 04b (Concept contract) | gate |
 | `verify_outcome_casing.py` | authored outcome tokens are SCREAMING_SNAKE_CASE. | stage 01b (Chain table); stage 02 (Concept specs) | gate |
@@ -59,6 +61,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_relational_mapping.py` | Conditional gate: relational storage mappings (Stage 04a) must satisfy the Rmap rules. | stage 04a (Storage mapping) | gate |
 | `verify_responsibility_map_shape.py` | Stage 01a gate: the Concepts table's `Owned actions` column carries NAMES ONLY — no signatures, no outcomes. | stage 01a (Responsibility map) | gate |
 | `verify_reused_concept_contracts.py` | a REUSED concept must have a canonical contract in the corpus. | stage 04b (Concept contract) | gate |
+| `verify_rmap_descriptor.py` | Check the committed runtime descriptor against the conceptual model. | stage 04a (Storage mapping) | gate |
 | `verify_scenario_coverage.py` | Stage gate: goal → scenario → chain → sync coverage. | stage 03 (Syncs) | gate |
 | `verify_shared_action_contracts.py` | a concept action/outcome vocabulary shared across features does not drift | project-level (every `verify_artefacts` run) | gate |
 | `verify_shared_triggers_current.py` | the generated cross-UC shared-trigger view is current | project-level (every `verify_artefacts` run) | advisory |
@@ -73,6 +76,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_sync_then_shape.py` | a sync `then` carries the authored result, not a transport frame | project-level (every `verify_artefacts` run) | gate |
 | `verify_sync_transition_coverage.py` | Stage 03: every chain-table invocation edge must have a sync file. | stage 03 (Syncs) | gate |
 | `verify_test_naming.py` | Advisory: unit-test naming conventions. | by hand (advisory tooling) | gate |
+| `verify_trace_complete.py` | Blocking Stage 05 check: the canonical trace carries real evidence. | stage 05 (Verify) | gate |
 
 ## Non-`verify_` helper scripts
 

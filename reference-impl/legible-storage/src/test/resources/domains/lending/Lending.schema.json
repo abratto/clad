@@ -1,0 +1,115 @@
+{
+  "models": [
+    {
+      "concept": "Lending",
+      "tables": [
+        {
+          "concept": "Lending",
+          "table": "lending__copy",
+          "objectType": "Copy",
+          "primaryKey": [
+            "copy"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "copy",
+              "column": "copy",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "copyCode",
+              "column": "copy_code",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": true,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "title",
+              "column": "title",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"lending__copy\" (\n  \"copy\" varchar NOT NULL PRIMARY KEY,\n  \"copy_code\" varchar NOT NULL UNIQUE,\n  \"title\" varchar NOT NULL\n)"
+        },
+        {
+          "concept": "Lending",
+          "table": "lending__loan",
+          "objectType": "Loan",
+          "primaryKey": [
+            "loan"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "loan",
+              "column": "loan",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "borrower",
+              "column": "borrower",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "openedAt",
+              "column": "opened_at",
+              "sqlType": "TIMESTAMP",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "loanCopy",
+              "column": "loan_copy",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": "returnedAt"
+            },
+            {
+              "predicate": "returnedAt",
+              "column": "returned_at",
+              "sqlType": "TIMESTAMP",
+              "mandatory": false,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"lending__loan\" (\n  \"loan\" varchar NOT NULL PRIMARY KEY,\n  \"borrower\" varchar NOT NULL,\n  \"opened_at\" timestamp NOT NULL,\n  \"loan_copy\" varchar NOT NULL,\n  \"returned_at\" timestamp\n);\nCREATE UNIQUE INDEX IF NOT EXISTS \"lending__loan_loan_copy_open_idx\" ON \"lending__loan\" (\"loan_copy\") WHERE \"returned_at\" IS NULL"
+        }
+      ]
+    }
+  ]
+}

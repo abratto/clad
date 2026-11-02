@@ -1,0 +1,53 @@
+{
+  "models": [
+    {
+      "concept": "Hold",
+      "tables": [
+        {
+          "concept": "Hold",
+          "table": "hold__member_and_copy",
+          "objectType": "Member+Copy",
+          "primaryKey": [
+            "member",
+            "copy"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "member",
+              "column": "member",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "copy",
+              "column": "copy",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "hold",
+              "column": "hold",
+              "sqlType": "TEXT",
+              "mandatory": false,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"hold__member_and_copy\" (\n  \"member\" varchar NOT NULL,\n  \"copy\" varchar NOT NULL,\n  \"hold\" varchar,\n  PRIMARY KEY (\"member\", \"copy\")\n)"
+        }
+      ]
+    }
+  ]
+}

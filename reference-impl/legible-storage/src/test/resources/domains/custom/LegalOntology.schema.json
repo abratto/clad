@@ -1,0 +1,163 @@
+{
+  "models": [
+    {
+      "concept": "LegalOntology",
+      "tables": [
+        {
+          "concept": "LegalOntology",
+          "table": "legal_ontology__client_id",
+          "objectType": "ClientId",
+          "primaryKey": [
+            "client_id"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "client_id",
+              "column": "client_id",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "firmByClientId",
+              "column": "firm_by_client_id",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"legal_ontology__client_id\" (\n  \"client_id\" varchar NOT NULL PRIMARY KEY,\n  \"firm_by_client_id\" varchar NOT NULL\n)"
+        },
+        {
+          "concept": "LegalOntology",
+          "table": "legal_ontology__service",
+          "objectType": "Service",
+          "primaryKey": [
+            "service"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "service",
+              "column": "service",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "serviceName",
+              "column": "service_name",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"legal_ontology__service\" (\n  \"service\" varchar NOT NULL PRIMARY KEY,\n  \"service_name\" varchar NOT NULL\n)"
+        },
+        {
+          "concept": "LegalOntology",
+          "table": "legal_ontology__firm_uri_and_service",
+          "objectType": "FirmUri+Service",
+          "primaryKey": [
+            "firm_uri",
+            "service"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "firm_uri",
+              "column": "firm_uri",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "service",
+              "column": "service",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "serviceJurisdiction",
+              "column": "service_jurisdiction",
+              "sqlType": "TEXT",
+              "mandatory": false,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "capabilityStatus",
+              "column": "capability_status",
+              "sqlType": "TEXT",
+              "mandatory": false,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"legal_ontology__firm_uri_and_service\" (\n  \"firm_uri\" varchar NOT NULL,\n  \"service\" varchar NOT NULL,\n  \"service_jurisdiction\" varchar,\n  \"capability_status\" varchar,\n  PRIMARY KEY (\"firm_uri\", \"service\")\n)"
+        },
+        {
+          "concept": "LegalOntology",
+          "table": "legal_ontology__provides",
+          "objectType": "FirmUri",
+          "primaryKey": [
+            "firm_uri",
+            "provides"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "firm_uri",
+              "column": "firm_uri",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "provides",
+              "column": "provides",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"legal_ontology__provides\" (\n  \"firm_uri\" varchar NOT NULL,\n  \"provides\" varchar NOT NULL,\n  PRIMARY KEY (\"firm_uri\", \"provides\")\n)"
+        }
+      ]
+    }
+  ]
+}

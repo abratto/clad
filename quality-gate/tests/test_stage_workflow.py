@@ -107,6 +107,8 @@ class StageWorkflowTests(unittest.TestCase):
         # (it FAILED before the no-op mechanism).
         with tempfile.TemporaryDirectory() as temporary:
             feature = self.make_feature(temporary)
+            (feature / "_config" / "storage.persistent.md").write_text(
+                "true\n", encoding="utf-8")
             resume = feature / "RESUME.md"
             resume.write_text(
                 resume.read_text(encoding="utf-8").replace("`pending`", "`approved`"),
@@ -131,6 +133,8 @@ class StageWorkflowTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temporary:
             feature = self.make_feature(temporary)
+            (feature / "_config" / "storage.persistent.md").write_text(
+                "true\n", encoding="utf-8")
             resume = feature / "RESUME.md"
             resume.write_text(
                 resume.read_text(encoding="utf-8").replace("`pending`", "`approved`"),

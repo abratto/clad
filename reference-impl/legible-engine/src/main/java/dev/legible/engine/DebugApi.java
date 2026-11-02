@@ -59,6 +59,32 @@ public final class DebugApi {
         return response;
     }
 
+    /** {@code GET /api/dev/archive} — completed flows retained in the buffer, newest first. */
+    public List<Map<String, Object>> archived() {
+        if (buffer == null) {
+            return List.of();
+        }
+        List<FlowRecord> recent = buffer.recent();
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (int i = recent.size() - 1; i >= 0; i--) {
+            FlowRecord record = recent.get(i);
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("flowId", record.flowId());
+            row.put("actionCount", record.invocations().size());
+            out.add(row);
+        }
+        return out;
+    }
+
+    /** {@code GET /api/dev/archive-info} — retention capacity and eviction count. */
+    public Map<String, Object> archiveInfo() {
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("capacity", buffer == null ? 0 : buffer.capacity());
+        response.put("retained", buffer == null ? 0 : buffer.recent().size());
+        response.put("evicted", buffer == null ? 0 : buffer.evicted());
+        return response;
+    }
+
     /** {@code GET /api/dev/stuck} — in-flight invocations committed with no completion yet. */
     public Map<String, Object> stuck() {
         List<Map<String, Object>> stuck = new ArrayList<>();

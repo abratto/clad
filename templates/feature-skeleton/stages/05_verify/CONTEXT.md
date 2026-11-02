@@ -67,6 +67,18 @@ the archived action history for one flow token, `/api/dev/stuck` to rule
 out missing `:output`, and `/api/dev/concept/{name}/triples` when you
 need to verify concept state alongside the flow trace.
 
+Start the trace from the deterministic skeleton:
+
+```
+python3 ../../../../quality-gate/generate_trace.py \
+  --feature ../.. --write
+```
+
+It emits one section per frozen acceptance-spec scenario. When the debug
+surface is reachable, `capture_observations.py` can fill the observed token
+chains; otherwise record the commands and responses by hand. Add `--force` only
+when intentionally regenerating an existing trace.
+
 Write a per-scenario walk to `output/trace.md`. If anything failed
 step 3 or 4, add an entry to `output/findings.md` and mark which
 earlier stage owns the defect — **do not proceed to closure** until
@@ -130,8 +142,12 @@ python3 ../../../../quality-gate/verify_close_evidence.py \
 python3 ../../../../quality-gate/verify_adapter_test.py \
   --feature-root ../.. \
   --test-source-root <APP_TEST_SOURCE_ROOT> --require-enabled
+python3 ../../../../quality-gate/verify_trace_complete.py \
+  --feature-root ../..
 ```
 
+- **`verify_trace_complete.py` (blocking):** `trace.md` exists and every
+  scenario in the frozen acceptance spec has a matching trace entry.
 - Confirms `trace.md` (the canonical name) is present and warns on the legacy
   `verification-trace.md`.
 - **`verify_adapter_test.py --require-enabled` (blocking):** when an adapter

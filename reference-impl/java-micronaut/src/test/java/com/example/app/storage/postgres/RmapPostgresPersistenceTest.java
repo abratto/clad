@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *
  * <p>Docker-backed (Testcontainers) and therefore gated behind
  * {@code -Dclad.storage=postgres}; the default in-memory run skips it. It proves
- * the DDLDatabase-introspected jOOQ schema and the runtime {@code RmapDeriver}
+ * the DDLDatabase-introspected jOOQ schema and the generated runtime schema
  * DDL agree (a jOOQ write is visible to the engine's {@code FactStore}, and vice
  * versa), that R-map tables are typed with no cross-concept foreign keys, and
  * that Flyway owns the base schema.

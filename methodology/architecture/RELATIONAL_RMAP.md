@@ -7,7 +7,7 @@ per-piece doctrine lives elsewhere and is referenced, not duplicated:
 | Concern | Document |
 |---|---|
 | Conceptual (CSDP) modeling procedure | [`DATA_MODEL_NOTES.md`](DATA_MODEL_NOTES.md) |
-| Machine-model block grammar | [`DATA_MODEL_NOTES.md`](DATA_MODEL_NOTES.md) §"The machine model block" |
+| Conceptual-model block grammar | [`DATA_MODEL_NOTES.md`](DATA_MODEL_NOTES.md) §"The conceptual model block" |
 | Storage mapping doctrine (per profile: relational / RDF / document) | [`../implementation/STORAGE_MAPPING.md`](../implementation/STORAGE_MAPPING.md) |
 | Profile-specific lowering rules (constraints, subtypes, migrations) | [`reference-impl/java-micronaut/RELATIONAL_LOWERING.md`](../../reference-impl/java-micronaut/RELATIONAL_LOWERING.md) |
 | Maintenance records for each refinement | [`../..`/maintenance/](../../maintenance/) (`rmap-table-set-storage.md`, `csdp-machine-model-to-rmap.md`, `relational-gaps-closure.md`) |
@@ -15,30 +15,32 @@ per-piece doctrine lives elsewhere and is referenced, not duplicated:
 ## The pipeline at a glance
 
 ```
-Stage 02 concept spec               Stage 03b (CSDP, canonical)           runtime
+Stage 02 concept spec               Stage 03b (CSDP, canonical)           workflow (Python)
 --------------------                ---------------------------           ----------------
-## State (relational)  ─generate──▶ <Name>.data-model.md                  RmapDeriver
-   notation                           + ## Machine model block  ─parse──▶ deriveModel-
-                                                                         FromDataModel
-(generate_data_model.py   verify_data_model.py requires + checks        │
- deterministically;       the block; humans resolve the judgment        ▼
- judgement steps are      steps)                                     RmapModel
- skeleton + <TODO>)                                                  (one RelationSchema
-                                                                     per concept table)
-                                                                        │           │
-                                                                        ▼           ▼
-                                                              RmapMigration   RmapPostgres-
-                                                              → Flyway V1     FactStore
-                                                              (drift-guarded) (Region SPI,
-                                                                               TransactionalRegion)
+## State (relational)  ─generate──▶ <Name>.data-model.md                  quality-gate/rmap.py
+   notation                           + ## Conceptual model  ─parse──▶ derive RmapModel
+                                                                          │
+(generate_data_model.py   verify_data_model.py requires + checks         ├─▶ V<n>__*.sql (Flyway)
+ deterministically;       the block; humans resolve the judgment         └─▶ _generated/rmap-schema.json
+ judgement steps are      steps)
+ skeleton + <TODO>)
+
+                                                                             runtime (Java)
+                                                                             ---------------
+                                                                             RmapPostgresFactStore
+                                                                             reads the generated descriptor;
+                                                                             Flyway owns DDL
 ```
 
 The `## State` notation remains the concept's *authored* state and the
-generator's input; the 03b `## Machine model` block (a faithful transcription
+generator's input; the 03b `## Conceptual model` block (a faithful transcription
 of the same facts, plus reference-scheme declarations) is the **canonical
-machine input** to Rmap. `RmapDeriverTest#dataModelAndStateInputsDeriveIdenticalSchemas`
-is the equivalence oracle: both inputs must derive identical schemas, so a
-hand-edited block cannot silently diverge from `## State`.
+machine input** to Rmap. `verify_data_model.py` checks the block against
+`## State`; `quality-gate/rmap.py` is the single Rmap implementation.
+
+**Java is an implementation target, not a generator.** Java consumes the
+generated SQL migration and runtime schema descriptor. It does not derive,
+validate, or render workflow artefacts.
 
 ## What a concept derives to (the rules)
 
@@ -61,8 +63,9 @@ multi-valued fact.
 | cross-concept identifier | opaque typed column — never a foreign key (R2) |
 | role membership (your "PartyRole" discriminator) | not a subtype mapping at all: assert the objectified membership fact (`member : (Party, Role) -> Timestamp -- mandatory`) beside a role catalog — that derives the junction table with the discriminator pair as its PK |
 
-Type mapping: `Int`/`Integer` → `INTEGER`; `Timestamp` → `TIMESTAMP`
-(values round-trip as ISO-8601 instants); everything else `TEXT`.
+Type mapping: `Int`/`Integer` → `INTEGER`; `Timestamp`/`Instant` →
+`TIMESTAMP` (values round-trip as ISO-8601 instants); `Boolean` → `BOOLEAN`;
+everything else `TEXT`.
 
 ## Runtime write semantics (why the schema can be strict)
 
@@ -119,17 +122,48 @@ knowing cold:
 
 ## Schema ownership and the drift guard
 
-**Flyway owns DDL.** `RmapMigration` renders the derived model set into a
-versioned migration (`V1__login_rmap.sql` in the shipped profile); the runtime
-store never creates tables in deployment
-(`RmapPostgresFactStore.createSchema()` is the dev/test helper). jOOQ's
-code generator (`DDLDatabase`) introspects the committed migration into typed
+**Flyway owns DDL.** `quality-gate/rmap.py` renders the derived model set into
+a versioned migration (`V1__login_rmap.sql` in the shipped profile); the
+runtime store never creates tables in deployment
+(`RmapPostgresFactStore.createSchema()` is the dev/test helper). jOOQ's code
+generator (`DDLDatabase`) introspects the committed migration into typed
 classes.
 
-The drift guard (`RmapMigrationTest`) byte-compares the committed migration
-against a fresh render and fails until regenerated
-(`mvn test -Drmap.migration.write=true`). Codegen caveat: `DDLDatabase` is an
-H2 parser; a partial unique index may not parse — the shipped login migration
+The drift guard is `./clad rmap --check`: it regenerates the migration from the
+conceptual model and fails when the committed file is stale. Regenerate with
+`./clad rmap --write <migration-path>` (add `--force` deliberately when
+overwriting a migration that may already be applied — the guard refuses a
+silent rewrite).
+
+**Project aggregate and incremental migrations.** A multi-feature app has one
+current model per canonical concept, not one migration per feature:
+
+```
+# one combined runtime descriptor from the canonical corpus
+python3 quality-gate/rmap.py --features-dir features --app-label app   --json app/src/main/resources/rmap-schema.json
+
+# incremental DDL from a deployed baseline descriptor
+python3 quality-gate/rmap.py --features-dir features   --baseline-descriptor deployed-rmap-schema.json   --alter app/src/main/resources/db/migration/V2__add_tagging.sql
+```
+
+The incremental mode emits `CREATE TABLE` for new tables and `ALTER TABLE ADD
+COLUMN/CONSTRAINT` for additions; it never drops tables or columns
+automatically (they are reported for review), and it refuses a new mandatory
+column without a default. This is the production path for a schema change;
+regenerating a base migration is only for an undeployed app.
+
+**Baseline discovery.** Record the deployed descriptor once:
+
+```
+python3 quality-gate/rmap.py --features-dir features \
+  --record-baseline prod
+```
+
+`--alter` then finds it automatically: an explicit `--baseline <name>`, the
+`rmap.baseline` property (feature-local `_config/rmap.baseline.md` wins), or
+the default `_generated/rmap-baselines/default.json` under the repo root (also
+searches `_system/rmap-baselines/` and the feature's `_generated/`). Codegen caveat: `DDLDatabase` is an H2
+parser; a partial unique index may not parse — the shipped login migration
 carries none, and an app adopting filtered uniqueness must re-verify its
 codegen step (see `RELATIONAL_LOWERING.md`).
 
@@ -151,19 +185,19 @@ consumer).
 
 | Guarantee | Proof |
 |---|---|
-| `## State` ≡ machine model (no silent divergence) | `RmapDeriverTest#dataModelAndStateInputsDeriveIdenticalSchemas` |
-| Derivation correctness across shapes | `RmapDeriverModelTest` (single, table-set, compound, multi, subtype×3, independent, filtered) + byte-frozen migration oracles |
-| Derivation survives real files, not strings | `RmapDeriverDataModelTest` (prose ignored, missing/unfenced/empty block throws) |
+| `## State` ≡ conceptual model (no silent divergence) | `quality-gate/verify_data_model.py` fidelity check |
+| Derivation correctness across shapes | `quality-gate/tests/test_rmap.py` (single, table-set, compound, multi, subtype×3, independent, filtered) + byte-frozen migration oracles |
+| Derivation survives real files, not strings | `test_machine_model_parser.py` + `test_rmap.py` parity tests |
 | Postgres round-trips per domain | `RmapDomainStorageTest` (clinic 3-part objectified, ordering child tables/defaults, PatientRegistry separate-subtype join, lending loans) |
 | Guardrails are behaviour, not comments | `RmapEdgeBehaviorTest` P1–P5 (loud FK, CHECK rejection & retry semantics, partition member-addressing, filtered-vs-plain uniqueness, retract shapes) |
-| Schema ≡ committed migration | `RmapMigrationTest` (drift guard) + `RmapPostgresPersistenceTest` (Flyway owned, jOOQ agrees) |
+| Schema ≡ committed migration | `./clad rmap --check` (Python) + `RmapPostgresPersistenceTest` (Flyway owned, jOOQ agrees) |
 | Pipeline end-to-end on the shipped app | CI `postgres-verify`: `mvn verify -pl legible-storage,java-micronaut -am -Dclad.storage=postgres` |
 
 ## Worked examples to read
 
 - **Login trio** — `examples/UC-00-login/stages/03b_data-model/output/*.data-model.md`
-  (machine blocks) and `reference-impl/legible-storage/…/LoginSchemas.java`
-  (derives straight from those files).
+  (conceptual blocks), `_generated/rmap-schema.json` (runtime descriptor), and
+  `reference-impl/legible-storage/…/LoginSchemas.java` (loads the descriptor).
 - **Shape coverage** — `reference-impl/legible-storage/src/test/resources/domains/`
   (`clinic`, `ordering`, `lending`): each concept ships its `## State`, the
   resolved 03b data model, and the frozen migration oracle.

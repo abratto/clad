@@ -92,7 +92,10 @@ class RmapPostgresFactStoreTest {
         // and UNIQUE from the fact model — not a generic fact table.
         try (Connection c = dataSource.getConnection();
              Statement st = c.createStatement()) {
-            assertEquals("TEXT", columnType(st, "user_naming", "username"));
+            String usernameType = columnType(st, "user_naming", "username");
+            assertTrue(usernameType.startsWith("TEXT")
+                            || usernameType.startsWith("CHARACTER VARYING"),
+                    "text is realised as TEXT or varchar: " + usernameType);
             assertEquals("INTEGER", columnType(st, "password_auth", "failed_attempts"));
             assertTrue(columnType(st, "password_auth", "locked_until").startsWith("TIMESTAMP"));
             assertTrue(columnType(st, "session", "opened_at").startsWith("TIMESTAMP"));

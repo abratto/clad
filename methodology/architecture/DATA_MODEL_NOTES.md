@@ -108,15 +108,18 @@ concept carries another concept's identifier, it is an opaque value
 whose runtime meaning is established by syncs, not by a schema-level
 relationship.
 
-## The machine model block
+## The conceptual model block
 
 The seven CSDP steps above are the human-facing model. A relational profile
 realizes them via Halpin's Rmap, so the data model also carries a small,
-hand-authorable **machine model** block that Rmap consumes directly. It is a
+hand-authorable **conceptual model** block that Rmap consumes directly
+(the historical `## Machine model` heading remains a supported alias). It is a
 faithful transcription of the same elementary facts and constraints the steps
-name — never a new decision. It is generated deterministically by
-`quality-gate/generate_data_model.py` from the concept `## State` relations and
-validated by `quality-gate/verify_data_model.py`.
+name — never a new decision. `## State` in the concept spec is the sole source
+of truth; edit that and regenerate, do not hand-edit the block independently.
+It is generated deterministically by `quality-gate/generate_data_model.py` from
+the concept `## State` relations and validated by
+`quality-gate/verify_data_model.py`, which fails if the two diverge.
 
 CLAD deliberately does **not** use Jarrar/Demey/Meersman's ORM-ML here:
 ORM-ML is an XML serialization of the ORM *diagram* (object roles referenced by
@@ -129,7 +132,7 @@ value constraints, subtyping).
 Grammar (one clause per line; `#` starts a comment; blank lines ignored):
 
 ```
-## Machine model
+## Conceptual model
 
 object-type <EntityType> identified-by <IdType>
 fact <predicate> : <EntityType> -> <ValueType> -- <annotations>
@@ -161,7 +164,8 @@ independent <ObjectType>
   `separate`); `independent T` declares an object type with no functional role.
 
 Rules:
-- Exactly one `## Machine model` block per data model.
+- Exactly one `## Conceptual model` block per data model (`## Machine model`
+  is the legacy alias).
 - Every object type in a `fact` subject must be declared with `object-type`
   (or be a value type introduced by `->`); the block must not introduce facts
   absent from Steps 2/4/5.

@@ -134,12 +134,16 @@ ships a Python generator so the model never has to author it. Stage
 | 03a | `generate_sync_cards.py` | per-concept dependency cards + `pattern-d-summary.md` |
 | 03b | `generate_data_model.py` | CSDP data models (types + constraints auto-derived from `--` annotations) |
 | 04b | `generate_contract.py` | per-concept concept contracts |
-| 04c | (authored) | Acceptance Spec (`acceptance-spec.md`) + native flow tests |
+| 04c | `generate_acceptance_spec.py` | per-branch Acceptance Spec skeleton (`acceptance-spec.md`); test bindings and judgment are authored |
+| 05 | `generate_trace.py` | per-branch trace skeleton (`trace.md`), optionally filled from captured observations |
 
-The generator produces the derived skeleton verbatim (names, matrices,
-signatures) and leaves `<TODO>` markers only where genuine design judgment is
-required — e.g. Pattern D concept-state reads. Its output passes the same
-stage's `verify_*` check by construction. Genuinely judgement-laden stages
+`generate_syncs.py --update` is the incremental form for an iterative change:
+it keeps resolved syncs whose transition is unchanged, patches row ids, and
+removes stale files. The generator produces the derived skeleton verbatim
+(names, matrices, signatures) and leaves `<TODO>` markers only where genuine
+design judgment is required — e.g. Pattern D concept-state reads. Its output
+passes the same stage's `verify_*` check by construction. Genuinely
+judgement-laden stages
 (00 intake, 01 use case, 01a concept decomposition, 02 concept design) stay
 model-authored. `quality-gate/describe_feature.py` emits a JSON descriptor of a
 feature for downstream runtimes, keeping the parsing grammar in one place.

@@ -1,8 +1,6 @@
 package dev.legible.storage.domain;
 
 import dev.legible.engine.Region;
-import dev.legible.storage.RmapDeriver;
-import dev.legible.storage.RmapModel;
 import dev.legible.storage.RmapPostgresFactStore;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -64,9 +62,8 @@ class RmapDomainStorageTest {
     }
 
     private RmapPostgresFactStore store(String domain, String concept) {
-        RmapModel model = RmapDeriver.deriveModelFromDataModel(concept,
-                DomainFixtures.dataModel(domain, concept));
-        RmapPostgresFactStore store = new RmapPostgresFactStore(dataSource, model.tables());
+        RmapPostgresFactStore store = new RmapPostgresFactStore(
+                dataSource, DomainFixtures.schemas(domain, concept));
         store.createSchema();
         return store;
     }

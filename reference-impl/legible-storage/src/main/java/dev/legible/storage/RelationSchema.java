@@ -1,6 +1,5 @@
 package dev.legible.storage;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,7 +33,8 @@ public record RelationSchema(
         List<String> primaryKey,
         List<String> foreignKeys,
         List<Check> checks,
-        boolean derived) {
+        boolean derived,
+        String ddlText) {
 
     /**
      * The historical single-scheme convenience constructor: {@code idColumn} is
@@ -43,7 +43,7 @@ public record RelationSchema(
     public RelationSchema(String concept, String table, String idColumn,
                           List<Column> columns) {
         this(concept, table, idColumn, columns, List.of(idColumn),
-                List.of(), List.of(), false);
+                List.of(), List.of(), false, "");
     }
 
     public RelationSchema {
@@ -145,81 +145,8 @@ public record RelationSchema(
                 .toList();
     }
 
-    private static String snake(String s) {
-        return s.replaceAll("([a-z0-9])([A-Z])", "$1_$2").toLowerCase();
-    }
-
-    /**
-     * The {@code CREATE TABLE} statement derived from this schema, plus
-     * (rendered if present) the filtered-uniqueness partial indexes for its
-     * columns. Intra-concept FKs are rendered as table constraints.
-     */
-    public String ddl() {
-        boolean singlePk = primaryKey.size() == 1;
-        String singleKeyCol = singlePk ? primaryKey.get(0) : null;
-        StringBuilder sb = new StringBuilder();
-        sb.append("CREATE TABLE IF NOT EXISTS \"").append(table).append("\" (\n");
-        List<String> parts = new ArrayList<>();
-        for (Column c : columns) {
-            StringBuilder col = new StringBuilder();
-            col.append(quote(c.column())).append(' ').append(c.sqlType());
-            if (c.defaultValue() != null) {
-                col.append(" DEFAULT ").append(c.defaultValue());
-            }
-            if (c.mandatory()) {
-                col.append(" NOT NULL");
-            }
-            if (c.unique()) {
-                col.append(" UNIQUE");
-            }
-            if (singlePk && c.column().equals(singleKeyCol)) {
-                col.append(" PRIMARY KEY");
-            }
-            parts.add(col.toString());
-        }
-        if (!singlePk) {
-            parts.add("PRIMARY KEY ("
-                    + String.join(", ", primaryKey.stream().map(RelationSchema::quote).toList())
-                    + ")");
-        }
-        for (Check check : checks) {
-            parts.add("CONSTRAINT " + check.name() + " CHECK (" + check.expression() + ")");
-        }
-        for (String fk : foreignKeys) {
-            parts.add(fkConstraint(fk));
-        }
-        sb.append("  ").append(String.join(",\n  ", parts));
-        sb.append("\n)");
-        // Filtered uniqueness emits its partial index after the table itself.
-        for (Column c : columns) {
-            if (c.uniqueWhileAbsent() != null) {
-                sb.append(";\n").append(filteredIdx(table, c));
-            }
-        }
-        return sb.toString();
-    }
-
-    private static String fkConstraint(String spec) {
-        // Format: column -> table(target)
-        int arrow = spec.indexOf("->");
-        String column = spec.substring(0, arrow).trim();
-        String ref = spec.substring(arrow + 2).trim();
-        String target = ref.substring(ref.indexOf('(') + 1, ref.indexOf(')')).trim();
-        String table = ref.substring(0, ref.indexOf('(')).trim();
-        return "FOREIGN KEY (" + quote(column) + ") REFERENCES "
-                + quote(table) + " (" + quote(target) + ")";
-    }
-
-    /** The partial unique index for a filtered-unique column. */
-    private static String filteredIdx(String table, Column c) {
-        return "CREATE UNIQUE INDEX IF NOT EXISTS "
-                + quote(table + "_" + c.column() + "_open_idx")
-                + " ON " + quote(table)
-                + " (" + quote(c.column()) + ")"
-                + " WHERE " + quote(snake(c.uniqueWhileAbsent())) + " IS NULL";
-    }
-
-    private static String quote(String ident) {
-        return '"' + ident + '"';
+    /** The generated DDL for this table, including filtered indexes. */
+    public String ddlText() {
+        return ddlText;
     }
 }

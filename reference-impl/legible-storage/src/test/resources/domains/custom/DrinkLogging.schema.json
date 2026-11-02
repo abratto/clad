@@ -1,0 +1,42 @@
+{
+  "models": [
+    {
+      "concept": "DrinkLogging",
+      "tables": [
+        {
+          "concept": "DrinkLogging",
+          "table": "drink_logging",
+          "objectType": "DrinkEntry",
+          "primaryKey": [
+            "entry_id"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "entry_id",
+              "column": "entry_id",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "name",
+              "column": "name",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"drink_logging\" (\n  \"entry_id\" varchar NOT NULL PRIMARY KEY,\n  \"name\" varchar NOT NULL\n)"
+        }
+      ]
+    }
+  ]
+}

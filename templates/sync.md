@@ -24,7 +24,7 @@ then {
 - `?user` is bound in `when` and used in `then` — internal flow data, no
   cross-concept read.
 - The response side is the same three clauses, matching the concept's completion:
-  `when { Session/grant: [ ... ] => [ Granted ; sessionToken: ?token ] } then { Web/respond: [ status: 200 ; sessionToken: ?token ] }`.
+  `when { Session/grant: [ ... ] => [ Granted ; sessionToken: ?token ] } then { Web/respond: [ httpStatus: 200 ; sessionToken: ?token ] }`.
 - When the row **mints** an entity, add `where { bind ( uuid() as ?<id> ) }`.
 - Most chain-table rows need nothing more than this section. Read on only when
   your row needs a join, a pin, a set, or an absence.

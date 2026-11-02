@@ -1,0 +1,157 @@
+{
+  "models": [
+    {
+      "concept": "OrderIntake",
+      "tables": [
+        {
+          "concept": "OrderIntake",
+          "table": "order_intake",
+          "objectType": "Order",
+          "primaryKey": [
+            "order"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "order",
+              "column": "order",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "orderNumber",
+              "column": "order_number",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": true,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "totalCents",
+              "column": "total_cents",
+              "sqlType": "INTEGER",
+              "mandatory": true,
+              "unique": false,
+              "default": "0",
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "status",
+              "column": "status",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "placedAt",
+              "column": "placed_at",
+              "sqlType": "TIMESTAMP",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [
+            {
+              "name": "ck_order_status",
+              "expression": "status IN ('open', 'paid', 'shipped')"
+            }
+          ],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"order_intake\" (\n  \"order\" varchar NOT NULL PRIMARY KEY,\n  \"order_number\" varchar NOT NULL UNIQUE,\n  \"total_cents\" integer DEFAULT 0 NOT NULL,\n  \"status\" varchar NOT NULL,\n  \"placed_at\" timestamp NOT NULL,\n  CONSTRAINT ck_order_status CHECK (status IN ('open', 'paid', 'shipped'))\n)"
+        },
+        {
+          "concept": "OrderIntake",
+          "table": "order_intake__order_and_product",
+          "objectType": "Order+Product",
+          "primaryKey": [
+            "order",
+            "product"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "order",
+              "column": "order",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "product",
+              "column": "product",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "line",
+              "column": "line",
+              "sqlType": "INTEGER",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"order_intake__order_and_product\" (\n  \"order\" varchar NOT NULL,\n  \"product\" varchar NOT NULL,\n  \"line\" integer NOT NULL,\n  PRIMARY KEY (\"order\", \"product\")\n)"
+        },
+        {
+          "concept": "OrderIntake",
+          "table": "order_intake__tags",
+          "objectType": "Order",
+          "primaryKey": [
+            "order",
+            "tags"
+          ],
+          "foreignKeys": [
+            "order -> order_intake(order)"
+          ],
+          "columns": [
+            {
+              "predicate": "order",
+              "column": "order",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "tags",
+              "column": "tags",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"order_intake__tags\" (\n  \"order\" varchar NOT NULL,\n  \"tags\" varchar NOT NULL,\n  PRIMARY KEY (\"order\", \"tags\"),\n  FOREIGN KEY (\"order\") REFERENCES \"order_intake\" (\"order\")\n)"
+        }
+      ]
+    }
+  ]
+}
