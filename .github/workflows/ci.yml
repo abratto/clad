@@ -99,7 +99,10 @@ jobs:
 
   postgres-verify:
     name: Postgres persistence (R-map + jOOQ)
-    runs-on: ubuntu-latest
+    # Pin to the last GitHub-hosted image with a working Docker daemon;
+    # ubuntu-26.04 (the current `ubuntu-latest`) has no usable Docker socket,
+    # so every Testcontainers test fails before it starts.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 21
