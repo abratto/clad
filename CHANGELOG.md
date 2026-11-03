@@ -10,6 +10,18 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.29.2] — 2026-11-03
+
+**Patch: the experiment friction log is marked for re-verification.**
+
+`docs/experiments/expense-approvals.md` recorded several fixes that rest on
+tooling built on the experiment branch and not ported into the seed
+(`./clad change plan/approve/review`, `generate_syncs --update`,
+`CLAD_CHANGE_RUN` gate deferral). The friction log now carries a note that
+those entries are **open until re-verified** against the current tree, so a
+reader does not assume the commands exist. Documentation-only; no code or
+gate behaviour changes.
+
 ## [0.29.1] — 2026-11-03
 
 **Patch: one report shell for the gate scripts, one baseline flag, and a

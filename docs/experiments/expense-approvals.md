@@ -92,6 +92,15 @@ dedicated status tracking.
 Status: **fixed** = changed in the CLAD seed during the experiment;
 **open** = remains to address.
 
+> **Note (0.29.x re-verification).** Some entries below mark a fix as
+> "`./clad change plan/approve/review`", "`generate_syncs --update`", or a
+> `CLAD_CHANGE_RUN` gate-deferral. Those were built on the **experiment
+> branch** and are **not** part of the current seed (0.29.0 was a selective
+> port that intentionally excluded the parallel change/gate rewrite). Treat
+> every such item as **open** until it is re-verified against the current
+> tree; do not assume the tooling exists. Entries tagged `experiment` or
+> `process` describe that run only.
+
 | # | Stage / surface | Observation | Status |
 |---|---|---|---|
 | 1 | project gate `verify_model_current` | A freshly bootstrapped feature has an empty `03b/output/.gitkeep`; the gate treated it as a model set and failed every new UC with `no .data-model.md files found`. Now skipped until a model exists; regression test added. | fixed |
