@@ -26,6 +26,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_chain_grammar.py` | Verify the lossless, one-branch grammar of Stage 01b chain tables. | stage 01b (Chain table) | gate |
 | `verify_chain_map_names.py` | Stage 01b gate: every chain-table action name resolves against the Stage 01a responsibility map. | stage 01b (Chain table) | gate |
 | `verify_chain_outcomes.py` | Stage 01b gate: every chain-table completion resolves against the concept spec that owns it. | stage 01b (Chain table) | gate |
+| `verify_changelog_claims.py` | the newest release note matches the tag and cites existing paths (advisory) | project-level (every `verify_artefacts` run) | advisory |
 | `verify_close_evidence.py` | Stage 05 WARN-only close evidence. | stage 05 (Verify) | gate |
 | `verify_code_refs.py` | backticked code references resolve (advisory) | project-level (every `verify_artefacts` run) | advisory |
 | `verify_collection_coverage.py` | Stage gate: collection responses carry empty + multi-item (and repeated-key) fixtures. | stage 04c (Acceptance tests) | gate |
@@ -87,3 +88,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
   `generate_sync_cards.py`, `rename_sync.py`, `generate_gate_index.py`.
 - **Shared parsers:** `artifact_parsers.py` (the artefact-grammar single source of truth),
   `descriptor.py`, `describe_feature.py` (the machine contract — see `MACHINE_CONTRACT.md`).
+- **Check shell:** `check_runner.py` — the shared PASS/SKIP/FAIL/WARN report
+  (`run_check` for a structured `Verdict`, `run_report` for a check that prints
+  its own table). Every `verify_*.py` reports through it so the verdict words
+  stay a contract with `advance.py` / `verify_artefacts.py`.

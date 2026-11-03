@@ -65,7 +65,7 @@ generator cannot decide it deterministically. The uniform rule is derivable.
 |---|---|---|
 | Engine/runtime implementation | yes | `Dsl.java` doc-comment example only; no behaviour |
 | Gate scripts | yes | `generate_syncs.py` (pass `flow_route`); `verify_implementation_parity.py` (route for pinned rules) |
-| Gate tests | yes | `test_generators.py`, `test_join_collect_grammar.py`, `test_checker_shapes.py` |
+| Gate tests | yes | `test_generators.py`, `test_join_collect_grammar.py`, `test_impl_parity_name_shapes.py` |
 | Templates | yes | naming examples |
 | Methodology docs | yes | `SYNCHRONIZATIONS.md` naming, `WALKTHROUGH.md` |
 | Corpus | no | — |
@@ -77,7 +77,7 @@ generator cannot decide it deterministically. The uniform rule is derivable.
 |---|---|---|---|---|
 | A pinned rule's stem carries its route | unit | `test_generators.py::…test_the_pin_route_scopes_a_pinned_rules_name` | pass | — |
 | A joined rule's stem carries its route | unit | `test_join_collect_grammar.py::…test_joined_chain_row_derives_joined_sync_stem` | pass | — |
-| The parity checker derives the route-scoped name | unit | `test_checker_shapes.py::…test_pin_route_scopes_the_name_but_the_pin_conjunct_does_not` | pass | — |
+| The parity checker derives the route-scoped name | unit | `test_impl_parity_name_shapes.py::…test_pin_route_scopes_the_name_but_the_pin_conjunct_does_not` | pass | — |
 | Whole gate suite | unit | `pytest quality-gate/tests -q` | pass | 202 |
 | The worked example regenerates to the new names | integration | `generate_syncs.py --feature features/UC-00-login` | pass | — |
 | The reactor builds | integration | `mvn -B -ntp test -f reference-impl/pom.xml` | pass | BUILD SUCCESS (7 modules) |

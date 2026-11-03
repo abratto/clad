@@ -19,40 +19,45 @@ import argparse
 import os
 import sys
 
+import check_runner as cr
 import generate_syncs as gs
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Every chain-table transition must have a sync file")
-    parser.add_argument("--feature", required=True, help="Feature root path")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--feature", required=True, help="Feature root path")
 
-    feature = os.path.abspath(args.feature)
-    expected, _warnings = gs.derive_syncs_for_feature(feature)
-    sync_dir = os.path.join(feature, "stages", "03_syncs", "output")
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        feature = os.path.abspath(args.feature)
+        expected, _warnings = gs.derive_syncs_for_feature(feature)
+        sync_dir = os.path.join(feature, "stages", "03_syncs", "output")
 
-    present = {f[:-len(".sync.md")] for f in os.listdir(sync_dir)
-               if f.endswith(".sync.md")} if os.path.isdir(sync_dir) else set()
-    missing = [g.stem for g in expected if g.stem not in present]
-    if not missing:
-        print(f"PASS  {len(expected)} derived chain transition(s) all present as sync files")
-        return 0
+        present = {f[:-len(".sync.md")] for f in os.listdir(sync_dir)
+                   if f.endswith(".sync.md")} if os.path.isdir(sync_dir) else set()
+        missing = [g.stem for g in expected if g.stem not in present]
+        if not missing:
+            return cr.Verdict.ok(
+                f"{len(expected)} derived chain transition(s) all present as "
+                f"sync files")
 
-    # Frozen/historical features (e.g. the UC-00 worked example) may carry
-    # pre-v0.6 hand-authored names, so a stem mismatch is not a missing
-    # transition when the counts agree. Fail only on a genuine shortfall.
-    if len(present) >= len(expected):
-        print(f"PASS  {len(expected)} chain transition(s) covered by {len(present)} "
-              f"sync file(s) (naming differs; counts agree)")
-        return 0
+        # Frozen/historical features (e.g. the UC-00 worked example) may carry
+        # pre-v0.6 hand-authored names, so a stem mismatch is not a missing
+        # transition when the counts agree. Fail only on a genuine shortfall.
+        if len(present) >= len(expected):
+            return cr.Verdict.ok(
+                f"{len(expected)} chain transition(s) covered by {len(present)} "
+                f"sync file(s) (naming differs; counts agree)")
 
-    print(f"FAIL  {len(missing)} chain transition(s) have no sync file "
-          f"({len(present)} present of {len(expected)} derived):")
-    for stem in missing:
-        print(f"        missing: {stem}.sync.md")
-    print("      Derive/emit the missing carrier(s); do not advance.")
-    return 1
+        verdict = cr.Verdict.fail(
+            f"{len(missing)} chain transition(s) have no sync file "
+            f"({len(present)} present of {len(expected)} derived)",
+            [cr.Problem(f"missing: {stem}.sync.md") for stem in missing])
+        verdict.detail = "      Derive/emit the missing carrier(s); do not advance."
+        return verdict
+
+    return cr.run_check(
+        "Every chain-table transition must have a sync file",
+        body, argv, configure)
 
 
 if __name__ == "__main__":

@@ -10,6 +10,44 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.29.1] — 2026-11-03
+
+**Patch: one report shell for the gate scripts, one baseline flag, and a
+release-note drift guard. No behavioural change to any check.**
+
+- **Shared check shell.** New `quality-gate/check_runner.py` owns the
+  PASS/SKIP/FAIL/WARN report every `verify_*.py` prints, so the verdict words
+  stay one contract with `advance.py`/`verify_artefacts.py` (`SKIP` is never
+  rendered as `PASS`). A check that fits a summary + itemised problems returns a
+  `Verdict` via `run_check`; one that prints its own per-item table returns an
+  exit code via `run_report`. 55 of 59 checks now report through it; the four
+  remaining (the `verify_artefacts.py` orchestrator and three checks with
+  output-buffering or `SystemExit` control flow) are documented exceptions. New
+  checks no longer re-implement argparse/report wiring.
+- **One baseline flag.** `rmap.py` folds `--baseline-descriptor` into
+  `--baseline <name-or-path>` (an existing descriptor path, or a name searched
+  under `_generated/rmap-baselines/` / `_system/rmap-baselines/`).
+  `--baseline-descriptor` remains as a deprecated alias; passing both is an
+  error. Docs prefer `--baseline`.
+- **Release-note drift guard.** New `verify_changelog_claims.py` (advisory, run
+  by `verify_artefacts`) checks that the newest `## [x.y.z]` entry matches the
+  newest `vX.Y.Z` tag and that file paths it names in backticks exist. 0.29.0's
+  note claimed the login migration was "byte-identical" when its header comment
+  had moved; this keeps that class of drift visible.
+- **Docs and hygiene.** New `docs/experiments/README.md` indexes the experiment
+  reports and states the retention policy. `.gitignore` now covers
+  `.pytest_cache/`/`.mypy_cache/`/`.ruff_cache/`; a new `test_gitignore_hygiene.py`
+  asserts local scratch/reference/build paths stay ignored and untracked. Four
+  vaguely-named test files were renamed to describe what they lock
+  (`test_gate_false_green_and_parity.py`, `test_impl_parity_name_shapes.py`,
+  `test_checker_concept_union.py`,
+  `test_concept_field_assertions_and_scope.py`); living references were updated,
+  frozen `CHANGELOG` history was left as written.
+
+**Upgrade notes.** Backward-compatible. `./clad rmap --baseline <path>` is the
+preferred spelling; `--baseline-descriptor` still works. No check changes its
+verdict or output text.
+
 ## [0.29.0] — 2026-11-02
 
 **Rmap moves to the workflow, generators cover the branches, and the debug

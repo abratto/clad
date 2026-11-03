@@ -21,6 +21,9 @@ scratch/
 # Legacy Roo local config
 .roo-clad-config
 
-# Python bytecode caches
+# Python bytecode caches and test-runner state
 __pycache__/
 *.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

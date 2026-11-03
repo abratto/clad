@@ -38,8 +38,10 @@ import os
 import re
 import sys
 
-import artifact_parsers as ap
-from verify_stage_sequence import APPROVED_STATES, gate_status
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import artifact_parsers as ap  # noqa: E402
+import check_runner as cr  # noqa: E402
+from verify_stage_sequence import APPROVED_STATES, gate_status  # noqa: E402
 
 
 INTRODUCED_RE = re.compile(r"^introduced-by\s+(.+)$", re.MULTILINE)
@@ -100,117 +102,118 @@ def proposing_features(features_dir):
     return out
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="The canonical concept corpus is current and self-consistent")
-    parser.add_argument("--features-dir", default="features")
-    parser.add_argument("--concepts-dir", default="")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--features-dir", default="features")
+        parser.add_argument("--concepts-dir", default="")
 
-    features_dir = os.path.abspath(args.features_dir)
-    corpus = args.concepts_dir or os.path.join(features_dir, "_system", "concepts")
-    if not os.path.isdir(corpus):
-        print(f"SKIP  no canonical corpus at {corpus}")
-        return 0
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        features_dir = os.path.abspath(args.features_dir)
+        corpus = args.concepts_dir or os.path.join(features_dir, "_system", "concepts")
+        if not os.path.isdir(corpus):
+            return cr.Verdict.skip(f"no canonical corpus at {corpus}")
 
-    proposers = proposing_features(features_dir)
-    receipt_dir = os.path.join(corpus, "_promotions")
+        proposers = proposing_features(features_dir)
+        receipt_dir = os.path.join(corpus, "_promotions")
 
-    failures = []
-    concepts = sorted(f for f in os.listdir(corpus) if f.endswith(".concept.md"))
+        failures = []
+        concepts = sorted(f for f in os.listdir(corpus) if f.endswith(".concept.md"))
 
-    # A concept an in-scope feature proposed and had approved must exist in the
-    # corpus at all — an absent entry is the most complete form of "behind".
-    present = {f.replace(".concept.md", "") for f in concepts}
-    for concept, entries in sorted(proposers.items()):
-        if concept not in present:
-            who = ", ".join(f"`{slug}`" for slug, _ in entries)
-            failures.append(
-                f"{concept}: proposed by {who} with Gate 2 approved, but the "
-                f"corpus has no canonical entry for it — promotion never ran.")
-    for fname in concepts:
-        concept = fname.replace(".concept.md", "")
-        with open(os.path.join(corpus, fname), encoding="utf-8") as handle:
-            spec_text = handle.read()
-        introducer, extenders = history_of(spec_text)
-        history = ([introducer] if introducer else []) + extenders
-        current = history[-1] if history else ""
-
-        # 1. every approved proposer is on the canonical history
-        for slug, _feature in proposers.get(concept, []):
-            if slug not in history:
+        # A concept an in-scope feature proposed and had approved must exist in the
+        # corpus at all — an absent entry is the most complete form of "behind".
+        present = {f.replace(".concept.md", "") for f in concepts}
+        for concept, entries in sorted(proposers.items()):
+            if concept not in present:
+                who = ", ".join(f"`{slug}`" for slug, _ in entries)
                 failures.append(
-                    f"{concept}: `{slug}` proposed this concept and its Gate 2 is "
-                    f"approved, but the canonical entry does not name it — the "
-                    f"corpus is behind (run `./clad promote-concepts {slug}`).")
+                    f"{concept}: proposed by {who} with Gate 2 approved, but the "
+                    f"corpus has no canonical entry for it — promotion never ran.")
+        for fname in concepts:
+            concept = fname.replace(".concept.md", "")
+            with open(os.path.join(corpus, fname), encoding="utf-8") as handle:
+                spec_text = handle.read()
+            introducer, extenders = history_of(spec_text)
+            history = ([introducer] if introducer else []) + extenders
+            current = history[-1] if history else ""
 
-        # 2. every promoter has a receipt naming the concept
-        for slug in history:
-            receipt = os.path.join(receipt_dir, f"{slug}.md")
-            if not os.path.isfile(receipt):
-                failures.append(
-                    f"{concept}: history names `{slug}` but there is no "
-                    f"_promotions/{slug}.md receipt — the promotion record is "
-                    f"incomplete.")
-                continue
-            with open(receipt, encoding="utf-8", errors="replace") as handle:
-                if concept not in handle.read():
+            # 1. every approved proposer is on the canonical history
+            for slug, _feature in proposers.get(concept, []):
+                if slug not in history:
                     failures.append(
-                        f"{concept}: `_promotions/{slug}.md` does not list this "
-                        f"concept — the receipt and the canonical entry disagree.")
+                        f"{concept}: `{slug}` proposed this concept and its Gate 2 is "
+                        f"approved, but the canonical entry does not name it — the "
+                        f"corpus is behind (run `./clad promote-concepts {slug}`).")
 
-        # 3. companions agree with the spec's current source
-        for suffix in COMPANIONS:
-            path = os.path.join(corpus, f"{concept}.{suffix}")
-            if not os.path.isfile(path):
-                continue
-            with open(path, encoding="utf-8") as handle:
-                head = handle.read(400)
-            match = COMPANION_RE.search(head)
-            if not match:
-                failures.append(
-                    f"{concept}.{suffix}: canonical companion has no "
-                    f"'canonical — derived from concept X: …' header, so it "
-                    f"cannot be told apart from a feature snapshot.")
-                continue
-            if match.group("promoter").strip() != current:
-                failures.append(
-                    f"{concept}.{suffix}: its header names "
-                    f"`{match.group('promoter').strip()}` as the concept's source "
-                    f"but the canonical spec is owned by `{current}` — the "
-                    f"companions have drifted.")
-            if match.group("intro").strip() != introducer:
-                failures.append(
-                    f"{concept}.{suffix}: introducer "
-                    f"`{match.group('intro').strip()}` disagrees with the spec's "
-                    f"`{introducer}`.")
+            # 2. every promoter has a receipt naming the concept
+            for slug in history:
+                receipt = os.path.join(receipt_dir, f"{slug}.md")
+                if not os.path.isfile(receipt):
+                    failures.append(
+                        f"{concept}: history names `{slug}` but there is no "
+                        f"_promotions/{slug}.md receipt — the promotion record is "
+                        f"incomplete.")
+                    continue
+                with open(receipt, encoding="utf-8", errors="replace") as handle:
+                    if concept not in handle.read():
+                        failures.append(
+                            f"{concept}: `_promotions/{slug}.md` does not list this "
+                            f"concept — the receipt and the canonical entry disagree.")
 
-        # 3b. the contract companion lists the spec's ACTIONS, not only its
-        #     provenance header. A canonical contract that lags the spec's
-        #     actions is drift (e.g. `GuidelineRules` gained `publishedLineages`
-        #     and its contract did not).
-        if os.path.isfile(os.path.join(corpus, f"{concept}.contract.md")):
-            spec_actions = {a.name for a in ap.parse_concept(
-                os.path.join(corpus, fname)).actions}
-            contract_actions = {action for (c, action) in
-                                ap.parse_spec_outcomes(corpus).items() if c == concept}
-            missing = sorted(spec_actions - contract_actions)
-            if missing:
-                failures.append(
-                    f"{concept}.contract.md: the canonical spec declares action(s) "
-                    + ", ".join(f"`{m}`" for m in missing)
-                    + " that the contract does not — re-derive the companion.")
+            # 3. companions agree with the spec's current source
+            for suffix in COMPANIONS:
+                path = os.path.join(corpus, f"{concept}.{suffix}")
+                if not os.path.isfile(path):
+                    continue
+                with open(path, encoding="utf-8") as handle:
+                    head = handle.read(400)
+                match = COMPANION_RE.search(head)
+                if not match:
+                    failures.append(
+                        f"{concept}.{suffix}: canonical companion has no "
+                        f"'canonical — derived from concept X: …' header, so it "
+                        f"cannot be told apart from a feature snapshot.")
+                    continue
+                if match.group("promoter").strip() != current:
+                    failures.append(
+                        f"{concept}.{suffix}: its header names "
+                        f"`{match.group('promoter').strip()}` as the concept's source "
+                        f"but the canonical spec is owned by `{current}` — the "
+                        f"companions have drifted.")
+                if match.group("intro").strip() != introducer:
+                    failures.append(
+                        f"{concept}.{suffix}: introducer "
+                        f"`{match.group('intro').strip()}` disagrees with the spec's "
+                        f"`{introducer}`.")
 
-    if failures:
-        print("FAIL  the canonical corpus is stale or self-inconsistent")
-        for failure in failures:
-            print(f"  - {failure}")
-        return 1
+            # 3b. the contract companion lists the spec's ACTIONS, not only its
+            #     provenance header. A canonical contract that lags the spec's
+            #     actions is drift (e.g. `GuidelineRules` gained `publishedLineages`
+            #     and its contract did not).
+            if os.path.isfile(os.path.join(corpus, f"{concept}.contract.md")):
+                spec_actions = {a.name for a in ap.parse_concept(
+                    os.path.join(corpus, fname)).actions}
+                contract_actions = {action for (c, action) in
+                                    ap.parse_spec_outcomes(corpus).items() if c == concept}
+                missing = sorted(spec_actions - contract_actions)
+                if missing:
+                    failures.append(
+                        f"{concept}.contract.md: the canonical spec declares action(s) "
+                        + ", ".join(f"`{m}`" for m in missing)
+                        + " that the contract does not — re-derive the companion.")
 
-    features_seen = {slug for entries in proposers.values() for slug, _ in entries}
-    print(f"PASS  {len(concepts)} canonical concept(s) current; "
-          f"{len(features_seen)} proposing feature(s) recorded")
-    return 0
+        if failures:
+            return cr.Verdict.fail(
+                "the canonical corpus is stale or self-inconsistent",
+                [cr.Problem(failure, bullet=True) for failure in failures])
+
+        features_seen = {slug for entries in proposers.values() for slug, _ in entries}
+        return cr.Verdict.ok(
+            f"{len(concepts)} canonical concept(s) current; "
+            f"{len(features_seen)} proposing feature(s) recorded")
+
+    return cr.run_check(
+        "The canonical concept corpus is current and self-consistent", body,
+        argv, configure)
 
 
 if __name__ == "__main__":

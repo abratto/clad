@@ -51,6 +51,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
+import check_runner as cr  # noqa: E402
 
 OP_SECTION = re.compile(r"^##\s+Operational principle\s*$(.*?)(?=^##\s|\Z)",
                         re.MULTILINE | re.DOTALL)
@@ -252,43 +253,44 @@ def check_one(path, others):
     return failures, warnings
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Verify the mechanical subset of the concept criteria")
-    parser.add_argument("--concept-dir", action="append", default=None,
-                        help="Concept-spec dir; repeatable. Earlier dirs shadow "
-                             "later ones by concept name. Defaults to the "
-                             "system corpus.")
-    parser.add_argument("--advisory", action="store_true",
-                        help="Report failures as warnings (exit 0)")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--concept-dir", action="append", default=None,
+                            help="Concept-spec dir; repeatable. Earlier dirs shadow "
+                                 "later ones by concept name. Defaults to the "
+                                 "system corpus.")
+        parser.add_argument("--advisory", action="store_true",
+                            help="Report failures as warnings (exit 0)")
 
-    dirs = args.concept_dir or ["features/_system/concepts"]
-    specs = ap.concept_spec_paths(dirs)
-    if not specs:
-        print("SKIP  no concept specs under %s" % ", ".join(dirs))
+    def body(args: argparse.Namespace):
+        dirs = args.concept_dir or ["features/_system/concepts"]
+        specs = ap.concept_spec_paths(dirs)
+        if not specs:
+            print("SKIP  no concept specs under %s" % ", ".join(dirs))
+            return 0
+
+        names = set(specs)
+        all_failures, all_warnings = [], []
+        for name, path in sorted(specs.items()):
+            failures, warnings = check_one(path, names)
+            all_failures.extend("%s: %s" % (name, f) for f in failures)
+            all_warnings.extend("%s: %s" % (name, w) for w in warnings)
+
+        for warning in all_warnings:
+            print("WARN  %s" % warning)
+
+        if all_failures:
+            label = "WARN" if args.advisory else "FAIL"
+            print("%s  %d concept criteria failure(s):" % (label, len(all_failures)))
+            for failure in all_failures:
+                print("  - %s" % failure)
+            return 0 if args.advisory else 1
+
+        print("PASS  %d concept(s) satisfy the mechanical criteria (%d warning(s))"
+              % (len(specs), len(all_warnings)))
         return 0
 
-    names = set(specs)
-    all_failures, all_warnings = [], []
-    for name, path in sorted(specs.items()):
-        failures, warnings = check_one(path, names)
-        all_failures.extend("%s: %s" % (name, f) for f in failures)
-        all_warnings.extend("%s: %s" % (name, w) for w in warnings)
-
-    for warning in all_warnings:
-        print("WARN  %s" % warning)
-
-    if all_failures:
-        label = "WARN" if args.advisory else "FAIL"
-        print("%s  %d concept criteria failure(s):" % (label, len(all_failures)))
-        for failure in all_failures:
-            print("  - %s" % failure)
-        return 0 if args.advisory else 1
-
-    print("PASS  %d concept(s) satisfy the mechanical criteria (%d warning(s))"
-          % (len(specs), len(all_warnings)))
-    return 0
+    return cr.run_report("Verify the mechanical subset of the concept criteria", body, argv, configure)
 
 
 if __name__ == "__main__":

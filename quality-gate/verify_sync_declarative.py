@@ -55,7 +55,9 @@ import argparse
 import os
 import re
 import sys
+import check_runner as cr
 from pathlib import Path
+
 
 
 # Regexes to strip Java annotations and comments
@@ -296,61 +298,62 @@ def check_file(filepath):
     return defects
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Verify sync implementations are declarative (R3)")
-    parser.add_argument(
-        "--sync-impl-dir", default=None,
-        help="Path to sync implementation source directory. "
-             "If not given, reads sync.impl.dir from clad.properties.")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--sync-impl-dir", default=None,
+            help="Path to sync implementation source directory. "
+                 "If not given, reads sync.impl.dir from clad.properties.")
 
-    sync_dir = args.sync_impl_dir or read_clad_property("sync.impl.dir")
-    if not sync_dir:
-        print("FAIL  sync.impl.dir not found in clad.properties and "
-              "--sync-impl-dir not given.")
-        sys.exit(1)
+    def body(args: argparse.Namespace):
+        sync_dir = args.sync_impl_dir or read_clad_property("sync.impl.dir")
+        if not sync_dir:
+            print("FAIL  sync.impl.dir not found in clad.properties and "
+                  "--sync-impl-dir not given.")
+            return 1
 
-    sync_dir = os.path.abspath(sync_dir)
-    if not os.path.isdir(sync_dir):
-        print(f"FAIL  sync implementation directory not found: {sync_dir}")
-        sys.exit(1)
+        sync_dir = os.path.abspath(sync_dir)
+        if not os.path.isdir(sync_dir):
+            print(f"FAIL  sync implementation directory not found: {sync_dir}")
+            return 1
 
-    all_defects = []
-    java_files = sorted(
-        p for p in Path(sync_dir).rglob("*.java")
-        if p.is_file() and _is_sync_file(p)
-    )
+        all_defects = []
+        java_files = sorted(
+            p for p in Path(sync_dir).rglob("*.java")
+            if p.is_file() and _is_sync_file(p)
+        )
 
-    if not java_files:
-        print(f"INFO  no Java files found in {sync_dir} — nothing to check")
-        sys.exit(0)
+        if not java_files:
+            print(f"INFO  no Java files found in {sync_dir} — nothing to check")
+            return 0
 
-    for filepath in java_files:
-        defects = check_file(str(filepath))
-        if defects:
-            rel = os.path.relpath(filepath, start=os.getcwd())
-            print(f"\n  {rel}")
-            for lineno, msg in defects:
-                loc = f"  line {lineno}: " if lineno else "  "
-                print(f"    {loc}{msg}")
-            all_defects.extend(defects)
+        for filepath in java_files:
+            defects = check_file(str(filepath))
+            if defects:
+                rel = os.path.relpath(filepath, start=os.getcwd())
+                print(f"\n  {rel}")
+                for lineno, msg in defects:
+                    loc = f"  line {lineno}: " if lineno else "  "
+                    print(f"    {loc}{msg}")
+                all_defects.extend(defects)
 
-    if all_defects:
-        print()
-        print(f"FAIL  {len(all_defects)} declarative violation(s) in "
-              f"{len(set(str(f) for f in java_files if check_file(str(f))))} "
-              f"file(s)")
-        print()
-        print("  CLAD syncs must be declarative (R3). Coordination is expressed")
-        print("  in declarative SyncRules, not in Java branching. Split outcome paths")
-        print("  into separate SyncRules for dispatch.")
-        print("  See methodology/architecture/SYNCHRONIZATIONS.md.")
-        sys.exit(1)
-    else:
+        if all_defects:
+            print()
+            print(f"FAIL  {len(all_defects)} declarative violation(s) in "
+                  f"{len(set(str(f) for f in java_files if check_file(str(f))))} "
+                  f"file(s)")
+            print()
+            print("  CLAD syncs must be declarative (R3). Coordination is expressed")
+            print("  in declarative SyncRules, not in Java branching. Split outcome paths")
+            print("  into separate SyncRules for dispatch.")
+            print("  See methodology/architecture/SYNCHRONIZATIONS.md.")
+            return 1
+
         print(f"PASS  all sync classes in {sync_dir} are declarative")
-        sys.exit(0)
+        return 0
+
+    return cr.run_report("Verify sync implementations are declarative (R3)", body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -95,7 +95,7 @@ collision (`quality-gate/artifact_parsers.py#sync_stem`).
 | Level-0 stem is action-first and concept-free | unit | `test_join_collect_grammar.py` | pass | `GrantWhenCheckOk`, `RespondWhenJoinListListedAndTagTagged` |
 | Collision escalates to a longer unique stem | unit | `test_generators.py` fixtures | pass | ladder 0→3 + payload fallback |
 | Generator names match the re-derived UC-00 pack | unit | `test_generators.py::test_generate_syncs_reproduces_canonical_names` | pass | 7 v3 stems |
-| Parity accepts every level | unit | `test_parser_regressions.py`, `test_gap_checks.py` | pass | v3 fixture name accepted |
+| Parity accepts every level | unit | `test_parser_regressions.py`, `test_gate_false_green_and_parity.py` | pass | v3 fixture name accepted |
 | UC-00 re-derivation is mechanically consistent | integration | `verify_artefacts.py`; `verify_stage_sequence --through 05` | pass (gates pending re-approval) | pipeline intact; gates stale by design |
 | Reactor intact (all stocked profiles) | integration | `mvn -q test … -pl java-legible -am`; `-pl java-plain`; `mvn -q compile … -pl java-micronaut-postgres` | pass | exit 0 ×3 |
 | Whole gate suite | unit | `pytest quality-gate/tests -q` | pass | 135 passed |

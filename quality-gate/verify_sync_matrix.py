@@ -23,6 +23,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+
 
 def check_sync_matrix(sync_dir):
     """Check every sync file has a Sync Contract Matrix section with required columns.
@@ -112,27 +115,57 @@ def check_sync_matrix(sync_dir):
     return failures
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Verify every sync has a complete Sync Contract Matrix")
-    parser.add_argument("--sync-dir", required=True,
-                        help="Path to 03_syncs/output/")
-    parser.add_argument("--chain-dir", required=False, default=None,
-                        help="Optional: path to 01b_chain-table/output/ for cross-ref")
-    args = parser.parse_args()
+class _Tail:
+    """The `FAIL` word printed once after the body's own failure lines."""
 
-    failures = check_sync_matrix(args.sync_dir)
+    status = cr.FAIL
+    message = ""
+    problems = ()
+    detail = None
+    prelude = None
+    exit_code = 1
 
-    if not failures:
-        sync_files = [f for f in os.listdir(args.sync_dir)
-                      if f.endswith(".sync.md")] if os.path.isdir(args.sync_dir) else []
-        print(f"PASS  {len(sync_files)} sync files with valid Sync Contract Matrices")
-        sys.exit(0)
-    else:
+
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--sync-dir", required=True,
+                            help="Path to 03_syncs/output/")
+        parser.add_argument("--chain-dir", required=False, default=None,
+                            help="Optional: path to 01b_chain-table/output/ for cross-ref")
+
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        failures = check_sync_matrix(args.sync_dir)
+
+        if not failures:
+            sync_files = [f for f in os.listdir(args.sync_dir)
+                          if f.endswith(".sync.md")] if os.path.isdir(args.sync_dir) else []
+            return cr.Verdict.ok(
+                f"{len(sync_files)} sync files with valid Sync Contract Matrices")
         for fname, msg in failures:
             print(f"FAIL  {fname}: {msg}")
-        sys.exit(1)
+        return _Tail()
+
+    return _run(body, argv, configure)
+
+
+def _run(body, argv, configure):
+    import contextlib
+    import io
+    buffer = io.StringIO()
+    with contextlib.redirect_stdout(buffer):
+        verdict = body(_parse(argv, configure))
+    if isinstance(verdict, _Tail):
+        sys.stdout.write(buffer.getvalue())
+        return 1
+    return cr.emit(verdict)
+
+
+def _parse(argv, configure):
+    parser = argparse.ArgumentParser(
+        description="Verify every sync has a complete Sync Contract Matrix")
+    configure(parser)
+    return parser.parse_args(argv)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

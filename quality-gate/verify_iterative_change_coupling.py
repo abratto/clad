@@ -33,6 +33,7 @@ import os
 import re
 import subprocess
 import sys
+import check_runner as cr
 from pathlib import Path
 
 
@@ -257,53 +258,55 @@ def has_active_iterative_change():
     return False
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Verify iterative implementation/spec coupling in the diff.")
-    parser.add_argument("--base", default="origin/main", help="Base ref for git diff detection")
-    parser.add_argument("--changed-files-file", default="", help="Test hook: newline-delimited changed file list")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--base", default="origin/main", help="Base ref for git diff detection")
+        parser.add_argument("--changed-files-file", default="", help="Test hook: newline-delimited changed file list")
 
-    if has_active_maintenance_record():
-        print("PASS  maintenance-governed change (R20); iterative-change coupling (R17) not applicable")
-        sys.exit(0)
+    def body(args: argparse.Namespace):
+        if has_active_maintenance_record():
+            print("PASS  maintenance-governed change (R20); iterative-change coupling (R17) not applicable")
+            return 0
 
-    if not has_active_iterative_change():
-        print("PASS  no active iterative change (R17 coupling not applicable; "
-              "feature-stage work is governed by the readiness/sequence gates)")
-        sys.exit(0)
+        if not has_active_iterative_change():
+            print("PASS  no active iterative change (R17 coupling not applicable; "
+                  "feature-stage work is governed by the readiness/sequence gates)")
+            return 0
 
-    changed = changed_files(args.base, args.changed_files_file)
+        changed = changed_files(args.base, args.changed_files_file)
 
-    # In git mode, ignore pure package/import renames: they are Presentation
-    # changes (R17) and do not invalidate the Stage 02/03 artefacts. The test
-    # hook (--changed-files-file) has no git diff to inspect, so it is exempt.
-    import_only_filter = None
-    is_new = None
-    if not args.changed_files_file:
-        import_only_filter = lambda path: is_import_or_package_only(path, args.base)
-        is_new = lambda path: not exists_at_base(path, args.base)
+        # In git mode, ignore pure package/import renames: they are Presentation
+        # changes (R17) and do not invalidate the Stage 02/03 artefacts. The test
+        # hook (--changed-files-file) has no git diff to inspect, so it is exempt.
+        import_only_filter = None
+        is_new = None
+        if not args.changed_files_file:
+            import_only_filter = lambda path: is_import_or_package_only(path, args.base)
+            is_new = lambda path: not exists_at_base(path, args.base)
 
-    concept_impls = changed_concept_impls(changed, import_only_filter, is_new)
-    sync_impls = changed_sync_impls(changed, import_only_filter, is_new)
-    concept_specs = changed_concept_specs(changed)
-    sync_specs = changed_sync_specs(changed)
+        concept_impls = changed_concept_impls(changed, import_only_filter, is_new)
+        sync_impls = changed_sync_impls(changed, import_only_filter, is_new)
+        concept_specs = changed_concept_specs(changed)
+        sync_specs = changed_sync_specs(changed)
 
-    failures = []
-    for name in missing_matches(concept_impls, concept_specs):
-        failures.append((name, "concept implementation changed without matching 02_concepts/output/*.concept.md"))
-    for name in missing_matches(sync_impls, sync_specs):
-        failures.append((name, "sync implementation changed without matching 03_syncs/output/*.sync.md"))
+        failures = []
+        for name in missing_matches(concept_impls, concept_specs):
+            failures.append((name, "concept implementation changed without matching 02_concepts/output/*.concept.md"))
+        for name in missing_matches(sync_impls, sync_specs):
+            failures.append((name, "sync implementation changed without matching 03_syncs/output/*.sync.md"))
 
-    if failures:
-        print(f"FAIL: {len(failures)} iterative-change coupling violation(s):\n")
-        for name, message in failures:
-            print(f"  {name}\n    {message}\n")
-        print("Re-enter the earliest owning CLAD stage and commit the stage artefact with the implementation change.")
-        sys.exit(1)
+        if failures:
+            print(f"FAIL: {len(failures)} iterative-change coupling violation(s):\n")
+            for name, message in failures:
+                print(f"  {name}\n    {message}\n")
+            print("Re-enter the earliest owning CLAD stage and commit the stage artefact with the implementation change.")
+            return 1
 
-    print("PASS  iterative implementation/spec coupling is satisfied")
-    sys.exit(0)
+        print("PASS  iterative implementation/spec coupling is satisfied")
+        return 0
+
+    return cr.run_report("Verify iterative implementation/spec coupling in the diff.", body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

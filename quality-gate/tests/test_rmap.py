@@ -181,6 +181,46 @@ class ProjectRmapTests(unittest.TestCase):
             self.assertEqual(rmap._guarded_write(str(path), "new\n", False), 0)
 
 
+class BaselineAliasTests(unittest.TestCase):
+    """`--baseline-descriptor` is a deprecated alias for `--baseline <path>`."""
+
+    def _corpus(self, root):
+        features = _write_corpus(root / "features", ["Alpha"])
+        self.assertEqual(rmap.main([
+            "--features-dir", str(features),
+            "--record-baseline", "prod"]), 0)
+        return features
+
+    def test_deprecated_alias_matches_baseline_path(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features = self._corpus(root)
+            path = root / "_generated/rmap-baselines/prod.json"
+            alias_out = root / "alias.sql"
+            new_out = root / "new.sql"
+            self.assertEqual(rmap.main([
+                "--features-dir", str(features),
+                "--baseline-descriptor", str(path),
+                "--alter", str(alias_out)]), 0)
+            self.assertEqual(rmap.main([
+                "--features-dir", str(features),
+                "--baseline", str(path),
+                "--alter", str(new_out)]), 0)
+            self.assertEqual(alias_out.read_text(), new_out.read_text())
+
+    def test_alias_and_baseline_together_are_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            features = self._corpus(root)
+            path = root / "_generated/rmap-baselines/prod.json"
+            with self.assertRaises(SystemExit):
+                rmap.main([
+                    "--features-dir", str(features),
+                    "--baseline", "prod",
+                    "--baseline-descriptor", str(path),
+                    "--alter", str(root / "x.sql")])
+
+
 class DescriptorCurrentTests(unittest.TestCase):
 
     def test_login_descriptor_is_current(self):

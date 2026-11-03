@@ -14,11 +14,13 @@ Usage:
 """
 
 import argparse
-
-from artifact_parsers import merge_by_concept  # noqa: E402
 import os
 import re
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from artifact_parsers import merge_by_concept  # noqa: E402
+import check_runner as cr  # noqa: E402
 
 
 ACTION_RE = re.compile(r"^###\s+`(\w+)\(")
@@ -202,35 +204,37 @@ def scan_tests(test_source_root, required_by_action):
     return checked, failures
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Verify Java concept tests assert required completion fields"
-    )
-    parser.add_argument(
-        "--contract-dir", required=True, action="append",
-        help="Contract dir; repeatable. Earlier dirs shadow later, so a reused "
-             "concept's tests are checked against its canonical contract (R22)")
-    parser.add_argument("--test-source-root", required=True)
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--contract-dir", required=True, action="append",
+            help="Contract dir; repeatable. Earlier dirs shadow later, so a reused "
+                 "concept's tests are checked against its canonical contract (R22)")
+        parser.add_argument("--test-source-root", required=True)
 
-    if not os.path.isdir(args.test_source_root):
-        print(f"FAIL  test source root not found: {args.test_source_root}")
-        return 1
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        if not os.path.isdir(args.test_source_root):
+            return cr.Verdict.fail(
+                f"test source root not found: {args.test_source_root}")
 
-    required_by_action = merge_by_concept(args.contract_dir, parse_required_fields)
-    if not required_by_action:
-        print("WARN  no required flow-token fields parsed from contracts")
-        return 0
+        required_by_action = merge_by_concept(args.contract_dir, parse_required_fields)
+        if not required_by_action:
+            verdict = cr.Verdict(cr.WARN, "")
+            verdict.detail = "WARN  no required flow-token fields parsed from contracts"
+            return verdict
 
-    checked, failures = scan_tests(args.test_source_root, required_by_action)
-    if failures:
-        print(f"FAIL  R14/R16 field assertion check failed ({len(failures)} issue(s))")
-        for failure in failures:
-            print(f"  - {failure}")
-        return 1
+        checked, failures = scan_tests(args.test_source_root, required_by_action)
+        if failures:
+            return cr.Verdict.fail(
+                f"R14/R16 field assertion check failed ({len(failures)} issue(s))",
+                [cr.Problem(failure, bullet=True) for failure in failures])
 
-    print(f"PASS  R14/R16: {checked} concept test method(s) assert required fields")
-    return 0
+        return cr.Verdict.ok(
+            f"R14/R16: {checked} concept test method(s) assert required fields")
+
+    return cr.run_check(
+        "Verify Java concept tests assert required completion fields", body,
+        argv, configure)
 
 
 if __name__ == "__main__":

@@ -31,6 +31,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+
 # `Concept/action: [ ... ]` — the argument list stops at the first `]`, so a
 # nested `body: { … }` remains inside the captured group.
 SIGNATURE = re.compile(r"\b([A-Z]\w*/\w+):\s*\[([^\]]*)\]")
@@ -90,54 +93,58 @@ def response_findings(path):
     return findings
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="A sync then carries the authored result, not the transport frame")
-    parser.add_argument("--features-dir", default="features")
-    parser.add_argument("--advisory", action="store_true",
-                        help="Report findings as warnings (exit 0)")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--features-dir", default="features")
+        parser.add_argument("--advisory", action="store_true",
+                            help="Report findings as warnings (exit 0)")
 
-    if not os.path.isdir(args.features_dir):
-        print(f"SKIP  no features directory at {args.features_dir}")
-        return 0
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        if not os.path.isdir(args.features_dir):
+            return cr.Verdict.skip(
+                f"no features directory at {args.features_dir}")
 
-    scanned = 0
-    findings = []
-    for feature in sorted(os.listdir(args.features_dir)):
-        if not feature.startswith("UC-"):
-            continue
-        sync_dir = os.path.join(args.features_dir, feature, "stages", "03_syncs",
-                                "output")
-        if not os.path.isdir(sync_dir):
-            continue
-        for name in sorted(os.listdir(sync_dir)):
-            if not name.endswith(".sync.md"):
+        scanned = 0
+        findings = []
+        for feature in sorted(os.listdir(args.features_dir)):
+            if not feature.startswith("UC-"):
                 continue
-            scanned += 1
-            path = os.path.join(sync_dir, name)
-            for lineno, signature in scan(path):
-                findings.append(
-                    f"{feature}/{name}:{lineno}: `{signature}` nests a `{{ … }}` "
-                    f"in its `then` — pass the authored result flat; the "
-                    f"primary adapter serializes the response frame")
-            for finding in response_findings(path):
-                findings.append(f"{feature}/{name}: {finding}")
+            sync_dir = os.path.join(args.features_dir, feature, "stages",
+                                    "03_syncs", "output")
+            if not os.path.isdir(sync_dir):
+                continue
+            for name in sorted(os.listdir(sync_dir)):
+                if not name.endswith(".sync.md"):
+                    continue
+                scanned += 1
+                path = os.path.join(sync_dir, name)
+                for lineno, signature in scan(path):
+                    findings.append(
+                        f"{feature}/{name}:{lineno}: `{signature}` nests a "
+                        f"`{{ … }}` in its `then` — pass the authored result "
+                        f"flat; the primary adapter serializes the response frame")
+                for finding in response_findings(path):
+                    findings.append(f"{feature}/{name}: {finding}")
 
-    if not scanned:
-        print("SKIP  no sync specs found")
-        return 0
+        if not scanned:
+            return cr.Verdict.skip("no sync specs found")
 
-    if findings:
-        label = "WARN" if args.advisory else "FAIL"
-        print(f"{label}  {len(findings)} sync `then` defect(s) — carry a "
-              f"transport frame or violate the response grammar:")
-        for finding in findings:
-            print(f"  - {finding}")
-        return 0 if args.advisory else 1
+        if findings:
+            summary = (f"{len(findings)} sync `then` defect(s) — carry a "
+                       f"transport frame or violate the response grammar:")
+            deck = [cr.Problem(finding, bullet=True) for finding in findings]
+            if args.advisory:
+                verdict = cr.Verdict(cr.WARN, summary)
+                verdict.problems = deck
+                return verdict
+            return cr.Verdict.fail(summary, deck)
 
-    print(f"PASS  {scanned} sync spec(s) carry the authored result, not a frame")
-    return 0
+        return cr.Verdict.ok(
+            f"{scanned} sync spec(s) carry the authored result, not a frame")
+
+    return cr.run_check(
+        "A sync then carries the authored result, not the transport frame",
+        body, argv, configure)
 
 
 if __name__ == "__main__":

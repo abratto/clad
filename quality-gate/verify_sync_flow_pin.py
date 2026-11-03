@@ -41,7 +41,9 @@ import os
 import re
 import sys
 
-import artifact_parsers as ap
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import artifact_parsers as ap  # noqa: E402
+import check_runner as cr  # noqa: E402
 
 
 WHEN_BLOCK = re.compile(r"when\s*\{(.*?)\}", re.DOTALL)
@@ -106,90 +108,93 @@ def all_chain_routes(features_dir):
     return routes
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Every non-bootstrap sync pins its flow root last")
-    parser.add_argument("--features-dir", default="features")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--features-dir", default="features")
 
-    features_dir = os.path.abspath(args.features_dir)
-    if not os.path.isdir(features_dir):
-        print(f"SKIP  no features directory at {features_dir}")
-        return 0
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        features_dir = os.path.abspath(args.features_dir)
+        if not os.path.isdir(features_dir):
+            return cr.Verdict.skip(f"no features directory at {features_dir}")
 
-    failures = []
-    pinned = bootstraps = 0
-    known_routes = {}
-    global_routes = all_chain_routes(features_dir)
-    for feature, path in sync_files(features_dir):
-        with open(path, encoding="utf-8") as handle:
-            text = handle.read()
-        block = WHEN_BLOCK.search(text)
-        if not block:
-            continue
-        when = block.group(1)
-        lines = when.splitlines()
-        conjuncts = [i for i, line in enumerate(lines)
-                     if CONJUNCT.match(line)]
-        roots = [i for i, line in enumerate(lines) if FLOW_ROOT.search(line)]
-        name = os.path.basename(path)
+        failures = []
+        pinned = bootstraps = 0
+        known_routes = {}
+        global_routes = all_chain_routes(features_dir)
+        for feature, path in sync_files(features_dir):
+            with open(path, encoding="utf-8") as handle:
+                text = handle.read()
+            block = WHEN_BLOCK.search(text)
+            if not block:
+                continue
+            when = block.group(1)
+            lines = when.splitlines()
+            conjuncts = [i for i, line in enumerate(lines)
+                         if CONJUNCT.match(line)]
+            roots = [i for i, line in enumerate(lines) if FLOW_ROOT.search(line)]
+            name = os.path.basename(path)
 
-        # A lone `Web/request` conjunct IS the flow root: the bootstrap.
-        if len(conjuncts) <= 1 and roots:
-            bootstraps += 1
-            continue
+            # A lone `Web/request` conjunct IS the flow root: the bootstrap.
+            if len(conjuncts) <= 1 and roots:
+                bootstraps += 1
+                continue
 
-        if not roots:
-            failures.append(
-                f"{feature}/{name}: `when` never names the flow root — this rule "
-                "cannot be told apart from another use case's rule on the same "
-                "completion")
-            continue
-        if len(roots) > 1:
-            failures.append(
-                f"{feature}/{name}: `when` names more than one flow root — a rule "
-                "belongs to exactly one flow; a rule that must fire in two flows "
-                "is two rules")
-            continue
-        root = roots[0]
-        if not conjuncts or root != conjuncts[-1]:
-            failures.append(
-                f"{feature}/{name}: the flow root is not the LAST conjunct — the "
-                "engine binds `triggerField`/`triggerInput` to the primary (first) "
-                "conjunct, so a pin before the domain trigger blanks the rule's "
-                "arguments")
-            continue
-        match = ROUTE.search(lines[root])
-        if not match:
-            failures.append(
-                f"{feature}/{name}: pins the flow root without its route — two "
-                "routes bootstrapping one action would still be one flow to this "
-                "rule")
-            continue
-        route = match.group(1)
-        if feature not in known_routes:
-            known_routes[feature] = chain_routes(features_dir, feature)
-        routes = known_routes[feature]
-        if routes and route not in routes and route not in global_routes:
-            failures.append(
-                f"{feature}/{name}: pins route {route!r}, but the feature's chain "
-                f"tables root {sorted(routes)} and no other feature roots it — the "
-                "generator derives the pin from row 1, so this rule has drifted "
-                "from its chain")
-            continue
-        pinned += 1
+            if not roots:
+                failures.append(
+                    f"{feature}/{name}: `when` never names the flow root — this rule "
+                    "cannot be told apart from another use case's rule on the same "
+                    "completion")
+                continue
+            if len(roots) > 1:
+                failures.append(
+                    f"{feature}/{name}: `when` names more than one flow root — a rule "
+                    "belongs to exactly one flow; a rule that must fire in two flows "
+                    "is two rules")
+                continue
+            root = roots[0]
+            if not conjuncts or root != conjuncts[-1]:
+                failures.append(
+                    f"{feature}/{name}: the flow root is not the LAST conjunct — the "
+                    "engine binds `triggerField`/`triggerInput` to the primary (first) "
+                    "conjunct, so a pin before the domain trigger blanks the rule's "
+                    "arguments")
+                continue
+            match = ROUTE.search(lines[root])
+            if not match:
+                failures.append(
+                    f"{feature}/{name}: pins the flow root without its route — two "
+                    "routes bootstrapping one action would still be one flow to this "
+                    "rule")
+                continue
+            route = match.group(1)
+            if feature not in known_routes:
+                known_routes[feature] = chain_routes(features_dir, feature)
+            routes = known_routes[feature]
+            if routes and route not in routes and route not in global_routes:
+                failures.append(
+                    f"{feature}/{name}: pins route {route!r}, but the feature's chain "
+                    f"tables root {sorted(routes)} and no other feature roots it — the "
+                    "generator derives the pin from row 1, so this rule has drifted "
+                    "from its chain")
+                continue
+            pinned += 1
 
-    if failures:
-        print("FAIL  a non-bootstrap sync does not pin its flow root")
-        for failure in failures[:12]:
-            print(f"  - {failure}")
-        if len(failures) > 12:
-            print(f"  ... and {len(failures) - 12} more")
-        return 1
+        if failures:
+            verdict = cr.Verdict.fail(
+                "a non-bootstrap sync does not pin its flow root",
+                [cr.Problem(failure, bullet=True) for failure in failures[:12]])
+            extra = len(failures) - 12
+            if extra > 0:
+                verdict.detail = f"  ... and {extra} more"
+            return verdict
 
-    print(f"PASS  {pinned} non-bootstrap sync(s) pin their flow root last; "
-          f"{bootstraps} bootstrap(s) are the flow root")
-    return 0
+        return cr.Verdict.ok(
+            f"{pinned} non-bootstrap sync(s) pin their flow root last; "
+            f"{bootstraps} bootstrap(s) are the flow root")
+
+    return cr.run_check(
+        "Every non-bootstrap sync pins its flow root last", body, argv,
+        configure)
 
 
 if __name__ == "__main__":

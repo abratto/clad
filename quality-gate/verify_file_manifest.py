@@ -23,49 +23,49 @@ import argparse
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Verify output/ contains exactly the expected files. "
-                    "Replaces non-deterministic LLM self-audit of file manifests.")
-    parser.add_argument("--dir", required=True,
-                        help="Path to the output/ directory to inspect")
-    parser.add_argument("--expected", required=True,
-                        help="Comma-separated list of expected filenames "
-                             "(e.g. 'usecase.md' or 'User.contract.md,Session.contract.md')")
-    args = parser.parse_args()
 
-    out_dir = args.dir
-    expected = set(args.expected.split(","))
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--dir", required=True,
+                            help="Path to the output/ directory to inspect")
+        parser.add_argument("--expected", required=True,
+                            help="Comma-separated list of expected filenames "
+                                 "(e.g. 'usecase.md' or 'User.contract.md,Session.contract.md')")
 
-    if not os.path.isdir(out_dir):
-        print(f"FAIL  directory not found: {out_dir}")
-        sys.exit(1)
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        out_dir = args.dir
+        expected = set(args.expected.split(","))
 
-    actual = {
-        f for f in os.listdir(out_dir)
-        if not f.startswith(".") and not f.endswith("-all-scenarios-chain.md")
-    }
+        if not os.path.isdir(out_dir):
+            return cr.Verdict.fail(f"directory not found: {out_dir}")
 
-    missing = expected - actual
-    extra = actual - expected
+        actual = {
+            f for f in os.listdir(out_dir)
+            if not f.startswith(".") and not f.endswith("-all-scenarios-chain.md")
+        }
 
-    passed = True
-    if missing:
+        missing = expected - actual
+        extra = actual - expected
+
+        problems = []
         for f in sorted(missing):
-            print(f"FAIL  missing expected file: {f}")
-        passed = False
-    if extra:
+            problems.append(cr.Problem(f"missing expected file: {f}"))
         for f in sorted(extra):
-            print(f"FAIL  unexpected file: {f}")
-        passed = False
+            problems.append(cr.Problem(f"unexpected file: {f}"))
 
-    if passed:
-        print(f"PASS  manifest matches ({len(expected)} files)")
-        sys.exit(0)
-    else:
-        sys.exit(1)
+        if problems:
+            return cr.Verdict.fail("", problems)
+
+        return cr.Verdict.ok(f"manifest matches ({len(expected)} files)")
+
+    return cr.run_check(
+        "Verify output/ contains exactly the expected files. "
+        "Replaces non-deterministic LLM self-audit of file manifests.",
+        body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

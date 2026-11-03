@@ -26,6 +26,9 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+
 
 _SYNC_RULE_HEAD = re.compile(
     r'SyncRule\.of\(\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"(\w+)"\s*,\s*"([^"]*)"')
@@ -90,28 +93,35 @@ def scan_sync_rule_ambiguity(root):
     return warnings, len(parsed)
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Advisory R11 route-scoping check for SyncRule syncs")
-    parser.add_argument("--sync-impl-dir", default="",
-                        help="Directory containing SyncRule Java implementations")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--sync-impl-dir", default="",
+                            help="Directory containing SyncRule Java implementations")
 
-    if not args.sync_impl_dir or not os.path.isdir(args.sync_impl_dir):
-        print(f"SKIP  sync implementation dir not found: {args.sync_impl_dir or '<unset>'}")
-        sys.exit(0)
+    def body(args: argparse.Namespace):
+        if not args.sync_impl_dir or not os.path.isdir(args.sync_impl_dir):
+            return cr.Verdict.skip(
+                f"sync implementation dir not found: "
+                f"{args.sync_impl_dir or '<unset>'}")
 
-    warnings, parsed_rules = scan_sync_rule_ambiguity(Path(args.sync_impl_dir))
-    for warning in warnings:
-        print(f"WARN  {warning}")
-    if warnings:
-        print(f"WARN  R11 route scoping: {len(warnings)} ambiguous SyncRule "
-              f"trigger(s); add a ?route guard or review Stage 03a.")
-    else:
-        print(f"PASS  R11 route scoping: {parsed_rules} SyncRule(s) examined, "
-              f"no ambiguous shared-trigger respond sync.")
-    sys.exit(0)
+        warnings, parsed_rules = scan_sync_rule_ambiguity(
+            Path(args.sync_impl_dir))
+        if warnings:
+            verdict = cr.Verdict(cr.WARN, "R11 route scoping: "
+                                 f"{len(warnings)} ambiguous SyncRule "
+                                 f"trigger(s); add a ?route guard or review "
+                                 f"Stage 03a.")
+            verdict.prelude = "\n".join(f"WARN  {warning}"
+                                        for warning in warnings)
+            return verdict
+        return cr.Verdict.ok(
+            f"R11 route scoping: {parsed_rules} SyncRule(s) examined, "
+            f"no ambiguous shared-trigger respond sync.")
+
+    return cr.run_check(
+        "Advisory R11 route-scoping check for SyncRule syncs", body, argv,
+        configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

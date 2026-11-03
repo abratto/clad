@@ -119,13 +119,13 @@ and `advance.set_gate_status`.
 
 | Invariant | Test level | Command or test | Status | Evidence |
 |---|---|---|---|---|
-| Outcome alignment FAILs on a present chain dir that parses to zero rows | unit | `test_gap_checks.py::…test_outcome_alignment_fails_on_empty_chain_rows` | pass | — |
-| Outcome alignment still SKIPs when the chain dir is absent | unit | `test_gap_checks.py::…test_outcome_alignment_skips_when_chain_dir_absent` | pass | — |
-| Scenario coverage FAILs when the chain dir is missing but scenarios exist | unit | `test_gap_checks.py::…test_scenario_coverage_fails_on_missing_chain_dir_with_scenarios` | pass | — |
-| Concept additivity FAILs when a canonical contract has no proposal counterpart | unit | `test_gap_checks.py::…test_additivity_fails_on_missing_proposal_contract`, `test_concept_additivity.py::…test_missing_proposal_contract_fails` | pass | — |
+| Outcome alignment FAILs on a present chain dir that parses to zero rows | unit | `test_gate_false_green_and_parity.py::…test_outcome_alignment_fails_on_empty_chain_rows` | pass | — |
+| Outcome alignment still SKIPs when the chain dir is absent | unit | `test_gate_false_green_and_parity.py::…test_outcome_alignment_skips_when_chain_dir_absent` | pass | — |
+| Scenario coverage FAILs when the chain dir is missing but scenarios exist | unit | `test_gate_false_green_and_parity.py::…test_scenario_coverage_fails_on_missing_chain_dir_with_scenarios` | pass | — |
+| Concept additivity FAILs when a canonical contract has no proposal counterpart | unit | `test_gate_false_green_and_parity.py::…test_additivity_fails_on_missing_proposal_contract`, `test_concept_additivity.py::…test_missing_proposal_contract_fails` | pass | — |
 | Gate-line parse/write round-trips both skeleton and UC-00 formats | unit | `test_parser_regressions.py::GateLineParsingTests` (6 cases) | pass | — |
 | `set_gate_status` WARNs when no gate line matches (and on a missing RESUME) | unit | `test_stage_workflow.py::…test_set_gate_status_warns_when_no_gate_line_matches`, `…warns_when_resume_missing` | pass | — |
-| Shared-triggers treats whitespace/EOL-only change as current | unit | `test_gap_checks.py::…test_shared_triggers_ignores_whitespace_drift` | pass | — |
+| Shared-triggers treats whitespace/EOL-only change as current | unit | `test_gate_false_green_and_parity.py::…test_shared_triggers_ignores_whitespace_drift` | pass | — |
 | UC-00 still passes the corrected scripts on the green tree | integration | `verify_outcome_alignment` (8 outcomes), `verify_concept_additivity` (SKIP), `verify_shared_triggers_current` (PASS) against `features/UC-00-login` | pass | — |
 | Gate pipeline intact | integration | `python3 quality-gate/verify_artefacts.py` | pass | artefact pipeline intact, 0 WARNs |
 | Gate suite green | unit | `python3 -m pytest quality-gate/tests -q` | pass | 246 passed |

@@ -30,6 +30,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+
 # `Name.<kind>.md` inside backticks.
 REF = re.compile(r"`([A-Za-z0-9_]+)\.(sync|concept|contract|data-model)\.md`")
 RULE_NAME = re.compile(r'(?:SyncRule\.ofJoin|SyncRule\.of|rule)\(\s*"(\w+)"')
@@ -87,60 +90,61 @@ def java_rule_names(sync_impl_dir):
     return names
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Rename-tail reference check")
-    parser.add_argument("--features-dir", default="features")
-    parser.add_argument("--sync-impl-dir", default="")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--features-dir", default="features")
+        parser.add_argument("--sync-impl-dir", default="")
 
-    features_dir = os.path.abspath(args.features_dir)
-    features = feature_dirs(features_dir)
-    if not features:
-        print(f"SKIP  no features under {features_dir}")
-        return 0
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        features_dir = os.path.abspath(args.features_dir)
+        features = feature_dirs(features_dir)
+        if not features:
+            return cr.Verdict.skip(f"no features under {features_dir}")
 
-    corpus = {
-        "concept": stems(os.path.join(features_dir, "_system/concepts"), ".concept.md"),
-        "contract": stems(os.path.join(features_dir, "_system/concepts"), ".contract.md"),
-        "data-model": stems(os.path.join(features_dir, "_system/concepts"), ".data-model.md"),
-    }
+        corpus = {
+            "concept": stems(os.path.join(features_dir, "_system/concepts"), ".concept.md"),
+            "contract": stems(os.path.join(features_dir, "_system/concepts"), ".contract.md"),
+            "data-model": stems(os.path.join(features_dir, "_system/concepts"), ".data-model.md"),
+        }
 
-    failures = []
-    checked = 0
-    all_sync_stems = set()
-    for feature in features:
-        have = available(feature, corpus)
-        all_sync_stems |= have["sync"]
-        rel = os.path.basename(feature)
-        for path in markdown_files(feature):
-            with open(path, encoding="utf-8", errors="replace") as handle:
-                text = handle.read()
-            for name, kind in REF.findall(text):
-                if kind in ("concept", "contract", "data-model") and name in BOOTSTRAP:
-                    continue
+        failures = []
+        checked = 0
+        all_sync_stems = set()
+        for feature in features:
+            have = available(feature, corpus)
+            all_sync_stems |= have["sync"]
+            rel = os.path.basename(feature)
+            for path in markdown_files(feature):
+                with open(path, encoding="utf-8", errors="replace") as handle:
+                    text = handle.read()
+                for name, kind in REF.findall(text):
+                    if kind in ("concept", "contract", "data-model") and name in BOOTSTRAP:
+                        continue
+                    checked += 1
+                    if name not in have[kind]:
+                        failures.append(cr.Problem(
+                            f"`{name}.{kind}.md` resolves to no {kind} artefact",
+                            where=f"{rel}/{os.path.relpath(path, feature)}"))
+
+        if args.sync_impl_dir:
+            for name in sorted(set(java_rule_names(args.sync_impl_dir))):
                 checked += 1
-                if name not in have[kind]:
-                    failures.append(
-                        f"{rel}/{os.path.relpath(path, feature)}: `{name}.{kind}.md` "
-                        f"resolves to no {kind} artefact")
+                if name not in all_sync_stems:
+                    failures.append(cr.Problem(
+                        f"rule(\"{name}\") matches no sync spec in any feature "
+                        f"(orphan rule / rename tail)",
+                        where=args.sync_impl_dir))
 
-    if args.sync_impl_dir:
-        for name in sorted(set(java_rule_names(args.sync_impl_dir))):
-            checked += 1
-            if name not in all_sync_stems:
-                failures.append(
-                    f"{args.sync_impl_dir}: `rule(\"{name}\")` matches no sync spec "
-                    f"in any feature (orphan rule / rename tail)")
+        if failures:
+            head, rest = failures[:20], failures[20:]
+            verdict = cr.Verdict.fail(
+                f"{len(failures)} dangling reference(s):", head)
+            if rest:
+                verdict.detail = f"  ... and {len(rest)} more"
+            return verdict
+        return cr.Verdict.ok(f"{checked} reference(s) resolve")
 
-    if failures:
-        print(f"FAIL  {len(failures)} dangling reference(s):")
-        for failure in failures[:20]:
-            print(f"  - {failure}")
-        if len(failures) > 20:
-            print(f"  ... and {len(failures) - 20} more")
-        return 1
-    print(f"PASS  {checked} reference(s) resolve")
-    return 0
+    return cr.run_check("Rename-tail reference check", body, argv, configure)
 
 
 if __name__ == "__main__":

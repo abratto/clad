@@ -12,9 +12,13 @@ Why this exists:
 """
 
 import argparse
+import os
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -60,42 +64,45 @@ def storage_mappings_in(storage_dir):
             yield storage_md, text
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Validate relational Stage 04a storage mappings.")
-    parser.add_argument("--storage-dir", default="", help="Directory of *.storage.md files (defaults to all features)")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--storage-dir", default="", help="Directory of *.storage.md files (defaults to all features)")
 
-    if args.storage_dir:
-        mappings = list(storage_mappings_in(args.storage_dir))
-    else:
-        features = REPO_ROOT / "features"
-        mappings = []
-        if features.is_dir():
-            for output_dir in features.glob(
-                    "UC-*/stages/04_implement/04a_storage-mapping/output"):
-                mappings.extend(storage_mappings_in(output_dir))
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        if args.storage_dir:
+            mappings = list(storage_mappings_in(args.storage_dir))
+        else:
+            features = REPO_ROOT / "features"
+            mappings = []
+            if features.is_dir():
+                for output_dir in features.glob(
+                        "UC-*/stages/04_implement/04a_storage-mapping/output"):
+                    mappings.extend(storage_mappings_in(output_dir))
 
-    if not mappings:
-        print("PASS  no relational storage mappings to validate")
-        return
+        if not mappings:
+            return cr.Verdict.ok("no relational storage mappings to validate")
 
-    failures = []
-    for path, text in mappings:
-        for failure in validate_relational_mapping(text):
-            try:
-                rel = path.relative_to(REPO_ROOT)
-            except ValueError:
-                rel = path
-            failures.append(f"{rel}: {failure}")
+        failures = []
+        for path, text in mappings:
+            for failure in validate_relational_mapping(text):
+                try:
+                    rel = path.relative_to(REPO_ROOT)
+                except ValueError:
+                    rel = path
+                failures.append(f"{rel}: {failure}")
 
-    if failures:
-        print(f"FAIL: {len(failures)} relational mapping violation(s):")
-        for failure in failures:
-            print(f"  {failure}")
-        sys.exit(1)
+        if failures:
+            return cr.Verdict.fail(
+                f"{len(failures)} relational mapping violation(s):", [
+                    cr.Problem(f) for f in failures])
 
-    print(f"PASS  {len(mappings)} relational storage mapping(s) satisfy the Rmap rules")
+        return cr.Verdict.ok(
+            f"{len(mappings)} relational storage mapping(s) satisfy the Rmap rules")
+
+    return cr.run_check(
+        "Validate relational Stage 04a storage mappings.",
+        body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

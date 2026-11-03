@@ -2,10 +2,14 @@
 """Require governed maintenance records for engine and profile changes."""
 
 import argparse
+import os
 import re
 import subprocess
 import sys
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -118,54 +122,58 @@ def has_passing_test(text):
     return False
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Verify maintenance-change governance.")
-    parser.add_argument("--base", default="origin/main")
-    parser.add_argument("--changed-files-file", default="")
-    parser.add_argument("--require-evidence", action="store_true")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--base", default="origin/main")
+        parser.add_argument("--changed-files-file", default="")
+        parser.add_argument("--require-evidence", action="store_true")
 
-    scoped = [path for path in changed_files(args.base, args.changed_files_file) if is_maintenance_scope(path)]
-    # A derived project editing only its own binding keys is project config, not
-    # a platform change (D1). A clad.properties-only diff on those keys drops out.
-    if not args.changed_files_file and scoped == ["clad.properties"]:
-        if is_project_config_only(clad_properties_diff("clad.properties", args.base)):
-            print("PASS  clad.properties binding-key change is project configuration, "
-                  "not a platform change")
-            return
-    if not scoped:
-        print("PASS  no engine, profile, configuration, or deployment changes detected")
-        return
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        scoped = [path for path in changed_files(args.base, args.changed_files_file) if is_maintenance_scope(path)]
+        # A derived project editing only its own binding keys is project config, not
+        # a platform change (D1). A clad.properties-only diff on those keys drops out.
+        if not args.changed_files_file and scoped == ["clad.properties"]:
+            if is_project_config_only(clad_properties_diff("clad.properties", args.base)):
+                return cr.Verdict.ok(
+                    "clad.properties binding-key change is project configuration, "
+                    "not a platform change")
+        if not scoped:
+            return cr.Verdict.ok(
+                "no engine, profile, configuration, or deployment changes detected")
 
-    records = active_records()
-    if len(records) != 1:
-        print("FAIL  maintenance-scoped changes require exactly one active maintenance/<change-name>.md record")
-        sys.exit(1)
+        records = active_records()
+        if len(records) != 1:
+            return cr.Verdict.fail(
+                "maintenance-scoped changes require exactly one active "
+                "maintenance/<change-name>.md record")
 
-    path, text = records[0]
-    failures = []
-    if field_value(text, "Change class") not in {"platform", "mixed"}:
-        failures.append("missing or invalid Change class")
-    if field_value(text, "Feature-contract impact") not in {"preserved", "re-entered"}:
-        failures.append("missing or invalid Feature-contract impact")
-    if field_value(text, "Design gate") != "approved":
-        failures.append("design gate is not approved")
-    if "## Contract impact" not in text or "## Impact matrix" not in text or "## Test matrix" not in text:
-        failures.append("missing required impact or test-matrix section")
-    if args.require_evidence:
-        if field_value(text, "Evidence gate") != "approved":
-            failures.append("evidence gate is not approved")
-        if not has_passing_test(text):
-            failures.append("test matrix has no passing test evidence")
+        path, text = records[0]
+        failures = []
+        if field_value(text, "Change class") not in {"platform", "mixed"}:
+            failures.append("missing or invalid Change class")
+        if field_value(text, "Feature-contract impact") not in {"preserved", "re-entered"}:
+            failures.append("missing or invalid Feature-contract impact")
+        if field_value(text, "Design gate") != "approved":
+            failures.append("design gate is not approved")
+        if "## Contract impact" not in text or "## Impact matrix" not in text or "## Test matrix" not in text:
+            failures.append("missing required impact or test-matrix section")
+        if args.require_evidence:
+            if field_value(text, "Evidence gate") != "approved":
+                failures.append("evidence gate is not approved")
+            if not has_passing_test(text):
+                failures.append("test matrix has no passing test evidence")
 
-    if failures:
-        print(f"FAIL: maintenance record {path.relative_to(REPO_ROOT)}")
-        for failure in failures:
-            print(f"  {failure}")
-        sys.exit(1)
+        if failures:
+            return cr.Verdict.fail(
+                f"maintenance record {path.relative_to(REPO_ROOT)}", [
+                    cr.Problem(failure) for failure in failures])
 
-    print(f"PASS  maintenance change governed by {path.relative_to(REPO_ROOT)}")
+        return cr.Verdict.ok(
+            f"maintenance change governed by {path.relative_to(REPO_ROOT)}")
+
+    return cr.run_check(
+        "Verify maintenance-change governance.", body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

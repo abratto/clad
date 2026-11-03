@@ -26,6 +26,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+
 
 ADAPTER_TEST_RE = re.compile(r"(?:Flow|Integration|Contract|IT)Test?$|IT$")
 
@@ -83,52 +86,68 @@ def read_current_stage(feature_root):
     return match.group(1).strip() if match else None
 
 
-def main():
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--feature-root", required=True)
+        parser.add_argument("--test-source-root", default="")
+
+    def body(args: argparse.Namespace):
+        feature_root = os.path.abspath(args.feature_root)
+        out_dir = os.path.join(feature_root, "stages", "05_verify", "output")
+        warnings = []
+
+        canonical = os.path.join(out_dir, "trace.md")
+        legacy = os.path.join(out_dir, "verification-trace.md")
+        if not os.path.isfile(canonical):
+            if os.path.isfile(legacy):
+                warnings.append(
+                    "Stage 05 uses the legacy name 'verification-trace.md'; the "
+                    "canonical contract is 'trace.md'.")
+            elif os.path.isdir(out_dir):
+                warnings.append("Stage 05 output has no 'trace.md'.")
+
+        adapter_pass = None
+        if has_adapter_surface(feature_root):
+            found, disabled_seen = find_enabled_adapter_test(args.test_source_root)
+            if found:
+                adapter_pass = (f"adapter integration test present: "
+                                f"{os.path.relpath(found, feature_root)}")
+            else:
+                note = " (only @Disabled candidates found)" if disabled_seen else ""
+                warnings.append(
+                    "adapter surface declared but no enabled flow/integration test "
+                    f"found under {args.test_source_root or '<unset>'}{note}.")
+
+        # A closed feature (trace.md written) must not still advertise a live stage.
+        if os.path.isfile(canonical):
+            stage = read_current_stage(feature_root)
+            if stage and not CLOSED_STAGE_RE.search(stage):
+                warnings.append(
+                    f"RESUME.md still says 'Current stage: {stage}' although the "
+                    "feature is closed; set it to 'None — feature complete' so the "
+                    "active-feature heuristic cannot pick this feature over a live "
+                    "one (a write command may otherwise target it).")
+
+        if adapter_pass is not None:
+            print(f"PASS  {adapter_pass}")
+        for warning in warnings:
+            print(f"WARN  {warning}")
+        if warnings:
+            sys.exit(0)
+        return cr.Verdict.ok("Stage 05 close evidence present")
+
+    args = _parse(argv, configure)
+    try:
+        verdict = body(args)
+    except SystemExit as exit_:
+        return exit_.code or 0
+    return cr.emit(verdict)
+
+
+def _parse(argv, configure):
     parser = argparse.ArgumentParser(description="Stage 05 close-evidence warnings")
-    parser.add_argument("--feature-root", required=True)
-    parser.add_argument("--test-source-root", default="")
-    args = parser.parse_args()
-
-    feature_root = os.path.abspath(args.feature_root)
-    out_dir = os.path.join(feature_root, "stages", "05_verify", "output")
-    warnings = []
-
-    canonical = os.path.join(out_dir, "trace.md")
-    legacy = os.path.join(out_dir, "verification-trace.md")
-    if not os.path.isfile(canonical):
-        if os.path.isfile(legacy):
-            warnings.append(
-                "Stage 05 uses the legacy name 'verification-trace.md'; the "
-                "canonical contract is 'trace.md'.")
-        elif os.path.isdir(out_dir):
-            warnings.append("Stage 05 output has no 'trace.md'.")
-
-    if has_adapter_surface(feature_root):
-        found, disabled_seen = find_enabled_adapter_test(args.test_source_root)
-        if found:
-            print(f"PASS  adapter integration test present: "
-                  f"{os.path.relpath(found, feature_root)}")
-        else:
-            note = " (only @Disabled candidates found)" if disabled_seen else ""
-            warnings.append(
-                "adapter surface declared but no enabled flow/integration test "
-                f"found under {args.test_source_root or '<unset>'}{note}.")
-
-    # A closed feature (trace.md written) must not still advertise a live stage.
-    if os.path.isfile(canonical):
-        stage = read_current_stage(feature_root)
-        if stage and not CLOSED_STAGE_RE.search(stage):
-            warnings.append(
-                f"RESUME.md still says 'Current stage: {stage}' although the "
-                "feature is closed; set it to 'None — feature complete' so the "
-                "active-feature heuristic cannot pick this feature over a live "
-                "one (a write command may otherwise target it).")
-
-    for warning in warnings:
-        print(f"WARN  {warning}")
-    if not warnings:
-        print("PASS  Stage 05 close evidence present")
-    sys.exit(0)
+    configure(parser)
+    return parser.parse_args(argv)
 
 
 if __name__ == "__main__":

@@ -24,9 +24,13 @@ Exits 0 if all checked links resolve, 1 otherwise.
 """
 
 import argparse
+import os
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
 
 LINK_RE = re.compile(r"\]\(\s*([^)]+?)\s*\)")
 FENCE_RE = re.compile(r"^\s*(```|~~~)", re.MULTILINE)
@@ -73,38 +77,41 @@ def _resolve(link, source, root):
     return (base / path_part).resolve()
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Validate CLAD doc cross-reference links")
-    parser.add_argument("--root", default=None, help="Repo root (default: parent of this script)")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--root", default=None, help="Repo root (default: parent of this script)")
 
-    root = Path(args.root).resolve() if args.root else Path(__file__).resolve().parents[1]
-    if not (root / "AGENTS.md").is_file():
-        print(f"FAIL  not a CLAD repo root: {root}")
-        sys.exit(1)
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        root = Path(args.root).resolve() if args.root else Path(__file__).resolve().parents[1]
+        if not (root / "AGENTS.md").is_file():
+            return cr.Verdict.fail(f"not a CLAD repo root: {root}")
 
-    broken = []
-    scanned = 0
-    for src in _tracked_md_files(root):
-        text = _strip_fences(src.read_text(encoding="utf-8", errors="replace"))
-        for m in LINK_RE.finditer(text):
-            scanned += 1
-            target = _resolve(m.group(1).strip(), src, root)
-            if target == root:  # non-file link (http/anchor)
-                continue
-            if not target.exists():
-                rel = src.relative_to(root)
-                broken.append((src, m.group(1).strip()))
+        broken = []
+        scanned = 0
+        for src in _tracked_md_files(root):
+            text = _strip_fences(src.read_text(encoding="utf-8", errors="replace"))
+            for m in LINK_RE.finditer(text):
+                scanned += 1
+                target = _resolve(m.group(1).strip(), src, root)
+                if target == root:  # non-file link (http/anchor)
+                    continue
+                if not target.exists():
+                    rel = src.relative_to(root)
+                    broken.append((src, m.group(1).strip()))
 
-    if broken:
-        print(f"FAIL  {len(broken)} broken cross-reference link(s) in CLAD docs")
-        for src, link in broken:
-            print(f"  {src.relative_to(root)} -> {link}")
-        sys.exit(1)
+        if broken:
+            return cr.Verdict.fail(
+                f"{len(broken)} broken cross-reference link(s) in CLAD docs", [
+                    cr.Problem(f"{src.relative_to(root)} -> {link}")
+                    for src, link in broken])
 
-    print(f"PASS  {scanned} cross-reference link(s) checked, {len(_tracked_md_files(root))} docs scanned")
-    sys.exit(0)
+        return cr.Verdict.ok(
+            f"{scanned} cross-reference link(s) checked, "
+            f"{len(_tracked_md_files(root))} docs scanned")
+
+    return cr.run_check(
+        "Validate CLAD doc cross-reference links", body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

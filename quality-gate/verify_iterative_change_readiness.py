@@ -32,8 +32,10 @@ import re
 import subprocess
 import sys
 
-import clad_stages as cs
-from verify_stage_sequence import gate_approved
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+import clad_stages as cs  # noqa: E402
+from verify_stage_sequence import gate_approved  # noqa: E402
 
 
 CATEGORIES = {"presentation", "behavioural", "behavioral", "structural"}
@@ -263,67 +265,69 @@ def validate_change_file(path, implementation_touched):
     return failures
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Verify iterative-change readiness artefact exists and is complete.")
-    parser.add_argument("--feature", required=True, help="Feature root, e.g. features/UC-00-login")
-    parser.add_argument("--change-file", default="", help="Path to the iterative change artefact")
-    parser.add_argument("--base", default="origin/main", help="Base ref for git diff detection")
-    parser.add_argument("--changed-files-file", default="", help="Test hook: newline-delimited changed file list")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--feature", required=True, help="Feature root, e.g. features/UC-00-login")
+        parser.add_argument("--change-file", default="", help="Path to the iterative change artefact")
+        parser.add_argument("--base", default="origin/main", help="Base ref for git diff detection")
+        parser.add_argument("--changed-files-file", default="", help="Test hook: newline-delimited changed file list")
 
-    changed = changed_files(args.base, args.changed_files_file, args.feature)
-    touched_scope = [path for path in changed if in_iterative_scope(path)]
-    implementation_touched = any(in_implementation_scope(path) for path in touched_scope)
-    if not touched_scope:
-        print("PASS  no iterative concept/sync spec or implementation changes detected")
-        sys.exit(0)
+    def body(args: argparse.Namespace):
+        changed = changed_files(args.base, args.changed_files_file, args.feature)
+        touched_scope = [path for path in changed if in_iterative_scope(path)]
+        implementation_touched = any(in_implementation_scope(path) for path in touched_scope)
+        if not touched_scope:
+            print("PASS  no iterative concept/sync spec or implementation changes detected")
+            return 0
 
-    # An uncommitted concept/sync artefact whose stage gate is not yet approved
-    # is the feature's own new stage output — the normal `advance` path, not an
-    # iterative change to a gated artefact — so it does not need a _changes/
-    # record. Only when some touched artefact is already gated (or unmapped) do
-    # we require one.
-    if all(is_new_stage_work(path, args.feature) for path in touched_scope):
-        print("PASS  uncommitted concept/sync artefacts are this feature's own "
-              "stage output (their gate is not yet approved); no iterative-change "
-              "record required")
-        sys.exit(0)
+        # An uncommitted concept/sync artefact whose stage gate is not yet approved
+        # is the feature's own new stage output — the normal `advance` path, not an
+        # iterative change to a gated artefact — so it does not need a _changes/
+        # record. Only when some touched artefact is already gated (or unmapped) do
+        # we require one.
+        if all(is_new_stage_work(path, args.feature) for path in touched_scope):
+            print("PASS  uncommitted concept/sync artefacts are this feature's own "
+                  "stage output (their gate is not yet approved); no iterative-change "
+                  "record required")
+            return 0
 
-    # A system-scope corpus edit (a canonical concept spec or companion) has no
-    # owning feature — a `<feature>/_changes/` record cannot carry it, which is
-    # exactly the "no longer the current source" case R22 routes through the
-    # maintenance route. Defer to that gate rather than demand a feature record.
-    if touched_scope and all(SYSTEM_CORPUS_RE.match(path) for path in touched_scope):
-        cmd = [sys.executable,
-               os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            "verify_maintenance_change_readiness.py"),
-               "--base", args.base]
-        if args.changed_files_file:
-            cmd += ["--changed-files-file", args.changed_files_file]
-        proc = subprocess.run(cmd, capture_output=True, text=True)
-        if proc.returncode == 0:
-            print("PASS  system-scope corpus edit is governed by the maintenance route")
-            sys.exit(0)
-        for line in (proc.stdout + proc.stderr).strip().splitlines():
-            print(f"  {line}")
-        print("FAIL  a system-scope corpus edit requires an active "
-              "maintenance/<change-name>.md record (R22 / the maintenance route)")
-        sys.exit(1)
+        # A system-scope corpus edit (a canonical concept spec or companion) has no
+        # owning feature — a `<feature>/_changes/` record cannot carry it, which is
+        # exactly the "no longer the current source" case R22 routes through the
+        # maintenance route. Defer to that gate rather than demand a feature record.
+        if touched_scope and all(SYSTEM_CORPUS_RE.match(path) for path in touched_scope):
+            cmd = [sys.executable,
+                   os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                "verify_maintenance_change_readiness.py"),
+                   "--base", args.base]
+            if args.changed_files_file:
+                cmd += ["--changed-files-file", args.changed_files_file]
+            proc = subprocess.run(cmd, capture_output=True, text=True)
+            if proc.returncode == 0:
+                print("PASS  system-scope corpus edit is governed by the maintenance route")
+                return 0
+            for line in (proc.stdout + proc.stderr).strip().splitlines():
+                print(f"  {line}")
+            print("FAIL  a system-scope corpus edit requires an active "
+                  "maintenance/<change-name>.md record (R22 / the maintenance route)")
+            return 1
 
-    change_file, failures = select_change_file(args.feature, args.change_file)
-    if change_file:
-        failures.extend(validate_change_file(change_file, implementation_touched))
+        change_file, failures = select_change_file(args.feature, args.change_file)
+        if change_file:
+            failures.extend(validate_change_file(change_file, implementation_touched))
 
-    if failures:
-        print(f"FAIL: {len(failures)} iterative-change readiness violation(s):\n")
-        for path, message in failures:
-            print(f"  {path}\n    {message}\n")
-        print("Open methodology/core/ITERATIVE_CHANGES.md and fill an artefact-impact matrix before proceeding.")
-        sys.exit(1)
+        if failures:
+            print(f"FAIL: {len(failures)} iterative-change readiness violation(s):\n")
+            for path, message in failures:
+                print(f"  {path}\n    {message}\n")
+            print("Open methodology/core/ITERATIVE_CHANGES.md and fill an artefact-impact matrix before proceeding.")
+            return 1
 
-    print(f"PASS  iterative-change readiness recorded in {change_file}")
-    sys.exit(0)
+        print(f"PASS  iterative-change readiness recorded in {change_file}")
+        return 0
+
+    return cr.run_report("Verify iterative-change readiness artefact exists and is complete.", body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

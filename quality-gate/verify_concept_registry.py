@@ -32,6 +32,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
+import check_runner as cr  # noqa: E402
 
 PROVENANCE = re.compile(r"^introduced-by\s+(.+?)\s*$", re.MULTILINE)
 
@@ -73,90 +74,91 @@ def feature_dirs(features_dir):
             if d.startswith("UC-") and not d.startswith("UC-00")]
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Project-level concept registry consistency")
-    parser.add_argument("--features-dir", default="features")
-    parser.add_argument("--concepts-dir", default=None,
-                        help="Canonical corpus (default <features-dir>/_system/concepts)")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--features-dir", default="features")
+        parser.add_argument("--concepts-dir", default=None,
+                            help="Canonical corpus (default <features-dir>/_system/concepts)")
 
-    concepts_dir = args.concepts_dir or os.path.join(args.features_dir,
-                                                     "_system", "concepts")
-    corpus = corpus_specs(concepts_dir)
-    if not corpus and not any(
-            os.path.isfile(os.path.join(f, "stages", "01a_responsibility-map",
-                                        "output", "responsibility-map.md"))
-            for f in feature_dirs(args.features_dir)):
-        print("SKIP  no concept corpus and no responsibility maps")
-        return 0
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        concepts_dir = args.concepts_dir or os.path.join(args.features_dir,
+                                                         "_system", "concepts")
+        corpus = corpus_specs(concepts_dir)
+        if not corpus and not any(
+                os.path.isfile(os.path.join(f, "stages", "01a_responsibility-map",
+                                            "output", "responsibility-map.md"))
+                for f in feature_dirs(args.features_dir)):
+            return cr.Verdict.skip("no concept corpus and no responsibility maps")
 
-    failures, warnings = [], []
+        failures, warnings = [], []
 
-    # 1. One introducer per concept.
-    for concept, provs in sorted(introducers(concepts_dir).items()):
-        if len(provs) > 1:
-            failures.append(
-                f"{concept}: introduced by {len(provs)} features in the corpus "
-                f"({', '.join(sorted(provs))}) — a concept has one introducer")
-
-    # 2/3. Per feature: no redefinition, and promotable proposals are promoted.
-    for feature in feature_dirs(args.features_dir):
-        slug = os.path.basename(feature)
-        resp_map = os.path.join(feature, "stages", "01a_responsibility-map",
-                                "output", "responsibility-map.md")
-        if not os.path.isfile(resp_map):
-            continue
-        entries = {c: e for c, e in ap.parse_responsibility_map(resp_map).items()
-                   if c != "Web"}
-        origins = {c: (e.origin or "").strip().lower() for c, e in entries.items()}
-        if not any(origins.values()):
-            continue  # pre-Model-B feature
-        concept_out = os.path.join(feature, "stages", "02_concepts", "output")
-        present = set(ap.concept_spec_paths([concept_out]))
-
-        for concept, origin in sorted(origins.items()):
-            if origin.startswith("reused") and concept in present:
+        # 1. One introducer per concept.
+        for concept, provs in sorted(introducers(concepts_dir).items()):
+            if len(provs) > 1:
                 failures.append(
-                    f"{slug}/{concept}: marked {origin} but carries a spec file "
-                    f"(a reused concept binds to the corpus; it must not redefine it)")
-            if origin.startswith(("new", "extend", "remodel")):
-                if concept not in corpus:
-                    resume = os.path.join(feature, "RESUME.md")
-                    approved = (os.path.isfile(resume)
-                                and gate2_approved(open(resume, encoding="utf-8").read()))
-                    if approved:
-                        failures.append(
-                            f"{slug}/{concept}: Gate 2 approved but the proposal is "
-                            f"not in the corpus — run ./clad promote-concepts")
-                    else:
-                        warnings.append(
-                            f"{slug}/{concept}: proposal not yet promoted "
-                            f"(Gate 2 not approved — expected in-flight)")
+                    f"{concept}: introduced by {len(provs)} features in the corpus "
+                    f"({', '.join(sorted(provs))}) — a concept has one introducer")
 
-    # 4. Catalog completeness.
-    catalog = os.path.join(os.path.dirname(concepts_dir), "concepts-catalog.md")
-    if corpus and os.path.isfile(catalog):
-        with open(catalog, encoding="utf-8") as fh:
-            text = fh.read()
-        for concept in sorted(corpus):
-            if f"`{concept}`" not in text:
-                failures.append(
-                    f"{concept}: missing from concepts-catalog.md "
-                    f"(regenerate with generate_concepts_catalog.py --write)")
+        # 2/3. Per feature: no redefinition, and promotable proposals are promoted.
+        for feature in feature_dirs(args.features_dir):
+            slug = os.path.basename(feature)
+            resp_map = os.path.join(feature, "stages", "01a_responsibility-map",
+                                    "output", "responsibility-map.md")
+            if not os.path.isfile(resp_map):
+                continue
+            entries = {c: e for c, e in ap.parse_responsibility_map(resp_map).items()
+                       if c != "Web"}
+            origins = {c: (e.origin or "").strip().lower() for c, e in entries.items()}
+            if not any(origins.values()):
+                continue  # pre-Model-B feature
+            concept_out = os.path.join(feature, "stages", "02_concepts", "output")
+            present = set(ap.concept_spec_paths([concept_out]))
 
-    for warning in warnings:
-        print(f"WARN  {warning}")
-    if failures:
-        print(f"FAIL  {len(failures)} concept-registry inconsistency(ies):")
-        for failure in failures:
-            print(f"  - {failure}")
-        return 1
+            for concept, origin in sorted(origins.items()):
+                if origin.startswith("reused") and concept in present:
+                    failures.append(
+                        f"{slug}/{concept}: marked {origin} but carries a spec file "
+                        f"(a reused concept binds to the corpus; it must not redefine it)")
+                if origin.startswith(("new", "extend", "remodel")):
+                    if concept not in corpus:
+                        resume = os.path.join(feature, "RESUME.md")
+                        approved = (os.path.isfile(resume)
+                                    and gate2_approved(open(resume, encoding="utf-8").read()))
+                        if approved:
+                            failures.append(
+                                f"{slug}/{concept}: Gate 2 approved but the proposal is "
+                                f"not in the corpus — run ./clad promote-concepts")
+                        else:
+                            warnings.append(
+                                f"{slug}/{concept}: proposal not yet promoted "
+                                f"(Gate 2 not approved — expected in-flight)")
 
-    print(f"PASS  concept registry consistent "
-          f"({len(corpus)} corpus concept(s), "
-          f"{len(feature_dirs(args.features_dir))} feature(s) scanned)")
-    return 0
+        # 4. Catalog completeness.
+        catalog = os.path.join(os.path.dirname(concepts_dir), "concepts-catalog.md")
+        if corpus and os.path.isfile(catalog):
+            with open(catalog, encoding="utf-8") as fh:
+                text = fh.read()
+            for concept in sorted(corpus):
+                if f"`{concept}`" not in text:
+                    failures.append(
+                        f"{concept}: missing from concepts-catalog.md "
+                        f"(regenerate with generate_concepts_catalog.py --write)")
+
+        prelude = "\n".join(f"WARN  {warning}" for warning in warnings) or None
+        if failures:
+            verdict = cr.Verdict.fail(
+                f"{len(failures)} concept-registry inconsistency(ies):",
+                [cr.Problem(failure, bullet=True) for failure in failures])
+        else:
+            verdict = cr.Verdict.ok(
+                f"concept registry consistent "
+                f"({len(corpus)} corpus concept(s), "
+                f"{len(feature_dirs(args.features_dir))} feature(s) scanned)")
+        verdict.prelude = prelude
+        return verdict
+
+    return cr.run_check(
+        "Project-level concept registry consistency", body, argv, configure)
 
 
 if __name__ == "__main__":

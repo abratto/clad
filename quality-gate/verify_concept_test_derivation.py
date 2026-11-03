@@ -29,7 +29,9 @@ import os
 import re
 import sys
 
-import artifact_parsers as ap
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import artifact_parsers as ap  # noqa: E402
+import check_runner as cr  # noqa: E402
 
 
 def parse_spec_outcomes(contract_dir):
@@ -68,99 +70,99 @@ def find_java_test_method(test_file, method_name):
     return bool(re.search(pattern, content))
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Verify concept test derivation against contract outcomes")
-    parser.add_argument("--contract-dir", required=True,
-                        help="Path to 04b_contract/output/")
-    parser.add_argument("--derivation", required=True,
-                        help="Path to concept-test-derivation.md")
-    parser.add_argument("--test-source-root", required=True,
-                        help="Path to APP_TEST_SOURCE_ROOT (e.g. app/backend/src/test/java)")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--contract-dir", required=True,
+                            help="Path to 04b_contract/output/")
+        parser.add_argument("--derivation", required=True,
+                            help="Path to concept-test-derivation.md")
+        parser.add_argument("--test-source-root", required=True,
+                            help="Path to APP_TEST_SOURCE_ROOT (e.g. app/backend/src/test/java)")
 
-    passed = True
+    def body(args: argparse.Namespace):
+        passed = True
 
-    if not os.path.isdir(args.contract_dir):
-        print(f"FAIL  contract directory not found: {args.contract_dir}")
-        sys.exit(1)
-    if not os.path.isfile(args.derivation):
-        print(f"FAIL  derivation file not found: {args.derivation}")
-        sys.exit(1)
-    if not os.path.isdir(args.test_source_root):
-        print(f"FAIL  test source root not found: {args.test_source_root}")
-        sys.exit(1)
+        if not os.path.isdir(args.contract_dir):
+            print(f"FAIL  contract directory not found: {args.contract_dir}")
+            return 1
+        if not os.path.isfile(args.derivation):
+            print(f"FAIL  derivation file not found: {args.derivation}")
+            return 1
+        if not os.path.isdir(args.test_source_root):
+            print(f"FAIL  test source root not found: {args.test_source_root}")
+            return 1
 
-    # 1. Parse contract outcomes
-    spec_outcomes = parse_spec_outcomes(args.contract_dir)
-    if not spec_outcomes:
-        print("FAIL  no contract outcomes parsed — check --contract-dir")
-        sys.exit(1)
+        # 1. Parse contract outcomes
+        spec_outcomes = parse_spec_outcomes(args.contract_dir)
+        if not spec_outcomes:
+            print("FAIL  no contract outcomes parsed — check --contract-dir")
+            return 1
 
-    # 2. Parse derivation map
-    derivations = parse_derivation(args.derivation)
-    if not derivations:
-        print("FAIL  no derivation rows parsed — check --derivation format")
-        sys.exit(1)
+        # 2. Parse derivation map
+        derivations = parse_derivation(args.derivation)
+        if not derivations:
+            print("FAIL  no derivation rows parsed — check --derivation format")
+            return 1
 
-    # Build lookup: {(concept, action): set_of_derived_outcomes}
-    derived_outcomes = {}
-    derived_methods = {}  # {test_class: [(method, outcome)]}
-    for test_class, test_method, outcome, concept, action in derivations:
-        key = (concept, action)
-        derived_outcomes.setdefault(key, set()).add(outcome)
-        derived_methods.setdefault(test_class, []).append((test_method, outcome))
+        # Build lookup: {(concept, action): set_of_derived_outcomes}
+        derived_outcomes = {}
+        derived_methods = {}  # {test_class: [(method, outcome)]}
+        for test_class, test_method, outcome, concept, action in derivations:
+            key = (concept, action)
+            derived_outcomes.setdefault(key, set()).add(outcome)
+            derived_methods.setdefault(test_class, []).append((test_method, outcome))
 
-    # 3. Cross-reference: every contract outcome has a derivation row.
-    # Compare under `normalize_outcome` (D9/D26): the contract enum is
-    # SCREAMING_SNAKE_CASE and a derivation map authored from the concept/chain
-    # token may use the runtime profile's casing (e.g. `Ok`); the two are the
-    # same token under normalisation.
-    for (concept, action), spec_outs in sorted(spec_outcomes.items()):
-        key = (concept, action)
-        derived_outs = derived_outcomes.get(key, set())
-        spec_by_norm = {ap.normalize_outcome(o): o for o in spec_outs}
-        derived_by_norm = {ap.normalize_outcome(o): o for o in derived_outs}
-        missing = [spec_by_norm[n] for n in spec_by_norm if n not in derived_by_norm]
-        extra = [derived_by_norm[n] for n in derived_by_norm if n not in spec_by_norm]
+        # 3. Cross-reference: every contract outcome has a derivation row.
+        # Compare under `normalize_outcome` (D9/D26): the contract enum is
+        # SCREAMING_SNAKE_CASE and a derivation map authored from the concept/chain
+        # token may use the runtime profile's casing (e.g. `Ok`); the two are the
+        # same token under normalisation.
+        for (concept, action), spec_outs in sorted(spec_outcomes.items()):
+            key = (concept, action)
+            derived_outs = derived_outcomes.get(key, set())
+            spec_by_norm = {ap.normalize_outcome(o): o for o in spec_outs}
+            derived_by_norm = {ap.normalize_outcome(o): o for o in derived_outs}
+            missing = [spec_by_norm[n] for n in spec_by_norm if n not in derived_by_norm]
+            extra = [derived_by_norm[n] for n in derived_by_norm if n not in spec_by_norm]
 
-        for outcome in sorted(missing):
-            print(f"FAIL  {concept}.{action}: contract outcome '{outcome}' "
-                  f"has no test row in derivation map")
-            passed = False
-
-        for outcome in sorted(extra):
-            print(f"WARN  {concept}.{action}: derivation maps outcome "
-                  f"'{outcome}' but it is not in contract outcomes "
-                  f"{sorted(spec_outs)}")
-            # WARN not FAIL — derivation may cover cross-feature outcomes
-
-    # 4. Check Java test class and method existence
-    for test_class, methods in sorted(derived_methods.items()):
-        test_file = find_java_test_class(args.test_source_root, test_class)
-        if not test_file:
-            print(f"FAIL  test class '{test_class}.java' not found "
-                  f"under {args.test_source_root}")
-            passed = False
-            continue
-
-        for method, outcome in methods:
-            if not find_java_test_method(test_file, method):
-                print(f"FAIL  test method '{method}' not found in "
-                      f"'{test_class}.java'")
+            for outcome in sorted(missing):
+                print(f"FAIL  {concept}.{action}: contract outcome '{outcome}' "
+                      f"has no test row in derivation map")
                 passed = False
 
-    spec_count = sum(len(v) for v in spec_outcomes.values())
-    derived_count = len(derivations)
-    action_count = len(spec_outcomes)
+            for outcome in sorted(extra):
+                print(f"WARN  {concept}.{action}: derivation maps outcome "
+                      f"'{outcome}' but it is not in contract outcomes "
+                      f"{sorted(spec_outs)}")
+                # WARN not FAIL — derivation may cover cross-feature outcomes
 
-    if passed:
-        print(f"PASS  {spec_count} contract outcomes → {derived_count} derivation "
-              f"rows across {action_count} actions; all Java test methods exist")
-        sys.exit(0)
-    else:
-        sys.exit(1)
+        # 4. Check Java test class and method existence
+        for test_class, methods in sorted(derived_methods.items()):
+            test_file = find_java_test_class(args.test_source_root, test_class)
+            if not test_file:
+                print(f"FAIL  test class '{test_class}.java' not found "
+                      f"under {args.test_source_root}")
+                passed = False
+                continue
+
+            for method, outcome in methods:
+                if not find_java_test_method(test_file, method):
+                    print(f"FAIL  test method '{method}' not found in "
+                          f"'{test_class}.java'")
+                    passed = False
+
+        spec_count = sum(len(v) for v in spec_outcomes.values())
+        derived_count = len(derivations)
+        action_count = len(spec_outcomes)
+
+        if passed:
+            print(f"PASS  {spec_count} contract outcomes → {derived_count} derivation "
+                  f"rows across {action_count} actions; all Java test methods exist")
+            return 0
+        return 1
+
+    return cr.run_report("Verify concept test derivation against contract outcomes", body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

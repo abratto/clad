@@ -33,7 +33,9 @@ import re
 import sys
 from collections import defaultdict
 
-import artifact_parsers as ap
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import artifact_parsers as ap  # noqa: E402
+import check_runner as cr  # noqa: E402
 
 
 _SCENARIO_RE = re.compile(r'^###\s+Scenario:\s+(.+)$', re.MULTILINE)
@@ -191,111 +193,111 @@ def detect_entanglement(matrix, scenarios, min_shared=2):
     return entangled
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Build FR×DP matrix and flag architectural anti-patterns")
-    parser.add_argument("--usecase", required=True,
-                        help="Path to 01_usecase/output/usecase.md")
-    parser.add_argument("--chain-dir", required=True,
-                        help="Path to 01b_chain-table/output/")
-    parser.add_argument("--resp-map", required=True,
-                        help="Path to 01a_responsibility-map/output/responsibility-map.md")
-    parser.add_argument("--output", default=None,
-                        help="Write the matrix as a markdown file")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--usecase", required=True,
+                            help="Path to 01_usecase/output/usecase.md")
+        parser.add_argument("--chain-dir", required=True,
+                            help="Path to 01b_chain-table/output/")
+        parser.add_argument("--resp-map", required=True,
+                            help="Path to 01a_responsibility-map/output/responsibility-map.md")
+        parser.add_argument("--output", default=None,
+                            help="Write the matrix as a markdown file")
 
-    for path, label in [(args.usecase, "usecase"),
-                        (args.chain_dir, "chain-dir"),
-                        (args.resp_map, "resp-map")]:
-        if not os.path.exists(path):
-            print(f"FAIL  {label} not found: {path}")
-            sys.exit(1)
+    def body(args: argparse.Namespace):
+        for path, label in [(args.usecase, "usecase"),
+                            (args.chain_dir, "chain-dir"),
+                            (args.resp_map, "resp-map")]:
+            if not os.path.exists(path):
+                print(f"FAIL  {label} not found: {path}")
+                return 1
 
-    scenarios = extract_scenarios(args.usecase)
-    concepts = extract_concepts(args.resp_map)
+        scenarios = extract_scenarios(args.usecase)
+        concepts = extract_concepts(args.resp_map)
 
-    if not scenarios or not concepts:
-        print("PASS  no scenarios or concepts found — nothing to analyze")
-        sys.exit(0)
+        if not scenarios or not concepts:
+            print("PASS  no scenarios or concepts found — nothing to analyze")
+            return 0
 
-    matrix, coverage = build_matrix(scenarios, concepts, args.chain_dir)
+        matrix, coverage = build_matrix(scenarios, concepts, args.chain_dir)
 
-    # Write matrix to file if requested (before stdout)
-    if args.output:
-        with open(args.output, "w") as fh:
-            fh.write(f"# Concept coverage matrix — {len(scenarios)} scenarios × {len(concepts)} concepts\n\n")
-            fh.write("| Scenario | " + " | ".join(concepts) + " |\n")
-            fh.write("|---|" + "|".join(":---:" for _ in concepts) + "|\n")
-            for scenario in scenarios:
-                cells = []
-                for c in concepts:
-                    cells.append("X" if matrix.get(scenario, {}).get(c) == 'X' else "—")
-                fh.write(f"| {scenario} | " + " | ".join(cells) + " |\n")
+        # Write matrix to file if requested (before stdout)
+        if args.output:
+            with open(args.output, "w") as fh:
+                fh.write(f"# Concept coverage matrix — {len(scenarios)} scenarios × {len(concepts)} concepts\n\n")
+                fh.write("| Scenario | " + " | ".join(concepts) + " |\n")
+                fh.write("|---|" + "|".join(":---:" for _ in concepts) + "|\n")
+                for scenario in scenarios:
+                    cells = []
+                    for c in concepts:
+                        cells.append("X" if matrix.get(scenario, {}).get(c) == 'X' else "—")
+                    fh.write(f"| {scenario} | " + " | ".join(cells) + " |\n")
 
-    # Print the matrix
-    print(f"Design Matrix: {len(scenarios)} scenarios × {len(concepts)} concepts\n")
-    header = "| Scenario | " + " | ".join(f"{c:12s}" for c in concepts) + " |"
-    sep = "|---|" + "|".join("---:" for _ in concepts) + "|"
-    print(header)
-    print(sep)
-    for scenario in scenarios:
-        cells = []
-        for c in concepts:
-            cells.append("     X     " if matrix.get(scenario, {}).get(c) == 'X' else "           ")
-        row_display = " | ".join(cells)
-        print(f"| {scenario[:30]:30s} | {row_display} |")
-    print()
-
-    # Detect anti-patterns
-    issues_found = False
-
-    god_objects = detect_god_objects(coverage, len(scenarios))
-    if god_objects:
-        print(f"WARN  God Object(s) detected:\n")
-        for concept, count, total, ratio in god_objects:
-            print(f"  {concept}: touches {count}/{total} scenarios ({ratio:.0%})")
-            print(f"    This concept cuts across most of the system. Consider")
-            print(f"    splitting it into smaller, more focused concepts.")
-            print()
-        issues_found = True
-
-    duplicates = detect_duplication(matrix, scenarios)
-    if duplicates:
-        print(f"WARN  Duplicate concept coverage detected:\n")
-        for c1, c2, shared in duplicates:
-            print(f"  {c1} and {c2} cover the same scenarios: "
-                  f"{', '.join(sorted(shared)[:3])}")
-            print(f"    These concepts have identical FR coverage — they may")
-            print(f"    duplicate business logic. Consider merging them or")
-            print(f"    clarifying their distinct purposes.")
-            print()
-        issues_found = True
-
-    entangled = detect_entanglement(matrix, scenarios)
-    if entangled:
-        print(f"WARN  Entangled concepts detected (boundary confusion):\n")
-        for c1, c2, shared in entangled:
-            print(f"  {c1} and {c2} share {len(shared)} scenario(s): "
-                  f"{', '.join(sorted(shared)[:3])}")
-            print(f"    These concepts overlap on multiple scenarios but aren't")
-            print(f"    duplicates — the boundary between them may be unclear.")
-            print()
-        issues_found = True
-
-    if issues_found:
-        print("Review the matrix above and the flagged patterns below.")
-        print("Resolve at Stage 01a (responsibility map) or Stage 01b (chain table).")
+        # Print the matrix
+        print(f"Design Matrix: {len(scenarios)} scenarios × {len(concepts)} concepts\n")
+        header = "| Scenario | " + " | ".join(f"{c:12s}" for c in concepts) + " |"
+        sep = "|---|" + "|".join("---:" for _ in concepts) + "|"
+        print(header)
+        print(sep)
+        for scenario in scenarios:
+            cells = []
+            for c in concepts:
+                cells.append("     X     " if matrix.get(scenario, {}).get(c) == 'X' else "           ")
+            row_display = " | ".join(cells)
+            print(f"| {scenario[:30]:30s} | {row_display} |")
         print()
-        print("NOTE: small, cohesive features (3-5 scenarios) will naturally have")
-        print("concepts that touch many scenarios — this is expected, not a defect.")
-        print("Duplication flags are the most actionable: two concepts with identical")
-        print("scenario coverage patterns may duplicate business logic.")
-        sys.exit(0)  # Advisory — don't block on these
-    else:
+
+        # Detect anti-patterns
+        issues_found = False
+
+        god_objects = detect_god_objects(coverage, len(scenarios))
+        if god_objects:
+            print(f"WARN  God Object(s) detected:\n")
+            for concept, count, total, ratio in god_objects:
+                print(f"  {concept}: touches {count}/{total} scenarios ({ratio:.0%})")
+                print(f"    This concept cuts across most of the system. Consider")
+                print(f"    splitting it into smaller, more focused concepts.")
+                print()
+            issues_found = True
+
+        duplicates = detect_duplication(matrix, scenarios)
+        if duplicates:
+            print(f"WARN  Duplicate concept coverage detected:\n")
+            for c1, c2, shared in duplicates:
+                print(f"  {c1} and {c2} cover the same scenarios: "
+                      f"{', '.join(sorted(shared)[:3])}")
+                print(f"    These concepts have identical FR coverage — they may")
+                print(f"    duplicate business logic. Consider merging them or")
+                print(f"    clarifying their distinct purposes.")
+                print()
+            issues_found = True
+
+        entangled = detect_entanglement(matrix, scenarios)
+        if entangled:
+            print(f"WARN  Entangled concepts detected (boundary confusion):\n")
+            for c1, c2, shared in entangled:
+                print(f"  {c1} and {c2} share {len(shared)} scenario(s): "
+                      f"{', '.join(sorted(shared)[:3])}")
+                print(f"    These concepts overlap on multiple scenarios but aren't")
+                print(f"    duplicates — the boundary between them may be unclear.")
+                print()
+            issues_found = True
+
+        if issues_found:
+            print("Review the matrix above and the flagged patterns below.")
+            print("Resolve at Stage 01a (responsibility map) or Stage 01b (chain table).")
+            print()
+            print("NOTE: small, cohesive features (3-5 scenarios) will naturally have")
+            print("concepts that touch many scenarios — this is expected, not a defect.")
+            print("Duplication flags are the most actionable: two concepts with identical")
+            print("scenario coverage patterns may duplicate business logic.")
+            sys.exit(0)  # Advisory — don't block on these
         print(f"PASS  no anti-patterns detected — {len(concepts)} concepts "
               f"across {len(scenarios)} scenarios")
         sys.exit(0)
 
+    return cr.run_report("Build FR×DP matrix and flag architectural anti-patterns", body, argv, configure)
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

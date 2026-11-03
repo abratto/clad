@@ -22,6 +22,7 @@ import argparse
 import os
 import sys
 
+import check_runner as cr
 import generate_shared_triggers as gst
 
 
@@ -32,30 +33,32 @@ def _normalise(text):
     return [line.rstrip() for line in text.replace("\r\n", "\n").replace("\r", "\n").split("\n")]
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="The cross-UC shared-trigger view is up to date")
-    parser.add_argument("--features-dir", default="features")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--features-dir", default="features")
 
-    features = os.path.abspath(args.features_dir)
-    out_path = os.path.join(features, "_system", "shared-triggers.md")
-    if not os.path.isfile(out_path):
-        print("SKIP  no shared-trigger view (Not generated yet)")
-        return 0
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        features = os.path.abspath(args.features_dir)
+        out_path = os.path.join(features, "_system", "shared-triggers.md")
+        if not os.path.isfile(out_path):
+            return cr.Verdict.skip("no shared-trigger view (Not generated yet)")
 
-    with open(out_path, encoding="utf-8") as handle:
-        current = handle.read()
-    fresh = gst.render(features)
+        with open(out_path, encoding="utf-8") as handle:
+            current = handle.read()
+        fresh = gst.render(features)
 
-    if _normalise(current) != _normalise(fresh):
-        print("FAIL  features/_system/shared-triggers.md is stale — it no "
-              "longer matches the sync packs it indexes")
-        print("      run: python3 quality-gate/generate_shared_triggers.py --write")
-        return 1
+        if _normalise(current) != _normalise(fresh):
+            verdict = cr.Verdict.fail(
+                "features/_system/shared-triggers.md is stale — it no longer "
+                "matches the sync packs it indexes")
+            verdict.detail = (
+                "      run: python3 quality-gate/generate_shared_triggers.py --write")
+            return verdict
+        return cr.Verdict.ok("shared-trigger view is current")
 
-    print("PASS  shared-trigger view is current")
-    return 0
+    return cr.run_check(
+        "The cross-UC shared-trigger view is up to date",
+        body, argv, configure)
 
 
 if __name__ == "__main__":

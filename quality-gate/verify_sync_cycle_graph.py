@@ -28,7 +28,9 @@ import os
 import sys
 from collections import defaultdict
 
-from artifact_parsers import Conjunct, parse_syncs
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+from artifact_parsers import Conjunct, parse_syncs  # noqa: E402
 
 
 def parse_syncs_edges(sync_dir):
@@ -103,44 +105,44 @@ def find_cycles(graph):
     return cycles
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Detect design-time sync cycles (A→B→A)")
-    parser.add_argument("--sync-dir", required=True,
-                        help="Path to 03_syncs/output/")
-    parser.add_argument("--advisory", action="store_true",
-                        help="Report findings as warnings instead of blocking")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--sync-dir", required=True,
+                            help="Path to 03_syncs/output/")
+        parser.add_argument("--advisory", action="store_true",
+                            help="Report findings as warnings instead of blocking")
 
-    if not os.path.isdir(args.sync_dir):
-        print(f"FAIL  sync directory not found: {args.sync_dir}")
-        sys.exit(1)
+    def body(args: argparse.Namespace):
+        if not os.path.isdir(args.sync_dir):
+            print(f"FAIL  sync directory not found: {args.sync_dir}")
+            return 1
 
-    edges = parse_syncs_edges(args.sync_dir)
-    if not edges:
-        print("PASS  no syncs found — nothing to check")
-        sys.exit(0)
+        edges = parse_syncs_edges(args.sync_dir)
+        if not edges:
+            print("PASS  no syncs found — nothing to check")
+            return 0
 
-    graph = build_graph(edges)
-    cycles = find_cycles(graph)
+        graph = build_graph(edges)
+        cycles = find_cycles(graph)
 
-    if cycles:
-        label = "WARN " if args.advisory else "FAIL "
-        print(f"{label} {len(cycles)} design-time sync cycle(s) detected:\n")
-        for i, cycle in enumerate(cycles):
-            path_str = " → ".join(cycle)
-            print(f"  Cycle {i + 1}: {path_str}")
-        print()
-        print("  Sync cycles mean two syncs chain back onto each other. This")
-        print("  creates an infinite loop that the dedup guard catches at runtime")
-        print("  but that should be caught at design time. Split the concepts or")
-        print("  add an intermediate concept to break the loop.")
-        sys.exit(0 if args.advisory else 1)
-    else:
+        if cycles:
+            label = "WARN " if args.advisory else "FAIL "
+            print(f"{label} {len(cycles)} design-time sync cycle(s) detected:\n")
+            for i, cycle in enumerate(cycles):
+                path_str = " → ".join(cycle)
+                print(f"  Cycle {i + 1}: {path_str}")
+            print()
+            print("  Sync cycles mean two syncs chain back onto each other. This")
+            print("  creates an infinite loop that the dedup guard catches at runtime")
+            print("  but that should be caught at design time. Split the concepts or")
+            print("  add an intermediate concept to break the loop.")
+            return 0 if args.advisory else 1
         print(f"PASS  no sync cycles detected across {len(edges)} edges "
               f"in {len(set(k[0] for k in graph))} concepts")
-        sys.exit(0)
+        return 0
+
+    return cr.run_report("Detect design-time sync cycles (A→B→A)", body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

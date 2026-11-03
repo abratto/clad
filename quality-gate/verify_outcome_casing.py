@@ -29,6 +29,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
+import check_runner as cr  # noqa: E402
 import clad_stages as cs  # noqa: E402
 
 SCREAMING = re.compile(r"^[A-Z][A-Z0-9_]*$")
@@ -45,59 +46,61 @@ def _is_bad(token: str) -> bool:
     return not SCREAMING.match(token)
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Authored outcome tokens must be SCREAMING_SNAKE_CASE")
-    parser.add_argument("--feature", required=True)
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--feature", required=True)
 
-    feature_root = os.path.abspath(args.feature)
-    failures = []
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        feature_root = os.path.abspath(args.feature)
+        failures = []
 
-    chain_dir = cs.CHAIN_DIR(feature_root)
-    if os.path.isdir(chain_dir):
-        for filename in sorted(os.listdir(chain_dir)):
-            if not filename.endswith("-chain.md"):
+        chain_dir = cs.CHAIN_DIR(feature_root)
+        if os.path.isdir(chain_dir):
+            for filename in sorted(os.listdir(chain_dir)):
+                if not filename.endswith("-chain.md"):
+                    continue
+                for row in ap.parse_chain_table(os.path.join(chain_dir, filename)):
+                    for token in (row.outcome_bases or [row.outcome_base]):
+                        if _is_bad(token):
+                            failures.append(cr.Problem(
+                                f"outcome `{token.strip()}`",
+                                where=f"{filename} row {row.row_num}"))
+
+        # Resolve the corpus union (feature proposals shadow the canonical
+        # corpus), so both the authored proposals and the canonical specs are
+        # checked.
+        seen_concepts: set[str] = set()
+        for concept_dir in cs.concept_source_dirs(feature_root):
+            if not os.path.isdir(concept_dir):
                 continue
-            for row in ap.parse_chain_table(os.path.join(chain_dir, filename)):
-                for token in (row.outcome_bases or [row.outcome_base]):
+            for filename in sorted(os.listdir(concept_dir)):
+                if not filename.endswith(".concept.md") or filename in seen_concepts:
+                    continue
+                seen_concepts.add(filename)
+                with open(os.path.join(concept_dir, filename), encoding="utf-8") as fh:
+                    text = fh.read()
+                for token in SPEC_FLOW_OUTCOME.findall(text):
                     if _is_bad(token):
-                        failures.append(
-                            f"{filename} row {row.row_num}: outcome `{token.strip()}`")
+                        failures.append(cr.Problem(
+                            f"{filename}: flow-token outcome `{token}`"))
 
-    # Resolve the corpus union (feature proposals shadow the canonical corpus),
-    # so both the authored proposals and the canonical specs are checked.
-    seen_concepts: set[str] = set()
-    for concept_dir in cs.concept_source_dirs(feature_root):
-        if not os.path.isdir(concept_dir):
-            continue
-        for filename in sorted(os.listdir(concept_dir)):
-            if not filename.endswith(".concept.md") or filename in seen_concepts:
-                continue
-            seen_concepts.add(filename)
-            with open(os.path.join(concept_dir, filename), encoding="utf-8") as fh:
-                text = fh.read()
-            for token in SPEC_FLOW_OUTCOME.findall(text):
-                if _is_bad(token):
-                    failures.append(f"{filename}: flow-token outcome `{token}`")
+        if not os.path.isdir(chain_dir) and not seen_concepts:
+            return cr.Verdict.skip("no chain tables or concept specs to check")
+        if failures:
+            verdict = cr.Verdict.fail(
+                f"{len(failures)} authored outcome token(s) are not "
+                f"SCREAMING_SNAKE_CASE", failures)
+            verdict.detail = (
+                '      Per FLOW_TOKENS.md §"Outcome casing", authored outcome '
+                "tokens are SCREAMING_SNAKE_CASE\n"
+                "      (the runtime profile may emit another casing; "
+                "comparisons normalise).")
+            return verdict
+        return cr.Verdict.ok("authored outcome tokens are SCREAMING_SNAKE_CASE")
 
-    if not os.path.isdir(chain_dir) and not seen_concepts:
-        print("SKIP  no chain tables or concept specs to check")
-        return 0
-
-    if failures:
-        print(f"FAIL  {len(failures)} authored outcome token(s) are not "
-              f"SCREAMING_SNAKE_CASE:")
-        for line in failures:
-            print(f"  {line}")
-        print("      Per FLOW_TOKENS.md §\"Outcome casing\", authored outcome "
-              "tokens are SCREAMING_SNAKE_CASE")
-        print("      (the runtime profile may emit another casing; comparisons "
-              "normalise).")
-        return 1
-
-    print("PASS  authored outcome tokens are SCREAMING_SNAKE_CASE")
-    return 0
+    return cr.run_check(
+        "Authored outcome tokens must be SCREAMING_SNAKE_CASE",
+        body, argv, configure)
 
 
 if __name__ == "__main__":

@@ -43,8 +43,10 @@ import os
 import re
 import sys
 
-import clad_stages as cs
-import artifact_parsers as ap
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+import clad_stages as cs  # noqa: E402
+import artifact_parsers as ap  # noqa: E402
 
 # A gate counts as cleared for sequencing if a human approved it or if the
 # configured autonomy level auto-approved it. The distinction is preserved in
@@ -231,131 +233,132 @@ def furthest_populated_index(feature_root: str) -> int:
     return last
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Verify CLAD stage sequence integrity for a feature")
-    parser.add_argument("--feature", required=True,
-                        help="Feature root path (e.g. features/UC-XX-<slug>)")
-    parser.add_argument("--through", default=None,
-                        help="Stage id to check up to (default: furthest populated)")
-    parser.add_argument("--require-receipts", action="store_true",
-                        help="Also require a current .gate-receipt.json per stage")
-    parser.add_argument("--no-gates", action="store_true",
-                        help="Skip the human-gate approval checks")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--feature", required=True,
+                            help="Feature root path (e.g. features/UC-XX-<slug>)")
+        parser.add_argument("--through", default=None,
+                            help="Stage id to check up to (default: furthest populated)")
+        parser.add_argument("--require-receipts", action="store_true",
+                            help="Also require a current .gate-receipt.json per stage")
+        parser.add_argument("--no-gates", action="store_true",
+                            help="Skip the human-gate approval checks")
 
-    feature_root = os.path.abspath(args.feature)
-    if not os.path.isdir(feature_root):
-        print(f"FAIL  feature root not found: {feature_root}")
-        sys.exit(1)
+    def body(args: argparse.Namespace):
+        feature_root = os.path.abspath(args.feature)
+        if not os.path.isdir(feature_root):
+            print(f"FAIL  feature root not found: {feature_root}")
+            return 1
 
-    if args.through:
-        target = cs.stage_index(args.through)
-        if target < 0:
-            print(f"FAIL  unknown stage id: {args.through}")
-            sys.exit(1)
-    else:
-        target = furthest_populated_index(feature_root)
-        if target < 0:
-            print("PASS  no stages populated yet — nothing to sequence-check")
-            sys.exit(0)
+        if args.through:
+            target = cs.stage_index(args.through)
+            if target < 0:
+                print(f"FAIL  unknown stage id: {args.through}")
+                return 1
+        else:
+            target = furthest_populated_index(feature_root)
+            if target < 0:
+                print("PASS  no stages populated yet — nothing to sequence-check")
+                return 0
 
-    resume_path = os.path.join(feature_root, "RESUME.md")
-    resume_text = ""
-    if os.path.isfile(resume_path):
-        with open(resume_path) as fh:
-            resume_text = fh.read()
+        resume_path = os.path.join(feature_root, "RESUME.md")
+        resume_text = ""
+        if os.path.isfile(resume_path):
+            with open(resume_path) as fh:
+                resume_text = fh.read()
 
-    ok = True
+        ok = True
 
-    # Invariant 1 — no gap (contiguous prefix).
-    for i in range(target + 1):
-        stage = cs.STAGES[i]
-        out_dir = stage.output_dir(feature_root)
-        if not stage_has_evidence(feature_root, stage.id):
-            print(f"FAIL  Stage {stage.id} ({stage.label}) output is empty, "
-                  f"but a later stage is populated — a stage was skipped.")
-            print(f"       expected artefacts in: {cs.relpath(out_dir, feature_root)}")
-            ok = False
-
-    # Invariant 2 — gates honoured for gate stages strictly before target.
-    if not args.no_gates:
-        for i in range(target):
-            stage = cs.STAGES[i]
-            if stage.gate_after is None:
-                continue
-            gate = stage.gate_after
-            status = gate_status(resume_text, gate)
-            label = cs.GATE_LABELS[gate]
-            if status not in APPROVED_STATES:
-                found = status or "missing"
-                print(f"FAIL  Gate {gate} ({label}) after Stage "
-                      f"{stage.id} is '{found}', but work advanced past it. "
-                      f"Human approval is required before Stage "
-                      f"{cs.STAGES[i + 1].id}.")
-                ok = False
-                continue
-            # A *human*-approved gate is bound to the content the human actually
-            # reviewed. If the gate's artefacts changed since approval (re-entry,
-            # silent edit), the approval is stale and must be re-presented.
-            # auto-approved gates are exempt — they are the documented
-            # "human never reviewed" escape hatch.
-            if status != "approved":
-                continue
-            recorded = gate_hash_recorded(resume_text, gate)
-            if recorded is None:
-                print(f"FAIL  Gate {gate} ({label}) is 'approved' but has no "
-                      f"content hash recorded — it was approved by an older "
-                      f"workflow and is no longer bound to its artefacts. "
-                      f"Re-present Gate {gate} for re-approval "
-                      f"(approve_gate.py --gate {gate}).")
-                ok = False
-            else:
-                current = compute_gate_hash(feature_root, gate)
-                if recorded != current:
-                    print(f"FAIL  Gate {gate} ({label}) approval is stale — the "
-                          f"artefacts changed since they were approved "
-                          f"(recorded {recorded[:12]}… vs current {current[:12]}…). "
-                          f"Re-present Gate {gate} for re-approval.")
-                    ok = False
-
-    # Invariant 3 — receipts current (optional).
-    if args.require_receipts:
+        # Invariant 1 — no gap (contiguous prefix).
         for i in range(target + 1):
             stage = cs.STAGES[i]
             out_dir = stage.output_dir(feature_root)
-            if not cs.dir_is_populated(out_dir):
-                continue
-            receipt_path = os.path.join(out_dir, ".gate-receipt.json")
-            if not os.path.isfile(receipt_path):
-                print(f"FAIL  Stage {stage.id} ({stage.label}) has no "
-                      f".gate-receipt.json — its checks were never recorded.")
-                ok = False
-                continue
-            try:
-                with open(receipt_path) as fh:
-                    receipt = json.load(fh)
-            except (OSError, json.JSONDecodeError):
-                print(f"FAIL  Stage {stage.id} receipt is unreadable: {receipt_path}")
-                ok = False
-                continue
-            if receipt.get("result") != "pass":
-                print(f"FAIL  Stage {stage.id} receipt records result="
-                      f"'{receipt.get('result')}', not 'pass'.")
-                ok = False
-                continue
-            current = compute_output_hash(out_dir)
-            if receipt.get("output_hash") != current:
-                print(f"FAIL  Stage {stage.id} receipt is stale — output changed "
-                      f"since it was recorded. Re-run advance.py for this stage.")
+            if not stage_has_evidence(feature_root, stage.id):
+                print(f"FAIL  Stage {stage.id} ({stage.label}) output is empty, "
+                      f"but a later stage is populated — a stage was skipped.")
+                print(f"       expected artefacts in: {cs.relpath(out_dir, feature_root)}")
                 ok = False
 
-    if ok:
-        print(f"PASS  sequence intact through Stage {cs.STAGES[target].id} "
-              f"({cs.STAGES[target].label})")
-        sys.exit(0)
-    sys.exit(1)
+        # Invariant 2 — gates honoured for gate stages strictly before target.
+        if not args.no_gates:
+            for i in range(target):
+                stage = cs.STAGES[i]
+                if stage.gate_after is None:
+                    continue
+                gate = stage.gate_after
+                status = gate_status(resume_text, gate)
+                label = cs.GATE_LABELS[gate]
+                if status not in APPROVED_STATES:
+                    found = status or "missing"
+                    print(f"FAIL  Gate {gate} ({label}) after Stage "
+                          f"{stage.id} is '{found}', but work advanced past it. "
+                          f"Human approval is required before Stage "
+                          f"{cs.STAGES[i + 1].id}.")
+                    ok = False
+                    continue
+                # A *human*-approved gate is bound to the content the human actually
+                # reviewed. If the gate's artefacts changed since approval (re-entry,
+                # silent edit), the approval is stale and must be re-presented.
+                # auto-approved gates are exempt — they are the documented
+                # "human never reviewed" escape hatch.
+                if status != "approved":
+                    continue
+                recorded = gate_hash_recorded(resume_text, gate)
+                if recorded is None:
+                    print(f"FAIL  Gate {gate} ({label}) is 'approved' but has no "
+                          f"content hash recorded — it was approved by an older "
+                          f"workflow and is no longer bound to its artefacts. "
+                          f"Re-present Gate {gate} for re-approval "
+                          f"(approve_gate.py --gate {gate}).")
+                    ok = False
+                else:
+                    current = compute_gate_hash(feature_root, gate)
+                    if recorded != current:
+                        print(f"FAIL  Gate {gate} ({label}) approval is stale — the "
+                              f"artefacts changed since they were approved "
+                              f"(recorded {recorded[:12]}… vs current {current[:12]}…). "
+                              f"Re-present Gate {gate} for re-approval.")
+                        ok = False
+
+        # Invariant 3 — receipts current (optional).
+        if args.require_receipts:
+            for i in range(target + 1):
+                stage = cs.STAGES[i]
+                out_dir = stage.output_dir(feature_root)
+                if not cs.dir_is_populated(out_dir):
+                    continue
+                receipt_path = os.path.join(out_dir, ".gate-receipt.json")
+                if not os.path.isfile(receipt_path):
+                    print(f"FAIL  Stage {stage.id} ({stage.label}) has no "
+                          f".gate-receipt.json — its checks were never recorded.")
+                    ok = False
+                    continue
+                try:
+                    with open(receipt_path) as fh:
+                        receipt = json.load(fh)
+                except (OSError, json.JSONDecodeError):
+                    print(f"FAIL  Stage {stage.id} receipt is unreadable: {receipt_path}")
+                    ok = False
+                    continue
+                if receipt.get("result") != "pass":
+                    print(f"FAIL  Stage {stage.id} receipt records result="
+                          f"'{receipt.get('result')}', not 'pass'.")
+                    ok = False
+                    continue
+                current = compute_output_hash(out_dir)
+                if receipt.get("output_hash") != current:
+                    print(f"FAIL  Stage {stage.id} receipt is stale — output changed "
+                          f"since it was recorded. Re-run advance.py for this stage.")
+                    ok = False
+
+        if ok:
+            print(f"PASS  sequence intact through Stage {cs.STAGES[target].id} "
+                  f"({cs.STAGES[target].label})")
+            return 0
+        return 1
+
+    return cr.run_report("Verify CLAD stage sequence integrity for a feature", body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

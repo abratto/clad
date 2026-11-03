@@ -8,6 +8,7 @@ import json
 import os
 import sys
 
+import check_runner as cr
 import rmap
 
 
@@ -28,18 +29,18 @@ def check_descriptor(feature_root: str, descriptor_path: str) -> list[str]:
     return []
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Check generated Rmap descriptor")
-    parser.add_argument("--feature", required=True)
-    parser.add_argument("--descriptor", required=True)
-    args = parser.parse_args()
-    failures = check_descriptor(args.feature, args.descriptor)
-    if failures:
-        for failure in failures:
-            print(f"FAIL  {failure}")
-        return 1
-    print("PASS  runtime schema descriptor is current")
-    return 0
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--feature", required=True)
+        parser.add_argument("--descriptor", required=True)
+
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        failures = check_descriptor(args.feature, args.descriptor)
+        if failures:
+            return cr.Verdict.fail("", [cr.Problem(line) for line in failures])
+        return cr.Verdict.ok("runtime schema descriptor is current")
+
+    return cr.run_check("Check generated Rmap descriptor", body, argv, configure)
 
 
 if __name__ == "__main__":

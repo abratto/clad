@@ -852,9 +852,11 @@ def _baseline_candidates(args, name: str) -> List[str]:
 
 
 def _resolve_baseline(args) -> str:
-    """Explicit path > `--baseline NAME` > `rmap.baseline` config > default."""
-    if args.baseline_descriptor:
-        return args.baseline_descriptor
+    """Explicit path > `--baseline NAME_OR_PATH` > `rmap.baseline` config > default.
+
+    `--baseline-descriptor` is a deprecated alias: `main` folds it into
+    `args.baseline`, so this function sees a single value.
+    """
     value = args.baseline
     if value and os.path.isfile(value):
         return value
@@ -951,11 +953,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                             "feature 03b models when no corpus exists")
     parser.add_argument("--app-label", default=None)
     parser.add_argument("--write", default=None, help="Write full SQL to this path")
-    parser.add_argument("--baseline-descriptor", default=None,
-                        help="Explicit baseline runtime descriptor for --alter")
     parser.add_argument("--baseline", nargs="?", const="default", default=None,
-                        help="Baseline name (default: default): searched under "
+                        metavar="NAME_OR_PATH",
+                        help="Deployed baseline for --alter: an existing descriptor "
+                             "path, or a name (default: default) searched under "
                              "_generated/rmap-baselines/ or _system/rmap-baselines/")
+    parser.add_argument("--baseline-descriptor", default=None,
+                        help="Deprecated alias for --baseline <path>")
     parser.add_argument("--record-baseline", nargs="?", const="default",
                         default=None,
                         help="Record the current descriptor as a baseline "
@@ -976,6 +980,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--review", action="store_true",
                         help="Print the generated human-review tables")
     args = parser.parse_args(argv)
+
+    # `--baseline-descriptor` is a deprecated alias for `--baseline <path>`;
+    # fold it into the single value so `_resolve_baseline` has one source.
+    if args.baseline_descriptor:
+        if args.baseline not in (None, "default"):
+            parser.error("--baseline-descriptor is a deprecated alias for "
+                         "--baseline <path>; pass only one of them")
+        args.baseline = args.baseline_descriptor
 
     if args.feature:
         app_label, sources = _feature_sources(args.feature)

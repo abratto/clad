@@ -27,6 +27,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+
 
 CLASS_NAME_RE = re.compile(
     r'(?:public\s+)?(?:abstract\s+)?class\s+(\w+Test)', re.MULTILINE)
@@ -222,77 +225,78 @@ def check_conventions(filepath, info):
     return violations
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Report unit-test naming-convention drift (advisory)")
-    parser.add_argument("--test-source-root", required=True,
-                        help="Path to the test source root (e.g. ref-impl/.../test/java)")
-    parser.add_argument("--scope", default="concepts,syncs",
-                        help="Comma-separated list of package dirs to check (default: concepts,syncs)")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--test-source-root", required=True,
+                            help="Path to the test source root (e.g. ref-impl/.../test/java)")
+        parser.add_argument("--scope", default="concepts,syncs",
+                            help="Comma-separated list of package dirs to check (default: concepts,syncs)")
 
-    packages = [p.strip() for p in args.scope.split(",") if p.strip()]
+    def body(args: argparse.Namespace):
+        packages = [p.strip() for p in args.scope.split(",") if p.strip()]
 
-    files = find_java_files(args.test_source_root, packages)
+        files = find_java_files(args.test_source_root, packages)
 
-    if not files:
-        print(f"WARN  No test files found under {args.test_source_root} "
-              f"for packages: {packages}")
-        print("      (No concept or sync unit tests exist yet — "
-              "this is expected if 04d/04e have not been run.)")
-        return 0
+        if not files:
+            print(f"WARN  No test files found under {args.test_source_root} "
+                  f"for packages: {packages}")
+            print("      (No concept or sync unit tests exist yet — "
+                  "this is expected if 04d/04e have not been run.)")
+            return 0
 
-    print(f"verify_test_naming.py: {len(files)} test file(s) "
-          f"under {packages}")
+        print(f"verify_test_naming.py: {len(files)} test file(s) "
+              f"under {packages}")
 
-    all_pass = True
-    file_count = 0
-    method_count = 0
+        all_pass = True
+        file_count = 0
+        method_count = 0
 
-    for f, scope_hint in files:
-        info = scan_file(f)
-        if info is None:
-            continue
-        if scope_hint == 'sync':
-            info['is_sync'] = True
-        elif scope_hint == 'concept':
-            info['is_concept'] = True
-        file_count += 1
-        method_count += len(info['methods'])
-        violations = check_conventions(f, info)
-
-        if violations:
-            all_pass = False
-            print(f"  ✗ {info['class_name']} — {len(violations)} violation(s)")
-            for v in violations:
-                print(v)
-        else:
-            nested_info = (
-                f", @Nested present ({', '.join(info['nested'])})"
-                if info['nested'] else "")
-            print(f"  ✓ {info['class_name']} — "
-                  f"{len(info['methods'])} method(s), "
-                  f"all should-prefixed{nested_info}")
-
-    print(
-        f"{'All' if all_pass else 'Some'} test naming conventions {'pass' if all_pass else 'fail'}.")
-
-    if not all_pass:
-        total = 0
         for f, scope_hint in files:
             info = scan_file(f)
-            if not info:
+            if info is None:
                 continue
             if scope_hint == 'sync':
                 info['is_sync'] = True
             elif scope_hint == 'concept':
                 info['is_concept'] = True
-            if check_conventions(f, info):
-                total += len(check_conventions(f, info))
-        print(f"\n{total} total violation(s). "
-              "See above for details.")
-        return 1
-    return 0
+            file_count += 1
+            method_count += len(info['methods'])
+            violations = check_conventions(f, info)
+
+            if violations:
+                all_pass = False
+                print(f"  ✗ {info['class_name']} — {len(violations)} violation(s)")
+                for v in violations:
+                    print(v)
+            else:
+                nested_info = (
+                    f", @Nested present ({', '.join(info['nested'])})"
+                    if info['nested'] else "")
+                print(f"  ✓ {info['class_name']} — "
+                      f"{len(info['methods'])} method(s), "
+                      f"all should-prefixed{nested_info}")
+
+        print(
+            f"{'All' if all_pass else 'Some'} test naming conventions {'pass' if all_pass else 'fail'}.")
+
+        if not all_pass:
+            total = 0
+            for f, scope_hint in files:
+                info = scan_file(f)
+                if not info:
+                    continue
+                if scope_hint == 'sync':
+                    info['is_sync'] = True
+                elif scope_hint == 'concept':
+                    info['is_concept'] = True
+                if check_conventions(f, info):
+                    total += len(check_conventions(f, info))
+            print(f"\n{total} total violation(s). "
+                  "See above for details.")
+            return 1
+        return 0
+
+    return cr.run_report("Report unit-test naming-convention drift (advisory)", body, argv, configure)
 
 
 if __name__ == "__main__":

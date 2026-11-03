@@ -42,6 +42,7 @@ PROJECT_LEVEL = [
     ("verify_reference_integrity.py", "no dangling artefact reference after a rename"),
     ("verify_shared_triggers_current.py", "the generated cross-UC shared-trigger view is current"),
     ("verify_sync_then_shape.py", "a sync `then` carries the authored result, not a transport frame"),
+    ("verify_changelog_claims.py", "the newest release note matches the tag and cites existing paths (advisory)"),
 ]
 
 PRE_COMMIT = [
@@ -53,7 +54,7 @@ PRE_COMMIT = [
 ADVISORY = {
     "verify_code_refs.py", "verify_governance_hygiene.py", "verify_concept_matrix.py",
     "verify_shared_triggers_current.py", "verify_close_evidence.py", "verify_sync_cycle_graph.py",
-    "verify_sync_overlap.py", "verify_collection_coverage.py",
+    "verify_sync_overlap.py", "verify_collection_coverage.py", "verify_changelog_claims.py",
 }
 
 
@@ -156,6 +157,10 @@ def render():
     lines.append("  `generate_sync_cards.py`, `rename_sync.py`, `generate_gate_index.py`.")
     lines.append("- **Shared parsers:** `artifact_parsers.py` (the artefact-grammar single source of truth),")
     lines.append("  `descriptor.py`, `describe_feature.py` (the machine contract — see `MACHINE_CONTRACT.md`).")
+    lines.append("- **Check shell:** `check_runner.py` — the shared PASS/SKIP/FAIL/WARN report")
+    lines.append("  (`run_check` for a structured `Verdict`, `run_report` for a check that prints")
+    lines.append("  its own table). Every `verify_*.py` reports through it so the verdict words")
+    lines.append("  stay a contract with `advance.py` / `verify_artefacts.py`.")
     lines.append("")
     return "\n".join(lines)
 

@@ -183,7 +183,7 @@ Implemented after the experiment, with regressions:
   ignores non-flow JSON in `--flows-dir`; `/api/dev/archive-info` exposes
   retention/eviction.
 - **Project Rmap:** `rmap --features-dir` aggregates the canonical corpus into
-  one descriptor; `--baseline-descriptor` + `--alter` emits incremental
+  one descriptor; `--baseline <path>` + `--alter` emits incremental
   CREATE/ALTER DDL (mandatory columns without defaults refused; drops
   reported, not emitted); `--force` guards an applied base migration.
 - **Typing and grammar:** `Instant` → `TIMESTAMP`, `Boolean` → `BOOLEAN` (Java

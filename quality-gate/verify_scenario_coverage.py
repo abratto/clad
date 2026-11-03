@@ -26,6 +26,8 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
 from artifact_parsers import (
     parse_goals,
     parse_scenario_names,
@@ -34,92 +36,89 @@ from artifact_parsers import (
 )
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Verify goal → scenario → chain → sync coverage")
-    parser.add_argument("--goals", required=True,
-                        help="Path to goals.md from Stage 00")
-    parser.add_argument("--usecase", required=True,
-                        help="Path to usecase.md from Stage 01")
-    parser.add_argument("--chain-dir", required=True,
-                        help="Path to 01b_chain-table/output/")
-    parser.add_argument("--sync-dir", required=True,
-                        help="Path to 03_syncs/output/")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--goals", required=True,
+                            help="Path to goals.md from Stage 00")
+        parser.add_argument("--usecase", required=True,
+                            help="Path to usecase.md from Stage 01")
+        parser.add_argument("--chain-dir", required=True,
+                            help="Path to 01b_chain-table/output/")
+        parser.add_argument("--sync-dir", required=True,
+                            help="Path to 03_syncs/output/")
 
-    passed = True
+    def body(args: argparse.Namespace) -> int:
+        passed = [True]
 
-    goals = parse_goals(args.goals)
-    scenarios = parse_scenario_names(args.usecase)
+        goals = parse_goals(args.goals)
+        scenarios = parse_scenario_names(args.usecase)
 
-    if not os.path.isdir(args.chain_dir):
-        if scenarios:
-            # Scenarios exist but their chain files cannot be checked — that is a
-            # defect (every scenario is unverified), not an absence to skip.
-            print(f"FAIL  chain directory not found: {args.chain_dir} — "
-                  f"{len(scenarios)} scenario(s) have no verifiable chain files")
-            sys.exit(1)
-        print(f"SKIP  chain directory not found: {args.chain_dir} — no scenarios to check")
-        chain_files = []
-        cited = set()
-    else:
+        if not os.path.isdir(args.chain_dir):
+            if scenarios:
+                # Scenarios exist but their chain files cannot be checked — that is a
+                # defect (every scenario is unverified), not an absence to skip.
+                print(f"FAIL  chain directory not found: {args.chain_dir} — "
+                      f"{len(scenarios)} scenario(s) have no verifiable chain files")
+                return 1
+            return 0
         chain_files = [f for f in os.listdir(args.chain_dir)
                        if f.endswith("-chain.md")]
 
-    # 1. Every in-scope goal → scenario (slug-based match)
-    # Match scenario names to goals via slug: "reserve unavailable books" -> slug = "reserve-unavailable-books"
-    # matches "reserve-unavailable-book" -> slug = "reserve-unavailable-book"
-    # Also match sub-operation scenarios: "add-title" is a sub-operation of "manage-catalogue"
-    # via token overlap check.
-    slugged_goals = {slugify(g) for g in goals}
-    for scenario in scenarios:
-        scenario_slug = slugify(scenario)
-        # Check: scenario slug starts with goal slug (or vice versa, with plural tolerance)
-        if not any(
-            scenario_slug.startswith(g.rstrip("s").rstrip("-"))
-            or g.startswith(scenario_slug.rstrip("s").rstrip("-"))
-            for g in slugged_goals
-        ):
-            print(f"WARN  scenario '{scenario}' (slug: '{scenario_slug}') "
-                  f"does not obviously match any in-scope goal "
-                  f"(slugs: {', '.join(sorted(slugged_goals))}) — "
-                  f"verify mapping manually")
+        # 1. Every in-scope goal → scenario (slug-based match)
+        # Match scenario names to goals via slug: "reserve unavailable books" -> slug = "reserve-unavailable-books"
+        # matches "reserve-unavailable-book" -> slug = "reserve-unavailable-book"
+        # Also match sub-operation scenarios: "add-title" is a sub-operation of "manage-catalogue"
+        # via token overlap check.
 
-    if scenarios:
-        print(f"INFO  scenarios in use case: {', '.join(sorted(scenarios))}")
-    if goals:
-        print(f"INFO  in-scope goals: {', '.join(sorted(goals))}")
+        slugged_goals = {slugify(g) for g in goals}
+        for scenario in scenarios:
+            scenario_slug = slugify(scenario)
+            # Check: scenario slug starts with goal slug (or vice versa, with plural tolerance)
+            if not any(
+                scenario_slug.startswith(g.rstrip("s").rstrip("-"))
+                or g.startswith(scenario_slug.rstrip("s").rstrip("-"))
+                for g in slugged_goals
+            ):
+                print(f"WARN  scenario '{scenario}' (slug: '{scenario_slug}') "
+                      f"does not obviously match any in-scope goal "
+                      f"(slugs: {', '.join(sorted(slugged_goals))}) — "
+                      f"verify mapping manually")
 
-    # 2. Every scenario → chain file (only if chain files exist)
-    for scenario in scenarios:
-        expected_chain = slugify(scenario) + "-chain.md"
-        chain_path = os.path.join(args.chain_dir, expected_chain)
-        if not os.path.isfile(chain_path) and chain_files:
-            print(f"FAIL  scenario '{scenario}' has no chain file "
-                  f"(expected {expected_chain})")
-            passed = False
+        # 2. Every scenario → chain file (only if chain files exist)
+        for scenario in scenarios:
+            expected_chain = slugify(scenario) + "-chain.md"
+            chain_path = os.path.join(args.chain_dir, expected_chain)
+            if not os.path.isfile(chain_path) and chain_files:
+                print(f"FAIL  scenario '{scenario}' has no chain file "
+                      f"(expected {expected_chain})")
+                passed[0] = False
 
-    # 3. Every chain file → cited by a sync (only if chain files exist)
-    cited = parse_sync_cited_scenarios(args.sync_dir)
-    for scenario in scenarios:
-        if scenario not in cited and chain_files:
-            print(f"FAIL  scenario '{scenario}' is not cited by any sync "
-                  f"in {args.sync_dir}")
-            passed = False
+        # 3. Every chain file → cited by a sync (only if chain files exist)
+        cited = parse_sync_cited_scenarios(args.sync_dir)
+        for scenario in scenarios:
+            if scenario not in cited and chain_files:
+                print(f"FAIL  scenario '{scenario}' is not cited by any sync "
+                      f"in {args.sync_dir}")
+                passed[0] = False
 
-    uncited_chains = [s for s in scenarios if s not in cited]
-    if uncited_chains and chain_files:
-        print(f"INFO  scenarios not cited by syncs (Web-only failure paths?): "
-              f"{', '.join(uncited_chains)}")
+        uncited_chains = [s for s in scenarios if s not in cited]
+        if uncited_chains and chain_files:
+            print(f"INFO  scenarios not cited by syncs (Web-only failure paths?): "
+                  f"{', '.join(uncited_chains)}")
 
-    if passed:
-        print(f"PASS  scenario coverage: {len(goals)} goals → "
-              f"{len(scenarios)} scenarios → {len(chain_files)} chain files → "
-              f"{len(cited)} sync-cited scenarios")
-        sys.exit(0)
-    else:
-        sys.exit(1)
+        if scenarios:
+            print(f"INFO  scenarios in use case: {', '.join(sorted(scenarios))}")
+        if goals:
+            print(f"INFO  in-scope goals: {', '.join(sorted(goals))}")
+        if passed[0]:
+            print(f"PASS  scenario coverage: {len(goals)} goals → "
+                  f"{len(scenarios)} scenarios → {len(chain_files)} chain files → "
+                  f"{len(cited)} sync-cited scenarios")
+        return 0 if passed[0] else 1
+
+    return cr.run_report("Verify goal → scenario → chain → sync coverage",
+                         body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

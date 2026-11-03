@@ -30,6 +30,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+
 ACTIVE = re.compile(r"^-\s*\*\*Status:\*\*\s*`active`", re.MULTILINE)
 FEATURE_COMPLETE = re.compile(r"feature complete", re.IGNORECASE)
 GATE_APPROVED = re.compile(
@@ -51,68 +54,71 @@ def active_markdown(directory):
                   if name.endswith(".md") and is_active(os.path.join(directory, name)))
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Advisory governance-hygiene check")
-    parser.add_argument("--features-dir", default="features")
-    parser.add_argument("--maintenance-dir", default="maintenance")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--features-dir", default="features")
+        parser.add_argument("--maintenance-dir", default="maintenance")
 
-    warnings = []
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        warnings = []
 
-    maintenance = active_markdown(args.maintenance_dir)
-    if len(maintenance) > 1:
-        warnings.append(
-            f"{len(maintenance)} `active` maintenance records — only one in-flight "
-            f"change at a time; mark the finished ones `closed`: "
-            + ", ".join(os.path.basename(p) for p in maintenance))
+        maintenance = active_markdown(args.maintenance_dir)
+        if len(maintenance) > 1:
+            warnings.append(
+                f"{len(maintenance)} `active` maintenance records — only one in-flight "
+                f"change at a time; mark the finished ones `closed`: "
+                + ", ".join(os.path.basename(p) for p in maintenance))
 
-    if os.path.isdir(args.features_dir):
-        for feature in sorted(os.listdir(args.features_dir)):
-            root = os.path.join(args.features_dir, feature)
+        if os.path.isdir(args.features_dir):
+            for feature in sorted(os.listdir(args.features_dir)):
+                root = os.path.join(args.features_dir, feature)
 
-            # D5: the `## Gate snapshot` content-hash lines are machine-owned
-            # (written by `approve_gate.py`). An approved gate with no well-formed
-            # hash is a hand-edit (or a legacy approval) — the sequence guard will
-            # block later, so flag it here with the fix.
-            resume = os.path.join(root, "RESUME.md")
-            if os.path.isfile(resume):
-                with open(resume, encoding="utf-8") as handle:
-                    resume_text = handle.read()
-                approved = {m.group(1) for m in GATE_APPROVED.finditer(resume_text)}
-                hashed = {m.group(1) for m in GATE_HASH.finditer(resume_text)}
-                for gate in sorted(approved - hashed):
+                # D5: the `## Gate snapshot` content-hash lines are machine-owned
+                # (written by `approve_gate.py`). An approved gate with no well-formed
+                # hash is a hand-edit (or a legacy approval) — the sequence guard will
+                # block later, so flag it here with the fix.
+                resume = os.path.join(root, "RESUME.md")
+                if os.path.isfile(resume):
+                    with open(resume, encoding="utf-8") as handle:
+                        resume_text = handle.read()
+                    approved = {m.group(1) for m in GATE_APPROVED.finditer(resume_text)}
+                    hashed = {m.group(1) for m in GATE_HASH.finditer(resume_text)}
+                    for gate in sorted(approved - hashed):
+                        warnings.append(
+                            f"{feature}: Gate {gate} is approved but has no well-formed "
+                            f"content-hash line — the `## Gate snapshot` hash lines are "
+                            f"written by `approve_gate.py`; re-approve with "
+                            f"`./clad approve {gate}` (or `--baseline` to migrate)")
+
+                changes_dir = os.path.join(root, "_changes")
+                if not os.path.isdir(changes_dir):
+                    continue
+                active = active_markdown(changes_dir)
+                if not active:
+                    continue
+                if len(active) > 1:
                     warnings.append(
-                        f"{feature}: Gate {gate} is approved but has no well-formed "
-                        f"content-hash line — the `## Gate snapshot` hash lines are "
-                        f"written by `approve_gate.py`; re-approve with "
-                        f"`./clad approve {gate}` (or `--baseline` to migrate)")
+                        f"{feature}: {len(active)} `active` _changes/ records — the "
+                        f"readiness guard selects exactly one: "
+                        + ", ".join(os.path.basename(p) for p in active))
+                if os.path.isfile(resume) and FEATURE_COMPLETE.search(resume_text):
+                    warnings.append(
+                        f"{feature}: `feature complete` but still carries an "
+                        f"`active` _changes/ record "
+                        f"({', '.join(os.path.basename(p) for p in active)}) "
+                        f"— mark it `closed`")
 
-            changes_dir = os.path.join(root, "_changes")
-            if not os.path.isdir(changes_dir):
-                continue
-            active = active_markdown(changes_dir)
-            if not active:
-                continue
-            if len(active) > 1:
-                warnings.append(
-                    f"{feature}: {len(active)} `active` _changes/ records — the "
-                    f"readiness guard selects exactly one: "
-                    + ", ".join(os.path.basename(p) for p in active))
-            if os.path.isfile(resume) and FEATURE_COMPLETE.search(resume_text):
-                warnings.append(
-                    f"{feature}: `feature complete` but still carries an "
-                    f"`active` _changes/ record "
-                    f"({', '.join(os.path.basename(p) for p in active)}) "
-                    f"— mark it `closed`")
+        if warnings:
+            verdict = cr.Verdict(cr.WARN,
+                                 f"governance hygiene: {len(warnings)} stale record(s)")
+            verdict.problems = [cr.Problem(warning, bullet=True)
+                                for warning in warnings]
+            return verdict
+        return cr.Verdict.ok(
+            "governance records are current (no stale `active` records)")
 
-    if warnings:
-        print(f"WARN  governance hygiene: {len(warnings)} stale record(s)")
-        for warning in warnings:
-            print(f"  - {warning}")
-        return 0
-
-    print("PASS  governance records are current (no stale `active` records)")
-    return 0
+    return cr.run_check("Advisory governance-hygiene check", body, argv,
+                        configure)
 
 
 if __name__ == "__main__":

@@ -25,6 +25,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+
 import artifact_parsers as ap
 
 
@@ -190,53 +193,55 @@ def then_matches(spec, targets):
     )
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Verify every Stage 03 sync has a SyncRule.of implementation")
-    parser.add_argument("--sync-dir", default="", help="Path to one 03_syncs/output directory.")
-    parser.add_argument("--features-dir", default="", help="Root features/ tree.")
-    parser.add_argument("--sync-impl-dir", required=True, help="Directory of SyncRule Java sources.")
-    parser.add_argument("--strict-trigger", action="store_true",
-                        help="Also require trigger + primary then target to match Stage 03.")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--sync-dir", default="", help="Path to one 03_syncs/output directory.")
+        parser.add_argument("--features-dir", default="", help="Root features/ tree.")
+        parser.add_argument("--sync-impl-dir", required=True, help="Directory of SyncRule Java sources.")
+        parser.add_argument("--strict-trigger", action="store_true",
+                            help="Also require trigger + primary then target to match Stage 03.")
 
-    if not args.sync_dir and not args.features_dir:
-        print("ERROR: provide --sync-dir or --features-dir.", file=sys.stderr)
-        sys.exit(1)
+    def body(args: argparse.Namespace):
+        if not args.sync_dir and not args.features_dir:
+            print("ERROR: provide --sync-dir or --features-dir.", file=sys.stderr)
+            return 1
 
-    specs, failures = collect_specs(args.sync_dir, args.features_dir)
-    rules, java_failures = collect_java_syncs(args.sync_impl_dir)
-    failures.extend(java_failures)
+        specs, failures = collect_specs(args.sync_dir, args.features_dir)
+        rules, java_failures = collect_java_syncs(args.sync_impl_dir)
+        failures.extend(java_failures)
 
-    for spec in specs:
-        rule = rules.get(spec.name)
-        label = f"{spec.filename} ({spec.name})"
-        if not rule:
-            failures.append((label, "no matching SyncRule.of declaration found"))
-            continue
-        if args.strict_trigger and not trigger_matches(
-                spec,
-                tuple(_deref(x, rule.get("symbols", {})) for x in rule["trigger"])):
-            c, a, o = rule["trigger"]
-            failures.append((
-                label, f"trigger mismatch: expected "
-                       f"{spec.trigger_concept}/{spec.trigger_action}[{spec.trigger_outcome}], "
-                       f"found {c}/{a}[{o}]"))
-        if args.strict_trigger and spec.then_targets and not then_matches(spec, rule["then_targets"]):
-            tc, ta = spec.then_targets[0]
-            failures.append((label, f"then mismatch: expected {tc}/{ta}, "
-                                    f"found {rule['then_targets']}"))
+        for spec in specs:
+            rule = rules.get(spec.name)
+            label = f"{spec.filename} ({spec.name})"
+            if not rule:
+                failures.append((label, "no matching SyncRule.of declaration found"))
+                continue
+            if args.strict_trigger and not trigger_matches(
+                    spec,
+                    tuple(_deref(x, rule.get("symbols", {})) for x in rule["trigger"])):
+                c, a, o = rule["trigger"]
+                failures.append((
+                    label, f"trigger mismatch: expected "
+                           f"{spec.trigger_concept}/{spec.trigger_action}[{spec.trigger_outcome}], "
+                           f"found {c}/{a}[{o}]"))
+            if args.strict_trigger and spec.then_targets and not then_matches(spec, rule["then_targets"]):
+                tc, ta = spec.then_targets[0]
+                failures.append((label, f"then mismatch: expected {tc}/{ta}, "
+                                        f"found {rule['then_targets']}"))
 
-    if failures:
-        print(f"FAIL: {len(failures)} sync implementation parity violation(s):\n")
-        for path, message in sorted(failures):
-            print(f"  {path}\n    {message}\n")
-        print("Every Stage 03 sync contract must lower to one SyncRule.of declaration.")
-        sys.exit(1)
+        if failures:
+            print(f"FAIL: {len(failures)} sync implementation parity violation(s):\n")
+            for path, message in sorted(failures):
+                print(f"  {path}\n    {message}\n")
+            print("Every Stage 03 sync contract must lower to one SyncRule.of declaration.")
+            return 1
 
-    print(f"PASS  {len(specs)} Stage 03 sync contract(s) have matching SyncRule implementations")
-    sys.exit(0)
+        print(f"PASS  {len(specs)} Stage 03 sync contract(s) have matching SyncRule implementations")
+        return 0
+
+    return cr.run_report("Verify every Stage 03 sync has a SyncRule.of implementation", body, argv, configure)
+
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

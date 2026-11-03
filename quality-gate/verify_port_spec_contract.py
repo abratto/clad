@@ -20,6 +20,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+
 
 PLACEHOLDER_RE = re.compile(r"<[^>]+>|<!--|-->")
 PORT_COLUMNS = (
@@ -196,45 +199,44 @@ def verify_features(feature_dir):
     return failures
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Verify Stage 04b/04c contract artefacts when port-spec.md exists"
-    )
-    parser.add_argument("--port-spec", required=True)
-    parser.add_argument("--contract-dir", required=True)
-    parser.add_argument("--feature-dir")
-    parser.add_argument(
-        "--require-all-specs",
-        action="store_true",
-        help="Require every .contract.md file to contain concrete response shapes",
-    )
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--port-spec", required=True)
+        parser.add_argument("--contract-dir", required=True)
+        parser.add_argument("--feature-dir")
+        parser.add_argument(
+            "--require-all-specs",
+            action="store_true",
+            help="Require every .contract.md file to contain concrete response shapes",
+        )
 
-    if not os.path.exists(args.port_spec):
-        print(f"SKIP  no port-spec.md at {args.port_spec}")
-        return 0
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        if not os.path.exists(args.port_spec):
+            return cr.Verdict.skip(f"no port-spec.md at {args.port_spec}")
 
-    failures, entries = verify_port_spec(args.port_spec)
-    has_inbound_port = any(entry["Direction"].strip().lower() == "inbound" for entry in entries)
-    failures.extend(verify_specs(args.contract_dir, has_inbound_port, args.require_all_specs))
-    if args.feature_dir and has_inbound_port:
-        failures.extend(verify_features(args.feature_dir))
+        failures, entries = verify_port_spec(args.port_spec)
+        has_inbound_port = any(entry["Direction"].strip().lower() == "inbound" for entry in entries)
+        failures.extend(verify_specs(args.contract_dir, has_inbound_port, args.require_all_specs))
+        if args.feature_dir and has_inbound_port:
+            failures.extend(verify_features(args.feature_dir))
 
-    if failures:
-        print(f"FAIL  port-spec contract checks failed ({len(failures)} issue(s))")
-        for failure in failures:
-            print(f"  - {failure}")
-        return 1
+        if failures:
+            return cr.Verdict.fail(
+                f"port-spec contract checks failed ({len(failures)} issue(s))",
+                [cr.Problem(failure, bullet=True) for failure in failures])
 
-    checked = "directional port spec"
-    if has_inbound_port:
-        checked += " + contract response shapes"
-        if args.feature_dir:
-            checked += " + @contract scenarios"
-    else:
-        checked += " + outbound adapter-boundary evidence"
-    print(f"PASS  port-spec contract checks passed ({checked})")
-    return 0
+        checked = "directional port spec"
+        if has_inbound_port:
+            checked += " + contract response shapes"
+            if args.feature_dir:
+                checked += " + @contract scenarios"
+        else:
+            checked += " + outbound adapter-boundary evidence"
+        return cr.Verdict.ok(f"port-spec contract checks passed ({checked})")
+
+    return cr.run_check(
+        "Verify Stage 04b/04c contract artefacts when port-spec.md exists",
+        body, argv, configure)
 
 
 if __name__ == "__main__":

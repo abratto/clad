@@ -23,8 +23,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-import clad_stages as cs
-from verify_stage_sequence import active_reentry_change, stage_has_evidence
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import clad_stages as cs  # noqa: E402
+from verify_stage_sequence import active_reentry_change, stage_has_evidence  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
@@ -75,14 +76,34 @@ def _current_stage(feature_root):
     return last
 
 
-def main():
+class _Exit:
+    """The exit code for a check that printed its own report lines."""
+
+    def __init__(self, code):
+        self.code = code
+
+
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--feature", default="",
+                            help="Limit the per-feature loop to one feature root. "
+                                 "The feature-independent project checks still run; "
+                                 "another feature's defect no longer blocks this one "
+                                 "(the advance pre-flight passes the active feature).")
+
+    def body(args: argparse.Namespace) -> _Exit:
+        return _run_gate(args)
+
+    return body(_parse(argv, configure)).code
+
+
+def _parse(argv, configure):
     parser = argparse.ArgumentParser(description="CLAD artefact pipeline gate")
-    parser.add_argument("--feature", default="",
-                        help="Limit the per-feature loop to one feature root. "
-                             "The feature-independent project checks still run; "
-                             "another feature's defect no longer blocks this one "
-                             "(the advance pre-flight passes the active feature).")
-    args = parser.parse_args()
+    configure(parser)
+    return parser.parse_args(argv)
+
+
+def _run_gate(args):
     only = os.path.abspath(args.feature) if args.feature else ""
 
     print(f"{BAR}")
@@ -221,6 +242,19 @@ def main():
     if detail:
         for line in detail.splitlines()[:8]:
             print(f"        {line}")
+
+    # The newest release note matches the newest tag and cites existing paths
+    # (advisory): a note is a claim about the tree, and 0.29.0's claimed a
+    # migration was unchanged when it had moved.
+    code, out, err = run_script("verify_changelog_claims.py", [])
+    detail = (out + err).strip()
+    mark = "WARN" if detail.startswith("WARN") or code != 0 else "PASS"
+    print(f"\n  [{mark}] changelog_claims")
+    if code != 0:
+        for line in detail.splitlines()[:8]:
+            print(f"        {line}")
+    elif detail:
+        print(f"        {detail.splitlines()[0]}")
 
     # A rename leaves no dangling reference (feature-independent): the cards,
     # derivation maps, traces, README, and Java rules cite artefacts by name.
@@ -388,13 +422,13 @@ def main():
     if all_pass:
         print("  RESULT: artefact pipeline intact — proceeding to tests")
         print(f"{BAR}")
-        sys.exit(0)
+        return _Exit(0)
     else:
         print("  RESULT: artefact defects found — fix before running tests")
         print("  (see FAIL lines above)")
         print(f"{BAR}")
-        sys.exit(1)
+        return _Exit(1)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

@@ -28,6 +28,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+
 # A backticked `path/File.java`, optionally with `:LINE` or `#symbol`.
 REF = re.compile(r"`([\w./-]+\.(?:java|py|kt|scala|ts|js))(?::(\d+)|#[\w.]+)?`")
 SKIP_DIRS = {".git", "node_modules", "target", "__pycache__", "scratch",
@@ -60,67 +63,90 @@ def repo_index(root):
     return index
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Advisory code-reference check")
-    parser.add_argument("--root", default=".")
-    parser.add_argument("--dirs", nargs="+",
-                        default=["methodology", "maintenance", "templates"])
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--root", default=".")
+        parser.add_argument("--dirs", nargs="+",
+                            default=["methodology", "maintenance", "templates"])
 
-    root = os.path.abspath(args.root)
-    index = repo_index(root)
-    warnings = []
-    checked = 0
+    def body(args: argparse.Namespace):
+        root = os.path.abspath(args.root)
+        index = repo_index(root)
+        warnings = []
+        checked = 0
 
-    for rel in args.dirs:
-        base = os.path.join(root, rel)
-        if not os.path.isdir(base):
-            continue
-        for dirpath, _dirs, files in os.walk(base):
-            for name in sorted(files):
-                if not name.endswith(".md"):
-                    continue
-                path = os.path.join(dirpath, name)
-                with open(path, encoding="utf-8", errors="replace") as handle:
-                    text = handle.read()
-                if is_closed_maintenance_record(root, path, text):
-                    continue
-                for match in REF.finditer(text):
-                    ref, line = match.group(1), match.group(2)
-                    # A bare filename with no line is usually an illustrative
-                    # example (`UserConcept.java`); only a path-qualified ref or
-                    # a `file:LINE` is a concrete citation worth checking.
-                    if line is None and "/" not in ref:
+        for rel in args.dirs:
+            base = os.path.join(root, rel)
+            if not os.path.isdir(base):
+                continue
+            for dirpath, _dirs, files in os.walk(base):
+                for name in sorted(files):
+                    if not name.endswith(".md"):
                         continue
-                    if "<" in ref or ">" in ref:
+                    path = os.path.join(dirpath, name)
+                    with open(path, encoding="utf-8", errors="replace") as handle:
+                        text = handle.read()
+                    if is_closed_maintenance_record(root, path, text):
                         continue
-                    checked += 1
-                    resolved = os.path.join(root, ref)
-                    if not os.path.isfile(resolved):
-                        candidates = index.get(os.path.basename(ref), [])
-                        if not candidates:
-                            warnings.append(
-                                f"{os.path.relpath(path, root)}: `{ref}` "
-                                f"resolves to no file in the repo")
+                    for match in REF.finditer(text):
+                        ref, line = match.group(1), match.group(2)
+                        # A bare filename with no line is usually an illustrative
+                        # example (`UserConcept.java`); only a path-qualified ref or
+                        # a `file:LINE` is a concrete citation worth checking.
+                        if line is None and "/" not in ref:
                             continue
-                        resolved = candidates[0]
-                    if line is not None:
-                        with open(resolved, encoding="utf-8",
-                                  errors="replace") as handle:
-                            count = sum(1 for _ in handle)
-                        if int(line) > count:
-                            warnings.append(
-                                f"{os.path.relpath(path, root)}: `{ref}:{line}` "
-                                f"is past the end of the file ({count} lines)")
+                        if "<" in ref or ">" in ref:
+                            continue
+                        checked += 1
+                        resolved = os.path.join(root, ref)
+                        if not os.path.isfile(resolved):
+                            candidates = index.get(os.path.basename(ref), [])
+                            if not candidates:
+                                warnings.append(
+                                    f"{os.path.relpath(path, root)}: `{ref}` "
+                                    f"resolves to no file in the repo")
+                                continue
+                            resolved = candidates[0]
+                        if line is not None:
+                            with open(resolved, encoding="utf-8",
+                                      errors="replace") as handle:
+                                count = sum(1 for _ in handle)
+                            if int(line) > count:
+                                warnings.append(
+                                    f"{os.path.relpath(path, root)}: `{ref}:{line}` "
+                                    f"is past the end of the file ({count} lines)")
 
-    for warning in warnings:
-        print(f"WARN  {warning}")
-    if warnings:
-        print(f"WARN  code references: {len(warnings)} of {checked} do not "
-              f"resolve")
-    else:
-        print(f"PASS  code references: {checked} backticked reference(s) resolve")
-    return 0
+        if warnings:
+            for warning in warnings:
+                print(f"WARN  {warning}")
+            verdict = cr.Verdict(cr.WARN, f"code references: {len(warnings)} of "
+                                 f"{checked} do not resolve")
+            return _Tail(verdict)
+        return cr.Verdict.ok(
+            f"code references: {checked} backticked reference(s) resolve")
+
+    import contextlib
+    import io
+    buffer = io.StringIO()
+    with contextlib.redirect_stdout(buffer):
+        verdict = body(_parse(argv, configure))
+    if isinstance(verdict, _Tail):
+        sys.stdout.write(buffer.getvalue())
+        return cr.emit(verdict.verdict)
+    return cr.emit(verdict)
+
+
+def _parse(argv, configure):
+    parser = argparse.ArgumentParser(description="Advisory code-reference check")
+    configure(parser)
+    return parser.parse_args(argv)
+
+
+class _Tail:
+    """A verdict to emit after the finding lines the body already printed."""
+
+    def __init__(self, verdict):
+        self.verdict = verdict
 
 
 if __name__ == "__main__":

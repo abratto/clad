@@ -32,53 +32,56 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
+import check_runner as cr  # noqa: E402
 
 
 def _when_key(when: str) -> str:
     return re.sub(r"\s+", "", (when or "").strip().strip("`"))
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Distinct terminal responses need distinct trigger tokens")
-    parser.add_argument("--chain-dir", required=True)
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--chain-dir", required=True)
 
-    if not os.path.isdir(args.chain_dir):
-        print("SKIP  no chain-table directory")
-        return 0
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        if not os.path.isdir(args.chain_dir):
+            return cr.Verdict.skip("no chain-table directory")
 
-    failures = []
-    for filename in sorted(os.listdir(args.chain_dir)):
-        if not filename.endswith("-chain.md"):
-            continue
-        path = os.path.join(args.chain_dir, filename)
-        branches: dict[str, dict[int, int]] = {}
-        for row in ap.parse_chain_table(path):
-            if row.then_suffix is None or row.then_concept != "Web":
+        failures = []
+        for filename in sorted(os.listdir(args.chain_dir)):
+            if not filename.endswith("-chain.md"):
                 continue
-            digits = re.search(r"\d+", row.then_suffix or "")
-            if not digits or row.composite_when:
-                continue
-            key = _when_key(row.when)
-            branches.setdefault(key, {})[int(digits.group(0))] = row.row_num
-        for key, statuses in sorted(branches.items()):
-            if len(statuses) > 1:
-                failures.append((filename, key, sorted(statuses)))
+            path = os.path.join(args.chain_dir, filename)
+            branches: dict[str, dict[int, int]] = {}
+            for row in ap.parse_chain_table(path):
+                if row.then_suffix is None or row.then_concept != "Web":
+                    continue
+                digits = re.search(r"\d+", row.then_suffix or "")
+                if not digits or row.composite_when:
+                    continue
+                key = _when_key(row.when)
+                branches.setdefault(key, {})[int(digits.group(0))] = row.row_num
+            for key, statuses in sorted(branches.items()):
+                if len(statuses) > 1:
+                    failures.append(cr.Problem(
+                        f"`{key}` -> statuses {sorted(statuses)}",
+                        where=filename))
 
-    if failures:
-        print(f"FAIL  {len(failures)} collapsed branch(es): one completion token "
-              f"reaches two distinct terminal responses")
-        for filename, key, statuses in failures:
-            print(f"  {filename}: `{key}` -> statuses {statuses}")
-        print("      Split each request-level refusal into its own pure guard "
-              "action with its own outcome")
-        print("      before the first state write (R23), so each response has a "
-              "distinct trigger token (R9/R12).")
-        return 1
+        if failures:
+            verdict = cr.Verdict.fail(
+                f"{len(failures)} collapsed branch(es): one completion token "
+                f"reaches two distinct terminal responses", failures)
+            verdict.detail = (
+                "      Split each request-level refusal into its own pure guard "
+                "action with its own outcome\n"
+                "      before the first state write (R23), so each response has a "
+                "distinct trigger token (R9/R12).")
+            return verdict
+        return cr.Verdict.ok("every terminal response has a distinct trigger token")
 
-    print("PASS  every terminal response has a distinct trigger token")
-    return 0
+    return cr.run_check(
+        "Distinct terminal responses need distinct trigger tokens",
+        body, argv, configure)
 
 
 if __name__ == "__main__":

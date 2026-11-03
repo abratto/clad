@@ -41,7 +41,9 @@ import os
 import re
 import sys
 
-import artifact_parsers as ap
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+import artifact_parsers as ap  # noqa: E402
 
 IMPL_EXTENSIONS = {".java", ".kt", ".scala"}
 SYNC_DECL_RE = re.compile(r"^sync\s+(\w+)\s*$", re.MULTILINE)
@@ -364,63 +366,65 @@ def check_concepts(concept_impl_dir, features_dir):
     return failures
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Verify every sync/concept implementation class has a spec artefact."
-    )
-    parser.add_argument(
-        "--sync-impl-dir",
-        default="",
-        help="Directory containing sync implementation classes (searched recursively).",
-    )
-    parser.add_argument(
-        "--concept-impl-dir",
-        default="",
-        help="Directory containing concept implementation classes (searched recursively).",
-    )
-    parser.add_argument(
-        "--features-dir",
-        default="features",
-        help="Root of the features/ tree (default: features/).",
-    )
-    args = parser.parse_args()
-
-    failures = []
-
-    if args.sync_impl_dir:
-        failures.extend(check_syncs(args.sync_impl_dir, args.features_dir))
-
-    if args.concept_impl_dir:
-        failures.extend(check_concepts(args.concept_impl_dir, args.features_dir))
-
-    if not args.sync_impl_dir and not args.concept_impl_dir:
-        print(
-            "ERROR: at least one of --sync-impl-dir or --concept-impl-dir is required.",
-            file=sys.stderr,
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--sync-impl-dir",
+            default="",
+            help="Directory containing sync implementation classes (searched recursively).",
         )
-        sys.exit(1)
-
-    if failures:
-        print(f"FAIL: {len(failures)} implementation parity violation(s):\n")
-        for path, message in sorted(failures):
-            print(f"  {path}\n    {message}\n")
-        print(
-            "Each violation means R17 was skipped or the sync naming rule was\n"
-            "not followed: implementation and stage artefacts no longer lower\n"
-            "mechanically from the same CLAD contract.\n"
-            "Open methodology/core/ITERATIVE_CHANGES.md, classify the change,\n"
-            "and add the missing *.sync.md or *.concept.md before committing."
+        parser.add_argument(
+            "--concept-impl-dir",
+            default="",
+            help="Directory containing concept implementation classes (searched recursively).",
         )
-        sys.exit(1)
+        parser.add_argument(
+            "--features-dir",
+            default="features",
+            help="Root of the features/ tree (default: features/).",
+        )
 
-    total = 0
-    if args.sync_impl_dir and os.path.isdir(args.sync_impl_dir):
-        total += len(collect_sync_names(args.sync_impl_dir))
-    if args.concept_impl_dir and os.path.isdir(args.concept_impl_dir):
-        total += len(collect_concept_class_names(args.concept_impl_dir))
-    print(f"OK: {total} implementation class(es) each have a spec artefact.")
-    sys.exit(0)
+    def body(args: argparse.Namespace):
+        failures = []
+
+        if args.sync_impl_dir:
+            failures.extend(check_syncs(args.sync_impl_dir, args.features_dir))
+
+        if args.concept_impl_dir:
+            failures.extend(check_concepts(args.concept_impl_dir, args.features_dir))
+
+        if not args.sync_impl_dir and not args.concept_impl_dir:
+            print(
+                "ERROR: at least one of --sync-impl-dir or --concept-impl-dir is required.",
+                file=sys.stderr,
+            )
+            return 1
+
+        if failures:
+            print(f"FAIL: {len(failures)} implementation parity violation(s):\n")
+            for path, message in sorted(failures):
+                print(f"  {path}\n    {message}\n")
+            print(
+                "Each violation means R17 was skipped or the sync naming rule was\n"
+                "not followed: implementation and stage artefacts no longer lower\n"
+                "mechanically from the same CLAD contract.\n"
+                "Open methodology/core/ITERATIVE_CHANGES.md, classify the change,\n"
+                "and add the missing *.sync.md or *.concept.md before committing."
+            )
+            return 1
+
+        total = 0
+        if args.sync_impl_dir and os.path.isdir(args.sync_impl_dir):
+            total += len(collect_sync_names(args.sync_impl_dir))
+        if args.concept_impl_dir and os.path.isdir(args.concept_impl_dir):
+            total += len(collect_concept_class_names(args.concept_impl_dir))
+        print(f"OK: {total} implementation class(es) each have a spec artefact.")
+        return 0
+
+    return cr.run_report(
+        "Verify every sync/concept implementation class has a spec artefact.",
+        body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

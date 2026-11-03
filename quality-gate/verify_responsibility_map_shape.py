@@ -33,6 +33,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
+import check_runner as cr  # noqa: E402
 
 _FORBIDDEN = (
     ("(", "a parameter list — signatures are Stage 02 work"),
@@ -43,42 +44,40 @@ _FORBIDDEN = (
 )
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="01a Owned actions column must carry names only, "
-                    "no signatures or outcomes")
-    parser.add_argument("--resp-map", required=True,
-                        help="Path to 01a responsibility-map.md")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--resp-map", required=True,
+                            help="Path to 01a responsibility-map.md")
 
-    if not os.path.isfile(args.resp_map):
-        print("SKIP  no responsibility map (Stage 01a not reached)")
-        return 0
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        if not os.path.isfile(args.resp_map):
+            return cr.Verdict.skip("no responsibility map (Stage 01a not reached)")
 
-    cells = ap.parse_resp_map_action_cells(args.resp_map)
-    if not cells:
-        print("SKIP  no Concepts table found in the responsibility map")
-        return 0
+        cells = ap.parse_resp_map_action_cells(args.resp_map)
+        if not cells:
+            return cr.Verdict.skip(
+                "no Concepts table found in the responsibility map")
 
-    failures = []
-    for concept in sorted(cells):
-        cell = cells[concept]
-        for token, why in _FORBIDDEN:
-            if token in cell:
-                failures.append(
-                    f"{concept}: Owned actions cell contains '{token}' — {why}. "
-                    f"Cell: {cell.strip()}")
-                break  # one diagnostic per row is enough to act on
+        failures = []
+        for concept in sorted(cells):
+            cell = cells[concept]
+            for token, why in _FORBIDDEN:
+                if token in cell:
+                    failures.append(cr.Problem(
+                        f"Owned actions cell contains '{token}' — {why}. "
+                        f"Cell: {cell.strip()}", where=concept))
+                    break  # one diagnostic per row is enough to act on
 
-    if failures:
-        print(f"FAIL  {len(failures)} responsibility-map row(s) carry "
-              f"Stage 02 detail:")
-        for failure in failures:
-            print(f"  - {failure}")
-        return 1
+        if failures:
+            return cr.Verdict.fail(
+                f"{len(failures)} responsibility-map row(s) carry Stage 02 "
+                f"detail", failures)
+        return cr.Verdict.ok(
+            f"{len(cells)} concept row(s) declare action names only")
 
-    print(f"PASS  {len(cells)} concept row(s) declare action names only")
-    return 0
+    return cr.run_check(
+        "01a Owned actions column must carry names only, no signatures or outcomes",
+        body, argv, configure)
 
 
 if __name__ == "__main__":

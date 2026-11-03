@@ -27,6 +27,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
+import check_runner as cr  # noqa: E402
 import clad_stages as cs  # noqa: E402
 
 
@@ -63,59 +64,56 @@ def spec_actions(path: str):
         re.MULTILINE)}
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="concept-bindings.md agrees with the 01a map")
-    parser.add_argument("--feature", required=True)
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--feature", required=True)
 
-    feature = os.path.abspath(args.feature)
-    bindings = os.path.join(cs.output_dir(feature, "02_concepts"),
-                            "concept-bindings.md")
-    resp_map = os.path.join(cs.output_dir(feature, "01a_responsibility-map"),
-                            "responsibility-map.md")
-    if not os.path.isfile(bindings):
-        print("SKIP  no concept-bindings.md (Stage 02 not reached)")
-        return 0
-    if not os.path.isfile(resp_map):
-        print("SKIP  no responsibility map (Stage 01a not reached)")
-        return 0
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        feature = os.path.abspath(args.feature)
+        bindings = os.path.join(cs.output_dir(feature, "02_concepts"),
+                                "concept-bindings.md")
+        resp_map = os.path.join(cs.output_dir(feature, "01a_responsibility-map"),
+                                "responsibility-map.md")
+        if not os.path.isfile(bindings):
+            return cr.Verdict.skip("no concept-bindings.md (Stage 02 not reached)")
+        if not os.path.isfile(resp_map):
+            return cr.Verdict.skip("no responsibility map (Stage 01a not reached)")
 
-    map_entries = ap.parse_responsibility_map(resp_map)
-    spec_paths = ap.concept_spec_paths(cs.concept_source_dirs(feature))
+        map_entries = ap.parse_responsibility_map(resp_map)
+        spec_paths = ap.concept_spec_paths(cs.concept_source_dirs(feature))
 
-    failures = []
-    checked = 0
-    for concept, origin, actions in parse_bindings(bindings):
-        entry = map_entries.get(concept)
-        if entry is None:
-            failures.append(
-                f"binding `{concept}` is not declared in the 01a responsibility "
-                f"map")
-            continue
-        map_origin = (entry.origin or "").strip()
-        if origin and map_origin and origin != map_origin:
-            failures.append(
-                f"binding `{concept}` says `{origin}` but the 01a map says "
-                f"`{map_origin}`")
-        if concept in spec_paths:
-            declared = spec_actions(spec_paths[concept])
-            for action in actions:
-                checked += 1
-                if action not in declared:
-                    failures.append(
-                        f"binding `{concept}` lists action `{action}`, which "
-                        f"`{concept}` does not declare")
+        failures = []
+        checked = 0
+        for concept, origin, actions in parse_bindings(bindings):
+            entry = map_entries.get(concept)
+            if entry is None:
+                failures.append(cr.Problem(
+                    "binding is not declared in the 01a responsibility map",
+                    where=concept))
+                continue
+            map_origin = (entry.origin or "").strip()
+            if origin and map_origin and origin != map_origin:
+                failures.append(cr.Problem(
+                    f"says `{origin}` but the 01a map says `{map_origin}`",
+                    where=concept))
+            if concept in spec_paths:
+                declared = spec_actions(spec_paths[concept])
+                for action in actions:
+                    checked += 1
+                    if action not in declared:
+                        failures.append(cr.Problem(
+                            f"lists action `{action}`, which `{concept}` does "
+                            f"not declare", where=concept))
 
-    if failures:
-        print(f"FAIL  {len(failures)} concept-binding defect(s):")
-        for failure in failures:
-            print(f"  - {failure}")
-        return 1
+        if failures:
+            return cr.Verdict.fail(
+                f"{len(failures)} concept-binding defect(s):", failures)
+        return cr.Verdict.ok(
+            f"concept bindings agree with the 01a map ({checked} action(s) "
+            f"resolved)")
 
-    print(f"PASS  concept bindings agree with the 01a map ({checked} action(s) "
-          f"resolved)")
-    return 0
+    return cr.run_check(
+        "concept-bindings.md agrees with the 01a map", body, argv, configure)
 
 
 if __name__ == "__main__":

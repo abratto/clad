@@ -38,6 +38,9 @@ import re
 import sys
 from collections import defaultdict
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+
 CONCEPT_FILE = re.compile(r"(.+)\.concept\.md$")
 # `action [ <params> ]` — the input side of an action signature line.
 SIGNATURE = re.compile(r"^(\w+)\s*\[([^\]]*)\]", re.MULTILINE)
@@ -111,53 +114,58 @@ def parse_specs(features_dir: str, concepts_dir: str):
     return contracts
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Canonical concept/proposal action contracts must not drift")
-    parser.add_argument("--features-dir", default="features")
-    parser.add_argument("--concepts-dir", default=None,
-                        help="Canonical corpus (default <features-dir>/_system/concepts)")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--features-dir", default="features")
+        parser.add_argument("--concepts-dir", default=None,
+                            help="Canonical corpus (default <features-dir>/_system/concepts)")
 
-    concepts_dir = args.concepts_dir or os.path.join(args.features_dir,
-                                                     "_system", "concepts")
-    contracts = parse_specs(args.features_dir, concepts_dir)
-    failures, warnings = [], []
-    for (concept, action), sources in sorted(contracts.items()):
-        if len(sources) < 2:
-            continue
-        labels = sorted(sources)
-        # Outcome-vocabulary disjointness -> FAIL.
-        for i in range(len(labels)):
-            for j in range(i + 1, len(labels)):
-                a = sources[labels[i]]["outcomes"]
-                b = sources[labels[j]]["outcomes"]
-                if a and b and a.isdisjoint(b):
-                    failures.append(
-                        f"{concept}.{action}: disjoint outcome vocabularies — "
-                        f"{labels[i]} {sorted(a)} vs {labels[j]} {sorted(b)}")
-        # Input-name-set incompatibility -> WARN.
-        for i in range(len(labels)):
-            for j in range(i + 1, len(labels)):
-                a = sources[labels[i]]["params"]
-                b = sources[labels[j]]["params"]
-                if a and b and not (a <= b or b <= a):
-                    warnings.append(
-                        f"{concept}.{action}: input-shape differs — "
-                        f"{labels[i]} {sorted(a)} vs {labels[j]} {sorted(b)}")
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        concepts_dir = args.concepts_dir or os.path.join(args.features_dir,
+                                                         "_system", "concepts")
+        contracts = parse_specs(args.features_dir, concepts_dir)
+        failures, warnings = [], []
+        for (concept, action), sources in sorted(contracts.items()):
+            if len(sources) < 2:
+                continue
+            labels = sorted(sources)
+            # Outcome-vocabulary disjointness -> FAIL.
+            for i in range(len(labels)):
+                for j in range(i + 1, len(labels)):
+                    a = sources[labels[i]]["outcomes"]
+                    b = sources[labels[j]]["outcomes"]
+                    if a and b and a.isdisjoint(b):
+                        failures.append(cr.Problem(
+                            f"disjoint outcome vocabularies — "
+                            f"{labels[i]} {sorted(a)} vs {labels[j]} {sorted(b)}",
+                            where=f"{concept}.{action}"))
+            # Input-name-set incompatibility -> WARN.
+            for i in range(len(labels)):
+                for j in range(i + 1, len(labels)):
+                    a = sources[labels[i]]["params"]
+                    b = sources[labels[j]]["params"]
+                    if a and b and not (a <= b or b <= a):
+                        warnings.append(
+                            f"{concept}.{action}: input-shape differs — "
+                            f"{labels[i]} {sorted(a)} vs {labels[j]} {sorted(b)}")
 
-    for w in warnings:
-        print(f"WARN  {w}")
-    if failures:
-        print(f"FAIL  {len(failures)} shared-concept contract drift(s):")
-        for f in failures:
-            print(f"        {f}")
-        print("      Reuse the canonical signature/enum, or extend it "
-              "additively; do not redeclare an action with a different vocabulary.")
-        return 1
-    print(f"PASS  concept action contracts consistent "
-          f"({sum(1 for v in contracts.values() if len(v) > 1)} shared action(s) checked)")
-    return 0
+        detail = "\n".join(f"WARN  {w}" for w in warnings) or None
+        if failures:
+            verdict = cr.Verdict.fail(
+                f"{len(failures)} shared-concept contract drift(s):", failures)
+            verdict.detail = detail or (
+                "      Reuse the canonical signature/enum, or extend it "
+                "additively; do not redeclare an action with a different "
+                "vocabulary.")
+            return verdict
+        return cr.Verdict.ok(
+            f"concept action contracts consistent "
+            f"({sum(1 for v in contracts.values() if len(v) > 1)} shared "
+            f"action(s) checked)", detail=detail)
+
+    return cr.run_check(
+        "Canonical concept/proposal action contracts must not drift",
+        body, argv, configure)
 
 
 if __name__ == "__main__":

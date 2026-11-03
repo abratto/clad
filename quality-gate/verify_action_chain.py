@@ -30,6 +30,8 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
 from artifact_parsers import (
     contract_actions,
     parse_resp_map_actions,
@@ -42,90 +44,90 @@ from artifact_parsers import (
 )
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Verify action names flow consistently across all artefacts")
-    parser.add_argument("--resp-map", required=True,
-                        help="Path to 01a responsibility-map.md")
-    parser.add_argument("--chain-dir", required=True,
-                        help="Path to 01b_chain-table/output/")
-    parser.add_argument("--concept-dir", required=True, action="append",
-                        help="Concept-spec dir; repeatable. Earlier dirs shadow "
-                             "later ones by concept name.")
-    parser.add_argument("--sync-dir", required=True,
-                        help="Path to 03_syncs/output/ (spec files)")
-    parser.add_argument("--dep-dir", required=True,
-                        help="Path to 03a_dependency-review/output/")
-    parser.add_argument("--contract-dir", required=True, action="append",
-                        help="Contract dir; repeatable. Earlier dirs shadow later "
-                             "ones by concept name, so a feature's own contract wins "
-                             "over the canonical corpus copy it extends — and a "
-                             "REUSED concept, which has no feature-local contract, is "
-                             "satisfied by the canonical one (Model B / R22).")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--resp-map", required=True,
+                            help="Path to 01a responsibility-map.md")
+        parser.add_argument("--chain-dir", required=True,
+                            help="Path to 01b_chain-table/output/")
+        parser.add_argument("--concept-dir", required=True, action="append",
+                            help="Concept-spec dir; repeatable. Earlier dirs shadow "
+                                 "later ones by concept name.")
+        parser.add_argument("--sync-dir", required=True,
+                            help="Path to 03_syncs/output/ (spec files)")
+        parser.add_argument("--dep-dir", required=True,
+                            help="Path to 03a_dependency-review/output/")
+        parser.add_argument("--contract-dir", required=True, action="append",
+                            help="Contract dir; repeatable. Earlier dirs shadow later "
+                                 "ones by concept name, so a feature's own contract wins "
+                                 "over the canonical corpus copy it extends — and a "
+                                 "REUSED concept, which has no feature-local contract, is "
+                                 "satisfied by the canonical one (Model B / R22).")
 
-    sources = {
-        "responsibility map":  parse_resp_map_actions(args.resp_map),
-        "chain tables":        parse_chain_table_actions(args.chain_dir),
-        "concept specs":       parse_concept_actions_multi(args.concept_dir),
-        "sync specs":          parse_sync_actions(args.sync_dir),
-        "dep. cards":          parse_dep_card_actions(args.dep_dir),
-        "contracts":               contract_actions(args.contract_dir),
-    }
+    def body(args: argparse.Namespace):
+        sources = {
+            "responsibility map":  parse_resp_map_actions(args.resp_map),
+            "chain tables":        parse_chain_table_actions(args.chain_dir),
+            "concept specs":       parse_concept_actions_multi(args.concept_dir),
+            "sync specs":          parse_sync_actions(args.sync_dir),
+            "dep. cards":          parse_dep_card_actions(args.dep_dir),
+            "contracts":               contract_actions(args.contract_dir),
+        }
 
-    # Filter out Web actions for all sources (Web is bootstrap)
-    for name in sources:
-        sources[name] = {a for a in sources[name] if not a.startswith("Web/")}
+        # Filter out Web actions for all sources (Web is bootstrap)
+        for name in sources:
+            sources[name] = {a for a in sources[name] if not a.startswith("Web/")}
 
-    if not any(sources.values()):
-        print("FAIL  no actions parsed from any source")
-        sys.exit(1)
+        if not any(sources.values()):
+            print("FAIL  no actions parsed from any source")
+            return 1
 
-    for name, actions in sources.items():
-        print(f"INFO  {name}: {len(actions)} actions — {sorted(actions)}")
-
-    # The chain tables are the reference for what the current feature
-    # actually invokes. Every chained action must appear in all other
-    # artefact types. Upstream artefacts (resp map, concept specs) may
-    # declare extra actions not exercised by this UC — that is legal
-    # (e.g. User.register, Session.lookup exist for future use cases).
-    reference = sources["chain tables"]
-    if not reference:
-        reference = sources.get("sync specs", set())
-    if not reference:
-        print("FAIL  no reference actions (chain tables or sync specs)")
-        sys.exit(1)
-
-    passed = True
-    for action in sorted(reference):
-        missing_in = []
         for name, actions in sources.items():
-            if name == "chain tables":
-                continue
-            if action not in actions:
-                missing_in.append(name)
-        if missing_in:
-            print(f"FAIL  {action} (used in chain) missing from: "
-                  f"{', '.join(missing_in)}")
+            print(f"INFO  {name}: {len(actions)} actions — {sorted(actions)}")
+
+        # The chain tables are the reference for what the current feature
+        # actually invokes. Every chained action must appear in all other
+        # artefact types. Upstream artefacts (resp map, concept specs) may
+        # declare extra actions not exercised by this UC — that is legal
+        # (e.g. User.register, Session.lookup exist for future use cases).
+        reference = sources["chain tables"]
+        if not reference:
+            reference = sources.get("sync specs", set())
+        if not reference:
+            print("FAIL  no reference actions (chain tables or sync specs)")
+            return 1
+
+        passed = True
+        for action in sorted(reference):
+            missing_in = []
+            for name, actions in sources.items():
+                if name == "chain tables":
+                    continue
+                if action not in actions:
+                    missing_in.append(name)
+            if missing_in:
+                print(f"FAIL  {action} (used in chain) missing from: "
+                      f"{', '.join(missing_in)}")
+                passed = False
+
+        # Also check that responsibility map declares every chained action
+        chained_not_in_resp = reference - sources["responsibility map"]
+        if chained_not_in_resp:
+            for a in sorted(chained_not_in_resp):
+                print(f"FAIL  {a} used in chain but not declared in "
+                      f"responsibility map")
             passed = False
 
-    # Also check that responsibility map declares every chained action
-    chained_not_in_resp = reference - sources["responsibility map"]
-    if chained_not_in_resp:
-        for a in sorted(chained_not_in_resp):
-            print(f"FAIL  {a} used in chain but not declared in "
-                  f"responsibility map")
-        passed = False
+        if passed:
+            n = len(reference)
+            total = sum(len(s) for s in sources.values())
+            print(f"PASS  {n} chained actions flow consistently across "
+                  f"{len(sources)} artefact types ({total} total references)")
+            return 0
+        return 1
 
-    if passed:
-        n = len(reference)
-        total = sum(len(s) for s in sources.values())
-        print(f"PASS  {n} chained actions flow consistently across "
-              f"{len(sources)} artefact types ({total} total references)")
-        sys.exit(0)
-    else:
-        sys.exit(1)
+    return cr.run_report("Verify action names flow consistently across all artefacts", body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

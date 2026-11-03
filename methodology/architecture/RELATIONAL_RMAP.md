@@ -143,7 +143,7 @@ current model per canonical concept, not one migration per feature:
 python3 quality-gate/rmap.py --features-dir features --app-label app   --json app/src/main/resources/rmap-schema.json
 
 # incremental DDL from a deployed baseline descriptor
-python3 quality-gate/rmap.py --features-dir features   --baseline-descriptor deployed-rmap-schema.json   --alter app/src/main/resources/db/migration/V2__add_tagging.sql
+python3 quality-gate/rmap.py --features-dir features   --baseline deployed-rmap-schema.json   --alter app/src/main/resources/db/migration/V2__add_tagging.sql
 ```
 
 The incremental mode emits `CREATE TABLE` for new tables and `ALTER TABLE ADD
@@ -159,7 +159,8 @@ python3 quality-gate/rmap.py --features-dir features \
   --record-baseline prod
 ```
 
-`--alter` then finds it automatically: an explicit `--baseline <name>`, the
+`--alter` then finds it automatically: an explicit `--baseline <name-or-path>`
+(the path may be a deployed descriptor such as `deployed-rmap-schema.json`), the
 `rmap.baseline` property (feature-local `_config/rmap.baseline.md` wins), or
 the default `_generated/rmap-baselines/default.json` under the repo root (also
 searches `_system/rmap-baselines/` and the feature's `_generated/`). Codegen caveat: `DDLDatabase` is an H2

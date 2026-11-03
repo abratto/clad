@@ -21,7 +21,9 @@ import argparse
 import os
 import re
 import sys
+import check_runner as cr
 from pathlib import Path
+
 
 
 # Direct store/region method calls. `region`/`Region` as a receiver catches a
@@ -66,65 +68,66 @@ def read_clad_property(key, default=""):
         d = parent
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Verify FactStore/Region access is isolated to concepts and engine")
-    parser.add_argument("--app-source-root", default=None,
-                        help="Root package containing the concepts/engine sources")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--app-source-root", default=None,
+                            help="Root package containing the concepts/engine sources")
 
-    app_root = args.app_source_root
-    if not app_root:
-        concept_dir = read_clad_property("concept.impl.dir", "")
-        if concept_dir:
-            app_root = str(Path(concept_dir).parent)
+    def body(args: argparse.Namespace):
+        app_root = args.app_source_root
+        if not app_root:
+            concept_dir = read_clad_property("concept.impl.dir", "")
+            if concept_dir:
+                app_root = str(Path(concept_dir).parent)
+            else:
+                print("FAIL  could not determine app source root. "
+                      "Set concept.impl.dir in clad.properties or pass --app-source-root.")
+                return 1
+        app_root = os.path.abspath(app_root)
+        if not os.path.isdir(app_root):
+            print(f"FAIL  app source root not found: {app_root}")
+            return 1
+
+        sources = [p for p in sorted(Path(app_root).rglob("*.java"))
+                   if "engine" not in p.parts]
+        has_store = any("FactStore" in p.read_text(errors="ignore") for p in sources)
+        if not has_store:
+            print(f"WARN  store isolation not evaluated for {app_root} — no "
+                  f"FactStore wiring found. Review R4 manually.")
+            return 0
+
+        violations = []
+        checked = 0
+        for p in sources:
+            if _ALLOWED.search(str(p)) or "engine" in p.parts:
+                continue
+            source = p.read_text(errors="ignore")
+            if _WAIVER.search(source):
+                continue
+            text = strip_comments_and_strings(source)
+            checked += 1
+            for m in _STORE_ACCESS.finditer(text):
+                violations.append((str(p.relative_to(app_root)),
+                                   text[:m.start()].count("\n") + 1, m.group(0)))
+
+        if violations:
+            print(f"FAIL  {len(violations)} direct FactStore/Region access "
+                  f"violation(s) outside engine/concepts (R4):")
+            for rel, lineno, call in violations:
+                print(f"    {rel}:{lineno}: {call}...")
+            print("  Only concepts own a Region; coordination belongs in syncs.")
+            return 1
+
+        if checked == 0:
+            print("WARN  store isolation not evaluated: no non-engine, non-concept "
+                  "source files to inspect (expected only for a very small app).")
         else:
-            print("FAIL  could not determine app source root. "
-                  "Set concept.impl.dir in clad.properties or pass --app-source-root.")
-            sys.exit(1)
-    app_root = os.path.abspath(app_root)
-    if not os.path.isdir(app_root):
-        print(f"FAIL  app source root not found: {app_root}")
-        sys.exit(1)
+            print(f"PASS  store isolation: {checked} non-engine file(s) avoid "
+                  f"direct FactStore/Region access")
+        return 0
 
-    sources = [p for p in sorted(Path(app_root).rglob("*.java"))
-               if "engine" not in p.parts]
-    has_store = any("FactStore" in p.read_text(errors="ignore") for p in sources)
-    if not has_store:
-        print(f"WARN  store isolation not evaluated for {app_root} — no "
-              f"FactStore wiring found. Review R4 manually.")
-        sys.exit(0)
-
-    violations = []
-    checked = 0
-    for p in sources:
-        if _ALLOWED.search(str(p)) or "engine" in p.parts:
-            continue
-        source = p.read_text(errors="ignore")
-        if _WAIVER.search(source):
-            continue
-        text = strip_comments_and_strings(source)
-        checked += 1
-        for m in _STORE_ACCESS.finditer(text):
-            violations.append((str(p.relative_to(app_root)),
-                               text[:m.start()].count("\n") + 1, m.group(0)))
-
-    if violations:
-        print(f"FAIL  {len(violations)} direct FactStore/Region access "
-              f"violation(s) outside engine/concepts (R4):")
-        for rel, lineno, call in violations:
-            print(f"    {rel}:{lineno}: {call}...")
-        print("  Only concepts own a Region; coordination belongs in syncs.")
-        sys.exit(1)
-
-    if checked == 0:
-        print("WARN  store isolation not evaluated: no non-engine, non-concept "
-              "source files to inspect (expected only for a very small app).")
-    else:
-        print(f"PASS  store isolation: {checked} non-engine file(s) avoid "
-              f"direct FactStore/Region access")
-    sys.exit(0)
+    return cr.run_report("Verify FactStore/Region access is isolated to concepts and engine", body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

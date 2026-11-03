@@ -38,6 +38,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+
 SCENARIO_RE = re.compile(r"^###\s+Scenario:\s*(.+?)\s*$", re.MULTILINE)
 SPEC_SECTION_RE = re.compile(r"^##\s+Scenario:\s*(.+?)\s*$", re.MULTILINE)
 TEST_BIND_RE = re.compile(r"\*\*Test:\*\*\s*`([A-Za-z_][\w]*)\.([A-Za-z_][\w]*)`")
@@ -134,69 +137,70 @@ def _flow_test_methods(root: str) -> list[tuple[str, str]]:
     return found
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Verify Acceptance Spec ↔ native flow-test binding")
-    parser.add_argument("--spec", required=True)
-    parser.add_argument("--usecase", required=True)
-    parser.add_argument("--chain-dir", default="")
-    parser.add_argument("--test-source-root", default="")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--spec", required=True)
+        parser.add_argument("--usecase", required=True)
+        parser.add_argument("--chain-dir", default="")
+        parser.add_argument("--test-source-root", default="")
 
-    if not os.path.isfile(args.spec):
-        print(f"FAIL  acceptance spec not found: {args.spec}")
+    def body(args: argparse.Namespace):
+        if not os.path.isfile(args.spec):
+            print(f"FAIL  acceptance spec not found: {args.spec}")
+            return 1
+
+        scenario_names, binds = parse_acceptance_spec(args.spec)
+        usecase_scenarios = parse_usecase_scenarios(args.usecase)
+        ok = True
+
+        if not scenario_names:
+            print("FAIL  acceptance spec has no `## Scenario:` sections")
+            return 1
+        if not binds:
+            print("FAIL  acceptance spec has no `- **Test:** `Class.method`` binding")
+            return 1
+
+        missing = [s for s in usecase_scenarios if s not in scenario_names]
+        if missing:
+            ok = False
+            print(f"FAIL  {len(missing)} use-case scenario(s) absent from the "
+                  f"acceptance spec: {', '.join(missing)}")
+
+        extra = [s for s in scenario_names if s not in usecase_scenarios]
+        if extra:
+            # An extra scenario the use case does not define is an invented
+            # contract (the old Gherkin rule: a derived view invents nothing).
+            ok = False
+            print(f"FAIL  acceptance spec has scenario(s) not in usecase.md: "
+                  f"{', '.join(extra)}")
+
+        index = _index_test_methods(args.test_source_root)
+        if not args.test_source_root or not os.path.isdir(args.test_source_root):
+            print("WARN  test source root absent — binding to methods skipped")
+        else:
+            for cls, method in binds:
+                methods = index.get(cls)
+                if methods is None:
+                    ok = False
+                    print(f"FAIL  bound test class not found: {cls} ({cls}.{method})")
+                elif method not in methods:
+                    ok = False
+                    print(f"FAIL  bound test method not found: {cls}.{method}")
+
+            documented = _documented_union(args.spec, binds)
+            for cls, method in _flow_test_methods(args.test_source_root):
+                if (cls, method) not in documented:
+                    ok = False
+                    print(f"FAIL  undocumented flow test: {cls}.{method} — add a "
+                          f"`Test:` binding or remove the method")
+
+        if ok:
+            print(f"PASS  acceptance spec binds {len(scenario_names)} scenario(s) "
+                  f"and {len(binds)} test(s)")
+            return 0
         return 1
 
-    scenario_names, binds = parse_acceptance_spec(args.spec)
-    usecase_scenarios = parse_usecase_scenarios(args.usecase)
-    ok = True
-
-    if not scenario_names:
-        print("FAIL  acceptance spec has no `## Scenario:` sections")
-        return 1
-    if not binds:
-        print("FAIL  acceptance spec has no `- **Test:** `Class.method`` binding")
-        return 1
-
-    missing = [s for s in usecase_scenarios if s not in scenario_names]
-    if missing:
-        ok = False
-        print(f"FAIL  {len(missing)} use-case scenario(s) absent from the "
-              f"acceptance spec: {', '.join(missing)}")
-
-    extra = [s for s in scenario_names if s not in usecase_scenarios]
-    if extra:
-        # An extra scenario the use case does not define is an invented
-        # contract (the old Gherkin rule: a derived view invents nothing).
-        ok = False
-        print(f"FAIL  acceptance spec has scenario(s) not in usecase.md: "
-              f"{', '.join(extra)}")
-
-    index = _index_test_methods(args.test_source_root)
-    if not args.test_source_root or not os.path.isdir(args.test_source_root):
-        print("WARN  test source root absent — binding to methods skipped")
-    else:
-        for cls, method in binds:
-            methods = index.get(cls)
-            if methods is None:
-                ok = False
-                print(f"FAIL  bound test class not found: {cls} ({cls}.{method})")
-            elif method not in methods:
-                ok = False
-                print(f"FAIL  bound test method not found: {cls}.{method}")
-
-        documented = _documented_union(args.spec, binds)
-        for cls, method in _flow_test_methods(args.test_source_root):
-            if (cls, method) not in documented:
-                ok = False
-                print(f"FAIL  undocumented flow test: {cls}.{method} — add a "
-                      f"`Test:` binding or remove the method")
-
-    if ok:
-        print(f"PASS  acceptance spec binds {len(scenario_names)} scenario(s) "
-              f"and {len(binds)} test(s)")
-        return 0
-    return 1
+    return cr.run_report("Verify Acceptance Spec ↔ native flow-test binding", body, argv, configure)
 
 
 if __name__ == "__main__":

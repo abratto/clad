@@ -47,6 +47,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import check_runner as cr  # noqa: E402
 import clad_stages as cs  # noqa: E402
 
 PAIRS = [
@@ -96,110 +97,111 @@ def _within(candidate: str, root: str) -> bool:
         return False
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Verify configured profile paths match the feature's "
-                    "declared package layout")
-    parser.add_argument("--feature", required=True)
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--feature", required=True)
 
-    feature_root = os.path.abspath(args.feature)
-    layout = os.path.join(feature_root, "_config", "package-and-layout.md")
-    if not os.path.isfile(layout):
-        print(f"SKIP  no package-and-layout declared for "
-              f"{cs.relpath(feature_root)} — nothing to bind-check")
-        sys.exit(0)
+    def body(args: argparse.Namespace):
+        feature_root = os.path.abspath(args.feature)
+        layout = os.path.join(feature_root, "_config", "package-and-layout.md")
+        if not os.path.isfile(layout):
+            return cr.emit(cr.Verdict.skip(
+                f"no package-and-layout declared for "
+                f"{cs.relpath(feature_root)} — nothing to bind-check"))
 
-    failures = []
-    warnings = []
-    compared = 0
+        failures = []
+        warnings = []
+        compared = 0
 
-    # Fail-fast on an unfilled layout. The skeleton ships `_config/
-    # package-and-layout.md` with `TBD` values; an unfilled layout resolves to
-    # None and the pair is skipped quietly, so a wrong-tree mis-audit is not
-    # caught. Once a feature reaches Stage 04 the layout must be concrete.
-    # (Recurring friction across the conduit rebuild: `_config` shipped TBD and
-    # had to be hand-filled at 04a every UC.)
-    impl_output = os.path.join(feature_root, "stages", "04_implement",
-                               "04a_storage-mapping", "output")
-    # `dir_is_populated`, NOT `isdir`: the skeleton pre-creates every stage
-    # output directory with only a `.gitkeep`, so `isdir` is true from day one
-    # and this guard fired at Stage 01 on a fresh feature. Only a feature that
-    # has actually produced Stage-04a output is held to a concrete layout.
-    if cs.dir_is_populated(impl_output):
-        # Strip markdown once so both the seed style (`APP_SOURCE_ROOT: TBD`)
-        # and the template style (`- **APP_SOURCE_ROOT:** `TBD``) parse.
-        normalized = open(layout).read().replace("`", "").replace("**", "")
-        for key in ("APP_PACKAGE_ROOT", "APP_SOURCE_ROOT", "APP_TEST_SOURCE_ROOT"):
-            for line in normalized.splitlines():
-                if key not in line:
-                    continue
-                _, _, tail = line.partition(key)
-                value = tail.strip().lstrip(":").strip()
-                if value.upper().startswith("TBD"):
-                    failures.append(
-                        f"  {cs.relpath(feature_root)}: "
-                        f"_config/package-and-layout.md still `TBD` for {key}; "
-                        f"fill it at Stage 04a before advancing (a TBD layout "
-                        f"silently skips the wrong-tree guard)")
-                break
+        # Fail-fast on an unfilled layout. The skeleton ships `_config/
+        # package-and-layout.md` with `TBD` values; an unfilled layout resolves to
+        # None and the pair is skipped quietly, so a wrong-tree mis-audit is not
+        # caught. Once a feature reaches Stage 04 the layout must be concrete.
+        # (Recurring friction across the conduit rebuild: `_config` shipped TBD and
+        # had to be hand-filled at 04a every UC.)
+        impl_output = os.path.join(feature_root, "stages", "04_implement",
+                                   "04a_storage-mapping", "output")
+        # `dir_is_populated`, NOT `isdir`: the skeleton pre-creates every stage
+        # output directory with only a `.gitkeep`, so `isdir` is true from day one
+        # and this guard fired at Stage 01 on a fresh feature. Only a feature that
+        # has actually produced Stage-04a output is held to a concrete layout.
+        if cs.dir_is_populated(impl_output):
+            # Strip markdown once so both the seed style (`APP_SOURCE_ROOT: TBD`)
+            # and the template style (`- **APP_SOURCE_ROOT:** `TBD``) parse.
+            normalized = open(layout).read().replace("`", "").replace("**", "")
+            for key in ("APP_PACKAGE_ROOT", "APP_SOURCE_ROOT", "APP_TEST_SOURCE_ROOT"):
+                for line in normalized.splitlines():
+                    if key not in line:
+                        continue
+                    _, _, tail = line.partition(key)
+                    value = tail.strip().lstrip(":").strip()
+                    if value.upper().startswith("TBD"):
+                        failures.append(
+                            f"  {cs.relpath(feature_root)}: "
+                            f"_config/package-and-layout.md still `TBD` for {key}; "
+                            f"fill it at Stage 04a before advancing (a TBD layout "
+                            f"silently skips the wrong-tree guard)")
+                    break
 
-    for prop_key, layout_key, label in PAIRS:
-        configured = cs._prop_path(feature_root, prop_key)
-        declared = _declared_root(feature_root, layout_key)
-        if not configured or not declared:
-            continue  # pair not comparable — skip quietly
-        compared += 1
-        if _within(configured, declared):
-            continue
-        failures.append(
-            f"  {cs.relpath(feature_root)}: {label} mismatch — "
-            f"{prop_key} resolves to {cs.relpath(configured)}, outside the "
-            f"declared {layout_key} {cs.relpath(declared)}")
-        cfg_rooted = os.path.realpath(configured).startswith(
-            os.path.realpath(os.path.join(cs._repo_root(feature_root),
-                                          "reference-impl")) + os.sep)
-        if cfg_rooted and not os.path.realpath(declared).startswith(
+        for prop_key, layout_key, label in PAIRS:
+            configured = cs._prop_path(feature_root, prop_key)
+            declared = _declared_root(feature_root, layout_key)
+            if not configured or not declared:
+                continue  # pair not comparable — skip quietly
+            compared += 1
+            if _within(configured, declared):
+                continue
+            failures.append(
+                f"  {cs.relpath(feature_root)}: {label} mismatch — "
+                f"{prop_key} resolves to {cs.relpath(configured)}, outside the "
+                f"declared {layout_key} {cs.relpath(declared)}")
+            cfg_rooted = os.path.realpath(configured).startswith(
                 os.path.realpath(os.path.join(cs._repo_root(feature_root),
-                                              "reference-impl")) + os.sep):
-            warnings.append(
-                f"  NOTE {cs.relpath(feature_root)}: {prop_key} points into "
-                f"the seed's reference-impl/ example while "
-                f"_config/package-and-layout.md declares "
-                f"{layout_key} {cs.relpath(declared)} — set "
-                f"features/{os.path.basename(feature_root)}/_config/"
-                f"{prop_key}.md (or re-point root clad.properties via the "
-                f"maintenance route) so parity checks audit your tree")
+                                              "reference-impl")) + os.sep)
+            if cfg_rooted and not os.path.realpath(declared).startswith(
+                    os.path.realpath(os.path.join(cs._repo_root(feature_root),
+                                                  "reference-impl")) + os.sep):
+                warnings.append(
+                    f"  NOTE {cs.relpath(feature_root)}: {prop_key} points into "
+                    f"the seed's reference-impl/ example while "
+                    f"_config/package-and-layout.md declares "
+                    f"{layout_key} {cs.relpath(declared)} — set "
+                    f"features/{os.path.basename(feature_root)}/_config/"
+                    f"{prop_key}.md (or re-point root clad.properties via the "
+                    f"maintenance route) so parity checks audit your tree")
 
-    if failures:
-        print(f"FAIL  profile-path integrity: {len(failures)} configured "
-              f"path(s) resolve outside the feature's declared roots "
-              f"({compared} comparable)")
-        for line in failures:
-            print(line)
-        for line in warnings:
-            print(line)
-        print("Profile-aware parity checks would have audited the wrong "
-              "tree. Re-point via the feature-local _config/<key>.md "
-              "override or the maintenance route (R20) before advancing.")
-        sys.exit(1)
+        if failures:
+            print(f"FAIL  profile-path integrity: {len(failures)} configured "
+                  f"path(s) resolve outside the feature's declared roots "
+                  f"({compared} comparable)")
+            for line in failures:
+                print(line)
+            for line in warnings:
+                print(line)
+            print("Profile-aware parity checks would have audited the wrong "
+                  "tree. Re-point via the feature-local _config/<key>.md "
+                  "override or the maintenance route (R20) before advancing.")
+            return 1
 
-    if warnings:
-        for line in warnings:
-            print(f"WARN {line}")
-        print(f"PASS  profile-path integrity ({compared} comparable, "
-              f"{len(warnings)} seed-path warning(s))")
-        sys.exit(0)
+        if warnings:
+            for line in warnings:
+                print(f"WARN {line}")
+            print(f"PASS  profile-path integrity ({compared} comparable, "
+                  f"{len(warnings)} seed-path warning(s))")
+            return 0
 
-    if compared == 0:
-        print(f"SKIP  no configured/declared path pair resolvable for "
-              f"{cs.relpath(feature_root)}")
-        sys.exit(0)
+        if compared == 0:
+            print(f"SKIP  no configured/declared path pair resolvable for "
+                  f"{cs.relpath(feature_root)}")
+            return 0
 
-    print(f"PASS  profile-path integrity ({compared} comparable — "
-          f"configured paths resolve inside the declared roots)")
-    sys.exit(0)
+        print(f"PASS  profile-path integrity ({compared} comparable — "
+              f"configured paths resolve inside the declared roots)")
+        return 0
+
+    return cr.run_report("Verify configured profile paths match the feature's declared package layout", body, argv, configure)
+
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

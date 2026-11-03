@@ -31,6 +31,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
 import artifact_parsers as ap  # noqa: E402
 import generate_data_model as gdm  # noqa: E402
 
@@ -361,56 +362,56 @@ def check_cross_concept_refs(data_dir, concept_dirs):
     return failures
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Validate conceptual data model CSDP structure")
-    parser.add_argument("--data-dir", required=True,
-                        help="Path to 03b_data-model/output/")
-    parser.add_argument("--concept-dir", required=True, action="append",
-                        help="Concept-spec dir for entity-name cross-ref; "
-                             "repeatable. Earlier dirs shadow later ones.")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--data-dir", required=True,
+                            help="Path to 03b_data-model/output/")
+        parser.add_argument("--concept-dir", required=True, action="append",
+                            help="Concept-spec dir for entity-name cross-ref; "
+                                 "repeatable. Earlier dirs shadow later ones.")
 
-    data_dir = args.data_dir
-    concept_dirs = args.concept_dir
+    def body(args: argparse.Namespace):
+        data_dir = args.data_dir
+        concept_dirs = args.concept_dir
 
-    if not os.path.isdir(data_dir):
-        print(f"FAIL  data model directory not found: {data_dir}")
-        sys.exit(1)
+        if not os.path.isdir(data_dir):
+            print(f"FAIL  data model directory not found: {data_dir}")
+            return 1
 
-    data_files = sorted([
-        f for f in os.listdir(data_dir) if f.endswith(".data-model.md")
-    ])
+        data_files = sorted([
+            f for f in os.listdir(data_dir) if f.endswith(".data-model.md")
+        ])
 
-    if not data_files:
-        print("FAIL  no .data-model.md files found")
-        sys.exit(1)
+        if not data_files:
+            print("FAIL  no .data-model.md files found")
+            return 1
 
-    # Check 5: One file per concept (at minimum, one exists)
-    print(f"INFO  {len(data_files)} data model files: {data_files}")
+        # Check 5: One file per concept (at minimum, one exists)
+        print(f"INFO  {len(data_files)} data model files: {data_files}")
 
-    total_failures = 0
+        total_failures = 0
 
-    # Structural checks per file
-    for fname in data_files:
-        path = os.path.join(data_dir, fname)
-        file_failures = check_data_model(path, concept_dirs)
-        for msg in file_failures:
-            print(f"FAIL  {fname}: {msg}")
+        # Structural checks per file
+        for fname in data_files:
+            path = os.path.join(data_dir, fname)
+            file_failures = check_data_model(path, concept_dirs)
+            for msg in file_failures:
+                print(f"FAIL  {fname}: {msg}")
+                total_failures += 1
+
+        # Cross-concept entity reference check
+        cross_failures = check_cross_concept_refs(data_dir, concept_dirs)
+        for msg in cross_failures:
+            print(f"FAIL  {msg}")
             total_failures += 1
 
-    # Cross-concept entity reference check
-    cross_failures = check_cross_concept_refs(data_dir, concept_dirs)
-    for msg in cross_failures:
-        print(f"FAIL  {msg}")
-        total_failures += 1
+        if total_failures == 0:
+            print(f"PASS  {len(data_files)} data models pass all CSDP structure checks")
+            return 0
+        return 1
 
-    if total_failures == 0:
-        print(f"PASS  {len(data_files)} data models pass all CSDP structure checks")
-        sys.exit(0)
-    else:
-        sys.exit(1)
+    return cr.run_report("Validate conceptual data model CSDP structure", body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

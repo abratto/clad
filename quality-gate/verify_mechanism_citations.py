@@ -31,6 +31,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+
 # A code citation: a file path/name with a line (`:12`) or symbol (`#method`).
 CITATION = re.compile(
     r"[\w./-]+\.(?:java|py|kt|scala|ts|js)(?::\d+|#[\w.]+)")
@@ -62,48 +65,48 @@ def section_body(text, heading):
     return "\n".join(out)
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Mechanism claims cite code")
-    parser.add_argument("--maintenance-dir", default="maintenance")
-    parser.add_argument(
-        "--sync-doc", default="methodology/architecture/SYNCHRONIZATIONS.md")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--maintenance-dir", default="maintenance")
+        parser.add_argument(
+            "--sync-doc", default="methodology/architecture/SYNCHRONIZATIONS.md")
 
-    failures = []
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        failures = []
 
-    if os.path.isdir(args.maintenance_dir):
-        for name in sorted(os.listdir(args.maintenance_dir)):
-            if not name.endswith(".md"):
-                continue
-            path = os.path.join(args.maintenance_dir, name)
-            with open(path, encoding="utf-8") as handle:
-                text = handle.read()
-            if field(text, "Change class").lower() not in PLATFORM_CLASSES:
-                continue
-            if field(text, "Status").lower() != "active":
-                continue  # forward-only: closed records predate the rule
-            if not CITATION.search(section_body(text, "## Mechanism")):
-                failures.append(
-                    f"{path}: active platform change has no `## Mechanism` "
-                    f"section citing a code path (`file.java:LINE` / "
-                    f"`File#symbol`)")
+        if os.path.isdir(args.maintenance_dir):
+            for name in sorted(os.listdir(args.maintenance_dir)):
+                if not name.endswith(".md"):
+                    continue
+                path = os.path.join(args.maintenance_dir, name)
+                with open(path, encoding="utf-8") as handle:
+                    text = handle.read()
+                if field(text, "Change class").lower() not in PLATFORM_CLASSES:
+                    continue
+                if field(text, "Status").lower() != "active":
+                    continue  # forward-only: closed records predate the rule
+                if not CITATION.search(section_body(text, "## Mechanism")):
+                    failures.append(
+                        f"{path}: active platform change has no `## Mechanism` "
+                        f"section citing a code path (`file.java:LINE` / "
+                        f"`File#symbol`)")
 
-    if os.path.isfile(args.sync_doc):
-        with open(args.sync_doc, encoding="utf-8") as handle:
-            doc = handle.read()
-        for heading in ("## Naming", "### Flow pinning"):
-            if not CITATION.search(section_body(doc, heading)):
-                failures.append(
-                    f"{args.sync_doc} {heading}: no code-path citation — a "
-                    f"mechanism claim here must point at the code it rests on")
+        if os.path.isfile(args.sync_doc):
+            with open(args.sync_doc, encoding="utf-8") as handle:
+                doc = handle.read()
+            for heading in ("## Naming", "### Flow pinning"):
+                if not CITATION.search(section_body(doc, heading)):
+                    failures.append(
+                        f"{args.sync_doc} {heading}: no code-path citation — a "
+                        f"mechanism claim here must point at the code it rests on")
 
-    if failures:
-        print(f"FAIL  {len(failures)} mechanism claim(s) without a citation:")
-        for failure in failures:
-            print(f"  - {failure}")
-        return 1
-    print("PASS  mechanism claims cite their code path")
-    return 0
+        if failures:
+            return cr.Verdict.fail(
+                f"{len(failures)} mechanism claim(s) without a citation:",
+                [cr.Problem(failure, bullet=True) for failure in failures])
+        return cr.Verdict.ok("mechanism claims cite their code path")
+
+    return cr.run_check("Mechanism claims cite code", body, argv, configure)
 
 
 if __name__ == "__main__":

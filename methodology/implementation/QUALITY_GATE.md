@@ -224,6 +224,14 @@ consistency checks across the CLAD artefact chain.
 > (stage / project-level / pre-commit), and whether it is a gate or advisory —
 > generated from `clad_stages.py` by `quality-gate/generate_gate_index.py`. The
 > table below is a curated subset; consult INDEX.md for the full surface.
+>
+> **Shared check shell.** Every `verify_*.py` reports through
+> [`quality-gate/check_runner.py`](../../quality-gate/check_runner.py) so the
+> verdict words stay one contract with `advance.py`: `PASS`/`SKIP` exit 0,
+> `FAIL` exits 1, and `SKIP` ("nothing to check") is never printed as `PASS`.
+> A check that fits a summary + itemised problems returns a `Verdict` via
+> `run_check`; one that prints its own per-item table returns an exit code via
+> `run_report`. New checks should not re-implement the argparse/report wiring.
 
 | Script | Stage(s) | What it checks |
 |---|---|---|
@@ -304,7 +312,7 @@ a test:
   `verify_iterative_change_coupling`, `verify_file_manifest`, and
   `verify_links` are exempt: they read both sides deliberately, are generic, or
   do not resolve concepts. The registry test
-  `quality-gate/tests/test_checker_shape_awareness.py` enforces this list.
+  `quality-gate/tests/test_checker_concept_union.py` enforces this list.
 - **Flow pin.** A non-bootstrap sync's `when` carries a `requested:
   Web/request: …` conjunct as its **last** conjunct. It is not a name
   component; a name-deriving checker must exclude it (`sync_stem` does). See
@@ -314,7 +322,7 @@ a test:
   name-deriving checker must include the route for both. See
   `maintenance/route-scoped-sync-names.md` and
   `maintenance/route-scoped-pinned-names.md`;
-  `quality-gate/tests/test_checker_shapes.py` locks the behaviour.
+  `quality-gate/tests/test_impl_parity_name_shapes.py` locks the behaviour.
 
 #### Mechanism claims cite their code
 

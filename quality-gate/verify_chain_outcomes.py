@@ -37,6 +37,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
+import check_runner as cr  # noqa: E402
 
 
 def _completion_base(token: str) -> str:
@@ -62,76 +63,76 @@ def spec_actions(path: str):
     return actions
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Chain-table completions must resolve against the concept spec")
-    parser.add_argument("--resp-map", required=True)
-    parser.add_argument("--chain-dir", required=True)
-    parser.add_argument("--concept-dir", action="append", default=[],
-                        help="Repeatable; earlier dirs shadow later by name")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--resp-map", required=True)
+        parser.add_argument("--chain-dir", required=True)
+        parser.add_argument("--concept-dir", action="append", default=[],
+                            help="Repeatable; earlier dirs shadow later by name")
 
-    if not os.path.isfile(args.resp_map):
-        print("SKIP  no responsibility map (Stage 01a not reached)")
-        return 0
-    if not os.path.isdir(args.chain_dir):
-        print("SKIP  no chain-table output (Stage 01b not reached)")
-        return 0
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        if not os.path.isfile(args.resp_map):
+            return cr.Verdict.skip("no responsibility map (Stage 01a not reached)")
+        if not os.path.isdir(args.chain_dir):
+            return cr.Verdict.skip("no chain-table output (Stage 01b not reached)")
 
-    spec_paths = ap.concept_spec_paths([d for d in args.concept_dir
-                                        if os.path.isdir(d)])
-    if not spec_paths:
-        print("SKIP  no concept specs to resolve completions against")
-        return 0
+        spec_paths = ap.concept_spec_paths([d for d in args.concept_dir
+                                            if os.path.isdir(d)])
+        if not spec_paths:
+            return cr.Verdict.skip(
+                "no concept specs to resolve completions against")
 
-    origins = {c: (e.origin or "").strip().lower()
-               for c, e in ap.parse_responsibility_map(args.resp_map).items()}
+        origins = {c: (e.origin or "").strip().lower()
+                   for c, e in ap.parse_responsibility_map(args.resp_map).items()}
 
-    checked = 0
-    failures = []
-    for chain in sorted(os.listdir(args.chain_dir)):
-        if not chain.endswith("-chain.md"):
-            continue
-        for row in ap.parse_chain_table(os.path.join(args.chain_dir, chain)):
-            for conjunct in row.conjuncts:
-                concept, action = conjunct.concept, conjunct.action
-                if concept == "Web" or concept not in spec_paths:
-                    continue
-                spec = spec_actions(spec_paths[concept])
-                if action not in spec:
-                    failures.append(
-                        f"{chain}: row {row.row_num} invokes `{concept}.{action}` "
-                        f"but `{concept}` declares no such action")
-                    continue
-                base = _completion_base(conjunct.outcome)
-                if not base:
-                    continue
-                checked += 1
-                if base.lower() not in {b.lower() for b in spec[action]}:
-                    origin = origins.get(concept, "")
-                    if origin.startswith("reused"):
+        checked = 0
+        failures = []
+        for chain in sorted(os.listdir(args.chain_dir)):
+            if not chain.endswith("-chain.md"):
+                continue
+            for row in ap.parse_chain_table(os.path.join(args.chain_dir, chain)):
+                for conjunct in row.conjuncts:
+                    concept, action = conjunct.concept, conjunct.action
+                    if concept == "Web" or concept not in spec_paths:
+                        continue
+                    spec = spec_actions(spec_paths[concept])
+                    if action not in spec:
                         failures.append(
-                            f"{chain}: row {row.row_num} triggers on "
-                            f"`{concept}.{action}[{base}]`, but `{concept}` is "
-                            f"`reused` and its canonical spec declares no "
-                            f"`{base}` completion — a reused concept cannot gain "
-                            f"an outcome. Propose an `extends` for `{concept}` "
-                            f"and reopen Stage 01a.")
-                    else:
-                        failures.append(
-                            f"{chain}: row {row.row_num} triggers on "
-                            f"`{concept}.{action}[{base}]`, but the `{concept}` "
-                            f"proposal declares no `{base}` completion")
+                            f"{chain}: row {row.row_num} invokes `{concept}.{action}` "
+                            f"but `{concept}` declares no such action")
+                        continue
+                    base = _completion_base(conjunct.outcome)
+                    if not base:
+                        continue
+                    checked += 1
+                    if base.lower() not in {b.lower() for b in spec[action]}:
+                        origin = origins.get(concept, "")
+                        if origin.startswith("reused"):
+                            failures.append(
+                                f"{chain}: row {row.row_num} triggers on "
+                                f"`{concept}.{action}[{base}]`, but `{concept}` is "
+                                f"`reused` and its canonical spec declares no "
+                                f"`{base}` completion — a reused concept cannot gain "
+                                f"an outcome. Propose an `extends` for `{concept}` "
+                                f"and reopen Stage 01a.")
+                        else:
+                            failures.append(
+                                f"{chain}: row {row.row_num} triggers on "
+                                f"`{concept}.{action}[{base}]`, but the `{concept}` "
+                                f"proposal declares no `{base}` completion")
 
-    if failures:
-        print(f"FAIL  {len(failures)} chain completion(s) the owning concept "
-              f"does not declare:")
-        for failure in failures:
-            print(f"  - {failure}")
-        return 1
+        if failures:
+            return cr.Verdict.fail(
+                f"{len(failures)} chain completion(s) the owning concept "
+                f"does not declare:",
+                [cr.Problem(failure, bullet=True) for failure in failures])
 
-    print(f"PASS  {checked} chain completion(s) resolve against their concept specs")
-    return 0
+        return cr.Verdict.ok(
+            f"{checked} chain completion(s) resolve against their concept specs")
+
+    return cr.run_check(
+        "Chain-table completions must resolve against the concept spec",
+        body, argv, configure)
 
 
 if __name__ == "__main__":

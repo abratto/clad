@@ -52,7 +52,9 @@ import os
 import re
 import sys
 
-import artifact_parsers as ap
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import artifact_parsers as ap  # noqa: E402
+import check_runner as cr  # noqa: E402
 
 
 EXCEPTION_FILE = os.path.join("_config", "additivity-exceptions.md")
@@ -151,102 +153,103 @@ def dropped_contract_terms(feature_root, corpus, concept):
     return dropped
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Model B additive-only check for extended corpus concepts")
-    parser.add_argument("--feature", required=True)
-    parser.add_argument("--corpus", default="",
-                        help="Canonical corpus dir (default: the feature's)")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--feature", required=True)
+        parser.add_argument("--corpus", default="",
+                            help="Canonical corpus dir (default: the feature's)")
 
-    feature_root = os.path.abspath(args.feature)
-    resp = os.path.join(feature_root, "stages", "01a_responsibility-map",
-                        "output", "responsibility-map.md")
-    if not os.path.isfile(resp):
-        print("SKIP  no responsibility map — nothing to compare")
+    def body(args: argparse.Namespace) -> int:
+        feature_root = os.path.abspath(args.feature)
+        resp = os.path.join(feature_root, "stages", "01a_responsibility-map",
+                            "output", "responsibility-map.md")
+        if not os.path.isfile(resp):
+            return cr.emit(cr.Verdict.skip("no responsibility map — nothing to compare"))
+
+        corpus = args.corpus or ap._default_corpus_dir(feature_root)
+        entries = ap.parse_responsibility_map(resp)
+        allowed = load_exceptions(feature_root)
+
+        import concept_remodel as concept_remodel
+        slug = os.path.basename(feature_root)
+
+        failures = []
+        checked = 0
+        remodels = 0
+        for concept, entry in sorted(entries.items()):
+            origin = (entry.origin or "").strip().lower()
+            if not origin.startswith("extend") and not concept_remodel.is_remodel(origin):
+                continue          # `new` has no canonical entry; `reused` derives nothing
+            if not os.path.isfile(os.path.join(corpus, concept + ".concept.md")):
+                continue          # canonical not promoted yet — nothing to protect
+            checked += 1
+
+            if concept_remodel.is_remodel(origin):
+                remodels += 1
+                state_drops, term_drops = concept_remodel.unauthorised_drops(
+                    feature_root, corpus, concept)
+                if state_drops:
+                    failures.append(
+                        f"{concept}: remodel drops canonical state line(s) with no "
+                        f"migration note — list each exact line (backticked, with a "
+                        f"reason) in the proposal's `## Migration notes`:")
+                    failures.extend(f"  - {line}" for line in state_drops)
+                if term_drops:
+                    failures.append(
+                        f"{concept}: remodel drops canonical contract term(s) with "
+                        f"no migration note:")
+                    failures.extend(f"  - {t}" for t in term_drops)
+                missing = concept_remodel.missing_consent(corpus, concept, slug)
+                if missing:
+                    failures.append(
+                        f"{concept}: remodel lacks consent receipt(s) from "
+                        f"{', '.join(missing)} — record each at "
+                        f"{concept_remodel.CONSENT_DIRNAME}/{concept}-<feature>.md")
+                continue
+
+            lost = [line for line in dropped_state_lines(feature_root, corpus, concept)
+                    if line not in allowed]
+            if lost:
+                failures.append(
+                    f"{concept}: the proposal drops canonical state "
+                    f"line(s) the corpus holds — this is not additive:")
+                failures.extend(f"  - {line}" for line in lost)
+
+            terms = [t for t in dropped_contract_terms(feature_root, corpus, concept)
+                     if t not in allowed]
+            if terms:
+                if terms == ["<entire contract missing>"]:
+                    failures.append(
+                        f"{concept}: the canonical contract exists but the proposal's "
+                        f"04b_contract holds no outcomes for it — a dropped contract "
+                        f"is not additive. Derive the concept contract, or authorise "
+                        f"the removal in {EXCEPTION_FILE}.")
+                else:
+                    failures.append(
+                        f"{concept}: the proposal's contract drops canonical "
+                        f"term(s) — this is not additive:")
+                    failures.extend(f"  - {t}" for t in terms)
+
+        if not checked:
+            return cr.emit(cr.Verdict.skip(
+                "no extended concept has a canonical entry yet"))
+
+        if failures:
+            print("FAIL  additive-only violated for a canonical concept")
+            for failure in failures:
+                print(f"  {failure}")
+            print(f"  Authorise a deliberate, bounded removal by listing the exact "
+                  f"line in {EXCEPTION_FILE}; anything else must be additive.")
+            return 1
+
+        note = f" ({len(allowed)} authorised exception(s))" if allowed else ""
+        remodel_note = f", {remodels} remodel(s) consented" if remodels else ""
+        print(f"PASS  additive-only holds across {checked} extended concept(s)"
+              f"{note}{remodel_note}")
         return 0
 
-    corpus = args.corpus or ap._default_corpus_dir(feature_root)
-    entries = ap.parse_responsibility_map(resp)
-    allowed = load_exceptions(feature_root)
+    return cr.run_report("Model B additive-only check for extended corpus concepts", body, argv, configure)
 
-    import concept_remodel as cr
-    slug = os.path.basename(feature_root)
-
-    failures = []
-    checked = 0
-    remodels = 0
-    for concept, entry in sorted(entries.items()):
-        origin = (entry.origin or "").strip().lower()
-        if not origin.startswith("extend") and not cr.is_remodel(origin):
-            continue          # `new` has no canonical entry; `reused` derives nothing
-        if not os.path.isfile(os.path.join(corpus, concept + ".concept.md")):
-            continue          # canonical not promoted yet — nothing to protect
-        checked += 1
-
-        if cr.is_remodel(origin):
-            remodels += 1
-            state_drops, term_drops = cr.unauthorised_drops(
-                feature_root, corpus, concept)
-            if state_drops:
-                failures.append(
-                    f"{concept}: remodel drops canonical state line(s) with no "
-                    f"migration note — list each exact line (backticked, with a "
-                    f"reason) in the proposal's `## Migration notes`:")
-                failures.extend(f"  - {line}" for line in state_drops)
-            if term_drops:
-                failures.append(
-                    f"{concept}: remodel drops canonical contract term(s) with "
-                    f"no migration note:")
-                failures.extend(f"  - {t}" for t in term_drops)
-            missing = cr.missing_consent(corpus, concept, slug)
-            if missing:
-                failures.append(
-                    f"{concept}: remodel lacks consent receipt(s) from "
-                    f"{', '.join(missing)} — record each at "
-                    f"{cr.CONSENT_DIRNAME}/{concept}-<feature>.md")
-            continue
-
-        lost = [line for line in dropped_state_lines(feature_root, corpus, concept)
-                if line not in allowed]
-        if lost:
-            failures.append(
-                f"{concept}: the proposal drops canonical state "
-                f"line(s) the corpus holds — this is not additive:")
-            failures.extend(f"  - {line}" for line in lost)
-
-        terms = [t for t in dropped_contract_terms(feature_root, corpus, concept)
-                 if t not in allowed]
-        if terms:
-            if terms == ["<entire contract missing>"]:
-                failures.append(
-                    f"{concept}: the canonical contract exists but the proposal's "
-                    f"04b_contract holds no outcomes for it — a dropped contract "
-                    f"is not additive. Derive the concept contract, or authorise "
-                    f"the removal in {EXCEPTION_FILE}.")
-            else:
-                failures.append(
-                    f"{concept}: the proposal's contract drops canonical "
-                    f"term(s) — this is not additive:")
-                failures.extend(f"  - {t}" for t in terms)
-
-    if not checked:
-        print("SKIP  no extended concept has a canonical entry yet")
-        return 0
-
-    if failures:
-        print("FAIL  additive-only violated for a canonical concept")
-        for failure in failures:
-            print(f"  {failure}")
-        print(f"  Authorise a deliberate, bounded removal by listing the exact "
-              f"line in {EXCEPTION_FILE}; anything else must be additive.")
-        return 1
-
-    note = f" ({len(allowed)} authorised exception(s))" if allowed else ""
-    remodel_note = f", {remodels} remodel(s) consented" if remodels else ""
-    print(f"PASS  additive-only holds across {checked} extended concept(s)"
-          f"{note}{remodel_note}")
-    return 0
 
 
 if __name__ == "__main__":

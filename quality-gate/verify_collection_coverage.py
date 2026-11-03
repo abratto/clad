@@ -40,6 +40,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
+
 COLLECTION_KEYS = (
     "articles", "comments", "tags", "taglists", "authors", "profiles",
     "following", "flags", "favoritescounts", "articleids", "commentids",
@@ -112,65 +115,65 @@ def declared_coverage(flow_dir):
     return None, ""
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Verify collection responses declare empty/multi-item/repeated-key fixtures"
-    )
-    parser.add_argument("--feature", required=True, help="Feature root, e.g. features/UC-XX-<slug>")
-    parser.add_argument("--advisory", action="store_true",
-                        help="Report a failure as a warning (exit 0) instead of failing")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--feature", required=True, help="Feature root, e.g. features/UC-XX-<slug>")
+        parser.add_argument("--advisory", action="store_true",
+                            help="Report a failure as a warning (exit 0) instead of failing")
 
-    feature_root = args.feature
-    if not os.path.isdir(feature_root):
-        print("FAIL  feature root not found: %s" % feature_root)
-        return 1
+    def body(args: argparse.Namespace):
+        feature_root = args.feature
+        if not os.path.isdir(feature_root):
+            print("FAIL  feature root not found: %s" % feature_root)
+            return 1
 
-    # No retrofit: a closed feature (has a Stage-05 trace) is grandfathered.
-    if os.path.isfile(os.path.join(feature_root, "stages", "05_verify",
-                                   "output", "trace.md")):
-        print("SKIP  feature is closed (no retrofit)")
+        # No retrofit: a closed feature (has a Stage-05 trace) is grandfathered.
+        if os.path.isfile(os.path.join(feature_root, "stages", "05_verify",
+                                       "output", "trace.md")):
+            print("SKIP  feature is closed (no retrofit)")
+            return 0
+
+        shaped, evidence = collection_signal(feature_root)
+        if not shaped:
+            print("SKIP  no collection response declared")
+            return 0
+
+        flow_dir = os.path.join(feature_root, "stages", "04_implement",
+                                "04c_acceptance-tests", "output")
+        # Evidence that 04c ran is ANY output file, not only a markdown carrier:
+        # the `## Collection coverage` section is optional in the stage contract, so
+        # keying on markdown meant a feature whose 04c output was only its flow-test
+        # carrier was always skipped — the edges this check exists for never ran.
+        if not stage_output_present(flow_dir):
+            print("SKIP  no 04c acceptance-test output yet")
+            return 0
+
+        path, body = declared_coverage(flow_dir)
+        failures = []
+        if path is None:
+            failures.append("no `## Collection coverage` section under "
+                            "04c_acceptance-tests/output/ (collection signal: %s)" % evidence)
+        else:
+            low = body.lower()
+            if "empty" not in low:
+                failures.append("`## Collection coverage` does not name the empty case")
+            if not re.search(r"multi[- ]?item|\bmulti\b", low):
+                failures.append("`## Collection coverage` does not name the multi-item case")
+            if not re.search(r"repeat", low):
+                failures.append("`## Collection coverage` does not name the repeated-key "
+                                "case (or 'n/a' with a reason)")
+
+        if failures:
+            label = "WARN" if args.advisory else "FAIL"
+            print("%s  collection coverage incomplete for a collection-shaped feature" % label)
+            for failure in failures:
+                print("  - %s" % failure)
+            return 0 if args.advisory else 1
+
+        print("PASS  collection coverage declared (empty, multi-item, repeated-key)")
         return 0
 
-    shaped, evidence = collection_signal(feature_root)
-    if not shaped:
-        print("SKIP  no collection response declared")
-        return 0
-
-    flow_dir = os.path.join(feature_root, "stages", "04_implement",
-                            "04c_acceptance-tests", "output")
-    # Evidence that 04c ran is ANY output file, not only a markdown carrier:
-    # the `## Collection coverage` section is optional in the stage contract, so
-    # keying on markdown meant a feature whose 04c output was only its flow-test
-    # carrier was always skipped — the edges this check exists for never ran.
-    if not stage_output_present(flow_dir):
-        print("SKIP  no 04c acceptance-test output yet")
-        return 0
-
-    path, body = declared_coverage(flow_dir)
-    failures = []
-    if path is None:
-        failures.append("no `## Collection coverage` section under "
-                        "04c_acceptance-tests/output/ (collection signal: %s)" % evidence)
-    else:
-        low = body.lower()
-        if "empty" not in low:
-            failures.append("`## Collection coverage` does not name the empty case")
-        if not re.search(r"multi[- ]?item|\bmulti\b", low):
-            failures.append("`## Collection coverage` does not name the multi-item case")
-        if not re.search(r"repeat", low):
-            failures.append("`## Collection coverage` does not name the repeated-key "
-                            "case (or 'n/a' with a reason)")
-
-    if failures:
-        label = "WARN" if args.advisory else "FAIL"
-        print("%s  collection coverage incomplete for a collection-shaped feature" % label)
-        for failure in failures:
-            print("  - %s" % failure)
-        return 0 if args.advisory else 1
-
-    print("PASS  collection coverage declared (empty, multi-item, repeated-key)")
-    return 0
+    return cr.run_report("Verify collection responses declare empty/multi-item/repeated-key fixtures", body, argv, configure)
 
 
 if __name__ == "__main__":

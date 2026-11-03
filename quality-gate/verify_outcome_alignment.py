@@ -23,6 +23,8 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
 from artifact_parsers import (contract_actions, parse_chain_table,
                               parse_spec_outcomes, parse_spec_outcomes_multi)
 
@@ -71,69 +73,71 @@ def normalize(name):
     return s.upper()
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Verify chain-table outcomes align with contract outcome enums")
-    parser.add_argument("--chain-dir", required=True,
-                        help="Path to 01b_chain-table/output/")
-    parser.add_argument("--contract-dir", required=True, action="append",
-                        help="Contract dir; repeatable. Earlier dirs shadow later "
-                             "ones by concept name, so a reused concept is validated "
-                             "against its canonical contract (R22).")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--chain-dir", required=True,
+                            help="Path to 01b_chain-table/output/")
+        parser.add_argument("--contract-dir", required=True, action="append",
+                            help="Contract dir; repeatable. Earlier dirs shadow later "
+                                 "ones by concept name, so a reused concept is validated "
+                                 "against its canonical contract (R22).")
 
-    chain_rows = parse_chain_outcomes(args.chain_dir)
-    spec_outcomes = parse_spec_outcomes_multi(args.contract_dir)
+    def body(args: argparse.Namespace) -> cr.Verdict:
+        chain_rows = parse_chain_outcomes(args.chain_dir)
+        spec_outcomes = parse_spec_outcomes_multi(args.contract_dir)
 
-    if not chain_rows:
-        # Distinguish absence from defect: no chain dir (or no chain files) is a
-        # legitimate skip when this stage's inputs are not present yet, but a
-        # populated chain dir that parses to zero comparable rows means every
-        # row was a terminal respond row — a chain table with no sync triggers.
-        if not _chain_row_files(args.chain_dir):
-            print(f"SKIP  no chain-table files found under {args.chain_dir}")
-            sys.exit(0)
-        print("FAIL  chain-table file(s) present but no comparable rows parsed — "
-              "every row was a terminal respond row, so no sync-trigger outcome "
-              "could be aligned. Fix the chain table (or --chain-dir).")
-        sys.exit(1)
+        if not chain_rows:
+            # Distinguish absence from defect: no chain dir (or no chain files) is a
+            # legitimate skip when this stage's inputs are not present yet, but a
+            # populated chain dir that parses to zero comparable rows means every
+            # row was a terminal respond row — a chain table with no sync triggers.
+            if not _chain_row_files(args.chain_dir):
+                return cr.Verdict.skip(
+                    f"no chain-table files found under {args.chain_dir}")
+            return cr.Verdict.fail(
+                "chain-table file(s) present but no comparable rows parsed — "
+                "every row was a terminal respond row, so no sync-trigger outcome "
+                "could be aligned. Fix the chain table (or --chain-dir).")
 
-    if not spec_outcomes:
-        print("FAIL  no contract outcomes parsed — check --contract-dir")
-        sys.exit(1)
+        if not spec_outcomes:
+            return cr.Verdict.fail(
+                "no contract outcomes parsed — check --contract-dir")
 
-    passed = True
-    checked = 0
+        problems = []
+        checked = 0
 
-    for concept, action, outcome_base in chain_rows:
-        # Skip Web actions — Web is bootstrap
-        if concept.lower() == "web":
-            continue
+        for concept, action, outcome_base in chain_rows:
+            # Skip Web actions — Web is bootstrap
+            if concept.lower() == "web":
+                continue
 
-        key = (concept, action)
-        if key not in spec_outcomes:
-            print(f"FAIL  {concept}.{action}: action not found in contracts "
-                  f"(known: {sorted(spec_outcomes.keys())})")
-            passed = False
-            continue
+            key = (concept, action)
+            if key not in spec_outcomes:
+                problems.append(cr.Problem(
+                    f"{concept}.{action}: action not found in contracts "
+                    f"(known: {sorted(spec_outcomes.keys())})"))
+                continue
 
-        expected = spec_outcomes[key]
-        outcome_norm = normalize(outcome_base)
+            expected = spec_outcomes[key]
+            outcome_norm = normalize(outcome_base)
 
-        if outcome_norm not in {normalize(e) for e in expected}:
-            print(f"FAIL  {concept}.{action}: outcome '{outcome_base}' "
-                  f"(normalized: '{outcome_norm}') not in contract outcomes "
-                  f"{sorted(expected)}")
-            passed = False
-        else:
-            checked += 1
+            if outcome_norm not in {normalize(e) for e in expected}:
+                problems.append(cr.Problem(
+                    f"{concept}.{action}: outcome '{outcome_base}' "
+                    f"(normalized: '{outcome_norm}') not in contract outcomes "
+                    f"{sorted(expected)}"))
+            else:
+                checked += 1
 
-    if passed:
-        print(f"PASS  {checked} chain-table outcomes aligned with contract enums")
-        sys.exit(0)
-    else:
-        sys.exit(1)
+        if problems:
+            return cr.Verdict.fail("", problems)
+        return cr.Verdict.ok(
+            f"{checked} chain-table outcomes aligned with contract enums")
+
+    return cr.run_check(
+        "Verify chain-table outcomes align with contract outcome enums",
+        body, argv, configure)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

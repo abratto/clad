@@ -35,6 +35,7 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import check_runner as cr  # noqa: E402
 import clad_stages as cs  # noqa: E402
 
 ADAPTER_TEST_RE = re.compile(r"(?:Flow|Integration|Contract|IT)Test?$|IT$")
@@ -137,54 +138,55 @@ def find_adapter_tests(test_root: str, owned=None):
     return enabled, disabled
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="An adapter surface requires an end-to-end adapter test")
-    parser.add_argument("--feature-root", required=True)
-    parser.add_argument("--test-source-root", default="")
-    parser.add_argument("--require-enabled", action="store_true",
-                        help="Stage 05: the test must be enabled, not @Disabled")
-    args = parser.parse_args()
+def main(argv=None) -> int:
+    def configure(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument("--feature-root", required=True)
+        parser.add_argument("--test-source-root", default="")
+        parser.add_argument("--require-enabled", action="store_true",
+                            help="Stage 05: the test must be enabled, not @Disabled")
 
-    feature_root = os.path.abspath(args.feature_root)
+    def body(args: argparse.Namespace):
+        feature_root = os.path.abspath(args.feature_root)
 
-    if not has_adapter_surface(feature_root):
-        print("SKIP  no adapter surface declared for this feature")
-        return 0
-
-    test_root = args.test_source_root
-    if not test_root or not os.path.isdir(test_root):
-        print("SKIP  no test source root configured (test.source.root)")
-        return 0
-
-    enabled, disabled = find_adapter_tests(test_root, _scenario_bound_classes(feature_root))
-    if args.require_enabled:
-        if enabled:
-            print(f"PASS  enabled adapter test present: "
-                  f"{os.path.relpath(enabled, test_root)}")
+        if not has_adapter_surface(feature_root):
+            print("SKIP  no adapter surface declared for this feature")
             return 0
-        note = " (only @Disabled candidates found)" if disabled else ""
-        print("FAIL  adapter surface declared but no ENABLED flow/integration "
-              f"test found under {test_root}{note}")
-        print("      Stage 05 requires the profile end-to-end test to run green. "
-              "Write one from templates/http-integration-test.java and enable it "
-              "at 04d/04e.")
+
+        test_root = args.test_source_root
+        if not test_root or not os.path.isdir(test_root):
+            print("SKIP  no test source root configured (test.source.root)")
+            return 0
+
+        enabled, disabled = find_adapter_tests(test_root, _scenario_bound_classes(feature_root))
+        if args.require_enabled:
+            if enabled:
+                print(f"PASS  enabled adapter test present: "
+                      f"{os.path.relpath(enabled, test_root)}")
+                return 0
+            note = " (only @Disabled candidates found)" if disabled else ""
+            print("FAIL  adapter surface declared but no ENABLED flow/integration "
+                  f"test found under {test_root}{note}")
+            print("      Stage 05 requires the profile end-to-end test to run green. "
+                  "Write one from templates/http-integration-test.java and enable it "
+                  "at 04d/04e.")
+            return 1
+
+        if enabled or disabled:
+            found = enabled or disabled
+            state = "enabled" if enabled else "@Disabled (not yet wired)"
+            print(f"PASS  adapter test present ({state}): "
+                  f"{os.path.relpath(found, test_root)}")
+            return 0
+
+        print("FAIL  adapter surface declared but no flow/integration test found "
+              f"under {test_root}")
+        print("      Derive a profile-specific end-to-end test (HTTP request -> "
+              "adapter -> bootstrap -> concepts/syncs -> response) from "
+              "templates/http-integration-test.java. Stage 04c requires it to exist "
+              "(it may be @Disabled until the implementation lands).")
         return 1
 
-    if enabled or disabled:
-        found = enabled or disabled
-        state = "enabled" if enabled else "@Disabled (not yet wired)"
-        print(f"PASS  adapter test present ({state}): "
-              f"{os.path.relpath(found, test_root)}")
-        return 0
-
-    print("FAIL  adapter surface declared but no flow/integration test found "
-          f"under {test_root}")
-    print("      Derive a profile-specific end-to-end test (HTTP request -> "
-          "adapter -> bootstrap -> concepts/syncs -> response) from "
-          "templates/http-integration-test.java. Stage 04c requires it to exist "
-          "(it may be @Disabled until the implementation lands).")
-    return 1
+    return cr.run_report("An adapter surface requires an end-to-end adapter test", body, argv, configure)
 
 
 if __name__ == "__main__":
