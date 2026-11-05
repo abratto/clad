@@ -86,6 +86,32 @@ class ChainOutcomeTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             self.assertIn("PASS", result.stdout)
 
+    def test_flow_token_style_completion_resolves(self):
+        """The canonical convention authors a completion on the `flow token:`
+        line (`outcome: "FOUND"`), leaving the action's `=> [ room: Room ]`
+        bracket as the return signature. `spec_actions` must read the flow-token
+        outcome, not the bracket (finding 30 — the check was a latent no-op that
+        read `room` and never resolved `FOUND`)."""
+        flow_spec = ("concept GuidelineRules [RuleSetLineageId]\n"
+                     "purpose\n    to publish rule-set lineages\n\n"
+                     "## Actions\n\n```\n"
+                     "publishedLineages [ lineupId: Id ] => [ published: Bool ]\n"
+                     "    flow token: { action: \"GuidelineRules.publishedLineages\", "
+                     "lineupId, published, outcome: \"OK\" }\n```\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            resp = root / "resp.md"
+            write(resp, RESP_MAP)
+            chain_dir = root / "01b"
+            write(chain_dir / "scenario-chain.md",
+                  chain("GuidelineRules/publishedLineages[OK]"))
+            corpus = root / "concepts"
+            write(corpus / "GuidelineRules.concept.md", flow_spec)
+            result = run("--resp-map", str(resp), "--chain-dir", str(chain_dir),
+                         "--concept-dir", str(corpus))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("PASS", result.stdout)
+
     def test_undeclared_action_is_flagged(self):
         with tempfile.TemporaryDirectory() as tmp:
             resp, chain_dir, corpus = self._world(

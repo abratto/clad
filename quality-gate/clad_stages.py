@@ -910,6 +910,24 @@ def _rmap_config_path(feature_root: str, key: str) -> str:
     return os.path.join(_repo_root(feature_root), raw)
 
 
+def _rmap_model_args(feature_root: str, migration_or_descriptor: str) -> List[str]:
+    """The model-scope args an `rmap.py` drift check must use.
+
+    `rmap.migration`/`rmap.descriptor` are, by default, ONE app-wide path (the
+    aggregate schema across every feature). But a feature-local
+    `_config/rmap.migration.md` override can point at a per-feature artefact.
+    The scope must mirror how the target was generated: a path outside this
+    feature root is app-wide (use the canonical corpus via `--features-dir`); a
+    path inside it is feature-local (use `--feature`). Choosing wrong makes the
+    check compare an app-wide migration to a single feature's model.
+    """
+    target = os.path.abspath(migration_or_descriptor) if migration_or_descriptor else ""
+    feature_abs = os.path.abspath(feature_root)
+    if target and (os.path.commonpath([target, feature_abs]) == feature_abs):
+        return ["--feature", feature_root]
+    return ["--features-dir", os.path.join(_repo_root(feature_root), "features")]
+
+
 def _rmap_migration(feature_root: str) -> str:
     return _rmap_config_path(feature_root, "rmap.migration")
 
@@ -926,7 +944,8 @@ def _rmap_sentinel(feature_root: str, key: str) -> List[str]:
 _RMAP_MIGRATION = Check(
     name="rmap_migration_current",
     script="rmap.py",
-    build_args=lambda r: ["--feature", r, "--check", _rmap_migration(r)],
+    build_args=lambda r: _rmap_model_args(r, _rmap_migration(r))
+                      + ["--check", _rmap_migration(r)],
     # `r` exists, so a configured-but-missing target still runs the check.
     requires=lambda r: ([r] if _rmap_migration(r)
                         else _rmap_sentinel(r, "rmap_migration")),
@@ -935,7 +954,8 @@ _RMAP_MIGRATION = Check(
 _RMAP_DESCRIPTOR = Check(
     name="rmap_descriptor_current",
     script="verify_rmap_descriptor.py",
-    build_args=lambda r: ["--feature", r, "--descriptor", _rmap_descriptor(r)],
+    build_args=lambda r: _rmap_model_args(r, _rmap_descriptor(r))
+                      + ["--descriptor", _rmap_descriptor(r)],
     requires=lambda r: ([r] if _rmap_descriptor(r)
                         else _rmap_sentinel(r, "rmap_descriptor")),
 )

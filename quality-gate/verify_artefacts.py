@@ -25,7 +25,9 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import clad_stages as cs  # noqa: E402
-from verify_stage_sequence import active_reentry_change, stage_has_evidence  # noqa: E402
+from verify_stage_sequence import (  # noqa: E402
+    active_reentry_change, clamp_to_pending_gate, stage_has_evidence,
+)
 
 HERE = Path(__file__).resolve().parent
 REPO_ROOT = HERE.parent
@@ -73,7 +75,9 @@ def _current_stage(feature_root):
     for stage in cs.STAGES:
         if stage_has_evidence(feature_root, stage.id):
             last = stage
-    return last
+    # A no-op stage past a pending human gate must not be treated as current;
+    # clamp back so the gate is presented (shared with advance.determine_stage).
+    return clamp_to_pending_gate(feature_root, last)
 
 
 class _Exit:

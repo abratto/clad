@@ -518,6 +518,29 @@ def _filtered_index(table: str, column: Column) -> str:
             + " IS NULL")
 
 
+_SQL_DEFAULT_KEYWORDS = {"null", "true", "false", "current_timestamp",
+                          "current_date", "current_time", "now()"}
+
+
+def _sql_default(value: str) -> str:
+    """Render a CSDP `default` annotation as a SQL literal.
+
+    String defaults must be quoted (`DEFAULT 'active'`); a bare identifier is
+    parsed by SQL as a column reference and rejected. Numbers, booleans, NULL,
+    and known temporal keywords stay unquoted. A value already quoted is kept.
+    """
+    text = value.strip()
+    if not text:
+        return "NULL"
+    if text[:1] in ("'", '"'):
+        return text
+    if text.lower() in _SQL_DEFAULT_KEYWORDS:
+        return text
+    if re.fullmatch(r"-?\d+(\.\d+)?", text):
+        return text
+    return "'" + text.replace("'", "''") + "'"
+
+
 def _create_table(schema: RelationSchema) -> str:
     single_pk = len(schema.primary_key) == 1
     single_key = schema.primary_key[0] if single_pk else None
@@ -526,7 +549,7 @@ def _create_table(schema: RelationSchema) -> str:
         part = _quote(column.column) + " " + _SQL_TYPE.get(
             column.sql_type, "varchar")
         if column.default is not None:
-            part += " DEFAULT " + column.default
+            part += " DEFAULT " + _sql_default(column.default)
         if column.mandatory:
             part += " NOT NULL"
         if column.unique:
@@ -741,7 +764,7 @@ def _alter_sql(baseline: dict, current: dict, app_label: str) -> tuple[str, List
                 part = (_quote(col) + " "
                         + _SQL_TYPE.get(column.get("sqlType"), "varchar"))
                 if column.get("default") is not None:
-                    part += " DEFAULT " + column["default"]
+                    part += " DEFAULT " + _sql_default(column["default"])
                 if column.get("mandatory"):
                     if column.get("default") is None:
                         raise SystemExit(

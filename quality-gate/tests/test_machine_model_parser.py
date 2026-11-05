@@ -109,6 +109,37 @@ class MachineModelParserTests(unittest.TestCase):
         self.assertEqual(len(m.facts), 1)
 
 
+class StateMapParsingTests(unittest.TestCase):
+    """`Map<K, V>` state lines must parse as a `K -> V` fact, not vanish.
+
+    A concept whose only `## State` line is a collection (`rooms: Map<RoomId,
+    Room>`) parsed to zero relations, so `generate_data_model` emitted a
+    stateless skeleton for a state-owning concept (finding 5)."""
+
+    def test_map_line_parses_as_a_key_to_value_fact(self):
+        rels = ap.parse_state_relations(["rooms: Map<RoomId, Room>   -- zero or more"])
+        self.assertEqual(len(rels), 1)
+        self.assertEqual(rels[0].field, "rooms")
+        self.assertEqual(rels[0].subject_type, "RoomId")
+        self.assertEqual(rels[0].value_type, "Room")
+        self.assertEqual(rels[0].multiplicity, "zero or more")
+
+    def test_map_line_without_annotation_still_parses(self):
+        rels = ap.parse_state_relations(["items: Map<ItemId, Item>"])
+        self.assertEqual(len(rels), 1)
+        self.assertEqual(rels[0].subject_type, "ItemId")
+        self.assertEqual(rels[0].value_type, "Item")
+
+    def test_map_only_concept_is_not_stateless(self):
+        spec = ap.ConceptSpec(
+            name="Rooms", purpose="p",
+            state_lines=["rooms: Map<RoomId, Room>   -- zero or more"],
+            actions=[])
+        text = gdm.render(spec)
+        self.assertIn("RoomId", text)
+        self.assertNotIn("no state", text.lower())
+
+
 class MachineSemanticsTests(unittest.TestCase):
 
     def test_snake_case_column_collision_is_rejected(self):

@@ -278,8 +278,8 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
                 join_then_sig = f"{target_concept}/{target_action}: [ <args> ]"
                 join_status = _respond_status(row)
                 if join_status:
-                    join_literals = f"status = {join_status}"
-                    join_then_sig = f"Web/respond: [ status: {join_status} ]"
+                    join_literals = f"httpStatus = {join_status}"
+                    join_then_sig = f"Web/respond: [ httpStatus: {join_status} ]"
                 joined = [ap.Conjunct(n, c, a, o)
                           for (n, c, a, o, _rn) in resolved]
                 when_sig = " \u2227 ".join(
@@ -355,8 +355,8 @@ def derive_syncs_for_feature(feature_root: str) -> Tuple[List[GeneratedSync], Li
             # (the generator emitted `<none>` before — experiment defect D11).
             respond_status = _respond_status(row)
             if respond_status:
-                then_sig = f"Web/respond: [ status: {respond_status} ]"
-                literals = f"status = {respond_status}"
+                then_sig = f"Web/respond: [ httpStatus: {respond_status} ]"
+                literals = f"httpStatus = {respond_status}"
 
             binds: List[Tuple[str, str, str]] = []
             pattern_d_notes: List[str] = []

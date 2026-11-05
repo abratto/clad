@@ -418,7 +418,7 @@ class GeneratorRegressionTests(unittest.TestCase):
             self.assertEqual(sorted(v for v, _p, _s in lends[0].binds),
                              ["?name", "?ref"])
             responses = [s for s in syncs if s.target_action == "respond"]
-            self.assertIn("status = 200", responses[0].literals)
+            self.assertIn("httpStatus = 200", responses[0].literals)
 
 
 if __name__ == "__main__":

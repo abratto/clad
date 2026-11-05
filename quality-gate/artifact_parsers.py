@@ -484,11 +484,27 @@ def parse_state_relations(state_lines: List[str]) -> List[StateRelation]:
             r"(?:\s+--\s+(.*))?$",
             line)
         if not m:
-            # Also accept a bare map/collection form: `field: Map<K,V>` (no arrow).
-            m2 = re.match(r"^(\w+)\s*:\s*([\w<>,\[\](){} ]+)$", line)
+            # Also accept a map/collection form with no arrow: `field: Map<K,V>`
+            # (optionally annotated, e.g. `-- zero or more`). `Map<K, V>` means
+            # key type K maps to value type V, so it is a `K -> V` fact — not a
+            # relation with an empty subject (which made a concept whose only
+            # state line was a collection parse as stateless: finding 5).
+            m2 = re.match(
+                r"^(\w+)\s*:\s*Map\s*<\s*([\w.]+)\s*,\s*([\w.<>\[\]]+)\s*>"
+                r"(?:\s+--\s+(.*))?$", line)
             if m2:
+                annotation = (m2.group(4) or "").strip()
                 relations.append(StateRelation(
-                    field=m2.group(1), subject_type="", value_type=m2.group(2).strip(),
+                    field=m2.group(1), subject_type=m2.group(2).strip(),
+                    value_type=m2.group(3).strip(),
+                    multiplicity=annotation, unique="unique" in annotation.lower()))
+                continue
+            # Any other bare `field: Type` (non-Map collection) keeps the legacy
+            # empty-subject shape so existing consumers see the same relation.
+            m3 = re.match(r"^(\w+)\s*:\s*([\w<>,\[\](){} ]+)$", line)
+            if m3:
+                relations.append(StateRelation(
+                    field=m3.group(1), subject_type="", value_type=m3.group(2).strip(),
                     multiplicity="", unique=False))
             continue
         field = m.group(1)
@@ -719,7 +735,11 @@ def parse_sync(path: str) -> Optional[SyncSpec]:
         then_targets.append((m.group(1), m.group(2)))
 
 
-    cited: List[str] = re.findall(r"—\s+scenario\s+[\"`']([^\"`']+)[\"`']", text)
+    # The citation delimiter is captured and back-referenced so a title
+    # containing an apostrophe (e.g. "View a room's day") is not truncated
+    # at its inner quote; only the matching closing delimiter ends it.
+    cited = [match.group(2) for match in re.finditer(
+        r"—\s+scenario\s+([\"`'])(.*?)\1", text)]
 
     # Pattern D = a concept-state read in the where block: `Concept: { ... }`
     where_block = extract_block(text, "where")

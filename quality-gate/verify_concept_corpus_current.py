@@ -53,6 +53,23 @@ COMPANION_RE = re.compile(
 COMPANIONS = ("data-model.md", "contract.md")
 
 
+def _authored_contracts(feature_root):
+    """True when the feature's 04b has authored at least one `<Name>.contract.md`.
+
+    A feature skeleton pre-creates `04b_contract/output/` with only a `.gitkeep`,
+    so the directory can exist while 04b has authored nothing. Until 04b authors
+    a contract, a canonical contract legitimately lags its spec's actions: the
+    companion is refreshed from the feature's own 04b output, which does not
+    exist yet (`./clad promote-concepts <slug> --companions-only` has nothing
+    to publish). Failing here would deadlock a feature that is *at* 04b.
+    """
+    contract_dir = os.path.join(feature_root, "stages", "04_implement",
+                                "04b_contract", "output")
+    if not os.path.isdir(contract_dir):
+        return False
+    return any(name.endswith(".contract.md") for name in os.listdir(contract_dir))
+
+
 def history_of(spec_text):
     """`(introducer, [promoters in promotion order])` for a canonical spec."""
     intro = INTRODUCED_RE.search(spec_text)
@@ -117,6 +134,7 @@ def main(argv=None) -> int:
         receipt_dir = os.path.join(corpus, "_promotions")
 
         failures = []
+        warnings = []
         concepts = sorted(f for f in os.listdir(corpus) if f.endswith(".concept.md"))
 
         # A concept an in-scope feature proposed and had approved must exist in the
@@ -189,17 +207,32 @@ def main(argv=None) -> int:
             #     provenance header. A canonical contract that lags the spec's
             #     actions is drift (e.g. `GuidelineRules` gained `publishedLineages`
             #     and its contract did not).
+            #
+            #     Exception: when the action's proposer is a feature that is at 04b
+            #     but has not authored its own 04b contract yet, the companion
+            #     cannot be refreshed (promotion derives it from that output). That
+            #     is a legitimate lag, not drift — a WARN, cleared once 04b runs and
+            #     `./clad promote-concepts <slug> --companions-only` publishes it.
             if os.path.isfile(os.path.join(corpus, f"{concept}.contract.md")):
                 spec_actions = {a.name for a in ap.parse_concept(
                     os.path.join(corpus, fname)).actions}
                 contract_actions = {action for (c, action) in
-                                    ap.parse_spec_outcomes(corpus).items() if c == concept}
+                                    ap.parse_spec_outcomes(corpus).keys() if c == concept}
                 missing = sorted(spec_actions - contract_actions)
                 if missing:
-                    failures.append(
+                    pending = [slug for slug, feature in proposers.get(concept, [])
+                               if not _authored_contracts(feature)]
+                    message = (
                         f"{concept}.contract.md: the canonical spec declares action(s) "
                         + ", ".join(f"`{m}`" for m in missing)
                         + " that the contract does not — re-derive the companion.")
+                    if pending:
+                        warnings.append(
+                            message + " (deferred: "
+                            + ", ".join(f"`{s}`" for s in pending)
+                            + " has not authored its 04b contract yet)")
+                    else:
+                        failures.append(message)
 
         if failures:
             return cr.Verdict.fail(
@@ -209,7 +242,8 @@ def main(argv=None) -> int:
         features_seen = {slug for entries in proposers.values() for slug, _ in entries}
         return cr.Verdict.ok(
             f"{len(concepts)} canonical concept(s) current; "
-            f"{len(features_seen)} proposing feature(s) recorded")
+            f"{len(features_seen)} proposing feature(s) recorded",
+            detail=("\n".join(f"  note: {w}" for w in warnings) if warnings else None))
 
     return cr.run_check(
         "The canonical concept corpus is current and self-consistent", body,

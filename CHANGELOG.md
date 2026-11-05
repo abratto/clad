@@ -10,6 +10,71 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.30.0] — 2026-11-06
+
+**Minor: quality-gate fixes found by the room-booking experiment.** A 3-use-case
+CLAD build (reserve / cancel / view-a-room's-day) plus two iterative changes ran
+the whole pipeline and its gates under real use. The defects below are the ones
+that were true blockers or silent false-greens; each carries a regression test.
+No methodology stage or gate placement changed — the gate *verdicts* are now the
+ones the rules always intended.
+
+- **`chain_outcomes` never actually ran (latent no-op).** `verify_chain_outcomes`
+  read a completion from the action's `=> [ ... ]` bracket, which is the *return
+  signature* (`room: Room`), not the completion — every concept authors the real
+  completion on its `flow token: { ..., outcome: "FOUND" }` line. So it resolved
+  `room`/`known` and could never match `FOUND`/`NOT_FOUND`/`LISTED`. It stayed
+  silent because Stage 01b runs before Stage 02, so its inputs were always
+  absent (`UNVERIFIED`); it only fired on an iterative re-entry, where it then
+  failed every cross-concept `When` row. `spec_actions` now also extracts each
+  flow token's `outcome` and attributes it to its action.
+- **Iterative re-entry readiness deadlock.** `verify_iterative_change_readiness`
+  required the re-entry's earliest stage in `_changes/<slug>.progress.json`, but
+  `advance` writes progress only *after* the stage completes (and, for the first
+  stage, after the `approve-iter` review) — which the red check itself blocked.
+  The guard now exempts exactly the *current in-flight* re-entry stage; every
+  earlier stage must still be recorded, so a skip or reordering still fails.
+- **Companion-lag deadlock at 04b.** `verify_concept_corpus_current` failed when
+  a canonical contract lagged its spec's actions while the proposing feature sat
+  *at* 04b and had not authored the contract the companion derives from (a
+  catch-22: the check blocked the stage that produces the fix). That case is now
+  a deferred WARN (cleared by `promote-concepts --companions-only`); genuine
+  drift after 04b still fails. Also fixes a `.keys()` bug in the same comparison.
+- **`Map<K, V>` state lines were dropped.** `parse_state_relations` matched only
+  `field: K -> V`; a collection line `rooms: Map<RoomId, Room>` (the canonical
+  form) parsed to *zero* relations, so a concept whose only state line was a
+  collection rendered as stateless. It now parses as a `K -> V` fact (with the
+  trailing `-- …` annotation preserved).
+- **Rmap string defaults were unquoted.** A `default active` annotation emitted
+  `DEFAULT active` — invalid SQL (`active` read as a column reference). `rmap.py`
+  now quotes string defaults (`DEFAULT 'active'`) and leaves numbers, booleans,
+  `NULL`, and known temporal keywords bare, in both `CREATE` and `ALTER`.
+- **App-wide Rmap drift checks used feature scope.** `rmap_migration_current` /
+  `rmap_descriptor_current` always passed `--feature`, comparing an app-wide
+  migration to one feature's model. They now choose `--features-dir` for a path
+  outside the feature root and `--feature` for a feature-local one;
+  `verify_rmap_descriptor.py` gains `--features-dir`.
+- **Citation parser truncated apostrophe titles.** `parse_sync_cited_scenarios`
+  used a quote-excluding char class, so a cited `"View a room's day"` parsed as
+  `View a room` and `scenario_coverage` failed with no satisfiable `Cites` line.
+  It now back-references the opening delimiter so the title runs to its matching
+  close quote.
+- **`generate_syncs` emitted `status`.** Generated `Web/respond` signatures and
+  literals used `status` (which collides with the `Web.respond` completion
+  token); they now emit `httpStatus`.
+- **A no-op stage past a pending gate skipped the gate.** `determine_stage` /
+  `_current_stage` take "the last stage with evidence", which a no-op stage
+  (e.g. 04a under Rmap) can push past an unapproved gate. New shared
+  `clamp_to_pending_gate` clamps back so the gate is presented.
+
+**Upgrade notes.** Backward-compatible for existing features; the changes tighten
+checks that were silently passing. Generated migrations re-emit quoted string
+defaults — regenerate with `./clad rmap --write <migration> --force` if a
+migration carried a bare string default. `Map<K,V>` concepts now yield a relation
+where they previously yielded none, so a data model generated under the old
+behaviour may report `model_current` drift until regenerated. Every fix ships a
+regression test; the suite is green.
+
 ## [0.29.2] — 2026-11-03
 
 **Patch: the experiment friction log is marked for re-verification.**

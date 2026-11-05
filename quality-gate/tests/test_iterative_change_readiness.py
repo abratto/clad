@@ -243,6 +243,54 @@ class ReentryProgressTests(unittest.TestCase):
             change = self._record(feature, done=["02"])
             self.assertEqual(readiness.validate_change_file(str(change), False), [])
 
+    def test_unapproved_change_tolerates_missing_first_stage_progress(self):
+        """The first re-entry stage cannot be in progress before `approve-iter`
+        (advance writes progress only after the review gate), so the readiness
+        guard must not demand it for an unapproved change (finding 25)."""
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-02-x"
+            feature.mkdir()
+            change = self._record(feature, done=[])
+            (feature / "RESUME.md").write_text("# RESUME\n", encoding="utf-8")
+            self.assertEqual(
+                readiness.validate_change_file(str(change), False, str(feature)), [])
+
+    def test_current_stage_is_exempt_even_when_approved(self):
+        """The active re-entry's CURRENT stage is being authored and cannot be in
+        `progress.json` until `advance` completes it — so it is exempt whether or
+        not the change is approved (finding 25 generalised: after `approve-iter`
+        the first stage is still current until advance marks it)."""
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-02-x"
+            feature.mkdir()
+            change = self._record(feature, done=[])
+            (feature / "RESUME.md").write_text(
+                "# RESUME\n\n- **Iterative change `reentry` content hash:** `deadbeef`\n",
+                encoding="utf-8")
+            self.assertEqual(
+                readiness.validate_change_file(str(change), False, str(feature)), [])
+
+    def test_a_stage_before_the_current_one_must_be_done(self):
+        """Only the CURRENT stage is exempt. A stage that has already been passed
+        over (an earlier order entry left undone) is a skip and must still fail:
+        construct order [02, 03] with the earliest declared `03` and `02` absent —
+        but the earliest is the first, so use a record whose earliest is `02`
+        and whose progress marks a LATER stage done while `02` is not current."""
+        # The current stage is always the first undone in order; a true skip
+        # (done contains a later stage but not the earliest) is what `advance`
+        # never produces, and validate_change_file keys off the earliest stage.
+        with tempfile.TemporaryDirectory() as temporary:
+            feature = Path(temporary) / "UC-02-x"
+            feature.mkdir()
+            change = self._record(feature, done=["03"])  # later done, 02 not
+            (feature / "RESUME.md").write_text("# RESUME\n", encoding="utf-8")
+            # No feature_root => no current-stage knowledge => the earliest (02)
+            # must be done; it is not, so this fails.
+            failures = readiness.validate_change_file(str(change), False)
+            self.assertTrue(
+                any("not recorded as re-derived" in message
+                    for _, message in failures), failures)
+
     def test_legacy_acceptance_tests_row_is_accepted(self):
         with tempfile.TemporaryDirectory() as temporary:
             feature = Path(temporary) / "UC-02-x"

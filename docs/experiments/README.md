@@ -11,6 +11,7 @@ it exposed and the platform fixes that followed.
 | Report | What it exercises | Status |
 |---|---|---|
 | [`expense-approvals.md`](expense-approvals.md) | Full loop (stages 00–05) on a multi-actor HTTP service, then an iterative change; one sub-agent per stage, a human reviewing every gate | Complete; the experimental app was removed from the seed, the platform fixes remain |
+| [`bookings-friction.md`](bookings-friction.md) | Full loop (stages 00–05) on a 3-UC room-booking app (Java/Micronaut/Postgres) plus two iterative changes (a state-field extension and a behaviour refusal); one sub-agent per stage, the orchestrator reviewing every gate | Complete; fixes ported as v0.30.0 |
 
 ## Retention policy
 

@@ -222,7 +222,34 @@ def rederivation_steps(text):
     return steps
 
 
-def validate_change_file(path, implementation_touched):
+def _stage_is_being_authored(reentry_stage, change_path, feature_root):
+    """True while `reentry_stage` is the active re-entry's CURRENT stage.
+
+    `advance` records a stage as re-derived (in `_changes/<slug>.progress.json`)
+    only after the stage is run to completion and, for the first stage, after the
+    human reviews the iterative diff (`approve-iter`). But this readiness guard
+    runs inside `verify_artefacts`, which `advance` runs as a whole-pipeline
+    pre-flight BEFORE it can run the stage / reach its post-gate marking. So the
+    current in-flight stage can never be in `done_stages` while it is being
+    authored — requiring it here made the gate unsatisfiable (finding 25: the
+    only command that clears it refuses to write progress until the review the
+    red check blocks; and after `approve-iter` the stage is still current until
+    `advance` completes it). Exempt exactly the CURRENT stage: every stage
+    before it must be done, so a skipped or out-of-order re-derivation still
+    fails. Once the stage completes, `advance` marks it and it is no longer
+    current.
+    """
+    if not feature_root or not os.path.isfile(change_path):
+        return False
+    try:
+        import reentry_progress
+        current = reentry_progress.current_stage(feature_root)
+    except Exception:
+        return False
+    return current is not None and current == reentry_stage
+
+
+def validate_change_file(path, implementation_touched, feature_root=None):
     failures = []
     if not os.path.isfile(path):
         return [(path, "iterative change artefact not found")]
@@ -257,7 +284,8 @@ def validate_change_file(path, implementation_touched):
     reentry_stage = field_value(text, "Earliest re-entry stage")
     if reentry_stage:
         import reentry_progress
-        if reentry_stage not in reentry_progress.done_stages(path):
+        if (reentry_stage not in reentry_progress.done_stages(path)
+                and not _stage_is_being_authored(reentry_stage, path, feature_root)):
             failures.append((path,
                 f"re-entry stage {reentry_stage} is not recorded as re-derived — "
                 f"run `advance` for it (writes _changes/<slug>.progress.json)"))
@@ -314,7 +342,7 @@ def main(argv=None) -> int:
 
         change_file, failures = select_change_file(args.feature, args.change_file)
         if change_file:
-            failures.extend(validate_change_file(change_file, implementation_touched))
+            failures.extend(validate_change_file(change_file, implementation_touched, args.feature))
 
         if failures:
             print(f"FAIL: {len(failures)} iterative-change readiness violation(s):\n")

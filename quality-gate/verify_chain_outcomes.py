@@ -60,6 +60,21 @@ def spec_actions(path: str):
             base = _completion_base(token)
             if base:
                 bases.add(base)
+    # A concept action's completion is authored on its `flow token:` line
+    # (`{ action: "Catalogue.lookup", ..., outcome: "FOUND" }`), while the
+    # `=> [ ... ]` bracket is the action's RETURN SIGNATURE (`room: Room`,
+    # `known: Bool`), not a completion. Reading only the bracket yielded
+    # `room`/`known` and never the real completions (`FOUND`/`NOT_FOUND`/…), so
+    # every cross-concept `When` conjunct failed to resolve on any run — the
+    # check was a latent no-op that only surfaced on a re-entry (finding 30).
+    # Extract each flow token's declared outcome and attribute it to its action.
+    for _concept, action, outcome in re.findall(
+            r'flow token:\s*\{\s*action:\s*"([A-Za-z]+)\.([a-z][A-Za-z0-9]*)"'
+            r'[^}]*?outcome:\s*"([A-Za-z0-9_]+)"',
+            section.group(1) if section else ""):
+        base = _completion_base(outcome)
+        if base:
+            actions.setdefault(action, set()).add(base)
     return actions
 
 

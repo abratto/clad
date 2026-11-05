@@ -67,6 +67,7 @@ from verify_stage_sequence import (
     gate_approval_current,
     gate_status,
     stage_has_evidence,
+    clamp_to_pending_gate,
 )
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -163,6 +164,12 @@ def determine_stage(feature_root: str, explicit: str | None):
         # evidence, not just a populated child output dir.
         if stage_has_evidence(feature_root, stage.id):
             last = i
+    if last >= 0:
+        # A no-op stage (e.g. 04a when Rmap generates the migration) inherits
+        # its predecessor's evidence, so "last stage with evidence" can jump
+        # past a human gate whose stage is done but unapproved. Clamp back to
+        # that gate's stage so it is presented (shared with verify_artefacts).
+        return clamp_to_pending_gate(feature_root, cs.STAGES[last])
     if last < 0:
         print(BAR)
         print("  ADVANCE — no stage output found yet.")
@@ -170,7 +177,6 @@ def determine_stage(feature_root: str, explicit: str | None):
         print(f"    {cs.relpath(cs.STAGES[0].context_path(feature_root))}")
         print(BAR)
         sys.exit(0)
-    return cs.STAGES[last]
 
 
 def reentry_advance(feature_root: str, stage: cs.Stage):

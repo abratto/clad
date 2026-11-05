@@ -130,26 +130,56 @@ class CorpusCurrentTests(unittest.TestCase):
                          "--features-dir", str(features))
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
-    def test_a_contract_missing_a_spec_action_is_flagged(self):
+    def test_a_contract_missing_a_spec_action_is_deferred_before_04b(self):
         """The contract companion must list the spec's actions, not only its
         provenance header (C3: `GuidelineRules` gained `publishedLineages` and
-        its canonical contract did not)."""
+        its canonical contract did not).
+
+        But when the proposing feature has not authored its own 04b contract
+        yet, the companion cannot be refreshed (promotion derives it from that
+        output) — a legitimate lag, reported as a note, not a FAIL. This is the
+        state a feature is in while it sits *at* Stage 04b (finding 24)."""
         with tempfile.TemporaryDirectory() as tmp:
             features = self.build(tmp, history=["introduced-by UC-01-a",
                                                 "extended-by UC-02-b"])
-            spec_path = (features / "_system" / "concepts"
-                         / "MemberEnrolment.concept.md")
-            spec_path.write_text(
-                spec_path.read_text(encoding="utf-8")
-                + "\n## Actions\n\n```\n"
-                + "enrol [ memberId: MemberId ] => [ ok ]\n```\n",
-                encoding="utf-8")
+            self._add_spec_action(features)
+
+            result = run(str(QG / "verify_concept_corpus_current.py"),
+                         "--features-dir", str(features))
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("PASS", result.stdout)
+            self.assertIn("re-derive the companion", result.stdout)
+            self.assertIn("deferred", result.stdout)
+
+    def test_a_contract_missing_a_spec_action_fails_once_04b_authored(self):
+        """Once the proposer has authored a 04b contract, a companion that still
+        lags the spec's actions is genuine drift and must FAIL."""
+        with tempfile.TemporaryDirectory() as tmp:
+            features = self.build(tmp, history=["introduced-by UC-01-a",
+                                                "extended-by UC-02-b"])
+            self._add_spec_action(features)
+            write(features / "UC-02-b/stages/04_implement/04b_contract/output/"
+                  "MemberEnrolment.contract.md",
+                  "# MemberEnrolment contract\n\n"
+                  "| Action | Outcome |\n|---|---|\n| `enrol` | `ok` |\n")
 
             result = run(str(QG / "verify_concept_corpus_current.py"),
                          "--features-dir", str(features))
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("re-derive the companion", result.stdout)
+            self.assertNotIn("deferred", result.stdout)
+
+    @staticmethod
+    def _add_spec_action(features):
+        spec_path = (features / "_system" / "concepts"
+                     / "MemberEnrolment.concept.md")
+        spec_path.write_text(
+            spec_path.read_text(encoding="utf-8")
+            + "\n## Actions\n\n```\n"
+            + "enrol [ memberId: MemberId ] => [ ok ]\n```\n",
+            encoding="utf-8")
 
 
 if __name__ == "__main__":
