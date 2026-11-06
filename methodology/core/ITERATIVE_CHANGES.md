@@ -84,6 +84,16 @@ came after it). Route that corpus edit through the **R20 maintenance route**
 (§7), or have the concept's current source re-derive and promote the change. Do
 not force the promotion.
 
+For the common case — the flow-owning feature adds an **additive** outcome/field
+to a shared concept — the maintenance route is tooled: record the re-derived
+Stage-02 proposal under the maintenance record's `## Concept proposals`, approve
+its design gate, and publish with `./clad promote-concepts --maintenance
+<change-name>`. That appends the feature to the canonical `extended-by` and
+writes the `_promotions/` receipt under the maintenance gate, with the same
+additivity rules. Name the feature's `_changes/` record in the maintenance
+record's `Dependent re-entry` so the evidence gate requires it closed — the
+corpus edit and the dependent flow re-entry land together.
+
 **A stage's own uncommitted output is not an iterative change.** The readiness
 guard (`verify_iterative_change_readiness.py`) fires on a modified concept/sync
 spec, but it distinguishes *new stage work* from *an edit of a gated artefact*:
@@ -231,6 +241,7 @@ not a fabricated UC pipeline.
 | Changes a primary or secondary adapter implementation while preserving its declared port contract and observable semantics | Maintenance route plus adapter-boundary tests |
 | Changes a port contract, timeout interpretation, retry/idempotency, ordering, delivery guarantee, or other observable adapter semantics | Existing iterative route: re-enter at the earliest owning concept or sync stage |
 | Changes both | Split the work where possible; otherwise run the maintenance route and re-enter the earliest affected feature stage |
+| Adds an outcome/field to a **shared concept** from the feature that owns the flow, when that feature is not the concept's current source (R22) | Maintenance route for the corpus edit (`./clad promote-concepts --maintenance <change>`), plus that feature's `_changes/` re-entry for the flow; link them via `Dependent re-entry` |
 
 ### Maintenance route
 

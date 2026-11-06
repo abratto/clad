@@ -10,6 +10,42 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.31.0] — 2026-11-06
+
+**Minor: a tooled maintenance route for additive shared-concept changes.** The
+room-booking experiment (finding 31) hit a structural gap: a behavioural change
+that adds an outcome/field to a **shared concept** has two halves with different
+owners — the canonical concept and the feature flow that consumes it — and the
+flow-owning feature is, by definition, *not* the concept's current source (that
+is the last extender), so a normal `promote-concepts` refused it. `CONCEPTS.md`
+already sanctioned the R20 maintenance route for that case, but there was no
+tooling: the canonical entry had to be hand-edited, so `extended-by` provenance
+and the `_promotions/` receipt were never stamped.
+
+- **`./clad promote-concepts --maintenance <change-name>`.** Publishes a
+  maintenance change's approved concept proposals from a feature that is not the
+  concept's current source. The maintenance record lists the proposal(s) under
+  `## Concept proposals`; its approved **design gate** — not the feature's Gate
+  2 — authorises the `extended-by` append. Provenance is stamped and the
+  `_promotions/<feature>.md` receipt written exactly as a normal promotion, so
+  `verify_concept_corpus_current` stays green. R22 is **not** relaxed: the same
+  additivity checks run, so a drop/restate is still refused (use `remodel` with
+  migration notes + consent for a deliberate removal).
+- **Dependent-re-entry linkage.** A maintenance record may name a feature's
+  `_changes/` record as its `Dependent re-entry`; the evidence gate requires it
+  `closed`, so the corpus edit and the flow it unblocks land together instead of
+  being hand-sequenced.
+- **Docs.** `CONCEPTS.md` (R22 escape hatch) and `ITERATIVE_CHANGES.md` §2/§7
+  name the tooled route and the decision rule.
+- **Housekeeping.** `maintenance/rmap-python-generators-port.md` (shipped in
+  0.29.0, both gates approved) is marked `closed`; it had been left `active`,
+  which the governance-hygiene check flagged as a second in-flight change.
+
+**Upgrade notes.** Backward-compatible: `--feature` promotion is unchanged;
+`--maintenance` is an additional, opt-in entry point. New regression tests cover
+the append+receipt, the drop refusal, the design-gate requirement, and the
+dependent-re-entry link.
+
 ## [0.30.0] — 2026-11-06
 
 **Minor: quality-gate fixes found by the room-booking experiment.** A 3-use-case

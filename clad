@@ -178,6 +178,15 @@ cmd_approve_maintenance() {
 }
 
 cmd_promote_concepts() {
+    # `--maintenance <name>` publishes a maintenance change's approved concept
+    # proposals (the R20 route for an additive canonical edit from a feature
+    # that is not the concept's current source). No feature is named, so pass
+    # straight through — the change record names the proposer feature(s).
+    if [ "${1:-}" = "--maintenance" ]; then
+        shift
+        python3 "$QG/promote_concepts.py" --maintenance "$@"
+        return $?
+    fi
     # Promotion WRITES the canonical corpus, so it must never guess: the active-
     # feature heuristic is for read commands. Running it for a superseded feature
     # overwrites newer corpus content with that feature's older proposal.
@@ -185,6 +194,7 @@ cmd_promote_concepts() {
     if [ -z "$feat" ]; then
         echo "promote-concepts needs an explicit feature: ./clad promote-concepts <name>" >&2
         echo "  (or set CLAD_FEATURE=<name>). It writes the corpus, so it will not guess." >&2
+        echo "  For a maintenance change: ./clad promote-concepts --maintenance <change-name>" >&2
         exit 1
     fi
     shift || true
@@ -360,6 +370,10 @@ CLAD CLI — lightweight wrapper for quality-gate scripts.
   ./clad promote-concepts <feature>  Promote approved NEW/EXTEND concept
                                        proposals into the canonical corpus
                                        (after Gate 2 approval)
+  ./clad promote-concepts --maintenance <name>
+                                       Publish a maintenance change's approved
+                                       concept proposals (R20 route, for a
+                                       feature that is not the current source)
   ./clad consent --feature <path> --concept <Name> --consenting <UC-XX>
                                        Scaffold a remodel consent receipt (R22)
   ./clad refresh-contracts [<feature>] [--write]

@@ -269,6 +269,17 @@ Two consequences follow, and both are mechanised:
   through the **R20 maintenance route** (`maintenance/<change-name>.md`), which
   edits the canonical entry deliberately and reviewably, or have the concept's
   current source re-derive and promote the change. Do not force the promotion.
+  - **The tooled maintenance route.** An *additive* extension driven by the
+    flow-owning feature (a new outcome/field on a shared concept) is published
+    with `./clad promote-concepts --maintenance <change-name>`. The maintenance
+    record lists the proposal to publish under `## Concept proposals`; its
+    approved **design gate** — not the feature's Gate 2 — authorises the
+    `extended-by` append, and the same additivity rules still apply (a
+    drop/restate is refused). The record's `Dependent re-entry` names the
+    feature's `_changes/` record, and the evidence gate requires it `closed`, so
+    the corpus edit and the flow it enables land together. Use a plain
+    `--feature` promotion only when the proposing feature *is* the concept's
+    current source.
 - **Additivity.** An extend may add fact types, constraints, actions and
   outcomes, but not drop or restate them. A deliberate removal is listed, with
   a reason, in the feature's `_config/additivity-exceptions.md` — or, when the

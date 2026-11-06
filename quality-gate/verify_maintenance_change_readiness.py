@@ -102,6 +102,38 @@ def field_value(text, label):
     return match.group(1).strip().lower() if match else ""
 
 
+def raw_field_value(text, label):
+    """Like `field_value` but case-preserved (for a path, not a keyword)."""
+    match = re.search(rf"^- \*\*{re.escape(label)}:\*\*\s*`([^`\n]+)`", text, re.MULTILINE)
+    return match.group(1).strip() if match else ""
+
+
+def dependent_reentry_problem(text):
+    """`None` when the linked re-entry is coherent, else a failure message.
+
+    A maintenance change that edits a shared concept to unblock a feature flow
+    names that flow's `_changes/` record as its `Dependent re-entry`. The two
+    halves (corpus edit + flow re-derivation) must land together, so at the
+    evidence gate the linked record must exist and be `closed` — otherwise the
+    corpus moved but the flow it was meant to enable did not.
+    """
+    path = raw_field_value(text, "Dependent re-entry")
+    if not path or path.lower() in ("none", "-", "n/a"):
+        return None
+    candidates = [path]
+    if not os.path.isabs(path):
+        candidates.append(str(REPO_ROOT / path))
+    record = next((c for c in candidates if os.path.isfile(c)), None)
+    if record is None:
+        return f"Dependent re-entry `{path}` not found"
+    rec_text = Path(record).read_text(encoding="utf-8")
+    status = field_value(rec_text, "Status")
+    if status != "closed":
+        return (f"Dependent re-entry `{path}` is `{status or 'unset'}`, not `closed` — "
+                f"close it before the evidence gate")
+    return None
+
+
 def active_records():
     if not MAINTENANCE_DIR.is_dir():
         return []
@@ -162,6 +194,9 @@ def main(argv=None) -> int:
                 failures.append("evidence gate is not approved")
             if not has_passing_test(text):
                 failures.append("test matrix has no passing test evidence")
+            reentry_problem = dependent_reentry_problem(text)
+            if reentry_problem:
+                failures.append(reentry_problem)
 
         if failures:
             return cr.Verdict.fail(

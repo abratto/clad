@@ -10,6 +10,9 @@
 - **Design gate:** `<pending | approved>`
 - **Evidence gate:** `<pending | approved>`
 - **Change summary:** `<one sentence>`
+- **Dependent re-entry:** `<none | features/UC-XX-<slug>/_changes/<name>.md>`
+  (the feature iterative change, if any, that re-enters the flow this corpus
+  edit enables; when set, the evidence gate requires it closed)
 
 ## Mechanism
 
@@ -24,6 +27,20 @@ with no engine/profile behaviour (e.g. a pure documentation or configuration
 rename).
 
 - <claim> — `<file>:<line>` or `<File>#<symbol>`.
+
+## Concept proposals
+
+Only for a maintenance change that edits a **canonical shared concept** from a
+feature that is not the concept's current source (an additive extension the
+promotion order would otherwise refuse). Name the feature whose re-derived
+Stage-02 proposal to promote; omit the section for every other change.
+
+- `<Name>: features/UC-XX-<slug>/stages/02_concepts/output/<Name>.concept.md`
+
+Publish with `./clad promote-concepts --maintenance <change-name>` (no `--feature`):
+it appends the feature to the concept's `extended-by` history and writes the
+`_promotions/` receipt under this change's approved design gate, applying the
+same additivity rules as a normal promotion.
 
 ## Contract impact
 

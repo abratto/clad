@@ -2,6 +2,7 @@
 """Regression coverage for maintenance-change scoping (D1: derived-project config)."""
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -74,6 +75,47 @@ class FieldValueTests(unittest.TestCase):
         self.assertIn(
             maint.field_value(template, "Status"),
             {"<draft | active | closed>", "draft", "active", "closed"})
+
+
+class DependentReentryTests(unittest.TestCase):
+    """A maintenance change that edits a shared concept must name (and close)
+    the dependent feature re-entry it unblocks — the two halves land together
+    (finding 31 / 34)."""
+
+    def _record(self, tmp, dependent):
+        path = Path(tmp) / "change.md"
+        path.write_text(
+            "# Maintenance change — `x`\n\n"
+            f"- **Dependent re-entry:** `{dependent}`\n", encoding="utf-8")
+        return path.read_text(encoding="utf-8")
+
+    def test_no_dependent_reentry_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            text = self._record(tmp, "none")
+            self.assertIsNone(maint.dependent_reentry_problem(text))
+
+    def test_closed_dependent_reentry_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rec = Path(tmp) / "reentry.md"
+            rec.write_text("- **Status:** `closed`\n", encoding="utf-8")
+            text = self._record(tmp, str(rec))
+            self.assertIsNone(maint.dependent_reentry_problem(text))
+
+    def test_active_dependent_reentry_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rec = Path(tmp) / "reentry.md"
+            rec.write_text("- **Status:** `active`\n", encoding="utf-8")
+            text = self._record(tmp, str(rec))
+            problem = maint.dependent_reentry_problem(text)
+            self.assertIsNotNone(problem)
+            self.assertIn("not `closed`", problem)
+
+    def test_missing_dependent_reentry_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            text = self._record(tmp, str(Path(tmp) / "absent.md"))
+            problem = maint.dependent_reentry_problem(text)
+            self.assertIsNotNone(problem)
+            self.assertIn("not found", problem)
 
 
 if __name__ == "__main__":

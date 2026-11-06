@@ -2,8 +2,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `mixed`
-- **Status:** `active` (`draft` until design approval, `active` while
-  implementing, `closed` after evidence approval)
+- **Status:** `closed`
 - **Affected profile(s):** `reference-impl/legible-storage`,
   `reference-impl/legible-engine`, `reference-impl/java-micronaut`,
   `reference-impl/java-plain`, `clad.properties`, `quality-gate`

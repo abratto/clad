@@ -238,6 +238,52 @@ def stamp_provenance(text: str, slug: str, canonical_text: str = "") -> str:
     return _with_history(text, history)
 
 
+def stamp_provenance_maintenance(text: str, slug: str, canonical_text: str) -> str:
+    """Record `slug` as the concept's promoter via the R20 maintenance route.
+
+    The order rule `stamp_provenance` enforces (only the current source may
+    write) exists because a frozen proposal has no memory of later additions and
+    re-promoting one would roll the corpus back. A maintenance change is a
+    *fresh, reviewed* proposal for the canonical entry — not a stale snapshot —
+    so the maintenance design gate authorises appending `slug` to the history
+    even though `slug` is not the current source (finding 31). The additivity
+    checks still run, so the append can only add; it cannot drop a later
+    feature's lines.
+
+    `slug` must not already be the current source or in the history
+    (idempotent re-promotion of an already-recorded feature is a separate case
+    the caller short-circuits). The history is read from the canonical entry,
+    exactly as in `stamp_provenance`.
+    """
+    intro = INTRODUCED_RE.search(text) or INTRODUCED_RE.search(canonical_text)
+    if intro is None:
+        lines = text.split("\n")
+        for i, line in enumerate(lines):
+            if line.strip().startswith("concept "):
+                lines.insert(i + 1, f"introduced-by {slug}")
+                return "\n".join(lines)
+        return f"introduced-by {slug}\n{text}"
+
+    introducer = intro.group(1).strip()
+    if INTRODUCED_RE.search(text) is None:
+        text = text[:intro.end()] + text[intro.end():]
+    source = canonical_text if EXTENDED_RE.search(canonical_text) else text
+    ext = EXTENDED_RE.search(source)
+    history = [s.strip() for s in ext.group(1).split(",")] if ext else []
+    current = history[-1] if history else introducer
+
+    if slug == current:
+        return _with_history(text, history) if history else text
+    if slug == introducer or slug in history:
+        # Already recorded; do not append a duplicate. The canonical may still
+        # differ in body (a maintenance edit by an already-listed feature), so
+        # write the history back unchanged and let the caller's diff decide.
+        return _with_history(text, history) if history else text
+
+    history.append(slug)
+    return _with_history(text, history)
+
+
 LEADING_COMMENT_RE = re.compile(r"\A<!--.*?-->\n", re.DOTALL)
 
 # A `## Migration notes` section is the remodel proposal's review evidence; it is
@@ -344,6 +390,204 @@ def dependence_claims(feature_root: str):
     return claims
 
 
+def _repo_root_from_cwd() -> str:
+    """The repository root, found by walking up from the working directory.
+
+    `--maintenance` names no feature, so the root is not derivable from a feature
+    path; the CLI is run from the repo root, but walk up to the nearest
+    `clad.properties` (or a `features/` dir) so a subdirectory invocation works.
+    """
+    here = os.path.abspath(os.getcwd())
+    probe = here
+    while True:
+        if (os.path.isfile(os.path.join(probe, "clad.properties"))
+                or os.path.isdir(os.path.join(probe, "features"))):
+            return probe
+        parent = os.path.dirname(probe)
+        if parent == probe:
+            return here
+        probe = parent
+
+
+def maintenance_record_for(repo: str, name: str) -> str:
+    """Path to `maintenance/<name>.md`, accepting a bare name or a path."""
+    if os.path.isfile(name):
+        return os.path.abspath(name)
+    stem = name[:-3] if name.endswith(".md") else name
+    return os.path.join(repo, "maintenance", stem + ".md")
+
+
+def _field_line(text: str, label: str) -> str:
+    """The backticked value of a `- **Label:** `value`` line, case preserved."""
+    match = re.search(rf"^- \*\*{re.escape(label)}:\*\*\s*`([^`\n]+)`",
+                      text, re.MULTILINE)
+    return match.group(1).strip() if match else ""
+
+
+def maintenance_concept_proposals(change_text: str):
+    """`[(concept, proposal_path)]` from a maintenance record's
+    `## Concept proposals` section (backticked `Name: path` bullets)."""
+    if "## Concept proposals" not in change_text:
+        return []
+    section = change_text.split("## Concept proposals", 1)[1].split("\n## ", 1)[0]
+    proposals = []
+    for line in section.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("- "):
+            continue
+        match = re.search(r"`([^`:]+):\s*([^`]+)`", stripped)
+        if not match:
+            continue
+        concept = match.group(1).strip()
+        path = match.group(2).strip()
+        if concept and path:
+            proposals.append((concept, path))
+    return proposals
+
+
+def _feature_root_of_proposal(proposal_path: str) -> str:
+    """The feature root that owns a proposal file (`.../stages/02_concepts/...`)."""
+    marker = os.sep + os.path.join("stages", "02_concepts") + os.sep
+    idx = proposal_path.find(marker.replace(os.sep, "/"))
+    if idx == -1:
+        idx = proposal_path.find(marker)
+    return proposal_path[:idx] if idx != -1 else os.path.dirname(proposal_path)
+
+
+def _maintenance_promotion(change_name: str, dry_run: bool) -> int:
+    """Publish a maintenance change's approved `## Concept proposals`.
+
+    The R20 route for an additive canonical concept edit from a feature that is
+    not the concept's current source (finding 31). The maintenance design gate,
+    not the feature's Gate 2, authorises the `extended-by` append; the same
+    additivity rules still apply, so a drop/restate is still refused.
+    """
+    repo = _repo_root_from_cwd()
+    record = maintenance_record_for(repo, change_name)
+    if not os.path.isfile(record):
+        print(f"FAIL  maintenance record not found: {record}")
+        return 1
+    with open(record, encoding="utf-8") as fh:
+        record_text = fh.read()
+    if _field_line(record_text, "Design gate") != "approved":
+        print("FAIL  maintenance design gate is not approved — promotion refused.")
+        print("      Approve it first: ./clad approve-maintenance "
+              f"{os.path.basename(record)[:-3]} design")
+        return 1
+    proposals = maintenance_concept_proposals(record_text)
+    if not proposals:
+        print("FAIL  the record names no `## Concept proposals` to promote.")
+        print("      Add `- <Name>: features/UC-XX-<slug>/stages/02_concepts/"
+              "output/<Name>.concept.md` to the maintenance record.")
+        return 1
+
+    import concept_remodel as cr
+    # A synthetic feature root two levels under `repo` makes `repo_root()` and
+    # `corpus_dir()` resolve against the real repository (the maintenance path
+    # has no feature path to derive them from).
+    anchor_root = os.path.join(repo, "features", "_maintenance-anchor")
+    corpus = corpus_dir(anchor_root)
+    receipt_dir = os.path.join(corpus, "_promotions")
+
+    planned, refused = {}, []
+    for concept, proposal_path in proposals:
+        if not os.path.isfile(proposal_path):
+            refused.append((concept, f"proposal not found: {proposal_path}"))
+            continue
+        feature_root = _feature_root_of_proposal(os.path.abspath(proposal_path))
+        slug = feature_slug(feature_root)
+        canonical_path = os.path.join(corpus, f"{concept}.concept.md")
+        if not os.path.isfile(canonical_path):
+            refused.append((concept, "no canonical entry — a maintenance "
+                                     "promotion extends an existing concept, it "
+                                     "does not introduce one"))
+            continue
+        with open(canonical_path, encoding="utf-8") as fh:
+            existing = fh.read()
+        # Additivity: an extend may add, never drop/restate a canonical line.
+        state_drops, term_drops = cr.unauthorised_drops_additive(
+            feature_root, corpus, concept)
+        if state_drops or term_drops:
+            refused.append((concept, "canonical line(s) dropped with no "
+                                     "authorisation: "
+                                     + "; ".join(state_drops + term_drops)))
+            continue
+        with open(proposal_path, encoding="utf-8") as fh:
+            spec = stamp_provenance_maintenance(fh.read(), slug, existing)
+        spec = canonical_spec(spec)
+        introducer, promoter = provenance_scope(spec)
+        companions = {}
+        for rel, suffix in (("03b_data-model", "data-model.md"),
+                            ("04_implement/04b_contract", "contract.md")):
+            produced = os.path.join(feature_root, "stages", rel, "output",
+                                    f"{concept}.{suffix}")
+            source = produced if os.path.isfile(produced) else None
+            if source and os.path.isfile(source):
+                with open(source, encoding="utf-8") as fh:
+                    companions[suffix] = canonical_companion(
+                        fh.read(), concept, introducer, promoter)
+        planned[concept] = (slug, spec, companions)
+
+    if refused and not planned:
+        for concept, reason in refused:
+            print(f"FAIL  refused `{concept}` — {reason}")
+        return 1
+
+    if dry_run:
+        print(f"WOULD promote {len(planned)} concept(s) via maintenance "
+              f"`{os.path.basename(record)[:-3]}`:")
+        for concept in sorted(planned):
+            slug, _spec, _comp = planned[concept]
+            print(f"  - {concept}.concept.md  (extended-by += {slug})")
+        for concept, reason in refused:
+            print(f"  refused: {concept} — {reason}")
+        print("(dry run — nothing written)")
+        return 0 if not refused else 1
+
+    os.makedirs(corpus, exist_ok=True)
+    os.makedirs(receipt_dir, exist_ok=True)
+    writes = {}
+    by_slug = {}
+    for concept in sorted(planned):
+        slug, spec, companions = planned[concept]
+        writes[os.path.join(corpus, f"{concept}.concept.md")] = spec
+        for suffix, text in companions.items():
+            writes[os.path.join(corpus, f"{concept}.{suffix}")] = text
+        by_slug.setdefault(slug, []).append(concept)
+
+    try:
+        writes[catalog_out_path(corpus)] = _catalog_text(
+            corpus, anchor_root, {c: planned[c][1] for c in planned})
+    except Exception as exc:  # noqa: BLE001
+        print(f"FAIL  promotion aborted before writing — the corpus is unchanged: {exc}")
+        return 1
+
+    change_stem = os.path.basename(record)[:-3]
+    for slug, concepts in by_slug.items():
+        receipt = os.path.join(receipt_dir, f"{slug}.md")
+        lines = [f"# Promotion receipt — `{slug}`\n\n",
+                 f"- maintenance change: `{change_stem}`\n",
+                 f"- promoted concepts: {', '.join(f'`{c}`' for c in concepts)}\n"]
+        writes[receipt] = "".join(lines)
+
+    try:
+        atomic_write_set(writes)
+    except AtomicWriteFailed as exc:
+        print(f"FAIL  promotion aborted and rolled back — the corpus is unchanged: {exc}")
+        return 1
+
+    for concept in sorted(planned):
+        slug = planned[concept][0]
+        print(f"PASS  promoted `{concept}` (extended-by += `{slug}`) via "
+              f"maintenance `{change_stem}`")
+    for concept, reason in refused:
+        print(f"WARN  skipped `{concept}` — {reason}")
+    if refused:
+        print(f"FAIL  {len(refused)} concept(s) refused — promotion is incomplete.")
+        return 1
+    return 0
+
+
 def _refresh_companions(feature_root: str) -> int:
     """Publish model/contract companions for the feature's already-promoted
     concepts, without rewriting specs or provenance.
@@ -396,7 +640,13 @@ def _refresh_companions(feature_root: str) -> int:
 def main():
     parser = argparse.ArgumentParser(
         description="Promote approved NEW/EXTEND proposals into the concept corpus")
-    parser.add_argument("--feature", required=True, help="Feature root")
+    scope = parser.add_mutually_exclusive_group(required=True)
+    scope.add_argument("--feature", default=None, help="Feature root")
+    scope.add_argument("--maintenance", default=None,
+                       help="Maintenance change name (maintenance/<name>.md) whose "
+                            "## Concept proposals this change publishes; the R20 "
+                            "route for an additive canonical edit from a feature "
+                            "that is not the concept's current source")
     parser.add_argument("--concept", default=None,
                         help="Promote only this concept (of the feature's "
                              "NEW/EXTEND/REMODEL proposals); the default "
@@ -408,6 +658,9 @@ def main():
                              "promoted concepts (no spec rewrite); run at Gate-3 "
                              "closure")
     args = parser.parse_args()
+
+    if args.maintenance:
+        return _maintenance_promotion(args.maintenance, args.dry_run)
 
     feature_root = os.path.abspath(args.feature)
     if args.companions_only:
