@@ -45,6 +45,10 @@ QUOTED = re.compile(r'"(?:\\.|[^"\\])*"')
 ARG_NAME = re.compile(r'(?:^|;)\s*([A-Za-z_]\w*)\s*:')
 STATUS_VALUE = re.compile(r'\bhttpStatus\s*:\s*([^;]+)')
 LEGACY_STATUS = re.compile(r'(?:^|;)\s*status\s*:')
+# `outcome` is the completion discriminator the engine stamps on every flow
+# token (`out.put("outcome", "SENT")`). A body field named `outcome` overwrites
+# it (finding 10): the archived token becomes the body value, not `SENT`.
+COMPLETION_COLLISION = re.compile(r'(?:^|;)\s*outcome\s*:')
 
 
 def scan(path):
@@ -82,6 +86,12 @@ def response_findings(path):
                         f"line {lineno}: Web/respond uses `status` for the "
                         f"transport; name it `httpStatus` and keep domain "
                         f"fields distinct (e.g. `claimStatus`)")
+                if COMPLETION_COLLISION.search(args):
+                    findings.append(
+                        f"line {lineno}: Web/respond has a body field named "
+                        f"`outcome`, which collides with the completion token "
+                        f"the engine stamps — rename it (e.g. `reason`, "
+                        f"`reservationStatus`)")
                 status = STATUS_VALUE.search(args)
                 if not status:
                     findings.append(

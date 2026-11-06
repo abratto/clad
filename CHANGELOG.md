@@ -10,6 +10,39 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.33.0] — 2026-11-06
+
+**Minor: close three high-severity gaps the room-booking experiment found.**
+
+- **`outcome` body-field collision (finding 10).** A sync `then` that carried a
+  body field named `outcome` overwrote the completion token the engine stamps
+  (`Web.respond` archived `[invalid-slot]` instead of `[SENT]`), and nothing
+  caught it — `verify_sync_then_shape` guarded `status` but not `outcome`.
+  `verify_sync_then_shape.py` now flags a `Web/respond` body field named
+  `outcome` (use `reason`/`reservationStatus`); the reference `WebConcept`
+  (`java-legible`, `java-micronaut`) sets the completion token *after* the body
+  fields so it can never be overwritten.
+- **Stale canonical data-model companion (finding 29).** Aggregate Rmap treats
+  the corpus as authoritative, so a feature that re-derived its Stage-03b model
+  but had not refreshed `features/_system/concepts/<Name>.data-model.md` got a
+  migration generated from the *old* model — silently omitting the new column.
+  New `verify_rmap_companion_fresh.py` (wired at Stage 04a) fails when the
+  current-source feature's fresh 03b model diverges from the companion, naming
+  `./clad promote-concepts <feature> --companions-only`. Earlier frozen features
+  are skipped (finding 32).
+- **Persistent profile closed without durable proof (finding 19).** The durable
+  Postgres lane is Docker-gated and outside `test.command`, so the feature could
+  close green while a Postgres-only defect hid. New `verify_durable_proof.py`
+  (wired at Stage 05) requires, when `storage.persistent=true`,
+  `durable-proof.md` to record the durable `Command` and a `Result` of
+  `PASS`; a non-persistent profile skips.
+
+**Upgrade notes.** Backward-compatible. The durable-proof check only fires for
+`storage.persistent=true` (the seed is in-memory). The companion-freshness check
+only fires for a feature that is a concept's current source. New regression
+tests cover all three (`test_sync_then_shape`, `test_rmap_companion_fresh`,
+`test_durable_proof`).
+
 ## [0.32.0] — 2026-11-06
 
 **Minor: additivity compares a re-entering feature to its own prior proposal,

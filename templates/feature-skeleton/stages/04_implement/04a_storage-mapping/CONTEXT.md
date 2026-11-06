@@ -119,11 +119,19 @@ python3 ../../../../../quality-gate/rmap.py \
   --feature ../../../ --check <rmap.migration>
 python3 ../../../../../quality-gate/verify_rmap_descriptor.py \
   --feature ../../../ --descriptor <rmap.descriptor>
+python3 ../../../../../quality-gate/verify_rmap_companion_fresh.py \
+  --feature ../../../
 ```
 
 - **rmap.py:** the configured migration is current for the approved 03b
   model. It runs only for a persistent relational profile; a generated Rmap
   makes this stage a no-op with nothing to author.
+- **verify_rmap_companion_fresh.py:** the canonical data-model companion this
+  migration is generated from is not stale. Aggregate Rmap treats the corpus as
+  authoritative, so if this feature re-derived its 03b model but has not
+  refreshed `features/_system/concepts/<Name>.data-model.md`, the migration
+  would be silently generated from the old model. Run
+  `./clad promote-concepts <feature> --companions-only` to refresh it.
 - **verify_rmap_descriptor.py:** the runtime descriptor matches the same
   model, so the SQL and the in-process schema cannot drift apart.
 - **verify_relational_mapping.py:** for relational profiles, the mapping

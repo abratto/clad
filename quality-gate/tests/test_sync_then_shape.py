@@ -119,6 +119,27 @@ class SyncThenShapeTests(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertIn("PASS", r.stdout)
 
+    def test_outcome_body_field_collision_fails(self):
+        """A body field named `outcome` collides with the completion token the
+        engine stamps (`out.put("outcome","SENT")`) — finding 10."""
+        collision = FLAT.replace(
+            "Web/respond: [ httpStatus: 201 ; memberId: ?memberId ]",
+            "Web/respond: [ httpStatus: 201 ; outcome: \"invalid-slot\" ]")
+        with tempfile.TemporaryDirectory() as tmp:
+            r = self._run(self._feature(tmp, collision))
+            self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+            self.assertIn("collides with the completion token", r.stdout)
+
+    def test_domain_reason_field_passes(self):
+        """The sanctioned alternative (`reason`) is accepted."""
+        reason = FLAT.replace(
+            "Web/respond: [ httpStatus: 201 ; memberId: ?memberId ]",
+            "Web/respond: [ httpStatus: 409 ; reason: \"invalid-slot\" ]")
+        with tempfile.TemporaryDirectory() as tmp:
+            r = self._run(self._feature(tmp, reason))
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("PASS", r.stdout)
+
     def test_no_sync_specs_skips(self):
         with tempfile.TemporaryDirectory() as tmp:
             r = self._run(Path(tmp) / "features")

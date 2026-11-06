@@ -31,9 +31,11 @@ public final class WebConcept implements Concept {
         return switch (action) {
             case "request" -> Map.of("outcome", "routed");
             case "respond" -> {
-                Map<String, Object> out = new LinkedHashMap<>();
+                Map<String, Object> out = new LinkedHashMap<>(input);
+                // The completion token is authoritative: set it AFTER the body
+                // fields so a body key named `outcome` cannot overwrite it
+                // (finding 10 — the token the trace archives must be `sent`).
                 out.put("outcome", "sent");
-                out.putAll(input);
                 yield out;
             }
             default -> Map.of("outcome", "error", "message", "unknown action: " + action);

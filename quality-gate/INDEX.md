@@ -44,6 +44,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_contract_parity.py` | Stage gate: concept spec actions match contract entries. | stage 04b (Concept contract) | gate |
 | `verify_data_model.py` | Stage gate: CSDP structural validation for data model files. | stage 03b (Data model) | gate |
 | `verify_distinct_outcomes.py` | one completion token must not fan out to two distinct terminal responses. | stage 01b (Chain table) | gate |
+| `verify_durable_proof.py` | a persistent profile must record a passing durable (Postgres) run before the feature closes. | stage 05 (Verify) | gate |
 | `verify_file_manifest.py` | Stage gate: output/ contains exactly the expected files. | stage 01 (Use case); stage 01a (Responsibility map); stage 01b (Chain table); stage 02 (Concept specs); stage 03a (Dependency review); stage 03b (Data model); stage 04b (Concept contract); stage 04c (Acceptance tests); stage 04d (Concept implementation); stage 04e (Sync implementation) | gate |
 | `verify_governance_hygiene.py` | no stale governance records (advisory) | project-level (every `verify_artefacts` run) | advisory |
 | `verify_implementation_parity.py` | Gate: every sync/concept implementation class has a corresponding spec artefact. | stage 04e (Sync implementation) | gate |
@@ -62,6 +63,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_relational_mapping.py` | Conditional gate: relational storage mappings (Stage 04a) must satisfy the Rmap rules. | stage 04a (Storage mapping) | gate |
 | `verify_responsibility_map_shape.py` | Stage 01a gate: the Concepts table's `Owned actions` column carries NAMES ONLY — no signatures, no outcomes. | stage 01a (Responsibility map) | gate |
 | `verify_reused_concept_contracts.py` | a REUSED concept must have a canonical contract in the corpus. | stage 04b (Concept contract) | gate |
+| `verify_rmap_companion_fresh.py` | a feature that is a concept's current source must have refreshed the canonical data-model companion before its migration is generated. | stage 04a (Storage mapping) | gate |
 | `verify_rmap_descriptor.py` | Check the committed runtime descriptor against the conceptual model. | stage 04a (Storage mapping) | gate |
 | `verify_scenario_coverage.py` | Stage gate: goal → scenario → chain → sync coverage. | stage 03 (Syncs) | gate |
 | `verify_shared_action_contracts.py` | a concept action/outcome vocabulary shared across features does not drift | project-level (every `verify_artefacts` run) | gate |

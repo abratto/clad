@@ -122,6 +122,7 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
 - [ ] Every scenario marked covered/partial/missing
 - [ ] Deployable artefact smoke-tested
 - [ ] `trace.md`, `findings.md`, `smoke.md`, `tracking.md` produced
+- [ ] (persistent profile) `durable-proof.md` records a passing durable run
 - [ ] Self-audit: `./clad verify` passes
 ## Outputs
 
@@ -130,6 +131,9 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
 - `output/findings.md` — only if Part 1 found violations
 - `output/smoke.md` — recorded smoke run (Part 2.1)
 - `output/tracking.md` — closure note (Part 2.2)
+- `output/durable-proof.md` — **only for a persistent profile**
+  (`storage.persistent=true`): the durable lane's command and result
+  (e.g. `mvn test -Dclad.postgres=true` → `PASS`)
 
 ## Verify
 
@@ -144,10 +148,18 @@ python3 ../../../../quality-gate/verify_adapter_test.py \
   --test-source-root <APP_TEST_SOURCE_ROOT> --require-enabled
 python3 ../../../../quality-gate/verify_trace_complete.py \
   --feature-root ../..
+python3 ../../../../quality-gate/verify_durable_proof.py \
+  --feature ../..
 ```
 
 - **`verify_trace_complete.py` (blocking):** `trace.md` exists and every
   scenario in the frozen acceptance spec has a matching trace entry.
+- **`verify_durable_proof.py` (blocking for a persistent profile):** when
+  `storage.persistent=true`, `output/durable-proof.md` records the durable
+  lane's `Command` (naming `clad.postgres`/`durable`) and a `Result` of `PASS`.
+  The durable lane is Docker-gated and outside `test.command`, so without this a
+  Postgres-only defect would let the feature close green (finding 19). A
+  non-persistent profile skips.
 - Confirms `trace.md` (the canonical name) is present and warns on the legacy
   `verification-trace.md`.
 - **`verify_adapter_test.py --require-enabled` (blocking):** when an adapter

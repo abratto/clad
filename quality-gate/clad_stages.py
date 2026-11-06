@@ -698,6 +698,16 @@ _TRACE_COMPLETE = Check(
     requires=lambda r: [output_dir(r, "05_verify")],
 )
 
+# A persistent profile must record a passing durable (Postgres) run at close
+# (finding 19): the durable lane is Docker-gated and outside `test.command`, so
+# without this the feature closes green while a Postgres-only defect hides.
+_DURABLE_PROOF = Check(
+    name="durable_proof",
+    script="verify_durable_proof.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: [output_dir(r, "05_verify")],
+)
+
 _COLLECTION_COVERAGE = Check(
     name="collection_coverage",
     script="verify_collection_coverage.py",
@@ -960,6 +970,17 @@ _RMAP_DESCRIPTOR = Check(
                         else _rmap_sentinel(r, "rmap_descriptor")),
 )
 
+# The canonical data-model companion must be refreshed before the migration is
+# generated from it (finding 29): aggregate Rmap treats the corpus as
+# authoritative, so a stale companion yields a silently-wrong migration.
+_RMAP_COMPANION_FRESH = Check(
+    name="rmap_companion_fresh",
+    script="verify_rmap_companion_fresh.py",
+    build_args=lambda r: ["--feature", r],
+    requires=lambda r: ([r] if _rmap_migration(r)
+                        else _rmap_sentinel(r, "rmap_migration")),
+)
+
 
 # --------------------------------------------------------------------------
 # The canonical per-UC stage order.
@@ -1007,7 +1028,7 @@ STAGES: List[Stage] = [
           # wired here `advance` happily passed 04a with a TBD layout, so the
           # checks then audited the seed's tree instead of the app's.
           checks=[_RELATIONAL_MAPPING, _FEATURE_IMPL_PATHS,
-                  _RMAP_MIGRATION, _RMAP_DESCRIPTOR]),
+                  _RMAP_COMPANION_FRESH, _RMAP_MIGRATION, _RMAP_DESCRIPTOR]),
     Stage("04b", "Concept contract", "04_implement/04b_contract",
           checks=[_CONTRACT_PARITY, _OUTCOME_ALIGNMENT, _ACTION_CHAIN,
                   _CONTRACT_MANIFEST, _CONCEPT_ADDITIVITY, _REUSED_CONTRACTS,
@@ -1024,7 +1045,8 @@ STAGES: List[Stage] = [
                   _SYNC_ROUTE_FILTERS, _SYNC_DECLARATIVE, _ACTION_LOG_ISOLATION,
                   _MUTATION_SCORE_04E, _SYNC_IMPL_MANIFEST]),
     Stage("05", "Verify", "05_verify",
-          checks=[_CLOSE_EVIDENCE, _TRACE_COMPLETE, _ADAPTER_TEST_05]),
+          checks=[_CLOSE_EVIDENCE, _TRACE_COMPLETE, _ADAPTER_TEST_05,
+                  _DURABLE_PROOF]),
 ]
 
 GATE_LABELS = {
