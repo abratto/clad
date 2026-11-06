@@ -298,9 +298,13 @@ open (approved features are grandfathered).
 "Is this the concept's current state?" is answered against three different
 baselines, each correct for its own question. They are not interchangeable:
 
-- **Additivity** (`verify_concept_additivity.py`) compares the proposal to the
-  **current canonical** `## State`: does this extend drop a line a human already
-  approved?
+- **Additivity** (`verify_concept_additivity.py`) compares the proposal to its
+  **own last committed version** (read at `--base`, default `origin/main`) when
+  one exists, else to the **current canonical** `## State`: does this extend
+  drop a line the feature previously carried? On first authoring the canonical
+  is the baseline. Comparing a *re-entering* feature to the moving canonical
+  instead would flag every line a *later* feature added after it as a "drop"
+  (finding 32); the proposal's own prior snapshot is the correct baseline.
 - **The data-model manifest** (`artifact_parsers.feature_model_concepts`) compares
   the proposal to the **predecessor feature's frozen proposal** — did *this*
   feature change the state? Comparing to the moving canonical would make an
@@ -308,9 +312,10 @@ baselines, each correct for its own question. They are not interchangeable:
 - **Promotion** (`promote_concepts.py`) compares the proposal to the **current
   canonical** again: would promoting it roll the corpus back?
 
-The first and third read the canonical because both guard against going
-backwards; the second reads the predecessor because it is about what *this*
-feature did.
+The additivity and manifest checks read the feature's own prior artefacts because
+both are about what *this* feature changed; promotion reads the canonical
+because it guards against rolling the corpus back. Additivity falls back to the
+canonical only on first authoring (no committed prior).
 
 #### The `Origin` suffix names the introducer, not the source
 

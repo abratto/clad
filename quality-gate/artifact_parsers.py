@@ -372,12 +372,17 @@ def parse_concept(path: str) -> ConceptSpec:
     State is the relational block inside the ``` fence following `## State`.
     """
     concept = os.path.basename(path).replace(".concept.md", "")
+    with open(path) as f:
+        text = f.read()
+    return parse_concept_text(text, name=concept)
+
+
+def parse_concept_text(text: str, name: str = "") -> ConceptSpec:
+    """Parse a concept spec already in memory (e.g. a committed baseline)."""
     actions: List[ActionSignature] = []
     state_lines: List[str] = []
     in_state = False
     fence_depth = 0
-    with open(path) as f:
-        text = f.read()
     for line in text.split("\n"):
         stripped = line.strip()
         if in_state:
@@ -404,7 +409,7 @@ def parse_concept(path: str) -> ConceptSpec:
         if a.name not in seen:
             seen.add(a.name)
             deduped.append(a)
-    return ConceptSpec(name=concept, purpose="",
+    return ConceptSpec(name=name, purpose="",
                        state_lines=state_lines, actions=deduped)
 
 
@@ -925,19 +930,36 @@ def parse_spec_outcomes(contract_dir: str) -> Dict[Tuple[str, str], Set[str]]:
         path = os.path.join(contract_dir, fname)
         with open(path) as f:
             content = f.read()
-        action = None
-        for line in content.split("\n"):
-            m_action = re.match(r"^###\s+`(\w+)\(", line)
-            if m_action:
-                action = m_action.group(1)
-                specs.setdefault((concept, action), set())
-                continue
-            if action is None:
-                continue
-            m_out = re.match(r"^- \*\*Outcomes.*?:\*\*\s+(.+)$", line.strip())
-            if m_out:
-                specs[(concept, action)] = set(re.findall(r"`([^`]+)`", m_out.group(1)))
-                action = None
+        specs.update(parse_contract_text(content, concept=concept))
+    return specs
+
+
+def parse_contract_text(content: str,
+                        concept: str = "") -> Dict[Tuple[str, str], Set[str]]:
+    """{(concept, action): set(outcomes)} from one contract file's text.
+
+    Used both for on-disk contracts and for a committed baseline read out of git
+    (finding 32), so a re-entry compares a contract to its own prior version.
+    `concept` should be supplied from the filename; it is only read from the
+    `# <Name> — contract` header when omitted (a git blob has no filename)."""
+    specs: Dict[Tuple[str, str], Set[str]] = {}
+    if not concept:
+        m_concept = re.search(r"^#\s+(.+?)\s+—\s+contract\s*$", content, re.MULTILINE)
+        if m_concept:
+            concept = m_concept.group(1).strip()
+    action = None
+    for line in content.split("\n"):
+        m_action = re.match(r"^###\s+`(\w+)\(", line)
+        if m_action:
+            action = m_action.group(1)
+            specs.setdefault((concept, action), set())
+            continue
+        if action is None:
+            continue
+        m_out = re.match(r"^- \*\*Outcomes.*?:\*\*\s+(.+)$", line.strip())
+        if m_out:
+            specs[(concept, action)] = set(re.findall(r"`([^`]+)`", m_out.group(1)))
+            action = None
     return specs
 
 

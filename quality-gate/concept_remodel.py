@@ -116,7 +116,7 @@ def _term_covered(term: str, noted: Set[str]) -> bool:
 
 
 def unauthorised_drops(feature_root: str, corpus: str,
-                       concept: str) -> Tuple[List[str], List[str]]:
+                       concept: str, base=None) -> Tuple[List[str], List[str]]:
     """A REMODEL's drops NOT covered by its `## Migration notes`.
 
     Migration notes rescue a `remodel` only; an `extends` uses
@@ -129,32 +129,32 @@ def unauthorised_drops(feature_root: str, corpus: str,
         with open(proposal, encoding="utf-8") as handle:
             noted = migration_notes(handle.read())
     state = [line for line in
-             vca.dropped_state_lines(feature_root, corpus, concept)
+             vca.dropped_state_lines(feature_root, corpus, concept, base=base)
              if line not in noted]
     terms = [term for term in
-             vca.dropped_contract_terms(feature_root, corpus, concept)
+             vca.dropped_contract_terms(feature_root, corpus, concept, base=base)
              if term != "<entire contract missing>"
              and not _term_covered(term, noted)]
     if "<entire contract missing>" in vca.dropped_contract_terms(
-            feature_root, corpus, concept):
+            feature_root, corpus, concept, base=base):
         terms.append("<entire contract missing>")
     return state, terms
 
 
 def unauthorised_drops_additive(feature_root: str, corpus: str,
-                                concept: str) -> Tuple[List[str], List[str]]:
+                                concept: str, base=None) -> Tuple[List[str], List[str]]:
     """An EXTEND/NEW proposal's drops, authorised only by the feature's
     `_config/additivity-exceptions.md`. Migration notes do NOT rescue an extend
     (R22) — a drop an extend needs is a `remodel`, not an exception."""
     allowed: Set[str] = set(vca.load_exceptions(feature_root))
     state = [line for line in
-             vca.dropped_state_lines(feature_root, corpus, concept)
+             vca.dropped_state_lines(feature_root, corpus, concept, base=base)
              if line not in allowed]
     terms = [term for term in
-             vca.dropped_contract_terms(feature_root, corpus, concept)
+             vca.dropped_contract_terms(feature_root, corpus, concept, base=base)
              if term != "<entire contract missing>"
              and not _term_covered(term, allowed)]
     if "<entire contract missing>" in vca.dropped_contract_terms(
-            feature_root, corpus, concept):
+            feature_root, corpus, concept, base=base):
         terms.append("<entire contract missing>")
     return state, terms

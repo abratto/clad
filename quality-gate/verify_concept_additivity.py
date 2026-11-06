@@ -50,6 +50,7 @@ Exit: 0 pass/skip, 1 fail.
 import argparse
 import os
 import re
+import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -58,6 +59,44 @@ import check_runner as cr  # noqa: E402
 
 
 EXCEPTION_FILE = os.path.join("_config", "additivity-exceptions.md")
+
+
+def _git_root(path):
+    """The nearest ancestor of `path` that is a git work tree, or None."""
+    probe = os.path.dirname(os.path.abspath(path))
+    while True:
+        if os.path.isdir(os.path.join(probe, ".git")):
+            return probe
+        parent = os.path.dirname(probe)
+        if parent == probe:
+            return None
+        probe = parent
+
+
+def _git_show(base, path):
+    """The committed text of `path` at `base`, or None when unavailable.
+
+    `base` may be any git rev (default `origin/main`). A missing ref, a path not
+    tracked at that rev, or no git at all yields None, so the caller falls back
+    to the canonical comparison — a first-authoring feature behaves exactly as
+    before (finding 32: an *earlier* feature re-entering must not be punished
+    for lines a *later* feature added to the canonical after it; its baseline is
+    its own last committed proposal, not the moving canonical).
+    """
+    if not base:
+        return None
+    repo = _git_root(path)
+    if repo is None:
+        return None
+    rel = os.path.relpath(os.path.abspath(path), repo)
+    try:
+        proc = subprocess.run(["git", "show", f"{base}:{rel}"],
+                              cwd=repo, capture_output=True, text=True)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if proc.returncode != 0:
+        return None
+    return proc.stdout
 
 
 def load_exceptions(feature_root):
@@ -89,15 +128,29 @@ def _normalised(line: str) -> str:
     return re.sub(r"\s+", " ", line).strip()
 
 
-def dropped_state_lines(feature_root, corpus, concept):
-    """Canonical `## State` lines the proposal no longer carries."""
+def dropped_state_lines(feature_root, corpus, concept, base=None):
+    """`## State` lines a proposal no longer carries, vs its correct baseline.
+
+    Baseline: the proposal's **own last committed version** at `base` when it
+    exists (a re-entry), so an earlier feature is not flagged for a line a
+    *later* feature added to the canonical after it (finding 32). On first
+    authoring there is no committed proposal, so the canonical entry is the
+    baseline — exactly the previous behaviour.
+    """
     canonical = os.path.join(corpus, concept + ".concept.md")
     proposal = os.path.join(feature_root, "stages", "02_concepts", "output",
                             concept + ".concept.md")
-    if not os.path.isfile(canonical) or not os.path.isfile(proposal):
+    if not os.path.isfile(proposal):
         return []
-    before = {_normalised(line)
-              for line in ap.parse_concept(canonical).state_lines}
+    baseline_text = _git_show(base, proposal)
+    if baseline_text is not None:
+        before = {_normalised(line)
+                  for line in ap.parse_concept_text(baseline_text).state_lines}
+    elif os.path.isfile(canonical):
+        before = {_normalised(line)
+                  for line in ap.parse_concept(canonical).state_lines}
+    else:
+        return []
     after = {_normalised(line)
              for line in ap.parse_concept(proposal).state_lines}
     return sorted(before - after)
@@ -114,19 +167,31 @@ def _authored_contracts(contract_dir):
     return any(name.endswith(".contract.md") for name in os.listdir(contract_dir))
 
 
-def dropped_contract_terms(feature_root, corpus, concept):
-    """Canonical actions and outcomes the proposal's contract no longer carries.
+def dropped_contract_terms(feature_root, corpus, concept, base=None):
+    """Actions/outcomes a proposal's contract no longer carries, vs its baseline.
 
-    Distinguishes absence from defect: a canonical contract that does not exist
-    yet is nothing to protect, but a canonical contract that exists while the
+    Baseline: the proposal's **own last committed contract** at `base` when it
+    exists (a re-entry), else the canonical contract (first authoring). An
+    earlier feature re-entering is thus not flagged for an action a *later*
+    feature added after it (finding 32) — the same fix the state arm applies.
+
+    Distinguishes absence from defect: a baseline contract that carries nothing
+    for the concept is nothing to protect, but a baseline that exists while the
     proposal's `04b_contract` carries nothing for the concept is a dropped
-    contract — a defect, not a skip. Return the sentinel `MISSING_PROPOSAL_CONTRACT`
-    marker via the second element of the tuple in that case.
+    contract — a defect, not a skip. Return the `<entire contract missing>`
+    sentinel in that case.
     """
     contract_dir = os.path.join(feature_root, "stages", "04_implement",
                                 "04b_contract", "output")
-    before = {(c, a): o for (c, a), o in ap.parse_spec_outcomes(corpus).items()
-              if c == concept}
+    contract_file = os.path.join(contract_dir, f"{concept}.contract.md")
+    baseline_text = _git_show(base, contract_file)
+    if baseline_text is not None:
+        before = {(c, a): o for (c, a), o in
+                  ap.parse_contract_text(baseline_text, concept=concept).items()
+                  if c == concept}
+    else:
+        before = {(c, a): o for (c, a), o in ap.parse_spec_outcomes(corpus).items()
+                  if c == concept}
     if not before:
         return []
     if not _authored_contracts(contract_dir):
@@ -141,7 +206,7 @@ def dropped_contract_terms(feature_root, corpus, concept):
     after = {(c, a): o for (c, a), o in ap.parse_spec_outcomes(contract_dir).items()
              if c == concept}
     if not after:
-        # Canonical contract exists, proposal produced none for this concept.
+        # Baseline contract exists, proposal produced none for this concept.
         return ["<entire contract missing>"]
     dropped = []
     for (c, action), outcomes in sorted(before.items()):
@@ -158,6 +223,11 @@ def main(argv=None) -> int:
         parser.add_argument("--feature", required=True)
         parser.add_argument("--corpus", default="",
                             help="Canonical corpus dir (default: the feature's)")
+        parser.add_argument("--base", default="origin/main",
+                            help="Git rev the proposal's own prior committed "
+                                 "version is read from (a re-entry compares to "
+                                 "it, not the moving canonical — finding 32); "
+                                 "pass '' to compare to the canonical always")
 
     def body(args: argparse.Namespace) -> int:
         feature_root = os.path.abspath(args.feature)
@@ -169,6 +239,7 @@ def main(argv=None) -> int:
         corpus = args.corpus or ap._default_corpus_dir(feature_root)
         entries = ap.parse_responsibility_map(resp)
         allowed = load_exceptions(feature_root)
+        base = args.base
 
         import concept_remodel as concept_remodel
         slug = os.path.basename(feature_root)
@@ -187,7 +258,7 @@ def main(argv=None) -> int:
             if concept_remodel.is_remodel(origin):
                 remodels += 1
                 state_drops, term_drops = concept_remodel.unauthorised_drops(
-                    feature_root, corpus, concept)
+                    feature_root, corpus, concept, base=base)
                 if state_drops:
                     failures.append(
                         f"{concept}: remodel drops canonical state line(s) with no "
@@ -207,7 +278,7 @@ def main(argv=None) -> int:
                         f"{concept_remodel.CONSENT_DIRNAME}/{concept}-<feature>.md")
                 continue
 
-            lost = [line for line in dropped_state_lines(feature_root, corpus, concept)
+            lost = [line for line in dropped_state_lines(feature_root, corpus, concept, base=base)
                     if line not in allowed]
             if lost:
                 failures.append(
@@ -215,7 +286,7 @@ def main(argv=None) -> int:
                     f"line(s) the corpus holds — this is not additive:")
                 failures.extend(f"  - {line}" for line in lost)
 
-            terms = [t for t in dropped_contract_terms(feature_root, corpus, concept)
+            terms = [t for t in dropped_contract_terms(feature_root, corpus, concept, base=base)
                      if t not in allowed]
             if terms:
                 if terms == ["<entire contract missing>"]:

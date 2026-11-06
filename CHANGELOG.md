@@ -10,6 +10,36 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.32.0] — 2026-11-06
+
+**Minor: additivity compares a re-entering feature to its own prior proposal,
+not the moving canonical.** The room-booking experiment (finding 32) found that a
+canonical concept extension by one feature forced edits to *every earlier
+feature's* frozen Stage-02 proposal, data model, and contract. `verify_concept_additivity`
+computed `dropped = current_canonical − proposal`, which cannot tell "a line I
+had and removed" from "a line a *later* feature added after me" — so re-entering
+an earlier feature (e.g. UC-02 for a cancel-flow change) blocked with
+"the proposal drops canonical line(s) `title`, `listForDay`" for lines it never
+had.
+
+- **Baseline-aware additivity.** `dropped_state_lines` and
+  `dropped_contract_terms` now read the proposal's **own last committed version**
+  at `--base` (default `origin/main`) via `git show <base>:<path>`, and compare
+  against that; when no committed prior exists (first authoring) they fall back
+  to the current canonical — byte-for-byte the previous behaviour. The `--base`
+  threads through both the state and contract arms and through the remodel
+  helpers.
+- **Promotion is unchanged.** `promote-concepts` still compares to the canonical
+  (it guards against rolling the corpus back — a different question).
+- **`artifact_parsers`** gains `parse_concept_text` and `parse_contract_text`
+  (in-memory parsing, so a committed git blob can be parsed without a temp file).
+
+**Upgrade notes.** Backward-compatible: first authoring and promotion behave
+exactly as before; a feature that genuinely removes a line it carried still
+fails. New regression tests (`test_additivity_baseline.py`, 5 cases) cover the
+re-entry pass, the own-drop failure, the canonical fallback, and both contract
+cases.
+
 ## [0.31.0] — 2026-11-06
 
 **Minor: a tooled maintenance route for additive shared-concept changes.** The
