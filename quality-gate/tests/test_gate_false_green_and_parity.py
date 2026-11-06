@@ -50,7 +50,7 @@ class SyncParityTests(unittest.TestCase):
                          "--sync-dir", str(UC00_SYNCS),
                          "--sync-impl-dir", str(impl), "--strict-trigger")
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("then mismatch", result.stdout)
+            self.assertIn("then-target mismatch", result.stdout)
 
 
 class FalseGreenTests(unittest.TestCase):
@@ -286,7 +286,8 @@ class ParityConstantsSiblingLayoutTests(unittest.TestCase):
                   "    SyncRule rule() {\n"
                   '        return rule("' + spec_name + '")\n'
                   "            .when(Web.NAME, Web.REQUEST, \"Routed\")\n"
-                  "            .then(invoke(Inventory.NAME, Inventory.LEND, args()));\n"
+                  "            .then(invoke(Inventory.NAME, Inventory.LEND, "
+                  "args(\"x\", ref(\"?x\"))));\n"
                   "    }\n}\n")
             write(concept_dir / "Web.java",
                   "final class Web {\n"

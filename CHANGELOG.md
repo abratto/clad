@@ -10,6 +10,39 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.34.0] — 2026-11-06
+
+**Minor: close five false greens in the sync gates.** An independent review
+reproduced each by mutating temporary copies; the checks below now reject what
+they previously passed.
+
+- **Malformed rule body (Stage 03).** A sync could keep a valid Sync Contract
+  Matrix while its `when`/`then` body was unparseable — the graph and transition
+  checks then had no edge and passed. New `artifact_parsers.sync_spec_problems`
+  and `verify_sync_matrix.py` fail a rule with no parseable conjunct or target.
+- **Unrelated carrier satisfying transition coverage.** `verify_sync_transition_coverage.py`
+  accepted any file set whose *count* matched ("naming differs; counts agree"),
+  so a missing transition plus an unrelated `.sync.md` passed. Active features
+  now require every derived stem; the count-fallback is kept only for a frozen
+  feature (Gate 3 approved).
+- **Slice-only implementation parity.** `verify_sync_implementation_parity.py
+  --strict-trigger` compared only the primary trigger and the first target, so a
+  changed second conjunct, route, or argument passed. It now compares every
+  conjunct, every `then` target, the route literal, and per-target argument
+  names; an unextractable (helper-based) target is *unresolved* and fails.
+- **Uncross-referenced matrix rows.** `verify_sync_matrix.py` parsed columns by
+  position and never used `--chain-dir`, so bogus row IDs (999/888) passed. It
+  now parses columns by name, checks every row, and cross-references row IDs and
+  signatures against the chain table.
+- **Advisory check mislabelled as a gate.** `verify_sync_route_filters.py` exits
+  0 on warnings but the index labelled it a gate. `clad_stages.Check` gains an
+  `advisory` flag (set on the route-filter check) so the generated index agrees.
+
+**Upgrade notes.** Backward-compatible: per-stage checks run only for the active
+stage, so completed features are not re-checked; the shipped `UC-00-login`
+example still passes the tightened matrix and parity checks. New regression
+tests (`test_sync_gate_soundness.py`, 11 cases) cover every false-green.
+
 ## [0.33.0] — 2026-11-06
 
 **Minor: close three high-severity gaps the room-booking experiment found.**

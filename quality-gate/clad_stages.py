@@ -50,6 +50,9 @@ class Check:
     build_args: Callable[[str], List[str]]
     requires: Callable[[str], List[str]]
     skip_in_artefact_gate: bool = False
+    # Advisory checks run at their stage but never block (they print WARN and
+    # exit 0); the gate index must label them "advisory", not "gate".
+    advisory: bool = False
 
 
 # --------------------------------------------------------------------------
@@ -368,6 +371,7 @@ _SYNC_ROUTE_FILTERS = Check(
         "--sync-impl-dir", _sync_impl_dir(r),
     ],
     requires=lambda r: [_sync_impl_dir(r)],
+    advisory=True,
 )
 
 _IMPL_PARITY = Check(

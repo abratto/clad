@@ -73,9 +73,9 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_sync_declarative.py` | Gate: sync implementations must be declarative. | stage 04e (Sync implementation) | gate |
 | `verify_sync_flow_pin.py` | every non-bootstrap sync names its flow root last | project-level (every `verify_artefacts` run) | gate |
 | `verify_sync_implementation_parity.py` | every Stage 03 sync has a matching `SyncRule.of(...)` implementation. | stage 04e (Sync implementation) | gate |
-| `verify_sync_matrix.py` | Stage gate: every sync has a complete Sync Contract Matrix. | stage 03 (Syncs) | gate |
+| `verify_sync_matrix.py` | Stage 03 gate: every sync has a complete Sync Contract Matrix, a well-formed `when`/`then` rule, and matrix rows that resolve against the chain table. | stage 03 (Syncs) | gate |
 | `verify_sync_overlap.py` | detects overlapping sync operations (deadlock risk). | stage 03 (Syncs) | gate |
-| `verify_sync_route_filters.py` | R11: route scoping on shared-trigger syncs. | stage 04e (Sync implementation) | gate |
+| `verify_sync_route_filters.py` | R11: route scoping on shared-trigger syncs. | stage 04e (Sync implementation) | advisory |
 | `verify_sync_then_shape.py` | a sync `then` carries the authored result, not a transport frame | project-level (every `verify_artefacts` run) | gate |
 | `verify_sync_transition_coverage.py` | Stage 03: every chain-table invocation edge must have a sync file. | stage 03 (Syncs) | gate |
 | `verify_test_naming.py` | Advisory: unit-test naming conventions. | by hand (advisory tooling) | gate |

@@ -54,7 +54,8 @@ PRE_COMMIT = [
 ADVISORY = {
     "verify_code_refs.py", "verify_governance_hygiene.py", "verify_concept_matrix.py",
     "verify_shared_triggers_current.py", "verify_close_evidence.py", "verify_sync_cycle_graph.py",
-    "verify_sync_overlap.py", "verify_collection_coverage.py", "verify_changelog_claims.py",
+    "verify_sync_overlap.py", "verify_sync_route_filters.py",
+    "verify_collection_coverage.py", "verify_changelog_claims.py",
 }
 
 
@@ -101,7 +102,8 @@ def collect():
             when = f"stage {stage.id} ({stage.label})"
             if check.skip_in_artefact_gate:
                 when += " — run by the profile test command"
-            add(check.script, when, advisory=False)
+            add(check.script, when,
+                advisory=False if not check.advisory else True)
 
     for script, why in PROJECT_LEVEL:
         add(script, "project-level (every `verify_artefacts` run)")

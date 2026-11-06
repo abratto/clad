@@ -21,6 +21,7 @@ import sys
 
 import check_runner as cr
 import generate_syncs as gs
+from verify_stage_sequence import APPROVED_STATES, gate_status
 
 
 def main(argv=None) -> int:
@@ -40,13 +41,22 @@ def main(argv=None) -> int:
                 f"{len(expected)} derived chain transition(s) all present as "
                 f"sync files")
 
-        # Frozen/historical features (e.g. the UC-00 worked example) may carry
-        # pre-v0.6 hand-authored names, so a stem mismatch is not a missing
-        # transition when the counts agree. Fail only on a genuine shortfall.
-        if len(present) >= len(expected):
+        # Exact matching for a feature still being authored: a missing derived
+        # stem is a missing transition, full stop. An unrelated `.sync.md` that
+        # happens to make the count match must NOT satisfy coverage (finding:
+        # "transition coverage can mistake an unrelated file for a missing
+        # transition"). Only a frozen feature (Gate 3 approved) may carry legacy
+        # hand-authored names, and even then a shortfall still fails.
+        resume = os.path.join(feature, "RESUME.md")
+        frozen = False
+        if os.path.isfile(resume):
+            with open(resume, encoding="utf-8", errors="replace") as fh:
+                frozen = gate_status(fh.read(), 3) in APPROVED_STATES
+
+        if frozen and len(present) >= len(expected):
             return cr.Verdict.ok(
                 f"{len(expected)} chain transition(s) covered by {len(present)} "
-                f"sync file(s) (naming differs; counts agree)")
+                f"sync file(s) (frozen feature: legacy naming, counts agree)")
 
         verdict = cr.Verdict.fail(
             f"{len(missing)} chain transition(s) have no sync file "

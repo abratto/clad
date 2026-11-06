@@ -808,6 +808,28 @@ def parse_syncs(sync_dir: str) -> List[SyncSpec]:
             for s in [parse_sync(os.path.join(sync_dir, fname))] if s]
 
 
+def sync_spec_problems(spec: Optional[SyncSpec]) -> List[str]:
+    """Why a parsed sync is incomplete or unparseable (empty list = well-formed).
+
+    A malformed `when`/`then` body parses to a SyncSpec with an empty trigger or
+    no targets, and the graph/transition checks then have no edge to analyse —
+    a silent false green (finding: "Stage 03 can accept a malformed sync rule").
+    Every Stage-03 sync must declare at least one complete conjunct and at least
+    one `then` target.
+    """
+    if spec is None:
+        return ["not a readable *.sync.md"]
+    problems: List[str] = []
+    if not spec.conjuncts:
+        problems.append("no parseable `when` conjunct")
+    for i, conjunct in enumerate(spec.conjuncts, 1):
+        if not conjunct.concept or not conjunct.action:
+            problems.append(f"`when` conjunct {i} has an empty concept/action")
+    if not spec.then_targets:
+        problems.append("no parseable `then` target (`Concept/action:`)")
+    return problems
+
+
 def parse_sync_actions(sync_dir: str) -> Set[str]:
     """Set of Concept/action from sync `then` clauses."""
     actions: Set[str] = set()

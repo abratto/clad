@@ -51,7 +51,18 @@ _CONJ_HEAD = re.compile(
     r'\.when\(\s*conj\(\s*"(\w+)"\s*,\s*("?)([A-Za-z_][\w.]*)\2\s*,'
     r'\s*("?)([A-Za-z_][\w.]*)\4\s*,\s*("?)([A-Za-z_0-9]\w*)\6\s*\)')
 _SYNC_RULE_INVOKE = re.compile(
-    r'invoke\(\s*("?)([A-Za-z_]\w*)\1\s*,\s*("?)([A-Za-z_]\w*)\3')
+    r'invoke\(\s*("?)([A-Za-z_][\w.]*)\1\s*,\s*("?)([A-Za-z_][\w.]*)\3')
+# Any `conj("name", Concept, action, outcome)` (not only the first after .when).
+_CONJ_ANY = re.compile(
+    r'conj\(\s*"(\w+)"\s*,\s*("?)([A-Za-z_][\w.]*)\2\s*,'
+    r'\s*("?)([A-Za-z_][\w.]*)\4\s*,\s*("?)([A-Za-z_0-9]\w*)\6\s*\)')
+# A route matcher literal: `Map.of("route", "login")` / `... lit("login")`.
+_ROUTE_LIT = re.compile(r'"route"\s*,\s*(?:lit\(\s*)?"([^"]+)"')
+# `invoke(Concept, action, args("name", <factory>(...), ...))`
+_INVOKE_ARGS = re.compile(
+    r'invoke\(\s*("?)(\w+)\1\s*,\s*("?)(\w+)\3\s*,\s*'
+    r'args\(((?:[^()]|\([^()]*\))*)\)', re.DOTALL)
+_ARG_NAME = re.compile(r'"(\w+)"\s*,\s*(?:[A-Za-z_]\w*\s*\()')
 
 
 def sync_invoke_targets(symbols, text):
@@ -101,21 +112,45 @@ def normalize_token(raw):
     return re.sub(r"[^a-z0-9]", "", (raw or "").strip().lower())
 
 
+def _parse_dir(sync_dir):
+    """`[(SyncSpec, path)]` for every *.sync.md in a directory."""
+    out = []
+    if not os.path.isdir(sync_dir):
+        return out
+    for fname in sorted(os.listdir(sync_dir)):
+        if not fname.endswith(".sync.md"):
+            continue
+        path = os.path.join(sync_dir, fname)
+        spec = ap.parse_sync(path)
+        if spec:
+            out.append((spec, path))
+    return out
+
+
 def collect_specs(sync_dir, features_dir):
     specs, failures = [], []
     if sync_dir:
         if os.path.isdir(sync_dir):
-            specs.extend(ap.parse_syncs(sync_dir))
+            specs.extend(_parse_dir(sync_dir))
         else:
             failures.append((sync_dir, f"sync directory not found: {sync_dir}"))
     if features_dir:
         if os.path.isdir(features_dir):
             for root, _dirs, _files in os.walk(features_dir):
                 if "03_syncs/output" in root:
-                    specs.extend(ap.parse_syncs(root))
+                    specs.extend(_parse_dir(root))
         else:
             failures.append((features_dir, f"features directory not found: {features_dir}"))
     return specs, failures
+
+
+def spec_route_literals(path):
+    """`route: "x"` / `route = "x"` literals in a sync spec's when/where blocks."""
+    if not path or not os.path.isfile(path):
+        return set()
+    text = open(path, encoding="utf-8").read()
+    return {f"route={m.group(1)}"
+            for m in re.finditer(r'route\s*[:=]\s*"([^"]+)"', text)}
 
 
 def collect_java_syncs(sync_impl_dir):
@@ -155,11 +190,25 @@ def collect_java_syncs(sync_impl_dir):
                     outcome_raw = m_join.group(7)
 
                 outcome = symbols.get(outcome_raw, outcome_raw) if outcome_raw else ""
+                conjunctions = [
+                    (symbols.get(m.group(3), m.group(3)),
+                     symbols.get(m.group(5), m.group(5)),
+                     symbols.get(m.group(7), m.group(7)))
+                    for m in _CONJ_ANY.finditer(body)
+                ]
+                if not conjunctions and concept:
+                    conjunctions = [(symbols.get(concept, concept),
+                                     symbols.get(action, action),
+                                     symbols.get(outcome_raw, outcome_raw) if outcome_raw else "")]
+                routes = sorted({f"route={m.group(1)}" for m in _ROUTE_LIT.finditer(body)})
                 rules[name] = {
                     "symbols": {k: v for k, v in symbols.items()},
                     "path": path,
                     "trigger": (concept, action, outcome or None),
                     "then_targets": sync_invoke_targets(symbols, body),
+                    "conjuncts": conjunctions,
+                    "route_literals": routes,
+                    "_body": body,
                 }
     return rules, []
 
@@ -193,6 +242,53 @@ def then_matches(spec, targets):
     )
 
 
+def java_invoke_args(body, symbols):
+    """`{(concept, action): set(arg names)}` from inline `invoke(...args(...))`."""
+    out = {}
+    for m in _INVOKE_ARGS.finditer(body):
+        concept = symbols.get(m.group(2), m.group(2))
+        action = symbols.get(m.group(4), m.group(4))
+        out[(concept, action)] = set(_ARG_NAME.findall(m.group(5)))
+    return out
+
+
+def spec_then_args(path):
+    """`{(concept, action): set(arg names)}` from a spec's `then { ... }` block."""
+    out = {}
+    if not path or not os.path.isfile(path):
+        return out
+    text = open(path, encoding="utf-8").read()
+    m = re.search(r"then\s*\{(.*?)\}", text, re.DOTALL)
+    if not m:
+        return out
+    for tm in re.finditer(r"([A-Za-z]+)/([A-Za-z]+)\s*:\s*\[([^\]]*)\]",
+                          m.group(1)):
+        names = set()
+        for arg in tm.group(3).split(";"):
+            am = re.match(r"\s*(\w+)\s*:", arg)
+            if am:
+                names.add(am.group(1))
+        out[(tm.group(1), tm.group(2))] = names
+    return out
+
+
+def _conj_set(pairs):
+    return {(normalize_token(c), normalize_token(a), normalize_token(o))
+            for c, a, o in pairs}
+
+
+def _target_set(pairs):
+    return {(normalize_token(c), normalize_token(a)) for c, a in pairs}
+
+
+def _route_set(items):
+    return {normalize_token(i) for i in items}
+
+
+def _fmt(items):
+    return ", ".join(sorted(str(i) for i in items)) or "<none>"
+
+
 def main(argv=None) -> int:
     def configure(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--sync-dir", default="", help="Path to one 03_syncs/output directory.")
@@ -210,7 +306,7 @@ def main(argv=None) -> int:
         rules, java_failures = collect_java_syncs(args.sync_impl_dir)
         failures.extend(java_failures)
 
-        for spec in specs:
+        for spec, spec_path in specs:
             rule = rules.get(spec.name)
             label = f"{spec.filename} ({spec.name})"
             if not rule:
@@ -224,10 +320,55 @@ def main(argv=None) -> int:
                     label, f"trigger mismatch: expected "
                            f"{spec.trigger_concept}/{spec.trigger_action}[{spec.trigger_outcome}], "
                            f"found {c}/{a}[{o}]"))
-            if args.strict_trigger and spec.then_targets and not then_matches(spec, rule["then_targets"]):
-                tc, ta = spec.then_targets[0]
-                failures.append((label, f"then mismatch: expected {tc}/{ta}, "
-                                        f"found {rule['then_targets']}"))
+
+            if not args.strict_trigger:
+                continue
+
+            # Full parity: EVERY conjunct, EVERY then target, and the route
+            # literals must agree. The old check compared only the primary
+            # trigger and the first target, so a rule could keep the primary
+            # trigger and target while changing its second conjunct, route, or
+            # argument sources and still pass (finding 3).
+            spec_conjs = _conj_set(
+                [(c.concept, c.action, c.outcome) for c in spec.conjuncts])
+            impl_conjs = _conj_set(rule.get("conjuncts", []))
+            if spec_conjs and not impl_conjs:
+                failures.append((label, "unresolved: cannot statically extract the "
+                                        "rule's conjuncts to verify parity"))
+            elif spec_conjs != impl_conjs:
+                failures.append((
+                    label, f"conjunct mismatch: spec {_fmt(spec_conjs)} vs "
+                           f"impl {_fmt(impl_conjs)}"))
+
+            spec_targets = _target_set(spec.then_targets)
+            impl_targets = _target_set(rule.get("then_targets", []))
+            if spec_targets and not impl_targets:
+                failures.append((label, "unresolved: the rule's `then` has no inline "
+                                        "`invoke(...)` target to verify (helper-based "
+                                        "targets are unverifiable)"))
+            elif spec_targets != impl_targets:
+                failures.append((
+                    label, f"then-target mismatch: spec {_fmt(spec_targets)} vs "
+                           f"impl {_fmt(impl_targets)}"))
+
+            spec_routes = _route_set(spec_route_literals(spec_path))
+            impl_routes = _route_set(rule.get("route_literals", []))
+            if spec_routes and impl_routes != spec_routes:
+                failures.append((
+                    label, f"route-literal mismatch: spec {_fmt(spec_routes)} vs "
+                           f"impl {_fmt(impl_routes)}"))
+
+            # Argument mapping: the arg names each target receives must agree
+            # (the spec's binding VALUES live in prose, so only names are
+            # structurally comparable; a renamed/missing arg is a real drift).
+            spec_args = spec_then_args(spec_path)
+            impl_args = java_invoke_args(body=rule.get("_body", ""),
+                                         symbols=rule.get("symbols", {}))
+            for key, names in spec_args.items():
+                if key in impl_args and impl_args[key] != names:
+                    failures.append((
+                        label, f"argument mismatch for {key[0]}/{key[1]}: "
+                               f"spec {_fmt(names)} vs impl {_fmt(impl_args[key])}"))
 
         if failures:
             print(f"FAIL: {len(failures)} sync implementation parity violation(s):\n")
