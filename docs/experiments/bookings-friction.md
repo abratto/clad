@@ -25,16 +25,18 @@ deadlock at 04b), #25 (iterative readiness deadlock), #30 (`chain_outcomes`
 latent no-op).
 
 **Systemic / methodology (documented, need a design change not a patch):**
-#16, #29 (companion lag before 04b/04a), #32 (canonical change ripples into
-frozen proposals), #26/#34 (iterative change spanning a gate needs mid-flow
-re-approval), #22 (new outcome on a reused concept reopens 01a), #10 (body field
-named `outcome` collides with the `Web.respond` token), #19 (Postgres proof
-outside `test.command`).
+#16, #29 (companion lag before 04b/04a), #26/#34 (iterative change spanning a
+gate needs mid-flow re-approval), #22 (new outcome on a reused concept reopens
+01a), #10 (body field named `outcome` collides with the `Web.respond` token),
+#19 (Postgres proof outside `test.command`).
 
 **Fixed after the initial release:** #31 (R22 current-source wall for a
 flow-owning feature) — **0.31.0** adds `./clad promote-concepts --maintenance`
 plus the `Dependent re-entry` link, so an additive shared-concept change is
-published by the maintenance route without relaxing R22.
+published by the maintenance route without relaxing R22. #32 (canonical change
+ripples into frozen proposals) — **0.32.0** makes additivity compare a
+re-entering feature to its own prior committed proposal, not the moving
+canonical.
 
 **Environment / test-isolation:** #27 (`test_iterative_change_coupling` fails
 whenever any `_changes/` record is active — baseline unreproducible mid-change),
