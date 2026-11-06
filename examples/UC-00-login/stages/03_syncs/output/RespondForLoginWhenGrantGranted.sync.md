@@ -12,6 +12,9 @@ when {
     Session/grant: [ userId: ?user ] => [ granted ; sessionId: ?sid ]
     requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ; ... ]
 }
+where {
+    bind ( triggerField("sessionId") as ?sid )
+}
 then {
     Web/respond: [ status: 200 ; sessionToken: ?sid ]
 }

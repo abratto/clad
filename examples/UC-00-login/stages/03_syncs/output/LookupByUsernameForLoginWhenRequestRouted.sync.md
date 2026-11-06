@@ -11,6 +11,9 @@ sync LookupByUsernameForLoginWhenRequestRouted
 when {
     Web/request: [ route: "login" ; method: "POST" ; username: ?u ; password: ?p ] => [ routed ]
 }
+where {
+    bind ( triggerInput("username") as ?u )
+}
 then {
     UserNaming/lookupByUsername: [ username: ?u ]
 }

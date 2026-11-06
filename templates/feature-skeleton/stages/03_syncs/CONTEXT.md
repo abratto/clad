@@ -130,6 +130,17 @@ It is not a filter (no computation, no JSON — R3), it fails closed on an unbou
 subject, and an aggregate over a possibly-empty set must use `collectBy`, since a
 `where` that ends with no frames does not fire.
 
+**The `where` block is parsed and machine-checked.** `verify_sync_matrix.py`
+fails a `where { }` block it cannot parse (a malformed clause is a Stage-03
+defect, not a silent "nothing to check"). `verify_sync_implementation_parity.py
+--strict-trigger` compares every parsed clause — each `bind` and its **source**
+(`triggerInput`/`triggerField`/`siblingInput`/`stateRead`/…), each `absent`/
+`fanOut`/`collectBy`/`collect`, and `OPTIONAL` — against the Java
+`.where(...)`. So binding provenance is now part of the contract: a rule whose
+implementation reads a different source than the spec declares is a parity
+failure, not an unverifiable pass. The grammar is the one documented in
+`templates/sync.md`.
+
 
 The sync file stem and `sync <Name>` header must match the naming rule
 from `SYNCHRONIZATIONS.md` (grammar v3, action-first and concept-free): the

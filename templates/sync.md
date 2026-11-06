@@ -57,6 +57,14 @@ then {
 }
 ```
 
+The `where { }` block above is **machine-checked**, not prose: the grammar is
+parsed by `quality-gate/sync_where.py`, validated at Stage 03
+(`verify_sync_matrix.py` fails an unparseable block), and compared clause-by-
+clause — each `bind` and its source, each `absent`/`fanOut`/`collect`/`OPTIONAL`
+— against the Java `.where(...)` by
+`verify_sync_implementation_parity.py --strict-trigger`. Binding provenance is
+therefore part of the contract.
+
 Optional: a `when` may **constrain trigger input values** (input matcher,
 R15): `Web/request: [ route: "profile" ] => [ routed ]`. Every constrained
 key must be present with the equal value for the sync to fire. Use it for

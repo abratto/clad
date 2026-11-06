@@ -12,6 +12,9 @@ when {
     PasswordAuth/check: [ userId: ?user ; password: ?p ] => [ ok ; userId: ?user ]
     requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ; ... ]
 }
+where {
+    bind ( triggerField("userId") as ?user )
+}
 then {
     Session/grant: [ userId: ?user ]
 }

@@ -350,7 +350,13 @@ the query result.
 ## Where clause expressiveness
 
 The paper's `where` clause is a **declarative query language** that
-CLAD adopts in full. Within the `where { }` block, a sync may use:
+CLAD adopts in full. Within the `where { }` block, a sync may use the forms
+below. The grammar is **machine-checked**: `quality-gate/sync_where.py` parses
+it, Stage 03 (`verify_sync_matrix.py`) fails an unparseable block, and
+`verify_sync_implementation_parity.py --strict-trigger` compares each clause and
+its binding source against the Java `.where(...)` — so a rule whose
+implementation reads a different source than the spec declares is a parity
+failure, not an unverifiable pass (experiment finding 3).
 
 ### Identifier minting
 

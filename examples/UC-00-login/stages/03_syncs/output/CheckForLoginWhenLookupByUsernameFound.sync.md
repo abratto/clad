@@ -12,6 +12,10 @@ when {
     UserNaming/lookupByUsername: [ username: ?u ] => [ found ; userId: ?user ]
     requested: Web/request: [ route: "login" ; method: "POST" ] => [ Routed ; ... ]
 }
+where {
+    bind ( triggerField("userId") as ?user )
+    bind ( siblingInput(Web/request, "password") as ?p )
+}
 then {
     PasswordAuth/check: [ userId: ?user ; password: ?p ]
 }

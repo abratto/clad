@@ -101,6 +101,15 @@ class SyncMatrixSoundnessTests(unittest.TestCase):
             self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
             self.assertIn("malformed sync rule", r.stdout)
 
+    def test_malformed_where_block_fails(self):
+        doc = sync_doc().replace(
+            "then {", "where {\n    this is not a where clause\n}\nthen {", 1)
+        with tempfile.TemporaryDirectory() as tmp:
+            sd = make_sync_dir(tmp, doc)
+            r = run(MATRIX, "--sync-dir", str(sd))
+            self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+            self.assertIn("malformed `where` block", r.stdout)
+
     def test_bogus_row_ids_fail_against_chain(self):
         with tempfile.TemporaryDirectory() as tmp:
             sd = make_sync_dir(tmp, sync_doc(source="999", target="888"))
@@ -193,6 +202,9 @@ when {
     Thing/create: [ name: ?n ] => [ Created ; id: ?id ]
     requested: Web/request: [ route: "things" ; method: "POST" ] => [ Routed ; ... ]
 }
+where {
+    bind ( triggerField("id") as ?user )
+}
 then {
     Session/grant: [ userId: ?user ]
 }
@@ -266,6 +278,28 @@ class ImplementationParitySoundnessTests(unittest.TestCase):
             r = self._run(tmp, bad)
             self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
             self.assertIn("argument mismatch", r.stdout)
+
+    def test_where_binding_source_mismatch_fails(self):
+        """Changing a binding's source (same var) is a provenance drift."""
+        bad = GOOD_JAVA.replace('triggerField("id")', 'triggerInput("id")')
+        with tempfile.TemporaryDirectory() as tmp:
+            r = self._run(tmp, bad)
+            self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+            self.assertIn("where-clause mismatch", r.stdout)
+
+    def test_impl_where_without_spec_block_is_unresolved(self):
+        """A spec with no `where { }` block cannot verify an impl that has
+        `.where(...)` — that is unresolved, not a silent pass."""
+        spec_without_where = SPEC.split("where {")[0] + "then {" + \
+            SPEC.split("then {", 1)[1]
+        with tempfile.TemporaryDirectory() as tmp:
+            sd, impl = make_parity_world(tmp, GOOD_JAVA)
+            (sd / "GrantForThingsWhenCreateCreated.sync.md").write_text(
+                spec_without_where, encoding="utf-8")
+            r = run(PARITY, "--sync-dir", str(sd), "--sync-impl-dir", str(impl),
+                    "--strict-trigger")
+            self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+            self.assertIn("unresolved", r.stdout)
 
     def test_helper_based_then_is_unresolved_not_passed(self):
         """A `then` with no inline invoke(...) cannot be verified — it must be

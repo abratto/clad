@@ -35,6 +35,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import artifact_parsers as ap  # noqa: E402
 import check_runner as cr  # noqa: E402
+import sync_where as sw  # noqa: E402
 
 REQUIRED_COLUMNS = ("Source row", "Target row", "when", "then", "Allowed literals")
 
@@ -142,6 +143,14 @@ def check_sync_matrix(sync_dir, chain_dir=None):
 
         with open(path, encoding="utf-8") as f:
             content = f.read()
+
+        # A structured `where { ... }` block must parse (its grammar is the
+        # shared binding-provenance contract; a malformed one cannot be checked
+        # against the implementation).
+        try:
+            sw.spec_where_clauses(content)
+        except sw.WhereParseError as exc:
+            failures.append((fname, f"malformed `where` block: {exc}"))
         if "## Sync Contract Matrix" not in content:
             failures.append((fname, "missing ## Sync Contract Matrix heading"))
             continue

@@ -29,6 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import check_runner as cr  # noqa: E402
 
 import artifact_parsers as ap
+import sync_where as sw
 
 
 SYNC_SUFFIX = ".sync.md"
@@ -369,6 +370,31 @@ def main(argv=None) -> int:
                     failures.append((
                         label, f"argument mismatch for {key[0]}/{key[1]}: "
                                f"spec {_fmt(names)} vs impl {_fmt(impl_args[key])}"))
+
+            # Binding provenance: the structured `where { ... }` clauses must
+            # match the Java `.where(...)` clauses. A spec that declares no
+            # `where` block but whose implementation does is UNRESOLVED (the
+            # provenance cannot be compared) — not a silent pass.
+            try:
+                spec_where = sw.spec_where_clauses(
+                    open(spec_path, encoding="utf-8").read())
+            except sw.WhereParseError as exc:
+                failures.append((label, f"malformed `where` block: {exc}"))
+                spec_where = None
+            impl_where = sw.parse_java_where(
+                sw.extract_java_where(rule.get("_body", "")),
+                rule.get("symbols", {}))
+            if spec_where is None and impl_where:
+                failures.append((
+                    label, "unresolved: the implementation has `where` clauses "
+                           "but the spec declares no `where { ... }` block to "
+                           "compare binding provenance against"))
+            elif spec_where is not None and \
+                    sw.clause_signatures(spec_where) != sw.clause_signatures(impl_where):
+                failures.append((
+                    label, "where-clause mismatch: spec "
+                           f"{_fmt(sw.clause_signatures(spec_where))} vs impl "
+                           f"{_fmt(sw.clause_signatures(impl_where))}"))
 
         if failures:
             print(f"FAIL: {len(failures)} sync implementation parity violation(s):\n")

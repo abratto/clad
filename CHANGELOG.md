@@ -10,6 +10,37 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.35.0] — 2026-11-06
+
+**Minor: the sync `where` grammar is parsed and machine-checked.** The last gap
+from the sync-gate review: "strict" implementation parity compared the trigger,
+targets, route and argument names but not **binding provenance** — a rule could
+change which source a binding reads and still pass. The `where` grammar was
+documented (`templates/sync.md`, `SYNCHRONIZATIONS.md`) but never parsed.
+
+- **New `quality-gate/sync_where.py`.** Parses the documented forms —
+  `bind ( <source> as ?var )`, `Concept: { ?id field: ?var }`, `OPTIONAL { … }`,
+  `BIND ( ?x AS ?y )`, `fanOut ( … )`, `absent ( … )`, `collect [distinct|by ?k]
+  ( … )` — into a normalized clause list, and parses the Java `.where(...)` DSL
+  into the same list (resolving constant concept/action names).
+- **Stage 03 validates it.** `verify_sync_matrix.py` fails a `where { }` block it
+  cannot parse (a malformed clause is a Stage-03 defect, not "nothing to check").
+- **Parity compares it.** `verify_sync_implementation_parity.py
+  --strict-trigger` now compares every parsed clause and its **source**; a spec
+  with no `where` block whose implementation has `.where(...)` is *unresolved*
+  (fail), not a silent pass.
+
+Reviewing the paper authors' ConceptBox engine (`frames.query` / `filter` /
+`collectAs`) confirmed the model; CLAD already documents the equivalent
+declarative grammar, so this parses and enforces it rather than inventing a
+parallel one. The worked `UC-00-login` example is migrated to the structured
+`where { }` blocks to dogfood the grammar.
+
+**Upgrade notes.** Backward-compatible: a spec with only the prose "Where clause
+patterns" table is grandfathered, and the generator's `bind ( <source> as ?var )`
+placeholder is accepted. New tests: `test_sync_where_grammar.py` (9) and the
+`where` cases in `test_sync_gate_soundness.py`.
+
 ## [0.34.0] — 2026-11-06
 
 **Minor: close five false greens in the sync gates.** An independent review
