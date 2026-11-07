@@ -1,6 +1,7 @@
 package com.example.app.flows;
 
 import com.example.app.api.LoginRequest;
+import dev.legible.engine.EvidenceWriter;
 import dev.legible.engine.FlowRecord;
 import dev.legible.engine.SyncEngine;
 import io.micronaut.http.HttpRequest;
@@ -56,6 +57,8 @@ class LoginFlowTest {
                         "PasswordAuth.check", "Session.grant", "Web.respond"),
                 latestActionChain());
         assertNoStuckActions();
+        capture("successful-login", "LoginFlowTest.successfulLoginReturnsSessionToken",
+                sessionReadback());
     }
 
     @Test
@@ -73,6 +76,8 @@ class LoginFlowTest {
                 List.of("Web.request", "UserNaming.lookupByUsername", "Web.respond"),
                 latestActionChain());
         assertNoStuckActions();
+        capture("unknown-user", "LoginFlowTest.unknownUserReturns401",
+                sessionReadback());
     }
 
     /** `concept.action` for every archived action of the most recent flow, in order. */
@@ -86,6 +91,25 @@ class LoginFlowTest {
                 .filter(a -> a.get("outcome") != null)
                 .map(a -> a.get("concept") + "." + a.get("action"))
                 .toList();
+    }
+
+    /** Emit machine-readable runtime evidence (with persisted read-back). */
+    private void capture(String scenario, String test, Map<String, Object> readback) {
+        EvidenceWriter.to(System.getProperty(
+                        "clad.evidence.dir", "target/acceptance-evidence"))
+                .write(scenario, engine, test, readback);
+    }
+
+    /** The persisted Session facts, read back from the (possibly durable) store. */
+    private Map<String, Object> sessionReadback() {
+        List<Map<String, Object>> rows = engine.facts().region("Session").facts()
+                .stream()
+                .map(f -> Map.<String, Object>of(
+                        "subject", f.subject(),
+                        "predicate", f.predicate(),
+                        "value", f.value()))
+                .toList();
+        return Map.of("Session", rows);
     }
 
     private void assertNoStuckActions() {

@@ -53,6 +53,12 @@ jobs:
           python-version: '3.11'
       - name: Artefact pipeline gate
         run: python3 quality-gate/verify_artefacts.py
+      # Release-profile consistency: a repo declaring `release.enforce=true` must
+      # run mutation (require=true) and, if persistent, record durable proof.
+      # Self-activating — a template (release.enforce=false) passes with SKIP; the
+      # enforcement logic is covered by the quality-gate regression tests.
+      - name: Release profile consistency
+        run: python3 quality-gate/verify_release_profile.py --repo-root .
       - name: Install test dependencies
         run: python3 -m pip install pytest
       - name: Quality-gate regression tests
@@ -76,6 +82,18 @@ jobs:
       # when validating those.
       - name: mvn verify (java-legible)
         run: mvn -B -ntp verify -f reference-impl/pom.xml -pl java-legible -am
+      # Runtime evidence, produced not predicted: the flow tests emitted a flow
+      # payload per scenario; assemble it and compare to the frozen Acceptance
+      # Spec. This is the machine-checked "the running app produced the approved
+      # chain, status, and body" gate (A of the testing-discipline change).
+      - name: Acceptance evidence (produced, not predicted)
+        run: |
+          python3 quality-gate/capture_observations.py \
+            --flows-dir reference-impl/java-legible/target/acceptance-evidence \
+            --out /tmp/acceptance-evidence.json
+          python3 quality-gate/verify_acceptance_evidence.py \
+            --feature-root examples/UC-00-login \
+            --evidence /tmp/acceptance-evidence.json
 
   mutation-gate:
     name: Mutation gate (java-legible, JDK 21)

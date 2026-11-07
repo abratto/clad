@@ -131,6 +131,10 @@ Once `trace.md` is clean and `findings.md` is empty (or absent), do
 - `output/findings.md` — only if Part 1 found violations
 - `output/smoke.md` — recorded smoke run (Part 2.1)
 - `output/tracking.md` — closure note (Part 2.2)
+- `output/acceptance-evidence.json` — **machine-produced** runtime evidence per
+  Acceptance-Spec scenario (token chain, status, body; `readback` for a
+  persistent profile), assembled by `capture_observations.py` from what the flow
+  tests emitted. Compared to the frozen spec by `verify_acceptance_evidence.py`.
 - `output/durable-proof.md` — **only for a persistent profile**
   (`storage.persistent=true`): the durable lane's command and result
   (e.g. `mvn test -Dclad.postgres=true` → `PASS`)
@@ -150,10 +154,18 @@ python3 ../../../../quality-gate/verify_trace_complete.py \
   --feature-root ../..
 python3 ../../../../quality-gate/verify_durable_proof.py \
   --feature ../..
+python3 ../../../../quality-gate/verify_acceptance_evidence.py \
+  --feature-root ../..
 ```
 
 - **`verify_trace_complete.py` (blocking):** `trace.md` exists and every
   scenario in the frozen acceptance spec has a matching trace entry.
+- **`verify_acceptance_evidence.py` (blocking):** `acceptance-evidence.json`
+  carries runtime evidence the flow tests produced, and every scenario's
+  observed token chain, status, and response fields match the frozen Acceptance
+  Spec (plus a persisted `readback` for a persistent profile). This separates
+  "the test predicts this path" from "the running app produced this path". A
+  legacy feature (pre-evidence `verification-trace.md`) is grandfathered.
 - **`verify_durable_proof.py` (blocking for a persistent profile):** when
   `storage.persistent=true`, `output/durable-proof.md` records the durable
   lane's `Command` (naming `clad.postgres`/`durable`) and a `Result` of `PASS`.

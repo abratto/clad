@@ -11,7 +11,11 @@ Delete this comment before committing. -->
 > Frozen at Gate 3: editing this file after approval stales the gate and
 > requires human re-approval (`verify_stage_sequence.py` gate content-hash).
 > `verify_acceptance_binding.py` blocks the stage unless every use-case
-> scenario has a section and every `Test:` binding resolves.
+> scenario has a section and every `Test:` binding resolves. At Stage 05
+> `verify_acceptance_evidence.py` compares each scenario's **machine-produced**
+> runtime evidence (token chain, status, response fields) to this file — so the
+> `Expected token chain` and `Expected response` lines are executable contract,
+> not prose. Keep them exact.
 
 ## Scenario: `<scenario-name>`
 

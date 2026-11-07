@@ -19,6 +19,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `rmap.py` | Rmap derivation and SQL rendering — the single authoritative implementation. | stage 04a (Storage mapping) | gate |
 | `sync_information.py` | sync_information.py — advisory linter: each sync's A/B/C/D binding profile, the feature aggregate, and two advisory findings. | stage 03 (Syncs) | gate |
 | `verify_acceptance_binding.py` | Stage gate: Acceptance Spec ↔ native tests. | stage 04c (Acceptance tests) | gate |
+| `verify_acceptance_evidence.py` | Stage 05: the running app produced the approved Acceptance-Spec behaviour, not just a test that predicts it. | stage 05 (Verify) | gate |
 | `verify_action_chain.py` | Stage gate: action names flow consistently through the full artefact chain: responsibility map → chain table → concept spec → sync spec → dependency card → contract. | stage 04b (Concept contract) | gate |
 | `verify_action_log_isolation.py` | Gate: concept state is reached only through the engine. | stage 04e (Sync implementation) | gate |
 | `verify_adapter_test.py` | when a feature exposes an adapter surface, a profile-specific end-to-end adapter test must exist (blocking). | stage 04c (Acceptance tests); stage 05 (Verify) | gate |
@@ -61,6 +62,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_profile_paths.py` | Profile-path integrity: configured implementation paths must not silently audit a different tree than the feature declares. | stage 04a (Storage mapping); stage 04c (Acceptance tests); stage 04d (Concept implementation); stage 04e (Sync implementation) | gate |
 | `verify_reference_integrity.py` | no dangling artefact reference after a rename | project-level (every `verify_artefacts` run) | gate |
 | `verify_relational_mapping.py` | Conditional gate: relational storage mappings (Stage 04a) must satisfy the Rmap rules. | stage 04a (Storage mapping) | gate |
+| `verify_release_profile.py` | a repo that declares itself release-grade must enforce the strongest checks where they apply. | by hand (advisory tooling) | gate |
 | `verify_responsibility_map_shape.py` | Stage 01a gate: the Concepts table's `Owned actions` column carries NAMES ONLY — no signatures, no outcomes. | stage 01a (Responsibility map) | gate |
 | `verify_reused_concept_contracts.py` | a REUSED concept must have a canonical contract in the corpus. | stage 04b (Concept contract) | gate |
 | `verify_rmap_companion_fresh.py` | a feature that is a concept's current source must have refreshed the canonical data-model companion before its migration is generated. | stage 04a (Storage mapping) | gate |

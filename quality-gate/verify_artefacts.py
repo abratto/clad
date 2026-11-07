@@ -219,6 +219,21 @@ def _run_gate(args):
         for line in detail.splitlines()[:10]:
             print(f"        {line}")
 
+    # A repo that declares itself release-grade enforces mutation + durable
+    # checks (self-activating on `release.enforce`; SKIPs for a template).
+    code, out, err = run_script("verify_release_profile.py",
+                                ["--repo-root", str(REPO_ROOT)])
+    detail = (out + err).strip()
+    ok = code == 0
+    mark = "PASS" if ok else "FAIL"
+    print(f"\n  [{mark}] release_profile")
+    if not ok:
+        all_pass = False
+        for line in detail.splitlines()[:8]:
+            print(f"        {line}")
+    elif detail and not detail.startswith("SKIP"):
+        print(f"        {detail.splitlines()[0]}")
+
     # A mechanism claim cites the code it rests on (the flow-pin record's wrong
     # explanation would have been caught by its citation). Blocking for active
     # platform records and the load-bearing SYNCHRONIZATIONS sections.

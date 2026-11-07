@@ -89,6 +89,10 @@ following on every PR. Each maps to a CLAD invariant.
 | Concept-import grep (R1) | No `import` across `concepts.<X>.<Y>` packages | `reference-impl/**/src/main/java/**` |
 | Tracking hygiene (overlay) | At most one `doing` phase + fresh resume point | `ROADMAP.md` (skipped if absent) |
 | `mvn verify` (when a Java profile changed) | Format, lint, unit + integration tests, ArchUnit hard-rule tests | canonical `reference-impl/java-legible/`; other profiles (`java-plain`, `java-micronaut`) run their documented gate command |
+| Acceptance evidence | The running app produced the approved token chain, status, and body (flow tests → `acceptance-evidence.json` → Acceptance Spec) | `verify_acceptance_evidence.py` on the worked example |
+| Mutation gate (`--require`) | The concept/sync suites actually constrain the code (a SKIP fails) | `verify_mutation_score.py` on `java-legible` |
+| Postgres persistence | The durable profile round-trips through the generated schema | `mvn verify -pl legible-storage,java-micronaut,java-plain -Dclad.storage=postgres` |
+| Release profile | A repo declaring `release.enforce=true` runs mutation (`require`) and records durable proof | `verify_release_profile.py` (self-activating; SKIPs for a template) |
 | Stage-output edit guard (advisory) | Edits to `stages/NN_*/output/` come from re-running the stage, not freelance edits | warning only — humans judge in review |
 
 CI is intentionally short. Add a check only when the *cost* of a

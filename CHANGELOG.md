@@ -10,6 +10,37 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.36.0] — 2026-11-06
+
+**Minor: machine-checked runtime evidence, and a release profile.** Two
+testing-discipline gaps: a green flow test plus a hand-assembled `trace.md` do
+not prove the *running app* produced the approved behaviour, and mutation/durable
+checks could be skipped by local configuration with no release-grade signal.
+
+- **Runtime evidence — produced, not predicted (Stage 05).** The flow tests now
+  emit a flow payload per Acceptance-Spec scenario (`EvidenceWriter` in the
+  engine; language-neutral JSON), carrying the archived token chain, transport
+  status, response body, and — for a persistent profile — a persisted
+  `readback`. `capture_observations.py` assembles them into
+  `acceptance-evidence.json`; new `verify_acceptance_evidence.py` (blocking at
+  Stage 05) compares each scenario to the frozen spec (chain, status, body
+  fields, read-back). A missing evidence file fails for a live feature; a legacy
+  `verification-trace.md` feature is grandfathered. The worked example's flow
+  tests (java-legible and java-micronaut) emit evidence, and the check already
+  caught a real spec drift in it (`NOT_FOUND` vs the chain's `REFUSED`).
+- **Release profile.** `clad.properties` gains `release.enforce` (default
+  `false`). When true, new `verify_release_profile.py` requires
+  `mutation.command` + `mutation.require=true` and, for a persistent profile, a
+  durable proof. It is wired project-level in `verify_artefacts.py` and CI, and
+  is self-activating (a template SKIPs). `--require` makes a non-release
+  declaration a failure, for a release build.
+
+**Upgrade notes.** Forward-only: existing features without evidence are
+grandfathered; new features produce it. The evidence contract is JSON, so other
+profiles can emit it. Browser (Playwright) and property-based tiers are
+deliberately deferred — the contract is their hook. New tests:
+`test_acceptance_evidence.py` (8) and `test_release_profile.py` (5).
+
 ## [0.35.0] — 2026-11-06
 
 **Minor: the sync `where` grammar is parsed and machine-checked.** The last gap

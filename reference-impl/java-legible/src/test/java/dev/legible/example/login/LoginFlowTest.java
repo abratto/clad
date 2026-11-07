@@ -1,5 +1,6 @@
 package dev.legible.example.login;
 
+import dev.legible.engine.EvidenceWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +26,13 @@ class LoginFlowTest {
         app = LoginApp.create();
     }
 
+    /** Emit machine-readable runtime evidence for the Acceptance-Spec comparison. */
+    private void capture(String scenario, String test) {
+        EvidenceWriter.to(System.getProperty(
+                        "clad.evidence.dir", "target/acceptance-evidence"))
+                .write(scenario, app.engine(), test);
+    }
+
     @Test
     void successfulLoginReturns200WithSessionToken() {
         app.seedUser("alice", "secret");
@@ -33,6 +41,7 @@ class LoginFlowTest {
         assertEquals(200, res.get("status"));
         assertTrue(res.get("sessionToken") instanceof String);
         assertTrue(!((String) res.get("sessionToken")).isEmpty());
+        capture("successful-login", "LoginFlowTest.successfulLoginReturns200WithSessionToken");
     }
 
     @Test
@@ -42,6 +51,7 @@ class LoginFlowTest {
 
         assertEquals(401, res.get("status"));
         assertEquals(OPAQUE, res.get("message"));
+        capture("wrong-password", "LoginFlowTest.wrongPasswordReturns401WithOpaqueMessage");
     }
 
     @Test
@@ -51,6 +61,7 @@ class LoginFlowTest {
 
         assertEquals(401, res.get("status"));
         assertEquals(OPAQUE, res.get("message"));
+        capture("unknown-user", "LoginFlowTest.unknownUserReturns401WithOpaqueMessage");
     }
 
     @Test
@@ -65,6 +76,7 @@ class LoginFlowTest {
 
         assertEquals(401, res.get("status"));
         assertEquals(LOCKED, res.get("message"));
+        capture("lockout", "LoginFlowTest.lockoutReturns401WithVisibleMessage");
     }
 
     @Test

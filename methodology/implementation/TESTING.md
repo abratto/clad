@@ -82,6 +82,45 @@ sync suites:
 
 Neither a red-green ritual nor a test count substitutes for this signal.
 
+## Runtime evidence: produced, not predicted
+
+A green flow test and a `trace.md` both describe behaviour, but neither proves
+the *running app* produced the approved chain, status, and body for a scenario.
+Stage 05 therefore requires machine-produced runtime evidence:
+
+- The flow tests emit a flow payload per scenario (`EvidenceWriter` in the
+  reference profile; the contract is language-neutral JSON), carrying the
+  archived token chain, the transport status, the response body, and — for a
+  persistent profile — a persisted `readback`.
+- `capture_observations.py` assembles those payloads into
+  `stages/05_verify/output/acceptance-evidence.json`.
+- `verify_acceptance_evidence.py` (blocking at Stage 05) compares each scenario's
+  evidence to the frozen Acceptance Spec: token chain, status, response fields,
+  and the persistent read-back. A mismatch is a defect; a missing evidence file
+  is a defect for a live feature (a pre-evidence `verification-trace.md` feature
+  is grandfathered).
+
+This is the distinction the acceptance tier exists to make: "the test predicts
+this path" versus "the app produced this path." It does not add a third test
+surface; it binds the existing flow test's *runtime output* to the frozen spec.
+
+## Release profile: enforce the strongest checks where they matter
+
+Mutation scoring and the durable proof are the strongest gates CLAD has, but a
+local configuration can skip them. A repo that ships to production declares
+`release.enforce=true` in `clad.properties`, which activates
+`verify_release_profile.py`:
+
+- `mutation.command` must be set and `mutation.require=true` (a SKIP is a
+  failure, not a silent pass);
+- a persistent profile (`storage.persistent=true`) must record durable proof
+  (`stages/05_verify/output/durable-proof.md`).
+
+The template ships `release.enforce=false`, so a derived project is not forced
+to enable it; CI runs the check (self-activating) and the existing
+`mutation-gate --require` and Postgres jobs. `--require` makes
+`release.enforce=false` itself a failure, for a release build.
+
 ## Concept isolation is still a diagnostic property (R1 companion)
 
 In the unit loop, each concept is tested **in complete isolation**. No

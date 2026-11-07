@@ -23,7 +23,7 @@ templates/acceptance-spec.md. Native tests: LoginFlowTest (java-legible profile)
 
 - **Trigger:** `POST /login { username: "nobody", password: "anything" }`
 - **Expected response:** `401 Unauthorized { message: "username or password didn't match" }` (same message as `wrong-password`; no enumeration leak)
-- **Expected token chain:** `Web.request[ROUTED]` -> `UserNaming.lookupByUsername[NOT_FOUND]` -> `Web.respond[SENT]`
+- **Expected token chain:** `Web.request[ROUTED]` -> `UserNaming.lookupByUsername[REFUSED]` -> `Web.respond[SENT]`
 - **Postconditions:** no session is minted; no state changes.
 - **Test:** `LoginFlowTest.unknownUserReturns401WithOpaqueMessage`
 

@@ -61,13 +61,49 @@ def _runtime_chain(actions):
     return chain
 
 
+def _respond_response(payload):
+    """`(status, body_dict)` from the last `Web/respond` action, or `(None, {})`.
+
+    The body is the flat authored result the adapter serializes (everything the
+    respond carried except the completion discriminator and the transport
+    status), so the Acceptance-Spec comparison can check response fields.
+    """
+    for action in reversed(_actions(payload)):
+        if action.get("concept") != "Web" or action.get("action") != "respond":
+            continue
+        data = action.get("input") or {}
+        fields = action.get("fields") or {}
+        merged = {}
+        if isinstance(fields, dict):
+            merged.update(fields)
+        if isinstance(data, dict):
+            merged.update(data)
+        status = merged.get("status") or merged.get("httpStatus")
+        body = {k: v for k, v in merged.items()
+                if k not in ("outcome", "status", "httpStatus")}
+        return status, body
+    return None, {}
+
+
 def observation(payload, test="<TODO: flow test>"):
     actions = _actions(payload)
-    return {
+    status, body = _respond_response(payload)
+    if isinstance(payload, dict):
+        # A test-run emitter may attach the transport response explicitly.
+        response = payload.get("response")
+        if isinstance(response, dict):
+            status = response.get("status", status)
+            body = response.get("body", body)
+    obs = {
         "runtime": _runtime_chain(actions),
         "test": test,
         "verdict": "covered" if actions else "missing",
+        "status": status,
+        "body": body,
     }
+    if isinstance(payload, dict) and payload.get("readback") is not None:
+        obs["readback"] = payload["readback"]
+    return obs
 
 
 def observations_from_dir(directory):

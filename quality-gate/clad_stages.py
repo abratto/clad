@@ -702,6 +702,15 @@ _TRACE_COMPLETE = Check(
     requires=lambda r: [output_dir(r, "05_verify")],
 )
 
+# The running app must have produced the approved Acceptance-Spec behaviour
+# (runtime evidence a test run emitted), not just a test that predicts it.
+_ACCEPTANCE_EVIDENCE = Check(
+    name="acceptance_evidence",
+    script="verify_acceptance_evidence.py",
+    build_args=lambda r: ["--feature-root", r],
+    requires=lambda r: [output_dir(r, "05_verify")],
+)
+
 # A persistent profile must record a passing durable (Postgres) run at close
 # (finding 19): the durable lane is Docker-gated and outside `test.command`, so
 # without this the feature closes green while a Postgres-only defect hides.
@@ -1049,8 +1058,8 @@ STAGES: List[Stage] = [
                   _SYNC_ROUTE_FILTERS, _SYNC_DECLARATIVE, _ACTION_LOG_ISOLATION,
                   _MUTATION_SCORE_04E, _SYNC_IMPL_MANIFEST]),
     Stage("05", "Verify", "05_verify",
-          checks=[_CLOSE_EVIDENCE, _TRACE_COMPLETE, _ADAPTER_TEST_05,
-                  _DURABLE_PROOF]),
+          checks=[_CLOSE_EVIDENCE, _TRACE_COMPLETE, _ACCEPTANCE_EVIDENCE,
+                  _ADAPTER_TEST_05, _DURABLE_PROOF]),
 ]
 
 GATE_LABELS = {
