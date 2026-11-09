@@ -62,7 +62,7 @@ its readable projection, kept current by `quality-gate/tests/test_gate_index.py`
 | `verify_profile_paths.py` | Profile-path integrity: configured implementation paths must not silently audit a different tree than the feature declares. | stage 04a (Storage mapping); stage 04c (Acceptance tests); stage 04d (Concept implementation); stage 04e (Sync implementation) | gate |
 | `verify_reference_integrity.py` | no dangling artefact reference after a rename | project-level (every `verify_artefacts` run) | gate |
 | `verify_relational_mapping.py` | Conditional gate: relational storage mappings (Stage 04a) must satisfy the Rmap rules. | stage 04a (Storage mapping) | gate |
-| `verify_release_profile.py` | a repo that declares itself release-grade must enforce the strongest checks where they apply. | by hand (advisory tooling) | gate |
+| `verify_release_profile.py` | a repo declaring release-grade enforces mutation + durable checks (self-activating) | project-level (every `verify_artefacts` run) | gate |
 | `verify_responsibility_map_shape.py` | Stage 01a gate: the Concepts table's `Owned actions` column carries NAMES ONLY — no signatures, no outcomes. | stage 01a (Responsibility map) | gate |
 | `verify_reused_concept_contracts.py` | a REUSED concept must have a canonical contract in the corpus. | stage 04b (Concept contract) | gate |
 | `verify_rmap_companion_fresh.py` | a feature that is a concept's current source must have refreshed the canonical data-model companion before its migration is generated. | stage 04a (Storage mapping) | gate |

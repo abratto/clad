@@ -87,7 +87,7 @@ features/UC-XX-name/
    │   └── 04e_sync-impl/       Syncs + unit tests (single stage)
    │       ├── CONTEXT.md
    │       └── output/          sync-test-derivation.md, verification-evidence.md
-    └── 05_verify/
+    └── 05_verify/          Runtime evidence + trace + smoke (close)
         ├── CONTEXT.md
         └── output/              trace.md, findings.md, smoke.md, tracking.md
 ```
@@ -335,12 +335,12 @@ single source of truth for per-stage instructions:
 | 03 | `stages/03_syncs/CONTEXT.md` | `<name>.sync.md` per coordination rule | Auto → 03b |
 | 03a | `stages/03a_dependency-review/CONTEXT.md` | `<concept>-card.md` (one per **participating** concept + `Web-card.md`) + `pattern-d-summary.md` + `concept-matrix.md` | Auto → 03b |
 | 03b | `stages/03b_data-model/CONTEXT.md` | `<Name>.data-model.md` per **state-owning** concept (none when no concept changes state — the stage is a no-op) | **Gate 2 (Architecture)** |
-| 04a | `stages/04_implement/04a_storage-mapping/CONTEXT.md` | `<Name>.storage.md` or `_NOT_APPLICABLE.md` | Auto → 04c |
+| 04a | `stages/04_implement/04a_storage-mapping/CONTEXT.md` | `<Name>.storage.md` or `_NOT_APPLICABLE.md` (Rmap profiles: the generated migration + descriptor; the canonical data-model companion must be refreshed first) | Auto → 04c |
 | 04b | `stages/04_implement/04b_contract/CONTEXT.md` | `<Name>.contract.md` per concept | Auto → 04c |
 | 04c | `stages/04_implement/04c_acceptance-tests/CONTEXT.md` | `acceptance-spec.md` + native flow tests | **Gate 3 (Acceptance spec)** |
 | 04d | `stages/04_implement/04d_concept-impl/CONTEXT.md` | `concept-test-derivation.md`, `verification-evidence.md` | Auto → 04e |
 | 04e | `stages/04_implement/04e_sync-impl/CONTEXT.md` | `sync-test-derivation.md`, `verification-evidence.md` | Auto → 05 |
-| 05 | `stages/05_verify/CONTEXT.md` | `trace.md`, `findings.md`, `smoke.md`, `tracking.md` | Auto (close) |
+| 05 | `stages/05_verify/CONTEXT.md` | `trace.md`, `findings.md`, `smoke.md`, `tracking.md`, `acceptance-evidence.json` (machine-produced; persistent profiles also `durable-proof.md`) | Auto (close) |
 
 ### Stage 04 shape
 
@@ -444,7 +444,11 @@ These rules apply to individual stages and do not appear in the
   domain branching, no concept-state reads/writes in the controller.
 - **Stage 05** is the closing of the contract loop. It proves runtime
   behaviour matches the use case (back-trace) and that the deployable
-  artefact runs (smoke).
+  artefact runs (smoke). The back-trace is *machine-produced*: the flow tests
+  emit runtime evidence (`acceptance-evidence.json`) and
+  `verify_acceptance_evidence.py` compares it to the frozen Acceptance Spec —
+  token chain, status, response fields, and (persistent) a durable read-back —
+  so closure rests on what the app produced, not on a predicted chain.
 
 
 
@@ -464,7 +468,8 @@ coherent with an earlier stage's output. Examples:
   least one test row in the test-intent derivation map.
 - Stage 05 verifies: every flow token observed at runtime back-traces
    to a use-case scenario using captured runtime evidence, not only
-   predicted token chains.
+   predicted token chains — and `verify_acceptance_evidence.py` checks that
+   evidence against the frozen Acceptance Spec (chain, status, body, read-back).
 
 The cross-stage check is what gives ICM § 6.2's reversibility
 property teeth: a downstream stage cannot silently drift from

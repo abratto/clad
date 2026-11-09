@@ -29,7 +29,9 @@ Stage 04c and 05 also ship per-branch generators: `generate_acceptance_spec.py`
 renders the Acceptance Spec skeleton from the chain table, and
 `generate_trace.py` renders the trace skeleton (optionally filled from
 `capture_observations.py`). Both leave the design judgment to the author;
-`verify_trace_complete.py` blocks Stage 05 when a scenario has no trace entry.
+`verify_trace_complete.py` blocks Stage 05 when a scenario has no trace entry,
+and `verify_acceptance_evidence.py` blocks it when the machine-produced runtime
+evidence does not match the frozen Acceptance Spec (see Stage 05 below).
 
 ---
 
@@ -95,9 +97,24 @@ not relax the *intent*.
 9. **Stage 03 sync contract checks (automated + semantic).**
    When a diff touches `features/UC-*/stages/03_syncs/`:
    - **Automated:** Run `quality-gate/verify_sync_matrix.py`
-     to verify every sync has a complete Sync Contract Matrix.
+     to verify every sync has a complete Sync Contract Matrix **and a
+     well-formed `when`/`then` rule** (an unparseable rule fails, not "nothing
+     to check"), and — with `--chain-dir` — that each matrix row id exists in
+     the chain table and its signatures name the referenced row's action.
+   - **Automated:** Run `quality-gate/verify_sync_transition_coverage.py`
+     to require every derived chain transition to have its sync file. A feature
+     still being authored must match exactly (an unrelated file that makes the
+     count match does not satisfy coverage); only a frozen feature (Gate 3
+     approved) tolerates legacy naming.
+   - **Automated:** Run `quality-gate/verify_chain_outcomes.py` (via the Stage
+     01b checks) to confirm every `When` completion is declared by its concept's
+     `flow token:` line.
    - **Automated:** Run `quality-gate/verify_sync_route_filters.py`
-     to detect shared-trigger syncs that are missing route filters.
+     to detect shared-trigger syncs that are missing route filters (advisory).
+   - **Automated:** Run `quality-gate/verify_sync_then_shape.py`
+     to reject a `then` that nests a transport frame, reuses `status` for the
+     transport, or names a body field `outcome` (it collides with the completion
+     token the engine stamps).
    - **Automated:** Run `quality-gate/verify_file_manifest.py`
      to check output files match the expected list exactly.
    - **Automated:** Run `quality-gate/verify_scenario_coverage.py`
@@ -127,6 +144,11 @@ not relax the *intent*.
        `quality-gate/verify_acceptance_binding.py` to check every use-case
        scenario has an Acceptance Spec section, every `Test:` binding resolves
        to a native test method, and every flow-test method is documented.
+     - **Automated:** At 04a, run `quality-gate/verify_rmap_companion_fresh.py`
+       to fail when a current-source feature re-derived its Stage-03b model but
+       has not refreshed the canonical `features/_system/concepts/<Name>.data-model.md`
+       companion — otherwise the migration is generated from the stale companion
+       (silently wrong). Refresh with `./clad promote-concepts <feature> --companions-only`.
      - **Automated:** Run `quality-gate/verify_concept_test_derivation.py`
        to check every contract outcome has a matching concept test.
      - **Automated:** For Java concept tests, run
@@ -139,6 +161,11 @@ not relax the *intent*.
      - **Automated:** At the end of Stage 04e, run
        `quality-gate/verify_sync_implementation_parity.py` to confirm every
        approved Stage 03 sync contract has a matching SyncRule implementation.
+       `--strict-trigger` (used at 04e) compares the **whole** rule: every
+       conjunct, every `then` target, the route literal, per-target argument
+       names, and every parsed `where` clause and its binding source
+       (`quality-gate/sync_where.py`); an unverifiable helper-based target is
+       reported unresolved and fails rather than passing.
      - The automated checks are the gate for 04d/04e; there is no red/green
        sub-stage split (DR-0001).
 12. **Implementation parity checks (R17 enforcement).**
@@ -188,6 +215,32 @@ not relax the *intent*.
     - **Semantic (human):** Review contract impact and the invariant-driven test
       matrix. Re-enter the feature pipeline if the
       work changes an artefact-chain truth.
+
+14. **Stage 05 close checks (automated).**
+    When a diff touches `features/UC-*/stages/05_verify/`:
+    - **Automated:** `verify_trace_complete.py` — `trace.md` exists, has no
+      `<TODO:>` evidence markers, and each scenario's runtime chain matches the
+      approved chain.
+    - **Automated:** `verify_acceptance_evidence.py` — the flow tests' emitted
+      runtime evidence (`acceptance-evidence.json`: token chain, status,
+      response fields, and a persisted `readback` for a persistent profile)
+      matches the frozen Acceptance Spec. This separates "the test predicts this
+      path" from "the app produced this path"; a legacy feature (pre-evidence
+      `verification-trace.md`) is grandfathered.
+    - **Automated:** `verify_adapter_test.py --require-enabled` — a declared
+      adapter surface has an enabled end-to-end adapter test.
+    - **Automated:** `verify_durable_proof.py` — a persistent profile
+      (`storage.persistent=true`) records a passing durable run in
+      `durable-proof.md`.
+    - **Automated:** `verify_close_evidence.py` — advisory cross-check of the
+      close artefacts and a closed RESUME.
+15. **Release profile (project-level, automated).**
+    `verify_release_profile.py` reads `release.enforce` from `clad.properties`.
+    When true, it requires `mutation.command` + `mutation.require=true` and, for
+    a persistent profile, a durable proof — so a repo that ships to production
+    cannot skip the strongest checks without a visible qualification. The
+    template ships `false` (self-activating; a release build runs with
+    `--require`).
 
 ## Reference profiles
 

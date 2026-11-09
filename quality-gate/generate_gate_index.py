@@ -43,6 +43,7 @@ PROJECT_LEVEL = [
     ("verify_shared_triggers_current.py", "the generated cross-UC shared-trigger view is current"),
     ("verify_sync_then_shape.py", "a sync `then` carries the authored result, not a transport frame"),
     ("verify_changelog_claims.py", "the newest release note matches the tag and cites existing paths (advisory)"),
+    ("verify_release_profile.py", "a repo declaring release-grade enforces mutation + durable checks (self-activating)"),
 ]
 
 PRE_COMMIT = [

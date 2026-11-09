@@ -174,6 +174,8 @@ consumer need that?**
 | `<Name>ConceptTest.java` + `<Name>Concept.java` | 04d | 04e, 05 | Running concept layer | The substrate the syncs orchestrate; the back-trace target. |
 | `sync-test-derivation.md` | 04e | 05 | Test coverage map for syncs | Same purpose as the concept derivation map, for syncs. |
 | `<SyncName>Test.java` + `<SyncName>.java` | 04e | 05 | Running coordination layer | This is the artefact 05 back-traces against. |
+| `acceptance-evidence.json` | 05 (flow-test emitter + `capture_observations.py`) | `verify_acceptance_evidence.py` | Machine-produced runtime evidence (token chain, status, body, persistent read-back) | Compared to the frozen `acceptance-spec.md`; distinguishes "the app produced this" from "the test predicts it." |
+| `durable-proof.md` | 05 | `verify_durable_proof.py` | Persistent-profile durable run (command + `PASS`) | Required when `storage.persistent=true`. |
 | `trace.md` | 05 | next feature's 00 | `Resume point:` line at the top | The bridge between features. |
 | `findings.md` | 05 | upstream stage(s) | Defects, with the owning stage named | Routes work back, never forward. |
 | `smoke.md` | 05 | (the human) | Real recorded commands + responses | Proves the *deployable* artefact (not just tests) behaves. |

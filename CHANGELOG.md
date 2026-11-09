@@ -10,6 +10,33 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.36.1] — 2026-11-06
+
+**Patch: documentation sync for the 0.33–0.36 gate changes. No code or gate
+behaviour changes.**
+
+The 0.33–0.36 releases added checks and artefacts that the canonical references
+did not yet describe. This syncs them:
+
+- **`QUALITY_GATE.md`** — the Stage-03 section now covers rule well-formedness
+  and chain-row cross-reference (`verify_sync_matrix`), exact transition coverage,
+  `chain_outcomes`, and the `then`-shape `outcome` rule; the 04a section adds
+  `verify_rmap_companion_fresh`; the 04e parity note describes the full
+  conjunct/target/route/argument/`where` comparison; a new Stage-05 close-checks
+  section lists `verify_trace_complete`, `verify_acceptance_evidence`,
+  `verify_adapter_test --require-enabled`, and `verify_durable_proof`; a new
+  release-profile section describes `verify_release_profile`.
+- **`STAGES.md`** — Stage 05's outputs include `acceptance-evidence.json`
+  (and `durable-proof.md` for a persistent profile); the Stage-05 description
+  states the back-trace is machine-produced.
+- **`TRACEABILITY.md`** / **`ARTEFACT_MAP.md`** — add the
+  `acceptance-evidence.json` and `durable-proof.md` artefacts and their code
+  consumers (`EvidenceWriter`, `verify_acceptance_evidence`).
+- **`skills/clad-quality-gate`** and **`skills/clad-verification`** — name the
+  runtime-evidence and release-profile checks, and Stage 05's new outputs.
+- **`templates/acceptance-spec.md`** — note that `Expected token chain` /
+  `Expected response` are executable contract (compared to produced evidence).
+
 ## [0.36.0] — 2026-11-06
 
 **Minor: machine-checked runtime evidence, and a release profile.** Two

@@ -15,8 +15,10 @@ Self-audit discipline: running the verification scripts between stages
 to catch defects before human gates. Scripts check file manifests, scenario
 coverage, outcome alignment, action chains, sync matrices, data models,
 contract parity, Acceptance Spec binding (`verify_acceptance_binding.py`),
-and concept/sync test derivation and mutation score
-(`verify_mutation_score.py`).
+concept/sync test derivation and mutation score (`verify_mutation_score.py`),
+machine-produced runtime acceptance evidence at close
+(`verify_acceptance_evidence.py`), and the release profile
+(`verify_release_profile.py`).
 
 ## Where to look
 

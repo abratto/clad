@@ -23,7 +23,11 @@ Stage 05 `Inputs` names `FLOW_TOKENS.md`, the 01 use case, and the runtime evide
 2. Mark each scenario: covered, partial, or missing.
 3. Smoke the deployable artefact.
 4. Produce `output/trace.md`, `output/findings.md`,
-   `output/smoke.md`, `output/tracking.md`.
+   `output/smoke.md`, `output/tracking.md`, and — from the flow tests' emitted
+   runtime evidence — `output/acceptance-evidence.json` (a persistent profile
+   also records `output/durable-proof.md`). `verify_acceptance_evidence.py`
+   compares the evidence to the frozen Acceptance Spec (chain, status, body,
+   persistent read-back); `verify_durable_proof.py` requires the durable run.
 5. Self-audit: run `python3 quality-gate/verify_artefacts.py` and fix any defects.
 6. Auto-close the feature.
 
@@ -32,3 +36,5 @@ Stage 05 `Inputs` names `FLOW_TOKENS.md`, the 01 use case, and the runtime evide
 - Every observable effect must back-trace to a use case (R7).
 - Do not close with any scenario at "missing" without explicit human sign-off.
 - Every scenario must have a status.
+- Close on *produced* runtime evidence (`acceptance-evidence.json`), not a
+  predicted chain; a legacy `verification-trace.md` feature is grandfathered.
