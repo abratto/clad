@@ -312,10 +312,19 @@ public final class RmapPostgresFactStore implements FactStore {
         @Override
         public void flushAction() {
             buffering = false;
-            for (Map.Entry<String, Map<String, Map<String, Object>>> bySubject : buffer.entrySet()) {
-                flushSubject(bySubject.getKey(), bySubject.getValue());
+            try {
+                // One transaction per concept action: every buffered row shares
+                // one connection and commits atomically. A mid-flush failure
+                // rolls the whole action back instead of leaving partial state.
+                dsl.transaction(configuration -> {
+                    DSLContext tx = DSL.using(configuration);
+                    for (Map.Entry<String, Map<String, Map<String, Object>>> bySubject : buffer.entrySet()) {
+                        flushSubject(tx, bySubject.getKey(), bySubject.getValue());
+                    }
+                });
+            } finally {
+                buffer.clear();
             }
-            buffer.clear();
         }
 
         @Override
@@ -583,7 +592,7 @@ public final class RmapPostgresFactStore implements FactStore {
             return out;
         }
 
-        private void flushSubject(String subject, Map<String, Map<String, Object>> byTable) {
+        private void flushSubject(DSLContext tx, String subject, Map<String, Map<String, Object>> byTable) {
             for (Map.Entry<String, Map<String, Object>> tableEntry : byTable.entrySet()) {
                 RelationSchema schema = null;
                 for (RelationSchema candidate : model.tables()) {
@@ -609,12 +618,12 @@ public final class RmapPostgresFactStore implements FactStore {
                 }
 
                 for (Map<String, Object> rowCols : expandDraftRows(completeDraft)) {
-                    flushRow(schema, subject, rowCols);
+                    flushRow(tx, schema, subject, rowCols);
                 }
             }
         }
 
-        private void flushRow(RelationSchema schema, String subject,
+        private void flushRow(DSLContext tx, RelationSchema schema, String subject,
                               Map<String, Object> rowCols) {
             List<String> pk = schema.primaryKey();
             // Split the draft into its key values, its buffered fact values,
@@ -658,6 +667,7 @@ public final class RmapPostgresFactStore implements FactStore {
                     // (the individual or its defining fact ceases).
                     if (!keyVals.isEmpty() && keyVals.stream().noneMatch(v -> v.equals("null"))) {
                         deleteRowByCondition(
+                                tx,
                                 schema,
                                 pk.size() == 1
                                         ? subjectField(schema).eq(subject)
@@ -666,7 +676,7 @@ public final class RmapPostgresFactStore implements FactStore {
                     return;
                 }
                 org.jooq.Condition keyCond = keyCondition(schema, keyVals, subject);
-                if (dsl.fetchCount(table(schema), keyCond) > 0) {
+                if (tx.fetchCount(table(schema), keyCond) > 0) {
                     // Existing individual/row: apply the buffered facts and any
                     // retracted columns' Rmap defaults; never touch the key.
                     Map<Field<?>, Object> set = new LinkedHashMap<>();
@@ -677,7 +687,7 @@ public final class RmapPostgresFactStore implements FactStore {
                         set.put(DSL.field(DSL.name(r)), defaultOrNothing(schema, r));
                     }
                     if (!set.isEmpty()) {
-                        dsl.update(table(schema)).set(set).where(keyCond).execute();
+                        tx.update(table(schema)).set(set).where(keyCond).execute();
                     }
                 } else {
                     // New row: the buffered facts plus the Rmap defaults for
@@ -696,7 +706,7 @@ public final class RmapPostgresFactStore implements FactStore {
                             insert.put(DSL.field(DSL.name(e.getKey())), null);
                         }
                     }
-                    dsl.insertInto(table(schema)).set(insert).execute();
+                    tx.insertInto(table(schema)).set(insert).execute();
                 }
             } catch (org.jooq.exception.DataAccessException e) {
                 throw new PostgresFactStore.UncheckedSQLException(new SQLException(e));
@@ -732,8 +742,9 @@ public final class RmapPostgresFactStore implements FactStore {
             dsl.deleteFrom(table(schema)).where(cond).execute();
         }
 
-        private void deleteRowByCondition(RelationSchema schema, org.jooq.Condition cond) {
-            dsl.deleteFrom(table(schema)).where(cond).execute();
+        private void deleteRowByCondition(DSLContext tx, RelationSchema schema,
+                                          org.jooq.Condition cond) {
+            tx.deleteFrom(table(schema)).where(cond).execute();
         }
 
         /**

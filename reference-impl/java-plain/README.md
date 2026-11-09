@@ -11,9 +11,10 @@ Ktor, …) or none, without touching engine, storage, concepts, or syncs.
 
 `PlainPostgresApp.boot()`:
 
-1. `PGSimpleDataSource` from the environment — `DATABASE_URL`
+1. A pooled `HikariDataSource` from the environment — `DATABASE_URL`
    (default `jdbc:postgresql://localhost:5432/clad`), `PGUSER`/`PGPASSWORD`
-   (defaults `clad`/`clad`, mirroring `java-micronaut/application.yml`).
+   (defaults `clad`/`clad`, mirroring `java-micronaut/application.yml`),
+   `PGPOOL_MAX` (default `10`), `PGPOOL_MIN_IDLE` (default `2`).
 2. **Flyway migrates** — the schema owner runs before any store use
    (`V1__login_rmap.sql`, drift-guarded by `./clad rmap --check`; both profiles
    consume the same generated migration).
@@ -22,10 +23,15 @@ Ktor, …) or none, without touching engine, storage, concepts, or syncs.
 4. `LoginApp.create(store)` — the login flows (`Web.request` → … →
    `RespondForLogin…`), no HTTP in sight.
 
+`boot()` returns an `AutoCloseable` `Runtime` that owns the pool. Close it when
+the application stops (try-with-resources):
+
 ```java
-LoginApp app = PlainPostgresApp.boot();
-app.seedUser("ada", "correct-horse-battery-staple");
-Map<String, Object> respond = app.login("ada", "correct-horse-battery-staple");
+try (var runtime = PlainPostgresApp.boot()) {
+    LoginApp app = runtime.app();
+    app.seedUser("ada", "correct-horse-battery-staple");
+    Map<String, Object> respond = app.login("ada", "correct-horse-battery-staple");
+}
 ```
 
 ## Running

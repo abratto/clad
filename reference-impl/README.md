@@ -21,9 +21,9 @@ the canonical runtime is the **fire-after-commit engine**:
   `tagging`, and `token`, exercising the full sync model — fan-out, Pattern D
   reads, `OPTIONAL`, `?_eachthen` aggregation, `bind(uuid)`, route scoping, and
   the flow-token back-trace.
-- [`java-plain/`](java-plain/) — the plain-Java durable profile: Flyway +
-  `RmapPostgresFactStore` + the login example, booted from `main()` with **no
-  transport framework** (HTTP is the adopter's choice). Barrel: see
+- [`java-plain/`](java-plain/) — the plain-Java durable profile: HikariCP pool
+  + Flyway + `RmapPostgresFactStore` + the login example, booted from `main()`
+  with **no transport framework** (HTTP is the adopter's choice). Barrel: see
   `java-plain/README.md`.
 - [`java-micronaut/`](java-micronaut/) — the Micronaut HTTP
   Ports & Adapters profile: Micronaut for the HTTP transport, Postgres

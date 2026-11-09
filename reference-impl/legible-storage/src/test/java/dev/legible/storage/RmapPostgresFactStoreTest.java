@@ -1,6 +1,9 @@
 package dev.legible.storage;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import dev.legible.engine.Region;
+import dev.legible.engine.TransactionalRegion;
 import dev.legible.example.login.LoginApp;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -199,6 +202,42 @@ class RmapPostgresFactStoreTest {
         assertThrows(PostgresFactStore.UncheckedSQLException.class,
                 () -> passwordAuth.write("nobody", "failedAttempts", "1"),
                 "an incomplete mandatory row must be rejected, not fabricated");
+    }
+
+    @Test
+    void aConceptActionFlushCommitsOrRollsBackAsOneUnit() {
+        // Two buffered writes in one action: the first is valid, the second
+        // duplicates the username UNIQUE constraint. The flush is one
+        // transaction, so the first row must not survive the failed action.
+        TransactionalRegion userNaming = (TransactionalRegion) store.region("UserNaming");
+        userNaming.beginAction();
+        userNaming.write("atomic-1", "username", "atomic-alice");
+        userNaming.write("atomic-2", "username", "atomic-alice");
+
+        assertThrows(PostgresFactStore.UncheckedSQLException.class, userNaming::flushAction,
+                "the duplicate username must fail the flush");
+
+        assertTrue(userNaming.read("atomic-1", "username").isEmpty(),
+                "the first row must roll back with the failed action");
+        assertTrue(userNaming.read("atomic-2", "username").isEmpty(),
+                "the duplicate row must not be written");
+    }
+
+    @Test
+    void storeRunsOnAHikariPool() {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(POSTGRES.getJdbcUrl());
+        config.setUsername(POSTGRES.getUsername());
+        config.setPassword(POSTGRES.getPassword());
+        config.setMaximumPoolSize(4);
+        try (HikariDataSource pooled = new HikariDataSource(config)) {
+            RmapPostgresFactStore hikariStore =
+                    new RmapPostgresFactStore(pooled, LoginSchemas.all());
+            LoginApp app = LoginApp.create(hikariStore);
+            app.seedUser("hikari-user", "secret");
+            Map<String, Object> ok = app.login("hikari-user", "secret");
+            assertEquals(200, ok.get("status"), ok.toString());
+        }
     }
 
     private String queryOne(String sql, String... params) throws Exception {

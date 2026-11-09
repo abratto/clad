@@ -18,3 +18,9 @@ datasources:
     username: ${PGUSER:clad}
     password: ${PGPASSWORD:clad}
     driver-class-name: org.postgresql.Driver
+    # Hikari pool (micronaut-jdbc-hikari). Concept actions borrow per
+    # statement; the pool removes per-operation connection setup.
+    maximum-pool-size: ${PGPOOL_MAX:10}
+    minimum-idle: ${PGPOOL_MIN_IDLE:2}
+    connection-timeout: 5000
+    pool-name: clad-micronaut

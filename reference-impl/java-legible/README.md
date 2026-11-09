@@ -38,6 +38,23 @@ mvn exec:java -f reference-impl/pom.xml -pl legible-bench -am \
     -Dexec.mainClass=dev.legible.bench.SerializationBench # same-user ceiling
 ```
 
+JMH benchmarks ship alongside them under
+[`../legible-bench-jmh/`](../legible-bench-jmh/) (JMH 1.37; also advisory, not
+CI). Build and run:
+
+```bash
+mvn -q -f reference-impl/pom.xml -pl legible-bench-jmh -am -DskipTests package
+java -jar reference-impl/legible-bench-jmh/target/benchmarks.jar -prof gc
+```
+
+The 2026-11-09 JMH + JFR review is in
+[`../../docs/experiments/engine-performance-review.md`](../../docs/experiments/engine-performance-review.md).
+Its main in-memory finding is that `Region.subjects` (and `Region.read` on a
+miss) is a full region scan, so lookups by a non-subject field and fan-out scale
+with the region size; the durable finding is that `PostgresFactStore` opens a
+connection per operation. Both are recorded as candidates awaiting separate R20
+gates — no engine behaviour changed.
+
 Numbers below are one session on a 2026 laptop-class machine (JDK 25) and are
 hardware-relative — treat shape, not absolutes, as the finding:
 
