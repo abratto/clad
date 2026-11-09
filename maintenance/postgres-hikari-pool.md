@@ -3,7 +3,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md` §"Platform maintenance changes" and R20
 - **Change class:** `platform`
-- **Status:** `active` (`draft` until design approval, `active` while implementing, `closed` after evidence approval)
+- **Status:** `closed` (`draft` until design approval, `active` while implementing, `closed` after evidence approval)
 - **Affected profile(s):** `reference-impl/legible-bench-jmh`, `reference-impl/java-plain`, `reference-impl/java-micronaut`
 - **Feature-contract impact:** `preserved`
 - **Design gate:** `approved`
