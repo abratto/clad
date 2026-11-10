@@ -10,6 +10,66 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [0.37.0] — 2026-11-10
+
+**Minor: per-subject concept locking. The engine no longer serializes every
+action on a concept by default; a concept can declare the subject its action
+mutates, so different subjects run concurrently while the same subject stays
+serialized. Existing concepts keep the concept-wide lock unless they opt in.**
+
+### Engine
+
+- **`Concept` lock-key contract.** `stateful()`, `lockKey(action, input)`, and
+  `lockKeys(action, input)` are new defaulted methods. `stateful() == false`
+  skips locking and region lookup for stateless concepts (e.g. `Web`);
+  `lockKey` returns the subject an action's read-modify-write is confined to;
+  `lockKeys` declares every subject for a multi-subject action. The defaults
+  preserve the previous concept-wide lock.
+- **`ConceptLocks`.** The per-concept `synchronized` lock is replaced by
+  striped `ReentrantLock`s keyed by `(concept, subject)`. Multi-subject actions
+  acquire distinct stripe indices in ascending order and release in reverse, so
+  overlapping actions cannot deadlock. Same-subject actions remain serialized;
+  the action is still the atomic unit.
+- **`RmapRegion`.** The action buffer/buffering flag is now a `ThreadLocal`, so
+  concurrent actions on different subjects do not share a buffer. The
+  one-transaction-per-action flush is unchanged.
+- **Lock keys declared** on the login, social, tagging, and token example
+  concepts; `Web` is stateless.
+
+### Documentation
+
+- `methodology/architecture/ENGINE.md` §"Concurrency model" now describes how
+  per-subject locking works, when to declare a key, and the caveats.
+- `methodology/architecture/CONCEPTS.md` gains §"Concurrency and lock keys".
+- `reference-impl/legible-engine/README.md` and
+  `skills/clad-concept-impl/SKILL.md` carry the implementer guidance.
+
+### Evidence and benchmarks
+
+- New `ConceptTimingProbe` (per-concept action/region attribution),
+  `PostgresConcurrencyBenchmark` (same vs unique users), and a throwaway
+  concurrency lab (`dev.legible.bench.concurrency`) covering a hot counter,
+  unique accounts, and multi-subject transfers.
+- Login, Hikari + Rmap: unique users 2,405 → 3,596 ops/s at 4 threads; same-user
+  remains serialized (2,384 → 2,134, within noise). Lab unique-subject workloads
+  scale ~3×; same-subject stays flat; transfers scale without deadlock.
+- Full record: `maintenance/per-subject-concept-locking.md`;
+  `docs/experiments/engine-performance-review.md`.
+
+### Upgrade notes
+
+- **No required action for existing concepts.** The new `Concept` methods are
+  defaulted: an unannotated action keeps the concept-wide lock. Declare
+  `lockKey`/`lockKeys` only when the action's read-modify-write is confined to
+  the declared subject(s); a wrong key is a correctness defect.
+- **Concurrency is in-process.** Multiple JVMs still need partitioning, DB row
+  locks, or optimistic concurrency.
+- **Sync `where` reads are not isolated.** The guarantee is per-action
+  atomicity, not flow-snapshot isolation.
+- **Generic `PostgresFactStore` is best-effort** (no per-action atomic flush);
+  the guarantee is validated on the in-memory and Rmap stores.
+- No schema, sync, action-outcome, or flow-token changes.
+
 ## [0.36.1] — 2026-11-06
 
 **Patch: documentation sync for the 0.33–0.36 gate changes. No code or gate
