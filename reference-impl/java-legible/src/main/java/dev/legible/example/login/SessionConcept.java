@@ -38,6 +38,15 @@ public final class SessionConcept implements Concept {
         };
     }
 
+    @Override
+    public Object lockKey(String action, Map<String, Object> input) {
+        return switch (action) {
+            case GRANT -> input.get("userId");
+            case LOOKUP -> input.get("sessionId");
+            default -> null;
+        };
+    }
+
     private Map<String, Object> grant(Map<String, Object> input) {
         String userId = (String) input.get("userId");
         if (userId == null) {

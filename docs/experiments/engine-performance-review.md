@@ -39,6 +39,11 @@ java -jar reference-impl/legible-bench-jmh/target/benchmarks.jar \
 java -jar reference-impl/legible-bench-jmh/target/benchmarks.jar \
   -wi 2 -i 3 -f 1 -w 1s -r 1s 'dev.legible.bench.jmh.PostgresBenchmark'
 
+# Postgres concurrency sweep (repeat for -t 1, 4, 16 and -p mode=same|unique)
+java -jar reference-impl/legible-bench-jmh/target/benchmarks.jar \
+  -wi 2 -i 3 -f 1 -w 1s -r 1s -t 4 -p mode=unique \
+  'dev.legible.bench.jmh.PostgresConcurrencyBenchmark.login'
+
 # JFR profile
 java -jar reference-impl/legible-bench-jmh/target/benchmarks.jar \
   -wi 1 -i 2 -f 1 -w 1s -r 1s -p followers=1000 \
@@ -91,9 +96,9 @@ once pooled.
 
 - **HTTP transport cost** is not in these numbers; a real Micronaut request will
   be slower than a direct `app.login()` call.
-- **Postgres concurrency and soak** were not measured — only single-threaded
-  throughput. The per-concept lock behaviour under sustained concurrent load is
-  the missing piece.
+- **Soak and percentile latency** under sustained load remain unmeasured; the
+  concurrency sweep above is short-run (1 s iterations) and shows the plateau,
+  not tail behaviour.
 - **Batching / CTE update-or-insert** remains the plausible next round-trip
   reduction; the naive `ON CONFLICT` was correctly declined for the `NOT NULL`
   hazard.
@@ -103,10 +108,52 @@ once pooled.
   realistic sizes, sustained concurrency, p50/p95/p99) is still the right next
   experiment.
 
-**Caveat.** These are hardware-relative, single-threaded,
+**Caveat.** These are hardware-relative, short-run (including the thread sweep),
 Testcontainers-on-laptop figures — useful for shape and for comparing changes,
 not a production capacity claim. The corrected reading of the original
 "44 ops/s" is: that was the unpooled/generic baseline, not the production path.
+
+## Capacity envelope (concurrency)
+
+The engine treats a concept as a state machine and serializes **all** actions on
+that concept (`SyncEngine.execute` uses a per-concept lock). It is not row-level
+or tenant-level locking. A flow touching `UserNaming`, `PasswordAuth`, and
+`Session` can overlap those three concepts, but every login contends on each of
+those same locks. Adding threads helps until the hottest concept saturates, then
+throughput plateaus; scaling means partitioning concepts/tenants across
+processes, not adding threads to one hot concept.
+
+`PostgresConcurrencyBenchmark` makes this reproducible: `same` hammers one user,
+`unique` round-robins a pre-seeded user set. Both hit the same concept locks.
+
+| Profile | Mode | 1 thread | 4 threads | 16 threads |
+|---|---|---|---|---|
+| Postgres (Hikari + Rmap) | same user | 1,518 | 2,384 | 2,372 ops/s |
+| Postgres (Hikari + Rmap) | unique users | 1,509 | 2,405 | 1,885 ops/s |
+| In-memory | same user | ~263k | ~460k (noisy) | ~320k (noisy) ops/s |
+
+Two findings:
+
+- **Unique users do not help.** Both modes plateau around ~2.4k login/s at 4
+  threads; the 16-thread unique run is lower. The limit is the concept, not the
+  row.
+- **In-memory is a different regime.** Hundreds of thousands of simple flows/s,
+  but still not thread-linear and still bounded by the hottest concept.
+
+**Practical envelope**
+
+- **In-memory:** embedded/tests/low-latency single-process use. Hundreds of
+  thousands of simple flows/s; fan-out is linear; hot concepts cap.
+- **Postgres durable:** moderate-throughput business apps — low thousands of
+  login-like flows/s per process on laptop-class hardware, likely higher on
+  server hardware with a native DB, but bounded by the hottest concept. Good for
+  CRUD-ish, concept-partitioned domains.
+- **Not a fit for:** global hot counters/queues, a single hot account,
+  high-QPS fan-out, or horizontally scaling one concept. Those need partitioning,
+  batching/aggregation into a concept, or a different state model.
+- **Latency:** in-memory microseconds; Postgres sub-millisecond on localhost;
+  real HTTP/network adds milliseconds. Soak and percentile latencies under
+  sustained load remain unmeasured.
 
 ## Results
 
@@ -330,3 +377,39 @@ single `dsl.transaction(...)`, so the action commits or rolls back as one unit.
 - **Phase 3 not triggered:** with Hikari, `readHit` is ~72 µs/op and a pool
   borrow is a few µs, so action-scoped read connections would not move the
   needle. The remaining cost is SQL/jOOQ execution, not connection acquisition.
+
+### Addendum — 2026-11-09 (per-subject locking, B)
+
+Step 0 (`ConceptTimingProbe`) attributed the login flow on Hikari/Rmap: the
+`PasswordAuth` concept lock was ~0.99 of wall at 4 threads (`check` action +
+flush), and `same` vs `unique` users both plateaued at ~2.3k login/s. That
+identified the per-concept lock as the ceiling.
+
+The `per-subject-concept-locking` change replaces the per-concept lock with
+striped locks keyed by a declared subject, makes `RmapRegion`'s action buffer
+thread-local, and declares subject keys on the example concepts (`Web` is
+stateless). A throwaway lab app (`dev.legible.bench.concurrency`) tests the
+strategy: a hot counter, unique accounts, and multi-subject transfers.
+
+Lab results (Hikari/Rmap; correctness all PASS):
+
+| Workload | 1 thread | 4 threads |
+|---|---|---|
+| Counter, same subject | 2,318/s | 2,859/s |
+| Counter, unique subjects | 2,443/s | 7,517/s |
+| Accounts, unique | 2,584/s | 8,194/s |
+| Transfer, multi-subject | 1,574/s | 4,618/s |
+
+Login JMH (`PostgresConcurrencyBenchmark`), before → after:
+
+| Mode | 1 thread | 4 threads |
+|---|---|---|
+| same user | 1,518 → 1,298 | 2,384 → 2,134 |
+| unique users | 1,509 → 1,347 | 2,405 → 3,596 |
+
+**Reading:** per-subject locking works — unique subjects scale ~3× in the lab,
+the same subject stays flat, and multi-subject transfers scale without deadlock.
+The login flow gains ~50% for unique users because its next bottleneck is DB
+flush/round-trip cost, not the lock: at 4 threads `PasswordAuth/flushAction` and
+`Session/flushAction` utilisation exceeds 1.0. The next lever is round-trip
+reduction (CTE/batching), not more locking.

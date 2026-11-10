@@ -31,6 +31,11 @@ public final class SubscribingConcept implements Concept {
         };
     }
 
+    @Override
+    public Object lockKey(String action, Map<String, Object> input) {
+        return SUBSCRIBE.equals(action) ? input.get("userId") : null;
+    }
+
     private Map<String, Object> subscribe(Map<String, Object> input) {
         String userId = (String) input.get("userId");
         String tag = (String) input.get("tag");

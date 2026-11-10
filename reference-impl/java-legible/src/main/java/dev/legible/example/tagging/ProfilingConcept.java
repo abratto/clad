@@ -34,6 +34,11 @@ public final class ProfilingConcept implements Concept {
         };
     }
 
+    @Override
+    public Object lockKey(String action, Map<String, Object> input) {
+        return SET_BIO.equals(action) ? input.get("userId") : null;
+    }
+
     private Map<String, Object> setBio(Map<String, Object> input) {
         String userId = (String) input.get("userId");
         String bio = (String) input.get("bio");

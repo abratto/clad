@@ -32,6 +32,11 @@ public final class FeedConcept implements Concept {
         };
     }
 
+    @Override
+    public Object lockKey(String action, Map<String, Object> input) {
+        return APPEND.equals(action) ? input.get("userId") : null;
+    }
+
     public List<String> itemsFor(String userId) {
         return List.copyOf(region.read(userId, "item"));
     }

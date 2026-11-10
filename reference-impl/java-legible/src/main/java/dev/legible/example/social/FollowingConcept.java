@@ -31,6 +31,11 @@ public final class FollowingConcept implements Concept {
         };
     }
 
+    @Override
+    public Object lockKey(String action, Map<String, Object> input) {
+        return FOLLOW.equals(action) ? input.get("follower") : null;
+    }
+
     /** Direct seed helper (test fixtures). */
     public void seedFollow(String follower, String target) {
         region.write(follower, "target", target);

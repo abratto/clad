@@ -33,6 +33,11 @@ public final class NotifyingConcept implements Concept {
         };
     }
 
+    @Override
+    public Object lockKey(String action, Map<String, Object> input) {
+        return NOTIFY.equals(action) ? input.get("userId") : null;
+    }
+
     public List<String> notificationsFor(String userId) {
         return List.copyOf(region.read(userId, "notification"));
     }

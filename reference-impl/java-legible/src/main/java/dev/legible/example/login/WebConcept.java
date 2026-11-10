@@ -27,6 +27,11 @@ public final class WebConcept implements Concept {
     }
 
     @Override
+    public boolean stateful() {
+        return false;
+    }
+
+    @Override
     public Map<String, Object> execute(String action, Map<String, Object> input) {
         return switch (action) {
             case "request" -> Map.of("outcome", "routed");

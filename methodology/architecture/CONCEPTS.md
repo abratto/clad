@@ -224,6 +224,46 @@ then   PasswordAuth/verify:      [ userId: u ; password: p ]     => [ error: "lo
 - Emit flow tokens on every action.
 - Define helper functions, types, and tests *internally*.
 
+## Concurrency and lock keys
+
+A concept is a state machine: the engine serializes its actions so each
+transition is atomic. By default the lock is **concept-wide** — safe, but it
+serializes every action on the concept, even for different individuals. A
+concept implementation may declare a finer lock key when an action's
+read-modify-write is confined to one individual.
+
+- `stateful()` — return `false` for a stateless concept (the bootstrap
+  `Web`/adapter concepts). Stateless concepts take no lock and do not touch a
+  region.
+- `lockKey(action, input)` — return the subject the action mutates (e.g. a
+  `userId` or `postId`). Different subjects may then run concurrently; the same
+  subject remains serialized.
+- `lockKeys(action, input)` — return every subject for a multi-subject action.
+  The engine acquires the keys in a deterministic order, so overlapping
+  actions cannot deadlock.
+- Leaving the defaults (no override) keeps the safe concept-wide lock.
+
+**Declare a key only when the action's invariant is confined to that subject.**
+An action that reads/writes several subjects, or enforces a cross-subject
+invariant, must stay concept-wide (or declare every subject it touches). A
+wrong key is a correctness defect: it lets two actions that share state run
+concurrently.
+
+**What the engine guarantees and what it does not:**
+
+- Same-subject actions serialize; different subjects may run concurrently; the
+  action remains the atomic unit.
+- On the durable Rmap profile, an action's buffered writes flush in one
+  transaction; the action buffer is thread-local.
+- The locks are in-process. Multiple JVMs need partitioning, DB row locks, or
+  optimistic concurrency.
+- Sync `where` reads are not serialized with actions: the guarantee is
+  per-action atomicity, not flow-snapshot isolation.
+- The generic `PostgresFactStore` is best-effort (no per-action atomic flush);
+  the guarantee is validated on the in-memory and Rmap stores.
+
+See [`ENGINE.md`](ENGINE.md) §"Concurrency model" and the `Concept` Javadoc.
+
 ## Concepts are reusable, system-scope assets
 
 A concept is the unit of reuse, not a per-feature artefact. The canonical spec

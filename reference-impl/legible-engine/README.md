@@ -19,8 +19,11 @@ runtime for concepts and syncs (`dev.legible.engine`).
 - **Action log** — a per-flow append-only record store of `Invocation`s and
   `Completion`s, carrying provenance edges (`parentActionId`, `causedBySync`).
   Flows are archived (flushed to a sink + bounded buffer) at quiescence.
-- **Concurrency** — per-flow log sharding; per-concept action serialisation
-  (`SyncEngine.execute`); the archive buffer/sink are thread-safe.
+- **Concurrency** — per-flow log sharding; per-subject action serialization
+  (`Concept.lockKey`/`lockKeys`, striped `ConceptLocks`; concept-wide by
+  default); stateless concepts (`Concept.stateful() == false`) take no lock;
+  the Rmap action buffer is thread-local. The archive buffer/sink are
+  thread-safe.
 
 ## Components
 
@@ -31,7 +34,8 @@ runtime for concepts and syncs (`dev.legible.engine`).
 | `Concept` | The concept abstraction (map→map actions). |
 | `SyncRule` / `Clause` / `Source` / `ThenInvocation` | The declarative `when/where/then` model. |
 | `WhereEvaluator` | The `where`-clause binding engine (frames). |
-| `SyncEngine` | Dispatch, commit, evaluate, mint; per-concept serialisation. |
+| `SyncEngine` | Dispatch, commit, evaluate, mint; per-subject serialization. |
+| `ConceptLocks` | Striped locks keyed by `(concept, subject)`; ordered multi-key acquisition. |
 | `FlowArchiver` / `FlowArchiveBuffer` / `FlowArchiveSink` | Bounded flow archival. |
 | `DebugApi` | Introspection (the developer `/api/dev/*` surface, as direct record lookups): `/syncs` designed rules, `/flow/{id}` realized chain, `/stuck`, `/concept/{name}/facts`. |
 

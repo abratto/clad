@@ -38,6 +38,14 @@ public final class UserNamingConcept implements Concept {
         };
     }
 
+    @Override
+    public Object lockKey(String action, Map<String, Object> input) {
+        return switch (action) {
+            case REGISTER, LOOKUP_BY_USERNAME -> input.get("username");
+            default -> null;
+        };
+    }
+
     /** Test/seed helper — pre-populate a (userId, username) fact. */
     public void seedUser(String userId, String username) {
         region.write(userId, "username", username);

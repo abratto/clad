@@ -52,7 +52,7 @@ public final class SyncEngine {
     private record IndexEntry(SyncRule rule, int conjunct) {}
     private final FlowArchiver archiver;
     private final Map<String, ActionLog> inFlight = new ConcurrentHashMap<>();
-    private final Map<String, Object> conceptLocks = new ConcurrentHashMap<>();
+    private final ConceptLocks conceptLocks = new ConceptLocks();
 
     public SyncEngine(FactStore facts, List<Concept> concepts, List<SyncRule> rules) {
         this(facts, concepts, rules,
@@ -286,28 +286,43 @@ public final class SyncEngine {
     }
 
     /**
-     * Execute a concept action atomically with respect to that concept: a
-     * concept is a state machine, so only one of its actions runs at a time.
-     * This is what makes "the action is the atomic unit" hold under concurrency,
-     * without touching the storage layer.
+     * Execute a concept action atomically with respect to its declared lock
+     * key(s). A stateful concept defaults to a concept-wide lock; a concept
+     * that declares a subject key lets different subjects run concurrently.
+     * Stateless concepts take no lock. The action remains the atomic unit.
      */
     private Map<String, Object> execute(String conceptName, Concept c, String action,
                                         Map<String, Object> input) {
-        synchronized (conceptLocks.computeIfAbsent(conceptName, k -> new Object())) {
-            Region region = facts.maybeRegion(conceptName);
-            if (region instanceof TransactionalRegion tx) {
-                tx.beginAction();
-                try {
-                    Map<String, Object> out = c.execute(action, input);
-                    tx.flushAction();
-                    return out;
-                } catch (RuntimeException ex) {
-                    tx.abortAction();
-                    throw ex;
-                }
-            }
+        if (!c.stateful()) {
+            return runAction(conceptName, c, action, input);
+        }
+        int[] indexes = conceptLocks.indexes(conceptName, c.lockKeys(action, input));
+        conceptLocks.acquire(indexes);
+        try {
+            return runAction(conceptName, c, action, input);
+        } finally {
+            conceptLocks.release(indexes);
+        }
+    }
+
+    private Map<String, Object> runAction(String conceptName, Concept c, String action,
+                                          Map<String, Object> input) {
+        if (!c.stateful()) {
             return c.execute(action, input);
         }
+        Region region = facts.maybeRegion(conceptName);
+        if (region instanceof TransactionalRegion tx) {
+            tx.beginAction();
+            try {
+                Map<String, Object> out = c.execute(action, input);
+                tx.flushAction();
+                return out;
+            } catch (RuntimeException ex) {
+                tx.abortAction();
+                throw ex;
+            }
+        }
+        return c.execute(action, input);
     }
 
     private Object resolveScalar(WhereEvaluator evaluator, Source src, Map<String, Object> frame,

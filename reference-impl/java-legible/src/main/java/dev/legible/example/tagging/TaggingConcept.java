@@ -30,6 +30,11 @@ public final class TaggingConcept implements Concept {
         };
     }
 
+    @Override
+    public Object lockKey(String action, Map<String, Object> input) {
+        return TAG.equals(action) ? input.get("postId") : null;
+    }
+
     private Map<String, Object> tag(Map<String, Object> input) {
         String postId = (String) input.get("postId");
         String tag = (String) input.get("tag");

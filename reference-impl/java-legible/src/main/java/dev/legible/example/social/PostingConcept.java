@@ -32,6 +32,11 @@ public final class PostingConcept implements Concept {
         };
     }
 
+    @Override
+    public Object lockKey(String action, Map<String, Object> input) {
+        return CREATE_POST.equals(action) ? input.get("author") : null;
+    }
+
     public String authorOf(String postId) {
         var v = region.read(postId, "author");
         return v.isEmpty() ? null : v.iterator().next();

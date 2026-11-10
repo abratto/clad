@@ -116,11 +116,14 @@ public final class RmapPostgresFactStore implements FactStore {
         private final DSLContext dsl;
         private final RmapModel model;
 
-        // Buffered writes for the current action: subject -> table -> column -> value.
-        // A buffered retract is the {@link #RETRACTED} marker; a multi-valued
-        // (child-table) fact accumulates a list of values per column.
-        private final Map<String, Map<String, Map<String, Object>>> buffer = new LinkedHashMap<>();
-        private boolean buffering = false;
+        // Buffered writes for the current action on the current thread:
+        // subject -> table -> column -> value. A ThreadLocal keeps concurrent
+        // actions on different subjects isolated while the engine's per-subject
+        // locks preserve each subject's read-modify-write invariant. A buffered
+        // retract is the {@link #RETRACTED} marker; a multi-valued (child-table)
+        // fact accumulates a list of values per column.
+        private final ThreadLocal<Map<String, Map<String, Map<String, Object>>>> buffer =
+                new ThreadLocal<>();
 
         // Predicates whose DATA column is owned by more than one table (only
         // a partitioned supertype's flattened predicates): plain operations on
@@ -305,32 +308,30 @@ public final class RmapPostgresFactStore implements FactStore {
 
         @Override
         public void beginAction() {
-            buffer.clear();
-            buffering = true;
+            buffer.set(new LinkedHashMap<>());
         }
 
         @Override
         public void flushAction() {
-            buffering = false;
-            try {
-                // One transaction per concept action: every buffered row shares
-                // one connection and commits atomically. A mid-flush failure
-                // rolls the whole action back instead of leaving partial state.
-                dsl.transaction(configuration -> {
-                    DSLContext tx = DSL.using(configuration);
-                    for (Map.Entry<String, Map<String, Map<String, Object>>> bySubject : buffer.entrySet()) {
-                        flushSubject(tx, bySubject.getKey(), bySubject.getValue());
-                    }
-                });
-            } finally {
-                buffer.clear();
+            Map<String, Map<String, Map<String, Object>>> buffered = buffer.get();
+            buffer.remove();
+            if (buffered == null) {
+                return;
             }
+            // One transaction per concept action: every buffered row shares
+            // one connection and commits atomically. A mid-flush failure
+            // rolls the whole action back instead of leaving partial state.
+            dsl.transaction(configuration -> {
+                DSLContext tx = DSL.using(configuration);
+                for (Map.Entry<String, Map<String, Map<String, Object>>> bySubject : buffered.entrySet()) {
+                    flushSubject(tx, bySubject.getKey(), bySubject.getValue());
+                }
+            });
         }
 
         @Override
         public void abortAction() {
-            buffering = false;
-            buffer.clear();
+            buffer.remove();
         }
 
         @Override
@@ -341,7 +342,7 @@ public final class RmapPostgresFactStore implements FactStore {
                         "unknown predicate '" + predicate + "' for concept " + model.concept());
             }
             RelationSchema.Column col = schema.columnFor(predicate);
-            if (buffering) {
+            if (buffer.get() != null) {
                 appendBuffered(schema, subject, Map.ofEntries(
                         Map.entry(col.column(), fromSpi(col, value))),
                         schema.primaryKey().contains(col.column()));
@@ -356,7 +357,7 @@ public final class RmapPostgresFactStore implements FactStore {
         public void write(String member, String subject, String predicate, String value) {
             RelationSchema schema = memberTable(member);
             RelationSchema.Column col = memberColumn(schema, member, predicate);
-            if (buffering) {
+            if (buffer.get() != null) {
                 appendBuffered(schema, subject, Map.ofEntries(
                         Map.entry(col.column(), fromSpi(col, value))),
                         schema.primaryKey().contains(col.column()));
@@ -436,7 +437,7 @@ public final class RmapPostgresFactStore implements FactStore {
                 colsByName.put(pk.get(i), subject.get(i));
             }
             colsByName.put(col.column(), typed);
-            if (buffering) {
+            if (buffer.get() != null) {
                 appendBuffered(schema, Region.join(subject), colsByName, false);
                 return;
             }
@@ -507,11 +508,12 @@ public final class RmapPostgresFactStore implements FactStore {
          */
         private boolean bufferRetract(RelationSchema schema, List<String> compositeSubject,
                                       RelationSchema.Column col, String subject) {
-            if (!buffering) {
+            Map<String, Map<String, Map<String, Object>>> buffered = buffer.get();
+            if (buffered == null) {
                 return false;
             }
             String key = compositeSubject != null ? Region.join(compositeSubject) : subject;
-            Map<String, Object> draft = buffer
+            Map<String, Object> draft = buffered
                     .computeIfAbsent(key, k -> new LinkedHashMap<>())
                     .computeIfAbsent(schema.qualifiedName(), k -> new LinkedHashMap<>());
             draft.put(col.column(), RETRACTED);
@@ -528,7 +530,11 @@ public final class RmapPostgresFactStore implements FactStore {
         private void appendBuffered(RelationSchema schema, String subject,
                                     Map<String, Object> columnsByName,
                                     boolean valueColumnAccumulates) {
-            Map<String, Object> cols = buffer
+            Map<String, Map<String, Map<String, Object>>> buffered = buffer.get();
+            if (buffered == null) {
+                throw new IllegalStateException("appendBuffered called outside beginAction");
+            }
+            Map<String, Object> cols = buffered
                     .computeIfAbsent(subject, k -> new LinkedHashMap<>())
                     .computeIfAbsent(schema.qualifiedName(), k -> new LinkedHashMap<>());
             for (Map.Entry<String, Object> e : columnsByName.entrySet()) {

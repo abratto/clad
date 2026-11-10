@@ -16,6 +16,17 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -238,6 +249,42 @@ class RmapPostgresFactStoreTest {
             Map<String, Object> ok = app.login("hikari-user", "secret");
             assertEquals(200, ok.get("status"), ok.toString());
         }
+    }
+
+    @Test
+    void concurrentActionsOnDifferentSubjectsKeepSeparateBuffers() throws Exception {
+        Region region = store.region("UserNaming");
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        CountDownLatch start = new CountDownLatch(1);
+
+        Callable<Void> first = () -> {
+            start.await();
+            TransactionalRegion tx = (TransactionalRegion) region;
+            tx.beginAction();
+            region.write("cb-1", "username", "cb-1");
+            Thread.sleep(10);
+            tx.flushAction();
+            return null;
+        };
+        Callable<Void> second = () -> {
+            start.await();
+            TransactionalRegion tx = (TransactionalRegion) region;
+            tx.beginAction();
+            region.write("cb-2", "username", "cb-2");
+            Thread.sleep(10);
+            tx.flushAction();
+            return null;
+        };
+
+        Future<Void> f1 = pool.submit(first);
+        Future<Void> secondFuture = pool.submit(second);
+        start.countDown();
+        f1.get(5, TimeUnit.SECONDS);
+        secondFuture.get(5, TimeUnit.SECONDS);
+        pool.shutdown();
+
+        assertEquals(Set.of("cb-1"), region.read("cb-1", "username"));
+        assertEquals(Set.of("cb-2"), region.read("cb-2", "username"));
     }
 
     private String queryOne(String sql, String... params) throws Exception {

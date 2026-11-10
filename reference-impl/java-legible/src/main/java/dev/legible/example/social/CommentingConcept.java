@@ -32,6 +32,11 @@ public final class CommentingConcept implements Concept {
         };
     }
 
+    @Override
+    public Object lockKey(String action, Map<String, Object> input) {
+        return COMMENT.equals(action) ? input.get("postId") : null;
+    }
+
     private Map<String, Object> comment(Map<String, Object> input) {
         String postId = (String) input.get("postId");
         String author = (String) input.get("author");

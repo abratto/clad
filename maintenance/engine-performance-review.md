@@ -138,3 +138,13 @@ green artefact/reactor gates before commit. After approval, set Status to
   comparisons are same-session only.
 - **Rollback:** removing the module from `reference-impl/pom.xml` and deleting
   the directory restores the prior tree; no runtime state or contract changes.
+
+## Post-close addendum — 2026-11-09 (concurrency benchmark)
+
+Added `PostgresConcurrencyBenchmark` (Hikari + Rmap; `-p mode=same|unique`, `-t`
+thread sweep) so the concurrency claims are reproducible rather than ad-hoc.
+Short-run results (1 s iterations): same-user 1,518 / 2,384 / 2,372 ops/s and
+unique-user 1,509 / 2,405 / 1,885 ops/s at 1 / 4 / 16 threads. Both plateau at
+~2.4k login/s; unique users do not help, which is the per-concept-lock finding.
+Recorded in `docs/experiments/engine-performance-review.md` §"Capacity envelope".
+No engine or storage behaviour changed.

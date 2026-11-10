@@ -41,6 +41,14 @@ public final class PasswordAuthConcept implements Concept {
         };
     }
 
+    @Override
+    public Object lockKey(String action, Map<String, Object> input) {
+        return switch (action) {
+            case SET_CREDENTIAL, CHECK -> input.get("userId");
+            default -> null;
+        };
+    }
+
     /** Test/seed helper. */
     public void seedCredential(String userId, String password) {
         region.clear(userId, "passwordHash");

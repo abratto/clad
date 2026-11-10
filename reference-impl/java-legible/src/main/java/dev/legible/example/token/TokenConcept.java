@@ -35,6 +35,11 @@ public final class TokenConcept implements Concept {
         };
     }
 
+    @Override
+    public Object lockKey(String action, Map<String, Object> input) {
+        return ISSUE.equals(action) ? input.get("tokenId") : null;
+    }
+
     public String ownerOf(String tokenId) {
         var v = region.read(tokenId, "owner");
         return v.isEmpty() ? null : v.iterator().next();

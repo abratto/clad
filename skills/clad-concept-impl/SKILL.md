@@ -70,6 +70,25 @@ consumers without causing any exception. An outcome-only test will pass;
 a field-value test will catch the null immediately.
 `verify_concept_field_assertions.py` enforces this.
 
+## Concurrency: declare lock keys
+
+The engine serializes a concept's actions. By default the lock is concept-wide
+(safe). Declare a finer key only when the action's read-modify-write is
+confined to one individual:
+
+- `stateful()` → `false` for a stateless concept (bootstrap/adapters).
+- `lockKey(action, input)` → the subject the action mutates (`userId`,
+  `postId`, …).
+- `lockKeys(action, input)` → every subject for a multi-subject action; the
+  engine acquires them in a deterministic order.
+- No override keeps the concept-wide lock.
+
+Do not invent a key for an action with a cross-subject invariant; a wrong key
+lets two actions that share state run concurrently. Locks are in-process
+(multi-JVM needs partitioning, DB row locks, or optimistic concurrency), and
+sync `where` reads are not isolated. See `ENGINE.md` §"Concurrency model" and
+`CONCEPTS.md` §"Concurrency and lock keys".
+
 ## Hard constraints
 
 - Tests and implementation are produced together — implement nothing
@@ -78,6 +97,8 @@ a field-value test will catch the null immediately.
 - Every concept unit test asserts the outcome and the primary completion
   field values that downstream syncs consume.
 - No cross-concept imports (R1).
+- Declare a lock key only when the action's read-modify-write is confined to
+  that subject; otherwise keep the concept-wide lock.
 - Every public action emits a flow token (R5).
 - Distinct contract outcomes remain distinct in code paths (R9).
 - Do not substitute an in-memory store for the configured storage layer.

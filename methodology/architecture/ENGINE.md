@@ -42,7 +42,7 @@ pending invocation that a later drain re-processes idempotently (the
 | `Concept` | `engine/Concept.java` | A state machine whose actions are `Map execute(String action, Map input)` returning an `outcome` + fields. |
 | `SyncRule` | `engine/SyncRule.java` | A declarative `when`/`where`/`then` rule (pure data, no branching — R3). |
 | `WhereEvaluator` | `engine/WhereEvaluator.java` | The `where`-clause binding engine: trigger/sibling joins, constants, concept-state reads (Pattern D), fan-out, `OPTIONAL`, `bind(uuid)`, `?_eachthen` grouping, and route `Guard`s. |
-| `SyncEngine` | `engine/SyncEngine.java` | Dispatches, commits, evaluates syncs, mints invocations; serializes concept actions per concept (the action is the atomic unit). |
+| `SyncEngine` | `engine/SyncEngine.java` | Dispatches, commits, evaluates syncs, mints invocations; serializes concept actions per declared subject (concept-wide by default; the action is the atomic unit). |
 | `FlowArchiver` / `FlowArchiveBuffer` | `engine/FlowArchiver.java` | Flush a completed flow to a sink + bounded buffer, then discard it. |
 | `DebugApi` | `engine/DebugApi.java` | Introspection over the logs, archive buffer, fact store, and rules — direct record lookups (see "The debug surface"). |
 
@@ -50,12 +50,44 @@ pending invocation that a later drain re-processes idempotently (the
 
 - **Per-flow logs (sharding).** Each `run()` owns a private `ActionLog`,
   so flows never contend on log state.
-- **Per-concept serialization.** A concept is a state machine; its actions
-  run one at a time (`SyncEngine.execute` holds a per-concept lock). This
-  makes "the action is the atomic unit" hold under concurrency without any
-  storage-level coordination.
-- **Storage-owned atomicity** remains available for profiles that need
-  finer granularity (per-subject locks, or `SELECT … FOR UPDATE` in SQL).
+- **Per-subject serialization.** A concept is a state machine; the engine
+  serializes actions that share a **lock key**. A concept that declares no key
+  keeps the original concept-wide lock (`Concept.lockKey` returns `null`). A
+  concept that declares a subject key — `lockKey(action, input)` returning e.g.
+  a `userId` or `postId` — lets different subjects run concurrently while the
+  same subject stays serialized. Multi-subject actions override
+  `lockKeys(action, input)`; the engine acquires the distinct stripe indices in
+  ascending order and releases them in reverse, so overlapping actions cannot
+  deadlock (`ConceptLocks`). Stateless concepts (`Concept.stateful() == false`,
+  e.g. `Web`) take no lock and do not touch a region.
+- **Action atomicity.** The action is still the atomic unit. On the durable
+  Rmap profile the buffered writes of one action are flushed in one
+  transaction, and `RmapRegion`'s action buffer is thread-local, so concurrent
+  actions on different subjects never share a buffer. Same-subject actions
+  remain serialized, preserving the read-modify-write invariant (e.g. the
+  failed-attempt counter and lockout).
+- **What this does not solve.** The locks are **in-process**: multiple JVMs
+  still need partitioning, DB row locks (`SELECT … FOR UPDATE`), or optimistic
+  concurrency. Sync `where` reads are not serialized with actions, so the
+  guarantee is per-action atomicity, not flow-snapshot isolation. The generic
+  `PostgresFactStore` remains best-effort (it is not a `TransactionalRegion`);
+  the concurrency guarantee is validated on the in-memory and Rmap stores.
+
+### Declaring a lock key (implementers)
+
+- Declare a key only when the action's read-modify-write is **confined to that
+  subject**. An action with a cross-subject invariant must stay concept-wide
+  (return `null`), or override `lockKeys` with every subject it touches.
+- A wrong key is a correctness defect: it lets two actions that share state run
+  concurrently. Unannotated actions deliberately keep the safe concept-wide
+  lock.
+- The subject in a concept's state relations is the natural key candidate
+  (`UserId`, `PostId`, …), but the action's actual write scope decides.
+- Lock striping can cause false contention between unrelated subjects that hash
+  to the same stripe; the fixed 4096-stripe table keeps that rare and bounded.
+- The Rmap action buffer is thread-local, so `beginAction`/`flushAction` must
+  run on the same thread; the engine's synchronous action path guarantees it.
+- See `Concept`'s Javadoc and `ConceptLocks` for the contract.
 
 ## Flow archival
 
@@ -147,6 +179,8 @@ change re-enters the affected feature artefact chain:
 - a sync fires at most once per trigger (provenance-based exactly-once);
 - the observable action chain and outcomes match the chain table (the
   flow-token back-trace in `05_verify`);
+- the action remains the atomic unit: same-subject actions serialize, and a
+  declared lock key covers exactly the subjects the action mutates;
 - declared storage backend (`FactStore` implementation) is selected or
   fails clearly — never a silent fallback.
 
