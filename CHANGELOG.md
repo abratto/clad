@@ -12,6 +12,15 @@ file `methodology/` is the source of truth for what each version contains.
 
 ## [Unreleased]
 
+## [0.38.0] — 2026-11-18
+
+**Minor: Rmap conformance, richer constraints, and typed value codecs. CLAD's
+relational subset now preserves subtype constraints under absorption, realises
+same-concept entity references as foreign keys, supports role-level
+participation, multi-column uniqueness, subtype disjointness/exhaustiveness and
+discriminators, and lowers Decimal/UUID/Date/Time/JSONB/Bytes through a
+pluggable type/codec registry.**
+
 ### Richer scalar types
 
 - **Built-in type map.** `Decimal`/`Numeric` (including `Decimal(12,2)`),
