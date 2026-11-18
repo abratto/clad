@@ -2,7 +2,7 @@
 
 - **Rulebook:** `methodology/core/ITERATIVE_CHANGES.md`
 - **Change class:** `platform`
-- **Status:** `active` (`draft` until design approval, `active` while
+- **Status:** `closed` (`draft` until design approval, `active` while
   implementing, `closed` after evidence approval)
 - **Affected profile(s):** `quality-gate/rmap.py`,
   `reference-impl/legible-storage`, `reference-impl/java-micronaut`,
