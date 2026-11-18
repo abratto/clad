@@ -53,7 +53,9 @@
           "primaryKey": [
             "loan"
           ],
-          "foreignKeys": [],
+          "foreignKeys": [
+            "loan_copy -> plain_lending__copy(copy)"
+          ],
           "columns": [
             {
               "predicate": "loan",
@@ -107,7 +109,7 @@
             }
           ],
           "checks": [],
-          "ddl": "CREATE TABLE IF NOT EXISTS \"plain_lending__loan\" (\n  \"loan\" varchar NOT NULL PRIMARY KEY,\n  \"borrower\" varchar NOT NULL,\n  \"opened_at\" timestamp NOT NULL,\n  \"loan_copy\" varchar NOT NULL UNIQUE,\n  \"returned_at\" timestamp\n)"
+          "ddl": "CREATE TABLE IF NOT EXISTS \"plain_lending__loan\" (\n  \"loan\" varchar NOT NULL PRIMARY KEY,\n  \"borrower\" varchar NOT NULL,\n  \"opened_at\" timestamp NOT NULL,\n  \"loan_copy\" varchar NOT NULL UNIQUE,\n  \"returned_at\" timestamp,\n  FOREIGN KEY (\"loan_copy\") REFERENCES \"plain_lending__copy\" (\"copy\")\n)"
         }
       ]
     }

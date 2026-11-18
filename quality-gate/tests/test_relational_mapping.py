@@ -36,6 +36,11 @@ class RelationalMappingTests(unittest.TestCase):
         self.assertEqual(1, len(failures))
         self.assertIn("R2", failures[0])
 
+    def test_intra_concept_fk_prose_is_not_a_violation(self):
+        failures = relational.validate_relational_mapping(
+            "- `worksFor` -> intra-concept foreign key to `department`")
+        self.assertEqual([], failures)
+
     def test_no_foreign_key_is_clean(self):
         failures = relational.validate_relational_mapping(
             "CREATE TABLE user_accounts (\n"

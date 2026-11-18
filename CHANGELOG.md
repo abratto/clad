@@ -10,6 +10,94 @@ governance does not prescribe release policy for downstream CLAD-based projects.
 Pre-1.0 minor versions can include incompatible methodology changes; the
 file `methodology/` is the source of truth for what each version contains.
 
+## [Unreleased]
+
+### Richer scalar types
+
+- **Built-in type map.** `Decimal`/`Numeric` (including `Decimal(12,2)`),
+  `UUID`, `Date`, `Time`, `JSONB`, and `Bytes` now render real PostgreSQL types.
+  Domain value types keep the historical `TEXT` fallback.
+- **Declarative extension.** `storage.type.<Name>=<SQL>` in `clad.properties`
+  (and a feature-local `_config/type-map.md`) maps application value types;
+  `storage.type.strict=true` rejects unregistered value types.
+- **Runtime codecs.** `dev.legible.storage.ValueCodec` / `ValueCodecs` provide
+  string↔SQL conversion for the built-in types and load custom providers via
+  `ServiceLoader`. An SQL type with no codec fails loudly. Individual
+  identifiers remain `TEXT` because the engine SPI addresses subjects as
+  strings.
+- **Coverage.** New `RichTypes` fixture and `RmapEdgeBehaviorTest` P11 verify
+  NUMERIC/UUID/DATE/TIME/JSONB/BYTEA round-trips; Python tests cover the type
+  map, strict mode, and generated DDL.
+
+### Richer Rmap constraints
+
+- **Role-level participation.** Fact annotations accept `value mandatory` and
+  `value optional` alongside subject `mandatory`/`optional`. A 1:1 between two
+  object types is validated against Halpin's mandatory-side grouping and the
+  optional-side orientation is rejected. Auto-flipping the runtime predicate
+  direction remains deferred.
+- **Multi-column uniqueness.** `unique ( tenant, email )` renders a table-level
+  `UNIQUE`; the `while <field> absent` form renders a partial unique index.
+  Cross-table and multi-valued predicates fail loudly.
+- **Subtype completeness.** `disjoint ( A, B )` and `exhaustive ( Sup )`
+  declarations validate the subtype graph. Absorbed disjointness gets a
+  pairwise `CHECK`; `mapping: absorb, discriminator P = v` makes membership
+  explicit and generates a check tying the discriminator to the subtype's
+  facts. Separate-table disjointness/exhaustiveness is reported, not
+  DB-enforced; partition is structural/inherent.
+- **Incremental CHECK changes.** `--alter` now replaces a changed `CHECK`
+  expression under an existing constraint name (drop + add) with a warning,
+  instead of silently leaving the old expression in place.
+- **Stage 03b contract.** The generator carries the new clauses from
+  `## State`; `verify_data_model` validates them and includes them in the
+  fidelity signature. The data-model template and conformance docs record the
+  new grammar.
+
+### Rmap conformance
+
+**Subtype absorption preserves conditional mandatory roles, and ordinary
+same-concept entity references become foreign keys when the target owns stored
+state.**
+
+### Relational mapping
+
+- **Absorbed subtypes.** A subtype's mandatory fact is no longer promoted to
+  `NOT NULL` on the supertype table. Absorbed facts are nullable and a
+  membership `CHECK` allows all-null (non-member) or every effective mandatory
+  fact present (member), including absorbed ancestors. `absorb` now requires a
+  mandatory simple qualifier; defaults and multi-valued subtype facts are
+  rejected. Transitive absorbed chains are handled.
+- **Entity references.** A fact value that names a declared object type or its
+  reference scheme in the same concept renders an intra-concept `FOREIGN KEY`
+  when the target table owns a data column. Identity-only targets stay opaque
+  with a derivation warning because the runtime has no identity-materialisation
+  operation. References to partitioned supertypes, compidots, and FK cycles
+  fail loudly. Tables are topologically ordered, and `--alter` emits new FK
+  constraints.
+- **Supported subset.** New `methodology/architecture/RMAP_CONFORMANCE.md`
+  records Halpin's stages, the supported input subset, the mapping semantics,
+  valid/invalid populations, and the explicit non-goals (role-level 1:1
+  orientation, general set-comparison constraints, derived views,
+  composite-reference FKs). The "Halpin's Rmap, complete" claim is removed.
+- **Unsupported constructs.** A `-- derived` fact is now rejected by the
+  Stage 03b check and by the derivation; previously it was silently stored as
+  a base column. Set-comparison clauses remain unexpressible and are reported
+  as unrecognized block clauses.
+- **Fixtures.** Domain schema descriptors and migration oracles regenerated;
+  the login migration and descriptor are unchanged.
+
+### Verification
+
+- New `quality-gate/tests/test_rmap_conformance.py` (Halpin-derived
+  valid/invalid populations), expanded absorption/entity-FK tests, new
+  `verify_data_model` semantic checks, and mutation-sensitivity coverage for
+  the absorption guard and entity FKs.
+- New `RmapEdgeBehaviorTest` P8 covers an action-boundary promotion of a party
+  to employer, a rejected partial promotion, and the retract-both rule.
+  Throwaway population/migration experiments also covered Halpin 1:1
+  orientation, 3-role objectification, generated Stage 03b models, random
+  populations, and `--alter` migration edges.
+
 ## [0.37.0] — 2026-11-10
 
 **Minor: per-subject concept locking. The engine no longer serializes every

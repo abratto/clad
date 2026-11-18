@@ -527,6 +527,42 @@ def parse_state_relations(state_lines: List[str]) -> List[StateRelation]:
 # Machine-model parsing (Stage 03b `## Machine model` block)
 # --------------------------------------------------------------------------
 
+def role_flags(annotation: str) -> Tuple[Optional[bool], Optional[bool]]:
+    """Parse subject/value role participation from a fact annotation.
+
+    Existing `mandatory` / `optional` describe the SUBJECT role. The explicit
+    `subject …` and `value …` forms disambiguate; `value mandatory` /
+    `value optional` describe the VALUE role. `None` means the model did not
+    state that role's participation.
+    """
+    text = (annotation or "").lower()
+    subject = None
+    value = None
+    if re.search(r"\bsubject\s+mandatory\b", text):
+        subject = True
+    elif re.search(r"\bsubject\s+optional\b", text):
+        subject = False
+    if re.search(r"\bvalue\s+mandatory\b", text):
+        value = True
+    elif re.search(r"\bvalue\s+optional\b", text):
+        value = False
+    remainder = re.sub(
+        r"\b(?:subject|value)\s+(?:mandatory|optional)\b", "", text)
+    if subject is None:
+        if re.search(r"\bmandatory\b", remainder):
+            subject = True
+        elif re.search(r"\boptional\b", remainder):
+            subject = False
+    return subject, value
+
+
+@dataclass(frozen=True)
+class UniqueConstraint:
+    """A table-level `unique ( p1, p2, ... )` declaration."""
+    predicates: Tuple[str, ...]
+    while_absent: Optional[str] = None
+
+
 @dataclass
 class MachineModel:
     """A Stage 03b conceptual data model's CSDP-aligned machine block.
@@ -536,12 +572,21 @@ class MachineModel:
     `subtypes` are `(sub, sup, mapping)` triples (mapping may be empty —
     Rmap's deterministic default is `separate`); `independent` lists object
     types with no functional role. `present` is False when the data model has
-    no machine block at all (legacy/stateless)."""
+    no machine block at all (legacy/stateless).
+
+    `unique_constraints` are table-level multi-column uniqueness declarations;
+    `disjoint` / `exhaustive` are subtype set constraints; `discriminators`
+    are `(subtype, predicate, value)` triples making absorbed membership
+    explicit."""
     object_types: dict
     facts: List[StateRelation]
     subtypes: List[tuple]
     independent: List[str]
     present: bool
+    unique_constraints: List[UniqueConstraint] = field(default_factory=list)
+    disjoint: List[Tuple[str, ...]] = field(default_factory=list)
+    exhaustive: List[str] = field(default_factory=list)
+    discriminators: List[Tuple[str, str, str]] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
 
 
@@ -550,8 +595,15 @@ _MACHINE_OBJECT_TYPE = re.compile(
 _MACHINE_FACT = re.compile(
     r"^fact\s+(\w+)\s*:\s*(.+?)\s*->\s*(.+?)(?:\s+--\s+(.*))?$")
 _MACHINE_SUBTYPE = re.compile(
-    r"^(\w+)\s+is a\s+(\w+)\s*(?:--\s*mapping:\s*(\w+))?\s*$")
+    r"^(\w+)\s+is a\s+(\w+)\s*(?:--\s*mapping:\s*(\w+)"
+    r"(?:\s*,\s*discriminator\s+(\w+)\s*=\s*(\S+))?)?\s*$")
 _MACHINE_INDEPENDENT = re.compile(r"^independent\s+(\w+)\s*$")
+_MACHINE_UNIQUE = re.compile(
+    r"^unique\s*\(\s*(\w+(?:\s*,\s*\w+)+)\s*\)"
+    r"(?:\s+while\s+(\w+)\s+(?:absent|missing))?\s*$")
+_MACHINE_DISJOINT = re.compile(
+    r"^disjoint\s*\(\s*(\w+(?:\s*,\s*\w+)+)\s*\)\s*$")
+_MACHINE_EXHAUSTIVE = re.compile(r"^exhaustive\s*\(\s*(\w+)\s*\)\s*$")
 
 
 def parse_machine_model(data_model_text: str) -> MachineModel:
@@ -589,6 +641,10 @@ def parse_machine_model(data_model_text: str) -> MachineModel:
     facts: List[StateRelation] = []
     subtypes: List[tuple] = []
     independent: List[str] = []
+    unique_constraints: List[UniqueConstraint] = []
+    disjoint: List[Tuple[str, ...]] = []
+    exhaustive: List[str] = []
+    discriminators: List[Tuple[str, str, str]] = []
     errors: List[str] = []
     for lineno, raw in enumerate(body, 1):
         line = raw.strip()
@@ -612,7 +668,27 @@ def parse_machine_model(data_model_text: str) -> MachineModel:
             continue
         m = _MACHINE_SUBTYPE.match(line)
         if m:
-            subtypes.append((m.group(1), m.group(2), (m.group(3) or "separate").lower()))
+            subtypes.append((m.group(1), m.group(2),
+                             (m.group(3) or "separate").lower()))
+            if m.group(4):
+                discriminators.append(
+                    (m.group(1), m.group(4), m.group(5)))
+            continue
+        m = _MACHINE_UNIQUE.match(line)
+        if m:
+            predicates = tuple(
+                part.strip() for part in m.group(1).split(","))
+            unique_constraints.append(
+                UniqueConstraint(predicates, m.group(2)))
+            continue
+        m = _MACHINE_DISJOINT.match(line)
+        if m:
+            disjoint.append(tuple(
+                part.strip() for part in m.group(1).split(",")))
+            continue
+        m = _MACHINE_EXHAUSTIVE.match(line)
+        if m:
+            exhaustive.append(m.group(1))
             continue
         m = _MACHINE_INDEPENDENT.match(line)
         if m:
@@ -621,8 +697,10 @@ def parse_machine_model(data_model_text: str) -> MachineModel:
         # Never silently drop a malformed clause: a typo must fail the gate,
         # not disappear from the derived schema.
         errors.append(f"line {lineno}: unrecognized machine-model clause: {line}")
-    return MachineModel(object_types, facts, subtypes, independent, present=True,
-                        errors=errors)
+    return MachineModel(
+        object_types, facts, subtypes, independent, present=True,
+        unique_constraints=unique_constraints, disjoint=disjoint,
+        exhaustive=exhaustive, discriminators=discriminators, errors=errors)
 
 
 # --------------------------------------------------------------------------

@@ -7,6 +7,7 @@ per-piece doctrine lives elsewhere and is referenced, not duplicated:
 | Concern | Document |
 |---|---|
 | Conceptual (CSDP) modeling procedure | [`DATA_MODEL_NOTES.md`](DATA_MODEL_NOTES.md) |
+| Supported Rmap subset (derived vs supplied) | [`RMAP_CONFORMANCE.md`](RMAP_CONFORMANCE.md) |
 | Conceptual-model block grammar | [`DATA_MODEL_NOTES.md`](DATA_MODEL_NOTES.md) §"The conceptual model block" |
 | Storage mapping doctrine (per profile: relational / RDF / document) | [`../implementation/STORAGE_MAPPING.md`](../implementation/STORAGE_MAPPING.md) |
 | Profile-specific lowering rules (constraints, subtypes, migrations) | [`reference-impl/java-micronaut/RELATIONAL_LOWERING.md`](../../reference-impl/java-micronaut/RELATIONAL_LOWERING.md) |
@@ -54,18 +55,36 @@ multi-valued fact.
 | `fact p : S -> V` mandatory / optional / `-- default d` / `-- in {…}` | typed column on `S`'s table; `NOT NULL` / nullable; `DEFAULT d`; `CHECK` |
 | `fact p : S -> V -- unique` | column `UNIQUE` (or the subject's `PRIMARY KEY`) |
 | `fact p : S -> V -- unique while F absent` | **partial unique index** `(p) WHERE F IS NULL` replacing the plain `UNIQUE` — external uniqueness over open individuals (e.g. at most one *open* loan per copy) |
+| `unique ( p1, p2 )` | table-level `UNIQUE (col1, col2)`; `while F absent` renders a partial unique index |
+| `fact p : S -> V -- value mandatory/optional` | value-role participation; a 1:1 between object types must be oriented on the mandatory side (the optional-side orientation is rejected) |
 | `fact p : (A, B…) -> V` | compidot table, `PRIMARY KEY (a, b…)` — the individual *is* the component pair; no surrogate id, no mapping table |
 | `fact p : S -> { V }` | child table `PRIMARY KEY (s, p)` |
 | `Sub is a Sup -- mapping: separate` (default) | member table keyed on the supertype's identity column + rendered intra-concept `FOREIGN KEY` |
-| `Sub is a Sup -- mapping: absorb` | subtype facts become nullable columns on the supertype's table |
+| `Sub is a Sup -- mapping: absorb` | subtype facts become **nullable** columns on the supertype's table; a membership `CHECK` allows all-null (non-member) or every effective mandatory fact present (member). `absorb` requires a mandatory simple qualifier or a discriminator; defaults and multi-valued subtype facts are rejected |
+| `Sub is a Sup -- mapping: absorb, discriminator P = v` | explicit membership: the generated check requires the subtype's facts when `P = v` and forbids them otherwise |
+| `disjoint ( A, B )` / `exhaustive ( Sup )` | absorbed disjointness gets a pairwise check; partition is structural; separate-table disjointness/exhaustiveness is reported, not DB-enforced |
 | `Sub is a Sup -- mapping: partition` | derivation realises it (flattening, no parent table); **runtime-writable via member-qualified operations** — plain operations on shared predicates throw naming the members; see guardrails |
 | `independent T` | single-column table keyed on `T`'s reference scheme |
+| same-concept entity reference | `FOREIGN KEY` when the target table owns a data column; an identity-only target stays opaque with a derivation warning (the runtime has no identity-materialisation operation) |
 | cross-concept identifier | opaque typed column — never a foreign key (R2) |
 | role membership (your "PartyRole" discriminator) | not a subtype mapping at all: assert the objectified membership fact (`member : (Party, Role) -> Timestamp -- mandatory`) beside a role catalog — that derives the junction table with the discriminator pair as its PK |
 
+The authority for what is derived versus supplied is
+[`RMAP_CONFORMANCE.md`](RMAP_CONFORMANCE.md). In particular, the fact line
+supplies the functional orientation (CLAD does not derive a 1:1 grouping from
+both roles' mandatory participation), and general set-comparison constraints
+and derived-fact SQL views are outside the supported subset.
+
 Type mapping: `Int`/`Integer` → `INTEGER`; `Timestamp`/`Instant` →
 `TIMESTAMP` (values round-trip as ISO-8601 instants); `Boolean` → `BOOLEAN`;
-everything else `TEXT`.
+`Decimal`/`Numeric` (optionally `Decimal(12,2)`) → `NUMERIC`; `UUID` → `UUID`;
+`Date` → `DATE`; `Time` → `TIME`; `Json`/`JSON`/`JSONB` → `JSONB`; `Bytes` →
+`BYTEA`. Other value types are domain types and default to `TEXT`; register
+them in the project/feature type map (`storage.type.<Name>=<SQL>`) to use a
+richer SQL type. `storage.type.strict=true` rejects unregistered value types.
+The runtime binds/reads each column through `dev.legible.storage.ValueCodecs`;
+an SQL type with no codec fails loudly. Identifiers remain `TEXT` in this
+round.
 
 ## Runtime write semantics (why the schema can be strict)
 
@@ -147,10 +166,17 @@ python3 quality-gate/rmap.py --features-dir features   --baseline deployed-rmap-
 ```
 
 The incremental mode emits `CREATE TABLE` for new tables and `ALTER TABLE ADD
-COLUMN/CONSTRAINT` for additions; it never drops tables or columns
-automatically (they are reported for review), and it refuses a new mandatory
-column without a default. This is the production path for a schema change;
-regenerating a base migration is only for an undeployed app.
+COLUMN/CONSTRAINT` for additions; a changed `CHECK` expression under an
+existing name is replaced (drop + add) with a warning. It never drops tables or
+columns automatically (they are reported for review), and it refuses a new
+mandatory column without a default. This is the production path for a schema
+change; regenerating a base migration is only for an undeployed app.
+
+**Table-set transitions need a data migration.** Adding a second object type
+changes a concept's single table (`employment`) into a table set
+(`concept__type`). `--alter` creates the new tables and retains the old one
+with a warning, but it does not copy rows into the new tables. Treat that
+structural change as a planned data migration, not a DDL-only change.
 
 **Baseline discovery.** Record the deployed descriptor once:
 
@@ -187,10 +213,10 @@ consumer).
 | Guarantee | Proof |
 |---|---|
 | `## State` ≡ conceptual model (no silent divergence) | `quality-gate/verify_data_model.py` fidelity check |
-| Derivation correctness across shapes | `quality-gate/tests/test_rmap.py` (single, table-set, compound, multi, subtype×3, independent, filtered) + byte-frozen migration oracles |
+| Derivation correctness across shapes | `quality-gate/tests/test_rmap.py` (single, table-set, compound, multi, subtype×3, independent, filtered) + `test_rmap_conformance.py` (Halpin-derived valid/invalid populations) + byte-frozen migration oracles |
 | Derivation survives real files, not strings | `test_machine_model_parser.py` + `test_rmap.py` parity tests |
 | Postgres round-trips per domain | `RmapDomainStorageTest` (clinic 3-part objectified, ordering child tables/defaults, PatientRegistry separate-subtype join, lending loans) |
-| Guardrails are behaviour, not comments | `RmapEdgeBehaviorTest` P1–P5 (loud FK, CHECK rejection & retry semantics, partition member-addressing, filtered-vs-plain uniqueness, retract shapes) |
+| Guardrails are behaviour, not comments | `RmapEdgeBehaviorTest` P1–P10 (loud FK, CHECK rejection & retry semantics, partition member-addressing, filtered-vs-plain uniqueness, retract shapes, conditional absorption, entity-reference FK, action-boundary promotion, multi-column uniqueness, discriminator membership) |
 | Schema ≡ committed migration | `./clad rmap --check` (Python) + `RmapPostgresPersistenceTest` (Flyway owned, jOOQ agrees) |
 | Pipeline end-to-end on the shipped app | CI `postgres-verify`: `mvn verify -pl legible-storage,java-micronaut -am -Dclad.storage=postgres` |
 

@@ -70,7 +70,7 @@ class RmapMutationSensitivityTests(unittest.TestCase):
                             f"mutation was not detected: {old} -> {new}")
 
     def test_int_type_mutation(self):
-        self._assert_mutant_changes_output('return "INTEGER"', 'return "TEXT"')
+        self._assert_mutant_changes_output('"Int": "INTEGER"', '"Int": "TEXT"')
 
     def test_enum_mutation(self):
         self._assert_mutant_changes_output(
@@ -84,6 +84,50 @@ class RmapMutationSensitivityTests(unittest.TestCase):
         self._assert_mutant_changes_output(
             "        if fact.compound:\n",
             "        if False and fact.compound:\n")
+
+    def test_absorbed_membership_guard_mutation(self):
+        model = """## Conceptual model
+
+```
+object-type Party identified-by Party
+object-type Employer identified-by Employer
+fact partyName : Party -> Name -- mandatory
+fact vatNumber : Employer -> VatNumber -- mandatory
+Employer is a Party -- mapping: absorb
+```
+"""
+        baseline = rmap.render_migration(
+            "x", [rmap.derive_model("Employment", model)])
+        source = RMAP.read_text()
+        old = ("if len(guarded) == 1 and len(needed) == 1 "
+               "and guarded == needed:")
+        self.assertIn(old, source)
+        mutated = _load_mutated(source.replace(old, "if False:", 1))
+        output = mutated.render_migration(
+            "x", [mutated.derive_model("Employment", model)])
+        self.assertNotEqual(output, baseline)
+
+    def test_entity_reference_mutation(self):
+        model = """## Conceptual model
+
+```
+object-type Department identified-by DeptCode
+object-type Employee identified-by Employee
+fact deptName : Department -> Name -- mandatory
+fact worksFor : Employee -> Department -- mandatory
+```
+"""
+        baseline = rmap.render_migration(
+            "x", [rmap.derive_model("Directory", model)])
+        source = RMAP.read_text()
+        self.assertIn("        if target is None:\n            continue\n",
+                      source)
+        mutated = _load_mutated(
+            source.replace("        if target is None:\n            continue\n",
+                           "        if True:\n            continue\n", 1))
+        output = mutated.render_migration(
+            "x", [mutated.derive_model("Directory", model)])
+        self.assertNotEqual(output, baseline)
 
 
 if __name__ == "__main__":

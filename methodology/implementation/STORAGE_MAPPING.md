@@ -96,18 +96,20 @@ semantics, guardrails, and the drift guard — is mapped in
 [`../architecture/RELATIONAL_RMAP.md`](../architecture/RELATIONAL_RMAP.md).
 
 The deterministic mapping from the Stage 03b CSDP fact model to this schema is
-Halpin's Rmap, complete: arity + uniqueness + mandatory roles selects a
-single table per concept **or a table set** (`RmapModel`) for a concept
-ranging over several object types, a compound (objectified) subject, or
-multi-valued facts; **subtypes** realise per an explicit per-model choice
-(`absorb | separate | partition` — separate is the deterministic default;
-partition is runtime-writable via the Region SPI's member-qualified
-operations) and
-**independent object types** realise as their own single-column tables. A
-concept region is therefore a table set, not always one table. See the
-`java-micronaut` profile's `RELATIONAL_LOWERING.md` for the
-profile-specific rule set (including the subtyping and
-tabled-views decisions).
+**CLAD's supported subset of Halpin's Rmap** (the authority is
+[`../architecture/RMAP_CONFORMANCE.md`](../architecture/RMAP_CONFORMANCE.md)):
+arity + uniqueness + mandatory roles selects a single table per concept **or a
+table set** (`RmapModel`) for a concept ranging over several object types, a
+compound (objectified) subject, or multi-valued facts; **subtypes** realise per
+an explicit per-model choice (`absorb | separate | partition` — separate is the
+deterministic default; partition is runtime-writable via the Region SPI's
+member-qualified operations) and **independent object types** realise as their
+own single-column tables. A concept region is therefore a table set, not always
+one table. Same-concept entity references become FKs when the target owns a
+data column; an identity-only target stays opaque because the runtime has no
+identity-materialisation operation. See the `java-micronaut` profile's
+`RELATIONAL_LOWERING.md` for the profile-specific rule set (including the
+subtyping and tabled-views decisions).
 
 **DDL ownership (R-map/SQL).** When a relational profile realizes the R-map, the
 schema is owned by **Flyway**, as a generated, versioned migration derived from

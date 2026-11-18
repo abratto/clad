@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS "lending__loan" (
   "borrower" varchar NOT NULL,
   "opened_at" timestamp NOT NULL,
   "loan_copy" varchar NOT NULL,
-  "returned_at" timestamp
+  "returned_at" timestamp,
+  FOREIGN KEY ("loan_copy") REFERENCES "lending__copy" ("copy")
 );
 CREATE UNIQUE INDEX IF NOT EXISTS "lending__loan_loan_copy_open_idx" ON "lending__loan" ("loan_copy") WHERE "returned_at" IS NULL;

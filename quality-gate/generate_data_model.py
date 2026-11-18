@@ -37,8 +37,7 @@ import clad_stages as cs
 
 
 def _is_mandatory(r: ap.StateRelation) -> bool:
-    a = r.multiplicity.lower()
-    return "mandatory" in a and "optional" not in a and "zero or more" not in a
+    return ap.role_flags(r.multiplicity)[0] is True
 
 
 def render(concept: ap.ConceptSpec) -> str:
@@ -53,8 +52,19 @@ def render(concept: ap.ConceptSpec) -> str:
     fact_types = [r.field for r in rels]
     unique_rels = [r.field for r in rels if r.unique]
     mandatory_rels = [r.field for r in rels if _is_mandatory(r)]
-    optional_rels = [r.field for r in rels if not _is_mandatory(r)]
+    optional_rels = [r.field for r in rels
+                     if ap.role_flags(r.multiplicity)[0] is False]
+    value_mandatory_rels = [r.field for r in rels
+                            if ap.role_flags(r.multiplicity)[1] is True]
     annotated = any(r.multiplicity for r in rels)
+    unique_groups = [line.strip() for line in concept.state_lines
+                     if re.match(r"^unique\s*\(", line.strip())]
+    disjoint_lines = [line.strip() for line in concept.state_lines
+                      if re.match(r"^disjoint\s*\(", line.strip())]
+    exhaustive_lines = [line.strip() for line in concept.state_lines
+                        if re.match(r"^exhaustive\s*\(", line.strip())]
+    discriminator_lines = [line.strip() for line in concept.state_lines
+                           if "discriminator" in line]
 
     L: List[str] = []
     add = L.append
@@ -111,11 +121,12 @@ def render(concept: ap.ConceptSpec) -> str:
     add("")
     add("### Uniqueness constraints")
     add("")
-    if annotated:
-        if unique_rels:
-            for f in unique_rels:
-                add(f"- `{f}` is unique")
-        else:
+    if annotated or unique_groups:
+        for f in unique_rels:
+            add(f"- `{f}` is unique")
+        for line in unique_groups:
+            add(f"- `{line}`")
+        if not unique_rels and not unique_groups:
             add("- None")
     else:
         add("- <TODO: judgment — no state `-- unique` annotation; cannot auto-derive>")
@@ -130,9 +141,11 @@ def render(concept: ap.ConceptSpec) -> str:
     add("")
     if annotated:
         for f in mandatory_rels:
-            add(f"- `{f}` is mandatory")
+            add(f"- subject role of `{f}` is mandatory")
         for f in optional_rels:
-            add(f"- `{f}` is optional")
+            add(f"- subject role of `{f}` is optional")
+        for f in value_mandatory_rels:
+            add(f"- value role of `{f}` is mandatory")
     else:
         add("- <TODO: judgment — no `-- mandatory`/`-- optional` annotation; cannot auto-derive>")
     add("")
@@ -152,7 +165,10 @@ def render(concept: ap.ConceptSpec) -> str:
     add("")
     add("### Subtype constraints")
     add("")
-    add("- <TODO: judgment — subtype constraint, or `None`>")
+    for line in disjoint_lines + exhaustive_lines + discriminator_lines:
+        add(f"- `{line}`")
+    if not (disjoint_lines or exhaustive_lines or discriminator_lines):
+        add("- <TODO: judgment — subtype constraint, or `None`>")
     add("")
     add("## Step 7 — Other constraints and final checks")
     add("")
@@ -261,6 +277,8 @@ def _machine_model_block(name: str, rels, state_lines: List[str]) -> List[str]:
             continue
         if " is a " in line or line.startswith("independent "):
             L.append(line)  # subtype / independent carry over unchanged
+        elif re.match(r"^(unique|disjoint|exhaustive)\s*\(", line):
+            L.append(line)  # set constraint carries over unchanged
         elif "->" in line:
             L.append("fact " + line)
         # anything else is prose and contributes no clause

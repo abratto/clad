@@ -36,7 +36,7 @@
               "predicate": "vatNumber",
               "column": "vat_number",
               "sqlType": "TEXT",
-              "mandatory": true,
+              "mandatory": false,
               "unique": false,
               "default": null,
               "valueConstraint": null,
@@ -44,7 +44,7 @@
             }
           ],
           "checks": [],
-          "ddl": "CREATE TABLE IF NOT EXISTS \"employment\" (\n  \"party\" varchar NOT NULL PRIMARY KEY,\n  \"party_name\" varchar NOT NULL,\n  \"vat_number\" varchar NOT NULL\n)"
+          "ddl": "CREATE TABLE IF NOT EXISTS \"employment\" (\n  \"party\" varchar NOT NULL PRIMARY KEY,\n  \"party_name\" varchar NOT NULL,\n  \"vat_number\" varchar\n)"
         }
       ]
     }

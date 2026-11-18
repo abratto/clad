@@ -99,6 +99,26 @@ def _snake(name):
     return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
 
 
+def _machine_multi(relation):
+    value = relation.value_type.strip()
+    annotation = (relation.multiplicity or "").lower()
+    return ((value.startswith("{") and value.endswith("}"))
+            or "zero or more" in annotation
+            or re.search(r"\bmany\b", annotation) is not None)
+
+
+def _resolve_machine_entity(name, machine, subtype_of):
+    """Resolve a type name to a same-concept entity, or None for a value type."""
+    if name in machine.object_types:
+        return name
+    entities = {entity for entity, scheme in machine.object_types.items()
+                if scheme == name}
+    if len(entities) == 1:
+        return next(iter(entities))
+    roots = [entity for entity in entities if entity not in subtype_of]
+    return roots[0] if len(roots) == 1 else None
+
+
 def check_machine_semantics(machine):
     """Ambiguity/cycle checks the textual grammar cannot express.
 
@@ -115,6 +135,11 @@ def check_machine_semantics(machine):
                 f"'{fact.field}' both map to column '{folded}'")
         else:
             field_names[folded] = fact.field
+        if re.search(r"\bderived\b", fact.multiplicity or "", re.IGNORECASE):
+            failures.append(
+                f"fact '{fact.field}' is marked derived; derived facts are "
+                f"outside CLAD's Rmap supported subset — derive them at "
+                f"concept-read time, not as a stored fact")
 
     type_names = {}
     for object_type in machine.object_types:
@@ -145,6 +170,193 @@ def check_machine_semantics(machine):
             seen.append(current)
             current = supertype_of[current]
 
+    subtype_of = {subtype: mapping
+                  for subtype, _supertype, mapping in machine.subtypes}
+    discriminator_subs = {sub for sub, _pred, _value in machine.discriminators}
+    by_supertype = {}
+    for subtype, supertype, mapping in machine.subtypes:
+        by_supertype.setdefault(supertype, set()).add(mapping)
+    for supertype, mappings in by_supertype.items():
+        if "absorb" in mappings and "partition" in mappings:
+            failures.append(
+                f"supertype '{supertype}' mixes absorb and partition "
+                f"subtypes; partition drops the table absorption needs")
+        if "partition" in mappings and "separate" in mappings:
+            failures.append(
+                f"supertype '{supertype}' mixes partition and separate "
+                f"subtypes; partition drops the supertype table a separate "
+                f"subtype needs")
+        if "partition" in mappings and subtype_of.get(supertype) == "absorb":
+            failures.append(
+                f"partitioned supertype '{supertype}' is itself absorbed; "
+                f"an absorbed type has no table to partition")
+
+    for subtype, _supertype, mapping in machine.subtypes:
+        if mapping != "absorb":
+            continue
+        owned = [fact for fact in machine.facts
+                 if not fact.subject_type.strip().startswith("(")
+                 and fact.subject_type.strip() == subtype]
+        mandatory = [fact for fact in owned
+                     if "mandatory" in (fact.multiplicity or "").lower()
+                     and not _machine_multi(fact)]
+        if not mandatory and subtype not in discriminator_subs:
+            failures.append(
+                f"absorbed subtype '{subtype}' has no mandatory simple fact "
+                f"and no discriminator; membership is not inferable — use "
+                f"mapping: separate, add a mandatory fact, or add a "
+                f"discriminator")
+        if any("default" in (fact.multiplicity or "").lower()
+               for fact in owned):
+            failures.append(
+                f"absorbed subtype '{subtype}' has a fact with a default; a "
+                f"default would make non-members look like members")
+        for fact in owned:
+            if _machine_multi(fact):
+                failures.append(
+                    f"absorbed subtype '{subtype}' has a multi-valued fact "
+                    f"'{fact.field}'; conditional cardinality cannot be "
+                    f"expressed — use mapping: separate or partition")
+
+    scheme_to_entities = {}
+    for entity, scheme in machine.object_types.items():
+        scheme_to_entities.setdefault(scheme, set()).add(entity)
+    for scheme, entities in scheme_to_entities.items():
+        if scheme in machine.object_types or len(entities) <= 1:
+            continue
+        roots = [entity for entity in entities if entity not in subtype_of]
+        if len(roots) != 1:
+            failures.append(
+                f"reference scheme '{scheme}' identifies multiple object "
+                f"types ({', '.join(sorted(entities))}); an entity reference "
+                f"through it is ambiguous")
+
+    partition_supers = {
+        supertype for _subtype, supertype, mapping in machine.subtypes
+        if mapping == "partition"}
+    for fact in machine.facts:
+        if fact.subject_type.strip().startswith("("):
+            continue
+        value = fact.value_type.strip()
+        if value.startswith("{"):
+            continue
+        if value in machine.object_types:
+            target = value
+        elif value in scheme_to_entities:
+            entities = scheme_to_entities[value]
+            roots = [entity for entity in entities
+                     if entity not in subtype_of]
+            target = (next(iter(entities)) if len(entities) == 1
+                      else roots[0] if len(roots) == 1 else None)
+        else:
+            target = None
+        if target in partition_supers:
+            failures.append(
+                f"fact '{fact.field}' references partitioned supertype "
+                f"'{target}', which has no single table; reference a member "
+                f"instead")
+
+    facts_by_field = {fact.field: fact for fact in machine.facts}
+
+    for fact in machine.facts:
+        subject_mandatory, value_mandatory = ap.role_flags(fact.multiplicity)
+        if value_mandatory is None:
+            continue
+        target = _resolve_machine_entity(
+            fact.value_type.strip(), machine, subtype_of)
+        if target is None:
+            failures.append(
+                f"fact '{fact.field}' states value-role participation but "
+                f"'{fact.value_type.strip()}' is not an object type")
+            continue
+        if (fact.unique and value_mandatory is True
+                and subject_mandatory is False):
+            failures.append(
+                f"1:1 fact '{fact.field}' is oriented on the optional role; "
+                f"rewrite it with the mandatory role as the subject so the "
+                f"column is grouped on the mandatory side")
+
+    for constraint in machine.unique_constraints:
+        subjects = set()
+        for predicate in constraint.predicates:
+            fact = facts_by_field.get(predicate)
+            if fact is None:
+                failures.append(
+                    f"unique constraint names unknown fact '{predicate}'")
+                continue
+            if fact.subject_type.strip().startswith("(") or _machine_multi(fact):
+                failures.append(
+                    f"unique constraint predicate '{predicate}' must be a "
+                    f"simple single-valued fact")
+                continue
+            subjects.add(fact.subject_type.strip())
+        if len(subjects) > 1:
+            failures.append(
+                f"unique constraint ({', '.join(constraint.predicates)}) spans "
+                f"multiple subject types/tables; only same-table uniqueness is "
+                f"supported")
+        if constraint.while_absent:
+            fact = facts_by_field.get(constraint.while_absent)
+            if fact is None:
+                failures.append(
+                    f"unique constraint filter names unknown fact "
+                    f"'{constraint.while_absent}'")
+            elif (fact.subject_type.strip().startswith("(")
+                  or _machine_multi(fact)):
+                failures.append(
+                    f"unique constraint filter '{constraint.while_absent}' "
+                    f"must be a simple single-valued fact")
+            elif fact.subject_type.strip() not in subjects:
+                failures.append(
+                    f"unique constraint filter '{constraint.while_absent}' "
+                    f"is on a different table from the constrained facts")
+
+    for group in machine.disjoint:
+        if len(group) < 2:
+            failures.append(
+                f"disjoint constraint needs at least two subtypes: "
+                f"({', '.join(group)})")
+        supers = {supertype_of.get(subtype) for subtype in group}
+        if None in supers or len(supers) != 1:
+            failures.append(
+                f"disjoint subtypes ({', '.join(group)}) must share one "
+                f"declared supertype")
+
+    for supertype in machine.exhaustive:
+        children = [subtype for subtype, parent in supertype_of.items()
+                    if parent == supertype]
+        if not children:
+            failures.append(
+                f"exhaustive supertype '{supertype}' has no declared subtypes")
+
+    for subtype, predicate, value in machine.discriminators:
+        if subtype_of.get(subtype) != "absorb":
+            failures.append(
+                f"discriminator on '{subtype}' requires mapping: absorb")
+            continue
+        fact = facts_by_field.get(predicate)
+        if fact is None:
+            failures.append(
+                f"discriminator on '{subtype}' names unknown fact '{predicate}'")
+            continue
+        if fact.subject_type.strip().startswith("(") or _machine_multi(fact):
+            failures.append(
+                f"discriminator fact '{predicate}' must be simple and "
+                f"single-valued")
+        if fact.subject_type.strip() != supertype_of.get(subtype):
+            failures.append(
+                f"discriminator fact '{predicate}' must be a fact on the "
+                f"direct supertype '{supertype_of.get(subtype)}'")
+        if ap.role_flags(fact.multiplicity)[0] is not True:
+            failures.append(
+                f"discriminator fact '{predicate}' must be mandatory")
+        for other_sub, other_predicate, other_value in machine.discriminators:
+            if (other_sub != subtype and other_predicate == predicate
+                    and other_value == value):
+                failures.append(
+                    f"subtypes '{subtype}' and '{other_sub}' share "
+                    f"discriminator value '{value}' on '{predicate}'")
+
     declared = set(machine.object_types) | set(machine.independent)
     declared |= {fact.subject_type for fact in machine.facts
                  if not fact.subject_type.startswith("(")}
@@ -169,7 +381,12 @@ def _machine_signature(machine):
         (fact.field, fact.subject_type, fact.value_type,
          _annotation_tokens(fact))
         for fact in machine.facts)
-    return facts, sorted(machine.subtypes), sorted(machine.independent)
+    unique = sorted(
+        (constraint.predicates, constraint.while_absent or "")
+        for constraint in machine.unique_constraints)
+    return (facts, sorted(machine.subtypes), sorted(machine.independent),
+            unique, sorted(machine.disjoint), sorted(machine.exhaustive),
+            sorted(machine.discriminators))
 
 
 def _concept_path(concept_name, concept_dirs):

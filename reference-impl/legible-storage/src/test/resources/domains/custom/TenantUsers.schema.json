@@ -1,0 +1,71 @@
+{
+  "models": [
+    {
+      "concept": "TenantUsers",
+      "tables": [
+        {
+          "concept": "TenantUsers",
+          "table": "tenant_users",
+          "objectType": "User",
+          "primaryKey": [
+            "user"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "user",
+              "column": "user",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "tenant",
+              "column": "tenant",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "email",
+              "column": "email",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "deletedAt",
+              "column": "deleted_at",
+              "sqlType": "TIMESTAMP",
+              "mandatory": false,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"tenant_users\" (\n  \"user\" varchar NOT NULL PRIMARY KEY,\n  \"tenant\" varchar NOT NULL,\n  \"email\" varchar NOT NULL,\n  \"deleted_at\" timestamp\n);\nCREATE UNIQUE INDEX IF NOT EXISTS \"tenant_users_tenant_email_open_idx\" ON \"tenant_users\" (\"tenant\", \"email\") WHERE \"deleted_at\" IS NULL",
+          "uniqueGroups": [
+            {
+              "columns": [
+                "tenant",
+                "email"
+              ],
+              "whileAbsent": "deleted_at"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

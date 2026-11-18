@@ -53,7 +53,9 @@
           "primaryKey": [
             "loan"
           ],
-          "foreignKeys": [],
+          "foreignKeys": [
+            "loan_copy -> lending__copy(copy)"
+          ],
           "columns": [
             {
               "predicate": "loan",
@@ -107,7 +109,7 @@
             }
           ],
           "checks": [],
-          "ddl": "CREATE TABLE IF NOT EXISTS \"lending__loan\" (\n  \"loan\" varchar NOT NULL PRIMARY KEY,\n  \"borrower\" varchar NOT NULL,\n  \"opened_at\" timestamp NOT NULL,\n  \"loan_copy\" varchar NOT NULL,\n  \"returned_at\" timestamp\n);\nCREATE UNIQUE INDEX IF NOT EXISTS \"lending__loan_loan_copy_open_idx\" ON \"lending__loan\" (\"loan_copy\") WHERE \"returned_at\" IS NULL"
+          "ddl": "CREATE TABLE IF NOT EXISTS \"lending__loan\" (\n  \"loan\" varchar NOT NULL PRIMARY KEY,\n  \"borrower\" varchar NOT NULL,\n  \"opened_at\" timestamp NOT NULL,\n  \"loan_copy\" varchar NOT NULL,\n  \"returned_at\" timestamp,\n  FOREIGN KEY (\"loan_copy\") REFERENCES \"lending__copy\" (\"copy\")\n);\nCREATE UNIQUE INDEX IF NOT EXISTS \"lending__loan_loan_copy_open_idx\" ON \"lending__loan\" (\"loan_copy\") WHERE \"returned_at\" IS NULL"
         }
       ]
     }

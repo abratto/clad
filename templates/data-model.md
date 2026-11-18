@@ -101,12 +101,23 @@
 
 ```
 object-type <EntityType> identified-by <IdType>
-fact <predicate> : <EntityType> -> <ValueType> -- <mandatory|optional[, unique][, default X]> 
+fact <predicate> : <EntityType> -> <ValueType> -- <mandatory|optional[, value mandatory|value optional][, unique][, default X]>
 fact <predicate> : ( <A>, <B> ) -> <ValueType> -- <annotations>
 fact <predicate> : <EntityType> -> { <ValueType> } -- <annotations>
-<Sub> is a <Sup> -- mapping: absorb | separate | partition
+unique ( <predicate>, <predicate>[, ...] ) [ while <predicate> absent ]
+disjoint ( <Sub>, <Sub>[, ...] )
+exhaustive ( <Sup> )
+<Sub> is a <Sup> -- mapping: absorb | separate | partition[, discriminator <predicate> = <value>]
 independent <ObjectType>
 ```
+
+- `value mandatory` / `value optional` state the value role's participation.
+  A 1:1 between two object types must be oriented on the mandatory side.
+- `unique (...)` is a same-table multi-column uniqueness constraint.
+- `disjoint (...)` declares pairwise disjoint subtypes; `exhaustive (Sup)`
+  declares that the supertype's direct subtypes cover it.
+- `discriminator` is supported on `mapping: absorb` and makes membership
+  explicit.
 
 ## Modeling Notes
 

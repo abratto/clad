@@ -30,11 +30,14 @@ RELATIONAL_MARKER = re.compile(
     r"\bR-?map\b|(?<!non-)(?<!not )\brelational\b)",
     re.IGNORECASE)
 
-# Any FK declaration in a CLAD mapping is a cross-concept coupling (concepts own
-# isolated regions; cross-concept identifiers are opaque, never references).
-# Case-sensitive and DDL-shaped, so prose like "never references into ..." is
-# not mistaken for a foreign-key declaration.
-FK_RE = re.compile(r"\b(?:REFERENCES|FOREIGN\s+KEY)\b")
+# Flag a DDL-shaped FK declaration in a Stage 04a mapping. Prose such as
+# "intra-concept foreign key" is the expected way to document a derived FK and
+# is not a violation; a raw `REFERENCES table(col)` is the shape that can hide a
+# cross-concept coupling (R2).
+FK_RE = re.compile(
+    r"\bFOREIGN\s+KEY\s*\([^)]*\)\s*REFERENCES\b"
+    r"|\bREFERENCES\s+[\w.\"]+\s*\(",
+    re.IGNORECASE)
 
 
 def is_relational(text):
@@ -48,8 +51,9 @@ def validate_relational_mapping(text):
     for index, line in enumerate(text.splitlines(), 1):
         if FK_RE.search(line):
             failures.append(
-                f"line {index}: cross-concept foreign key is forbidden "
-                f"(R2) — {line.strip()}")
+                f"line {index}: raw FK declaration in a Stage 04a mapping — "
+                f"confirm it is intra-concept; cross-concept FKs are "
+                f"forbidden (R2) — {line.strip()}")
     return failures
 
 

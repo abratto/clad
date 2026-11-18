@@ -103,6 +103,33 @@ class MachineModelParserTests(unittest.TestCase):
         self.assertTrue(any("duplicate" in error for error in m.errors),
                         m.errors)
 
+    def test_parses_set_constraints_and_discriminator(self):
+        m = ap.parse_machine_model(_wrap(
+            "object-type Party identified-by Party\n"
+            "object-type Client identified-by Client\n"
+            "object-type Supplier identified-by Supplier\n"
+            "fact tenant : Party -> Tenant -- mandatory\n"
+            "fact email : Party -> Email -- mandatory\n"
+            "fact deletedAt : Party -> Timestamp -- optional\n"
+            "fact partyKind : Party -> Kind -- mandatory\n"
+            "unique ( tenant, email ) while deletedAt absent\n"
+            "disjoint ( Client, Supplier )\n"
+            "exhaustive ( Party )\n"
+            "Client is a Party -- mapping: absorb, discriminator partyKind = client\n"))
+        self.assertEqual(
+            m.unique_constraints,
+            [ap.UniqueConstraint(("tenant", "email"), "deletedAt")])
+        self.assertEqual(m.disjoint, [("Client", "Supplier")])
+        self.assertEqual(m.exhaustive, ["Party"])
+        self.assertEqual(m.discriminators,
+                         [("Client", "partyKind", "client")])
+
+    def test_role_flags_distinguish_subject_and_value(self):
+        self.assertEqual(ap.role_flags("mandatory, unique"), (True, None))
+        self.assertEqual(ap.role_flags("optional, value mandatory"),
+                         (False, True))
+        self.assertEqual(ap.role_flags("value optional"), (None, False))
+
     def test_comments_and_blank_lines_ignored(self):
         m = ap.parse_machine_model(_wrap(
             "# a comment\n\nfact domain : ClientId -> Domain -- mandatory\n"))

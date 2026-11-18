@@ -166,6 +166,26 @@ models under hard rule R2 (one named region per concept). The full
 ORM-ML notation is **not** adopted; readers who want the notation
 should consult Jarrar's papers directly.
 
+## Rmap — relational mapping
+
+Terry Halpin. **Object-Role Modeling: an overview**, §"Relational mapping"
+(ORM.net, 1997; revised 2002); and **Information Modeling and Relational
+Databases** (Morgan Kaufmann, 2001; 2nd edn 2008), ch. 11 "Relational
+Mapping".
+
+- Overview PDF: [orm.net/pdf/ORMwhitePaper.pdf](https://www.orm.net/pdf/ORMwhitePaper.pdf)
+- ORM.net overview index: [orm.net/overview](https://www.orm.net/overview)
+
+CLAD cites Rmap as the source of its relational realization:
+composite-key fact types map to their own tables, simple-key facts group
+onto the object type's table, mandatory/optional roles become column
+constraints, and subtyping is captured by qualified optionals or subset
+constraints. CLAD adapts the procedure to a functional-fact input profile
+and documents the supported subset in
+[`../architecture/RMAP_CONFORMANCE.md`](../architecture/RMAP_CONFORMANCE.md).
+The overview presents the basic algorithm, not every advanced refinement;
+"Rmap" in CLAD means that documented subset, not the complete procedure.
+
 ## Source of the CLAD reference implementation
 
 Alan Potosnak. **Tastetag** (private project, 2025–2026).

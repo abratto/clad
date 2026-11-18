@@ -1,0 +1,92 @@
+{
+  "models": [
+    {
+      "concept": "RichTypes",
+      "tables": [
+        {
+          "concept": "RichTypes",
+          "table": "rich_types",
+          "objectType": "Entity",
+          "primaryKey": [
+            "entity"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "entity",
+              "column": "entity",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "amount",
+              "column": "amount",
+              "sqlType": "NUMERIC(12,2)",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "externalId",
+              "column": "external_id",
+              "sqlType": "UUID",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "bornOn",
+              "column": "born_on",
+              "sqlType": "DATE",
+              "mandatory": false,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "opensAt",
+              "column": "opens_at",
+              "sqlType": "TIME",
+              "mandatory": false,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "metadata",
+              "column": "metadata",
+              "sqlType": "JSONB",
+              "mandatory": false,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "payload",
+              "column": "payload",
+              "sqlType": "BYTEA",
+              "mandatory": false,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"rich_types\" (\n  \"entity\" varchar NOT NULL PRIMARY KEY,\n  \"amount\" numeric(12,2) NOT NULL,\n  \"external_id\" uuid NOT NULL,\n  \"born_on\" date,\n  \"opens_at\" time,\n  \"metadata\" jsonb,\n  \"payload\" bytea\n)"
+        }
+      ]
+    }
+  ]
+}

@@ -14,7 +14,6 @@ import org.jooq.impl.DSL;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -848,12 +847,8 @@ public final class RmapPostgresFactStore implements FactStore {
         }
 
         private static Field<?> typedField(RelationSchema.Column col) {
-            return switch (col.sqlType()) {
-                case "INTEGER" -> DSL.field(DSL.name(col.column()), Integer.class);
-                case "TIMESTAMP" -> DSL.field(DSL.name(col.column()), Timestamp.class);
-                case "BOOLEAN" -> DSL.field(DSL.name(col.column()), Boolean.class);
-                default -> DSL.field(DSL.name(col.column()), String.class);
-            };
+            return DSL.field(DSL.name(col.column()),
+                    ValueCodecs.forType(col.sqlType()).dataType());
         }
 
         @SuppressWarnings("unchecked")
@@ -864,25 +859,11 @@ public final class RmapPostgresFactStore implements FactStore {
 
     /** Bind a string value using the column's Rmap-derived SQL type. */
     private static Object fromSpi(RelationSchema.Column col, String value) {
-        return switch (col.sqlType()) {
-            case "INTEGER" -> Integer.parseInt(value);
-            // The SPI's instant strings are ISO-8601 (the wire contract's
-            // encoding); epoch-millis strings are accepted from legacy seeds.
-            case "TIMESTAMP" -> value.chars().allMatch(Character::isDigit)
-                    ? new Timestamp(Long.parseLong(value))
-                    : Timestamp.from(java.time.Instant.parse(value));
-            case "BOOLEAN" -> Boolean.parseBoolean(value);
-            default -> value;
-        };
+        return ValueCodecs.forType(col.sqlType()).fromSpi(value);
     }
 
     /** Read a typed value back to the SPI's string form. */
     private static String toSpi(RelationSchema.Column col, Object value) {
-        return switch (col.sqlType()) {
-            case "INTEGER" -> String.valueOf(value);
-            case "TIMESTAMP" -> ((Timestamp) value).toInstant().toString();
-            case "BOOLEAN" -> String.valueOf(value);
-            default -> String.valueOf(value);
-        };
+        return ValueCodecs.forType(col.sqlType()).toSpi(value);
     }
 }

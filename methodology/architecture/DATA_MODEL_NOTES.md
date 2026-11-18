@@ -10,6 +10,9 @@ The procedure is adapted from the CSDP described by Terry Halpin and
 the ORM tradition summarized by Mustafa Jarrar. CLAD does **not** adopt
 full ORM-ML syntax, but it should stay recognizably faithful to the
 seven-step CSDP. See [`../reference/CITATIONS.md`](../reference/CITATIONS.md).
+The relational consequences of the block are bounded by CLAD's documented
+Rmap subset ([`RMAP_CONFORMANCE.md`](RMAP_CONFORMANCE.md)), not the full
+published procedure.
 
 ## When this file applies
 
@@ -79,7 +82,9 @@ multiple simpler fact types, do that here.
 
 Record mandatory roles explicitly. Then check for logical derivations:
 facts derivable from other facts without arithmetic. Such facts should
-be marked derived rather than modeled as stored base facts.
+be marked derived rather than modeled as stored base facts. Do not put a
+derived fact in the `## Conceptual model` block: the block carries stored
+facts, and the Rmap derivation rejects a `derived` annotation.
 
 ### Step 6 — Add any value, set comparison, and subtyping constraints
 
@@ -138,7 +143,10 @@ object-type <EntityType> identified-by <IdType>
 fact <predicate> : <EntityType> -> <ValueType> -- <annotations>
 fact <predicate> : ( <A>, <B> ) -> <ValueType> -- <annotations>
 fact <predicate> : <EntityType> -> { <ValueType> } -- <annotations>
-<Sub> is a <Sup> -- mapping: absorb | separate | partition
+unique ( <predicate>, <predicate>[, ...] ) [ while <predicate> absent ]
+disjoint ( <Sub>, <Sub>[, ...] )
+exhaustive ( <Sup> )
+<Sub> is a <Sup> -- mapping: absorb | separate | partition[, discriminator <predicate> = <value>]
 independent <ObjectType>
 ```
 
@@ -154,14 +162,44 @@ independent <ObjectType>
 - `fact` is one elementary fact type. `( A, B )` is a compound (objectified)
   subject; `{ V }` is a multi-valued ("zero or more") fact.
 - `<annotations>` is the same `--` tail the `## State` notation uses:
-  `mandatory` | `optional`, `unique …`, `default <expr>`, `in {a, b, c}` or
-  `in {a..b}`. A filtered uniqueness — `unique while <field> absent` — is
-  external uniqueness restricted to open individuals (Halpin's 1:1 with
-  history: at most one open loan per copy): `unique` alone realises a plain
-  column `UNIQUE`; the filtered form replaces it and realises as a partial
-  unique index over the fact column filtered on `<field>`'s NULL.
+  `mandatory` | `optional` (the **subject** role), `value mandatory` |
+  `value optional` (the **value** role), `unique …`, `default <expr>`,
+  `in {a, b, c}` or `in {a..b}`. A filtered uniqueness —
+  `unique while <field> absent` — is external uniqueness restricted to open
+  individuals (Halpin's 1:1 with history: at most one open loan per copy):
+  `unique` alone realises a plain column `UNIQUE`; the filtered form replaces
+  it and realises as a partial unique index over the fact column filtered on
+  `<field>`'s NULL. A 1:1 between two object types must be oriented on the
+  mandatory side; the deriver rejects the optional-side orientation (automatic
+  predicate flipping is not implemented).
+- `unique ( p1, p2 )` is a same-table multi-column uniqueness constraint.
+  `while <field> absent` makes it a partial unique index. Cross-table and
+  multi-valued predicates are rejected.
 - `is a` declares a subtype and the per-model Rmap mapping (default
   `separate`); `independent T` declares an object type with no functional role.
+  An absorbed subtype needs at least one mandatory simple fact or a
+  `discriminator` to qualify membership; its other facts are conditional
+  (nullable on the supertype) and cannot carry a `default` or be multi-valued.
+  Use `separate` when membership must be explicit or when those conditions do
+  not hold. `disjoint ( A, B )` declares pairwise disjoint subtypes;
+  `exhaustive ( Sup )` declares that the direct subtypes cover `Sup`.
+  `discriminator <predicate> = <value>` is supported on `mapping: absorb`: the
+  supertype fact's value states subtype membership, and the generated check
+  ties it to the subtype's facts. Cross-table disjointness/exhaustiveness is
+  reported, not DB-enforced (partition is structural/inherent).
+- A fact value that names a declared object type in the **same** concept (or
+  that type's reference scheme) is an entity reference. It is realised as an
+  intra-concept foreign key when the target owns a data column; an
+  identity-only target stays opaque because there is no stored row to reference.
+  A name not declared in this concept, including another concept's identifier,
+  is an opaque value.
+- A fact value that does not name an object type is a **value type**. The
+  built-in scalar names map to SQL types (`Decimal(12,2)`, `UUID`, `Date`,
+  `Time`, `JSONB`, `Bytes`, and the existing integer/timestamp/boolean/text
+  names). Other domain value types default to `TEXT`; register them in the
+  project/feature type map (`storage.type.<Name>=<SQL>` or
+  `_config/type-map.md`) to use a richer SQL type. `storage.type.strict=true`
+  makes an unregistered value type fail instead of falling back to `TEXT`.
 
 Rules:
 - Exactly one `## Conceptual model` block per data model (`## Machine model`

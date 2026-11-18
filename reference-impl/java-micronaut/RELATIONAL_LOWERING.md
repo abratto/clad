@@ -8,9 +8,11 @@ the canonical profile.
 
 Stage 03b produces a profile-neutral CSDP fact model (Halpin's ORM tradition —
 see `methodology/architecture/DATA_MODEL_NOTES.md`). Its relational mapping is
-Halpin's **Rmap**: a fact type becomes either an absorbed column or a separate
-table, decided by **arity**, the **uniqueness constraint**, and **mandatory
-roles**. CLAD adds one constraint of its own: **no cross-concept foreign key**.
+**CLAD's supported subset of Halpin's Rmap** (the authority is
+`methodology/architecture/RMAP_CONFORMANCE.md`): a fact type becomes either an
+absorbed column or a separate table, decided by **arity**, the **uniqueness
+constraint**, and **mandatory roles**. CLAD adds one constraint of its own:
+**no cross-concept foreign key**.
 
 ## The mapping rules
 
@@ -24,8 +26,12 @@ roles**. CLAD adds one constraint of its own: **no cross-concept foreign key**.
 | value constraint (e.g. `in {…}`) | `CHECK` constraint |
 | uniqueness constraint | `UNIQUE` (or `PRIMARY KEY` on the subject column) |
 | filtered uniqueness: `unique while <field> absent` | partial unique index — `(col) WHERE <field> IS NULL` — replacing the plain `UNIQUE`; external uniqueness over open individuals, which preserves 1:1-with-history (a returned loan frees the copy) |
-| intra-concept reference | `FOREIGN KEY (col) REFERENCES table(col)` — rendered by both DDL writers; child-table FKs name the parent keyed on the fact's subject, and are omitted when that table is identity-only (it could never hold a row) |
-| intra-concept entity reference | real FK (same concept) |
+| multi-column uniqueness: `unique (a, b)` | table-level `UNIQUE (a, b)`; `while <field> absent` renders a partial unique index over the combination |
+| value-role participation: `value mandatory/optional` | recorded and validated; a 1:1 between object types must be oriented on the mandatory side. The deriver does not auto-flip the authored predicate. |
+| subtype set constraints: `disjoint (A, B)` / `exhaustive (Sup)` | absorbed disjointness gets a pairwise `CHECK`; partition is structural; separate-table disjointness/exhaustiveness is reported, not DB-enforced |
+| absorb discriminator: `mapping: absorb, discriminator P = v` | an explicit membership `CHECK`: subtype facts required when `P = v`, forbidden otherwise |
+| intra-concept reference | `FOREIGN KEY (col) REFERENCES table(col)` — rendered by the derivation; child-table FKs name the parent keyed on the fact's subject, and are omitted when that table is identity-only (it could never hold a row) |
+| intra-concept entity reference | real FK when the target table owns a data column; an identity-only target (no table, or only a primary key) stays an opaque typed column with a derivation warning — the runtime has no identity-materialisation operation |
 | **cross-concept identifier** | **opaque typed column — never a FK** |
 
 ### Worked example — the three UC-00-login concepts
@@ -88,7 +94,7 @@ fact line:
 
 | Stage 03b form | Relational realisation |
 |---|---|
-| `Sub is a Sup -- mapping: absorb` | The subtype's simple-key fact types become columns on the supertype's table (the subtype itself realises no table). Right for small/sparse subtypes: no extra join, subtype columns nullable where their supertype sibling is optional. |
+| `Sub is a Sup -- mapping: absorb` | The subtype's simple-key fact types become **nullable** columns on the supertype's table (the subtype itself realises no table). A membership `CHECK` allows either all guarded columns null (non-member) or every effective mandatory fact present (member), including absorbed ancestors' mandatory facts. `absorb` requires at least one mandatory simple qualifier; defaults and multi-valued subtype facts are rejected because they cannot be conditional without a discriminator. Right for small/sparse subtypes: no extra join, and a mandatory subtype fact is not forced on unrelated supertype rows. |
 | `Sub is a Sup -- mapping: separate` (or no mapping declared — the deterministic default) | The subtype gets its own table keyed on the **supertype's identity column** (a subtype has no reference scheme of its own; a subtype row is a supertype row), with a rendered intra-concept FK naming the supertype's table. **Write semantics:** the FK is the fact model's own subset constraint — a subtype fact for an individual with no supertype row fails loudly, so a concept action creating a subtype individual writes the supertype's facts in the same buffered action. Nothing materializes the base row implicitly. |
 | `Sub is a Sup -- mapping: partition` (disjoint, exhaustive) | The supertype's own fact types are flattened into each member's table at derivation. **Runtime-routable via member-qualified operations** (`write(member, subject, predicate, value)`): the member's own table carries the shared predicate, so a plain operation on one throws at the operation time, naming the members — member qualification is how membership is stated at runtime. A mandatory flattened predicate is satisfiable per member (the member's own row carries it). The role-catalog recipe remains the modelling alternative (membership as an objectified fact `( Party, Role ) -> Timestamp` beside a role catalog — no subtype declaration); partition + member addressing is the physical alternative. |
 | `independent T` | A single-column table keyed on `T`'s reference scheme, beside the concept's other tables (`concept__t`), for object types that play no functional fact role ("just in case a model needs them"). |
@@ -140,9 +146,12 @@ drift from the concepts:
   ```
 
 `TEXT` is rendered as `varchar` so jOOQ's `DDLDatabase` (H2) can parse it;
-the types are equivalent on Postgres. Later schema changes are new `Vn`
-migrations (Flyway is append-only after release) — author them at Stage 04a
-from the changed data model.
+the types are equivalent on Postgres. Richer scalar types (`NUMERIC(12,2)`,
+`UUID`, `DATE`, `TIME`, `JSONB`, `BYTEA`) are bound/read through
+`dev.legible.storage.ValueCodecs`; a custom SQL type requires a registered
+`ValueCodec` provider. Later schema changes are new `Vn` migrations (Flyway is
+append-only after release) — author them at Stage 04a from the changed data
+model.
 
 ## Seeding
 

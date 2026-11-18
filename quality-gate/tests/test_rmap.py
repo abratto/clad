@@ -129,6 +129,33 @@ class ProjectRmapTests(unittest.TestCase):
         sql, _warnings = rmap._alter_sql(base, current, "x")
         self.assertIn('ALTER TABLE "x" ADD COLUMN "note" varchar;', sql)
 
+    def test_alter_replaces_a_changed_check_expression(self):
+        baseline = rmap.model_descriptor([rmap.derive_model(
+            "Employment", "## Conceptual model\n\n```\n" + """
+object-type Party identified-by Party
+object-type Employer identified-by Employer
+fact partyName : Party -> Name -- mandatory
+fact partyKind : Party -> Kind -- mandatory
+fact vatNumber : Employer -> VatNumber -- mandatory
+fact payrollRef : Employer -> PayrollRef -- optional
+Employer is a Party -- mapping: absorb
+""" + "\n```\n")])
+        current = rmap.model_descriptor([rmap.derive_model(
+            "Employment", "## Conceptual model\n\n```\n" + """
+object-type Party identified-by Party
+object-type Employer identified-by Employer
+fact partyName : Party -> Name -- mandatory
+fact partyKind : Party -> Kind -- mandatory
+fact vatNumber : Employer -> VatNumber -- mandatory
+fact payrollRef : Employer -> PayrollRef -- optional
+Employer is a Party -- mapping: absorb, discriminator partyKind = employer
+""" + "\n```\n")])
+        sql, warnings = rmap._alter_sql(baseline, current, "employment")
+        self.assertIn('DROP CONSTRAINT "ck_party_employer_member"', sql)
+        self.assertIn('ADD CONSTRAINT "ck_party_employer_member"', sql)
+        self.assertTrue(any("check expression changed" in warning
+                            for warning in warnings), warnings)
+
     def test_alter_refuses_a_mandatory_column_without_default(self):
         base = {"models": [{"concept": "X", "tables": [{
             "table": "x", "columns": [], "primaryKey": [], "checks": [],
@@ -343,11 +370,120 @@ Patient is a Person -- mapping: separate
 object-type Person identified-by Person
 object-type Manager identified-by Manager
 fact name : Person -> Name -- mandatory
+fact level : Manager -> Int -- mandatory
 fact reports : Manager -> Int -- optional
 Manager is a Person -- mapping: absorb
 """)
         self.assertEqual(len(model.tables), 1)
-        self.assertIsNotNone(model.tables[0].column_for("reports"))
+        table = model.tables[0]
+        self.assertIsNotNone(table.column_for("reports"))
+        # A subtype's mandatory fact is conditional on subtype membership, not
+        # forced on every supertype row.
+        self.assertFalse(table.column_for("level").mandatory)
+        self.assertFalse(table.column_for("reports").mandatory)
+        self.assertTrue(any(
+            check.name == "ck_person_manager_member"
+            and "level IS NOT NULL" in check.expression
+            for check in table.checks))
+
+    def test_absorb_without_a_mandatory_qualifier_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.derive("Staff", """
+object-type Person identified-by Person
+object-type Manager identified-by Manager
+fact name : Person -> Name -- mandatory
+fact reports : Manager -> Int -- optional
+Manager is a Person -- mapping: absorb
+""")
+
+    def test_absorb_with_a_default_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.derive("Staff", """
+object-type Person identified-by Person
+object-type Manager identified-by Manager
+fact level : Manager -> Int -- mandatory, default 1
+Manager is a Person -- mapping: absorb
+""")
+
+    def test_absorb_with_a_multivalued_fact_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.derive("Staff", """
+object-type Person identified-by Person
+object-type Manager identified-by Manager
+fact level : Manager -> Int -- mandatory
+fact directReports : Manager -> { Person } -- zero or more
+Manager is a Person -- mapping: absorb
+""")
+
+    def test_transitive_absorb_requires_the_ancestor_facts(self):
+        model = self.derive("Staff", """
+object-type Person identified-by Person
+object-type Employee identified-by Employee
+object-type Manager identified-by Manager
+fact employeeNo : Employee -> Int -- mandatory
+fact level : Manager -> Int -- mandatory
+Employee is a Person -- mapping: absorb
+Manager is a Employee -- mapping: absorb
+""")
+        table = model.tables[0]
+        check = next(c for c in table.checks
+                     if c.name == "ck_person_manager_member")
+        self.assertIn("employee_no IS NOT NULL", check.expression)
+        self.assertIn("level IS NOT NULL", check.expression)
+
+    def test_entity_reference_to_a_state_owning_target_is_a_foreign_key(self):
+        model = self.derive("Directory", """
+object-type Department identified-by DeptCode
+object-type Employee identified-by Employee
+fact deptName : Department -> Name -- mandatory
+fact worksFor : Employee -> Department -- mandatory
+""")
+        sql = rmap.render_migration("x", [model])
+        self.assertIn('FOREIGN KEY ("works_for") REFERENCES '
+                      '"directory__department" ("dept_code")', sql)
+
+    def test_entity_reference_to_an_identity_only_target_stays_opaque(self):
+        model = self.derive("Lending", """
+object-type Member identified-by Member
+object-type Loan identified-by Loan
+fact borrower : Loan -> Member -- mandatory
+""")
+        self.assertFalse(any(table.foreign_keys for table in model.tables))
+        self.assertTrue(any("identity-only" in w or "owns no table" in w
+                            for w in model.warnings), model.warnings)
+
+    def test_reference_to_a_partitioned_supertype_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.derive("Party", """
+object-type Party identified-by Party
+object-type Individual identified-by Individual
+object-type Assignment identified-by Assignment
+fact name : Party -> Name -- mandatory
+fact assignee : Assignment -> Party -- mandatory
+Individual is a Party -- mapping: partition
+""")
+
+    def test_foreign_key_cycle_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.derive("Mutual", """
+object-type A identified-by A
+object-type B identified-by B
+fact bName : B -> Name -- mandatory
+fact aName : A -> Name -- mandatory
+fact aToB : A -> B -- mandatory
+fact bToA : B -> A -- mandatory
+""")
+
+    def test_tables_are_ordered_before_their_foreign_key_targets(self):
+        model = self.derive("Directory", """
+object-type Department identified-by DeptCode
+object-type Employee identified-by Employee
+fact deptName : Department -> Name -- mandatory
+fact worksFor : Employee -> Department -- mandatory
+""")
+        names = [table.table for table in model.tables]
+        self.assertLess(names.index("directory__department"),
+                        names.index("directory__employee"))
 
     def test_partition_flattens_supertype_facts(self):
         model = self.derive("Party", """
@@ -362,6 +498,33 @@ Company is a Party -- mapping: partition
                          ["party__company", "party__individual"])
         for table in model.tables:
             self.assertIsNotNone(table.column_for("name"))
+
+    def test_nested_partition_propagates_outer_facts_to_inner_members(self):
+        model = self.derive("Demographics", """
+object-type Party identified-by Party
+object-type Individual identified-by Individual
+object-type Company identified-by Company
+object-type Male identified-by Male
+object-type Female identified-by Female
+fact partyName : Party -> Name -- mandatory
+fact age : Individual -> Int -- optional
+Individual is a Party -- mapping: partition
+Company is a Party -- mapping: partition
+Male is a Individual -- mapping: partition
+Female is a Individual -- mapping: partition
+""")
+        names = sorted(table.table for table in model.tables)
+        self.assertEqual(names, [
+            "demographics__company", "demographics__female",
+            "demographics__male"])
+        for table in model.tables:
+            self.assertIsNotNone(table.column_for("partyName"))
+        for name in ("demographics__female", "demographics__male"):
+            table = next(t for t in model.tables if t.table == name)
+            self.assertIsNotNone(table.column_for("age"))
+        company = next(t for t in model.tables
+                       if t.table == "demographics__company")
+        self.assertIsNone(company.column_for("age"))
 
     def test_independent_type_is_a_single_column_table(self):
         model = self.derive("Scheduling", """

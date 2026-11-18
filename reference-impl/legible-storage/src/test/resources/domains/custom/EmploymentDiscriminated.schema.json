@@ -1,0 +1,71 @@
+{
+  "models": [
+    {
+      "concept": "EmploymentDiscriminated",
+      "tables": [
+        {
+          "concept": "EmploymentDiscriminated",
+          "table": "employment_discriminated",
+          "objectType": "Party",
+          "primaryKey": [
+            "party"
+          ],
+          "foreignKeys": [],
+          "columns": [
+            {
+              "predicate": "party",
+              "column": "party",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "partyName",
+              "column": "party_name",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "partyKind",
+              "column": "party_kind",
+              "sqlType": "TEXT",
+              "mandatory": true,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            },
+            {
+              "predicate": "vatNumber",
+              "column": "vat_number",
+              "sqlType": "TEXT",
+              "mandatory": false,
+              "unique": false,
+              "default": null,
+              "valueConstraint": null,
+              "uniqueWhileAbsent": null
+            }
+          ],
+          "checks": [
+            {
+              "name": "ck_party_party_kind",
+              "expression": "party_kind IN ('individual', 'employer')"
+            },
+            {
+              "name": "ck_party_employer_member",
+              "expression": "(party_kind <> 'employer' AND vat_number IS NULL) OR (party_kind = 'employer' AND vat_number IS NOT NULL)"
+            }
+          ],
+          "ddl": "CREATE TABLE IF NOT EXISTS \"employment_discriminated\" (\n  \"party\" varchar NOT NULL PRIMARY KEY,\n  \"party_name\" varchar NOT NULL,\n  \"party_kind\" varchar NOT NULL,\n  \"vat_number\" varchar,\n  CONSTRAINT ck_party_party_kind CHECK (party_kind IN ('individual', 'employer')),\n  CONSTRAINT ck_party_employer_member CHECK ((party_kind <> 'employer' AND vat_number IS NULL) OR (party_kind = 'employer' AND vat_number IS NOT NULL))\n)"
+        }
+      ]
+    }
+  ]
+}

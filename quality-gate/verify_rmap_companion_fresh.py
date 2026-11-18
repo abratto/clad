@@ -49,12 +49,16 @@ def _current_source(concept_text):
     return history[-1] if history else introducer
 
 
-def _descriptor(concept, text):
-    return rmap.model_descriptor([rmap.derive_model(concept, text)])
+def _descriptor(concept, text, type_map=None, strict_types=False):
+    return rmap.model_descriptor([rmap.derive_model(
+        concept, text, type_map=type_map, strict_types=strict_types)])
 
 
 def findings(feature_root, corpus):
-    slug = os.path.basename(os.path.abspath(feature_root))
+    feature_root = os.path.abspath(feature_root)
+    repo = os.path.dirname(os.path.dirname(feature_root))
+    type_map, strict_types = rmap._type_config_for(repo, feature_root)
+    slug = os.path.basename(feature_root)
     data_dir = os.path.join(feature_root, "stages", "03b-data-model", "output")
     if not os.path.isdir(data_dir):
         return []
@@ -75,8 +79,10 @@ def findings(feature_root, corpus):
         with open(companion, encoding="utf-8") as fh:
             companion_text = fh.read()
         try:
-            fresh = _descriptor(concept, feature_text)
-            published = _descriptor(concept, companion_text)
+            fresh = _descriptor(concept, feature_text,
+                                type_map, strict_types)
+            published = _descriptor(concept, companion_text,
+                                    type_map, strict_types)
         except ValueError:
             continue  # a malformed model is another check's job
         if fresh != published:

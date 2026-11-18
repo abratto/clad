@@ -22,8 +22,11 @@ import java.util.List;
  *
  * <p>Uniqueness from the fact model becomes a {@code UNIQUE} or {@code PRIMARY
  * KEY} constraint; mandatory roles become {@code NOT NULL}; value constraints
- * become {@code CHECK}; intra-concept references become foreign keys. Cross-
- * concept identifiers stay opaque typed columns — never a foreign key (R2).
+ * become {@code CHECK}. A fact absorbed from a subtype is nullable on the
+ * supertype table and guarded by a membership check, not forced on every
+ * supertype row. An intra-concept reference to a target that owns a data
+ * column becomes a foreign key; an identity-only target stays an opaque typed
+ * column. Cross-concept identifiers stay opaque — never a foreign key (R2).
  */
 public record RelationSchema(
         String concept,

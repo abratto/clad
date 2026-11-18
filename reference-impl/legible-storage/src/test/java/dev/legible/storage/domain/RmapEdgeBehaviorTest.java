@@ -52,7 +52,9 @@ class RmapEdgeBehaviorTest {
                     "patient_registry__person", "patient_registry__patient",
                     "order_intake", "order_intake__order_and_product", "order_intake__tags",
                     "lending__copy", "lending__loan", "hold__member_and_copy",
-                    "roles__client", "roles__supplier")) {
+                    "roles__client", "roles__supplier",
+                    "employment_conditional", "tenant_users",
+                    "employment_discriminated", "rich_types")) {
                 st.execute("DROP TABLE IF EXISTS " + t + " CASCADE");
             }
         }
@@ -277,6 +279,252 @@ class RmapEdgeBehaviorTest {
         assertTrue(plainConflict.getMessage().toLowerCase().contains("unique"),
                 "the block is the plain UNIQUE constraint: "
                         + plainConflict.getMessage());
+    }
+
+    @Test
+    @DisplayName("P6 absorbed subtype: mandatory facts are conditional, not NOT NULL")
+    void absorbedSubtypeConditionalMandatoryIsEnforced() throws Exception {
+        RmapPostgresFactStore store = new RmapPostgresFactStore(
+                dataSource, DomainFixtures.customSchemas("EmploymentConditional"));
+        store.createSchema();
+        dev.legible.engine.TransactionalRegion r =
+                (dev.legible.engine.TransactionalRegion) store.region("EmploymentConditional");
+
+        // Non-member: both guarded subtype columns are null.
+        r.beginAction();
+        r.write("p-1", "partyName", "Ada");
+        r.flushAction();
+        assertEquals(null,
+                cell("employment_conditional", "vat_number", "party = 'p-1'"));
+        assertEquals(null,
+                cell("employment_conditional", "payroll_ref", "party = 'p-1'"));
+
+        // Member: the mandatory qualifier and the optional fact are present.
+        r.beginAction();
+        r.write("p-2", "partyName", "ACME");
+        r.write("p-2", "vatNumber", "VAT-1");
+        r.write("p-2", "payrollRef", "PR-1");
+        r.flushAction();
+        assertEquals("VAT-1",
+                cell("employment_conditional", "vat_number", "party = 'p-2'"));
+        assertEquals("PR-1",
+                cell("employment_conditional", "payroll_ref", "party = 'p-2'"));
+
+        // Invalid: an optional subtype fact without the mandatory qualifier.
+        r.beginAction();
+        r.write("p-3", "partyName", "Solo");
+        r.write("p-3", "payrollRef", "PR-3");
+        var rejected = assertThrows(RuntimeException.class, r::flushAction,
+                "a partial subtype population must fail the membership check");
+        assertTrue(rejected.getMessage().toLowerCase().contains(
+                        "ck_party_employer_member")
+                        || rejected.getMessage().toLowerCase().contains("check"),
+                "the rejection is the membership CHECK: "
+                        + rejected.getMessage());
+        assertEquals(null,
+                cell("employment_conditional", "party", "party = 'p-3'"),
+                "the rejected row never lands");
+    }
+
+    @Test
+    @DisplayName("P8 concept action: promote a party to employer; partial promotion is rejected")
+    void absorbedSubtypePromotionInActionBoundary() throws Exception {
+        RmapPostgresFactStore store = new RmapPostgresFactStore(
+                dataSource, DomainFixtures.customSchemas("EmploymentConditional"));
+        store.createSchema();
+        dev.legible.engine.TransactionalRegion r =
+                (dev.legible.engine.TransactionalRegion) store.region("EmploymentConditional");
+
+        // Action 1 creates a non-employer; action 2 promotes the same row.
+        r.beginAction();
+        r.write("p1", "partyName", "Ada");
+        r.flushAction();
+        r.beginAction();
+        r.write("p1", "vatNumber", "VAT-1");
+        r.write("p1", "payrollRef", "PR-1");
+        r.flushAction();
+        assertEquals("VAT-1",
+                cell("employment_conditional", "vat_number", "party = 'p1'"));
+        assertEquals("PR-1",
+                cell("employment_conditional", "payroll_ref", "party = 'p1'"));
+
+        // A partial promotion in its own action leaves the row unchanged.
+        r.beginAction();
+        r.write("p2", "partyName", "Solo");
+        r.flushAction();
+        r.beginAction();
+        r.write("p2", "payrollRef", "PR-2");
+        assertThrows(RuntimeException.class, r::flushAction,
+                "a partial promotion must fail the membership check");
+        assertEquals(null,
+                cell("employment_conditional", "vat_number", "party = 'p2'"));
+        assertEquals(null,
+                cell("employment_conditional", "payroll_ref", "party = 'p2'"));
+
+        // Retracting only the qualifier would leave a partial member; the
+        // action must retract both subtype facts together.
+        r.beginAction();
+        r.clear("p1", "vatNumber");
+        assertThrows(RuntimeException.class, r::flushAction,
+                "retracting only the qualifier leaves a partial member");
+        r.beginAction();
+        r.clear("p1", "vatNumber");
+        r.clear("p1", "payrollRef");
+        r.flushAction();
+        assertEquals("Ada",
+                cell("employment_conditional", "party_name", "party = 'p1'"),
+                "the supertype row persists");
+        assertEquals(null,
+                cell("employment_conditional", "vat_number", "party = 'p1'"));
+        assertEquals(null,
+                cell("employment_conditional", "payroll_ref", "party = 'p1'"));
+    }
+
+    @Test
+    @DisplayName("P7 entity reference: a same-concept FK rejects a missing target")
+    void entityReferenceForeignKeyIsEnforced() throws Exception {
+        RmapPostgresFactStore store = store("lending", "Lending");
+        dev.legible.engine.TransactionalRegion r =
+                (dev.legible.engine.TransactionalRegion) store.region("Lending");
+
+        r.beginAction();
+        r.write("l-1", "borrower", "m-1");
+        r.write("l-1", "openedAt", "2026-10-01T10:00:00Z");
+        r.write("l-1", "loanCopy", "c-missing");
+        var missing = assertThrows(RuntimeException.class, r::flushAction,
+                "a loan must reference an existing copy");
+        assertTrue(missing.getMessage().toLowerCase().contains("lending__copy")
+                        || missing.getMessage().toLowerCase().contains(
+                        "foreign key"),
+                "the rejection is the copy FK: " + missing.getMessage());
+        assertEquals(0L, countRows("lending__loan"));
+
+        r.beginAction();
+        r.write("c-1", "copyCode", "CB-1");
+        r.write("c-1", "title", "Dune");
+        r.flushAction();
+
+        r.beginAction();
+        r.write("l-1", "borrower", "m-1");
+        r.write("l-1", "openedAt", "2026-10-01T10:00:00Z");
+        r.write("l-1", "loanCopy", "c-1");
+        r.flushAction();
+        assertEquals(1L, countRows("lending__loan"));
+    }
+
+    @Test
+    @DisplayName("P9 multi-column uniqueness is per tenant while the row is open")
+    void multiColumnUniquenessWithinTenant() throws Exception {
+        RmapPostgresFactStore store = new RmapPostgresFactStore(
+                dataSource, DomainFixtures.customSchemas("TenantUsers"));
+        store.createSchema();
+        dev.legible.engine.TransactionalRegion r =
+                (dev.legible.engine.TransactionalRegion) store.region("TenantUsers");
+
+        r.beginAction();
+        r.write("u1", "tenant", "t1");
+        r.write("u1", "email", "a@example.com");
+        r.flushAction();
+        r.beginAction();
+        r.write("u2", "tenant", "t1");
+        r.write("u2", "email", "b@example.com");
+        r.flushAction();
+        r.beginAction();
+        r.write("u3", "tenant", "t2");
+        r.write("u3", "email", "a@example.com");
+        r.flushAction();
+
+        // The same email in the same tenant is rejected.
+        r.beginAction();
+        r.write("u4", "tenant", "t1");
+        r.write("u4", "email", "a@example.com");
+        var duplicate = assertThrows(RuntimeException.class, r::flushAction,
+                "tenant/email must be unique among open rows");
+        assertTrue(duplicate.getMessage().toLowerCase().contains("open_idx")
+                        || duplicate.getMessage().toLowerCase().contains(
+                        "tenant_email"),
+                "the rejection is the partial unique index: "
+                        + duplicate.getMessage());
+
+        // Soft-deleting the first row frees the pair.
+        r.beginAction();
+        r.write("u1", "deletedAt", "2026-01-01T00:00:00Z");
+        r.flushAction();
+        r.beginAction();
+        r.write("u4", "tenant", "t1");
+        r.write("u4", "email", "a@example.com");
+        r.flushAction();
+    }
+
+    @Test
+    @DisplayName("P10 explicit discriminator selects subtype membership")
+    void discriminatorMembershipIsEnforced() throws Exception {
+        RmapPostgresFactStore store = new RmapPostgresFactStore(
+                dataSource,
+                DomainFixtures.customSchemas("EmploymentDiscriminated"));
+        store.createSchema();
+        dev.legible.engine.TransactionalRegion r =
+                (dev.legible.engine.TransactionalRegion) store.region(
+                        "EmploymentDiscriminated");
+
+        r.beginAction();
+        r.write("p1", "partyName", "Ada");
+        r.write("p1", "partyKind", "individual");
+        r.flushAction();
+        r.beginAction();
+        r.write("p2", "partyName", "ACME");
+        r.write("p2", "partyKind", "employer");
+        r.write("p2", "vatNumber", "VAT-1");
+        r.flushAction();
+
+        r.beginAction();
+        r.write("p3", "partyName", "Bad Individual");
+        r.write("p3", "partyKind", "individual");
+        r.write("p3", "vatNumber", "VAT-3");
+        var individualWithVat = assertThrows(RuntimeException.class,
+                r::flushAction,
+                "an individual must not carry the employer fact");
+        assertTrue(individualWithVat.getMessage().toLowerCase().contains(
+                        "ck_party_employer_member"),
+                individualWithVat.getMessage());
+
+        r.beginAction();
+        r.write("p4", "partyName", "Bad Employer");
+        r.write("p4", "partyKind", "employer");
+        var employerWithoutVat = assertThrows(RuntimeException.class,
+                r::flushAction,
+                "an employer must carry the mandatory VAT fact");
+        assertTrue(employerWithoutVat.getMessage().toLowerCase().contains(
+                        "ck_party_employer_member"),
+                employerWithoutVat.getMessage());
+    }
+
+    @Test
+    @DisplayName("P11 rich scalar types round-trip through the value codecs")
+    void richScalarTypesRoundTrip() {
+        RmapPostgresFactStore store = new RmapPostgresFactStore(
+                dataSource, DomainFixtures.customSchemas("RichTypes"));
+        store.createSchema();
+        dev.legible.engine.TransactionalRegion r =
+                (dev.legible.engine.TransactionalRegion) store.region("RichTypes");
+
+        r.beginAction();
+        r.write("e1", "amount", "12.34");
+        r.write("e1", "externalId", "550e8400-e29b-41d4-a716-446655440000");
+        r.write("e1", "bornOn", "2026-01-31");
+        r.write("e1", "opensAt", "09:30:00");
+        r.write("e1", "metadata", "{\"a\": 1}");
+        r.write("e1", "payload", "aGVsbG8=");
+        r.flushAction();
+
+        assertEquals(java.util.Set.of("12.34"), r.read("e1", "amount"));
+        assertEquals(java.util.Set.of("550e8400-e29b-41d4-a716-446655440000"),
+                r.read("e1", "externalId"));
+        assertEquals(java.util.Set.of("2026-01-31"), r.read("e1", "bornOn"));
+        assertEquals(java.util.Set.of("09:30:00"), r.read("e1", "opensAt"));
+        String metadata = r.read("e1", "metadata").iterator().next();
+        assertTrue(metadata.contains("\"a\""), metadata);
+        assertEquals(java.util.Set.of("aGVsbG8="), r.read("e1", "payload"));
     }
 
     @Test
